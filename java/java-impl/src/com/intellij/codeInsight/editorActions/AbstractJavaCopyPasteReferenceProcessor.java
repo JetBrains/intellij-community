@@ -125,7 +125,6 @@ public abstract class AbstractJavaCopyPasteReferenceProcessor<TRef extends PsiEl
       () -> ReadAction.compute(
         () -> findReferencesToRestore(file, bounds, referenceData)
       ), JavaBundle.message("progress.title.searching.references"), true, project);
-    if (refs == null) return;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
       askReferencesToRestore(project, refs, referenceData);
     }

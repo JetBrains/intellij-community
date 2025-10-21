@@ -1,35 +1,52 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEventResult;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
+@Internal
 public final class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssueEvent {
-  private final BuildIssue myIssue;
-  private final Kind myKind;
 
-  public BuildIssueEventImpl(@NotNull Object parentId,
-                             @NotNull BuildIssue buildIssue,
-                             @NotNull Kind kind) {
-    super(new Object(), parentId, System.currentTimeMillis(), buildIssue.getTitle());
+  private final @NotNull Kind myKind;
+  private final @NotNull BuildIssue myIssue;
+
+  @Internal
+  public BuildIssueEventImpl(
+    @Nullable Object id,
+    @Nullable Object parentId,
+    @Nullable Long time,
+    @Nullable @BuildEventsNls.Hint String hint,
+    @NotNull Kind kind,
+    @NotNull BuildIssue buildIssue
+  ) {
+    super(id, parentId, time, buildIssue.getTitle(), hint, buildIssue.getDescription());
     myIssue = buildIssue;
     myKind = kind;
   }
 
+  public BuildIssueEventImpl(
+    @NotNull Object parentId,
+    @NotNull BuildIssue buildIssue,
+    @NotNull Kind kind
+  ) {
+    this(null, parentId, null, null, kind, buildIssue);
+  }
+
   @Override
   public @NotNull String getDescription() {
-    return myIssue.getDescription();
+    assert super.getDescription() != null;
+    return super.getDescription();
   }
 
   @Override
@@ -53,7 +70,7 @@ public final class BuildIssueEventImpl extends AbstractBuildEvent implements Bui
   }
 
   @Override
-  public MessageEventResult getResult() {
+  public @NotNull MessageEventResult getResult() {
     return new MessageEventResult() {
       @Override
       public Kind getKind() {

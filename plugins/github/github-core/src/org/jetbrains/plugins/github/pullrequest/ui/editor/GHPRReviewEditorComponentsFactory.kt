@@ -21,8 +21,10 @@ import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolv
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +42,10 @@ import javax.swing.Action
 import javax.swing.JComponent
 
 internal object GHPRReviewEditorComponentsFactory {
+  private const val VERTICAL_INLAY_MARGIN = 8
+  private const val LEFT_INLAY_MARGIN = 34
+  private const val RIGHT_INLAY_MARGIN = 0
+
   fun createThreadIn(cs: CoroutineScope, vm: GHPRCompactReviewThreadViewModel): JComponent {
     val commentsPanel = ComponentListPanelFactory.createVertical(cs, vm.comments) { item ->
       val itemCs = this
@@ -82,7 +88,11 @@ internal object GHPRReviewEditorComponentsFactory {
       CodeReviewCommentUIUtil.createEditorInlayPanel(it)
     }, UiDataProvider { sink ->
       sink[GHPRReviewThreadViewModel.THREAD_VM_DATA_KEY] = vm
-    })
+    }).apply {
+      if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
+        border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
+      }
+    }
   }
 
   private fun CoroutineScope.createReplyActionsPanel(vm: GHPRCompactReviewThreadViewModel): JComponent {
@@ -160,7 +170,14 @@ internal object GHPRReviewEditorComponentsFactory {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 
-    return CodeReviewCommentUIUtil.createEditorInlayPanel(editor)
+    return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
+      Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(editor)).apply {
+        border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
+      }
+    }
+    else {
+      CodeReviewCommentUIUtil.createEditorInlayPanel(editor)
+    }
   }
 
   private fun CoroutineScope.createUiAction(

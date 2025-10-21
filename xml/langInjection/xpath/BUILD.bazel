@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.xml.langInjection.xpath` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "xpath_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "xpath",
+  module_name = "intellij.xml.langInjection.xpath",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":xpath_resources"],
+  deps = [
+    "//xml/langInjection",
+    "//plugins/xpath",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-parser:parser",
+    "@lib//:jetbrains-annotations",
+    "//xml/xml-psi-api:psi",
+    "//libraries/jaxen",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util",
+  ]
+)
+### auto-generated section `build intellij.xml.langInjection.xpath` end

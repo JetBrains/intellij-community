@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
@@ -40,8 +39,8 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 private class JdkAutoHint: BaseState() {
   val name by string()
@@ -123,29 +122,15 @@ class JdkAuto : UnknownSdkResolver {
     return object : UnknownSdkLookup {
       private val coroutineScope = service<ServiceScope>().coroutineScope
 
-      val projectWslDistribution by lazy {
-        project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
-      }
+      val projectEelDescriptor by lazy { project?.getEelDescriptor() ?: LocalEelDescriptor }
 
-      val eel = coroutineScope.suspendingLazy {
-        (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApi()
-      }
-
-      @Deprecated("Remove when EelApi is stabilized")
-      val projectInWsl by lazy {
-        project?.basePath?.let { WslPath.isWslUncPath(it) } == true
-      }
+      val eel = coroutineScope.suspendingLazy { projectEelDescriptor.toEelApi() }
 
       val lazyDownloadModel: SuspendingLazy<List<JdkItem>> = coroutineScope.suspendingLazy {
         indicator.pushState()
         indicator.text = ProjectBundle.message("progress.text.downloading.jdk.list")
         try {
-          val jdkPredicate = when {
-            Registry.`is`("java.home.finder.use.eel") -> JdkPredicate.forEel(eel.getValue())
-            projectInWsl -> JdkPredicate.forWSL()
-            else -> JdkPredicate.default()
-          }
-
+          val jdkPredicate = JdkPredicate.forEel(eel.getValue())
           JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
         }
         catch (e: ProcessCanceledException) {
@@ -161,9 +146,10 @@ class JdkAuto : UnknownSdkResolver {
       }
 
       private fun resolveHint(sdk: UnknownSdk): JdkAutoHint? {
-        if (sdk.sdkType != sdkType) return null
+        if (sdk.sdkType != sdkType || project == null) {
+          return null
+        }
 
-        project ?: return null
         val sdkName = sdk.sdkName ?: return null
 
         return JdkAutoHintService
@@ -171,7 +157,7 @@ class JdkAuto : UnknownSdkResolver {
           .state
           .jdks.singleOrNull {
             it.name.equals(sdkName, ignoreCase = true) &&
-            it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } == true
+            it.path?.let { path -> Path.of(path).getEelDescriptor() } == projectEelDescriptor
           }
       }
 
@@ -193,7 +179,7 @@ class JdkAuto : UnknownSdkResolver {
         val hint = resolveHint(sdk)
         val path = hint?.path ?: return null
         indicator.text = ProjectBundle.message("progress.text.resolving.hint.path", path)
-        if (!File(path).isDirectory) return null
+        if (!Path.of(path).isDirectory()) return null
 
         val version = runCatching {
           sdkType.getVersionString(path)
@@ -235,7 +221,7 @@ class JdkAuto : UnknownSdkResolver {
                      }
 
         val matchingJdks = jdks.filter { req.matches(it.first) }
-        val jdkToDownload = matchingJdks.singleOrNull() ?: jdks.filter { it.first.suggestedSdkName == sdk.sdkName }.singleOrNull()
+        val jdkToDownload = matchingJdks.singleOrNull() ?: jdks.singleOrNull { it.first.suggestedSdkName == sdk.sdkName }
 
         if (matchingJdks.count() == 0 && jdkToDownload == null) {
           return null
@@ -263,12 +249,12 @@ class JdkAuto : UnknownSdkResolver {
 
         override fun createTask(indicator: ProgressIndicator): SdkDownloadTask = runBlockingCancellable {
           val jdkInstaller = JdkInstaller.getInstance()
-          val homeDir = jdkInstaller.defaultInstallDir(jdkToDownload, eel.getValue(), projectWslDistribution)
+          val homeDir = jdkInstaller.defaultInstallDir(jdkToDownload, eel.getValue())
           val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
           JdkDownloadTask(jdkToDownload, request, project)
         }
 
-        override fun toString() = "UnknownSdkDownloadableFix{${jdkToDownload.fullPresentationText}, wsl=${projectWslDistribution}}"
+        override fun toString() = "UnknownSdkDownloadableFix{${jdkToDownload.fullPresentationText}, eel=${projectEelDescriptor}}"
       }
 
       private fun multipleJdksDownloadFix(
@@ -288,16 +274,12 @@ class JdkAuto : UnknownSdkResolver {
 
         override fun createTask(indicator: ProgressIndicator): SdkDownloadTask = runBlockingCancellable {
           val jdkInstaller = JdkInstaller.getInstance()
-          val path = homeDir ?: jdkInstaller.defaultInstallDir(
-            item,
-            if (Registry.`is`("java.home.finder.use.eel")) eel.getValue() else null,
-            projectWslDistribution,
-          )
+          val path = homeDir ?: jdkInstaller.defaultInstallDir(item, eel.getValue())
           val request = jdkInstaller.prepareJdkInstallation(item, path)
           JdkDownloadTask(item, request, project)
         }
 
-        override fun toString() = "UnknownSdkMultipleDownloadsFix{${items.joinToString(" / ") { it.fullPresentationText }}, wsl=${projectWslDistribution}}"
+        override fun toString() = "UnknownSdkMultipleDownloadsFix{${items.joinToString(" / ") { it.fullPresentationText }}, eel=${projectEelDescriptor}}"
 
         override fun chooseItem(sdkTypeName: @NlsSafe String): Boolean {
           val (selectedItem, path) = selectJdkAndPath(project, null, items, sdkType, null, sdkLookupReason, ProjectBundle.message("dialog.button.download.jdk"))
@@ -345,8 +327,8 @@ class JdkAuto : UnknownSdkResolver {
 
         fun List<JavaLocalSdkFix>.pickBestMatch() = this.maxByOrNull { it.version }
 
-        val localSdkFix = tryUsingExistingSdk(req, sdk.sdkType, indicator).filterByWsl().pickBestMatch()
-                          ?: lazyLocalJdks.filter { req.matches(it) }.filterByWsl().pickBestMatch()
+        val localSdkFix = tryUsingExistingSdk(req, sdk.sdkType, indicator).filterByEelDescriptor().pickBestMatch()
+                          ?: lazyLocalJdks.filter { req.matches(it) }.filterByEelDescriptor().pickBestMatch()
 
         return localSdkFix?.copy(includeJars = resolveHint(sdk)?.includeJars ?: listOf())
       }
@@ -377,8 +359,8 @@ class JdkAuto : UnknownSdkResolver {
         return result
       }
 
-      private fun List<JavaLocalSdkFix>.filterByWsl(): List<JavaLocalSdkFix> {
-        return filter { WslPath.isWslUncPath(it.homeDir) == projectInWsl }
+      private fun List<JavaLocalSdkFix>.filterByEelDescriptor(): List<JavaLocalSdkFix> {
+        return filter { projectEelDescriptor == Path.of(it.homeDir).getEelDescriptor() }
       }
     }
   }

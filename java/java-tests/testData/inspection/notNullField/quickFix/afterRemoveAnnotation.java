@@ -1,4 +1,4 @@
-// "Remove not-null annotation" "true"
+// "Remove non-null annotation" "true"
 import org.jetbrains.annotations.NotNull;
 
 class X {

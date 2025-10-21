@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
@@ -6,6 +6,9 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
 
+/**
+ * @see com.intellij.java.syntax.element.JavaSyntaxTokenType
+ */
 @SuppressWarnings("SpellCheckingInspection")
 public interface JavaTokenType extends TokenType {
   IElementType IDENTIFIER = new IJavaElementType("IDENTIFIER");

@@ -6,20 +6,8 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtDoWhileExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtForExpression
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtWhenEntry
-import org.jetbrains.kotlin.psi.KtWhileExpression
-import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 object AddBracesUtils {
     fun addBraces(element: KtElement, expression: KtExpression) {
@@ -72,15 +60,18 @@ object AddBracesUtils {
         }
 
         val result = expression.replace(psiFactory.createSingleStatementBlock(expression, nextComment = nextComment?.text))
-        when (element) {
-            is KtDoWhileExpression -> {
-                // remove new line between '}' and while
-                (element.body?.parent?.nextSibling as? PsiWhiteSpace)?.delete()
-            }
 
-            is KtIfExpression -> {
-                (result?.parent?.nextSibling as? PsiWhiteSpace)?.delete()
-            }
+        val parent = when (element) {
+            is KtDoWhileExpression -> element.body?.parent
+            is KtIfExpression -> result.parent
+            is KtWhenEntry -> result
+            else -> null
+        }
+        parent?.let {
+            // remove new line between '{' and if/when
+            (it.prevSibling as? PsiWhiteSpace)?.delete()
+            // remove new line between '}' and while
+            (it.nextSibling as? PsiWhiteSpace)?.delete()
         }
         saver?.restore(result, forceAdjustIndent = false)
     }

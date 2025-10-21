@@ -40,7 +40,7 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
                 @Suppress("UNCHECKED_CAST")
                 (this::codeInsightTestFixture as KMutableProperty0<CodeInsightTestFixture?>).set(null)
             },
-            ThrowableRunnable { myTestFixture = null }
+            ThrowableRunnable { resetTestFixture() }
         )
     }
 

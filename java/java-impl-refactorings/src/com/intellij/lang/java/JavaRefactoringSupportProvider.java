@@ -151,6 +151,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
     SearchScope useScope = PsiSearchHelper.getInstance(elementToRename.getProject()).getUseScope(elementToRename);
     if (!(useScope instanceof LocalSearchScope)) return false;
     PsiElement[] scopeElements = ((LocalSearchScope)useScope).getScope();
+    if (scopeElements.length == 0 && elementToRename instanceof PsiVariable variable && variable.isUnnamed()) return true;
     if (scopeElements.length > 1 &&                          // assume there are no elements with use scopes with holes in them
         !isElementWithComment(scopeElements) &&              // ... except a case of element and it's doc comment
         !isResourceVariable(scopeElements)) {

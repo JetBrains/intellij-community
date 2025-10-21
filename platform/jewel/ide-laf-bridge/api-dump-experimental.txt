@@ -4,11 +4,11 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - *sf:toNonNegativeDpSize(com.intellij.util.ui.JBDimension):J
 - *sf:toNonNegativeDpSize(java.awt.Dimension):J
 f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
-- *sf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- *bsf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - *sf:JewelComposeNoThemePanel(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - *bs:JewelComposeNoThemePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - *bs:JewelComposeNoThemePanel$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- *sf:composeWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- *bsf:composeWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - *sf:composeWithoutTheme(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - *bs:composeWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - *bs:composeWithoutTheme$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent

@@ -30,14 +30,13 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
-    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" />
     <orderEntry type="module" module-name="intellij.platform.tasks" />
     <orderEntry type="module" module-name="intellij.tasks.compatibility" />
@@ -59,9 +58,10 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="javax.annotation-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="library" name="jsonpath" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsonpath" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
   </component>

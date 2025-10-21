@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalJewelApi::class)
+
 package com.intellij.markdown.compose.preview
 
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +28,7 @@ import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.jetbrains.jewel.bridge.retrievePlatformTextStyle
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.*
@@ -220,6 +223,8 @@ private fun createListStyling(baseTextStyle: TextStyle): List = List(
     padding = PaddingValues(start = 6.dp),
     numberFormatStyles = Ordered.NumberFormatStyles(
       firstLevel = NumberFormatStyle.Decimal,
+      secondLevel = NumberFormatStyle.Roman,
+      thirdLevel = NumberFormatStyle.Alphabetical,
     )
   ),
   unordered = Unordered(
@@ -230,7 +235,7 @@ private fun createListStyling(baseTextStyle: TextStyle): List = List(
     itemVerticalSpacingTight = 4.dp,
     padding = PaddingValues(start = 6.dp),
     markerMinWidth = 16.dp,
-    bulletCharStyles = Unordered.BulletCharStyles(),
+    bulletCharStyles = Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
   )
 )
 

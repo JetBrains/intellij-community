@@ -49,8 +49,9 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private static final Key<List<RangeHighlighter>> TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY");
 
   public static final TextAttributesKey TAG_TREE_HIGHLIGHTING_KEY = TextAttributesKey.createTextAttributesKey("TAG_TREE_HIGHLIGHTING_KEY");
-  private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION,
-                                                                                            TAG_TREE_HIGHLIGHTING_KEY);
+  private static class Holder {
+    private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, TAG_TREE_HIGHLIGHTING_KEY);
+  }
 
   private final PsiFile myPsiFile;
   private final EditorEx myEditor;
@@ -231,7 +232,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   private static @NotNull HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
     TextAttributes attributes = new TextAttributes(null, color, null, null, Font.PLAIN);
-    return HighlightInfo.newHighlightInfo(TYPE).range(range).textAttributes(attributes)
+    return HighlightInfo.newHighlightInfo(Holder.TYPE).range(range).textAttributes(attributes)
       .severity(HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY).createUnconditionally();
   }
 
@@ -292,7 +293,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
       if (info == null) continue;
-      if (info.type == TYPE) {
+      if (info.type == Holder.TYPE) {
         highlighter.dispose();
       }
     }

@@ -16,11 +16,12 @@ import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
@@ -32,26 +33,21 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class AnalyzeStacktraceUtil private constructor(){
+class AnalyzeStacktraceUtil private constructor() {
   @ApiStatus.Internal
   companion object {
-
     @JvmField
     val EP_NAME: ProjectExtensionPointName<Filter> = ProjectExtensionPointName<Filter>("com.intellij.analyzeStacktraceFilter")
 
     @ApiStatus.Experimental
-    @JvmField
-    val EP_CONTENT_PROVIDER: ProjectExtensionPointName<StacktraceTabContentProvider> = ProjectExtensionPointName<StacktraceTabContentProvider>(
-      "com.intellij.analyzeStacktraceRunContentProvider")
+    private val EP_CONTENT_PROVIDER = ExtensionPointName<StacktraceTabContentProvider>("com.intellij.analyzeStacktraceRunContentProvider")
 
     @JvmStatic
     fun printStacktrace(consoleView: ConsoleView, unscrambledTrace: String) {
       ThreadingAssertions.assertEventDispatchThread()
-      consoleView.apply {
-        clear()
-        print(unscrambledTrace + "\n", ConsoleViewContentType.ERROR_OUTPUT)
-        scrollTo(0)
-      }
+      consoleView.clear()
+      consoleView.print(unscrambledTrace + "\n", ConsoleViewContentType.ERROR_OUTPUT)
+      consoleView.scrollTo(0)
     }
 
     @JvmStatic
@@ -61,7 +57,7 @@ class AnalyzeStacktraceUtil private constructor(){
       tabTitle: @NlsContexts.TabTitle String?,
       text: String,
     ) {
-      addConsole(project, consoleFactory, tabTitle, text, null)
+      addConsole(project = project, consoleFactory = consoleFactory, tabTitle = tabTitle, text = text, icon = null)
     }
 
     @JvmOverloads
@@ -102,7 +98,7 @@ class AnalyzeStacktraceUtil private constructor(){
         val runContentManager = RunContentManager.getInstance(project)
         runContentManager.showRunContent(executor, descriptor)
 
-        EP_CONTENT_PROVIDER.getExtensions(project).forEach { provider ->
+        for (provider in EP_CONTENT_PROVIDER.extensionList) {
           runWithModalProgressBlocking(project, LangBundle.message("unscramble.progress.title.analyzing.stacktrace")) {
             provider.createRunTabDescriptor(project, text)?.let { contentDescriptor ->
               Disposer.register(descriptor, contentDescriptor)
@@ -121,7 +117,8 @@ class AnalyzeStacktraceUtil private constructor(){
     }
 
     @JvmStatic
-    fun createEditorPanel(project: Project?, parentDisposable: Disposable): StacktraceEditorPanel {
+    @ApiStatus.Internal
+    fun createEditorPanel(project: Project?, parentDisposable: Disposable): AnalyzeStacktraceUtil.StacktraceEditorPanel {
       val editorFactory = EditorFactory.getInstance()
       val document = editorFactory.createDocument("")
       val editor = editorFactory.createEditor(document, project)
@@ -133,9 +130,8 @@ class AnalyzeStacktraceUtil private constructor(){
         setRightMarginShown(false)
       }
 
-      val editorPanel = StacktraceEditorPanel(project, editor).apply {
-        preferredSize = JBUI.size(600, 400)
-      }
+      val editorPanel = StacktraceEditorPanel(project, editor)
+      editorPanel.preferredSize = JBUI.size(600, 400)
       Disposer.register(parentDisposable, editorPanel)
       return editorPanel
     }
@@ -157,7 +153,8 @@ class AnalyzeStacktraceUtil private constructor(){
     }
   }
 
-  class StacktraceEditorPanel(private val myProject: Project?, val editor: Editor) : JPanel(BorderLayout()), UiDataProvider, Disposable {
+  @ApiStatus.Internal
+  class StacktraceEditorPanel(private val project: Project?, private val editor: Editor) : JPanel(BorderLayout()), UiDataProvider, Disposable {
     init {
       add(editor.getComponent())
     }
@@ -167,7 +164,7 @@ class AnalyzeStacktraceUtil private constructor(){
     }
 
     fun pasteTextFromClipboard() {
-      ClipboardUtil.getTextInClipboard()?.let { text -> this.text = text }
+      ClipboardUtil.getTextInClipboard()?.let { text = it }
     }
 
     override fun dispose() {
@@ -177,10 +174,10 @@ class AnalyzeStacktraceUtil private constructor(){
     var text: String
       get() = editor.getDocument().text
       set(text) {
-        CommandProcessor.getInstance().executeCommand(myProject, Runnable {
+        CommandProcessor.getInstance().executeCommand(project, Runnable {
           ApplicationManager.getApplication().runWriteAction(Runnable {
             val document = editor.getDocument()
-            document.replaceString(0, document.textLength, StringUtil.convertLineSeparators(text))
+            document.replaceString(0, document.textLength, Strings.convertLineSeparators(text))
           })
         }, "", this)
       }

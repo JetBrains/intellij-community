@@ -38,8 +38,9 @@ fun printCodeCompletionItems(items: List<PolySymbolCodeCompletionItem>,
 
 fun printMatches(matches: List<PolySymbol>, printer: DebugOutputPrinter = PolySymbolsDebugOutputPrinter()): String =
   printer.printValue(
-    matches
-      .sortedWith(Comparator
-                    .comparing<PolySymbol, PolySymbol.Priority?> { it.priority ?: PolySymbol.Priority.NORMAL }
-                    .thenComparing(Function { it.name })
-                    .thenComparing(Function { it.origin.library ?: "" })))
+    matches.sortedWith(
+      compareBy<PolySymbol> { it.priority ?: PolySymbol.Priority.NORMAL }
+        .thenBy { it.name }
+        .thenBy { it.origin.library ?: "" }
+    )
+  )

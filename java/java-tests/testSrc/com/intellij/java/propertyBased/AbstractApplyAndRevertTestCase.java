@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath;
+
 public abstract class AbstractApplyAndRevertTestCase extends HeavyPlatformTestCase {
   protected CompilerTester myCompilerTester;
 
@@ -72,7 +74,7 @@ public abstract class AbstractApplyAndRevertTestCase extends HeavyPlatformTestCa
   protected @NotNull Project doCreateAndOpenProject() {
     PathMacros pathMacros = PathMacros.getInstance();
     oldMacroValue = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY);
-    pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getDefaultMavenRepositoryPath());
+    pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getMavenRepositoryPath());
 
     return ProjectUtil.openOrImport(Paths.get(getTestDataPath()).normalize());
   }
@@ -88,11 +90,6 @@ public abstract class AbstractApplyAndRevertTestCase extends HeavyPlatformTestCa
     catch (Throwable e) {
       ExceptionUtil.rethrowAllAsUnchecked(e);
     }
-  }
-
-  protected String getDefaultMavenRepositoryPath() {
-    final String root = System.getProperty("user.home", null);
-    return (root != null ? new File(root, ".m2/repository") : new File(".m2/repository")).getAbsolutePath();
   }
 
   @Override

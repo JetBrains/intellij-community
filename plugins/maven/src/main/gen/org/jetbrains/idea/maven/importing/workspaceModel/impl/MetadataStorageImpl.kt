@@ -10,27 +10,47 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal object MetadataStorageImpl: MetadataStorageBase() {
-    override fun initializeMetadata() {
-        val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-        val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
-        
-        var typeMetadata: StorageTypeMetadata
-        
-        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-        
-        addMetadata(typeMetadata)
-        
-        typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity", entityDataFqName = "org.jetbrains.idea.maven.importing.workspaceModel.impl.MavenProjectsTreeSettingsEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "importedFilePaths", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable), primitive = primitiveTypeListNotNullable), withDefault = false)), extProperties = listOf(), isAbstract = false)
-        
-        addMetadata(typeMetadata)
-    }
+internal object MetadataStorageImpl : MetadataStorageBase() {
+  override fun initializeMetadata() {
+    val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
+    val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
 
-    override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity", metadataHash = -2066553308)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1237028792)
-        addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenEntitySource", metadataHash = 582639044)
-    }
+    var typeMetadata: StorageTypeMetadata
+
+    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenEntitySource",
+                                                     properties = listOf(
+                                                       OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
+                                                                           name = "virtualFileUrl",
+                                                                           valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                             isNullable = true,
+                                                                             typeMetadata = FinalClassMetadata.KnownClass(
+                                                                               fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                           withDefault = false)),
+                                                     supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+
+    addMetadata(typeMetadata)
+
+    typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity",
+                                  entityDataFqName = "org.jetbrains.idea.maven.importing.workspaceModel.impl.MavenProjectsTreeSettingsEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
+                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                            withDefault = false),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "importedFilePaths",
+                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable),
+                                                                            primitive = primitiveTypeListNotNullable),
+                            withDefault = false)), extProperties = listOf(), isAbstract = false)
+
+    addMetadata(typeMetadata)
+  }
+
+  override fun initializeMetadataHash() {
+    addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity",
+                    metadataHash = -2066553308)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1237028792)
+    addMetadataHash(typeFqn = "org.jetbrains.idea.maven.importing.workspaceModel.MavenEntitySource", metadataHash = 582639044)
+  }
 
 }

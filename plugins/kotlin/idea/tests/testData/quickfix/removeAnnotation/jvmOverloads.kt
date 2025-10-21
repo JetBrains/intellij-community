@@ -1,5 +1,4 @@
 // "Remove @JvmOverloads annotation" "true"
-// IGNORE_K2
 // WITH_STDLIB
 
 interface T {
@@ -7,3 +6,4 @@ interface T {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

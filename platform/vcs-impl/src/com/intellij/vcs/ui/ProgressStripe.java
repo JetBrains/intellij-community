@@ -2,11 +2,11 @@
 package com.intellij.vcs.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ public class ProgressStripe extends JBPanel {
   }
 
   public ProgressStripe(@NotNull JComponent targetComponent, @NotNull Disposable parent) {
-    this(targetComponent, parent, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    this(targetComponent, parent, (int)ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
   }
 
   @Override

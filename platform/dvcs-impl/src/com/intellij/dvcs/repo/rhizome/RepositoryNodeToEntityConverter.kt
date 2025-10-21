@@ -5,10 +5,10 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
-import com.intellij.vcs.branch.BranchPresentation
-import com.intellij.platform.vcs.impl.backend.shelf.NodeToEntityConverter
 import com.intellij.platform.vcs.impl.shared.rhizome.NodeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.RepositoryNodeEntity
+import com.intellij.vcs.branch.BranchPresentation
+import com.intellij.vcs.shelf.NodeToEntityConverter
 import fleet.kernel.SharedChangeScope
 
 internal class RepositoryNodeToEntityConverter : NodeToEntityConverter<RepositoryChangesBrowserNode>(RepositoryChangesBrowserNode::class) {

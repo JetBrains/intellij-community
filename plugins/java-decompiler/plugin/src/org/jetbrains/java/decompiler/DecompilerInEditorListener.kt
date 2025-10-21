@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.EditorInspectionsActionToolbar
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
 import com.intellij.openapi.editor.impl.EditorToolbarButtonLook
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBInsets
@@ -26,9 +27,9 @@ import kotlin.math.max
 private class DecompilerInEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor as? EditorImpl ?: return
-    val file = editor.virtualFile ?: return
-    if (file.fileType != JavaClassFileType.INSTANCE) return
-    if (file.name == "module-info.class") return
+    val virtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return
+    if (virtualFile.fileType != JavaClassFileType.INSTANCE) return
+    if (virtualFile.name == "module-info.class") return
     setupModeToggles(editor)
   }
 
@@ -57,6 +58,9 @@ private class DecompilerInEditorListener : EditorFactoryListener {
 
     // We override this *only* to enforce the nice-looking minimum icon size.
     val statusToolbar = object : EditorInspectionsActionToolbar(defaultActionGroup, editor, editorButtonLook, null, null) {
+
+      override fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation) = true
+
       override fun createIconButton(action: AnAction, place: String, presentation: Presentation, minimumSize: Supplier<out Dimension>): ActionButton {
         return object : ToolbarActionButton(action, presentation, place, minimumSize) {
           override fun getPreferredSize(): Dimension {
@@ -77,17 +81,17 @@ private class DecompilerInEditorListener : EditorFactoryListener {
 
     val toolbar = statusToolbar.component
     toolbar.layout = EditorMarkupModelImpl.StatusComponentLayout()
-    toolbar.setBorder(JBUI.Borders.empty(2))
+    toolbar.border = JBUI.Borders.empty(2)
 
     val statusPanel = NonOpaquePanel()
     statusPanel.isVisible = true
-    statusPanel.setLayout(BoxLayout(statusPanel, BoxLayout.X_AXIS))
+    statusPanel.layout = BoxLayout(statusPanel, BoxLayout.X_AXIS)
     statusPanel.add(toolbar)
 
-    val scrollPane = (editor.scrollPane as? JBScrollPane) ?: return
+    val scrollPane = editor.scrollPane as? JBScrollPane ?: return
     scrollPane.statusComponent = statusPanel
 
-    val scrollPaneLayout = (scrollPane.layout as? JBScrollPane.Layout) ?: return
+    val scrollPaneLayout = scrollPane.layout as? JBScrollPane.Layout ?: return
     scrollPaneLayout.syncWithScrollPane(scrollPane)
   }
 }

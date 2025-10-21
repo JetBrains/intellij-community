@@ -1,9 +1,10 @@
-mutation ($projectId: ID!, $sourceBranch: String!, $targetBranch: String!, $title: String!){
+mutation ($projectId: ID!, $sourceBranch: String!, $targetBranch: String!, $title: String!, $description: String){
   mergeRequestCreate(input: {
     projectPath: $projectId,
     sourceBranch:$sourceBranch,
     targetBranch: $targetBranch,
-    title: $title
+    title: $title,
+    description: $description
   }) {
     mergeRequest {
       ...mergeRequest

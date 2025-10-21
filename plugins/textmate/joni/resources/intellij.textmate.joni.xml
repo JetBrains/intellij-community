@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.textmate.core"/>
+  </dependencies>
+</idea-plugin>

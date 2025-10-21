@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 private class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider(
   MLSE_RECORDER_ID,
-  8,
+  9,
   TimeUnit.MINUTES.toMillis(10),
   100 * 1024,
   sendLogsOnIdeClose = true,

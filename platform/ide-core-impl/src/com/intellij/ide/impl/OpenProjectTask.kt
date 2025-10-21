@@ -4,8 +4,10 @@ package com.intellij.ide.impl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenedCallback
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 import java.util.function.Predicate
 
 data class OpenProjectTask @Internal constructor(
@@ -45,6 +47,13 @@ data class OpenProjectTask @Internal constructor(
   val preventIprLookup: Boolean,
   val processorChooser: ((List<Any>) -> Any)?,
   val implOptions: Any?,
+  @ApiStatus.Experimental
+  /**
+   * Used to register [com.intellij.workspaceModel.ide.ProjectRootEntity] for this directory
+   */
+  val projectRootDir: Path?,
+  @Internal
+  val createModule: Boolean,
 ) {
   @Internal
   constructor(
@@ -82,6 +91,9 @@ data class OpenProjectTask @Internal constructor(
     processorChooser = null,
 
     implOptions = null,
+    createModule = true,
+
+    projectRootDir = null,
   )
 
   companion object {
@@ -143,8 +155,13 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
     beforeOpen = { callback.test(it) }
   }
 
+  var projectRootDir: Path? = null
+
   @Internal
   var processorChooser: ((List<Any>) -> Any)? = null
+
+  @Internal
+  var createModule: Boolean = true
 
   var project: Project? = null
 
@@ -176,11 +193,13 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
 
       projectWorkspaceId = projectWorkspaceId,
       implOptions = implOptions,
+      createModule = createModule,
 
       line = line,
       column = column,
 
       project = project,
+      projectRootDir = projectRootDir,
     )
   }
 }

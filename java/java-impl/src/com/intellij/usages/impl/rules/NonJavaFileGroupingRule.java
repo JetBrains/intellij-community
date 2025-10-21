@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class NonJavaFileGroupingRule extends FileGroupingRule {
-  public NonJavaFileGroupingRule(Project project) {
-    super(project);
+  public NonJavaFileGroupingRule(Project project, boolean showShortFilePath) {
+    super(project, showShortFilePath);
   }
 
   @Override

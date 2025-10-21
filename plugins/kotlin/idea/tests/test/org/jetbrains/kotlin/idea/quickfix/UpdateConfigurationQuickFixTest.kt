@@ -19,7 +19,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -137,7 +137,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
     private fun configureRuntime(path: String) {
         val name = if (path == "mockRuntime106") "kotlin-runtime.jar" else "kotlin-stdlib.jar"
         val sourcePath = when (path) {
-            "actualRuntime" -> TestKotlinArtifacts.kotlinStdlib
+            "actualRuntime" -> TestKotlinArtifacts.kotlinStdlib.toFile()
             else -> File(IDEA_TEST_DATA_DIR, "configuration/$path/$name")
         }
 

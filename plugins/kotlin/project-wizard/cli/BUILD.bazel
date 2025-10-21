@@ -1,16 +1,16 @@
-### auto-generated section `build kotlin.project-wizard.cli` start
+### auto-generated section `build intellij.kotlin.projectWizard.cli` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "cli",
-  module_name = "kotlin.project-wizard.cli",
+  module_name = "intellij.kotlin.projectWizard.cli",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
-    "@lib//:kotlinx-collections-immutable",
-    "@lib//:snakeyaml",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/snakeyaml",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/project-wizard/core",
   ],
@@ -19,4 +19,4 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
-### auto-generated section `build kotlin.project-wizard.cli` end
+### auto-generated section `build intellij.kotlin.projectWizard.cli` end

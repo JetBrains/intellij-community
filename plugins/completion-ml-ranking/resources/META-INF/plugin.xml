@@ -22,6 +22,11 @@
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.platform.ml.impl), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
 
   <extensionPoints>
     <extensionPoint name="features.policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

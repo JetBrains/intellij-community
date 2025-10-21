@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.Activity;
@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndexInfrastructureExtension.InitializationResult;
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService;
 import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator;
 import com.intellij.util.io.DataOutputStream;
@@ -84,7 +85,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
           // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
           myRegisteredIndexes.registerIndexExtension(extension);
         }
-        catch (IOException | ProcessCanceledException e) {
+        catch (ProcessCanceledException e) {
+          LOG.warn("Could not register indexing extension: " + extension + ". reason: PCE");
+          ID.unloadId(extension.getName());
+          throw e;
+        }
+        catch (IOException e) {
           LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + e, e);
           ID.unloadId(extension.getName());
           throw e;
@@ -122,29 +128,29 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
     // PersistentFS lifecycle should contain FileBasedIndex lifecycle, so,
     // 1) we call for it's instance before index creation to make sure it's initialized
     // 2) we dispose FileBasedIndex before PersistentFS disposing
-    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstance();
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    Disposable disposable = new ShutdownTaskAsDisposable();
-    ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
-    Disposer.register(fs, disposable);
+    Disposable shutdownIndexesTask = new ShutdownTaskAsDisposable();
+    ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), shutdownIndexesTask);
+
+    PersistentFSImpl pFS = (PersistentFSImpl)ManagingFS.getInstance();
+    Disposer.register(pFS, shutdownIndexesTask);
     //Generally, Index will be shutdown by Disposer -- but to be sure, we'll register a shutdown task also:
     myFileBasedIndex.setUpShutDownTask();
 
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
     for (FileBasedIndexInfrastructureExtension extension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result =
-        extension.initialize(IndexStorageLayoutLocator.getCustomLayoutId());
-      myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
-                                  result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
+      InitializationResult result = extension.initialize(IndexStorageLayoutLocator.getCustomLayoutId());
+      myCurrentVersionCorrupted |= (result == InitializationResult.INDEX_REBUILD_REQUIRED);
     }
 
     if (myCurrentVersionCorrupted) {
+      //FIXME: dropIndexes() likely lead to many errors due to indexes/VFS storages being not closed (IJPL-175210)
       CorruptionMarker.dropIndexes();
       ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps("Indexes corrupted");
     }
 
     var p = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(),
-                                                                ManagingFS.getInstance().getCreationTimestamp());
+                                                                pFS.getCreationTimestamp());
     myOrphanDirtyFilesQueue = p.getFirst();
     myOrphanDirtyFilesQueueRecreationReason = p.getSecond();
     Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions(myOrphanDirtyFilesQueue);

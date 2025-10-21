@@ -26,7 +26,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -41,8 +40,6 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   private final boolean myMake;
   private final boolean myIsRebuild;
   private final boolean myIsAnnotationProcessorsEnabled;
-  private boolean myRebuildRequested;
-  private String myRebuildReason;
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
@@ -135,24 +132,6 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   @Override
   public CompileScope getProjectCompileScope() {
     return myProjectCompileScope;
-  }
-
-  @Override
-  public void requestRebuildNextTime(String message) {
-    if (!myRebuildRequested) {
-      myRebuildRequested = true;
-      myRebuildReason = message;
-    }
-  }
-
-  @Override
-  public boolean isRebuildRequested() {
-    return myRebuildRequested;
-  }
-
-  @Override
-  public @Nullable String getRebuildReason() {
-    return myRebuildReason;
   }
 
   @Override

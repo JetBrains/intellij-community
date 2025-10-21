@@ -1,17 +1,18 @@
-### auto-generated section `build kotlin.base.jps` start
+### auto-generated section `build intellij.kotlin.base.jps` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "jps",
-  module_name = "kotlin.base.jps",
+  module_name = "intellij.kotlin.base.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/core-api:core",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
@@ -24,4 +25,4 @@ jvm_library(
     "//java/compiler/impl",
   ]
 )
-### auto-generated section `build kotlin.base.jps` end
+### auto-generated section `build intellij.kotlin.base.jps` end

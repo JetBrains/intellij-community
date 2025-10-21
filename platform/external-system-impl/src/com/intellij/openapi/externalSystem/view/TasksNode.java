@@ -80,7 +80,7 @@ public class TasksNode extends ExternalSystemNode<Object> {
           }
 
           @Override
-          public int compareTo(@NotNull ExternalSystemNode node) {
+          public int compareTo(@NotNull ExternalSystemNode<?> node) {
             return "other".equals(group) ? 1 : super.compareTo(node);
           }
         };

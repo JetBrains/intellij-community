@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="com.typesafe.config" type="repository">
+    <properties maven-id="com.typesafe:config:1.4.4">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.4/config-1.4.4.jar">
+          <sha256sum>ab16decc45cc678b0cf17fb9668f380a73bfdf11b75af1fa1ddec5da82805aea</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.4/config-1.4.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.4/config-1.4.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

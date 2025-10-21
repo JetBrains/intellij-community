@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.projectRoots.impl.SdkUtils;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
@@ -130,7 +131,7 @@ public class ProjectSdksModel implements SdkModel {
     if (sdkHomePath != null) {
       try {
         Path path = Path.of(sdkHomePath);
-        if (getEelDescriptor(path).equals(eelDescriptor)) {
+        if (getEelDescriptor(path).getMachine().equals(eelDescriptor.getMachine())) {
           return true;
         }
       }
@@ -464,12 +465,12 @@ public class ProjectSdksModel implements SdkModel {
                                     @NotNull JComponent parent,
                                     @NotNull java.util.function.Consumer<? super Sdk> callback) {
           if (!isForce && type.supportsCustomCreateUI()) {
-            type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
+            type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, (java.util.function.Consumer<? super Sdk>)sdk -> setupSdk(sdk, callback));
           }
           else {
             Path pathToEnvironment = (project == null || project.getProjectFilePath() == null) ?
                                      Path.of(System.getProperty("user.home")) : Path.of(project.getProjectFilePath());
-            SdkConfigurationUtil.selectSdkHome(type, null, pathToEnvironment, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
+            SdkConfigurationUtil.selectSdkHome(type, parent, pathToEnvironment, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
           }
         }
       };
@@ -497,7 +498,7 @@ public class ProjectSdksModel implements SdkModel {
   public void doAdd(@NotNull JComponent parent, final @Nullable Sdk selectedSdk, final @NotNull SdkType type, final @NotNull Consumer<? super Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
-      type.showCustomCreateUI(this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
+      type.showCustomCreateUI(this, parent, selectedSdk, (java.util.function.Consumer<? super Sdk>) sdk -> setupSdk(sdk, callback));
     }
     else {
       SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, callback));
@@ -522,7 +523,7 @@ public class ProjectSdksModel implements SdkModel {
   private static @NotNull Sdk createSdkInternal(@NotNull SdkType type,
                                                 @NotNull String newSdkName,
                                                 @NotNull String home) {
-    final Sdk newJdk = ProjectJdkTable.getInstance().createSdk(newSdkName, type);
+    final Sdk newJdk = SdkUtils.createSdkForEnvironment(ProjectJdkTable.getInstance(), newSdkName, type, home);
     SdkModificator sdkModificator = newJdk.getSdkModificator();
     sdkModificator.setHomePath(home);
     sdkModificator.setVersionString(type.getVersionString(home));

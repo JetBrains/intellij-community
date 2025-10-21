@@ -65,7 +65,7 @@ public final class StringToUpperWithoutLocaleInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new StringToUpperWithoutLocaleVisitor();
   }
 

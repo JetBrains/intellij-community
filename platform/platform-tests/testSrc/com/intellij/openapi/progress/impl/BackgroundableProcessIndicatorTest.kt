@@ -48,7 +48,7 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Back
   }
 
   override fun showDialog(process: Pair<Task.Backgroundable, BackgroundableProcessIndicator>) {
-    process.second.showDialog()
+    process.second.showDialogTestAccessor()
   }
 
   override fun assertUninitialized(process: Pair<Task.Backgroundable, BackgroundableProcessIndicator>) {

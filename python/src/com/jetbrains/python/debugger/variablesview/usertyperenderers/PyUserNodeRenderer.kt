@@ -3,8 +3,10 @@ package com.jetbrains.python.debugger.variablesview.usertyperenderers
 
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.debugger.PyUserTypeRenderer
+import org.jetbrains.annotations.ApiStatus
 import java.io.Serializable
 
+@ApiStatus.Internal
 class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
   var name: String = getNewRendererName(existingNames)
   var toType: String = "object"

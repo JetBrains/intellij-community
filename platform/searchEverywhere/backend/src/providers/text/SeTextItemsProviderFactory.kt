@@ -7,7 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContrib
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
-import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProviderFactory
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,6 +17,6 @@ class SeTextItemsProviderFactory : SeWrappedLegacyContributorItemsProviderFactor
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
     if (project == null || !TextSearchContributor.enabled() || legacyContributor !is WeightedSearchEverywhereContributor<Any>) return null
-    return SeTextItemsProvider(project, SeAsyncWeightedContributorWrapper(legacyContributor))
+    return SeTextItemsProvider(project, SeAsyncContributorWrapper(legacyContributor))
   }
 }

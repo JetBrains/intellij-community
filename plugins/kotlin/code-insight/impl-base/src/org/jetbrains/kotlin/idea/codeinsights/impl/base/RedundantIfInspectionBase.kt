@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import kotlin.collections.dropLastWhile
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -193,11 +192,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
     ) : LocalQuickFix {
         val returnExpressionAfterIfPointer: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
 
-        override fun getName(): String =
+        override fun getFamilyName(): String =
             if (mayChangeSemantics) KotlinBundle.message("remove.redundant.if.may.change.semantics.with.floating.point.types")
             else KotlinBundle.message("remove.redundant.if.text")
-
-        override fun getFamilyName(): String = name
 
         override fun startInWriteAction(): Boolean = false
 

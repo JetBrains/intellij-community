@@ -16,32 +16,32 @@ class EnabledVisibleTest {
   @Test
   fun testNestedEnabled() {
     testNestedEnabledVisible({ entity, value ->
-      when (entity) {
-        is Panel -> entity.enabled(value)
-        is Row -> entity.enabled(value)
-        is Cell<*> -> entity.enabled(value)
-        else -> Unit
-      }
-    }, { jComponent -> jComponent.isEnabled })
+                               when (entity) {
+                                 is Panel -> entity.enabled(value)
+                                 is Row -> entity.enabled(value)
+                                 is Cell<*> -> entity.enabled(value)
+                                 else -> Unit
+                               }
+                             }, { jComponent -> jComponent.isEnabled })
   }
 
   @Test
   fun testNestedVisible() {
     testNestedEnabledVisible({ entity, value ->
-      when (entity) {
-        is Panel -> entity.visible(value)
-        is Row -> entity.visible(value)
-        is Cell<*> -> entity.visible(value)
-        else -> Unit
-      }
-    }, { jComponent -> jComponent.isVisible })
+                               when (entity) {
+                                 is Panel -> entity.visible(value)
+                                 is Row -> entity.visible(value)
+                                 is Cell<*> -> entity.visible(value)
+                                 else -> Unit
+                               }
+                             }, { jComponent -> jComponent.isVisible })
   }
 
   @Test
   fun testVisibleIf() {
     lateinit var checkBoxText: Cell<JBCheckBox>
     lateinit var checkBoxRow: Cell<JBCheckBox>
-    lateinit var textField: JBTextField
+    lateinit var textField: Cell<JBTextField>
     lateinit var label: JLabel
     panel {
       row {
@@ -53,31 +53,88 @@ class EnabledVisibleTest {
 
       row("visibleIf test row") {
         textField = textField()
+          .commentRight("Right comment")
+          .comment("Comment")
           .visibleIf(checkBoxText.selected)
-          .component
         label = label("")
           .component
       }.visibleIf(checkBoxRow.selected)
     }
 
     assertTrue(label.isVisible)
-    assertTrue(textField.isVisible)
+    textField.assertVisible(true)
 
     checkBoxText.component.isSelected = false
     assertTrue(label.isVisible)
-    assertFalse(textField.isVisible)
+    textField.assertVisible(false)
 
     checkBoxText.component.isSelected = true
     assertTrue(label.isVisible)
-    assertTrue(textField.isVisible)
+    textField.assertVisible(true)
 
     checkBoxRow.component.isSelected = false
     assertFalse(label.isVisible)
-    assertFalse(textField.isVisible)
+    textField.assertVisible(false)
 
     checkBoxRow.component.isSelected = true
     assertTrue(label.isVisible)
-    assertTrue(textField.isVisible)
+    textField.assertVisible(true)
+  }
+
+  @Test
+  fun testEnabledIf() {
+    lateinit var checkBoxText: Cell<JBCheckBox>
+    lateinit var checkBoxRow: Cell<JBCheckBox>
+    lateinit var textField: Cell<JBTextField>
+    lateinit var label: JLabel
+    panel {
+      row {
+        checkBoxRow = checkBox("")
+          .selected(true)
+        checkBoxText = checkBox("")
+          .selected(true)
+      }
+
+      row("enabledIf test row") {
+        textField = textField()
+          .commentRight("Right comment")
+          .comment("Comment")
+          .enabledIf(checkBoxText.selected)
+        label = label("")
+          .component
+      }.enabledIf(checkBoxRow.selected)
+    }
+
+    assertTrue(label.isEnabled)
+    textField.assertEnabled(true)
+
+    checkBoxText.component.isSelected = false
+    assertTrue(label.isEnabled)
+    textField.assertEnabled(false)
+
+    checkBoxText.component.isSelected = true
+    assertTrue(label.isEnabled)
+    textField.assertEnabled(true)
+
+    checkBoxRow.component.isSelected = false
+    assertFalse(label.isEnabled)
+    textField.assertEnabled(false)
+
+    checkBoxRow.component.isSelected = true
+    assertTrue(label.isEnabled)
+    textField.assertEnabled(true)
+  }
+
+  private fun Cell<JBTextField>.assertVisible(visible: Boolean) {
+    assertEquals(component.isVisible, visible)
+    assertEquals(commentRight?.isVisible, visible)
+    assertEquals(comment?.isVisible, visible)
+  }
+
+  private fun Cell<JBTextField>.assertEnabled(enabled: Boolean) {
+    assertEquals(component.isEnabled, enabled)
+    assertEquals(commentRight?.isEnabled, enabled)
+    assertEquals(comment?.isEnabled, enabled)
   }
 
   private fun testNestedEnabledVisible(setState: (entity: Any, value: Boolean) -> Unit, getState: (JComponent) -> Boolean) {

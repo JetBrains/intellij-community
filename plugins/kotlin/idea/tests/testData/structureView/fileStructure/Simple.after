@@ -1,4 +1,6 @@
 -Simple.kt
+ foo(): String
+ Simple
  -Test
   constructor Test(String, Integer)
   foo(): Int

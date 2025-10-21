@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -30,6 +30,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import kotlin.jvm.JvmStatic;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
 
     @Override
     public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
-      PsiClass accessObjectType = getAccessObjectType(qualifier);
+      PsiClass accessObjectType = getAccessObjectType(target, qualifier);
       if (target instanceof PsiJvmMember) {
         checkAccess(sourceNode, (PsiJvmMember)target, accessObjectType);
         if (!(target instanceof PsiClass)) {
@@ -107,8 +108,12 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
       }
     }
 
-    private static @Nullable PsiClass getAccessObjectType(@Nullable UExpression qualifier) {
+    private static @Nullable PsiClass getAccessObjectType(@NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
       if (qualifier == null || qualifier instanceof UThisExpression || qualifier instanceof USuperExpression) {
+        return null;
+      }
+
+      if (isExtensionMember(target)) {
         return null;
       }
 
@@ -122,6 +127,13 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
       return null;
     }
 
+    private static boolean isExtensionMember(@NotNull PsiModifierListOwner target) {
+      UMethod method = UastContextKt.toUElement(target, UMethod.class);
+      return method != null &&
+             !method.getUastParameters().isEmpty() &&
+             method.getUastParameters().getFirst() instanceof UReceiverParameter;
+    }
+
     private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiJvmMember target, @Nullable PsiClass accessObjectType) {
       if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
         checkPackageLocalAccess(sourceNode, target, "package-private");
@@ -132,6 +144,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiJvmMember targetElement, final String accessType) {
+      if (targetElement instanceof SyntheticElement) return;
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       if (sourcePsi != null) {
         SuspiciousPackagePrivateAccess suspiciousAccess = verifyPackagePrivateAccess(sourcePsi, targetElement);
@@ -145,7 +158,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
           String message;
           if (suspiciousAccess.accessedFromTests) {
-            message = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.from.tests.description", 
+            message = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.from.tests.description",
                                                       elementDescription, accessType);
           }
           else {
@@ -158,6 +171,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     private void checkOverridePackageLocal(@NotNull UMethod sourceNode, @NotNull PsiJvmMember targetElement) {
+      if (targetElement instanceof SyntheticElement) return;
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       PsiElement nameIdentifier = UElementKt.getSourcePsiElement(sourceNode.getUastAnchor());
       if (sourcePsi != null && nameIdentifier != null && targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
@@ -177,7 +191,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
                                                       classDescription);
           }
           else {
-            problem = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.problem", elementDescription, 
+            problem = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.problem", elementDescription,
                                                       classDescription, accessResult.targetModule.getName());
           }
           myProblemsHolder.registerProblem(nameIdentifier, problem, quickFixes);
@@ -204,18 +218,29 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
       }
       return null;
     }
-    
+
     private record SuspiciousPackagePrivateAccess(Module targetModule, boolean accessedFromTests) {}
   }
 
   private static boolean canAccessProtectedMember(UElement sourceNode, PsiMember member, PsiClass accessObjectType) {
-    PsiClass memberClass = member.getContainingClass();
+    PsiClass containingClass = member.getContainingClass();
+    if (containingClass == null) return false;
+
+    boolean isJvmStatic = isJvmStatic(member);
+    PsiClass memberClass = isJvmStatic ? containingClass.getContainingClass() : containingClass;
     if (memberClass == null) return false;
 
     PsiClass contextClass = getContextClass(sourceNode, member instanceof PsiClass);
     if (contextClass == null) return false;
 
-    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC), contextClass);
+    boolean isStaticAccess = isJvmStatic || member.hasModifierProperty(PsiModifier.STATIC);
+    return canAccessProtectedMember(member, memberClass, accessObjectType, isStaticAccess, contextClass);
+  }
+
+  private static boolean isJvmStatic(@NotNull PsiModifierListOwner member) {
+    UAnnotated annotated = UastContextKt.toUElement(member.getNavigationElement(), UAnnotated.class);
+    return annotated != null &&
+           UVariableKt.findSourceAnnotation(annotated, JvmStatic.class.getCanonicalName()) != null;
   }
 
   /**

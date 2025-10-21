@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
@@ -152,8 +151,7 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
       return SimpleAsyncChangesTreeModel.create(grouping -> {
         List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
         List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> !list.getChanges().isEmpty());
-        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists,
-                                                     Registry.is("vcs.skip.single.default.changelist"));
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists);
       });
     }
   }
@@ -172,8 +170,7 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
       return SimpleAsyncChangesTreeModel.create(grouping -> {
         List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
         List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> myChangeListNames.contains(list.getName()));
-        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists,
-                                                     Registry.is("vcs.skip.single.default.changelist"));
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists);
       });
     }
   }

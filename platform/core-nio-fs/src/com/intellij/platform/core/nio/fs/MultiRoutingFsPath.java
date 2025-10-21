@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -24,8 +24,23 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
     myFileSystem = fileSystem;
   }
 
-  public Path getDelegate() {
+  /**
+   * <b>Warning:</b> this is the path used for creating this instance. It may not correspond to the actual backend.
+   *
+   * @see #getCurrentDelegate
+   */
+  public Path getInitialDelegate() {
     return myDelegate;
+  }
+
+  /**
+   * Returns the path from the actual file system responsible for this absolute path in case if it is an absolute path.
+   * Behaves like {@link #getInitialDelegate} if the path is relative.
+   */
+  public Path getCurrentDelegate() {
+    return myDelegate.isAbsolute()
+           ? ((MultiRoutingFsPath)myFileSystem.getPath(myDelegate.toString())).getInitialDelegate()
+           : myDelegate;
   }
 
   @Override
@@ -242,7 +257,7 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
       return null;
     }
     if (path instanceof MultiRoutingFsPath mrfsp) {
-      path = mrfsp.getDelegate();
+      path = mrfsp.getInitialDelegate();
     }
     if (myDelegate.getClass().equals(path.getClass())) {
       return path;

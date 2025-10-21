@@ -39,13 +39,13 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   val listComponent: JListComponent get() = driver.cast(component, JListComponent::class)
 
-  val items: List<String>
+  open val items: List<String>
     get() = fixture.collectItems()
 
   val rawItems: List<String>
     get() = fixture.collectRawItems()
 
-  val selectedItems: List<String>
+  open val selectedItems: List<String>
     get() = fixture.collectSelectedItems()
 
   fun replaceCellRendererReader(readerSupplier: (JListFixtureRef) -> CellRendererReader) {

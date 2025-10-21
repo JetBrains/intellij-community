@@ -1,25 +1,36 @@
-from typing import Any
-from typing_extensions import Self
+from _typeshed import Incomplete
+from logging import Logger
+from typing import Final, Literal
+from typing_extensions import Self, TypeAlias
 
-log: Any
-ROOT: str
-PARENT: str
-SAMPLE: str
-SELF: str
-HEADER_DELIMITER: str
+_SampledTrue: TypeAlias = Literal[True, "1", 1]
+_SampledFalse: TypeAlias = Literal[False, "0", 0]
+_SampledUnknown: TypeAlias = Literal["?"]
+_Sampled: TypeAlias = _SampledTrue | _SampledFalse | _SampledUnknown
+
+log: Logger
+ROOT: Final = "Root"
+PARENT: Final = "Parent"
+SAMPLE: Final = "Sampled"
+SELF: Final = "Self"
+HEADER_DELIMITER: Final = ";"
 
 class TraceHeader:
     def __init__(
-        self, root: str | None = None, parent: str | None = None, sampled: bool | None = None, data: dict[str, Any] | None = None
+        self,
+        root: str | None = None,
+        parent: str | None = None,
+        sampled: _Sampled | None = None,
+        data: dict[str, Incomplete] | None = None,
     ) -> None: ...
     @classmethod
-    def from_header_str(cls, header) -> Self: ...
-    def to_header_str(self): ...
+    def from_header_str(cls, header: str | None) -> Self: ...
+    def to_header_str(self) -> str: ...
     @property
-    def root(self): ...
+    def root(self) -> str | None: ...
     @property
-    def parent(self): ...
+    def parent(self) -> str | None: ...
     @property
-    def sampled(self): ...
+    def sampled(self) -> Literal[1, 0, "?"] | None: ...
     @property
-    def data(self): ...
+    def data(self) -> dict[str, Incomplete]: ...

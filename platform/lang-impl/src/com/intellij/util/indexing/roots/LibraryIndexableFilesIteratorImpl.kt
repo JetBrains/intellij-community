@@ -28,21 +28,14 @@ private constructor(private val libraryName: @NlsSafe String?,
                     private val sourceRoots: List<VirtualFile>) : LibraryIndexableFilesIterator {
 
   override fun getDebugName(): String {
-    return if (Registry.`is`("use.workspace.file.index.to.generate.iterators")) {
-      val debugMessage = if (classRoots.isNotEmpty()) {
-        "(class root ${classRoots.first().name})"
-      } else if (sourceRoots.isNotEmpty()) {
-        "(source root ${sourceRoots.first().name})"
-      } else {
-        "(no root)"
-      }
-
-      "Library ${presentableLibraryName} $debugMessage"
+    val debugMessage = if (classRoots.isNotEmpty()) {
+      "(class root ${classRoots.first().name})"
+    } else if (sourceRoots.isNotEmpty()) {
+      "(source root ${sourceRoots.first().name})"
     } else {
-      "Library ${presentableLibraryName} " +
-      "(#${classRoots.validCount()} class roots, " +
-      "#${sourceRoots.validCount()} source roots)"
+      "(no root)"
     }
+    return "Library ${presentableLibraryName} $debugMessage"
   }
 
   override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.library.name",

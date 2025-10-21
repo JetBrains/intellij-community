@@ -8,10 +8,11 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.util.ui.UIUtil
 import training.dsl.*
+import training.dsl.EditorSettingsState.isLineNumbersShown
+import training.dsl.LessonUtil.checkInsideSearchEverywhere
+import training.dsl.LessonUtil.showWarningIfSearchPopupClosed
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -118,19 +119,6 @@ class GotoActionLesson(private val sample: LessonSample,
         firstLessonCompletedMessage()
       }
     }
-
-  private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
-    return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
-  }
-
-  private fun TaskContext.showWarningIfSearchPopupClosed() {
-    showWarning(LessonsBundle.message("goto.action.popup.closed.warning.message", action("GotoAction"),
-                                      LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT))) {
-      !checkInsideSearchEverywhere()
-    }
-  }
-
-  private fun isLineNumbersShown() = EditorSettingsExternalizable.getInstance().isLineNumbersShown
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.search.everywhere"),

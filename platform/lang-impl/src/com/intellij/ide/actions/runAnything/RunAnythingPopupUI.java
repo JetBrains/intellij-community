@@ -576,18 +576,6 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     myHintLabel.addAdvertisement(s, null);
   }
 
-  /**
-   * @deprecated this is an internal method, must not be used outside the class
-   */
-  @SuppressWarnings("DataFlowIssue")
-  @Deprecated(forRemoval = true)
-  public static @NotNull Executor getExecutor() {
-    final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-    final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-
-    return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
-  }
-  
   private @NotNull Executor getCurrentExecutor() {
     Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
     return myShiftIsPressed && debugExecutor != null ? debugExecutor : DefaultRunExecutor.getRunExecutorInstance();

@@ -1,11 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
+import com.intellij.ide.projectWizard.toEelDescriptorProperty
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.shared.ValidationFunctions.*
@@ -27,8 +29,6 @@ import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -62,8 +62,9 @@ abstract class CommonStarterInitialStep(
     .bindStorage(GROUP_ID_PROPERTY_NAME)
 
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
-  protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
-  protected val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.lazyProperty { null }
+  protected val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent> = propertyGraph.lazyProperty { ProjectWizardJdkIntent.NoJdk }
+  @Deprecated("Use jdkIntentProperty instead")
+  protected val sdkProperty: GraphProperty<Sdk?> = SdkPropertyBridge(propertyGraph, jdkIntentProperty)
 
   protected val languageProperty: GraphProperty<StarterLanguage> = propertyGraph.lazyProperty { starterContext.language }
   protected val projectTypeProperty: GraphProperty<StarterProjectType> = propertyGraph.lazyProperty {
@@ -87,11 +88,10 @@ abstract class CommonStarterInitialStep(
   protected lateinit var groupRow: Row
   protected lateinit var artifactRow: Row
 
-  protected lateinit var sdkComboBox: JdkComboBox
-
   protected fun Panel.addProjectLocationUi() {
     row(UIBundle.message("label.project.wizard.new.project.name")) {
       textField()
+        .accessibleName(UIBundle.message("label.project.wizard.new.project.name"))
         .bindText(entityNameProperty)
         .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
                                createLocationWarningValidator(locationProperty))
@@ -142,10 +142,9 @@ abstract class CommonStarterInitialStep(
   protected fun Panel.addSdkUi() {
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
-        this, sdkProperty, sdkDownloadTaskProperty,
-        locationProperty,
-        null,
-        { sdk -> wizardContext.projectJdk = sdk },
+        this,
+        locationProperty.toEelDescriptorProperty(),
+        jdkIntentProperty,
         wizardContext.disposable,
         wizardContext.projectJdk,
         { sdk -> moduleBuilder.isSuitableSdkType(sdk.sdkType) }
@@ -153,7 +152,7 @@ abstract class CommonStarterInitialStep(
 
       moduleBuilder.addListener(object : ModuleBuilderListener {
         override fun moduleCreated(module: Module) {
-          val downloadTask = sdkDownloadTaskProperty.get() ?: return
+          val downloadTask = jdkIntentProperty.get().downloadTask ?: return
           val downloadService = module.project.service<JdkDownloadService>()
           val jdk = downloadService.setupInstallableSdk(downloadTask)
           if (wizardContext.isCreatingNewProject) {
@@ -178,6 +177,7 @@ abstract class CommonStarterInitialStep(
         .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.help") }
 
       textField()
+        .accessibleName(JavaStartersBundle.message("title.project.group.label"))
         .bindText(groupIdProperty)
         .columns(COLUMNS_MEDIUM)
         .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_GROUP_FORMAT, CHECK_NO_RESERVED_WORDS,
@@ -195,6 +195,7 @@ abstract class CommonStarterInitialStep(
                                                                        wizardContext.presentationName) }
 
       textField()
+        .accessibleName(JavaStartersBundle.message("title.project.artifact.label"))
         .bindText(artifactIdProperty)
         .columns(COLUMNS_MEDIUM)
         .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS,

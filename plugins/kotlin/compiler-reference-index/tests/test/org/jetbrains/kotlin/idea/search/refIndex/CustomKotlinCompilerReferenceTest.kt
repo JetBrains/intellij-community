@@ -55,6 +55,8 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     }
 
     fun `test match testData with tests`() {
+        if (!isCompatibleVersions) return
+
         val testNames = CustomKotlinCompilerReferenceTest6::class.declaredMemberFunctions.filter { it.visibility == KVisibility.PUBLIC }.map(KFunction<*>::name).toSet()
         for (testDirectory in Path(testDataPath).listDirectoryEntries()) {
             if (!testDirectory.isDirectory() || testDirectory.listDirectoryEntries().isEmpty()) continue
@@ -65,11 +67,15 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     }
 
     fun testIsNotReady() {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFile("Main.kt")
         assertIndexUnavailable()
     }
 
     fun testFindItself() {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFile("Main.kt")
         rebuildProject()
         assertUsageInMainFile()
@@ -86,12 +92,16 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     }
 
     fun testSimpleJavaLibraryClass() {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFiles("Main.kt", "Boo.kt")
         rebuildProject()
         TestCase.assertEquals(setOf("Main.kt"), getReferentFiles(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST), true))
     }
 
     fun testHierarchyJavaLibraryClass() {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFiles("Main.kt", "Boo.kt", "Doo.kt", "Foo.kt")
         rebuildProject()
         TestCase.assertEquals(setOf("Foo.kt"), getReferentFiles(myFixture.findClass("java.util.AbstractList"), true))
@@ -100,12 +110,16 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     }
 
     fun testTopLevelConstantWithJvmName() {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
         // JvmName for constants isn't supported
         assertThrows(AssertionFailedError::class.java) { rebuildProject() }
     }
 
     fun `test sub and super types`() {
+        if (!isCompatibleVersions) return
+
         myFixture.addFileToProject(
             "one/two/Main.kt",
             """
@@ -142,6 +156,8 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     }
 
     open fun testMixedSubtypes() {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFiles("one/two/MainJava.java", "one/two/SubMainJavaClass.java", "one/two/KotlinSubMain.kt")
         val className = "one.two.MainJava"
         val subtypes = findClassSubtypes(className, true)
@@ -174,6 +190,8 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     }
 
     fun testObjects() {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFiles(
             "CompanionInstanceUsage.java",
             "CompanionUsage.java",
@@ -277,6 +295,8 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     }
 
     open fun testTooltips() {
+        if (!isCompatibleVersions) return
+
         doTestTooltips(SUBCLASSED_CLASS.tooltip, OVERRIDDEN_FUNCTION.tooltip)
     }
 
@@ -329,6 +349,8 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
     fun testNonPresentedClassWithCompanion(): Unit = doTestNonPresentedClass(13)
 
     private fun doTestNonPresentedClass(declarationsCount: Int) {
+        if (!isCompatibleVersions) return
+
         myFixture.configureByFiles(
             "Hierarchy.java",
             "KotlinOnlyClass.kt",

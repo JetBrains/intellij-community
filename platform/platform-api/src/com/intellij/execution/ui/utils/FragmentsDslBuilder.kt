@@ -306,7 +306,6 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
   }
 }
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
 interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
   val id: String

@@ -1,6 +1,8 @@
-from _typeshed import Incomplete
+from networkx.classes.digraph import DiGraph
+from networkx.classes.graph import _Node
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["is_semiconnected"]
 
-@_dispatch
-def is_semiconnected(G, topo_order: Incomplete | None = None): ...
+@_dispatchable
+def is_semiconnected(G: DiGraph[_Node]) -> bool: ...

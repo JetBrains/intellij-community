@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
+import com.intellij.configurationStore.ProjectStorePathManager;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectStorePathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -27,7 +27,7 @@ public final class ProjectUtilCore {
    */
   @Deprecated
   public static boolean isValidProjectPath(@NotNull Path file) {
-    ProjectStorePathManager storePathManager = ProjectStorePathManager.getInstance();
+    ProjectStorePathManager storePathManager = ProjectStorePathManager.Companion.getInstance();
     return storePathManager.testStoreDirectoryExistsForProjectRoot(file) ||
            (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
   }

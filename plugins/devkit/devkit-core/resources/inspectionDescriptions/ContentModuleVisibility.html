@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports violations of content module visibility when declaring module dependencies.
+<p>
+  Content modules can specify their visibility as <code>private</code> (default, when missing), <code>internal</code>, or <code>public</code>.
+</p>
+<p>
+  When declaring dependencies on other modules, the following rules must be followed:
+</p>
+<ul>
+  <li>Private modules can only be accessed within the same plugin.</li>
+  <li>Internal modules can only be accessed when declared within the same namespace (<code>content@namespace</code>).</li>
+  <li>Public modules can be accessed from anywhere.</li>
+</ul>
+</body>
+</html>

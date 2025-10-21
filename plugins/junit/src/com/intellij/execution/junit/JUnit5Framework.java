@@ -25,6 +25,8 @@ public class JUnit5Framework extends JUnitTestFramework {
 
   @Override
   public boolean isDumbAware() {
+    // Only Java is available in dumb mode, other language implementation might not support it.
+    // For example, Kotlin, because it relies on light classes which require resolve.
     return this.getClass().isAssignableFrom(JUnit5Framework.class);
   }
 

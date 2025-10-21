@@ -6,6 +6,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -24,11 +25,16 @@ import java.util.Objects;
 final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
   @Override
   public boolean isAvailable(@NotNull PsiLocalVariable var) {
+    if (var.getTypeElement().isInferredType() &&
+        !PsiTypesUtil.isDenotableType(var.getType(), var)) {
+      return false;
+    }
     PsiExpression initializer = var.getInitializer();
     Branched branched = extractInitMode(var);
     // Do not add too many branches
     return branched != null && branched.numberOfNonInitializedBranches() <= 3 &&
-           canReorder(initializer, branched);
+           canReorder(initializer, branched) &&
+           branched.conditions().noneMatch(cond -> VariableAccessUtils.variableIsUsed(var, cond));
   }
 
   @Override
@@ -38,6 +44,10 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     PsiStatement statement = JavaPsiFacade.getElementFactory(var.getProject())
       .createStatementFromText(var.getName() + "=" + initializer.getText() + ";", null);
     branched.addInitializer(statement);
+    PsiTypeElement typeElement = var.getTypeElement();
+    if (typeElement.isInferredType()) {
+      PsiTypesUtil.replaceWithExplicitType(typeElement);
+    }
     initializer.delete();
   }
 
@@ -188,10 +198,10 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     @Override
     public @NotNull InitMode join(@NotNull InitMode nextMode) {
       if (nextMode == ExactMode.NOT_INITIALIZED) return this;
-      if (!(nextMode instanceof Branched branched)) return ExactMode.BOTTOM;
-      if (ifStatement() != branched.ifStatement()) return ExactMode.BOTTOM;
-      InitMode newThen = thenBranch().join(branched.thenBranch());
-      InitMode newElse = elseBranch().join(branched.elseBranch());
+      if (!(nextMode instanceof Branched(PsiIfStatement nextIf, InitMode nextThen, InitMode nextElse))) return ExactMode.BOTTOM;
+      if (ifStatement() != nextIf) return ExactMode.BOTTOM;
+      InitMode newThen = thenBranch().join(nextThen);
+      InitMode newElse = elseBranch().join(nextElse);
       if (newThen == ExactMode.BOTTOM || newElse == ExactMode.BOTTOM) return ExactMode.BOTTOM;
       if (newThen == newElse) return newThen;
       return new Branched(ifStatement(), newThen, newElse);

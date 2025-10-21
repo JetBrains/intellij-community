@@ -4,7 +4,6 @@ package com.intellij.platform.debugger.impl.frontend.storage
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
-import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -17,20 +16,21 @@ internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(Fro
   private val cache = ConcurrentHashMap<XStackFrameId, FrontendXStackFrame>()
 
   fun getOrCreateStackFrame(project: Project, scope: CoroutineScope, frameDto: XStackFrameDto): FrontendXStackFrame {
-    val (id, sourcePosition, equalityObject, evaluator, textPresentation, captionInfo, customBackgroundInfo, canDrop) = frameDto
-    return cache.computeIfAbsent(id) {
-      FrontendXStackFrame(
-        id,
-        project,
-        scope,
-        sourcePosition,
-        customBackgroundInfo,
-        equalityObject,
-        evaluator,
-        captionInfo,
-        textPresentation,
-        canDrop,
-      )
+    return cache.computeIfAbsent(frameDto.stackFrameId) {
+      with(frameDto) {
+        FrontendXStackFrame(
+          stackFrameId,
+          project,
+          scope,
+          sourcePosition,
+          customBackgroundInfo,
+          equalityObject,
+          evaluator,
+          captionInfo,
+          textPresentation,
+          canDrop,
+        )
+      }
     }
   }
 }

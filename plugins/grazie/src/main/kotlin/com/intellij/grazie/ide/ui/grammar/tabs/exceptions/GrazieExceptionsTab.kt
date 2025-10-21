@@ -4,7 +4,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.GrazieUIComponent
 import com.intellij.grazie.ide.ui.components.dsl.panel
 import com.intellij.grazie.ide.ui.grammar.tabs.exceptions.component.GrazieExceptionsListComponent
-import com.intellij.ui.layout.migLayout.*
+import com.intellij.ui.layout.migLayout.createLayoutConstraints
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC

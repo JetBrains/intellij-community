@@ -257,9 +257,11 @@ public final class JBCefClient implements JBCefDisposable {
                                     String title,
                                     String defaultFilePath,
                                     @SuppressWarnings("UseOfObsoleteCollectionType") Vector<String> acceptFilters,
+                                    @SuppressWarnings("UseOfObsoleteCollectionType") Vector<String> acceptExtensions,
+                                    @SuppressWarnings("UseOfObsoleteCollectionType") Vector<String> acceptDescriptions,
                                     CefFileDialogCallback callback) {
           return myDialogHandler.handleBooleanFirst(browser, handler -> {
-            return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, callback);
+            return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, acceptExtensions, acceptDescriptions, callback);
           });
         }
       });
@@ -331,12 +333,12 @@ public final class JBCefClient implements JBCefDisposable {
     return myDownloadHandler.add(handler, browser, () -> {
       myCefClient.addDownloadHandler(new CefDownloadHandler() {
         @Override
-        public void onBeforeDownload(CefBrowser browser,
+        public boolean onBeforeDownload(CefBrowser browser,
                                      CefDownloadItem downloadItem,
                                      String suggestedName,
                                      CefBeforeDownloadCallback callback) {
-          myDownloadHandler.handleAll(browser, handler -> {
-            handler.onBeforeDownload(browser, downloadItem, suggestedName, callback);
+          return myDownloadHandler.handleBooleanReturnAnyOf(browser, handler -> {
+            return handler.onBeforeDownload(browser, downloadItem, suggestedName, callback);
           });
         }
 
@@ -638,9 +640,9 @@ public final class JBCefClient implements JBCefDisposable {
         }
 
         @Override
-        public void onRenderProcessTerminated(CefBrowser browser, TerminationStatus status) {
+        public void onRenderProcessTerminated(CefBrowser browser, TerminationStatus status, int error_code, String error_string) {
           myRequestHandler.handleAll(browser, handler -> {
-            handler.onRenderProcessTerminated(browser, status);
+            handler.onRenderProcessTerminated(browser, status, error_code, error_string);
           });
         }
       });

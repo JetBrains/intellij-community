@@ -1,10 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
-import com.intellij.codeInsight.javadoc.JavaSuperTypeSearchUtil;
-import com.intellij.codeInsight.javadoc.SnippetMarkup;
+import com.intellij.codeInsight.javadoc.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
@@ -53,8 +51,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import kotlin.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -62,7 +63,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 
-public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
+@ApiStatus.NonExtendable
+public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
   private static final Logger LOG = Logger.getInstance(JavaPsiImplementationHelperImpl.class);
 
   private final Project myProject;
@@ -439,6 +441,37 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
           }
         }
         return target.getTextRange();
+      }
+    };
+  }
+
+  @Override
+  public @Nullable PsiSymbolReference getFragmentNameSymbol(@NotNull PsiDocFragmentName fragmentName) {
+    if (DumbService.getInstance(myProject).isDumb()) return null;
+
+    final Pair<PsiClass, JavaDocFragmentData> fragmentData = JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(myProject, fragmentName);
+    if (fragmentData == null) return null;
+    final int offset = fragmentData.getSecond().getOffset();
+
+    final PsiElement target = fragmentData.getFirst().getContainingFile().getViewProvider().findElementAt(offset);
+    if (!(target instanceof PsiDocToken)) return null;
+
+    return new PsiSymbolReference() {
+      @Override
+      public @NotNull PsiElement getElement() {
+        return fragmentName;
+      }
+
+      @Override
+      public @NotNull TextRange getRangeInElement() {
+        return new TextRange(0, fragmentName.getText().length());
+      }
+
+      @Override
+      public @NotNull @Unmodifiable Collection<? extends Symbol> resolveReference() {
+        return List.of(
+          new SnippetRegionSymbol(target.getContainingFile(), new TextRange(offset, offset + fragmentName.getText().length()))
+        );
       }
     };
   }

@@ -14,7 +14,7 @@ class GradleOperationDescriptorPropagationTest : GradleProjectResolverTestCase()
   @Test
   fun testProjectImport() {
     val externalSystemTaskId = Ref<ExternalSystemTaskId>()
-    whenModelFetchCompleted(testRootDisposable) { resolverContext, _ ->
+    whenModelFetchCompleted(testRootDisposable) { resolverContext ->
       externalSystemTaskId.set(resolverContext.externalSystemTaskId)
     }
 

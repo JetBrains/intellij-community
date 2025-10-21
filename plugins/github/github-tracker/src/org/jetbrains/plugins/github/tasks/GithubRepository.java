@@ -15,15 +15,14 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
-import org.jetbrains.plugins.github.api.data.GithubIssue;
-import org.jetbrains.plugins.github.api.data.GithubIssueBase;
-import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml;
-import org.jetbrains.plugins.github.api.data.GithubIssueState;
+import org.jetbrains.plugins.github.api.data.*;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
@@ -32,24 +31,22 @@ import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Tag("GitHub")
-final class GithubRepository extends BaseRepository {
-
+@VisibleForTesting
+@ApiStatus.Internal
+public final class GithubRepository extends BaseRepository {
   private Pattern myPattern = Pattern.compile("($^)");
   private @NotNull String myRepoAuthor = "";
   private @NotNull String myRepoName = "";
   private @NotNull String myUser = "";
   private boolean myAssignedIssuesOnly = false;
 
-  @SuppressWarnings("UnusedDeclaration")
-  GithubRepository() {
+  @VisibleForTesting
+  public GithubRepository() {
   }
 
   GithubRepository(GithubRepository other) {
@@ -156,7 +153,8 @@ final class GithubRepository extends BaseRepository {
     return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
-  private @NotNull Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueCommentWithHtml> comments) {
+  @VisibleForTesting
+  public @NotNull Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueCommentWithHtml> comments) {
     return new Task() {
       private final @NotNull String myRepoName = getRepoName();
       private final Comment @NotNull [] myComments =
@@ -203,7 +201,21 @@ final class GithubRepository extends BaseRepository {
 
       @Override
       public @NotNull TaskType getType() {
-        return TaskType.BUG;
+        List<GithubIssueLabel> labels = issue.getLabels();
+        if (labels == null || labels.isEmpty()) return TaskType.OTHER;
+
+        // Map GitHub's default labels to TaskType
+        for (GithubIssueLabel label : labels) {
+          String name = label.getName().toLowerCase(Locale.getDefault());
+          switch (name) {
+            case "bug":
+              return TaskType.BUG;
+            case "enhancement":
+              return TaskType.FEATURE;
+          }
+        }
+
+        return TaskType.OTHER;
       }
 
       @Override

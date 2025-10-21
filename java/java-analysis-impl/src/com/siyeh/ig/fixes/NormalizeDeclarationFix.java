@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -67,8 +67,8 @@ public class NormalizeDeclarationFix extends PsiUpdateModCommandQuickFix {
     }
     if (element instanceof PsiDeclarationStatement declarationStatement) {
       final PsiElement grandParent = element.getParent();
-      if (grandParent instanceof PsiForStatement) {
-        splitMultipleDeclarationInForStatementInitialization((PsiForStatement)grandParent);
+      if (grandParent instanceof PsiForStatement statement) {
+        splitMultipleDeclarationInForStatementInitialization(statement);
       }
       else {
         final PsiElement[] elements = declarationStatement.getDeclaredElements();
@@ -84,8 +84,8 @@ public class NormalizeDeclarationFix extends PsiUpdateModCommandQuickFix {
         }
       }
     }
-    else if (element instanceof PsiField) {
-      PsiField field = DeclarationSearchUtils.findFirstFieldInDeclaration((PsiField)element);
+    else if (element instanceof PsiField f) {
+      PsiField field = DeclarationSearchUtils.findFirstFieldInDeclaration(f);
       assert field != null;
       PsiField nextField = field;
       int count = 0;
@@ -115,15 +115,15 @@ public class NormalizeDeclarationFix extends PsiUpdateModCommandQuickFix {
       }
       final PsiTypeElement typeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(returnType);
       CommentTracker ct = new CommentTracker();
-      PsiElement replacement = ct.replaceAndRestoreComments(returnTypeElement, typeElement);
+      final PsiElement replacement = ct.replaceAndRestoreComments(returnTypeElement, typeElement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(replacement);
 
       PsiElement child = method.getParameterList();
       while (child != null && !(child instanceof PsiCodeBlock)) {
         final PsiElement elementToDelete = child;
         child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
-        if (elementToDelete instanceof PsiJavaToken) {
-          final IElementType tokenType = ((PsiJavaToken)elementToDelete).getTokenType();
+        if (elementToDelete instanceof PsiJavaToken token) {
+          final IElementType tokenType = token.getTokenType();
           if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
             elementToDelete.delete();
           }
@@ -155,35 +155,36 @@ public class NormalizeDeclarationFix extends PsiUpdateModCommandQuickFix {
       min = 1;
       max = variables.size();
     }
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(forStatement.getProject());
-
     final CommentTracker ct = new CommentTracker();
     for (int i = min; i < max; i++) {
       final PsiVariable variable = variables.get(i);
-      final String name = variable.getName();
-      assert name != null;
-      final PsiDeclarationStatement newStatement =
-        factory.createVariableDeclarationStatement(name, variable.getType(), ct.markUnchanged(variable.getInitializer()),
-                                                   declarationStatement);
+      final PsiDeclarationStatement newStatement = createNewDeclaration(variable, ct);
       forStatement.getParent().addBefore(newStatement, forStatement);
     }
 
     final PsiVariable remainingVariable = variables.get(dependentVariables ? variables.size() - 1 : 0);
-    final String name = remainingVariable.getName();
-    assert name != null;
-    final PsiStatement replacementStatement =
-      factory.createVariableDeclarationStatement(name, remainingVariable.getType(), ct.markUnchanged(remainingVariable.getInitializer()),
-                                                 declarationStatement);
+    final PsiDeclarationStatement replacementStatement = createNewDeclaration(remainingVariable, ct);
     ct.replaceAndRestoreComments(declarationStatement, replacementStatement);
+  }
+
+  private static @NotNull PsiDeclarationStatement createNewDeclaration(PsiVariable variable, CommentTracker ct) {
+    final String name = variable.getName();
+    assert name != null;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
+    final PsiDeclarationStatement replacementStatement =
+      factory.createVariableDeclarationStatement(name, variable.getType(), ct.markUnchanged(variable.getInitializer()), variable);
+    if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiUtil.setModifierProperty((PsiLocalVariable)replacementStatement.getDeclaredElements()[0], PsiModifier.FINAL, false);
+    }
+    return replacementStatement;
   }
 
   private static boolean containsDependentVariables(List<PsiLocalVariable> variables) {
     if (variables.isEmpty()) return false;
-    final Set<PsiLocalVariable> visited = ContainerUtil.newHashSet(variables.get(0));
+    final Set<PsiLocalVariable> visited = ContainerUtil.newHashSet(variables.getFirst());
     for (int i = 1; i < variables.size(); i++) {
       final PsiLocalVariable variable = variables.get(i);
-      if (!PsiTreeUtil.processElements(variable.getInitializer(),
-                                       element -> !visited.contains(tryResolveLocalVariable(element)))) {
+      if (!PsiTreeUtil.processElements(variable.getInitializer(), element -> !visited.contains(tryResolveLocalVariable(element)))) {
         return true;
       }
       visited.add(variable);
@@ -194,7 +195,7 @@ public class NormalizeDeclarationFix extends PsiUpdateModCommandQuickFix {
   private static PsiLocalVariable tryResolveLocalVariable(PsiElement element) {
     if (element instanceof PsiReferenceExpression referenceExpression) {
       if (referenceExpression.getQualifierExpression() == null) {
-        return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+        return referenceExpression.resolve() instanceof PsiLocalVariable var ? var : null;
       }
     }
     return null;

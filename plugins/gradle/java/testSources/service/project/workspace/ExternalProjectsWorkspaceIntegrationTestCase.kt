@@ -14,17 +14,16 @@ import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenPomBuilder
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenPomBuilder.Companion.mavenPom
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder.Companion.mavenSettings
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.BeforeEach
 import java.io.ByteArrayOutputStream
-import java.nio.file.Path
 import java.util.jar.JarOutputStream
 import kotlin.io.path.createFile
 import kotlin.io.path.createParentDirectories
@@ -85,11 +84,11 @@ abstract class ExternalProjectsWorkspaceIntegrationTestCase {
     }
   }
 
-  suspend fun createMavenSettingsFile(relativePath: String, configure: MavenSettingsBuilder.() -> Unit): Path {
-    return withContext(Dispatchers.IO) {
+  suspend fun createMavenSettingsFile(relativePath: String, configure: MavenSettingsBuilder.() -> Unit) {
+    withContext(Dispatchers.IO) {
       testRoot.resolve(relativePath).resolve(MavenConstants.SETTINGS_XML)
         .createParentDirectories().createFile()
-        .apply { writeText(mavenSettings(configure)) }
+        .writeText(mavenSettings(configure))
     }
   }
 
@@ -103,13 +102,15 @@ abstract class ExternalProjectsWorkspaceIntegrationTestCase {
 
   suspend fun createGradleWrapper(relativePath: String) {
     withContext(Dispatchers.IO) {
-      generateGradleWrapper(testRoot.resolve(relativePath), gradleVersion)
+      testRoot.resolve(relativePath)
+        .createGradleWrapper(gradleVersion)
     }
   }
 
   suspend fun createGradleBuildFile(relativePath: String, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     withContext(Dispatchers.IO) {
-      testRoot.createBuildFile(gradleVersion, relativePath, configure = configure)
+      testRoot.resolve(relativePath)
+        .createBuildFile(gradleVersion, configure = configure)
     }
   }
 

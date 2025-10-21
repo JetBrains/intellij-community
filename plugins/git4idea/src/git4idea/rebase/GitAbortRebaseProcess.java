@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.vcs.log.Hash;
 import git4idea.DialogManager;
 import git4idea.GitActivity;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -155,7 +156,7 @@ class GitAbortRebaseProcess {
 
   private void doAbort(final boolean rollback) {
     boolean[] success = new boolean[1];
-
+    myNotifier.hideAllNotificationsById(REBASE_STOPPED_ON_EDITING);
     new GitFreezingProcess(myProject, GitBundle.message("activity.name.rebase"), () -> {
       String activityName = GitBundle.message("activity.name.abort.command", GitBundle.message("abort.operation.rebase.name"));
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, activityName, GitActivity.Abort)) {

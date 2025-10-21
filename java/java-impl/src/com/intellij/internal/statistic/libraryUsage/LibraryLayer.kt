@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class LibraryLayer private constructor(
+public class LibraryLayer private constructor(
   /**
    * Library on this layer. Must be no more than one per layer.
    */
@@ -16,7 +16,7 @@ class LibraryLayer private constructor(
    */
   private val nextLayers: Map<String, LibraryLayer> = emptyMap(),
 ) {
-  fun findSuitableLibrary(packageQualifier: String): String? = findLibrary(packageQualifier)
+  public fun findSuitableLibrary(packageQualifier: String): String? = findLibrary(packageQualifier)
 
   private fun findLibrary(packageQualifier: String?): String? {
     if (packageQualifier == null) return libraryName
@@ -25,8 +25,8 @@ class LibraryLayer private constructor(
     return nextLayers[key]?.findLibrary(newPrefix) ?: libraryName
   }
 
-  companion object {
-    fun create(libraryDescriptors: List<LibraryDescriptor>): LibraryLayer = LibraryLayerBuilder().apply {
+  public companion object {
+    public fun create(libraryDescriptors: List<LibraryDescriptor>): LibraryLayer = LibraryLayerBuilder().apply {
       for (descriptor in libraryDescriptors) {
         add(descriptor.packagePrefix, descriptor.libraryName)
       }

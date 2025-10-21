@@ -144,14 +144,16 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                     fun substituteDefaultValueWithPassedArguments(): @NlsSafe String? {
                         val key = Key<KtExpression>("SUBSTITUTION")
                         var needToSubstitute = false
-                        defaultValue?.forEachDescendantOfType<KtSimpleNameExpression> {
-                            val symbol = it.mainReference.resolveToSymbol()
-                            if (symbol is KaValueParameterSymbol && symbol in valueParameters) {
-                                it.putCopyableUserData(
-                                    key,
-                                    functionCall.argumentMapping.entries.firstOrNull { it.value.symbol == symbol }?.key
-                                )
-                                needToSubstitute = true
+                        defaultValue?.forEachDescendantOfType<KtSimpleNameExpression> { ref ->
+                            analyze(defaultValue) {
+                                val symbol = ref.mainReference.resolveToSymbol()
+                                if (symbol is KaValueParameterSymbol && symbol in valueParameters) {
+                                    ref.putCopyableUserData(
+                                        key,
+                                        functionCall.argumentMapping.entries.firstOrNull { it.value.symbol == symbol }?.key
+                                    )
+                                    needToSubstitute = true
+                                }
                             }
                         }
 

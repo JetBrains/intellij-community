@@ -11,6 +11,7 @@ import javax.swing.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@Deprecated(forRemoval = true)
 public class ThumbnailComponent extends JComponent {
   private static final @NonNls String FORMAT_PROP = "format";
   private static final @NonNls String FILE_SIZE_PROP = "fileSize";

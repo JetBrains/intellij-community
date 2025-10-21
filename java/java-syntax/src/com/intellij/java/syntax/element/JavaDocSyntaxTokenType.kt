@@ -30,6 +30,7 @@ object JavaDocSyntaxTokenType {
   @JvmField val DOC_TAG_VALUE_GT: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_GT")
   @JvmField val DOC_TAG_VALUE_SLASH: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_SLASH")
   @JvmField val DOC_TAG_VALUE_SHARP_TOKEN: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_SHARP_TOKEN")
+  @JvmField val DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN")
 
   // Additional tokens for java 23 markdown
   @JvmField val DOC_CODE_FENCE: SyntaxElementType = SyntaxElementType("DOC_CODE_FENCE")
@@ -38,6 +39,7 @@ object JavaDocSyntaxTokenType {
   @JvmField val DOC_LPAREN: SyntaxElementType = SyntaxElementType("DOC_LPAREN")
   @JvmField val DOC_RPAREN: SyntaxElementType = SyntaxElementType("DOC_RPAREN")
   @JvmField val DOC_SHARP: SyntaxElementType = SyntaxElementType("DOC_SHARP")
+  @JvmField val DOC_DOUBLE_SHARP: SyntaxElementType = SyntaxElementType("DOC_DOUBLE_SHARP")
   @JvmField val DOC_INLINE_CODE_FENCE: SyntaxElementType = SyntaxElementType("DOC_INLINE_CODE_FENCE")
   @JvmField val DOC_COMMA: SyntaxElementType = SyntaxElementType("DOC_COMMA")
 

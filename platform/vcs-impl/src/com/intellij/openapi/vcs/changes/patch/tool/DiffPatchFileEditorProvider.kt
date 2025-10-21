@@ -14,6 +14,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers.getTitleCustomizers
 import com.intellij.openapi.diff.impl.patch.*
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -37,7 +38,6 @@ import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromPr
 import com.intellij.openapi.vcs.changes.patch.PatchFileType
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
-import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers.getTitleCustomizers
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -71,7 +71,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
                                     Runnable { switchToEditableView(project, file) })
       processor.setBlocks(buildCombinedDiffModel(document))
 
-      val editor = DiffEditorViewerFileEditor(file, processor)
+      val editor = DiffEditorViewerFileEditor(project, file, processor)
 
       val updateQueue = MergingUpdateQueue("DiffPatchFileEditorProvider", 300, true, editor.component, editor)
       document.addDocumentListener(CombinedViewerPatchChangeListener(processor, updateQueue), editor)
@@ -84,7 +84,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
                                     Runnable { switchToEditableView(project, file) })
       processor.chain = PatchDiffRequestChain(document)
 
-      val editor = DiffEditorViewerFileEditor(file, processor)
+      val editor = DiffEditorViewerFileEditor(project, file, processor)
 
       val updateQueue = MergingUpdateQueue("DiffPatchFileEditorProvider", 300, true, editor.component, editor)
       document.addDocumentListener(RequestProcessorPatchChangeListener(processor, updateQueue), editor)

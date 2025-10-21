@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTe
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.k2.hints.*
+import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerDeclarationsHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerPluginModalityHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerSupertypesHintProviderTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationMultiModuleTest
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationMultifileTest
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationTest
+import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
@@ -60,6 +62,9 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         }
         testClass<AbstractKotlinGotoImplementationMultiModuleTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.navigation.KotlinGotoImplementationMultiModuleTestGenerated") {
             model("../../../idea/tests/testData/navigation/implementations/multiModule", isRecursive = false, pattern = DIRECTORY)
+        }
+        testClass<AbstractKotlinNavBarTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.navigationToolbar.KotlinNavBarTestGenerated") {
+            model("../../../idea/tests/testData/navigationToolbar", isRecursive = false, pattern = KT_OR_KTS)
         }
         testClass<AbstractNameSuggestionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.KotlinNameSuggestionProviderTestGenerated") {
             model("../../../idea/tests/testData/refactoring/nameSuggestionProvider")
@@ -153,9 +158,16 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         testClass<AbstractKtCallChainHintsProviderTest> {
             model("../../../idea/tests/testData/codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
+        testClass<AbstractKtDefaultParameterInlayHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/defaultParameters", pattern = inlayHintsFileRegexp)
+        }
 
         testClass<AbstractKtCompilerPluginModalityHintProviderTest> {
             model("hints/compilerPlugins/modality", pattern = inlayHintsFileRegexp)
+        }
+
+        testClass<AbstractKtCompilerDeclarationsHintProviderTest> {
+            model("hints/compilerPlugins/declarations", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKtCompilerSupertypesHintProviderTest> {

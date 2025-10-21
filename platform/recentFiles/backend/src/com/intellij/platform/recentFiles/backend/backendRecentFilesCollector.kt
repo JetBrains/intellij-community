@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.backend
 
-import com.intellij.ide.ui.colors.rpcId
-import com.intellij.ide.ui.icons.rpcId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -19,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.SWITCHER_ELEMENTS_LIMIT
-import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -152,7 +148,7 @@ private class StopOnTwoIdenticalNamesProcessor(private val searchedName: String)
   }
 }
 
-internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): SwitcherRpcDto.File {
+internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): BackendRecentFilePresentation {
   ProgressManager.checkCanceled()
   val parentPath = virtualFile.parent?.path?.toNioPathOrNull()
   val result = if (parentPath == null ||
@@ -179,14 +175,14 @@ internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Projec
   }
 
   ProgressManager.checkCanceled()
-  return SwitcherRpcDto.File(
+  return BackendRecentFilePresentation(
     mainText = EditorTabPresentationUtil.getCustomEditorTabTitle(project, virtualFile) ?: virtualFile.presentableName,
     statusText = FileUtil.getLocationRelativeToUserHome(virtualFile.parent?.presentableUrl ?: virtualFile.presentableUrl),
     pathText = result,
     hasProblems = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile),
-    virtualFileId = virtualFile.rpcId(),
-    iconId = IconUtil.getIcon(virtualFile, 0, project).rpcId(),
-    backgroundColorId = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId(),
-    foregroundTextColorId = FileStatusManager.getInstance(project).getStatus(virtualFile).color?.rpcId()
+    virtualFile = virtualFile,
+    icon = IconUtil.getIcon(virtualFile, 0, project),
+    backgroundColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile),
+    foregroundTextColor = FileStatusManager.getInstance(project).getStatus(virtualFile).color
   )
 }

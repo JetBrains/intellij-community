@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.lang.properties.UnsupportedCharacterInspection;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -186,7 +187,8 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
   }
 
   private void javaVersion(LanguageLevel jdk) {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(jdk);
+    var ext = LanguageLevelProjectExtension.getInstance(getProject());
+    WriteAction.run(() -> ext.setLanguageLevel(jdk));
   }
 
   private static void fileEncoding(PsiFile file, Charset charset) {

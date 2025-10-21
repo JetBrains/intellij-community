@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -57,7 +57,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     myPsiFile = psiFile;
     myDocument = document;
     myRefCountHolder = LocalRefUseInfo.forFile(psiFile);
-    myContext = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    myContext = CodeInsightContextUtil.getCodeInsightContext(psiFile);
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder holder) {

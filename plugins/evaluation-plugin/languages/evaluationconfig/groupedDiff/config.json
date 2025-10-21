@@ -1,0 +1,32 @@
+{
+  "outputDir": "bin/ml-eval-grouped-diff-output",
+  "strategy": {
+  },
+  "fileDataset": {
+    "url": "/Users/dmitry.osinovsky/IdeaProjects/semantic-review-evaluation/CasesIdea"
+  },
+
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": [
+      "Sessions",
+      "Precision",
+      "SessionsWithoutSyntaxErrorsRatio",
+      "WithoutHighlightErrors",
+      "PreservedAPI",
+      "MeanLatency"
+    ],
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

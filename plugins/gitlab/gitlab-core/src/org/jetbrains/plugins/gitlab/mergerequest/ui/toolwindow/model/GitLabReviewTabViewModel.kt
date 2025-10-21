@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model
 
 import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
@@ -25,7 +25,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     reviewId: String,
     detailsVm: Flow<Result<GitLabMergeRequestDetailsViewModel>>
   ) : GitLabReviewTabViewModel, Disposable {
-    private val cs = parentCs.childScope().cancelledWith(this)
+    private val cs = parentCs.childScope(this::class).cancelledWith(this)
 
     override val displayName: @NlsSafe String = "!${reviewId}"
 
@@ -43,7 +43,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     openReviewTabAction: suspend (mrIid: String) -> Unit,
     onReviewCreated: () -> Unit
   ) : GitLabReviewTabViewModel, Disposable {
-    private val cs = parentCs.childScope().cancelledWith(this)
+    private val cs = parentCs.childScope(this::class).cancelledWith(this)
 
     private val projectPath = projectData.projectMapping.repository.projectPath.fullPath()
     override val displayName: String = GitLabBundle.message("merge.request.create.tab.title", projectPath)

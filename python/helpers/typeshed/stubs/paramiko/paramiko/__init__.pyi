@@ -1,3 +1,6 @@
+from typing import Final
+
+from paramiko import util as util
 from paramiko.agent import Agent as Agent, AgentKey as AgentKey
 from paramiko.channel import Channel as Channel, ChannelFile as ChannelFile
 from paramiko.client import (
@@ -9,7 +12,6 @@ from paramiko.client import (
 )
 from paramiko.common import io_sleep as io_sleep
 from paramiko.config import SSHConfig as SSHConfig, SSHConfigDict as SSHConfigDict
-from paramiko.dsskey import DSSKey as DSSKey
 from paramiko.ecdsakey import ECDSAKey as ECDSAKey
 from paramiko.ed25519key import Ed25519Key as Ed25519Key
 from paramiko.file import BufferedFile as BufferedFile
@@ -39,8 +41,7 @@ from paramiko.ssh_exception import (
 )
 from paramiko.transport import SecurityOptions as SecurityOptions, Transport as Transport
 
-__author__: str
-__license__: str
-
-# Names in __all__ with no definition:
-#   util
+__version__: Final[str]
+__author__: Final[str]
+__license__: Final[str]
+key_classes: list[type[PKey]]

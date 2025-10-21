@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinScratch
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinWorksheet
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -30,7 +29,7 @@ class ScratchRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
         element.containingFile.safeAs<KtFile>()?.takeIf {
             val file = it.virtualFile
-            file.isKotlinWorksheet || file.isKotlinScratch || it.isScript()
+            file.isKotlinScratch || it.isScript()
         }  ?: return null
 
         val declaration = element.getStrictParentOfType<KtNamedDeclaration>()

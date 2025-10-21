@@ -5,7 +5,7 @@ package com.intellij.platform.syntax.util.cancellation
 
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.extensions.ExtensionPointKey
-import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 fun cancellationProvider(): CancellationProvider? =
-  ExtensionSupport().getExtensions(cancellationProviderEP).firstNotNullOfOrNull { it.getCancellationProvider() }
+  currentExtensionSupport().getExtensions(cancellationProviderEP).firstNotNullOfOrNull { it.getCancellationProvider() }
 
 /**
  * Implement this extension point to provide a [CancellationProvider] for your environment.

@@ -54,13 +54,6 @@ public class TextMateSyntaxTable {
 
   /**
    * @deprecated use {@link TextMateSyntaxTableBuilder}
-   */
-  @Deprecated(forRemoval = true)
-  public void compact() {
-  }
-
-  /**
-   * @deprecated use {@link TextMateSyntaxTableBuilder}
    *
    * Returns root syntax rule by scope name.
    *

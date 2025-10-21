@@ -118,7 +118,7 @@ class EelLocalTunnelApiTest {
       }
       Assertions.assertEquals(helloFromClient.decodeToString(), bufferRecv.flip().decodeString())
       client.join()
-      rx.close()
+      rx.closeForReceive()
       tx.close()
     }
   }

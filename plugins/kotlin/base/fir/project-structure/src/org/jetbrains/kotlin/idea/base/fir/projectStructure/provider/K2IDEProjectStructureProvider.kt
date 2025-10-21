@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
@@ -31,7 +32,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.KaNotUnderContentRootModuleFactory
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaNotUnderContentRootModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryEntityBasedLibraryModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
@@ -41,6 +43,8 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSour
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -55,7 +59,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getNotUnderContentRootModule(project: Project): KaNotUnderContentRootModule {
-        return KaNotUnderContentRootModuleImpl(file = null, project)
+        return getKaNotUnderContentRootModule(project, null)
     }
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
@@ -92,7 +96,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
             .filter { virtualFile == null || virtualFile in it.contentScope }
 
         ModuleChooser.chooseModule(candidates, useSiteModule)?.let { return it }
-        return KaNotUnderContentRootModuleImpl(psiFile, project)
+        return getKaNotUnderContentRootModule(project, psiFile)
     }
 
     private fun createKaModules(data: ModuleCandidate): List<KaModule> = when (data) {
@@ -124,6 +128,18 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
 
         is LibraryEntity -> {
             val libraryModules = getKaLibraryModules(entity)
+            when (fileKind) {
+                WorkspaceFileKind.EXTERNAL_SOURCE -> libraryModules.mapNotNull { it.librarySources }
+                else -> libraryModules
+            }
+        }
+
+        is KotlinScriptEntity -> {
+            getKaScriptModules(entity)
+        }
+
+        is KotlinScriptLibraryEntity -> {
+            val libraryModules = getKaScriptLibraryModules(entity)
             when (fileKind) {
                 WorkspaceFileKind.EXTERNAL_SOURCE -> libraryModules.mapNotNull { it.librarySources }
                 else -> libraryModules
@@ -162,25 +178,27 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         openapiModule: Module,
         kind: KaSourceModuleKind,
     ): KaSourceModule? {
-        require(openapiModule is ModuleBridge) {
-            "Expected ${ModuleBridge::class}, but got ${openapiModule::class} instead"
-        }
-        val moduleEntity = openapiModule.findModuleEntity(project.workspaceModel.currentSnapshot) ?: return null
+        val moduleEntity = getModuleEntity(openapiModule) ?: return null
         return getKaSourceModule(moduleEntity, kind)
     }
 
-    override fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule? {
-        if (moduleEntity.sourceRoots.any { it.getKind() == kind }) {
-            return cache.cachedKaSourceModule(moduleEntity.symbolicId, kind)
-        }
-        return null
+    override fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule =
+        cache.cachedKaSourceModule(moduleEntity.symbolicId, kind)
+
+    override fun getKaSourceModules(moduleId: ModuleId): List<KaSourceModule> {
+        val moduleEntity = moduleId.resolve(project.workspaceModel.currentSnapshot) ?: return emptyList()
+        return getKaSourceModules(moduleEntity)
     }
 
-    override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
-        require(module is KaSourceModuleBase) {
-            "Expected ${KaSourceModuleBase::class}, but got ${module::class} instead"
-        }
-        return module.kind
+    override fun getKaSourceModules(moduleEntity: ModuleEntity): List<KaSourceModule> {
+        val productionModule = getKaSourceModule(moduleEntity, KaSourceModuleKind.PRODUCTION)
+        val testModule = getKaSourceModule(moduleEntity, KaSourceModuleKind.TEST)
+        return listOfNotNull(productionModule, testModule)
+    }
+
+    override fun getKaSourceModules(openapiModule: Module): List<KaSourceModule> {
+        val moduleEntity = getModuleEntity(openapiModule) ?: return emptyList()
+        return getKaSourceModules(moduleEntity)
     }
 
     override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
@@ -203,10 +221,27 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getKaLibraryModules(libraryEntity: LibraryEntity): List<KaLibraryModule> {
-        for (factory in K2KaModuleFactory.Companion.EP_NAME.extensionList) {
-            factory.createSpecialLibraryModule(libraryEntity, project)?.let { return listOf(it) }
-        }
         return listOf(cache.cachedKaLibraryModule(libraryEntity.symbolicId))
+    }
+
+    override fun getKaScriptModules(scriptEntity: WorkspaceEntity): List<KaScriptModule> {
+        for (factory in FirKaModuleFactory.EP_NAME.extensionList) {
+            if (scriptEntity is KotlinScriptEntity) {
+                factory.createScriptModule(project, scriptEntity)?.let { return listOf(it) }
+            }
+        }
+
+        return listOf()
+    }
+
+    override fun getKaScriptLibraryModules(libraryEntity: WorkspaceEntity): List<KaLibraryModule> {
+        for (factory in FirKaModuleFactory.EP_NAME.extensionList) {
+            if (libraryEntity is KotlinScriptLibraryEntity) {
+                factory.createScriptLibraryModule(project, libraryEntity)?.let { return listOf(it) }
+            }
+        }
+
+        return listOf()
     }
 
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
@@ -250,6 +285,19 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         JAVA_SOURCE_ROOT_ENTITY_TYPE_ID.name, KOTLIN_SOURCE_ROOT_TYPE_ID -> KaSourceModuleKind.PRODUCTION
         JAVA_TEST_ROOT_ENTITY_TYPE_ID.name, KOTLIN_TEST_ROOT_TYPE_ID -> KaSourceModuleKind.TEST
         else -> null
+    }
+
+    override fun getCacheDependenciesTracker(): ModificationTracker {
+        return ModificationTracker {
+            cache.getCacheSdkAndLibrariesTracker().modificationCount + cache.getCacheSourcesTracker().modificationCount
+        }
+    }
+
+    private fun getModuleEntity(openapiModule: Module): ModuleEntity? {
+        require(openapiModule is ModuleBridge) {
+            "Expected ${ModuleBridge::class}, but got ${openapiModule::class} instead"
+        }
+        return openapiModule.findModuleEntity(project.workspaceModel.currentSnapshot)
     }
 
     companion object {
@@ -298,4 +346,6 @@ private fun <T> cachedKaModule(
     }
 }
 
-
+private fun getKaNotUnderContentRootModule(project: Project, psiFile: PsiFile?): KaNotUnderContentRootModule =
+    KaNotUnderContentRootModuleFactory.EP_NAME.extensionList.firstNotNullOfOrNull { factory -> factory.create(project, psiFile) }
+        ?: KaNotUnderContentRootModuleImpl(project =  project, file = psiFile)

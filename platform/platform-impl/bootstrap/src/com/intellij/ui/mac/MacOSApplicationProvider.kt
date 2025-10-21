@@ -62,7 +62,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
   val desktop = Desktop.getDesktop()
   desktop.setAboutHandler {
     submit("About", mainScope) { ideFocusManager ->
-      val project = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      val project = withContext(Dispatchers.UiWithModelAccess) {
         val project = (ideFocusManager.lastFocusedIdeWindow as? IdeFrame)?.project
         AboutAction.perform(project)
         project
@@ -75,7 +75,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
     submit("Settings", mainScope) { ideFocusManager ->
       val showSettingsUtil = serviceAsync<ShowSettingsUtil>()
       // we should not use RW to get focused frame - pure UI should be enough
-      val project = withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+      val project = withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
         (ideFocusManager.lastFocusedIdeWindow as? IdeFrame)?.project
       }
 

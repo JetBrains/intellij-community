@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.UIBundle
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
@@ -107,6 +108,7 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     init {
       isOpaque = false
       hoverBackground = JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground())
+      accessibleNamePrefix = UIBundle.message("filename.widget.accessible.name.prefix")
     }
 
     override fun processMouseEvent(e: MouseEvent) {

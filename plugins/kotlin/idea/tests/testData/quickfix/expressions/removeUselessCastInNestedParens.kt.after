@@ -1,4 +1,4 @@
-// "Remove useless cast" "true"
+// "Remove redundant cast" "true"
 fun test(x: Any): Int {
     if (x is String) {
         return x.length

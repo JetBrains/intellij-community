@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
 import com.intellij.codeInsight.intention.*
+import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger
@@ -47,10 +48,14 @@ private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: 
       ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
     }
 
-    for (descriptor in intentions) {
+    for ((index, descriptor) in intentions.withIndex()) {
       val action = descriptor.action
       if (action.text == myActionText) {
-        //unfortunately it is very common case when quick fixes/refactorings use caret position
+        // unfortunately it is very common case when quick fixes/refactorings use caret position
+        // Skip the ChoiceTitleIntentionAction if it's the first action: most likely it's a title and not the actual action
+        if (intentions.size > 1 && index == 0 && action is ChoiceTitleIntentionAction) {
+          continue
+        }
         editor.caretModel.moveToOffset(myActualOffset)
         ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myActionText, IntentionSource.DAEMON_TOOLTIP)
         return

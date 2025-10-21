@@ -122,9 +122,9 @@ public final class NotificationCollector {
     BALLOON_COLLAPSED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
-  private static @NotNull List<EventPair<?>> createNotificationData(@Nullable String groupId,
-                                                                    @NotNull String id,
-                                                                    @Nullable String displayId) {
+  public static @NotNull List<EventPair<?>> createNotificationData(@Nullable String groupId,
+                                                                   @NotNull String id,
+                                                                   @Nullable String displayId) {
     ArrayList<EventPair<?>> data = new ArrayList<>();
     data.add(ID.with(id));
     if (Strings.isNotEmpty(displayId)) {

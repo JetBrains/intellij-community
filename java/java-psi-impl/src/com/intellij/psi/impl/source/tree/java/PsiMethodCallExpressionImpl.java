@@ -164,7 +164,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
           theOnly = type;
         }
         else if (!theOnly.equals(type)) {
-          return null;
+          theOnly = GenericsUtil.getLeastUpperBound(type, theOnly, file.getManager());
+          if (theOnly == null) return null;
         }
       }
 

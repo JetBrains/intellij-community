@@ -6,11 +6,10 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -18,10 +17,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration.Companion.TEST_NAME_PARTS_SPLITTER
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -63,9 +64,11 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
     return null
   }
 
-  open fun getTestSpec(request: TargetEnvironmentRequest,
-                       location: Location<*>,
-                       failedTest: AbstractTestProxy): TargetEnvironmentFunction<String>? {
+  open fun getTestSpec(
+    request: TargetEnvironmentRequest,
+    location: Location<*>,
+    failedTest: AbstractTestProxy,
+  ): TargetEnvironmentFunction<String>? {
     val element = location.psiElement
     var pyClass = PsiTreeUtil.getParentOfType(element, PyClass::class.java, false)
     if (location is PyPsiLocationWithFixedClass) {
@@ -122,9 +125,7 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
       return false
     }
     val requiredPackage = this.requiredPackage ?: return true // Installed by default
-    return runBlockingCancellable {
-      PythonPackageManager.forSdk(project, sdk).listInstalledPackages().find { it -> it.presentableName == requiredPackage } != null
-    }
+    return PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage)
   }
 
 
@@ -133,6 +134,6 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
      * When passing path to test to runners, you should join parts with this char.
      * I.e.: file.py::PyClassTest::test_method
      */
-    protected const val TEST_NAME_PARTS_SPLITTER = "::"
+    protected const val TEST_NAME_PARTS_SPLITTER: String = "::"
   }
 }

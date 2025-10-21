@@ -4,6 +4,7 @@ package com.intellij.tasks.context;
 import com.intellij.ide.bookmark.BookmarksManager;
 import com.intellij.ide.bookmark.ManagerState;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -43,6 +44,11 @@ public class BookmarkContextProvider extends WorkingContextProvider {
   @Override
   public void clearContext(@NotNull Project project) {
     getComponent(project).loadState(new ManagerState());
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return AdvancedSettings.getBoolean("tasks.enable.bookmark.context.on.branch.switch");
   }
 
   @SuppressWarnings("unchecked")

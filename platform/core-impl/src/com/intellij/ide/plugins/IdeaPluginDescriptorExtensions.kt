@@ -7,11 +7,17 @@ import org.jetbrains.annotations.ApiStatus
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.contentModuleName: String?
-  get() = (this as? ContentModuleDescriptor)?.moduleName
+  get() = (this as? ContentModuleDescriptor)?.moduleId?.name
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.isRequiredContentModule: Boolean
   get() = (this as? ContentModuleDescriptor)?.moduleLoadingRule?.required == true
+
+/**
+ * A dependency from [pluginIds] in fact means a module dependency on the *implicit main module* of a given plugin.
+ */
+@ApiStatus.Experimental
+class ModuleDependenciesApi(val pluginIds: List<String>, val moduleIds: List<String>)
 
 /**
  * aka `<dependencies>` element from plugin.xml
@@ -19,8 +25,10 @@ val IdeaPluginDescriptor.isRequiredContentModule: Boolean
  * Note that it's different from [IdeaPluginDescriptor.getDependencies] (which is for `<depends>`)
  */
 @get:ApiStatus.Experimental
-val IdeaPluginDescriptor.moduleDependencies: ModuleDependencies
-  get() = (this as IdeaPluginDescriptorImpl).moduleDependencies
+val IdeaPluginDescriptor.moduleDependencies: ModuleDependenciesApi
+  get() = (this as IdeaPluginDescriptorImpl).moduleDependencies.let {
+    ModuleDependenciesApi(it.plugins.map { it.idString }, it.modules.map { it.name })
+  }
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.contentModules: List<IdeaPluginDescriptor>

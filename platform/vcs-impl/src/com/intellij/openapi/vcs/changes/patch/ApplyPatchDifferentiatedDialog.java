@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffDialogHints;
@@ -26,7 +26,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -54,6 +53,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -81,6 +81,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.containers.ContainerUtil.concat;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
@@ -106,7 +107,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final Runnable myReset;
   private final @Nullable ChangeListChooserPanel myChangeListChooser;
   private final ChangesLegendCalculator myInfoCalculator;
-  private final CommitLegendPanel myCommitLegendPanel;
+  private final @NotNull CommitLegendComponent myCommitLegendPanel;
   private final ApplyPatchExecutor myCallback;
   private final List<? extends ApplyPatchExecutor> myExecutors;
 
@@ -186,8 +187,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       new MyShowDiff().showDiff();
     });
-    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable(),
-                                                   ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable(), ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
     myChangesTreeLoadingPanel.add(myChangesTreeList, BorderLayout.CENTER);
     myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
     myPatchFile = new TextFieldWithBrowseButton();
@@ -228,17 +228,24 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     myInfoCalculator = new ChangesLegendCalculator();
-    myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator) {
+
+    LegendChunk conflict = new LegendChunk() {
       @Override
-      public void update() {
-        super.update();
-        final int inapplicable = myInfoCalculator.getInapplicable();
-        if (inapplicable > 0) {
-          appendSpace();
-          append(inapplicable, FileStatus.MERGED_WITH_CONFLICTS, VcsBundle.message("patch.apply.missing.base.file.label"));
-        }
+      public @NotNull FileStatus getFileStatus() { return FileStatus.MERGED_WITH_CONFLICTS; }
+
+      @Override
+      public @NlsSafe @NotNull String getCompactLabel() { return getFullLabel(); }
+
+      @Override
+      public @Nls @NotNull String getFullLabel() { return VcsBundle.message("patch.apply.missing.base.file.label"); }
+
+      @Override
+      public @Nls @NotNull String formatNumbers() {
+        return LegendChunkFormatters.nonZeroOrEmpty(myInfoCalculator.getInapplicable());
       }
     };
+    List<LegendChunk> legendChunks = concat(CommitLegendComponent.defaultLegendChunks(myInfoCalculator), List.of(conflict));
+    myCommitLegendPanel = CommitLegendComponent.create(myInfoCalculator, legendChunks);
 
     init();
 

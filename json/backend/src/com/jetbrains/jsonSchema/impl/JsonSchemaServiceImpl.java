@@ -120,7 +120,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     for (Runnable action : myResetActions) {
       action.run();
     }
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
   }
 
   @Override

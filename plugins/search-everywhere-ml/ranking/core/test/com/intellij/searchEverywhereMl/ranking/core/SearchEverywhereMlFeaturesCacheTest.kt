@@ -215,7 +215,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateFirst = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsFirstSearch,
       ::getContributorFeatures,
       idProvider
@@ -252,7 +251,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsSecondSearch,
       ::getContributorFeatures,
       idProvider
@@ -285,7 +283,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateFirst = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsFirstSearch,
       ::getContributorFeatures,
       idProvider
@@ -317,7 +314,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsSecondSearch,
       ::getContributorFeatures,
       idProvider
@@ -342,7 +338,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateThird = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsThirdSearch,
       ::getContributorFeatures,
       idProvider
@@ -366,7 +361,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateFourth = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsFourthSearch,
       ::getContributorFeatures,
       idProvider
@@ -404,7 +398,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateFirst = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsFirstSearch,
       ::getContributorFeatures,
       idProvider
@@ -439,7 +432,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsSecondSearch,
       ::getContributorFeatures,
       idProvider
@@ -477,7 +469,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsFirstSearch,
       ::getContributorFeatures,
       idProvider
@@ -508,7 +499,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsSecondSearch,
       ::getContributorFeatures,
       idProvider
@@ -555,7 +545,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsFirstSearch,
       contributorProvider,
       idProvider
@@ -580,7 +569,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsSecondSearch,
       contributorProvider,
       idProvider
@@ -631,7 +619,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsFirstSearch,
       firstContributorProvider,
       idProvider
@@ -656,7 +643,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
-      true,
       elementsSecondSearch,
       secondContributorProvider,
       idProvider

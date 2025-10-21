@@ -5,12 +5,13 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -67,11 +68,17 @@ private class IndexWaiter(private val project: Project) {
       private var nested: Int = 1 // 1 because at least one write action is currently happenings
 
       override fun beforeWriteActionStart(action: Any) {
+        if (!EDT.isCurrentThreadEdt()) {
+          return
+        }
         nested++
       }
 
       // invoked after all the write actions are finished (write lock is released)
       override fun afterWriteActionFinished(action: Any) {
+        if (!EDT.isCurrentThreadEdt()) {
+          return
+        }
         nested--
         assert(nested >= 0) { "We counted more finished write actions than started." }
         if (nested <= 0) { // may not be negative, but let's stay on the safe side
@@ -98,14 +105,8 @@ private class IndexWaiter(private val project: Project) {
 
     if (application.isDispatchThread) {
       do {
-        val runnable = {
-          PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, 600)
-        }
-        if (application is ApplicationImpl) {
-          application.threadingSupport.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(runnable)
-        }
-        else {
-          runnable()
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, indexWaitingTimeout.seconds.toInt())
         }
       }
       while (dispatchAllEventsInIdeEventQueue()) // make sure that all the scheduled write actions are executed

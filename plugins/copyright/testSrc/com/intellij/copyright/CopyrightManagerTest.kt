@@ -2,24 +2,22 @@
 package com.intellij.copyright
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.testFramework.ProjectExtension
+import com.intellij.platform.testFramework.junit5.jimfs.jimFsFixture
+import com.intellij.project.isDirectoryBased
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.InMemoryFsExtension
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.io.write
 import com.maddyhome.idea.copyright.CopyrightProfile
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 internal class CopyrightManagerTest {
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val projectRule = ProjectExtension(runPostStartUpActivities = false, preloadServices = false)
+  private companion object {
+    val project by projectFixture(openProjectTask = createTestOpenProjectOptions(false))
   }
-
-  @JvmField
-  @RegisterExtension
-  val fsRule = InMemoryFsExtension()
+    val fs by jimFsFixture()
 
   @Test
   fun serialize() {
@@ -39,7 +37,7 @@ internal class CopyrightManagerTest {
 
   @Test
   fun loadSchemes() {
-    val schemeFile = fsRule.fs.getPath("copyright/openapi.xml")
+    val schemeFile = fs.getPath("project/copyright/openapi.xml")
     val schemeData = """
       <component name="CopyrightManager">
         <copyright>
@@ -51,8 +49,9 @@ internal class CopyrightManagerTest {
         </copyright>
       </component>""".trimIndent()
     schemeFile.write(schemeData)
-    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = CopyrightManager(projectRule.project, schemeManagerFactory, IdeCopyrightManager.getInstance(),
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fs.getPath("project"))
+    assertThat(project.isDirectoryBased).isTrue()
+    val profileManager = CopyrightManager(project, schemeManagerFactory, IdeCopyrightManager.getInstance(),
                                           isSupportIprProjects = false /* otherwise scheme will be not loaded from our memory fs */)
     profileManager.loadSchemes()
 
@@ -65,7 +64,7 @@ internal class CopyrightManagerTest {
 
   @Test
   fun loadLocalSchemes() {
-    val schemeFile = fsRule.fs.getPath("copyright/openapi.xml")
+    val schemeFile = fs.getPath("app/copyright/openapi.xml")
     val schemeData = """
       <component name="IdeCopyrightManager">
         <copyright>
@@ -77,7 +76,7 @@ internal class CopyrightManagerTest {
         </copyright>
       </component>""".trimIndent()
     schemeFile.write(schemeData)
-    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fs.getPath("app"))
     val profileManager = IdeCopyrightManager(schemeManagerFactory)
 
     val copyrights = profileManager.getCopyrights()
@@ -89,7 +88,7 @@ internal class CopyrightManagerTest {
 
   @Test
   fun loadLocalSchemeInProjectSettings() {
-    val schemeFile = fsRule.fs.getPath("copyright/openapi.xml")
+    val schemeFile = fs.getPath("app/copyright/openapi.xml")
     val schemeData = """
       <component name="IdeCopyrightManager">
         <copyright>
@@ -101,8 +100,9 @@ internal class CopyrightManagerTest {
         </copyright>
       </component>""".trimIndent()
     schemeFile.write(schemeData)
-    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = IdeCopyrightManager(schemeManagerFactory)
+    val appSchemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fs.getPath("app"))
+    val projectSchemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fs.getPath("project"))
+    val profileManager = IdeCopyrightManager(appSchemeManagerFactory)
 
     val copyrights = profileManager.getCopyrights()
     assertThat(copyrights).hasSize(1)
@@ -110,7 +110,8 @@ internal class CopyrightManagerTest {
     assertThat(scheme.schemeState).isEqualTo(null)
     assertThat(scheme.name).isEqualTo("openapi")
 
-    val copyrightManager = CopyrightManager(projectRule.project, schemeManagerFactory, profileManager, isSupportIprProjects = false)
+    assertThat(project.isDirectoryBased).isTrue()
+    val copyrightManager = CopyrightManager(project, projectSchemeManagerFactory, profileManager, isSupportIprProjects = false)
     copyrightManager.defaultCopyright = scheme
     assertThat(copyrightManager.defaultCopyright).isEqualTo(scheme)
 
@@ -120,7 +121,7 @@ internal class CopyrightManagerTest {
 
   @Test
   fun `use file name if scheme name missed`() {
-    val schemeFile = fsRule.fs.getPath("copyright/FooBar.xml")
+    val schemeFile = fs.getPath("project/copyright/FooBar.xml")
     val schemeData = """
       <component name="CopyrightManager">
         <copyright>
@@ -128,8 +129,9 @@ internal class CopyrightManagerTest {
         </copyright>
       </component>""".trimIndent()
     schemeFile.write(schemeData)
-    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = CopyrightManager(projectRule.project, schemeManagerFactory,
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fs.getPath("project"))
+    assertThat(project.isDirectoryBased).isTrue()
+    val profileManager = CopyrightManager(project, schemeManagerFactory,
                                           IdeCopyrightManager.getInstance(),
                                           isSupportIprProjects = false /* otherwise scheme will be not loaded from our memory fs */)
     profileManager.loadSchemes()

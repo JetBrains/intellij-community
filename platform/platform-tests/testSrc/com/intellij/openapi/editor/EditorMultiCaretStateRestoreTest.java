@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 
 public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTestCase {
   public void testRestoreState() {
@@ -38,7 +39,7 @@ public class EditorMultiCaretStateRestoreTest extends HeavyFileEditorManagerTest
 
   private static void verifyEditorState(Editor editor, String textWithMarkup) {
     final Document document = new DocumentImpl(textWithMarkup);
-    EditorTestUtil.CaretAndSelectionState caretAndSelectionState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+    EditorCaretTestUtil.CaretAndSelectionState caretAndSelectionState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
     assertEquals(document.getCharsSequence().toString(), editor.getDocument().getText());
     EditorTestUtil.verifyCaretAndSelectionState(editor, caretAndSelectionState);
   }

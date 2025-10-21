@@ -6,6 +6,7 @@ import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import kotlin.io.path.pathString
 
 class CleanStaleTargetsTest : JpsBuildTestCase() {
   fun `test delete old output when module is deleted`() {
@@ -17,7 +18,9 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
 
   fun `test delete old output when module is renamed`() {
     doTestDeleteOldOutput {
-      it.name = "a2"
+      val oldSourceRoot = it.sourceRoots.single().path.pathString
+      myProject.removeModule(it)
+      addModule("a2", arrayOf(oldSourceRoot), null, null, jdk)
     }
   }
 

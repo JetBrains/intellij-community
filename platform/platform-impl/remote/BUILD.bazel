@@ -10,13 +10,14 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
+    "//platform/remote-core",
     "//platform/util/jdom",
     "//platform/platform-util-io:ide-util-io",
     "//platform/lang-core",
     "//platform/execution",
     "//platform/platform-impl:ide-impl",
     "//platform/util/concurrency",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/core-ui",
   ]
 )

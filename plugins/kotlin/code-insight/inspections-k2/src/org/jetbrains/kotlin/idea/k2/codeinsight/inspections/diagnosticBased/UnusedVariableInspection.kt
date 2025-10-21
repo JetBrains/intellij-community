@@ -10,8 +10,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
@@ -22,7 +23,7 @@ import org.jetbrains.kotlin.psi.*
 import kotlin.reflect.KClass
 
 internal class UnusedVariableInspection :
-    KotlinKtDiagnosticBasedInspectionBase<KtNamedDeclaration, KaFirDiagnostic.UnusedVariable, Unit>() {
+    KotlinKtDiagnosticBasedInspectionBase<KtNamedDeclaration, KaFirDiagnostic.UnusedVariable, UnusedVariableInspection.Context>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -42,7 +43,7 @@ internal class UnusedVariableInspection :
 
     override fun getProblemDescription(
         element: KtNamedDeclaration,
-        context: Unit,
+        context: Context,
     ): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
 
     override val diagnosticType: KClass<KaFirDiagnostic.UnusedVariable>
@@ -51,30 +52,52 @@ internal class UnusedVariableInspection :
     override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> =
         ApplicabilityRanges.declarationName(element)
 
+    class Context(
+        val couldBeAnExplicitlyIgnoredValue: Boolean
+    )
+
     override fun KaSession.prepareContextByDiagnostic(
         element: KtNamedDeclaration,
         diagnostic: KaFirDiagnostic.UnusedVariable,
-    ): Unit? {
-        val ktProperty = diagnostic.psi as? KtCallableDeclaration ?: return null
-        val typeReference = ktProperty.typeReference ?: return Unit
-        return (!ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference))
-            .asUnit
+    ): Context? {
+        val declaration = diagnostic.psi as? KtCallableDeclaration ?: return null
+        val couldBeAnExplicitlyIgnoredValue =
+            (declaration is KtProperty)
+                    && !declaration.isVar
+                    && element.languageVersionSettings.supportsFeature(LanguageFeature.UnnamedLocalVariables)
+                    && !declaration.symbol.returnType.isUnitType
+        val typeReference = declaration.typeReference ?: return Context(couldBeAnExplicitlyIgnoredValue)
+        return if (!declaration.isExplicitTypeReferenceNeededForTypeInference(typeReference)) {
+            Context(couldBeAnExplicitlyIgnoredValue)
+        } else {
+            null
+        }
     }
 
     override fun createQuickFix(
         element: KtNamedDeclaration,
-        context: Unit,
+        context: Context,
     ): KotlinModCommandQuickFix<KtNamedDeclaration> {
         val smartPointer = element.createSmartPointer()
-
         return object : KotlinModCommandQuickFix<KtNamedDeclaration>() {
 
             override fun getFamilyName(): String =
                 KotlinBundle.message("remove.variable")
 
             override fun getName(): String = getName(smartPointer) { element ->
-                if (element is KtDestructuringDeclarationEntry) KotlinBundle.message("rename.to.underscore")
-                else KotlinBundle.message("remove.variable.0", element.name.toString())
+                when (element) {
+                    is KtDestructuringDeclarationEntry -> {
+                        KotlinBundle.message("rename.to.underscore")
+                    }
+
+                    is KtProperty if context.couldBeAnExplicitlyIgnoredValue -> {
+                        KotlinBundle.message("rename.0.to.explicitly.ignore.return.value", element.name.toString())
+                    }
+
+                    else -> {
+                        KotlinBundle.message("remove.variable.0", element.name.toString())
+                    }
+                }
             }
 
             override fun applyFix(
@@ -82,10 +105,15 @@ internal class UnusedVariableInspection :
                 element: KtNamedDeclaration,
                 updater: ModPsiUpdater,
             ) {
-                if (element is KtDestructuringDeclarationEntry) {
-                    renameToUnderscore(element)
-                } else if (element is KtProperty) {
-                    removeProperty(element)
+                when (element) {
+                    is KtDestructuringDeclarationEntry -> renameToUnderscore(element)
+                    is KtProperty -> {
+                        if (context.couldBeAnExplicitlyIgnoredValue) {
+                            renameToUnderscore(element)
+                        } else {
+                            removeProperty(element)
+                        }
+                    }
                 }
             }
         }

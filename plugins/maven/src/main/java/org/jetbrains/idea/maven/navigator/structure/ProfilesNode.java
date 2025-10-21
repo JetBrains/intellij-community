@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-class ProfilesNode extends GroupNode {
+final class ProfilesNode extends GroupNode {
   private final List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
 
   ProfilesNode(MavenProjectsStructure structure, MavenSimpleNode parent) {

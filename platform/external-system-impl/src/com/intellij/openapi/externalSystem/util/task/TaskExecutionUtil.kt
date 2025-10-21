@@ -48,7 +48,8 @@ object TaskExecutionUtil {
       callback = spec.callback,
       userData = spec.userData,
       activateToolWindowBeforeRun = spec.activateToolWindowBeforeRun,
-      activateToolWindowOnFailure = spec.activateToolWindowOnFailure
+      activateToolWindowOnFailure = spec.activateToolWindowOnFailure,
+      navigateToError = spec.navigateToError
     ))
 
     withContext(NonCancellable) {

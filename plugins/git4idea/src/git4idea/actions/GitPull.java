@@ -93,12 +93,11 @@ final class GitPull extends GitMergeAction {
       return;
     }
 
-    new GitUpdateExecutionProcess(project,
-                                  singletonList(repository),
-                                  Map.of(repository, new GitBranchPair(repository.getCurrentBranch(), selectedBranch)),
-                                  UpdateMethod.REBASE,
-                                  false)
-      .execute();
+    GitUpdateExecutionProcess.launchUpdate(project,
+                                           singletonList(repository),
+                                           Map.of(repository, new GitBranchPair(repository.getCurrentBranch(), selectedBranch)),
+                                           UpdateMethod.REBASE,
+                                           false);
   }
 
   @Override

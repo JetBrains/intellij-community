@@ -6,13 +6,13 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.rpc.XValueAdvancedPresentationPart
+import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
-import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
-import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*

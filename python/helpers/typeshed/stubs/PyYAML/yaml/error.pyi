@@ -24,3 +24,5 @@ class MarkedYAMLError(YAMLError):
         problem_mark: Mark | None = None,
         note: str | None = None,
     ) -> None: ...
+
+__all__ = ["Mark", "YAMLError", "MarkedYAMLError"]

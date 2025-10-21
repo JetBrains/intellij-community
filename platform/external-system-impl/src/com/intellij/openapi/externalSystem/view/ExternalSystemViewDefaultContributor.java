@@ -422,7 +422,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     }
 
     @Override
-    public int compareTo(@NotNull ExternalSystemNode node) {
+    public int compareTo(@NotNull ExternalSystemNode<?> node) {
       final T myData = getData();
       final Object thatData = node.getData();
       if (myData instanceof OrderAware && thatData instanceof OrderAware) {

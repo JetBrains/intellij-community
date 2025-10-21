@@ -7,20 +7,17 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.util.LayeredTextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
 @ApiStatus.Internal
 final class InjectedLanguageFragmentSyntaxUtil {
   @Contract(pure = true)
-  static List<HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
-                                                           @NotNull TextRange hostRange,
-                                                           TextAttributesKey @NotNull [] keys,
-                                                           @Nullable Object toolId) {
+  static @NotNull @Unmodifiable List<@NotNull HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
+                                                                                           @NotNull TextRange hostRange,
+                                                                                           TextAttributesKey @NotNull [] keys,
+                                                                                           @Nullable Object toolId) {
     if (hostRange.isEmpty()) {
       return List.of();
     }

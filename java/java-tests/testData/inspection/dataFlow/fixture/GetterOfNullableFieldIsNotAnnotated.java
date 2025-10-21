@@ -13,5 +13,5 @@ class A {
 class B {
 
   @NotNull
-  String x = <warning descr="Expression 'new A().getXxxx()' might evaluate to null but is assigned to a variable that is annotated with @NotNull">new A().getXxxx()</warning>;
+  String x = <warning descr="Expression 'new A().getXxxx()' might evaluate to null but is assigned to a non-null variable">new A().getXxxx()</warning>;
 }

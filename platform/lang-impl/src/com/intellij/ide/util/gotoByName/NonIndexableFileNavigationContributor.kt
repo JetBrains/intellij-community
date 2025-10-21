@@ -1,24 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
+
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import com.intellij.util.indexing.*
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexEx
+import com.intellij.util.indexing.FindSymbolParameters
+import com.intellij.util.indexing.IdFilter
 import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
 val GOTO_FILE_SEARCH_IN_NON_INDEXABLE: Key<Boolean> = Key.create("search.in.non.indexable")
+
+private val LOG = logger<NonIndexableFileNavigationContributor>()
 
 /**
  * The current implementation loads files into VFS, which we should avoid here.
@@ -26,13 +30,14 @@ val GOTO_FILE_SEARCH_IN_NON_INDEXABLE: Key<Boolean> = Key.create("search.in.non.
  * See IJPL-189502 Support non-persistent `VirtualFile`s
  */
 @ApiStatus.Internal
+@Deprecated("Use NonIndexableFilesSEContributor")
 class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAware {
 
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
     val project = scope.project ?: return
     if (!isGotoFileToNonIndexableEnabled(project)) return
     val filenamesProcessed = hashSetOf<String>()
-    iterateNonIndexableFilesImpl(project, scope, { file ->
+    FileBasedIndex.getInstance().iterateNonIndexableFiles(project, scope, { file ->
       val filename = file.name
       if (filenamesProcessed.add(filename)) {
         processor.process(filename)
@@ -51,17 +56,30 @@ class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAwa
     val parametersFilter = parameters.idFilter
 
     // we want to process only non-indexable files, yet want to respect `idFilter` from parameters
+    //FIXME RC: we can't really use IdFilter with non-indexable files, because non-indexable files could be 'transient'
+    //          (cache-avoiding), so they are not always have fileId/implement VirtualFileWithId
     val idFilter = when {
       parametersFilter == null -> nonIndexableFilesFilter
       else -> idFilter { id -> parametersFilter.containsFileId(id) && nonIndexableFilesFilter.containsFileId(id) }
     }
 
+    //FIXME RC: we do not really search among non-indexable files -- we search among indexable files, but with filter 'non-indexable'
+    //          instead we should really use FileBasedIndex.getInstance().iterateNonIndexableFiles(), and filter files by name
+    //          (better to do that multithreaded)
     DefaultFileNavigationContributor.processElementsWithName(name, processor, parameters, idFilter)
   }
 }
 
-private fun isGotoFileToNonIndexableEnabled(project: Project): Boolean =
-  Registry.`is`("search.in.non.indexable") || project.getUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE) == true
+private fun isGotoFileToNonIndexableEnabled(project: Project): Boolean {
+  if (project.getUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE) != true) return false
+  val enabled = Registry.`is`("search.in.non.indexable")
+  val seContributorEnabled = Registry.`is`("se.enable.non.indexable.files.contributor")
+  if (!enabled || seContributorEnabled) {
+    // if new contributor is enabled we don't want to run the second one
+    return false
+  }
+  return true
+}
 
 
 private inline fun idFilter(crossinline filter: (Int) -> Boolean): IdFilter = object : IdFilter() {
@@ -73,20 +91,4 @@ private fun nonIndexableFilesFilter(scope: GlobalSearchScope, project: Project):
     null -> idFilter { true }
     else -> idFilter { id -> !projectIdFilter.containsFileId(id) }
   }
-}
-
-private fun VirtualFile.isIndexedOrExcluded(workspaceFileIndex: WorkspaceFileIndexEx): Boolean {
-  return workspaceFileIndex.isIndexable(this) || !workspaceFileIndex.isInWorkspace(this)
-}
-
-@ApiStatus.Internal
-fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
-  val roots = mutableSetOf<VirtualFile>()
-  visitFileSets { fileSet, _ ->
-    val root = fileSet.root
-    if (fileSet.kind == WorkspaceFileKind.CONTENT_NON_INDEXABLE && !isIndexable(root)) {
-      roots.add(fileSet.root)
-    }
-  }
-  return roots
 }

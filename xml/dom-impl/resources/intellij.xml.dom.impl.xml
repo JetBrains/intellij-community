@@ -1,6 +1,11 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.structureView"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.libraries.cglib"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
 
@@ -86,4 +91,7 @@
 
     <xmlStructureViewBuilderProvider implementation="com.intellij.util.xml.structure.DomStructureViewBuilderProvider" order="last"/>
   </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.util.xml.DomUtil$XmlDomCacheCleaner" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
 </idea-plugin>

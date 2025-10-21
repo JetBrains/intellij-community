@@ -1,37 +1,115 @@
 graph TD
   KaLibraryModule_0(["KaLibraryModule(SDK)"])
   KaSourceModule_1["KaSourceModule(common)<br />production<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
-  KaSourceModule_2["KaSourceModule(js)<br />production<br />JS"]
-  KaSourceModule_3["KaSourceModule(jvm1)<br />production<br />JVM (1.8)"]
-  KaSourceModule_4["KaSourceModule(jvm2)<br />production<br />JVM (1.8)"]
-  KaSourceModule_5["KaSourceModule(jvmCommon)<br />production<br />JVM (1.8)"]
+  KaSourceModule_2["KaSourceModule(common)<br />test<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
+  KaSourceModule_3["KaSourceModule(js)<br />production<br />JS"]
+  KaSourceModule_4["KaSourceModule(js)<br />test<br />JS"]
+  KaSourceModule_5["KaSourceModule(jvm1)<br />production<br />JVM (1.8)"]
+  KaSourceModule_6["KaSourceModule(jvm1)<br />test<br />JVM (1.8)"]
+  KaSourceModule_7["KaSourceModule(jvm2)<br />production<br />JVM (1.8)"]
+  KaSourceModule_8["KaSourceModule(jvm2)<br />test<br />JVM (1.8)"]
+  KaSourceModule_9["KaSourceModule(jvmCommon)<br />production<br />JVM (1.8)"]
+  KaSourceModule_10["KaSourceModule(jvmCommon)<br />test<br />JVM (1.8)"]
   style KaLibraryModule_0 fill:#CC2B52
   style KaSourceModule_1 fill:#608BC1
-  style KaSourceModule_2 fill:#608BC1
+  style KaSourceModule_2 fill:#31511E
   style KaSourceModule_3 fill:#608BC1
-  style KaSourceModule_4 fill:#608BC1
+  style KaSourceModule_4 fill:#31511E
   style KaSourceModule_5 fill:#608BC1
+  style KaSourceModule_6 fill:#31511E
+  style KaSourceModule_7 fill:#608BC1
+  style KaSourceModule_8 fill:#31511E
+  style KaSourceModule_9 fill:#608BC1
+  style KaSourceModule_10 fill:#31511E
+  KaSourceModule_10 --> KaSourceModule_1
+  KaSourceModule_10 --> KaSourceModule_2
+  KaSourceModule_10 --> KaSourceModule_9
   KaSourceModule_2 --> KaSourceModule_1
   KaSourceModule_3 --> KaSourceModule_1
-  KaSourceModule_3 --> KaSourceModule_5
   KaSourceModule_4 --> KaSourceModule_1
-  KaSourceModule_4 --> KaSourceModule_5
+  KaSourceModule_4 --> KaSourceModule_2
+  KaSourceModule_4 --> KaSourceModule_3
   KaSourceModule_5 --> KaSourceModule_1
-  KaSourceModule_2 --dependsOn--> KaSourceModule_1
+  KaSourceModule_5 --> KaSourceModule_9
+  KaSourceModule_6 --> KaSourceModule_1
+  KaSourceModule_6 --> KaSourceModule_10
+  KaSourceModule_6 --> KaSourceModule_2
+  KaSourceModule_6 --> KaSourceModule_5
+  KaSourceModule_6 --> KaSourceModule_9
+  KaSourceModule_7 --> KaSourceModule_1
+  KaSourceModule_7 --> KaSourceModule_9
+  KaSourceModule_8 --> KaSourceModule_1
+  KaSourceModule_8 --> KaSourceModule_10
+  KaSourceModule_8 --> KaSourceModule_2
+  KaSourceModule_8 --> KaSourceModule_7
+  KaSourceModule_8 --> KaSourceModule_9
+  KaSourceModule_9 --> KaSourceModule_1
+  KaSourceModule_10 --friend--> KaSourceModule_1
+  KaSourceModule_10 --friend--> KaSourceModule_9
+  KaSourceModule_2 --friend--> KaSourceModule_1
+  KaSourceModule_4 --friend--> KaSourceModule_1
+  KaSourceModule_4 --friend--> KaSourceModule_3
+  KaSourceModule_6 --friend--> KaSourceModule_1
+  KaSourceModule_6 --friend--> KaSourceModule_5
+  KaSourceModule_6 --friend--> KaSourceModule_9
+  KaSourceModule_8 --friend--> KaSourceModule_1
+  KaSourceModule_8 --friend--> KaSourceModule_7
+  KaSourceModule_8 --friend--> KaSourceModule_9
+  KaSourceModule_10 --dependsOn--> KaSourceModule_2
   KaSourceModule_3 --dependsOn--> KaSourceModule_1
-  KaSourceModule_3 --dependsOn--> KaSourceModule_5
-  KaSourceModule_4 --dependsOn--> KaSourceModule_1
-  KaSourceModule_4 --dependsOn--> KaSourceModule_5
+  KaSourceModule_4 --dependsOn--> KaSourceModule_2
   KaSourceModule_5 --dependsOn--> KaSourceModule_1
+  KaSourceModule_5 --dependsOn--> KaSourceModule_9
+  KaSourceModule_6 --dependsOn--> KaSourceModule_10
+  KaSourceModule_6 --dependsOn--> KaSourceModule_2
+  KaSourceModule_7 --dependsOn--> KaSourceModule_1
+  KaSourceModule_7 --dependsOn--> KaSourceModule_9
+  KaSourceModule_8 --dependsOn--> KaSourceModule_10
+  KaSourceModule_8 --dependsOn--> KaSourceModule_2
+  KaSourceModule_9 --dependsOn--> KaSourceModule_1
   linkStyle 0 stroke:black
   linkStyle 1 stroke:black
   linkStyle 2 stroke:black
   linkStyle 3 stroke:black
   linkStyle 4 stroke:black
   linkStyle 5 stroke:black
-  linkStyle 6 stroke:#8967B3
-  linkStyle 7 stroke:#8967B3
-  linkStyle 8 stroke:#8967B3
-  linkStyle 9 stroke:#8967B3
-  linkStyle 10 stroke:#8967B3
-  linkStyle 11 stroke:#8967B3
+  linkStyle 6 stroke:black
+  linkStyle 7 stroke:black
+  linkStyle 8 stroke:black
+  linkStyle 9 stroke:black
+  linkStyle 10 stroke:black
+  linkStyle 11 stroke:black
+  linkStyle 12 stroke:black
+  linkStyle 13 stroke:black
+  linkStyle 14 stroke:black
+  linkStyle 15 stroke:black
+  linkStyle 16 stroke:black
+  linkStyle 17 stroke:black
+  linkStyle 18 stroke:black
+  linkStyle 19 stroke:black
+  linkStyle 20 stroke:black
+  linkStyle 21 stroke:black
+  linkStyle 22 stroke:black
+  linkStyle 23 stroke:#E6C767
+  linkStyle 24 stroke:#E6C767
+  linkStyle 25 stroke:#E6C767
+  linkStyle 26 stroke:#E6C767
+  linkStyle 27 stroke:#E6C767
+  linkStyle 28 stroke:#E6C767
+  linkStyle 29 stroke:#E6C767
+  linkStyle 30 stroke:#E6C767
+  linkStyle 31 stroke:#E6C767
+  linkStyle 32 stroke:#E6C767
+  linkStyle 33 stroke:#E6C767
+  linkStyle 34 stroke:#8967B3
+  linkStyle 35 stroke:#8967B3
+  linkStyle 36 stroke:#8967B3
+  linkStyle 37 stroke:#8967B3
+  linkStyle 38 stroke:#8967B3
+  linkStyle 39 stroke:#8967B3
+  linkStyle 40 stroke:#8967B3
+  linkStyle 41 stroke:#8967B3
+  linkStyle 42 stroke:#8967B3
+  linkStyle 43 stroke:#8967B3
+  linkStyle 44 stroke:#8967B3
+  linkStyle 45 stroke:#8967B3

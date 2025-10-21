@@ -54,7 +54,7 @@ internal class DirtBuilder {
     val scopes: Collection<VcsDirtyScopeBuilder>
     if (isEverythingDirty) {
       val allScopes = mutableMapOf<AbstractVcs, VcsDirtyScopeBuilder>()
-      for (root in ProjectLevelVcsManager.getInstance(project).allVcsRoots) {
+      for (root in ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
         val vcs = root.vcs
         val path = root.path
         if (vcs != null) {

@@ -7,6 +7,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import static java.util.Collections.emptyList;
 /**
  * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public class BintrayEndpoint {
 

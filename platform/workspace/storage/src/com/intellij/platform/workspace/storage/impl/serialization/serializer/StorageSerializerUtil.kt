@@ -298,7 +298,7 @@ internal class StorageSerializerUtil(
       val data = kryo.readClassAndObject(input) as Map<SerializableEntityId, Set<SymbolicEntityId<*>>>
       val index = MutableMultimapStorageIndex.from(ImmutableMultimapStorageIndex())
       data.forEach { (key, value) ->
-        index.index(key.toEntityId(classCache), value)
+        index.populateIndex(key.toEntityId(classCache), value)
       }
       return index.toImmutable()
     }

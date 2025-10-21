@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
@@ -27,9 +13,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ui.UIUtil;
 
-public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> implements AccessLevelProvider,
-                                                                                                                      ColoredItemPresentation,
-                                                                                                                      LocationPresentation {
+public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends PsiTreeElementBase<Value> 
+  implements AccessLevelProvider, ColoredItemPresentation, LocationPresentation {
+
   private final boolean myIsInherited;
   protected String myLocation;
 
@@ -44,14 +30,14 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
 
   public boolean isPublic() {
     Value element = getElement();
-    return !(element instanceof PsiModifierListOwner) || ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PUBLIC);
+    return !(element instanceof PsiModifierListOwner owner) || owner.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
   @Override
   public int getAccessLevel() {
     Value element = getElement();
-    if (!(element instanceof PsiModifierListOwner)) return PsiUtil.ACCESS_LEVEL_PUBLIC;
-    final PsiModifierList modifierList = ((PsiModifierListOwner)element).getModifierList();
+    if (!(element instanceof PsiModifierListOwner owner)) return PsiUtil.ACCESS_LEVEL_PUBLIC;
+    final PsiModifierList modifierList = owner.getModifierList();
     if (modifierList == null) {
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
@@ -69,8 +55,8 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
     if (isInherited()) {
       if (myLocation == null) {
         final Value element = getElement();
-        if (element instanceof PsiMember) {
-          final PsiClass cls = ((PsiMember)element).getContainingClass();
+        if (element instanceof PsiMember member) {
+          final PsiClass cls = member.getContainingClass();
           if (cls == null) {
             myLocation = "";
           } else {
@@ -97,17 +83,16 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    final JavaClassTreeElementBase that = (JavaClassTreeElementBase)o;
+    final JavaClassTreeElementBase<?> that = (JavaClassTreeElementBase<?>)o;
 
-    if (myIsInherited != that.myIsInherited) return false;
-
-    return true;
+    return myIsInherited == that.myIsInherited;
   }
 
   @Override
   public TextAttributesKey getTextAttributesKey() {
+    if (isInherited()) return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
     try {
       return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
     }
@@ -118,6 +103,6 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
 
   private boolean isDeprecated(){
     final Value element = getElement();
-    return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
+    return element instanceof PsiDocCommentOwner owner && owner.isDeprecated();
  }
 }

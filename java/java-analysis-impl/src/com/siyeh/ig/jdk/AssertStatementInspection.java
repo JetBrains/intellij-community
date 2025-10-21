@@ -38,7 +38,7 @@ public final class AssertStatementInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AssertStatementVisitor();
   }
 

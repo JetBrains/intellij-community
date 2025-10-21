@@ -77,8 +77,8 @@ final class ResourceVersions implements PersistentStateComponent<ResourceVersion
       synchronized (storedState.pluginIdToVersion) {
         Map<String, String> pluginIdToVersion = new HashMap<>(storedState.pluginIdToVersion.size());
         for (String pluginIdString : storedState.pluginIdToVersion.keySet()) {
-          PluginId pluginId = PluginId.findId(pluginIdString);
-          IdeaPluginDescriptor plugin = pluginId == null ? null : PluginManager.getInstance().findEnabledPlugin(pluginId);
+          PluginId pluginId = PluginId.getId(pluginIdString);
+          IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
           if (plugin != null) {
             pluginIdToVersion.put(pluginIdString, storedState.pluginIdToVersion.get(pluginIdString));
           }

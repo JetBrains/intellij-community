@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -153,7 +154,7 @@ abstract class ModuleManagerBridgeImpl(
         else {
           modules.map { it.name }
         }
-        AutomaticModuleUnloader.getInstance(project).setLoadedModules(moduleNames)
+        project.service<AutomaticModuleUnloader>().setLoadedModules(moduleNames)
       }
     }
   }
@@ -249,15 +250,18 @@ abstract class ModuleManagerBridgeImpl(
   protected open fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>) {
   }
 
-  final override fun calculateUnloadModules(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
+  final override fun calculateUnloadModules(
+    builder: MutableEntityStorage,
+    unloadedEntityBuilder: MutableEntityStorage,
+  ): Pair<List<String>, List<String>> {
     val currentModuleNames = HashSet<String>()
     builder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
     unloadedEntityBuilder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
-    return AutomaticModuleUnloader.getInstance(project).calculateNewModules(currentModuleNames, builder, unloadedEntityBuilder)
+    return project.service<AutomaticModuleUnloader>().calculateNewModules(currentModuleNames, builder, unloadedEntityBuilder)
   }
 
   final override fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {
-    AutomaticModuleUnloader.getInstance(project).updateUnloadedStorage(modulesToLoad, modulesToUnload)
+    project.service<AutomaticModuleUnloader>().updateUnloadedStorage(modulesToLoad, modulesToUnload)
   }
 
   final override fun getModifiableModel(): ModifiableModuleModel {

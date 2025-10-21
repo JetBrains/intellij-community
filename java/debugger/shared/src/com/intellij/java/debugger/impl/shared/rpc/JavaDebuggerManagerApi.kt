@@ -26,6 +26,16 @@ interface JavaDebuggerManagerApi : RemoteApi<Unit> {
 @ApiStatus.Internal
 @Serializable
 data class JavaDebuggerSessionDto(
-  val isAttachedInitial: Boolean,
-  val isAttachedFlow: RpcFlow<Boolean>,
+  val initialState: JavaSessionState,
+  val stateFlow: RpcFlow<JavaSessionState>,
+  val areRenderersMutedInitial: Boolean,
+  val areRenderersMutedFlow: RpcFlow<Boolean>,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class JavaSessionState(
+  val isAttached: Boolean,
+  val isEvaluationPossible: Boolean,
+)
+

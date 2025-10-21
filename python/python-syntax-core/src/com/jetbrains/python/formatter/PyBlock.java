@@ -214,7 +214,7 @@ public class PyBlock implements ASTBlock {
     }
   }
 
-  private @NotNull PyBlock buildSubBlock(@NotNull ASTNode child) {
+  protected @NotNull PyBlock buildSubBlock(@NotNull ASTNode child) {
     final IElementType parentType = myNode.getElementType();
 
     final ASTNode grandParentNode = myNode.getTreeParent();
@@ -1196,7 +1196,7 @@ public class PyBlock implements ASTBlock {
     return null;
   }
 
-  private @NotNull Indent getChildIndent(int newChildIndex) {
+  protected @NotNull Indent getChildIndent(int newChildIndex) {
     final IElementType parentType = myNode.getElementType();
     final ASTNode afterNode = getAfterNode(newChildIndex);
     final ASTNode lastChild = getLastNonSpaceChild(myNode, false);

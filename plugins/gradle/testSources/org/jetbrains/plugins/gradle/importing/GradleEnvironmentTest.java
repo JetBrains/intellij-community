@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -54,13 +55,13 @@ public class GradleEnvironmentTest extends GradleImportingTestCase {
       ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
         gradleEnv.append(text);
       }
     };
     notificationManager.addNotificationListener(listener);
     try {
-      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID, null,
+      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, getMyProject(), GradleConstants.SYSTEM_ID, null,
                                  ProgressExecutionMode.NO_PROGRESS_SYNC);
     }
     finally {

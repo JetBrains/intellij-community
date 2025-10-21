@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 
 /**
@@ -31,6 +32,14 @@ internal class ApplicationCommandCompletionService : PersistentStateComponent<Ap
   fun commandCompletionEnabled(): Boolean {
     return myState.isEnabled()
   }
+
+  fun useGroupEnabled(): Boolean {
+    return myState.useGroup
+  }
+
+  fun readOnlyEnabled(): Boolean {
+    return myState.myReadOnlyEnabled
+  }
 }
 
 @ApiStatus.Internal
@@ -44,12 +53,34 @@ class CommandCompletionSettingsService {
   fun commandCompletionEnabled(): Boolean {
     return ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()
   }
+
+  fun groupEnabled(): Boolean {
+    return ApplicationCommandCompletionService.getInstance().useGroupEnabled()
+  }
+
+  fun readOnlyEnabled(): Boolean {
+    return ApplicationCommandCompletionService.getInstance().readOnlyEnabled()
+  }
+
+  @TestOnly
+  fun groupEnabled(enabled: Boolean) {
+    val service = ApplicationCommandCompletionService.getInstance()
+    service.state.useGroup = enabled
+  }
+
+  @TestOnly
+  fun readOnlyEnabled(enabled: Boolean) {
+    val service = ApplicationCommandCompletionService.getInstance()
+    service.state.myReadOnlyEnabled = enabled
+  }
 }
 
 @ApiStatus.Internal
 internal class AppCommandCompletionSettings(
   var showCounts: Int = 0,
   var myEnabled: CommandCompletionEnabled = CommandCompletionEnabled.FROM_REGISTRY,
+  var myReadOnlyEnabled: Boolean = false,
+  var useGroup: Boolean = true,
 ) {
 
   fun isEnabled(): Boolean {
@@ -74,8 +105,7 @@ internal class AppCommandCompletionSettings(
   private fun calculateFromRegistry(): Boolean {
     if (!PlatformUtils.isIntelliJ()) return false
     return Registry.`is`("ide.completion.command.force.enabled") ||
-           (ApplicationManager.getApplication().isInternal() &&
-            !ApplicationManager.getApplication().isUnitTestMode() &&
+           (!ApplicationManager.getApplication().isUnitTestMode() &&
             Registry.`is`("ide.completion.command.enabled"))
   }
 }

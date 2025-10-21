@@ -6,6 +6,9 @@
       <xy x="20" y="20" width="537" height="60"/>
     </constraints>
     <properties/>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+    </clientProperties>
     <border type="etched" title-resource-bundle="messages/XDebuggerBundle" title-key="suspend.policy.panel.title"/>
     <children>
       <hspacer id="d9eab">

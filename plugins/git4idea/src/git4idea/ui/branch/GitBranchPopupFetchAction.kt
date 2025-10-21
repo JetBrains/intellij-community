@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupActions
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupActions
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.fetch.GitFetchSupport

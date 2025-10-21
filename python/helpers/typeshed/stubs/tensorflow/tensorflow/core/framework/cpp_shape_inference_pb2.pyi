@@ -50,7 +50,11 @@ class CppShapeInferenceResult(google.protobuf.message.Message):
         SHAPE_AND_TYPE_FIELD_NUMBER: builtins.int
         is_set: builtins.bool
         @property
-        def shape_and_type(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CppShapeInferenceResult.HandleShapeAndType]:
+        def shape_and_type(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___CppShapeInferenceResult.HandleShapeAndType
+        ]:
             """Only valid if <is_set>."""
 
         def __init__(
@@ -87,13 +91,20 @@ class CppShapeInferenceInputsNeeded(google.protobuf.message.Message):
     @property
     def input_tensors_needed(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
     @property
-    def input_tensors_as_shapes_needed(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
+    def input_tensors_as_shapes_needed(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
     def __init__(
         self,
         *,
         input_tensors_needed: collections.abc.Iterable[builtins.int] | None = ...,
         input_tensors_as_shapes_needed: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["input_tensors_as_shapes_needed", b"input_tensors_as_shapes_needed", "input_tensors_needed", b"input_tensors_needed"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "input_tensors_as_shapes_needed", b"input_tensors_as_shapes_needed", "input_tensors_needed", b"input_tensors_needed"
+        ],
+    ) -> None: ...
 
 global___CppShapeInferenceInputsNeeded = CppShapeInferenceInputsNeeded

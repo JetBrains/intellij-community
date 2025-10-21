@@ -31,6 +31,11 @@ interface XLightLineBreakpointProxy {
 
 @ApiStatus.Internal
 sealed interface XLineBreakpointHighlighterRange {
-  object Unavailable : XLineBreakpointHighlighterRange
-  data class Available(val range: TextRange?) : XLineBreakpointHighlighterRange
+  object Unavailable : XLineBreakpointHighlighterRange {
+    override fun toString(): String = "[unavailable]"
+  }
+
+  data class Available(val range: TextRange?) : XLineBreakpointHighlighterRange {
+    override fun toString(): String = range?.toString() ?: "[full line]"
+  }
 }

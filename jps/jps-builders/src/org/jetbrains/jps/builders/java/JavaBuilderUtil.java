@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 public final class JavaBuilderUtil {
 
@@ -437,7 +438,8 @@ public final class JavaBuilderUtil {
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
       .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()) && !LibraryDef.isLibraryPath(s))
-      .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()));
+      .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()))
+      .withLogConsumer(LogConsumer.createJULogConsumer(Level.FINE));
     DifferentiateParameters differentiateParams = params.get();
     DifferentiateResult diffResult = dependencyGraph.differentiate(delta, differentiateParams);
 

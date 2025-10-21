@@ -30,9 +30,8 @@ public final class ArrayUtilRt {
 
   private ArrayUtilRt() { }
 
-  @NotNull
   @Contract(pure=true)
-  public static String[] toStringArray(@Nullable Collection<String> collection) {
+  public static String @NotNull [] toStringArray(@Nullable Collection<String> collection) {
     return collection == null || collection.isEmpty()
            ? EMPTY_STRING_ARRAY : collection.toArray(EMPTY_STRING_ARRAY);
   }
@@ -46,12 +45,12 @@ public final class ArrayUtilRt {
    *         these elements.
    */
   @Contract(pure = true)
-  public static <T> int find(@NotNull T[] src, @Nullable T obj) {
+  public static <T> int find(T @NotNull [] src, @Nullable T obj) {
     return indexOf(src, obj, 0, src.length);
   }
 
   @Contract(pure = true)
-  public static <T> int indexOf(@NotNull T[] src, @Nullable T obj, int start, int end) {
+  public static <T> int indexOf(T @NotNull [] src, @Nullable T obj, int start, int end) {
     if (obj == null) {
       for (int i = start; i < end; i++) {
         if (src[i] == null) return i;

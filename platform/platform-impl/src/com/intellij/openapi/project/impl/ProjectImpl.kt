@@ -71,7 +71,7 @@ private val LOG = logger<ProjectImpl>()
 private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
 
 @Internal
-open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
+open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProject: Boolean, projectName: String?)
   : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
   companion object {
     @Internal
@@ -116,8 +116,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   var isTemporarilyDisposed: Boolean = false
     private set
 
-  private val isLight: Boolean
-
   private var cachedName: String?
 
   private val componentStoreValue = SynchronizedClearableLazy {
@@ -136,9 +134,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
 
     cachedName = projectName
-    // a light project may be changed later during test, so we need to remember its initial state
-    @Suppress("TestOnlyProblems")
-    isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
 
   final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
@@ -186,7 +181,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     if (result == null) {
       // ProjectPathMacroManager adds macro PROJECT_NAME_MACRO_NAME and so, a project name is required on each load of configuration file.
       // So the name is computed very early anyway.
-      result = componentStore.projectName
+      result = componentStore.storeDescriptor.projectName
       cachedName = result
     }
     return result
@@ -223,6 +218,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.invariantSeparatorsPathString
 
   final override fun getProjectFile(): VirtualFile? {
+    //MAYBE RC: cache result same way as in getWorkspaceFile()?
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
   }
 
@@ -232,17 +228,38 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
   }
 
-  final override fun getBasePath(): String = componentStore.projectBasePath.invariantSeparatorsPathString
+  final override fun getBasePath(): String {
+    return componentStore.storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString
+  }
 
-  final override fun getPresentableUrl(): String = componentStore.presentableUrl
+  final override fun getPresentableUrl(): String = componentStore.storeDescriptor.presentableUrl.invariantSeparatorsPathString
 
   override fun getLocationHash(): String = componentStore.locationHash
 
-  final override fun getWorkspaceFile(): VirtualFile? {
-    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)
+
+  /** Caches [Path] -(via [LocalFileSystem.findFileByNioFile])-> [VirtualFile]  resolution result */
+  private class CachedVirtualFile(@JvmField val path: Path){
+    val resolvedVirtualFile: VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(path)
   }
 
-  final override fun isLight(): Boolean = isLight
+  /** Cache last resolved [getWorkspaceFile]: [LocalFileSystem.findFileByNioFile] call is not cheap, and workspacePath is rarely changed */
+  @Volatile
+  private var cachedWorkspaceFile: CachedVirtualFile? = null
+
+  final override fun getWorkspaceFile(): VirtualFile? {
+    val workspacePath = componentStore.workspacePath
+
+    val cached = this.cachedWorkspaceFile
+    if (cached?.path == workspacePath) {
+      return cached.resolvedVirtualFile
+    }
+    val cachedVirtualFile = CachedVirtualFile(workspacePath)
+    this.cachedWorkspaceFile = cachedVirtualFile
+
+    return cachedVirtualFile.resolvedVirtualFile
+  }
+
+  final override fun isLight(): Boolean = isLightTestProject
 
   @Internal
   final override fun activityNamePrefix(): String = "project "
@@ -335,7 +352,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   @TestOnly
   fun setLightProjectName(name: String) {
-    assert(isLight)
+    assert(isLightTestProject)
     setProjectName(name)
     storeCreationTrace()
   }
@@ -360,7 +377,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       }
     }
     val disposedStr = if (isDisposed) " (disposed)" else ""
-    return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr"
+    val creationTrace = if (ApplicationManager.getApplication().isUnitTestMode) creationTrace?.let {"\n"+it} ?:"" else ""
+    return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr$creationTrace"
   }
 
   override fun isOpen(): Boolean {

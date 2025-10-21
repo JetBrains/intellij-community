@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -9,6 +9,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.newui.PluginManagerSession;
+import com.intellij.ide.plugins.newui.PluginManagerSessionService;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -21,7 +23,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +41,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 import static com.intellij.ide.startup.StartupActionScriptManager.*;
@@ -86,6 +89,7 @@ public final class PluginInstaller {
     if (pluginDescriptor.isBundled()) {
       throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
     }
+    LOG.debug("Scheduling uninstallation of plugin " + pluginDescriptor + " after restart");
     // Make sure this method does not interfere with installAfterRestart by adding the DeleteCommand to the beginning of the script.
     // This way plugin installation always takes place after plugin uninstallation.
     addActionCommandsToBeginning(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
@@ -116,6 +120,7 @@ public final class PluginInstaller {
     var uninstalledWithoutRestart = !pluginDescriptor.isEnabled() || unloadDynamicPlugin(parentComponent, pluginDescriptor, isUpdate);
     if (uninstalledWithoutRestart) {
       try {
+        LOG.debug("Deleting dynamic plugin from disk: " + pluginDescriptor.getPluginPath());
         NioFiles.deleteRecursively(pluginDescriptor.getPluginPath());
       }
       catch (IOException e) {
@@ -151,6 +156,7 @@ public final class PluginInstaller {
     @Nullable Path existingPlugin,
     boolean deleteSourceFile
   ) throws IOException {
+    LOG.debug("Scheduling installation of plugin " + descriptor + " after restart");
     var commands = new ArrayList<ActionCommand>();
 
     if (existingPlugin != null) {
@@ -198,28 +204,28 @@ public final class PluginInstaller {
   }
 
   public static @NotNull Path unpackPlugin(@NotNull Path sourceFile, @NotNull Path targetPath) throws IOException {
+    LOG.debug("Unpacking " + sourceFile + " to " + targetPath);
     Path target;
     if (sourceFile.getFileName().toString().endsWith(".jar")) {
-      target = targetPath.resolve(sourceFile.getFileName());
-      FileUtilRt.copy(sourceFile.toFile(), target.toFile());
+      target = targetPath.resolve(sourceFile.getFileName().toString());
+      NioFiles.createDirectories(targetPath);
+      Files.copy(sourceFile, target, StandardCopyOption.REPLACE_EXISTING);
     }
     else {
       target = targetPath.resolve(rootEntryName(sourceFile));
       NioFiles.deleteRecursively(target);
-      new Decompressor.Zip(sourceFile).extract(targetPath);
+      new Decompressor.Zip(sourceFile).withZipExtensions().extract(targetPath);
     }
     return target;
   }
 
   public static String rootEntryName(@NotNull Path zip) throws IOException {
-    try (ZipFile zipFile = new ZipFile(zip.toFile())) {
-      var entries = zipFile.entries();
-      while (entries.hasMoreElements()) {
-        ZipEntry zipEntry = entries.nextElement();
+    try (var zipFile = new JBZipFile(zip)) {
+      for (var zipEntry : zipFile.getEntries()) {
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash is found anywhere in the path
-        String name = zipEntry.getName();
-        int i = name.indexOf('/');
+        var name = zipEntry.getName();
+        var i = name.indexOf('/');
         if (i > 0) {
           return name.substring(0, i);
         }
@@ -244,7 +250,7 @@ public final class PluginInstaller {
   ) {
     try {
       var pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(file, null);
+        return PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
       }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
 
       if (pluginDescriptor == null) {
@@ -321,6 +327,13 @@ public final class PluginInstaller {
       var isRestartRequired = oldFile != null ||
                               !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) ||
                               operation.isRestartRequired();
+      for (PendingDynamicPluginInstall dynamicPluginInstall : operation.getPendingDynamicPluginInstalls()) {
+        var installed = installAndLoadDynamicPlugin(dynamicPluginInstall.getFile(), parent, dynamicPluginInstall.getPluginDescriptor());
+        if (!installed) {
+          isRestartRequired = true;
+        }
+      }
+
       if (isRestartRequired) {
         installAfterRestart(pluginDescriptor, file, oldFile, false);
       }
@@ -351,6 +364,12 @@ public final class PluginInstaller {
 
       PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, installedPlugins);
 
+      if (!isRestartRequired) {
+        PluginManagerSession session = PluginManagerSessionService.getInstance().getSession(model.mySessionId.toString());
+        if (session != null) {
+          session.getDynamicPluginsToInstall().put(pluginDescriptor.getPluginId(), new PendingDynamicPluginInstall(file, pluginDescriptor));
+        }
+      }
       callback.accept(new PluginInstallCallbackData(file, pluginDescriptor, isRestartRequired));
       for (var callbackData : installedDependencies) {
         if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {

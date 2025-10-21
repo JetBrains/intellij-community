@@ -15,4 +15,5 @@ interface GradleInitScriptParameters {
   val mainClass: String
   val javaExePath: String
   val sourceSetName: String
+  val javaModuleName: String?
 }

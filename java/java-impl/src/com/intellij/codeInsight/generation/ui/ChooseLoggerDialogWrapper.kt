@@ -15,12 +15,12 @@ import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
 
-class ChooseLoggerDialogWrapper(
+public class ChooseLoggerDialogWrapper(
   private val project: Project,
   private val availableLoggers: List<JvmLogger>,
   selectedLogger: JvmLogger,
 ) : DialogWrapper(project, true) {
-  var selectedLogger: JvmLogger = selectedLogger
+  public var selectedLogger: JvmLogger = selectedLogger
     private set
 
   private lateinit var comboBox: Cell<ComboBox<JvmLogger>>
@@ -32,7 +32,7 @@ class ChooseLoggerDialogWrapper(
   }
 
   @TestOnly
-  fun setComboBoxItem(item: JvmLogger) {
+  public fun setComboBoxItem(item: JvmLogger) {
     comboBox.component.item = item
   }
 

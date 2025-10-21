@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any
 
 def constant_to_class_kind(value): ...
@@ -13,9 +12,9 @@ class BaseServerInfo:
     raw: Any
     def __init__(self, raw_attributes) -> None: ...
     @classmethod
-    def from_json(cls, json_definition, schema: Incomplete | None = None, custom_formatter: Incomplete | None = None): ...
+    def from_json(cls, json_definition, schema=None, custom_formatter=None): ...
     @classmethod
-    def from_file(cls, target, schema: Incomplete | None = None, custom_formatter: Incomplete | None = None): ...
+    def from_file(cls, target, schema=None, custom_formatter=None): ...
     def to_file(self, target, indent: int = 4, sort: bool = True) -> None: ...
     def to_json(self, indent: int = 4, sort: bool = True): ...
 
@@ -58,14 +57,7 @@ class BaseObjectInfo:
     experimental: Any
     raw_definition: Any
     def __init__(
-        self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
-        obsolete: bool = False,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        self, oid=None, name=None, description=None, obsolete: bool = False, extensions=None, experimental=None, definition=None
     ) -> None: ...
     @property
     def oid_info(self): ...
@@ -76,28 +68,28 @@ class MatchingRuleInfo(BaseObjectInfo):
     syntax: Any
     def __init__(
         self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
+        oid=None,
+        name=None,
+        description=None,
         obsolete: bool = False,
-        syntax: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        syntax=None,
+        extensions=None,
+        experimental=None,
+        definition=None,
     ) -> None: ...
 
 class MatchingRuleUseInfo(BaseObjectInfo):
     apply_to: Any
     def __init__(
         self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
+        oid=None,
+        name=None,
+        description=None,
         obsolete: bool = False,
-        apply_to: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        apply_to=None,
+        extensions=None,
+        experimental=None,
+        definition=None,
     ) -> None: ...
 
 class ObjectClassInfo(BaseObjectInfo):
@@ -107,17 +99,17 @@ class ObjectClassInfo(BaseObjectInfo):
     may_contain: Any
     def __init__(
         self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
+        oid=None,
+        name=None,
+        description=None,
         obsolete: bool = False,
-        superior: Incomplete | None = None,
-        kind: Incomplete | None = None,
-        must_contain: Incomplete | None = None,
-        may_contain: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        superior=None,
+        kind=None,
+        must_contain=None,
+        may_contain=None,
+        extensions=None,
+        experimental=None,
+        definition=None,
     ) -> None: ...
 
 class AttributeTypeInfo(BaseObjectInfo):
@@ -135,34 +127,27 @@ class AttributeTypeInfo(BaseObjectInfo):
     optional_in: Any
     def __init__(
         self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
+        oid=None,
+        name=None,
+        description=None,
         obsolete: bool = False,
-        superior: Incomplete | None = None,
-        equality: Incomplete | None = None,
-        ordering: Incomplete | None = None,
-        substring: Incomplete | None = None,
-        syntax: Incomplete | None = None,
-        min_length: Incomplete | None = None,
+        superior=None,
+        equality=None,
+        ordering=None,
+        substring=None,
+        syntax=None,
+        min_length=None,
         single_value: bool = False,
         collective: bool = False,
         no_user_modification: bool = False,
-        usage: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        usage=None,
+        extensions=None,
+        experimental=None,
+        definition=None,
     ) -> None: ...
 
 class LdapSyntaxInfo(BaseObjectInfo):
-    def __init__(
-        self,
-        oid: Incomplete | None = None,
-        description: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
-    ) -> None: ...
+    def __init__(self, oid=None, description=None, extensions=None, experimental=None, definition=None) -> None: ...
 
 class DitContentRuleInfo(BaseObjectInfo):
     auxiliary_classes: Any
@@ -171,17 +156,17 @@ class DitContentRuleInfo(BaseObjectInfo):
     not_contains: Any
     def __init__(
         self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
+        oid=None,
+        name=None,
+        description=None,
         obsolete: bool = False,
-        auxiliary_classes: Incomplete | None = None,
-        must_contain: Incomplete | None = None,
-        may_contain: Incomplete | None = None,
-        not_contains: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        auxiliary_classes=None,
+        must_contain=None,
+        may_contain=None,
+        not_contains=None,
+        extensions=None,
+        experimental=None,
+        definition=None,
     ) -> None: ...
 
 class DitStructureRuleInfo(BaseObjectInfo):
@@ -189,15 +174,15 @@ class DitStructureRuleInfo(BaseObjectInfo):
     name_form: Any
     def __init__(
         self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
+        oid=None,
+        name=None,
+        description=None,
         obsolete: bool = False,
-        name_form: Incomplete | None = None,
-        superior: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        name_form=None,
+        superior=None,
+        extensions=None,
+        experimental=None,
+        definition=None,
     ) -> None: ...
 
 class NameFormInfo(BaseObjectInfo):
@@ -206,14 +191,14 @@ class NameFormInfo(BaseObjectInfo):
     may_contain: Any
     def __init__(
         self,
-        oid: Incomplete | None = None,
-        name: Incomplete | None = None,
-        description: Incomplete | None = None,
+        oid=None,
+        name=None,
+        description=None,
         obsolete: bool = False,
-        object_class: Incomplete | None = None,
-        must_contain: Incomplete | None = None,
-        may_contain: Incomplete | None = None,
-        extensions: Incomplete | None = None,
-        experimental: Incomplete | None = None,
-        definition: Incomplete | None = None,
+        object_class=None,
+        must_contain=None,
+        may_contain=None,
+        extensions=None,
+        experimental=None,
+        definition=None,
     ) -> None: ...

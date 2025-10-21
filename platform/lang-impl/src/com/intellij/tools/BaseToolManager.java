@@ -15,29 +15,34 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public abstract class BaseToolManager<T extends Tool> implements Disposable {
-  private final SchemeManagerFactory myFactory;
-  private final SchemeManager<ToolsGroup<T>> mySchemeManager;
+  private final SchemeManagerFactory factory;
+  private final SchemeManager<ToolsGroup<T>> schemeManager;
 
   public BaseToolManager(@NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
-    myFactory = factory;
+    this.factory = factory;
     //noinspection AbstractMethodCallInConstructor
-    mySchemeManager =
-      factory.create(schemePath, createProcessor(), presentableName, RoamingType.DEFAULT, name -> FileUtil.sanitizeFileName(name, false),
-                     null, null, true, SettingsCategory.OTHER);
-    mySchemeManager.loadSchemes();
+    schemeManager = factory.create(schemePath,
+                                   createProcessor(),
+                                   presentableName,
+                                   RoamingType.DEFAULT,
+                                   name -> FileUtil.sanitizeFileName(name, false),
+                                   null,
+                                   null,
+                                   true,
+                                   SettingsCategory.OTHER);
+    schemeManager.loadSchemes();
   }
 
   protected abstract SchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> createProcessor();
@@ -47,21 +52,21 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
   }
 
   public static @Nullable String convertString(String s) {
-    return StringUtil.nullize(s, true);
+    return Strings.nullize(s, true);
   }
 
   public List<T> getTools() {
     List<T> result = new SmartList<>();
-    for (ToolsGroup<T> group : mySchemeManager.getAllSchemes()) {
+    for (ToolsGroup<T> group : schemeManager.getAllSchemes()) {
       result.addAll(group.getElements());
     }
     return result;
   }
 
   public @NotNull List<T> getTools(@NotNull String group) {
-    ToolsGroup<T> groupByName = mySchemeManager.findSchemeByName(group);
+    ToolsGroup<T> groupByName = schemeManager.findSchemeByName(group);
     if (groupByName == null) {
-      return Collections.emptyList();
+      return List.of();
     }
     else {
       return groupByName.getElements();
@@ -69,11 +74,11 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
   }
 
   public List<ToolsGroup<T>> getGroups() {
-    return mySchemeManager.getAllSchemes();
+    return schemeManager.getAllSchemes();
   }
 
   public void setTools(@NotNull List<ToolsGroup<T>> tools) {
-    mySchemeManager.setSchemes(tools);
+    schemeManager.setSchemes(tools);
     ActionManagerEx actionManager = getActionManager();
     if (actionManager != null) {
       registerActions(actionManager.asActionRuntimeRegistrar());
@@ -87,9 +92,9 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     // register
     // to prevent exception if 2 or more targets have the same name
     Set<String> registeredIds = new HashSet<>();
-    for (ToolsGroup<T> group : mySchemeManager.getAllSchemes()) {
+    for (ToolsGroup<T> group : schemeManager.getAllSchemes()) {
       String groupName = group.getName();
-      if (!StringUtil.isEmptyOrSpaces(groupName)) {
+      if (!Strings.isEmptyOrSpaces(groupName)) {
         String groupId = getGroupIdPrefix() + groupName;
         if (registeredIds.add(groupId)) {
           ToolActionGroup<T> actionGroup = new ToolActionGroup<>(group);
@@ -108,11 +113,10 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     actionRegistrar.registerAction(getRootGroupId(), new ActionGroup() {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        ActionManager am = e != null ? e.getActionManager() : ActionManager.getInstance();
-        return ContainerUtil.mapNotNull(mySchemeManager.getAllSchemes(), o -> {
+        ActionManager am = e == null ? ActionManager.getInstance() : e.getActionManager();
+        return ContainerUtil.mapNotNull(schemeManager.getAllSchemes(), o -> {
             String groupName = o.getName();
-            return !StringUtil.isEmptyOrSpaces(groupName) ? am.getAction(getGroupIdPrefix() + groupName) :
-                   new ToolActionGroup<>(o);
+            return Strings.isEmptyOrSpaces(groupName) ? new ToolActionGroup<>(o) : am.getAction(getGroupIdPrefix() + groupName);
           })
           .toArray(EMPTY_ARRAY);
       }
@@ -134,7 +138,7 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     return getClass().getName() + "_Group";
   }
 
-  protected void unregisterActions(@NotNull ActionRuntimeRegistrar actionManager) {
+  protected final void unregisterActions(@NotNull ActionRuntimeRegistrar actionManager) {
     actionManager.unregisterActionByIdPrefix(getActionIdPrefix());
     actionManager.unregisterActionByIdPrefix(getGroupIdPrefix());
     actionManager.unregisterActionByIdPrefix(getRootGroupId());
@@ -142,22 +146,24 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
 
   @Override
   public void dispose() {
-    myFactory.dispose(mySchemeManager);
+    factory.dispose(schemeManager);
   }
 
-  private static class ToolActionGroup<T extends Tool> extends ActionGroup {
+  private static final class ToolActionGroup<T extends Tool> extends ActionGroup {
     final ToolsGroup<T> group;
 
     ToolActionGroup(@NotNull ToolsGroup<T> group) { this.group = group; }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      ActionManager am = e != null ? e.getActionManager() : ActionManager.getInstance();
+      ActionManager am = e == null ? ActionManager.getInstance() : e.getActionManager();
       return ContainerUtil.mapNotNull(group.getElements(), o -> {
         // We used to have a bunch of IFs checking whether we want to show the given tool in the given event.getPlace().
-        // But now from the UX point of view we believe we'd better remove a bunch of checkboxes from the Edit External Tool dialog.
+        // But now from the UX point of view, we believe we'd better remove a bunch of checkboxes from the Edit External Tool dialog.
         // See IDEA-190856 for discussion.
-        if (!o.isEnabled()) return null;
+        if (!o.isEnabled()) {
+          return null;
+        }
         return am.getAction(o.getActionId());
       }).toArray(EMPTY_ARRAY);
     }

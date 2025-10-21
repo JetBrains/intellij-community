@@ -208,7 +208,7 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
 
   public void testLineMarkersDoNotBlinkOnBackSpaceRightBeforeMethodIdentifier() {
     configureByText(JavaFileType.INSTANCE, """
-      package x;\s
+      package x;
       class  <caret>ToRun{
         public static void main(String[] args) {
         }

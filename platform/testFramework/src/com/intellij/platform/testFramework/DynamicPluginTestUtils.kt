@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework
 
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.plugins.*
@@ -69,7 +70,9 @@ fun loadPluginWithText(
 
   return Disposable {
     val reason = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)
-    unloadAndUninstallPlugin(descriptor)
+    invokeAndWaitIfNeeded {
+      unloadAndUninstallPlugin(descriptor)
+    }
     assertThat(reason).isNull()
   }
 }

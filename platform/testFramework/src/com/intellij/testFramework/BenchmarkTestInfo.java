@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -25,6 +25,16 @@ public interface BenchmarkTestInfo {
   // to warn about not calling .start() in the end
   @Contract(pure = true)
   BenchmarkTestInfo warmupIterations(int iterations);
+
+  /**
+   * Sets {@link com.intellij.openapi.application.ex.ApplicationManagerEx#setInStressTest(boolean)} to true before the test,
+   * restores original value after.
+   * inStressTest disables many debug-level checks, and rises logLevel from DEBUG to INFO, which makes benchmark run much
+   * closer to production run, thus making benchmark results more representative.
+   */
+  // to warn about not calling .start() in the end
+  @Contract(pure = true)
+  BenchmarkTestInfo runAsStressTest();
 
   String getUniqueTestName();
 

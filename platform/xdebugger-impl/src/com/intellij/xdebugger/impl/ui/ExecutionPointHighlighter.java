@@ -57,7 +57,7 @@ public class ExecutionPointHighlighter {
   /**
    * @deprecated This constructor doesn't subscribe to events for updating itself. Use the overload taking a {@link Disposable}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ExecutionPointHighlighter(@NotNull Project project) {
     myProject = project;
   }

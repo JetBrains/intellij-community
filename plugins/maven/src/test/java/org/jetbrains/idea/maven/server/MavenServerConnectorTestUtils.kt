@@ -97,10 +97,6 @@ private class CompatibleMavenServerConnector(
     throw RuntimeException("not implemented")
   }
 
-  override fun pingBlocking(): Boolean {
-    return true
-  }
-
   override suspend fun ping(): Boolean {
     return true
   }
@@ -156,10 +152,6 @@ private class StoppedMavenServerConnector : MavenServerConnector {
 
   override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     throw ConnectException("Cannot reconnect")
-  }
-
-  override fun pingBlocking(): Boolean {
-    return false
   }
 
   override suspend fun ping(): Boolean {

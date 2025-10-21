@@ -7,7 +7,7 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * @see [com.intellij.vcs.git.shared.actions.GitSingleRefActions]
+ * @see [com.intellij.vcs.git.actions.GitSingleRefActions]
  */
 @ApiStatus.Internal
 object GitBranchActionsDataKeys {

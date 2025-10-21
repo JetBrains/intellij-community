@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
@@ -23,6 +24,10 @@ abstract class AbstractFirWithMppStdlibCompletionTest : KotlinFixtureCompletionB
             { project.invalidateCaches() },
             { super.tearDown() },
         )
+    }
+
+    override fun extraLookupElementCheck(lookupElement: LookupElement) {
+        SerializabilityChecker.checkLookupElement(lookupElement, myFixture.project)
     }
 
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, IgnoreTests.FileExtension.FIR)

@@ -157,6 +157,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   public void testChainedVarargConstructors() {
     doTest(false, false);
   }
+  
+  public void testChainedVarargConstructorsCalledWithArray() {
+    doTest(false, false);
+  }
 
   public void testInlineThisOnly() {
     doTest(true, false);

@@ -5,3 +5,6 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
 val CodeCompletion: Scope = Scope("codeCompletion")
+
+@JvmField
+val CodeCompletionContributors: Scope = Scope("codeCompletionContributors", verbose = true)

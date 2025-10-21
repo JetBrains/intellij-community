@@ -31,6 +31,7 @@ public final class GitCommand {
   public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand CHECK_IGNORE = read("check-ignore");
   public static final GitCommand COMMIT = write("commit");
+  public static final GitCommand COMMIT_TREE = write("commit-tree");
   public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY = read("cherry");
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
@@ -45,6 +46,7 @@ public final class GitCommand {
   public static final GitCommand LS_REMOTE = read("ls-remote");
   public static final GitCommand MERGE = write("merge");
   public static final GitCommand MERGE_BASE = read("merge-base");
+  public static final GitCommand MERGE_TREE = read("merge-tree");
   public static final GitCommand MV = write("mv");
   public static final GitCommand PULL = write("pull");
   public static final GitCommand PUSH = read("push"); // push is a read-command, because it doesn't modify the index. We still benefit from COMMIT & Co being write-commands, preventing HEAD from moving.
@@ -85,6 +87,11 @@ public final class GitCommand {
    * Marker-ENV, that lets git hooks to detect us if needed.
    */
   public static final @NonNls String IJ_HANDLER_MARKER_ENV = "INTELLIJ_GIT_EXECUTABLE";
+
+  /**
+   * Environment variable that allows to specify the descriptive text written to the reflog
+   */
+  public static final @NonNls String GIT_REFLOG_ACTION_ENV = "GIT_REFLOG_ACTION";
 
   @ApiStatus.Internal
   public enum LockingPolicy {

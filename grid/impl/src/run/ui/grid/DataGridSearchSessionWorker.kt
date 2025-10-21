@@ -6,6 +6,7 @@ import com.intellij.database.run.ui.DataAccessType
 import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -43,12 +44,9 @@ internal class DataGridSearchSessionWorker(
     cs.launch {
       requests
         .debounce(100.milliseconds)
-        .collectLatest {
-          val doNotSelectOccurence = it
-          search()?.let {
-            searchInfo = it
-            onUpdated.tryEmit(doNotSelectOccurence)
-          }
+        .collectLatest { doNotSelectOccurence ->
+          searchInfo = search()
+          onUpdated.tryEmit(doNotSelectOccurence)
         }
     }
   }
@@ -70,37 +68,32 @@ internal class DataGridSearchSessionWorker(
     return findManager.findString(cellText, 0, findModel).isStringFound
   }
 
-  private suspend fun search(): SearchInfo? {
+  private suspend fun search(): SearchInfo {
     val model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
-    val rowIdxs = model.rowIndices.asList()
-    val columnIdxs = model.columnIndices.asList()
+    val rowIdxs = model.rowIndices.asList().sortedBy { it.asInteger() }
+    val columnIdxs = model.columnIndices.asList().sortedBy { it.asInteger() }
     val configs = columnIdxs.map { grid.getFormatterConfig(it) ?: DatabaseDisplayObjectFormatterConfig()}.toList()
     val result = ArrayList<TreeSet<Int>?>()
     result.addAll((0 until rowIdxs.size).map { null })
 
-    try {
-      rowIdxs.forEachIndexed { rowNum, rowIdx ->
-        val row = model.getRow(rowIdx)
-        columnIdxs.forEachIndexed { colNum, columnIdx ->
-          val column = model.getColumn(columnIdx)
-          if (rowNum != rowIdx.asInteger() || colNum != columnIdx.asInteger()) {
-            error("unexpected model indices - rowNum: $rowNum, rowIdx.asInteger: ${rowIdx.asInteger()}, colNum: $colNum, columnIdx.asInteger: ${columnIdx.asInteger()}")
-          }
-          val matched = row?.let { column?.let { calcCellMatch(row, column, configs[colNum]) } } ?: false
-          if (matched) {
-            val collection = result.getOrNull(rowNum)
-            if (collection == null) {
-              result[rowNum] = sortedSetOf(columnIdx.asInteger())
-            } else {
-              collection.add(columnIdx.asInteger())
-            }
+    rowIdxs.forEachIndexed { rowNum, rowIdx ->
+      val row = model.getRow(rowIdx)
+      columnIdxs.forEachIndexed { colNum, columnIdx ->
+        val column = model.getColumn(columnIdx)
+        if (rowNum != rowIdx.asInteger() || colNum != columnIdx.asInteger()) {
+          error("unexpected model indices - rowNum: $rowNum, rowIdx.asInteger: ${rowIdx.asInteger()}, colNum: $colNum, columnIdx.asInteger: ${columnIdx.asInteger()}")
+        }
+        val matched = row?.let { column?.let { calcCellMatch(row, column, configs[colNum]) } } ?: false
+        if (matched) {
+          val collection = result.getOrNull(rowNum)
+          if (collection == null) {
+            result[rowNum] = sortedSetOf(columnIdx.asInteger())
+          } else {
+            collection.add(columnIdx.asInteger())
           }
         }
-        checkCanceled()
       }
-    }
-    catch (_: CancellationException) {
-      return null
+      checkCanceled()
     }
     return result
   }

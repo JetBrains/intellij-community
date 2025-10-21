@@ -6,18 +6,13 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 
-class FoldIfToReturnAsymmetricallyIntention : KotlinApplicableModCommandAction<KtIfExpression, Unit>(KtIfExpression::class) {
+class FoldIfToReturnAsymmetricallyIntention : KotlinApplicableModCommandAction.Simple<KtIfExpression>(KtIfExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.if.expression.with.return")
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> {
@@ -29,8 +24,6 @@ class FoldIfToReturnAsymmetricallyIntention : KotlinApplicableModCommandAction<K
         if (nextElement?.returnedExpression == null) return emptyList()
         return ApplicabilityRange.self(element.ifKeyword)
     }
-
-    override fun KaSession.prepareContext(element: KtIfExpression) {}
 
     override fun invoke(
         actionContext: ActionContext,

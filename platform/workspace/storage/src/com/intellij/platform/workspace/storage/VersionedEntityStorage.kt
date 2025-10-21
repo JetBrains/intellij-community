@@ -60,4 +60,12 @@ public interface VersionedStorageChange {
    * The events are ordered: Removed -> Replaced -> Added
    */
   public fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
+
+  /**
+   * Returns the first added and last removed [SymbolicEntityId] of the [referenceSymbolicEntityIdClass] type.
+   */
+  @ApiStatus.Internal
+  public fun <E: WorkspaceEntityWithSymbolicId> getChangedReferences(
+    referenceSymbolicEntityIdClass: Class<out SymbolicEntityId<E>>,
+  ): Collection<ReferenceChange<E>>
 }

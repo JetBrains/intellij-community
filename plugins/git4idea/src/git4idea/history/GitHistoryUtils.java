@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -185,11 +185,12 @@ public final class GitHistoryUtils {
   public static @Nullable VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
                                                                @Nullable String branch) throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
-    GitLineHandler h = new GitLineHandler(project, GitUtil.getRootForFile(project, filePath), GitCommand.LOG);
+    GitRepository repository = GitUtil.getRepositoryForFile(project, filePath);
+    GitLineHandler h = new GitLineHandler(project, repository.getRoot(), GitCommand.LOG);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
-    h.addParameters(!StringUtil.isEmpty(branch) ? branch : "--all");
+    h.addParameters(!StringUtil.isEmpty(branch) && !repository.isFresh() ? branch : "--all");
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();

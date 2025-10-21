@@ -1474,6 +1474,52 @@ interface UastResolveApiFixtureTestBase {
         )
     }
 
+    fun checkResolveAnnotationOnSetparam(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt",
+            """
+                package test.pkg
+                
+                annotation class Anno(val attr: Int)
+                
+                class Test {
+                  @get:Anno(attr = 42)
+                  @setparam:Anno(attr = 21)
+                  var prop = 0
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        var cnt = 0
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitMethod(node: UMethod): Boolean {
+                    val txt = node.sourcePsi?.text
+                    when (node.name) {
+                        "getProp" -> {
+                            cnt++
+                            val anno = node.uAnnotations.single()
+                            val resolved = anno.resolve()
+                            TestCase.assertNotNull(txt, resolved)
+                            TestCase.assertEquals("test.pkg.Anno", resolved!!.qualifiedName)
+                        }
+                        "setProp" -> {
+                            cnt++
+                            val param = node.uastParameters.single()
+                            val anno = param.uAnnotations.single()
+                            val resolved = anno.resolve()
+                            TestCase.assertNotNull(txt, resolved)
+                            TestCase.assertEquals("test.pkg.Anno", resolved!!.qualifiedName)
+                        }
+                    }
+                    return super.visitMethod(node)
+                }
+            }
+        )
+        TestCase.assertEquals(2, cnt)
+    }
+
     fun checkResolveDataClassSyntheticMember(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
         myFixture.configureByText(
             "main.kt",
@@ -2621,6 +2667,41 @@ interface UastResolveApiFixtureTestBase {
         }
     }
 
+    fun checkResolveAnnotationConstructorCallFromLibrary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Anno.kt", """
+                package test.pkg
+
+                annotation class Anno(
+                    val p: String
+                )
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.Anno
+                
+                @Anno("hi")
+                class Test
+            """.trimIndent()
+        )
+
+        try {
+            val uFile = myFixture.file.toUElementOfType<UFile>()!!
+            uFile.accept(object : AbstractUastVisitor() {
+                override fun visitAnnotation(node: UAnnotation): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+
+                    TestCase.assertEquals("Anno", resolved!!.name)
+                    return super.visitAnnotation(node)
+                }
+            })
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
     fun checkResolveTopLevelInlineReifiedFromLibrary(myFixture: JavaCodeInsightTestFixture, withJvmName: Boolean) {
         val anno = if (withJvmName) "@file:JvmName(\"Mocking\")" else ""
         val mockLibraryFacility = myFixture.configureLibraryByText(
@@ -2672,6 +2753,61 @@ interface UastResolveApiFixtureTestBase {
                     }
                     TestCase.assertNotNull(resolved.returnType)
                     TestCase.assertEquals("MyClass", resolved.returnType!!.canonicalText)
+
+                    TestCase.assertEquals(1, resolved.typeParameters.size)
+                    val typeParam = resolved.typeParameters.single()
+                    TestCase.assertEquals("T", typeParam.name)
+
+                    return super.visitCallExpression(node)
+                }
+            })
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
+    fun checkResolveTopLevelInlineReifiedFromLibrary_recursiveTypeParameter(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Mocking.kt", """
+                package test
+
+                inline fun <reified T : Any> mock(): T = TODO()
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+                package my.logger;
+
+                public interface LoggingApi<API extends LoggingApi<API>> {
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import my.logger.LoggingApi
+                import test.mock
+
+                fun test() {
+                  abstract class CustomLoggingApi : LoggingApi<CustomLoggingApi>
+                  val logger: CustomLoggingApi = mock()
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val uFile = myFixture.file.toUElementOfType<UFile>()!!
+            uFile.accept(object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertEquals("mock", resolved!!.name)
+                    TestCase.assertNotNull(resolved.returnType)
+                    val expected =
+                        if (isK2)
+                            "CustomLoggingApi"
+                        else
+                            "<ErrorType>"
+                    TestCase.assertEquals(expected, resolved.returnType!!.canonicalText)
 
                     TestCase.assertEquals(1, resolved.typeParameters.size)
                     val typeParam = resolved.typeParameters.single()

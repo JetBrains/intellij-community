@@ -92,10 +92,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
       ret.addAll(membersOfQualifier);
     }
 
-    // look for assignment of this attribute in containing function
-    if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
-      if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) {
-        return ret;
+    if (myContext.getTypeEvalContext().maySwitchToAST(myElement)) {
+      // look for assignment of this attribute in containing function
+      // See PyResolveTest#testAttributeAssignedNearby for an example
+      if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
+        if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) {
+          return ret;
+        }
       }
     }
 
@@ -190,7 +193,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
           final Collection<PyTargetExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
           for (PyTargetExpression expression : attrs) {
             final String name = expression.getName();
-            if (name != null && name.endsWith(CompletionInitializationContext.DUMMY_IDENTIFIER.trim())) {
+            if (name != null && name.endsWith(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED)) {
               continue;
             }
             if (qualifierType instanceof PyClassType && name != null) {
@@ -308,7 +311,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
    * Can be used for completion.
    */
   public static @NotNull Collection<PyTargetExpression> collectAssignedAttributes(final @NotNull QualifiedName qualifierQName,
-                                                                         final @NotNull PsiElement anchor) {
+                                                                                  final @NotNull PsiElement anchor) {
     final Set<String> names = new HashSet<>();
     final List<PyTargetExpression> results = new ArrayList<>();
     for (ScopeOwner owner = ScopeUtil.getScopeOwner(anchor); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {

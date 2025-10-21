@@ -3,8 +3,11 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.util.getFileResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
@@ -14,7 +17,13 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class DummyFileResolveCachingTest : LightJavaCodeInsightFixtureTestCase() {
+class DummyFileResolveCachingTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
+    override fun setUp() {
+        setUpWithKotlinPlugin {  super.setUp() }
+    }
+
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun test() {

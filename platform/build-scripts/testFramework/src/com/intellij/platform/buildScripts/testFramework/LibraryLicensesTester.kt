@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import org.assertj.core.api.SoftAssertions
@@ -19,6 +19,7 @@ fun reportMissingLicenses(collector: SoftAssertions, project: JpsProject, licens
       !nonPublicModules.contains(it.name)
       && !it.name.contains("guiTests")
       && it.name != "intellij.platform.util.immutableKeyValueStore.benchmark"
+      && it.name != "intellij.libraries.mockito"
       && !it.name.contains("integrationTests", ignoreCase = true)
     }
     .forEach { module ->

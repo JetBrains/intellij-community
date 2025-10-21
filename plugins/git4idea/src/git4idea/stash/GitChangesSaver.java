@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
@@ -108,6 +110,19 @@ public abstract class GitChangesSaver {
       );
       return new HtmlBuilder().append(message).br().appendRaw(e.getMessage()).toString();
     }
+  }
+
+  public boolean trySaveLocalChanges(@Nullable Collection<? extends VirtualFile> rootsToSave) {
+    String errorMessage = saveLocalChangesOrError(rootsToSave);
+    if (errorMessage == null) {
+      return true;
+    }
+
+    VcsNotifier.getInstance(myProject)
+      .notifyError(VcsNotificationIdsHolder.UNCOMMITTED_CHANGES_SAVING_ERROR,
+                   VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
+                   errorMessage);
+    return false;
   }
 
   public void notifyLocalChangesAreNotRestored(@NotNull @Nls String operationName) {

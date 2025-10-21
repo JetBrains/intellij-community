@@ -4,7 +4,7 @@
 
 package org.jetbrains.kotlin.idea.base.util
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.facet.FacetManager
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -64,11 +64,11 @@ val VirtualFile.parentsWithSelf: Sequence<VirtualFile>
  * still return `null` - if the original file was deleted, for example.
  */
 fun isOutsiderFile(file: VirtualFile): Boolean {
-    return OutsidersPsiFileSupport.isOutsiderFile(file)
+    return SyntheticPsiFileSupport.isOutsiderFile(file)
 }
 
 fun markAsOutsiderFile(file: VirtualFile, originalFile: VirtualFile?) {
-    OutsidersPsiFileSupport.markFileWithUrl(file, originalFile?.url)
+    SyntheticPsiFileSupport.markFileWithUrl(file, originalFile?.url)
 }
 
 fun getOutsiderFileOrigin(project: Project, file: VirtualFile): VirtualFile? {
@@ -76,7 +76,7 @@ fun getOutsiderFileOrigin(project: Project, file: VirtualFile): VirtualFile? {
         return null
     }
 
-    val originalUrl = OutsidersPsiFileSupport.getOriginalFileUrl(file) ?: return null
+    val originalUrl = SyntheticPsiFileSupport.getOriginalFileUrl(file) ?: return null
     val originalFile = VirtualFileManager.getInstance().findFileByUrl(originalUrl) ?: return null
 
     // TODO possibly change to 'GlobalSearchScope.projectScope(project)' check

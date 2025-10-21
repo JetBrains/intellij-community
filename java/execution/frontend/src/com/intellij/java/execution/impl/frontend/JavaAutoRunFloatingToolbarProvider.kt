@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.project.projectId
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +59,7 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
           updateFloatingToolbarVisibility(component, state.autoTestEnabled && state.toolbarEnabled)
         }
       }
-    }
+    }.cancelOnDispose(parentDisposable)
   }
 
   private fun updateFloatingToolbarVisibility(component: FloatingToolbarComponent, visible: Boolean) {

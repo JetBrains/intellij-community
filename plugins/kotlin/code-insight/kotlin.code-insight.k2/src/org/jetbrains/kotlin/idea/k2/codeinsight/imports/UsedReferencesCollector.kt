@@ -26,7 +26,8 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
     private val aliases: Map<FqName, List<Name>> = collectImportAliases(file)
 
-    fun KaSession.collectUsedReferences(): Result {
+    context(_: KaSession)
+    fun collectUsedReferences(): Result {
         file.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
             override fun visitElement(element: PsiElement) {
                 ProgressIndicatorProvider.checkCanceled()
@@ -49,14 +50,15 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         return Result(usedDeclarations, unresolvedNames, importableSymbolPointers, references)
     }
 
-    private fun KaSession.collectReferencesFrom(element: KtElement) {
+    private context(_: KaSession)
+    fun collectReferencesFrom(element: KtElement) {
         if (element.ignoreReferencesDuringImportOptimization) return
 
         if (element is KtLabelReferenceExpression) return
 
         val usedReferences = element.references
             .filterIsInstance<KtReference>()
-            .mapNotNull { UsedReference.run { createFrom(it) } }
+            .mapNotNull { UsedReference.createFrom(it) }
 
         if (usedReferences.isEmpty()) return
 
@@ -65,20 +67,20 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
             references += usedReference.reference
 
-            val isResolved = usedReference.run { isResolved() }
+            val isResolved = usedReference.isResolved()
 
-            val names = usedReference.run { resolvesByNames() }
+            val names = usedReference.resolvesByNames()
             if (!isResolved) {
                 unresolvedNames += names
                 continue
             }
 
-            val symbols = usedReference.run { resolveToReferencedSymbols() }
+            val symbols = usedReference.resolveToReferencedSymbols()
 
             for (symbol in symbols) {
-                if (!symbol.run { isResolvedWithImport() }) continue
+                if (!symbol.isResolvedWithImport()) continue
 
-                val importableName = symbol.run { computeImportableName() } ?: continue
+                val importableName = symbol.computeImportableName() ?: continue
 
                 // Do not save symbols from the current package unless they are aliased
                 if (importableName.parent() == file.packageFqName && importableName !in aliases) continue
@@ -88,7 +90,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 val newNames = (aliases[importableName].orEmpty() + importableName.shortName()).intersect(names)
                 usedDeclarations.getOrPut(importableName) { hashSetOf() } += newNames
 
-                importableSymbols += symbol.run { toSymbolInfo() }
+                importableSymbols += symbol.toSymbolInfo()
             }
         }
     }

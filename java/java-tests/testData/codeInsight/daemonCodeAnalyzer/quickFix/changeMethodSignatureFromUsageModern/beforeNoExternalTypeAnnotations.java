@@ -1,4 +1,4 @@
-// "Change 1st parameter of method 'use' from 'Map<String, String>' to 'Map<String, Integer>'" "true" 
+// "Change 1st parameter of method 'use()' from 'Map<String, String>' to 'Map<String, Integer>'" "true" 
 import java.util.Map;
 import java.util.stream.Collectors;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
@@ -20,7 +20,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -44,10 +44,10 @@ internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 @OptIn(FlowPreview::class)
 class IcsManager @JvmOverloads constructor(
   dir: Path,
-  coroutineScope: CoroutineScope,
+  @JvmField val coroutineScope: CoroutineScope,
   val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) },
 ) {
-  val credentialsStore = lazy { IcsCredentialsStore() }
+  internal val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
@@ -246,7 +246,7 @@ private class IcsManagerService(private val coroutineScope: CoroutineScope) {
 
   fun init(app: Application, configPath: Path) {
     val customPath = System.getProperty("ics.settingsRepository")
-    val dir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(FileUtil.expandUserHome(customPath))
+    val dir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(OSAgnosticPathUtil.expandUserHome(customPath))
     val icsManager = IcsManager(dir = dir, coroutineScope = coroutineScope)
     this.icsManager = icsManager
     icsManager.beforeApplicationLoaded(app)

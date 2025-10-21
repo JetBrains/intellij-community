@@ -30,9 +30,6 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 final class ManageRecentProjectsAction extends DumbAwareAction {
   private static final int DEFAULT_POPUP_HEIGHT = 485;
   private static final int DEFAULT_POPUP_WIDTH = 300;
@@ -44,7 +41,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Disposable disposable = Disposer.newDisposable();
 
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(
-      disposable, List.of(ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project)),
+      disposable, List.of(ProjectCollectors.INSTANCE.createRecentProjectsWithoutCurrentCollector(project)),
       WelcomeScreenUIManager.getProjectsBackground()
     );
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
@@ -104,7 +101,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    boolean enable = project != null && !RecentProjectListActionProvider.getInstance().getActions(false).isEmpty();
+    boolean enable = project != null && !RecentProjectListActionProvider.getInstance().getActionsWithoutGroups(false).isEmpty();
     e.getPresentation().setEnabledAndVisible(enable);
   }
 

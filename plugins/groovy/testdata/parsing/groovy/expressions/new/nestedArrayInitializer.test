@@ -12,16 +12,12 @@ Groovy script
     PsiWhiteSpace(' ')
     Array initializer
       PsiElement({)('{')
-      Closable block
+      Array initializer
         PsiElement({)('{')
-        Parameter list
-          <empty list>
         PsiElement(})('}')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      Closable block
+      Array initializer
         PsiElement({)('{')
-        Parameter list
-          <empty list>
         PsiElement(})('}')
       PsiElement(})('}')

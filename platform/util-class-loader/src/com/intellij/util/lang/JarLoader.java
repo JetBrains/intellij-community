@@ -98,6 +98,26 @@ public final class JarLoader implements Loader {
 
   @Override
   public @Nullable Resource getResource(@NotNull String name) {
+    if (name.isEmpty()) {
+      // Note(k15tfu): JUnit5 discovers tests in the root URIs found via the "" resource
+      return new Resource() {
+        @Override
+        public @NotNull URL getURL() {
+          return url;
+        }
+
+        @Override
+        public @NotNull InputStream getInputStream() {
+          throw new IllegalStateException("No input stream for resource with empty name");
+        }
+
+        @Override
+        public byte @NotNull [] getBytes() {
+          throw new IllegalStateException("No bytes for resource with empty name");
+        }
+      };
+    }
+
     try {
       return zipFile.getResource(name, this);
     }

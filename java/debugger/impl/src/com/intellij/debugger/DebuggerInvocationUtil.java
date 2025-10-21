@@ -13,6 +13,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public final class DebuggerInvocationUtil {
+  /**
+   * @deprecated Use {@link #invokeLaterAnyModality}
+   */
+  @Deprecated
   public static void swingInvokeLater(final @Nullable Project project, final @NotNull Runnable runnable) {
     if (project == null) {
       return;
@@ -23,6 +27,18 @@ public final class DebuggerInvocationUtil {
         WriteIntentReadAction.run(runnable);
       }
     });
+  }
+
+  public static void invokeLaterAnyModality(@NotNull Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+  }
+
+  public static void invokeLaterAnyModality(@Nullable Project project, @NotNull Runnable runnable) {
+    if (project == null) {
+      return;
+    }
+
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any(), project.getDisposed());
   }
 
   public static void invokeLater(@Nullable Project project, @NotNull Runnable runnable) {

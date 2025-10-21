@@ -284,6 +284,8 @@ def unique_justseen(iterable: Iterable[_T], key: Callable[[_T], bool] | None = N
     "List unique elements, preserving order. Remember only the element just seen."
     # unique_justseen('AAAABBBCCDAABBB') --> A B C D A B
     # unique_justseen('ABBcCAD', str.lower) --> A B c A D
+    if key is None:
+        return map(operator.itemgetter(0), groupby(iterable))
     g: groupby[_T | bool, _T] = groupby(iterable, key)
     return map(next, map(operator.itemgetter(1), g))
 

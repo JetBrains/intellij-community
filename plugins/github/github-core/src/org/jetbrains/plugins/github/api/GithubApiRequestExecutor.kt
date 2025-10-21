@@ -18,8 +18,8 @@ import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -49,9 +49,11 @@ sealed class GithubApiRequestExecutor {
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
-  internal class WithTokenAuth(githubSettings: GithubSettings,
-                               private val tokenSupplier: (URL) -> String?,
-                               private val useProxy: Boolean) : Base(githubSettings) {
+  internal class WithTokenAuth(
+    githubSettings: GithubSettings,
+    private val tokenSupplier: (URL) -> String?,
+    private val useProxy: Boolean,
+  ) : Base(githubSettings) {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
@@ -121,7 +123,8 @@ sealed class GithubApiRequestExecutor {
 
           val (result, rates) = if (request is GithubApiRequest.Post.GQLQuery) {
             request.extractResultWithCost(createResponse(it, indicator))
-          } else {
+          }
+          else {
             request.extractResult(createResponse(it, indicator)) to null
           }
           val cost = rates?.cost
@@ -179,7 +182,8 @@ sealed class GithubApiRequestExecutor {
       throw when (connection.responseCode) {
         HttpURLConnection.HTTP_UNAUTHORIZED,
         HttpURLConnection.HTTP_PAYMENT_REQUIRED,
-        HttpURLConnection.HTTP_FORBIDDEN -> {
+        HttpURLConnection.HTTP_FORBIDDEN,
+          -> {
           if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
             GithubRateLimitExceededException(jsonError.presentableError)
           }
@@ -240,9 +244,6 @@ sealed class GithubApiRequestExecutor {
 
   @Service
   class Factory {
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Server must be provided to match URL for authorization")
-    fun create(token: String): GithubApiRequestExecutor = create(true) { token }
 
     fun create(serverPath: GithubServerPath, token: String): GithubApiRequestExecutor = create(true, serverPath, token)
 
@@ -268,18 +269,37 @@ sealed class GithubApiRequestExecutor {
     private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitHub-Plugin"
     private val LOG = logger<GithubApiRequestExecutor>()
 
-    private fun isAuthorizedUrl(serverPath: GithubServerPath, url: URL): Boolean {
-      if (url.host != serverPath.host && url.host != serverPath.apiHost) {
-        LOG.debug("URL $url host does not match the server $serverPath. Authorization will not be granted")
+    @VisibleForTesting
+    internal fun isAuthorizedUrl(serverPath: GithubServerPath, url: URL): Boolean {
+      val targetHost = url.host
+      val apiHost = serverPath.apiHost
+      val mainHost = serverPath.host
+
+      val ghDotComRawHost = "raw.githubusercontent.com"
+      val enterpriseRawHost = "raw.$mainHost" // If GH Enterprise serves raw files from raw.<enterprise-host>
+
+      val hostMatches = when {
+        targetHost == mainHost -> true
+        targetHost == apiHost -> true
+        targetHost == enterpriseRawHost -> true
+        serverPath.isGithubDotCom || serverPath.isGheDataResidency -> targetHost == ghDotComRawHost
+        else -> false
+      }
+
+      if (!hostMatches) {
+        LOG.info("URL $url host does not match the server $serverPath. Authorization will not be granted")
         return false
       }
       if (url.port != (serverPath.port ?: -1)) {
-        LOG.debug("URL $url port does not match the server $serverPath. Authorization will not be granted")
+        LOG.info("URL $url port does not match the server $serverPath. Authorization will not be granted")
         return false
       }
       if (url.protocol != null && url.protocol != serverPath.schema) {
-        LOG.debug("URL $url protocol does not match the server $serverPath. Authorization will not be granted")
+        LOG.info("URL $url protocol does not match the server $serverPath. Authorization will not be granted")
         return false
+      }
+      if (serverPath.schema == "http") {
+        LOG.warn("URL $url use HTTP, not HTTPS, token leak is possible")
       }
       return true
     }

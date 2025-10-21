@@ -1,0 +1,8 @@
+// "Add empty brackets after primary constructor" "true"
+// K2_AFTER_ERROR: Data class must have at least one primary constructor parameter.
+// ERROR: Data class must have at least one primary constructor parameter
+// ERROR: Unresolved reference: JvmOverloads
+
+data class Some @JvmOverloads constructor<caret>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MissingConstructorBracketsFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MissingConstructorBracketsFix

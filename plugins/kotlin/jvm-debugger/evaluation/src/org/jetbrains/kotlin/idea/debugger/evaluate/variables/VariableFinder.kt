@@ -134,29 +134,41 @@ class VariableFinder(val context: ExecutionContext) {
 
     fun find(parameter: CodeFragmentParameter, asmType: AsmType, codeFragment: KtCodeFragment): Result? {
         return when (parameter.kind) {
-            Kind.ORDINARY -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = false))
-            Kind.DELEGATED -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = true))
+            Kind.ORDINARY -> findOrdinary(
+                VariableKind.Ordinary(parameter.name, asmType, isDelegated = false),
+                parameter.depthRelativeToCurrentFrame
+            )
+
+            Kind.DELEGATED -> findOrdinary(
+                VariableKind.Ordinary(parameter.name, asmType, isDelegated = true),
+                parameter.depthRelativeToCurrentFrame
+            )
+
             Kind.FAKE_JAVA_OUTER_CLASS -> thisObject()?.let { Result(it) }
-            Kind.EXTENSION_RECEIVER -> findExtensionThis(VariableKind.ExtensionThis(parameter.name, asmType))
+            Kind.EXTENSION_RECEIVER -> findExtensionThis(
+                VariableKind.ExtensionThis(parameter.name, asmType),
+                parameter.depthRelativeToCurrentFrame
+            )
+
             Kind.CONTEXT_RECEIVER -> findContextReceiver(VariableKind.ContextReceiver(asmType))
             Kind.LOCAL_FUNCTION -> findLocalFunction(VariableKind.LocalFunction(parameter.name, asmType))
-            Kind.DISPATCH_RECEIVER -> findDispatchThis(VariableKind.OuterClassThis(asmType))
+            Kind.DISPATCH_RECEIVER -> findDispatchThis(VariableKind.OuterClassThis(asmType), parameter.depthRelativeToCurrentFrame)
             Kind.COROUTINE_CONTEXT -> findCoroutineContext()
             Kind.FIELD_VAR -> findFieldVariable(VariableKind.FieldVar(parameter.name, asmType))
             Kind.FOREIGN_VALUE -> findForeignValue(parameter.name, codeFragment)
         }
     }
 
-    private fun findOrdinary(kind: VariableKind.Ordinary): Result? {
+    private fun findOrdinary(kind: VariableKind.Ordinary, rollbackInlineFramesCount: Int): Result? {
         val variables = frameProxy.safeVisibleVariables()
 
         // Local variables – direct search
-        findLocalVariable(variables, kind, kind.name)?.let { return it }
+        findLocalVariable(variables, kind, kind.name, rollbackInlineFramesCount)?.let { return it }
 
         // Local variables - synthetic captured local variable (IR Backend)
         // Local variable name with $ prefix,
         // see org.jetbrains.kotlin.backend.common.descriptors.DescriptorUtilsKt.getSynthesizedString
-        findLocalVariable(variables, kind, "$${kind.name}")?.let { return it }
+        findLocalVariable(variables, kind, "$${kind.name}", rollbackInlineFramesCount)?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
@@ -182,10 +194,10 @@ class VariableFinder(val context: ExecutionContext) {
 
         // Local variables – direct search, new convention
         val newConventionName = AsmUtil.LOCAL_FUNCTION_VARIABLE_PREFIX + kind.name
-        findLocalVariable(variables, kind, newConventionName)?.let { return it }
+        findLocalVariable(variables, kind, newConventionName, rollbackInlineFramesCount = 0)?.let { return it }
 
         // Local variables – direct search, old convention (before 1.3.30)
-        findLocalVariable(variables, kind, kind.name + "$")?.let { return it }
+        findLocalVariable(variables, kind, kind.name + "$", rollbackInlineFramesCount = 0)?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
@@ -204,12 +216,12 @@ class VariableFinder(val context: ExecutionContext) {
         return findCapturedVariable(kind, containingThis)
     }
 
-    private fun findExtensionThis(kind: VariableKind.ExtensionThis): Result? {
+    private fun findExtensionThis(kind: VariableKind.ExtensionThis, rollbackInlineFramesCount: Int): Result? {
         val variables = frameProxy.safeVisibleVariables()
 
         // Local variables – direct search
         val namePredicate = fun(name: String) = name == kind.parameterName || name.startsWith(kind.parameterName + '$')
-        findLocalVariable(variables, kind, namePredicate)?.let { return it }
+        findLocalVariableWithSpecifiedRollbackFramesCount(variables, kind, rollbackInlineFramesCount, namePredicate)?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
@@ -227,18 +239,18 @@ class VariableFinder(val context: ExecutionContext) {
 
     private fun findContextReceiver(kind: VariableKind.ContextReceiver): Result? {
         val variableProxies = frameProxy.visibleVariables().map { LocalVariableProxyImpl(frameProxy, it.variable) }
-        findLocalVariable(variableProxies, kind) {
+        findLocalVariableWithSpecifiedRollbackFramesCount(variableProxies, kind, rollbackInlineFramesCount = 0) {
             kind.capturedNameMatches(it) || it.startsWith(AsmUtil.THIS_IN_DEFAULT_IMPLS)
         }?.let { return it }
         return findCapturedVariableInContainingThis(kind)
     }
 
-    private fun findDispatchThis(kind: VariableKind.OuterClassThis): Result? {
+    private fun findDispatchThis(kind: VariableKind.OuterClassThis, rollbackInlineFramesCount: Int): Result? {
         findCapturedVariableInContainingThis(kind)?.let { return it }
 
         val variables = frameProxy.safeVisibleVariables()
         if (isInsideDefaultImpls()) {
-            findLocalVariable(variables, kind, AsmUtil.THIS_IN_DEFAULT_IMPLS)?.let { return it }
+            findLocalVariable(variables, kind, AsmUtil.THIS_IN_DEFAULT_IMPLS, rollbackInlineFramesCount)?.let { return it }
         }
 
         if (frameProxy is InlineStackFrameProxyImpl) {
@@ -259,7 +271,7 @@ class VariableFinder(val context: ExecutionContext) {
             }
         }
 
-        val inlineDepth = getInlineDepth(variables)
+        val inlineDepth = getInlineDepth(variables) - rollbackInlineFramesCount
         if (inlineDepth > 0) {
             variables.namedEntitySequence()
                 .filter { it.name.matches(INLINED_THIS_REGEX) && getInlineDepth(it.name) == inlineDepth && kind.typeMatches(it.type) }
@@ -299,24 +311,31 @@ class VariableFinder(val context: ExecutionContext) {
         return findCapturedVariableInContainingThis(kind)
     }
 
-    private fun findLocalVariable(variables: List<LocalVariableProxyImpl>, kind: VariableKind, name: String): Result? {
-        return findLocalVariable(variables, kind) { it == name }
-    }
-
     private fun findLocalVariable(
         variables: List<LocalVariableProxyImpl>,
         kind: VariableKind,
-        namePredicate: (String) -> Boolean
+        name: String,
+        rollbackInlineFramesCount: Int
+    ): Result? {
+        return findLocalVariableWithSpecifiedRollbackFramesCount(variables, kind, rollbackInlineFramesCount) { it == name }
+    }
+
+    private fun findLocalVariableWithSpecifiedRollbackFramesCount(
+        variables: List<LocalVariableProxyImpl>,
+        kind: VariableKind,
+        rollbackInlineFramesCount: Int,
+        namePredicate: (String) -> Boolean,
     ): Result? {
         if (frameProxy is InlineStackFrameProxyImpl) {
             val scopeNumber = frameProxy.inlineScopeNumber
             if (scopeNumber >= 0) {
-                val parentScopeNumbers = collectParentScopeNumbers(variables, scopeNumber)
+                val parentScopeNumbers = collectParentScopeNumbers(variables, scopeNumber - rollbackInlineFramesCount)
                 findLocalVariableByScopeNumber(variables, kind, parentScopeNumbers, namePredicate)?.let { return it }
             }
         }
 
-        val inlineDepth = (frameProxy as? InlineStackFrameProxyImpl)?.inlineDepth ?: getInlineDepth(variables)
+        val currentFrameDepth = (frameProxy as? InlineStackFrameProxyImpl)?.inlineDepth ?: getInlineDepth(variables)
+        val inlineDepth = currentFrameDepth - rollbackInlineFramesCount
         findLocalVariable(variables, kind, inlineDepth, namePredicate)?.let { return it }
 
         // Try to find variables outside of inline functions as well

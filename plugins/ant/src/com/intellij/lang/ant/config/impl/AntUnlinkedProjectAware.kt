@@ -33,6 +33,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
       .any { FileUtil.pathsEqual(PathUtil.getParentPath(it), externalProjectPath) }
   }
 
+  @Deprecated("use async method instead", level = DeprecationLevel.ERROR)
   override fun linkAndLoadProject(project: Project, externalProjectPath: String) {
     val localFileSystem = LocalFileSystem.getInstance()
     val externalProjectDir = localFileSystem.findFileByPath(externalProjectPath)
@@ -48,6 +49,12 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
                    ?: ActivateAntToolWindowAction.Manager.createToolWindow(project)
       window.activate(null)
     }
+  }
+
+  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    // This method must be implemented as it is a part of an API.
+    // If was mandatory from the very beginning, this assertion sat in a parent.
+    TODO("Not yet implemented")
   }
 
   override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.ui.Gray
 
 class NotebookEditorModeListenerAdapter private constructor(private val editor: Editor) : NotebookEditorModeListener, CaretListener, Disposable.Default {
   private var currentEditorMode: NotebookEditorMode? = null
@@ -55,7 +56,7 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
 
   override fun caretAdded(event: CaretEvent) {
     val mode = currentEditorMode ?: return
-    event.caret?.visualAttributes = getCaretAttributes(mode)
+    event.caret.visualAttributes = getCaretAttributes(mode)
     (editor as EditorEx).gutterComponentEx.repaint()
   }
 
@@ -87,6 +88,8 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
   }
 
   companion object {
+    private val INVISIBLE_CARET = CaretVisualAttributes(Gray.TRANSPARENT, CaretVisualAttributes.Weight.NORMAL)
+
     fun setupForEditor(editor: Editor) {
       val listener = NotebookEditorModeListenerAdapter(editor)
       editor.caretModel.addCaretListener(listener, listener)

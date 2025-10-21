@@ -7,12 +7,13 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.test.KotlinCliCompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import kotlin.io.path.absolutePathString
 
 abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionTest() {
 
@@ -39,13 +40,15 @@ abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEv
     override fun createJavaParameters(mainClass: String?): JavaParameters {
         return super.createJavaParameters(mainClass).apply {
             val artifactsForCompiler = KotlinCliCompilerFacade.getTestArtifactsNeededForCLICompiler()
-            artifactsForCompiler.forEach(classPath::add)
+            for (path in artifactsForCompiler) {
+                classPath.add(path.toFile())
+            }
 
             val artifactsForScriptFile = listOf(
                 TestKotlinArtifacts.kotlinStdlib,
                 TestKotlinArtifacts.kotlinScriptRuntime
             )
-            val classpath = artifactsForScriptFile.joinToString(File.pathSeparator) { it.absolutePath }
+            val classpath = artifactsForScriptFile.joinToString(File.pathSeparator) { it.absolutePathString() }
             programParametersList.addAll(
                 "-script", getScriptKtFile().virtualFilePath,
                 "-classpath", classpath,

@@ -2,13 +2,23 @@
 package com.intellij.execution.impl
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-internal class EditorHyperlinkEffectSupport(private val editor: Editor) {
+internal interface EditorHyperlinkEffectSupplier {
+  fun getFollowedHyperlinkAttributes(highlighter: RangeHighlighterEx): TextAttributes?
+  fun getHoveredHyperlinkAttributes(highlighter: RangeHighlighterEx): TextAttributes?
+}
+
+internal class EditorHyperlinkEffectSupport(
+  private val editor: Editor,
+  private val effectSupplier: EditorHyperlinkEffectSupplier,
+) {
 
   private var followedLinkWrapper: ChangedAttrsLinkWrapper? = null
   private var hoveredLinkWrapper: ChangedAttrsLinkWrapper? = null
@@ -17,6 +27,9 @@ internal class EditorHyperlinkEffectSupport(private val editor: Editor) {
     @RequiresEdt(generateAssertion = false)
     get() = followedLinkWrapper?.linkRangeHighlighter
 
+  /**
+   * @param link a highlighter that is already in the editor, expected to be valid
+   */
   @RequiresEdt(generateAssertion = false)
   fun linkFollowed(link: RangeHighlighter) {
     if (followedLinkWrapper?.isSame(link) == true) return
@@ -26,7 +39,10 @@ internal class EditorHyperlinkEffectSupport(private val editor: Editor) {
     hoveredLinkWrapper?.restoreOriginalAttrs()
     hoveredLinkWrapper = null
     if (link is RangeHighlighterEx) {
-      followedLinkWrapper = ChangedAttrsLinkWrapper(link, EditorHyperlinkSupport.getFollowedHyperlinkAttributes(link))
+      followedLinkWrapper = ChangedAttrsLinkWrapper(
+        link,
+        effectSupplier.getFollowedHyperlinkAttributes(link) ?: defaultFollowedHyperlinkAttributes()
+      )
     }
   }
 
@@ -47,7 +63,7 @@ internal class EditorHyperlinkEffectSupport(private val editor: Editor) {
     hoveredLinkWrapper?.restoreOriginalAttrs()
     hoveredLinkWrapper = null
     if (link is RangeHighlighterEx) {
-      val hoveredLinkAttrs = EditorHyperlinkSupport.getHoveredHyperlinkAttributes(link)
+      val hoveredLinkAttrs = effectSupplier.getHoveredHyperlinkAttributes(link)
       if (hoveredLinkAttrs != null) {
         hoveredLinkWrapper = ChangedAttrsLinkWrapper(link, hoveredLinkAttrs)
       }
@@ -70,3 +86,6 @@ internal class EditorHyperlinkEffectSupport(private val editor: Editor) {
     }
   }
 }
+
+private fun defaultFollowedHyperlinkAttributes(): TextAttributes =
+  EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES)

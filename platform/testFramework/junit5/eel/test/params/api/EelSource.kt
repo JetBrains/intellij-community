@@ -6,6 +6,7 @@ import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelCart
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.junitpioneer.jupiter.cartesian.CartesianArgumentsSource
+import kotlin.annotation.AnnotationTarget.*
 
 /**
  * Mark your parametrized test that accepts [EelHolder]
@@ -14,4 +15,5 @@ import org.junitpioneer.jupiter.cartesian.CartesianArgumentsSource
 @ArgumentsSource(EelArgumentsProvider::class)
 @CartesianArgumentsSource(EelCartesianArgumentsProvider::class)
 @TestOnly
+@Target(ANNOTATION_CLASS, VALUE_PARAMETER, CONSTRUCTOR, FUNCTION)
 annotation class EelSource

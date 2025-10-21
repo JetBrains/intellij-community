@@ -47,12 +47,12 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
 
   fun testTwoJars() {
     val libraries = createLibraries(OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
-                                    OrderRoot(asmJar, OrderRootType.CLASSES))
+                                    OrderRoot(sampleLibJar, OrderRootType.CLASSES))
     assertThat(libraries).hasSize(2)
     assertThat(libraries[0].name).isNull()
     assertThat(libraries[0].getFiles(OrderRootType.CLASSES)).containsExactly(getFastUtilJar())
     assertThat(libraries[1].name).isNull()
-    assertThat(libraries[1].getFiles(OrderRootType.CLASSES)).containsExactly(asmJar)
+    assertThat(libraries[1].getFiles(OrderRootType.CLASSES)).containsExactly(sampleLibJar)
   }
 
   fun testJarAndSources() {
@@ -82,28 +82,28 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
     val fastUtilJar = getFastUtilJar()
     val libraries = createLibraries(
       OrderRoot(fastUtilJar, OrderRootType.CLASSES),
-      OrderRoot(asmJar, OrderRootType.CLASSES),
+      OrderRoot(sampleLibJar, OrderRootType.CLASSES),
       OrderRoot(IntelliJProjectConfiguration.getVirtualFile(gsonLib), OrderRootType.SOURCES),
     )
     val library = libraries.single()
     assertThat(library.name).isNull()
-    assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(fastUtilJar, asmJar)
+    assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(fastUtilJar, sampleLibJar)
     assertThat(library.getUrls(OrderRootType.SOURCES).asList()).isEqualTo(gsonLib.classesUrls)
   }
 
   fun testTwoJarWithSourcesInside() {
     val fastUtilJar = getFastUtilJar()
     val libraries = createLibraries(OrderRoot(fastUtilJar, OrderRootType.CLASSES),
-                                    OrderRoot(asmJar, OrderRootType.CLASSES),
+                                    OrderRoot(sampleLibJar, OrderRootType.CLASSES),
                                     OrderRoot(fastUtilJar, OrderRootType.SOURCES),
-                                    OrderRoot(asmJar, OrderRootType.SOURCES))
+                                    OrderRoot(sampleLibJar, OrderRootType.SOURCES))
     assertEquals(2, libraries.size)
     assertNull(libraries[0].name)
     UsefulTestCase.assertSameElements(libraries[0].getFiles(OrderRootType.CLASSES), fastUtilJar)
     UsefulTestCase.assertSameElements(libraries[0].getFiles(OrderRootType.SOURCES), fastUtilJar)
     assertNull(libraries[1].name)
-    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.CLASSES), asmJar)
-    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.SOURCES), asmJar)
+    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.CLASSES), sampleLibJar)
+    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.SOURCES), sampleLibJar)
   }
 
   private fun createLibraries(vararg roots: OrderRoot): List<Library> {

@@ -42,6 +42,8 @@ import java.util.function.Supplier;
  *
  * <p>If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile} can be used.</p>
  *
+ * <p>VirtualFile is also a {@link ModificationTracker} whose stamp is incremented whenever the file's content changes.</p>
+ *
  * <p>Please see <a href="https://plugins.jetbrains.com/docs/intellij/virtual-file-system.html">Virtual File System</a>
  * for a high-level overview.</p>
  *
@@ -323,6 +325,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract VirtualFile[] getChildren();
 
   /**
+   * {@link #getChildren()} is not formally requires the sorting, but many methods rely on stable sorting provided by it
+   * But sorting is not cheap, hence this method exists for scenarios there order of children doesn't matter.
+   */
+  @ApiStatus.Internal
+  public VirtualFile @NotNull [] getChildren(boolean requireSorting){
+    return getChildren();
+  }
+
+  /**
    * Finds child of this file with the given name. The returned file is guaranteed to be valid, if the method is called in a read action.
    *
    * @param name the file name to search by
@@ -532,10 +543,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     setCharset(charset, whenChanged, true);
   }
 
-  public void setCharset(final Charset charset, @Nullable Runnable whenChanged, boolean fireEventsWhenChanged) {
-    final Charset old = getStoredCharset();
+  public void setCharset(Charset charset, @Nullable Runnable whenChanged, boolean fireEventsWhenChanged) {
+    Charset oldCharset = getStoredCharset();
     storeCharset(charset);
-    if (Comparing.equal(charset, old)) return;
+    if (Comparing.equal(charset, oldCharset)) return;
+
+
     byte[] bom = charset == null ? null : CharsetToolkit.getMandatoryBom(charset);
     byte[] existingBOM = getBOM();
     if (bom == null && charset != null && existingBOM != null) {
@@ -543,10 +556,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
     setBOM(bom);
 
-    if (old != null) { //do not send on detect
+    if (oldCharset != null) { //do not send on detect
       if (whenChanged != null) whenChanged.run();
       if (fireEventsWhenChanged) {
-        VirtualFileManager.getInstance().notifyPropertyChanged(this, PROP_ENCODING, old, charset);
+        VirtualFileManager.getInstance().notifyPropertyChanged(this, PROP_ENCODING, oldCharset, charset);
       }
     }
   }
@@ -730,7 +743,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @return true if filesystem inherits {@link LocalFileSystem} (including temporary)
+   * BEWARE: method name may be quite misleading: the definition of 'local' relies on "being subclass of {@link LocalFileSystem}"
+   * This definition leads to quite counterintuitive behavior: the 'file://...' filesystem is 'local' -- which is intuitive.
+   * But 'temp://...' i.e., in-memory filesystem is also considered 'local' -- which is not very intuitive.
+   * Moreover, archive ('jar://...', 'zip://...', etc.) filesystems are considered NOT local, even if the actual archive
+   * is a local file -- also quite counterintuitive.
+   * It is too late to change this behavior -- method is very widely used.
+   * So the only choice is: constant vigilance while using it.
+   *
+   * @return true if filesystem inherits {@link LocalFileSystem} (<b>including temporary!</b>)
    */
   public boolean isInLocalFileSystem() {
     return false;

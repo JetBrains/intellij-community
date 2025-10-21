@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.vfs
 
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthChecker
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthChecker.VFSHealthCheckReport
 import kotlinx.coroutines.runBlocking
@@ -75,7 +74,8 @@ private constructor(private val checkBeforeEach: Boolean = false,
     //TODO RC: supply dummy LOG instance so VFSHealthChecker doesn't fill the log with
     //         warnings?
     val checker = VFSHealthChecker()
-    val currentReport = runBlockingCancellable {
+    @Suppress("RAW_RUN_BLOCKING")
+    val currentReport = runBlocking {
       checker.checkHealth(checkForOrphanRecords = true)
     }
     context.publishReportEntry(LOCAL_STORE_REPORT_KEY, currentReport.toString())

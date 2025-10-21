@@ -8,7 +8,6 @@ import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExtern
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
-import com.intellij.gradle.toolingExtension.impl.model.warmUp.GradleTaskWarmUpModelProvider;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -742,7 +741,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   public @NotNull List<ProjectImportModelProvider> getModelProviders() {
     return ContainerUtil.append(
       super.getModelProviders(),
-      new GradleTaskWarmUpModelProvider(),
       new GradleSourceSetModelProvider(),
       new GradleSourceSetDependencyModelProvider(),
       new GradleExternalProjectModelProvider(),

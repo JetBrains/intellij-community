@@ -7,12 +7,14 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Defines persistence storage location and options.
+ * Defines persistence storage location and options. The annotation should be used as a value of {@link State#storages()}.
  * See <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Persisting State of Components (IntelliJ Platform Docs)</a>.
  */
 @Retention(RetentionPolicy.RUNTIME)
+@Target({})
 public @interface Storage {
   /** @deprecated Use {@link #value()}. */
   @Deprecated(forRemoval = true)

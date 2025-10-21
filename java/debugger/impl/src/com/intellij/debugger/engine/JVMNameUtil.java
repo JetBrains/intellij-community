@@ -6,7 +6,6 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -124,16 +123,16 @@ public final class JVMNameUtil {
     public JVMName toName() {
       final List<JVMName> optimised = new ArrayList<>();
       for (JVMName evaluator : myList) {
-        if (evaluator instanceof JVMRawText && !optimised.isEmpty() &&
-            optimised.get(optimised.size() - 1) instanceof JVMRawText nameEvaluator) {
-          nameEvaluator.setName(nameEvaluator.getName() + ((JVMRawText)evaluator).getName());
+        if (evaluator instanceof JVMRawText rawText && !optimised.isEmpty() &&
+            optimised.getLast() instanceof JVMRawText nameEvaluator) {
+          nameEvaluator.setName(nameEvaluator.getName() + rawText.getName());
         }
         else {
           optimised.add(evaluator);
         }
       }
 
-      if (optimised.size() == 1) return optimised.get(0);
+      if (optimised.size() == 1) return optimised.getFirst();
       if (optimised.isEmpty()) return new JVMRawText("");
 
       return new JVMName() {
@@ -174,7 +173,7 @@ public final class JVMNameUtil {
     }
 
     @Override
-    public String getName(DebugProcessImpl process) throws EvaluateException {
+    public String getName(DebugProcessImpl process) {
       return myText;
     }
 
@@ -228,7 +227,7 @@ public final class JVMNameUtil {
         }
       }
       if (!allClasses.isEmpty()) {
-        return allClasses.get(0).name();
+        return allClasses.getFirst().name();
       }
 
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.class.not.loaded", getDisplayName(process)));
@@ -389,7 +388,7 @@ public final class JVMNameUtil {
     if (res.second && debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
       if (!allClasses.isEmpty()) {
-        return allClasses.get(0).name();
+        return allClasses.getFirst().name();
       }
     }
     return res.first;
@@ -464,7 +463,7 @@ public final class JVMNameUtil {
     if (res == null && debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
       if (!allClasses.isEmpty()) {
-        final String className = allClasses.get(0).name();
+        final String className = allClasses.getFirst().name();
         int dotIndex = className.lastIndexOf('.');
         if (dotIndex >= 0) {
           return className.substring(0, dotIndex);
@@ -479,17 +478,11 @@ public final class JVMNameUtil {
   }
 
   public static @Nullable String getClassVMName(@Nullable PsiClass containingClass) {
-    // no support for local classes for now. TODO: use JavaLocalClassesHelper
     if (containingClass == null) return null;
-    if (containingClass instanceof PsiAnonymousClass) {
-      String parentName = getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class));
-      if (parentName == null) {
-        return null;
-      }
-      else {
-        return parentName + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
-      }
+    if (PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+      return ClassUtil.getBinaryClassName(containingClass);
     }
+    // need to use getNonAnonymousClassName to have name mappers involved, see DebuggerManagerImpl#getVMClassQualifiedName
     return getNonAnonymousClassName(containingClass);
   }
 }

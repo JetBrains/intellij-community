@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public interface ArrangementSettings extends Cloneable {
   /**
    * @deprecated collect match rules from {@link #getSections()}
    */
+  @ApiStatus.Internal
   @Deprecated
   @NotNull
   List<? extends ArrangementMatchRule> getRules();

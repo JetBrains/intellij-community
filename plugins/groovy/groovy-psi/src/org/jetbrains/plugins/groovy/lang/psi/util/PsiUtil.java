@@ -1378,8 +1378,14 @@ public final class PsiUtil {
     return referenceExpression.getParent() instanceof GrCall;
   }
 
-  public static boolean isLocalVariable(@Nullable PsiElement variable) {
-    return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
+  /**
+   * Checks whether the current element is a local variable.
+   * Note: this method doesn't treat an unnamed variable as a local variable
+   *
+   * @see GrVariable#isUnnamed()
+   */
+  public static boolean isLocalVariable(@Nullable PsiElement element) {
+    return element instanceof GrVariable variable && !(element instanceof GrField || element instanceof GrParameter || variable.isUnnamed());
   }
 
   public static boolean isLocalOrParameter(@Nullable PsiElement variable) {

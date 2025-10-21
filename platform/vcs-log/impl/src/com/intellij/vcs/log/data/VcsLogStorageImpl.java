@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
@@ -370,12 +371,24 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
         LOG.error("Could not create index storage backend", e);
         return new Pair<>(storage, null);
       }
-    }, () -> {
-      for (StorageId.Directory storageId : storageIds) {
-        if (!storageId.cleanupAllStorageFiles()) {
+    }, () -> cleanupStorageFiles(storageIds));
+  }
+
+  @RequiresBackgroundThread
+  static void cleanupStorageFiles(@NotNull Collection<? extends StorageId> storageIds) {
+    for (StorageId storageId : storageIds) {
+      try {
+        boolean deleted = storageId.cleanupAllStorageFiles();
+        if (deleted) {
+          LOG.info("Deleted storage files in " + storageId.getStoragePath());
+        }
+        else {
           LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
         }
       }
-    });
+      catch (Exception e) {
+        LOG.error("Could not clean up storage files in " + storageId.getStoragePath(), e);
+      }
+    }
   }
 }

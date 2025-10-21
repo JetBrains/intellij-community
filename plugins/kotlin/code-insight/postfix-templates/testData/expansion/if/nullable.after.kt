@@ -1,3 +1,5 @@
 fun test(condition: Boolean?) {
-    condition.if
+    if (condition) {
+
+    }
 }

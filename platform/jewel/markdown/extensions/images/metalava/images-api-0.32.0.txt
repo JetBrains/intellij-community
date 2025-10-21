@@ -1,0 +1,17 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.markdown.extensions.images {
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class Coil3ImageRendererExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension {
+    ctor public Coil3ImageRendererExtension(coil3.ImageLoader imageLoader);
+    method public org.jetbrains.jewel.markdown.extensions.ImageRendererExtension getImageRendererExtension();
+    property public org.jetbrains.jewel.markdown.extensions.ImageRendererExtension imageRendererExtension;
+    field public static final org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension.Companion Companion;
+  }
+
+  public static final class Coil3ImageRendererExtension.Companion {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension withDefaultLoader();
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension withDefaultLoader(coil3.PlatformContext context);
+  }
+
+}
+

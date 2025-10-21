@@ -11,19 +11,23 @@ import org.jetbrains.kotlin.idea.quickfix.collections.ChangeToMutableCollectionF
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtProperty
 
-internal object ChangeToMutableCollectionFixFactories {
+object ChangeToMutableCollectionFixFactories {
 
-    val noSetMethod = KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.NoSetMethod> { diagnostic -> createQuickFixes(diagnostic) }
+    val noSetMethod: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.NoSetMethod> = KotlinQuickFixFactory.ModCommandBased {
+        createQuickFixes(diagnostic = it)
+    }
 
     private fun KaSession.createQuickFixes(diagnostic: KaFirDiagnostic.NoSetMethod): List<ModCommandAction> {
         val element = diagnostic.psi
         val arrayExpr = element.arrayExpression ?: return emptyList()
         val type = arrayExpr.expressionType as? KaClassType ?: return emptyList()
-        if (!MutableCollectionsConversionUtils.run { isReadOnlyListOrMap(type) }) return emptyList()
+
+        val immutableCollectionClassId = type.classId
+        if (!MutableCollectionsConversionUtils.isReadOnlyListOrMap(immutableCollectionClassId)) return emptyList()
 
         val property = arrayExpr.mainReference?.resolve() as? KtProperty ?: return emptyList()
         if (!MutableCollectionsConversionUtils.canConvertPropertyType(property)) return emptyList()
 
-        return listOf(ChangeToMutableCollectionFix(property, type.classId))
+        return listOf(ChangeToMutableCollectionFix(property, immutableCollectionClassId))
     }
 }

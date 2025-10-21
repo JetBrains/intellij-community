@@ -13,8 +13,9 @@ val Entity.isShared: Boolean
 /**
  * UGLY HACK for UNSHARED documents, please don't use it
  * */
-fun <T> ChangeScope.unshared(f: SharedChangeScope.() -> T): T {
-  return SharedChangeScope(this).f()
+context(cs: ChangeScope)
+fun <T> unshared(f: SharedChangeScope.() -> T): T {
+  return SharedChangeScope(cs).f()
 }
 
 class SharedChangeScope internal constructor(private val changeScope: ChangeScope) : ChangeScope by changeScope
@@ -46,5 +47,6 @@ fun <T> SharedChangeScope.withKey(key: Any, body: SharedChangeScope.() -> T): T 
  * Local entities will be hidden from [f].
  * [f] will be invoked again, on a different state of the database, if there are any conflicts
  * */
-fun <T> ChangeScope.shared(f: SharedChangeScope.() -> T): T =
-  requireNotNull(meta[Shared]).shared(f)
+context(cs: ChangeScope)
+fun <T> shared(f: SharedChangeScope.() -> T): T =
+  requireNotNull(cs.meta[Shared]).shared(f)

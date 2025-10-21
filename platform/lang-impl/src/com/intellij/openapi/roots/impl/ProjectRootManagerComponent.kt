@@ -34,6 +34,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -183,6 +187,13 @@ open class ProjectRootManagerComponent(
     }
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(coroutineScope, rootsExtensionPointListener)
     OrderEnumerationHandler.EP_NAME.addChangeListener(coroutineScope, rootsExtensionPointListener)
+    connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ProjectSettingsEntity::class.java).isNotEmpty()) {
+          projectJdkChanged()
+        }
+      }
+    })
   }
 
   protected open fun projectClosed() {
@@ -274,8 +285,8 @@ open class ProjectRootManagerComponent(
     val projectFilePath = store.projectFilePath
     val directoryStorePath = store.directoryStorePath
     if (directoryStorePath == null || !projectFilePath.startsWith(directoryStorePath)) {
-      flatPaths += projectFilePath.invariantSeparatorsPathString
-      flatPaths += store.workspacePath.invariantSeparatorsPathString
+      flatPaths.add(projectFilePath.invariantSeparatorsPathString)
+      flatPaths.add(store.workspacePath.invariantSeparatorsPathString)
       WATCH_ROOTS_LOG.trace { "  project store: ${flatPaths}" }
     }
 
@@ -313,7 +324,7 @@ open class ProjectRootManagerComponent(
     }
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
-    collectModuleWatchRoots(recursivePaths, flatPaths, true)
+    collectModuleWatchRoots(recursivePaths = recursivePaths, flatPaths = flatPaths, logAllowed = true)
 
     collectCustomWorkspaceWatchRoots(recursivePaths)
 
@@ -334,14 +345,17 @@ open class ProjectRootManagerComponent(
       }
 
       if (logRoots) {
-        WATCH_ROOTS_LOG.trace { "    ${logDescriptor()}: ${recursive}, ${flat}" }
+        WATCH_ROOTS_LOG.trace { "    ${logDescriptor()}: $recursive, $flat" }
         recursivePaths += recursive
-        flatPaths += flat
+        flatPaths.addAll(flat)
       }
     }
 
     for (module in ModuleManager.getInstance(project).modules) {
-      if (logRoots) WATCH_ROOTS_LOG.trace { "  module ${module}" }
+      if (logRoots) {
+        WATCH_ROOTS_LOG.trace { "  module ${module}" }
+      }
+
       val rootManager = ModuleRootManager.getInstance(module)
       collectUrls(rootManager.contentRootUrls) { "content" }
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
@@ -382,6 +396,9 @@ open class ProjectRootManagerComponent(
       register(roots.sourceRoots, "external source roots")
       register(roots.nonRecursiveRoots, "non-recursive external roots")
       register(roots.nonRecursiveSourceRoots, "non-recursive external source roots")
+    }
+    builder.forEachNonIndexableRoots { roots ->
+      register(roots, "non-indexable roots")
     }
   }
 

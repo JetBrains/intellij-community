@@ -74,13 +74,13 @@ public final class UsageInfoToUsageConverter {
 
     public @NotNull List<PsiElement> getAllElements() {
       List<PsiElement> result = new ArrayList<>(myPrimarySearchedElements.size() + myAdditionalSearchedElements.size());
-      for (SmartPsiElementPointer pointer : myPrimarySearchedElements) {
+      for (SmartPsiElementPointer<?> pointer : myPrimarySearchedElements) {
         PsiElement element = pointer.getElement();
         if (element != null) {
           result.add(element);
         }
       }
-      for (SmartPsiElementPointer pointer : myAdditionalSearchedElements) {
+      for (SmartPsiElementPointer<?> pointer : myAdditionalSearchedElements) {
         PsiElement element = pointer.getElement();
         if (element != null) {
           result.add(element);
@@ -118,9 +118,8 @@ public final class UsageInfoToUsageConverter {
     PsiElement usageElement = usageInfo.getElement();
     if (usageElement != null && primaryElements.length != 0) {
       Bag features = new Bag();
-      UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider -> {
-        features.addAll(provider.getFeatures(usageElement));
-      });
+      UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider ->
+                                                                     features.addAll(provider.getFeatures(usageElement)));
       if (!features.isEmpty()) {
         final ReadWriteAccessDetector.Access readWriteAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
         final SimilarUsage similarUsageAdapter;

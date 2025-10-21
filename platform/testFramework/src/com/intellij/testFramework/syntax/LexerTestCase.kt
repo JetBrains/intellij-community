@@ -18,11 +18,8 @@ abstract class LexerTestCase : UsefulTestCase() {
 
   protected abstract fun createLexer(): Lexer
 
-  fun doTest(text: String, expected: String) {
-    doTest(text, expected, createLexer())
-  }
-
-  private fun doTest(text: String, expected: String? = null, lexer: Lexer = createLexer()) {
+  @JvmOverloads
+  protected fun doTest(text: String, expected: String? = null, lexer: Lexer = createLexer()) {
     val result = printTokens(lexer, text, 0)
 
     if (expected != null) {
@@ -37,7 +34,7 @@ abstract class LexerTestCase : UsefulTestCase() {
     return printTokens(text, start, lexer)
   }
 
-  protected fun getPathToTestDataFile(extension: String): String {
+  protected open fun getPathToTestDataFile(extension: String): String {
     return IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/" + this.dirPath + "/" + getTestName(true) + extension
   }
 

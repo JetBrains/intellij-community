@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 class ConcurrentIntObjectHashMapTest {
   @Test
   fun `put and get`() {
-    val map = chIntMap<Int>()
+    val map = ConcurrentCollectionFactory.createConcurrentIntObjectMap<Int>()
     assertThat(map.size()).isEqualTo(0)
     assertThat(map.isEmpty).isTrue()
     map.put(1, 0)
@@ -79,7 +79,7 @@ class ConcurrentIntObjectHashMapTest {
   }
 
   private fun createFrom(vararg pair: Pair<Int, Int>): ConcurrentIntObjectMap<Int> {
-    val map = chIntMap<Int>()
+    val map = ConcurrentCollectionFactory.createConcurrentIntObjectMap<Int>()
     for (entry in pair) {
       map.put(entry.first, entry.second)
     }

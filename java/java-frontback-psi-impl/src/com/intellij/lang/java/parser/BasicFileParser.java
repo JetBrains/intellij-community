@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +25,11 @@ import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link FileParser}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class BasicFileParser {
   protected final TokenSet IMPORT_LIST_STOPPER_SET;
   private final BasicJavaParser myParser;

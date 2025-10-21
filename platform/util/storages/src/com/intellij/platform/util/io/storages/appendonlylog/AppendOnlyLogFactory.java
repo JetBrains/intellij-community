@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.appendonlylog;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,7 +16,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.intellij.util.io.IOUtil.*;
+import static com.intellij.util.io.IOUtil.MiB;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.READ;
 
@@ -158,7 +158,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
                      "-> delete it, and pretend never seen it incompatible " +
                      "(incompatibility: " + ex.getMessage() + ")"
             );
-            FileUtil.delete(storagePath);
+            NioFiles.deleteRecursively(storagePath);
           }
           else {
             throw ex;

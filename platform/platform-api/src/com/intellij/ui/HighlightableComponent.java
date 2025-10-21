@@ -215,8 +215,8 @@ public class HighlightableComponent extends JComponent implements Accessible {
     boolean paintHighlightsBackground;
     boolean paintHighlightsForeground;
     if (myIsSelected && (myHasFocus || myPaintUnfocusedSelection)) {
-      bgColor = UIUtil.getTreeSelectionBackground();
-      fgColor = UIUtil.getTreeSelectionForeground();
+      bgColor = UIUtil.getTreeSelectionBackground(true);
+      fgColor = UIUtil.getTreeSelectionForeground(true);
       paintHighlightsBackground = false;
       paintHighlightsForeground = false;
     }

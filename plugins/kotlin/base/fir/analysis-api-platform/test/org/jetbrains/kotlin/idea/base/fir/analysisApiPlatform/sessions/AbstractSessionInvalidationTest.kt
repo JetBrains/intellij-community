@@ -7,8 +7,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLResolutionFacadeService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
 import java.io.File
@@ -56,8 +55,7 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
 
     @OptIn(LLFirInternals::class)
     private fun getAllModuleSessions(mainModule: KaModule): List<LLFirSession> {
-        val projectModules = ModuleManager.getInstance(mainModule.project).modules
-            .flatMap { listOfNotNull(it.toKaSourceModuleForProductionOrTest(), it.toKaSourceModuleForTest()) }
+        val projectModules = ModuleManager.getInstance(mainModule.project).modules.flatMap { it.toKaSourceModules() }
 
         val resolutionFacade = LLResolutionFacadeService.getInstance(mainModule.project).getResolutionFacade(mainModule)
         return projectModules.map(resolutionFacade::getSessionFor)

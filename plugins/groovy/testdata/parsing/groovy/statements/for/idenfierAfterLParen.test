@@ -5,8 +5,10 @@ Groovy script
     PsiElement(for)('for')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    Traditional FOR clause
-      Reference expression
+    In clause
+      Parameter
+        Modifiers
+          <empty list>
         PsiElement(identifier)('foo')
-      PsiErrorElement:';' expected
+      PsiErrorElement:',' expected
         <empty list>

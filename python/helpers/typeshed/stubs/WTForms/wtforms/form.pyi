@@ -1,16 +1,18 @@
 from _typeshed import SupportsItems
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Protocol, overload
+from typing import Any, ClassVar, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import TypeAlias
 
 from wtforms.fields.core import Field, UnboundField
 from wtforms.meta import DefaultMeta, _MultiDictLike
 
-_FormErrors: TypeAlias = dict[str | None, Sequence[str] | _FormErrors]
+_T = TypeVar("_T")
+_FormErrors: TypeAlias = dict[str, Sequence[str] | _FormErrors]
 
 # _unbound_fields will always be a list on an instance, but on a
 # class it might be None, if it never has been instantiated, or
 # not instantianted after a new field had been added/removed
+@type_check_only
 class _UnboundFields(Protocol):
     @overload
     def __get__(self, obj: None, owner: type[object] | None = None, /) -> list[tuple[str, UnboundField[Any]]] | None: ...
@@ -55,7 +57,7 @@ class BaseForm:
 
 class FormMeta(type):
     def __init__(cls, name: str, bases: Sequence[type[object]], attrs: Mapping[str, Any]) -> None: ...
-    def __call__(cls, *args: Any, **kwargs: Any) -> Any: ...
+    def __call__(cls: type[_T], *args: Any, **kwargs: Any) -> _T: ...
     def __setattr__(cls, name: str, value: object) -> None: ...
     def __delattr__(cls, name: str) -> None: ...
 
@@ -82,3 +84,5 @@ class Form(BaseForm, metaclass=FormMeta):
     def __setitem__(self, name: str, value: None) -> None: ...  # type: ignore[override]
     def __delitem__(self, name: str) -> None: ...
     def __delattr__(self, name: str) -> None: ...
+
+__all__ = ("BaseForm", "Form")

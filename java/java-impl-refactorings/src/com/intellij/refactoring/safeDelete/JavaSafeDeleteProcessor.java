@@ -51,7 +51,6 @@ import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -107,22 +106,19 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       LOG.assertTrue(parameter.getDeclarationScope() instanceof PsiMethod);
       findParameterUsages(parameter, allElementsToDelete, usages);
     }
-    else if (element instanceof PsiLocalVariable) {
+    else if (element instanceof PsiLocalVariable variable) {
       for (PsiReference reference : ReferencesSearch.search(element).asIterable()) {
         PsiReferenceExpression referencedElement = (PsiReferenceExpression)reference.getElement();
         PsiElement statementOrExprInList = PsiTreeUtil.getParentOfType(referencedElement, PsiStatement.class);
         if (statementOrExprInList instanceof PsiExpressionListStatement statement) {
-          PsiExpressionList expressionList = statement.getExpressionList();
-          if (expressionList != null) {
-            statementOrExprInList = PsiTreeUtil.findPrevParent(expressionList, referencedElement);
-          }
+          statementOrExprInList = PsiTreeUtil.findPrevParent(statement.getExpressionList(), referencedElement);
         }
 
         boolean isSafeToDelete = PsiUtil.isAccessedForWriting(referencedElement);
         boolean hasSideEffects = false;
         if (PsiUtil.isOnAssignmentLeftHand(referencedElement)) {
           PsiExpression rhs = ((PsiAssignmentExpression)referencedElement.getParent()).getRExpression();
-          hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(rhs, (PsiLocalVariable)element, new ArrayList<>());
+          hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(rhs, variable, new ArrayList<>());
         }
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(statementOrExprInList, element, isSafeToDelete && !hasSideEffects));
       }
@@ -188,14 +184,14 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
     if (element instanceof PsiTypeParameter typeParameter) {
       PsiTypeParameterListOwner owner = typeParameter.getOwner();
-      if (owner instanceof PsiMethod && !owner.hasModifierProperty(PsiModifier.STATIC)) {
+      if (owner instanceof PsiMethod method && !owner.hasModifierProperty(PsiModifier.STATIC)) {
         PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
         if (typeParameterList != null) {
-          int index = typeParameterList.getTypeParameterIndex((PsiTypeParameter)element);
+          int index = typeParameterList.getTypeParameterIndex(typeParameter);
           if (index >= 0) {
             ArrayList<PsiTypeParameter> overriders = new ArrayList<>();
-            overriders.add((PsiTypeParameter)element);
-            OverridingMethodsSearch.search((PsiMethod)owner).forEach(overrider -> {
+            overriders.add(typeParameter);
+            OverridingMethodsSearch.search(method).forEach(overrider -> {
               PsiTypeParameter[] typeParameters = overrider.getTypeParameters();
               if (index < typeParameters.length) {
                 overriders.add(typeParameters[index]);
@@ -509,23 +505,20 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public void prepareForDeletion(@NotNull PsiElement element) {
-    if (element instanceof PsiVariable var) {
-      var.normalizeDeclaration();
-    }
-    if (element instanceof PsiParameter parameter && element.getParent() instanceof PsiParameterList parameterList) {
-      PsiMethod method = ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
-      if (method != null) {
-        PsiAnnotation contract = JavaMethodContractUtil.findContractAnnotation(method);
-        if (contract != null) {
-          ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, parameter);
-          try {
-            String[] names = ContainerUtil.map(parameterList.getParameters(), PsiParameter::getName, ArrayUtilRt.EMPTY_STRING_ARRAY);
-            PsiAnnotation newContract = ContractConverter.convertContract(method, names, info);
-            if (newContract != null && newContract != contract) {
-              contract.replace(newContract);
-            }
+    if (element instanceof PsiParameter parameter
+        && element.getParent() instanceof PsiParameterList parameterList
+        && parameterList.getParent() instanceof PsiMethod method) {
+      PsiAnnotation contract = JavaMethodContractUtil.findContractAnnotation(method);
+      if (contract != null) {
+        ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, parameter);
+        try {
+          String[] names = ContainerUtil.map(parameterList.getParameters(), PsiParameter::getName, ArrayUtilRt.EMPTY_STRING_ARRAY);
+          PsiAnnotation newContract = ContractConverter.convertContract(method, names, info);
+          if (newContract != null && newContract != contract) {
+            contract.replace(newContract);
           }
-          catch (ContractConverter.ContractConversionException ignored) { }
+        }
+        catch (ContractConverter.ContractConversionException ignored) {
         }
       }
     }

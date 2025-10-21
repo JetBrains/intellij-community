@@ -14,9 +14,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,26 +28,26 @@ import java.util.List;
 @ApiStatus.Internal
 public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFromEditorActionHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     return super.isEnabled(session, dataContext) && getConsoleExecuteAction(session) != null;
   }
 
-  private static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@NotNull XDebugSession session) {
+  private static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@NotNull XDebugSessionProxy session) {
     return getConsoleExecuteAction(session.getConsoleView());
   }
 
   public static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@Nullable ConsoleView consoleView) {
-    if (!(consoleView instanceof LanguageConsoleView)) {
+    if (!(consoleView instanceof LanguageConsoleView languageConsoleView)) {
       return null;
     }
 
-    List<AnAction> actions = ActionUtil.getActions(((LanguageConsoleView)consoleView).getConsoleEditor().getComponent());
+    List<AnAction> actions = ActionUtil.getActions(languageConsoleView.getConsoleEditor().getComponent());
     ConsoleExecuteAction action = ContainerUtil.findInstance(actions, ConsoleExecuteAction.class);
     return action == null || !action.isEnabled() ? null : action;
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (!(editor instanceof EditorEx)) {
       return;
@@ -60,7 +60,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
       TextRange textRange = new TextRange(selectionStart, selectionEnd);
       rangeAndText = Promises.resolvedPromise(Pair.create(textRange, editor.getDocument().getText(textRange)));
     } else {
-      XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+      XDebuggerEvaluator evaluator = session.getCurrentEvaluator();
       if (evaluator != null) {
         Promise<ExpressionInfo> expressionInfoPromise = evaluator.getExpressionInfoAtOffsetAsync(session.getProject(), editor.getDocument(), selectionStart, true);
         rangeAndText = expressionInfoPromise.then(expressionInfo -> {

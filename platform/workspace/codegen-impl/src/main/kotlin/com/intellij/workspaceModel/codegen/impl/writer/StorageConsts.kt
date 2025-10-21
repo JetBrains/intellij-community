@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
 private const val workspaceBasePackageName = "com.intellij.platform.workspace"
@@ -64,7 +64,7 @@ internal object WorkspaceEntity {
   private val fqn = fqn(packageName, className)
 
   val simpleName = fqn.simpleName
-  val Builder = fqn(packageName, "$className.Builder")
+  val Builder = fqn(packageName, "Modifiable$className")
   override fun toString(): String {
     return fqn.toString()
   }

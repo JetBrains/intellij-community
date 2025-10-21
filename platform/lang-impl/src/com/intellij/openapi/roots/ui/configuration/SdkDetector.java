@@ -161,7 +161,7 @@ public class SdkDetector {
    *
    * @deprecated Please use {@link SdkDetector#detectSdks(Project, SdkType, ProgressIndicator, DetectedSdkListener)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void detectSdks(
     @NotNull SdkType type,
     @NotNull ProgressIndicator indicator,

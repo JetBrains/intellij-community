@@ -37,11 +37,6 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  protected void specifyFileLanguageLevel(@NotNull VirtualFile virtualFile, @Nullable LanguageLevel langLevel) {
-    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, langLevel);
-  }
-
-  @Override
   public ASTNode createNameIdentifier(String name, LanguageLevel languageLevel) {
     final PsiFile dummyFile = createDummyFile(languageLevel, name);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
@@ -223,13 +218,15 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a " + s + " b");
+  public PyBinaryExpression createBinaryExpression(@NotNull String operator,
+                                                   @NotNull PyExpression leftOperand,
+                                                   @NotNull PyExpression rightOperand) {
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a " + operator + " b");
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     PyBinaryExpression binExpr = (PyBinaryExpression)expressionStatement.getExpression();
     ASTNode binnode = binExpr.getNode();
-    binnode.replaceChild(binExpr.getLeftExpression().getNode(), expr.getNode().copyElement());
-    binnode.replaceChild(binExpr.getRightExpression().getNode(), listLiteral.getNode().copyElement());
+    binnode.replaceChild(binExpr.getLeftExpression().getNode(), leftOperand.getNode().copyElement());
+    binnode.replaceChild(binExpr.getRightExpression().getNode(), rightOperand.getNode().copyElement());
     return binExpr;
   }
 

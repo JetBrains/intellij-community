@@ -108,7 +108,7 @@ internal class StateStorageBackedByController(
     return ControllerBackedSaveSessionProducer(storageController = this)
   }
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  override suspend fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // external change is not expected and not supported
   }
 

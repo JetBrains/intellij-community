@@ -30,8 +30,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
-import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.*;
+import com.intellij.platform.syntax.util.cancellation.CancellationProviderExtension;
+import com.intellij.platform.syntax.util.log.LogProvider;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
@@ -123,6 +124,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
+    app.registerService(PsiSyntaxBuilderFactory.class, new PsiSyntaxBuilderFactoryImpl());
     project.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
     project.registerService(PsiManager.class, myPsiManager);
     project.registerService(TreeAspect.class, new TreeAspect());
@@ -132,6 +134,14 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
     addExplicitExtensionForAnyLanguage(ElementTypeConverters.getInstance(), new CommonElementTypeConverterFactory());
+
+    ExtensionPointName<CancellationProviderExtension> cancellationProviderEP = new ExtensionPointName<>("com.intellij.syntax.cancellationProviderExtension");
+    registerExtensionPoint(app.getExtensionArea(), cancellationProviderEP, CancellationProviderExtension.class);
+    registerExtension(cancellationProviderEP, new IntelliJCancellationProvider());
+
+    ExtensionPointName<LogProvider> logProviderEP = new ExtensionPointName<>("com.intellij.syntax.logProvider");
+    registerExtensionPoint(app.getExtensionArea(), logProviderEP, LogProvider.class);
+    registerExtension(logProviderEP, new IntelliJLogProvider());
 
     myLangParserDefinition = app.getExtensionArea().registerFakeBeanPoint(LanguageParserDefinitions.INSTANCE.getName(), getPluginDescriptor());
 
@@ -292,7 +302,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   protected void doTest(boolean checkResult, boolean ensureNoErrorElements) {
     String name = getTestName();
     try {
-      parseFile(name, loadFile(name + "." + myFileExt));
+      String text = loadFile(name + "." + myFileExt);
+      parseFile(name, text);
       if (checkResult) {
         checkResult(name, myFile);
         if (ensureNoErrorElements) {
@@ -308,7 +319,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
   }
 
-  protected PsiFile parseFile(String name, String text) {
+  protected @NotNull PsiFile parseFile(@NotNull String name, @NotNull String text) {
     myFile = createPsiFile(name, text);
     assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
     assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
@@ -534,14 +545,14 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   public static void doCheckResult(@NotNull String fullPath, @NotNull String targetDataName, @NotNull String actual) {
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
-    UsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
+    assertSameLinesWithFile(expectedFileName, actual);
   }
 
   protected static String toParseTreeText(@NotNull PsiElement file,  boolean skipSpaces, boolean printRanges) {
     return DebugUtil.psiToString(file, !skipSpaces, printRanges);
   }
 
-  protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
+  protected @NotNull String loadFile(@NotNull @TestDataFile String name) throws IOException {
     return loadFileDefault(myFullDataPath, name);
   }
 

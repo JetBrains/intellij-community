@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -55,7 +55,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   public @Nullable String getLibraryPath() {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
-      return descriptor.getLibraryClassesRoots().get(0);
+      return descriptor.getLibraryClassesRoots().getFirst();
     }
     return null;
   }

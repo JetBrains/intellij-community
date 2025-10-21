@@ -1,2 +1,2 @@
-version = "0.9.*"
-upstream_repository = "https://github.com/eventable/vobject"
+version = "~=0.9.9"
+upstream_repository = "https://github.com/py-vobject/vobject"

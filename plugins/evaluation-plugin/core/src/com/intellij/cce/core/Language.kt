@@ -9,7 +9,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   KOTLIN("Kotlin", listOf("kt"), "kotlin", needSdk = true),
   RUBY("Ruby", listOf("rb"), "ruby", needSdk = true),
   SCALA("Scala", listOf("scala"), "Scala", needSdk = true),
-  CPP("C++", listOf("cpp", "c", "cc"), "ObjectiveC"),
+  CPP("C++", listOf("cpp", "c", "cc"), "C++"),
   CPPRadler("Cpp", listOf("cpp", "c", "cc", "h"), "C++"),
   PHP("PHP", listOf("php"), "PHP"),
   JS("JavaScript", listOf("js", "jsx"), "JavaScript"),
@@ -30,6 +30,8 @@ enum class Language(val displayName: String, private val extensions: List<String
   JSON("JSON", listOf("json"), "JSON"),
   XML("XML", listOf("xml", "xsd", "xsl", "wsdl"), "XML"),
   MARKDOWN("Markdown", listOf("md"), "Markdown"),
+  TERMINAL("TerminalOutput", listOf("terminal_output"), "TerminalOutput"),
+  PROPERTIES("Properties", listOf("properties"), "Properties"),
   ANOTHER("Another", listOf(), ""),
   UNSUPPORTED("Unsupported", listOf(), ""); // TODO: There are no unsupported languages
 

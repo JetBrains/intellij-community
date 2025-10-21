@@ -1,3 +1,3 @@
-from _typeshed import Incomplete
+from typing import Final
 
-rsPoly_LUT: Incomplete
+rsPoly_LUT: Final[dict[int, list[int]]]

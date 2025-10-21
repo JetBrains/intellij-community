@@ -4,8 +4,10 @@ package org.jetbrains.plugins.terminal.block.util
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.terminal.actions.TerminalActionUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction.Companion.SUPPRESS_COMPLETION
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
@@ -21,7 +23,8 @@ import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 @ApiStatus.Experimental
 object TerminalDataContextUtils {
   // gen1
-  internal val IS_PROMPT_EDITOR_KEY: Key<Boolean> = Key.create("PromptEditor")
+  @ApiStatus.Internal
+  val IS_PROMPT_EDITOR_KEY: Key<Boolean> = Key.create("PromptEditor")
   internal val IS_OUTPUT_EDITOR_KEY: Key<Boolean> = Key.create("OutputEditor")
   internal val IS_ALTERNATE_BUFFER_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferEditor")
   // gen2
@@ -30,6 +33,9 @@ object TerminalDataContextUtils {
 
   @ApiStatus.Internal
   val IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferModelEditor")
+
+  @ApiStatus.Internal
+  val IS_ALTERNATE_BUFFER_DATA_KEY: DataKey<Boolean> = DataKey.create("IS_ALTERNATE_BUFFER")
 
   val Editor.isPromptEditor: Boolean
     get() = getUserData(IS_PROMPT_EDITOR_KEY) == true
@@ -48,8 +54,8 @@ object TerminalDataContextUtils {
   val Editor.terminalPromptModel: TerminalPromptModel?
     get() = getUserData(TerminalPromptModel.KEY)
 
-  val DataContext.editor: Editor?
-    get() = getData(CommonDataKeys.EDITOR)
+  val DataContext.terminalEditor: Editor?
+    get() = getData(TerminalActionUtil.EDITOR_KEY) ?: getData(CommonDataKeys.EDITOR)
 
   @get:ApiStatus.Internal
   val DataContext.outputController: TerminalOutputController?
@@ -80,8 +86,8 @@ object TerminalDataContextUtils {
     get() = getData(BlockTerminalSession.DATA_KEY)
 
 
-  val AnActionEvent.editor: Editor?
-    get() = getData(CommonDataKeys.EDITOR)
+  val AnActionEvent.terminalEditor: Editor?
+    get() = dataContext.terminalEditor
 
   @get:ApiStatus.Internal
   val AnActionEvent.outputController: TerminalOutputController?

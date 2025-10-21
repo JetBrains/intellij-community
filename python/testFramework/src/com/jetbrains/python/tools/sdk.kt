@@ -14,7 +14,7 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.target.getInterpreterVersion
+import com.jetbrains.python.target.getInterpreterVersionForJava
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.Assume
@@ -42,7 +42,7 @@ suspend fun createSdk(request: SdkCreationRequest): Pair<Sdk, AutoCloseable> = w
         interpreterPath = PYTHON_PATH_ON_TARGET
       }
       try {
-        Assume.assumeNotNull("No $PYTHON_PATH_ON_TARGET on target", targetData.getInterpreterVersion(null, true))
+        Assume.assumeNotNull("No $PYTHON_PATH_ON_TARGET on target", targetData.getInterpreterVersionForJava())
       }
       catch (e: RemoteSdkException) {
         Assume.assumeNoException("Error running $PYTHON_PATH_ON_TARGET", e)

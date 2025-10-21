@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
@@ -31,7 +30,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -656,12 +654,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiParameter[] parameters = target.getParameterList().getParameters();
     if (parameters.length == 0) return;
     PsiParameter parameter = parameters[0];
-    if (!BaseIntentionAction.canModify(parameter) || !AnnotationUtil.isAnnotatingApplicable(parameter)) return;
+    if (!BaseIntentionAction.canModify(parameter)) return;
+    ModCommandAction fix = AddAnnotationModCommandAction.createAddNullableFix(parameter);
     reporter.registerProblem(methodRef, problem.getMessage(IGNORE_ASSERT_STATEMENTS),
-                             LocalQuickFix.notNullElements(
-                               parameters.length == 1
-                               ? LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(parameter))
-                               : null));
+                             LocalQuickFix.notNullElements(parameters.length == 1 ? LocalQuickFix.from(fix) : null));
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(ProblemReporter reporter,
@@ -671,7 +667,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiParameter parameter = MethodCallUtils.getParameterForArgument(top);
     if (parameter == null) return;
     PsiModifierListOwner target = Objects.requireNonNullElse(JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter), parameter);
-    if (BaseIntentionAction.canModify(target) && AnnotationUtil.isAnnotatingApplicable(target)) {
+    if (BaseIntentionAction.canModify(target)) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly(), alwaysNull);
       fixes.add(LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(target)));
       reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -788,6 +784,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     // no warnings for Void methods, where only null can be possibly returned
     if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
 
+    reportNullableReturnsProblems(reporter, problems, nullability, anno, manager);
+  }
+
+  protected void reportNullableReturnsProblems(ProblemReporter reporter,
+                         List<NullabilityProblem<?>> problems,
+                         Nullability nullability,
+                         PsiAnnotation anno,
+                         NullableNotNullManager manager) {
     for (NullabilityProblem<PsiExpression> problem : StreamEx.of(problems).map(NullabilityProblemKind.nullableReturn::asMyProblem).nonNull()) {
       final PsiExpression anchor = problem.getAnchor();
       PsiExpression expr = problem.getDereferencedExpression();
@@ -799,19 +803,26 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         final String text = exactlyNull
                             ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
-        reporter.registerProblem(expr, text, createNPEFixes(expr, expr, reporter.isOnTheFly(), exactlyNull).toArray(LocalQuickFix.EMPTY_ARRAY));
-      }
-      else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
-        final String defaultNullable = manager.getDefaultNullable();
-        final String presentableNullable = StringUtil.getShortName(defaultNullable);
-        final String text = exactlyNull
-                            ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
-                            : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
+        List<LocalQuickFix> fixes = createNPEFixes(expr, expr, reporter.isOnTheFly(), exactlyNull);
         PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
-        final LocalQuickFix fix = surroundingMethod == null ? null :
-                                  LocalQuickFix.from(new AddAnnotationModCommandAction(defaultNullable, surroundingMethod,
-                                                                                       ArrayUtilRt.toStringArray(manager.getNotNulls())));
-        reporter.registerProblem(expr, text, LocalQuickFix.notNullElements(fix));
+        if (surroundingMethod != null) {
+          ModCommandAction fix = AddAnnotationModCommandAction.createAddNullableFix(surroundingMethod);
+          if (fix != null) fixes = StreamEx.of(fixes).append(LocalQuickFix.from(fix)).toList();
+        }
+        reporter.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      }
+      else {
+        final String defaultNullable = manager.getDefaultAnnotation(Nullability.NULLABLE, anchor);
+        if (AnnotationUtil.isAnnotatingApplicable(anchor, defaultNullable)) {
+          final String presentableNullable = StringUtil.getShortName(defaultNullable);
+          final String text = exactlyNull
+                              ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
+                              : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
+          PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
+          final LocalQuickFix fix = surroundingMethod == null ? null :
+                                    LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(surroundingMethod));
+          reporter.registerProblem(expr, text, LocalQuickFix.notNullElements(fix));
+        }
       }
     }
   }

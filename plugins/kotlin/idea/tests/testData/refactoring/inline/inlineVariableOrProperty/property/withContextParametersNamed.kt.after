@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.2
+
+context(b: String)
+fun f() {
+    println(b.length)
+}
+
+
+// IGNORE_K1

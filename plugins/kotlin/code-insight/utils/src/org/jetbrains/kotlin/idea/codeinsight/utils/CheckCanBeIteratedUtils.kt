@@ -2,8 +2,12 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
@@ -23,7 +27,8 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = buildSet {
     this += DefaultTypeClassIds.CHAR_SEQUENCE
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 @ApiStatus.Internal
 fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean {
     return when (type) {

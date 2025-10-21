@@ -8,6 +8,7 @@ import com.intellij.BundleBase.SHOW_LOCALIZED_MESSAGES
 import com.intellij.BundleBase.appendLocalizationSuffix
 import com.intellij.BundleBase.getDefaultMessage
 import com.intellij.BundleBase.replaceMnemonicAmpersand
+import com.intellij.openapi.application.DevTimeClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
@@ -61,7 +62,7 @@ object BundleBase {
   }
 
   /**
-   * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
+   * Performs partial application of the pattern message from the bundle, leaving some parameters unassigned.
    * It's expected that the message contains `params.length + unassignedParams` placeholders. Parameters
    * `{0}..{params.length-1}` will be substituted using a passed params array. The remaining parameters
    * will be renumbered: `{params.length}` will become `{0}` and so on, so the resulting template
@@ -115,7 +116,7 @@ object BundleBase {
         return parentBundle.getString(key)
       }
     }
-    catch (e: IllegalAccessException) {
+    catch (_: IllegalAccessException) {
       LOG.warn("Cannot fetch default message with 'idea.l10n.english' enabled, by key '$key'")
     }
     return "undefined"
@@ -125,7 +126,7 @@ object BundleBase {
   fun appendLocalizationSuffix(result: String, suffixToAppend: String): @NlsSafe String {
     for (suffix in SUFFIXES) {
       if (result.endsWith(suffix)) {
-        return result.substring(0, result.length - suffix.length) + L10N_MARKER + suffix
+        return result.dropLast(suffix.length) + L10N_MARKER + suffix
       }
     }
     return result + suffixToAppend
@@ -230,14 +231,13 @@ internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, params
     OrdinalFormat.apply(format)
     return format.format(params)
   }
-  catch (e: IllegalArgumentException) {
+  catch (_: IllegalArgumentException) {
     return "!invalid format: `$value`!"
   }
 }
 
 @Suppress("DuplicatedCode")
-@Internal
-fun messageOrDefault(bundle: ResourceBundle, key: String, defaultValue: @Nls String?, params: Array<out Any?>?): @Nls String {
+internal fun messageOrDefault(bundle: ResourceBundle, key: String, defaultValue: @Nls String?, params: Array<out Any?>?): @Nls String {
   if (bundle !is IntelliJResourceBundle || bundle.parent != null) {
     @Suppress("HardCodedStringLiteral")
     return messageOrDefaultForJdkBundle(bundle = bundle, key = key, defaultValue = defaultValue, params = params)
@@ -257,7 +257,7 @@ private fun messageOrDefaultForJdkBundle(
   val value = try {
     bundle.getString(key)
   }
-  catch (e: MissingResourceException) {
+  catch (_: MissingResourceException) {
     resourceFound = false
     defaultValue ?: useDefaultValue(bundle = bundle, key = key)
   }
@@ -279,10 +279,15 @@ private fun messageOrDefaultForJdkBundle(
 }
 
 internal fun useDefaultValue(bundle: ResourceBundle, @NlsSafe key: String): @Nls String {
-  if (assertOnMissedKeys) {
+  if (assertOnMissedKeys && !isDevelopmentTime(bundle.javaClass.classLoader)) {
     LOG.error("'$key' is not found (baseBundleName=${bundle.baseBundleName}, bundle=$bundle)")
   }
   return "!$key!"
+}
+
+private fun isDevelopmentTime(bundleClassLoader: ClassLoader): Boolean {
+  return bundleClassLoader is DevTimeClassLoader
+         || Thread.currentThread().contextClassLoader is DevTimeClassLoader
 }
 
 internal fun postProcessResolvedValue(

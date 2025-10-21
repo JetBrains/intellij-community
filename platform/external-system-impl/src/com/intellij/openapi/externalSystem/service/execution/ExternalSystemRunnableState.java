@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -49,6 +50,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.task.RunConfigurationTaskState;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
@@ -82,6 +84,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   @ApiStatus.Internal
   public static final @NotNull Key<ExternalSystemTaskNotificationListener> TASK_NOTIFICATION_LISTENER_KEY =
     Key.create("TASK_NOTIFICATION_LISTENER");
+  @ApiStatus.Internal
+  public static final Key<ThreeState> NAVIGATE_TO_ERROR_KEY = Key.create("NAVIGATE_TO_ERROR");
 
   private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
   private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
@@ -223,6 +227,12 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
     DefaultBuildDescriptor buildDescriptor =
       new DefaultBuildDescriptor(task.getId(), executionName, task.getExternalProjectPath(), System.currentTimeMillis());
+
+    ThreeState navigateToError = myEnv.getUserData(NAVIGATE_TO_ERROR_KEY);
+    if (navigateToError != null) {
+      buildDescriptor.setNavigateToError(navigateToError);
+    }
+
     Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY);
     Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
     Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
@@ -245,7 +255,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (executionConsole instanceof BuildView) {
       actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
-      actionGroup.add(BuildTreeFilters.createFilteringActionsGroup((BuildView)executionConsole));
+      actionGroup.add(BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>((BuildView)executionConsole)));
     }
     RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
     if (taskState != null && consoleView != null) {
@@ -321,14 +331,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         }
 
         @Override
-        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
           if (consoleView != null) {
-            consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            consoleManager.onOutput(consoleView, processHandler, text, outputType);
           }
           else {
-            processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            processHandler.notifyTextAvailable(text, outputType);
           }
-          eventDispatcher.setStdOut(stdOut);
+          eventDispatcher.setStdOut(outputType.isStdout());
           eventDispatcher.append(text);
         }
 

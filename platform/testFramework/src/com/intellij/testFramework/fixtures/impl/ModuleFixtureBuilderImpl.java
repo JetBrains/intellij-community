@@ -29,11 +29,12 @@ import org.junit.Assert;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
   private static int ourIndex;
 
-  private final NotNullProducer<? extends ModuleType<?>> myModuleTypeProducer;
+  private final Supplier<? extends @NotNull ModuleType<?>> myModuleTypeSupplier;
   protected final List<String> myContentRoots = new SmartList<>();
   protected final List<String> mySourceRoots = new SmartList<>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
@@ -42,12 +43,24 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected String myTestOutputPath;
 
   public ModuleFixtureBuilderImpl(@NotNull ModuleType<?> moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
-    myModuleTypeProducer = () -> moduleType;
+    myModuleTypeSupplier = () -> moduleType;
     myFixtureBuilder = fixtureBuilder;
   }
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  protected ModuleFixtureBuilderImpl(@NotNull Supplier<? extends @NotNull ModuleType<?>> moduleTypeSupplier,
+                                     @NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
+    myModuleTypeSupplier = moduleTypeSupplier;
+    myFixtureBuilder = fixtureBuilder;
+  }
+
+  /**
+   * @deprecated use {@link #ModuleFixtureBuilderImpl(Supplier, TestFixtureBuilder)} instead.
+   */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @Deprecated
   public ModuleFixtureBuilderImpl(final @NotNull NotNullProducer<? extends ModuleType<?>> moduleTypeProducer, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
-    myModuleTypeProducer = moduleTypeProducer;
+    myModuleTypeSupplier = moduleTypeProducer;
     myFixtureBuilder = fixtureBuilder;
   }
 
@@ -83,7 +96,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     Project project = myFixtureBuilder.getFixture().getProject();
     Assert.assertNotNull(project);
     Path moduleFilePath = ((ProjectStoreOwner)project).getComponentStore().getProjectBasePath().getParent().resolve(getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleTypeProducer.produce().getId());
+    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleTypeSupplier.get().getId());
   }
 
   private static int getNextIndex() {

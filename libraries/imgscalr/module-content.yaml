@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.imgscalr
+  library: imgscalr
+  files:
+  - name: $MAVEN_REPOSITORY$/org/imgscalr/imgscalr-lib/4/imgscalr-lib-4.jar

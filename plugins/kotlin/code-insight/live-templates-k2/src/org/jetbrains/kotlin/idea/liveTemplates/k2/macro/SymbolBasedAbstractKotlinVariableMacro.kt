@@ -85,7 +85,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun shouldDisplayVariable(variable: KaVariableSymbol, file: KtFile): Boolean {
         return when (variable) {
             is KaValueParameterSymbol, is KaLocalVariableSymbol -> true

@@ -24,7 +24,7 @@ import static com.intellij.util.SystemProperties.getIntProperty;
  * (avg, max, 50-99-99.9%-tile...) to FUS, as 'performance:responsiveness' event
  * <p>
  * The goal is to estimate how many 'hiccups' -- tail-delays in ordinary CPU/memory-bound
- * task execution time, whose reasons are (likely) outside of our control -- IDE JVM experiences,
+ * task execution time, whose reasons are (likely) outside our control -- IDE JVM experiences,
  * in a long run.
  *
  * @see IdeHeartbeatEventReporter
@@ -42,7 +42,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
   // This task-execution time is affected by:
   //  1. OS thread scheduling: thread could be scheduled off CPU during the execution -- because it's
   //     time slice is finished. The time until the thread will be scheduled back on-CPU depends on
-  //     overall system load -- number of active threads, interrupts, thread packing/unparking, etc
+  //     overall system load -- number of active threads, interrupts, thread packing/unparking, etc.
   //  2. Memory pressure: memory capacity vs memory demands. Intensive memory use by IDE and other
   //     apps in the system leads to swapping, but also to CPU cache 'trashing' -- both significantly
   //     slow down memory accesses
@@ -96,7 +96,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
   }
 
   /** task durations, in nanoseconds */
-  private final Histogram taskDurationHisto = new Histogram(3);
+  private final Histogram taskDurationHistory = new Histogram(3);
 
   private void samplingLoop() {
     UILatencyLogger.MemoryStatsSampler memorySampler = new UILatencyLogger.MemoryStatsSampler();
@@ -106,7 +106,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
            sampleNo++) {
         long timeTakenNs = runCpuAndMemoryTask();
 
-        taskDurationHisto.recordValue(MathUtil.clamp(timeTakenNs, 0, Long.MAX_VALUE));
+        taskDurationHistory.recordValue(MathUtil.clamp(timeTakenNs, 0, Long.MAX_VALUE));
 
         memorySampler.sample();
 
@@ -120,8 +120,8 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
         }
 
         if (sampleNo % REPORTING_EACH_N_SAMPLES == REPORTING_EACH_N_SAMPLES - 1) {
-          reportAccumulatedStats(taskDurationHisto);
-          taskDurationHisto.reset();
+          reportAccumulatedStats(taskDurationHistory);
+          taskDurationHistory.reset();
           memorySampler.logToFus();
 
           logSlowOperations();
@@ -142,13 +142,13 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
     SLOW_OPERATIONS_ISSUES.log(new ArrayList<>(knownIssues));
   }
 
-  private static void reportAccumulatedStats(@NotNull Histogram taskDurationHisto) {
-    double avg_ns = taskDurationHisto.getMean();
-    long p50_ns = taskDurationHisto.getValueAtPercentile(50);
-    long p99_ns = taskDurationHisto.getValueAtPercentile(99);
-    long p999_ns = taskDurationHisto.getValueAtPercentile(99.9);
-    long max_ns = taskDurationHisto.getMaxValue();
-    int measurementsCount = (int)taskDurationHisto.getTotalCount();
+  private static void reportAccumulatedStats(@NotNull Histogram taskDurationHistory) {
+    double avg_ns = taskDurationHistory.getMean();
+    long p50_ns = taskDurationHistory.getValueAtPercentile(50);
+    long p99_ns = taskDurationHistory.getValueAtPercentile(99);
+    long p999_ns = taskDurationHistory.getValueAtPercentile(99.9);
+    long max_ns = taskDurationHistory.getMaxValue();
+    int measurementsCount = (int)taskDurationHistory.getTotalCount();
 
     UILatencyLogger.reportResponsiveness(avg_ns, p50_ns, p99_ns, p999_ns, max_ns, measurementsCount);
 

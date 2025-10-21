@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.storage;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -26,7 +27,8 @@ public interface BuildDataPaths {
    * @deprecated Use {@link #getTargetTypeDataRootDir}.
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   default @NotNull File getTargetTypeDataRoot(@NotNull BuildTargetType<?> targetType) {
     return getTargetTypeDataRootDir(targetType).toFile();
   }
@@ -37,7 +39,8 @@ public interface BuildDataPaths {
    * @deprecated Use {@link #getTargetDataRootDir}.
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   default @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target) {
     return getTargetDataRootDir(target).toFile();
   }

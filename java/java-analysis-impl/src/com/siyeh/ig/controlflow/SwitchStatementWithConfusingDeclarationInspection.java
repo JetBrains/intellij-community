@@ -37,7 +37,7 @@ public final class SwitchStatementWithConfusingDeclarationInspection extends Bas
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SwitchStatementWithConfusingDeclarationVisitor();
   }
 

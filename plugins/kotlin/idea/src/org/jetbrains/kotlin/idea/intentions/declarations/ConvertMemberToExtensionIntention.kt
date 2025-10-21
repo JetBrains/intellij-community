@@ -40,9 +40,9 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 
 private val LOG = Logger.getInstance(ConvertMemberToExtensionIntention::class.java)
 
-class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
+internal class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
-    KotlinBundle.lazyMessage("convert.member.to.extension")
+    KotlinBundle.messagePointer("convert.member.to.extension")
 ), LowPriorityAction {
     private fun isApplicable(element: KtCallableDeclaration): Boolean {
         val classBody = element.parent as? KtClassBody ?: return false

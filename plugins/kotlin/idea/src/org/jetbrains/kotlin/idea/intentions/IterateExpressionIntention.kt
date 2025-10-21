@@ -36,9 +36,9 @@ import org.jetbrains.kotlin.types.KotlinType
 
 class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
-    KotlinBundle.lazyMessage("iterate.over.collection")
-),
-                                   HighPriorityAction {
+    KotlinBundle.messagePointer("iterate.over.collection")
+), HighPriorityAction {
+
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         if (element.parent !is KtBlockExpression) return false
 
@@ -50,7 +50,7 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
         if (caretOffset != range.startOffset && caretOffset != range.endOffset) return false
         val data = data(element, bindingContext, resolutionFacade) ?: return false
         setTextGetter(
-            KotlinBundle.lazyMessage(
+            KotlinBundle.messagePointer(
                 "iterate.over.0",
                 IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(data.collectionType)
             )

@@ -178,9 +178,10 @@ fun findPluginTypeByValue(value: String): PluginType? {
 private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
 private const val aeExperimentsPluginId = "com.jetbrains.ae.experiments"
 private const val aeDatabasePluginId = "com.jetbrains.ae.database"
-private const val jcpAnalyticsPluginId = "org.jetbrains.jcp"
+private const val aiAssistantPluginId = "com.intellij.ml.llm"
+private const val juniePluginId = "org.jetbrains.junie"
 
-private val allowedPlugins = setOf(tbePluginId, aeExperimentsPluginId, aeDatabasePluginId, jcpAnalyticsPluginId)
+private val allowedPlugins = setOf(tbePluginId, aeExperimentsPluginId, aeDatabasePluginId, aiAssistantPluginId, juniePluginId)
 
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**

@@ -1,7 +1,7 @@
 @file:JvmName("StateFlowDebounce")
 package flows.stateFlow.debounce
 
-// ATTACH_LIBRARY: maven(com.intellij.platform:kotlinx-coroutines-core-jvm:1.8.0-intellij-11)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-coroutines-core-jvm-1.8.0-intellij-11.jar)
 
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -58,4 +58,9 @@ suspend fun <T> `~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign 2 !!!~~
 suspend fun <T> `~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 2 !!!~~~`(flow: MutableStateFlow<T>, value: T) {
     flow.emit(value)
 }
+
+// IGNORE_K1
+// IGNORE_K2
+// SKIP_WRONG_DIRECTIVE_CHECK
+/* IDEA-380226 */
 

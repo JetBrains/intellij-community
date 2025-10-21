@@ -1057,7 +1057,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(initializer1, initializer2))) return;
     }
     else if (initializer2 != null) {
-      myMatchingVisitor.setResult(areZeroLiterals(patternExpression.getArrayDimensions()) && initializer2.getInitializers().length == 0);
+      myMatchingVisitor.setResult(areZeroLiterals(patternExpression.getArrayDimensions()) && initializer2.isEmpty());
       return;
     }
 
@@ -1645,7 +1645,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           myMatchingVisitor.setResult(myMatchingVisitor.matchSons(initializer, other));
         }
         else {
-          myMatchingVisitor.setResult(((PsiArrayInitializerExpression)other).getInitializers().length == 0);
+          myMatchingVisitor.setResult(((PsiArrayInitializerExpression)other).isEmpty());
         }
       }
       return;

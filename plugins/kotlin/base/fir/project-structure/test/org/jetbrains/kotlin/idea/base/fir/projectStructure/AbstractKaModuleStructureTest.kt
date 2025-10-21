@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
 import com.google.gson.JsonObject
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.projectStructureTest.*
@@ -16,7 +18,10 @@ abstract class AbstractKaModuleStructureTest : AbstractProjectStructureTest<Proj
         (KotlinRoot.DIR.toPath() / "base" / "fir" / "project-structure" / "testData" / "kaModuleStructure").toFile()
 
     override fun doTestWithProjectStructure(testDirectory: String) {
-        val allModules = project.getAllKaModules()
+        val allModules = project.getAllKaModules().filterNot { module ->
+            // Ignore the default module of `HeavyPlatformTestCase`.
+            module is KaSourceModule && module.openapiModule == myModule
+        }
 
         val txt = KaModuleStructureTxtRenderer.render(allModules)
         KotlinTestUtils.assertEqualsToFile(Paths.get(testDirectory, "kaModules.txt"), txt)

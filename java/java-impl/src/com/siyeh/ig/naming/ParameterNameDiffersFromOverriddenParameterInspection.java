@@ -64,7 +64,7 @@ public final class ParameterNameDiffersFromOverriddenParameterInspection extends
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ParameterNameDiffersFromOverriddenParameterVisitor();
   }
 

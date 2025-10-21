@@ -27,10 +27,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,6 +36,7 @@ import java.util.Set;
 
 public final class UsageViewUtil {
   private static final Logger LOG = Logger.getInstance(UsageViewUtil.class);
+  public static final @NonNls String FIND_OPTIONS_HREF_TARGET = "FindOptions";
 
   private UsageViewUtil() { }
 

@@ -76,11 +76,13 @@ private fun getParametersFromDecorator(decorator: PyDecorator, function: PyFunct
   return parameterNames.mapIndexed { i, name -> PyTestParameter(name, parameterTypes[i]) }
 }
 
-private fun patchTypesWithIndirectFixture(paramNames: List<String>,
-                                          paramTypes: Array<PyType?>,
-                                          function: PyFunction,
-                                          evalContext: TypeEvalContext,
-                                          indirectKeyword: PyKeywordArgument) {
+private fun patchTypesWithIndirectFixture(
+  paramNames: List<String>,
+  paramTypes: Array<PyType?>,
+  function: PyFunction,
+  evalContext: TypeEvalContext,
+  indirectKeyword: PyKeywordArgument,
+) {
   if (indirectKeyword.keyword != "indirect") return
   val indirectParams = when (val expression = PyEvaluator().evaluate(indirectKeyword.valueExpression)) {
     is Boolean -> if (expression) paramNames else emptyList() // indirect=True
@@ -106,13 +108,23 @@ internal data class PyTestParameter(val name: String, val type: PyType? = null)
  * @return List<String> if test function decorated with parametrize -- return parameter names
  */
 internal fun PyFunction.getParametersOfParametrized(evalContext: TypeEvalContext): List<PyTestParameter> {
-  val decoratorList = decoratorList ?: return emptyList()
-  if (!isTestElement(this, ThreeState.NO, evalContext)) {
-    return emptyList()
-  }
-  return decoratorList.decorators
-    .filter { it.name == "parametrize" }
-    .flatMap { getParametersFromDecorator(it, this, evalContext) }
+  val result = mutableListOf<PyTestParameter>()
+  // function-level decorators
+  decoratorList?.decorators
+    ?.filter { it.name == "parametrize" }
+    ?.forEach { result.addAll(getParametersFromDecorator(it, this, evalContext)) }
 
+  // class-level decorators applied to containing test class
+  containingClass?.decoratorList?.decorators
+    ?.filter { it.name == "parametrize" }
+    ?.forEach { result.addAll(getParametersFromDecorator(it, this, evalContext)) }
+
+  // de-duplicate preserving order
+  val seen = HashSet<String>()
+  val unique = ArrayList<PyTestParameter>(result.size)
+  for (p in result) {
+    if (seen.add(p.name)) unique.add(p)
+  }
+  return unique
 }
 

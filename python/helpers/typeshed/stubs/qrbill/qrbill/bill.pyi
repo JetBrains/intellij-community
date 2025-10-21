@@ -114,8 +114,8 @@ class QRBill:
         payment_line: bool = True,
         font_factor: int = 1,
     ) -> None: ...
-    @deprecated("ref_number is deprecated and replaced by reference_number")
     @overload
+    @deprecated("ref_number is deprecated and replaced by reference_number")
     def __init__(
         self,
         account: str,
@@ -135,8 +135,8 @@ class QRBill:
         payment_line: bool = True,
         font_factor: int = 1,
     ) -> None: ...
-    @deprecated("extra_infos is deprecated and replaced by additional_information")
     @overload
+    @deprecated("extra_infos is deprecated and replaced by additional_information")
     def __init__(
         self,
         account: str,

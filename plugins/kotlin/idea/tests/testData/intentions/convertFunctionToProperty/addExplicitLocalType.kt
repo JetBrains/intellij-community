@@ -1,4 +1,5 @@
 // AFTER-WARNING: Variable 't' is never used
+// PRIORITY: LOW
 fun test() {
     class X
 

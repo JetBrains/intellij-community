@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
@@ -20,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
@@ -42,6 +43,20 @@ public abstract class FileBasedIndex {
    * Consider using it without a read action if you don't require a consistent snapshot.
    */
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator);
+
+  /**
+   * Don't wrap this method in one [smart] read action because on large projects it will either cause a freeze
+   * without a proper indicator or ProgressManager.checkCanceled() or will be constantly interrupted by write action and restarted.
+   * Consider using it without a read action if you don't require a consistent snapshot.
+   *
+   * @implNote method tries to use {@link com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile} there applicable, to avoid
+   * storing the non-indexable files in VFS
+   */
+  @RequiresBackgroundThread
+  @ApiStatus.Experimental
+  public abstract boolean iterateNonIndexableFiles(@NotNull Project project,
+                                                @Nullable VirtualFileFilter acceptFilter,
+                                                @NotNull ContentIterator processor);
 
   /**
    * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.

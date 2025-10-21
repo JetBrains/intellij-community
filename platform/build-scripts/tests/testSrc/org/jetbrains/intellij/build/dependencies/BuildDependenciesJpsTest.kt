@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.dependencies
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildDependenciesJps
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.getMavenRepositoryPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,7 +35,7 @@ class BuildDependenciesJpsTest {
 
   @Test
   fun getModuleLibrarySingleRoot_snapshot_version() = runBlocking {
-    val snapshotDir = BuildDependenciesJps.getLocalArtifactRepositoryRoot().resolve("org/jetbrains/intellij/deps/debugger-agent/1.0-SNAPSHOT")
+    val snapshotDir = Path.of(getMavenRepositoryPath()).resolve("org/jetbrains/intellij/deps/debugger-agent/1.0-SNAPSHOT")
     snapshotDir.deleteRecursively()
 
     val localFile = snapshotDir.resolve("debugger-agent-1.0-SNAPSHOT.jar")
@@ -91,7 +92,7 @@ class BuildDependenciesJpsTest {
 
   @Test
   fun getModuleLibrarySingleRoot_use_local_file() = runBlocking {
-    val localFile = BuildDependenciesJps.getLocalArtifactRepositoryRoot()
+    val localFile = Path.of(getMavenRepositoryPath())
       .resolve("org/jetbrains/intellij/deps/debugger-agent/1.0/debugger-agent-1.0.jar")
     localFile.deleteIfExists()
     try {

@@ -52,8 +52,8 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
           component.getRowForPath(path),
           getCheckBoxForNode(path).isSelected)
       }, {
-          result.add(it)
-           })
+                                  result.add(it)
+                                })
     }
     return result
   }
@@ -62,23 +62,18 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
   fun switchCheckBoxByPath(path: List<String>, state: Boolean) {
     val root = component.model.root as DefaultMutableTreeNode
 
-    val treePaths = collectExpandedPaths()
-
     val node = TreeUtil.findNode(root) { node ->
-      TreePath(node.path).toStringList().equals(path)
+      TreePath(node.path).toStringList() == path
     }
 
     val fileTreePath = TreePath(node!!.path)
     val checkbox = getCheckBoxForNode(fileTreePath)
 
-    if (getCheckBoxForNode(fileTreePath).isSelected != state) {
-      val checkboxLocation = computeOnEdt {
-        component.getPathBounds(fileTreePath) ?: error("Have not found bounds")
-      }
-      while (getCheckBoxForNode(fileTreePath).isSelected != state) {
-        clickOnCheckbox(checkbox, checkboxLocation)
-      }
+    if (getCheckBoxForNode(fileTreePath).isSelected == state) return
+    val checkboxLocation = computeOnEdt {
+      checkNotNull(component.getPathBounds(fileTreePath)) { "Have not found bounds" }
     }
+    clickOnCheckbox(checkbox, checkboxLocation)
   }
 
   private fun clickOnCheckbox(checkbox: JCheckBox, checkboxLocation: Rectangle) {

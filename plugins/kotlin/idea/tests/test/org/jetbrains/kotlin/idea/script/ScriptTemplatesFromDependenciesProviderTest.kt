@@ -41,7 +41,7 @@ class ScriptTemplatesFromDependenciesProviderTest : AbstractScriptConfigurationT
             val attempts = 20
             // definitions are loaded in a background, spin some time to get them loaded
             for (attempt in 0 until attempts) {
-              definitions = ScriptDefinitionsManager.getInstance(project).getDefinitions()
+              definitions = ScriptDefinitionsManager.getInstance(project).currentDefinitions.toList()
               if (definitions.any { it.name == "Custom Init Script" }) {
                 return@run definitions
               }

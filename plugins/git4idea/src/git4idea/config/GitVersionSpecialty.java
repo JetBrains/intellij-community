@@ -123,13 +123,6 @@ public enum GitVersionSpecialty {
     }
   },
 
-  CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
-    }
-  },
-
   CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

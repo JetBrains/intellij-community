@@ -13,10 +13,10 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.EditedCommitDetails
-import com.intellij.vcs.commit.EditedCommitNode
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -132,12 +132,12 @@ private class AmendChangeWrapper(override val userObject: EditedCommitDetails) :
 
     other as AmendChangeWrapper
 
-    return userObject.commit.id == other.userObject.commit.id
+    return userObject.commitHash == other.userObject.commitHash
   }
 
-  override fun toString(): String = userObject.commit.subject
+  override fun toString(): String = userObject.subject
 
-  override fun hashCode(): Int = userObject.commit.id.hashCode()
+  override fun hashCode(): Int = userObject.commitHash.hashCode()
 }
 
 private class ChangeListWrapper(override val userObject: ChangeList) : ChangesViewUserObjectTag {

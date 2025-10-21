@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import org.jetbrains.annotations.ApiStatus
@@ -9,7 +9,7 @@ public object CodeGeneratorVersions {
   /** these constants are accessed from WorkspaceImplObsoleteInspection */
   private const val API_VERSION_INTERNAL = 3
   private const val IMPL_MAJOR_VERSION_INTERNAL = 7
-  private const val IMPL_MINOR_VERSION_INTERNAL = 0
+  private const val IMPL_MINOR_VERSION_INTERNAL = 5
 
   @set:TestOnly
   public var API_VERSION: Int = API_VERSION_INTERNAL

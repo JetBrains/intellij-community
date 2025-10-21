@@ -13,14 +13,14 @@ import com.intellij.serviceContainer.NonInjectable
 
 
 @Service(Service.Level.PROJECT)
-class UsagesCountManager @NonInjectable constructor(project: Project, configuration: UsageCounterConfiguration): UsagesCountManagerBase<PsiMember>(project, configuration) {
+public class UsagesCountManager @NonInjectable constructor(project: Project, configuration: UsageCounterConfiguration): UsagesCountManagerBase<PsiMember>(project, configuration) {
 
   @Suppress("unused")
-  constructor(project: Project) : this(project, object : UsageCounterConfiguration {})
+  public constructor(project: Project) : this(project, object : UsageCounterConfiguration {})
 
-  companion object {
+  public companion object {
     @JvmStatic
-    fun getInstance(project: Project): UsagesCountManager {
+    public fun getInstance(project: Project): UsagesCountManager {
       return project.getService(UsagesCountManager::class.java)
     }
   }
@@ -34,7 +34,7 @@ class UsagesCountManager @NonInjectable constructor(project: Project, configurat
   }
 }
 
-interface UsageCounterConfiguration: UsageCounterConfigurationBase<PsiMember> {
+public interface UsageCounterConfiguration: UsageCounterConfigurationBase<PsiMember> {
   override fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int {
     return JavaTelescope.usagesCount(file, members, scope)
   }

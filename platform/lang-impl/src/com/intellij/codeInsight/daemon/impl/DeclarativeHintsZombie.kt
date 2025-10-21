@@ -49,7 +49,7 @@ private object NecromancyPresentationTreeExternalizer : PresentationTreeExternal
       is SymbolPointerInlayActionPayload -> {
         writeINT(output, 2)
       }
-      else -> { /* do nothing */ }
+      else -> error("unknown payload type: $actionPayload")
     }
   }
 
@@ -59,7 +59,7 @@ private object NecromancyPresentationTreeExternalizer : PresentationTreeExternal
       0 -> StringInlayActionPayload(readUTF(input))
       1 -> PsiPointerInlayActionPayload(ZombieSmartPointer())
       2 -> SymbolPointerInlayActionPayload(ZombieSymbolPointer())
-      else -> throw IllegalStateException("unknown inlay action payload type: $type")
+      else -> error("unknown payload type: $type")
     }
   }
 

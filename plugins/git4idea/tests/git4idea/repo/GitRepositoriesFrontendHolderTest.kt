@@ -4,10 +4,10 @@ package git4idea.repo
 import com.intellij.openapi.components.service
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.assertErrorLogged
-import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.shared.repo.GitRepositoryModel
-import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
-import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
+import com.intellij.vcs.git.repo.GitRepositoriesHolder
+import com.intellij.vcs.git.repo.GitRepositoryModel
+import com.intellij.vcs.git.rpc.GitRepositoryApi
+import com.intellij.vcs.git.rpc.GitUiSettingsApi
 import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchType

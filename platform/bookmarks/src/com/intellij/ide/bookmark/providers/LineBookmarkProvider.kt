@@ -32,6 +32,7 @@ import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 @Suppress("ExtensionClassShouldBeFinalAndNonPublic")
@@ -226,6 +227,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
 
   companion object {
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the 'Util.find' method", ReplaceWith("Util.find(project)", "com.intellij.ide.bookmark.providers.LineBookmarkProvider.Util"))
     fun find(project: Project): LineBookmarkProvider? {
       return Util.find(project)

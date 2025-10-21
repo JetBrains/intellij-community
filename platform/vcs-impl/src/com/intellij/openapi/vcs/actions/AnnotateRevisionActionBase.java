@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.ApiStatus;
@@ -154,7 +154,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     });
 
     try {
-      semaphore.tryAcquire(ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, TimeUnit.MILLISECONDS);
+      semaphore.tryAcquire(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS, TimeUnit.MILLISECONDS);
 
       // We want to let Backgroundable task open editor if it was fast enough.
       // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).

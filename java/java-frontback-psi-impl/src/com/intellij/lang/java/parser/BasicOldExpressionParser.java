@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -19,12 +20,14 @@ import java.util.function.Function;
 import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.*;
-
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link OldExpressionParser}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 @SuppressWarnings("UnnecessarilyQualifiedStaticUsage") //suppress to be clear, what type is used
 public class BasicOldExpressionParser {
   private enum ExprType {

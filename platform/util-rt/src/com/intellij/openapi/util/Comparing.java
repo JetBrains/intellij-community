@@ -77,7 +77,7 @@ public final class Comparing {
     return aSet.equals(bSet);
   }
 
-  public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
+  public static <T> boolean haveEqualElements(T @Nullable [] a, T @Nullable [] b) {
     if (a == null || b == null) {
       //noinspection ArrayEquality
       return a == b;
@@ -129,7 +129,7 @@ public final class Comparing {
     return Integer.compare(o1, o2);
   }
 
-  public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {
+  public static int compare(byte @Nullable [] o1, byte @Nullable [] o2) {
     //noinspection ArrayEquality
     if (o1 == o2) return 0;
     if (o1 == null) return 1;

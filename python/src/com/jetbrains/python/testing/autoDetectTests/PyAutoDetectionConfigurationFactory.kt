@@ -2,8 +2,10 @@
 package com.jetbrains.python.testing.autoDetectTests
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.testing.PyAbstractTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
 import com.jetbrains.python.testing.PythonTestConfigurationType
@@ -17,13 +19,21 @@ class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurat
         PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().filterNot { it is PyAutoDetectionConfigurationFactory }
   }
 
-  fun getFactory(sdk: Sdk): PyAbstractTestFactory<*> =
-    factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(sdk) } ?: PyUnitTestFactory(type)
+
+  @Deprecated("Use getFactory(sdk, project)", ReplaceWith("getFactory(sdk, project)"), DeprecationLevel.ERROR)
+  fun getFactory(sdk: Sdk): PyAbstractTestFactory<*> {
+    val project = ProjectManager.getInstance().openProjects.firstOrNull { sdk == it.pythonSdk }!!
+    return factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, sdk) } ?: PyUnitTestFactory(type)
+  }
+
+
+  fun getFactory(sdk: Sdk, project: Project): PyAbstractTestFactory<*> =
+    factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, sdk) } ?: PyUnitTestFactory(type)
 
   override fun createTemplateConfiguration(project: Project): PyAutoDetectTestConfiguration =
     PyAutoDetectTestConfiguration(project, this)
 
-  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = getFactory(sdk).onlyClassesAreSupported(sdk)
+  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = getFactory(sdk, project).onlyClassesAreSupported(project, sdk)
 
   override fun getId(): String = "Autodetect"
 

@@ -55,7 +55,7 @@ private val LOG = Logger.getInstance(ImplementAbstractMemberIntentionBase::class
 
 abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
-    KotlinBundle.lazyMessage("implement.abstract.member"),
+    KotlinBundle.messagePointer("implement.abstract.member"),
 ) {
 
     override fun startInWriteAction(): Boolean = false

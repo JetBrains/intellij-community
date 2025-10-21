@@ -15,6 +15,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,10 +239,7 @@ final class StatementChecker {
   }
 
   private static boolean checkMultipleTypes(@NotNull PsiClass catchClass, @NotNull List<? extends PsiType> upperCatchTypes) {
-    for (int i = upperCatchTypes.size() - 1; i >= 0; i--) {
-      if (checkSingleType(catchClass, upperCatchTypes.get(i))) return true;
-    }
-    return false;
+    return ContainerUtil.exists(upperCatchTypes.reversed(), type -> checkSingleType(catchClass, type));
   }
 
   private static boolean checkSingleType(@NotNull PsiClass catchClass, @Nullable PsiType upperCatchType) {

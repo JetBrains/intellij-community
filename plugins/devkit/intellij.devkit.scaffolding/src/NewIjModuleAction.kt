@@ -42,5 +42,5 @@ private suspend fun actionPerformed(dc: DataContext) {
   val name = withContext(Dispatchers.EDT) {
     askForModuleName(project, suggestedNamePrefix)
   }
-  createIjModule(root, name)
+  createIjModule(project, root, name)
 }

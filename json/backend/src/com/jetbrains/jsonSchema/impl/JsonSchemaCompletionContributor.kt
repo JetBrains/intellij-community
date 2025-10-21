@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.codeInsight.AutoPopupController
@@ -520,7 +520,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
             context.document.deleteString(offset, offset + 1)
           }
           PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-          AutoPopupController.getInstance(context.project).autoPopupMemberLookup(context.editor, null)
+          AutoPopupController.getInstance(context.project).scheduleAutoPopup(context.editor)
         }
 
         fun isSeparatorAtOffset(docChars: CharSequence, offset: Int, propertyValueSeparator: String): Boolean {
@@ -602,7 +602,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
             invokeEnterHandler(editor)
             EditorActionUtil.moveCaretToLineEnd(editor, false, false)
           }
-          AutoPopupController.getInstance(context.project).autoPopupMemberLookup(editor, null)
+          AutoPopupController.getInstance(context.project).scheduleAutoPopup(editor)
         }
       }
 
@@ -780,7 +780,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
               formatInsertedString(context, stringToInsert.length)
               val start = editor.selectionModel.selectionStart
               model.setSelection(start - value.length, start)
-              AutoPopupController.getInstance(context.project).autoPopupMemberLookup(context.editor, null)
+              AutoPopupController.getInstance(context.project).scheduleAutoPopup(context.editor)
             }
             JsonSchemaType._array -> {
               if (insertColon) {
@@ -889,7 +889,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       }
 
       if (hasValues) {
-        AutoPopupController.getInstance(context.project).autoPopupMemberLookup(context.editor, null)
+        AutoPopupController.getInstance(context.project).scheduleAutoPopup(context.editor)
       }
     }
 

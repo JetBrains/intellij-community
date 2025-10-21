@@ -78,7 +78,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
       workflowHandler.ui.getIncludedPaths().mapNotNull { vcsManager.getVcsRootObjectFor(it) }.toSet()
     }
 
-  protected fun getSingleRoot(): VcsRoot? = vcsManager.allVcsRoots.singleOrNull()
+  protected fun getSingleRoot(): VcsRoot? = vcsManager.getAllVcsRoots().singleOrNull()
 
   protected fun setAmendMessage(beforeAmendMessage: String, amendMessage: String) {
     if (!equalsIgnoreWhitespaces(beforeAmendMessage, amendMessage)) {

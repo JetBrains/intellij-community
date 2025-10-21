@@ -8,4 +8,3 @@ fun String.method3() {
     }
 }
 
-/* Text: (<highlight>param1: Int</highlight>), Disabled: false, Strikeout: false, Green: true */

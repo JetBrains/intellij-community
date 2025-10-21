@@ -2,6 +2,7 @@
 package fleet.util
 
 // copied from org.ec4j.core.model.Glob
+// todo: the implementation is quite incorrect, fix and merge with one from FleetFileSearchProvider. See ignored tests in GlobTest.kt
 fun convertGlobToRegEx(globString: String, ranges: MutableList<IntArray>, result: StringBuilder) {
   val length = globString.length
   var i = 0

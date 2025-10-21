@@ -71,7 +71,7 @@ fun <T> prepareThreadContextTest(action: (Job) -> T): T {
     assertNull(currentThreadContextOrNull())
     assertNull(ProgressManager.getGlobalProgressIndicator())
     val job = assertNotNull(ctx[Job])
-    installThreadContext(ctx).use {
+    installThreadContext(ctx) {
       assertSame(job, Cancellation.currentJob())
       action(job)
     }

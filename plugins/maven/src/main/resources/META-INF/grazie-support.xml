@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <problemFilter language="" implementationClass="org.jetbrains.idea.maven.proofreading.MavenProblemFilter"/>
+  </extensions>
+</idea-plugin>

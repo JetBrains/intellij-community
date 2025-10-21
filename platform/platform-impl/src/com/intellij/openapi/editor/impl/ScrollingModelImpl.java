@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -270,7 +269,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     if (!editor.getSettings().isAnimatedScrolling() || animationDisabled || RemoteDesktopService.isRemoteSession()) {
       useAnimation = false;
     }
-    else if (CommandProcessor.getInstance().getCurrentCommand() == null) {
+    else if (!CommandProcessor.getInstance().isCommandInProgress()) {
       useAnimation = editor.getComponent().isShowing();
     }
     else {
@@ -472,7 +471,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     @DirtyUI
     @Override
     public void stateChanged(ChangeEvent event) {
-      ReadAction.run(() -> {
+      EditorThreading.run(() -> {
         Rectangle viewRect = getVisibleArea();
         VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(supplier.getEditor(), myLastViewRect, viewRect);
         if (!viewportPositioned && viewRect.height > 0) {

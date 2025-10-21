@@ -47,6 +47,7 @@ object LangDetector {
    *
    * @return Lang that is detected and enabled in grazie
    */
+  @Suppress("unused") // preserved to not break binary compatibility
   fun getLang(text: String): Lang? = getLanguage(text)?.let { language ->
     GrazieConfig.get().availableLanguages.find { lang -> lang.equalsTo(language) }
   }

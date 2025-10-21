@@ -8,10 +8,12 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 
+@ApiStatus.Internal
 interface StackFrameInterceptor {
-    fun createStackFrames(
+    suspend fun createStackFrames(
         frame: StackFrameProxyImpl,
         debugProcess: DebugProcessImpl
     ): List<XStackFrame>?

@@ -207,7 +207,7 @@ final class AsyncFilterRunner {
     }
   }
 
-  private static Filter.Result checkRange(Filter filter, int endOffset, Filter.Result result) {
+  static Filter.Result checkRange(Filter filter, int endOffset, Filter.Result result) {
     if (result != null) {
       for (Filter.ResultItem resultItem : result.getResultItems()) {
         int start = resultItem.getHighlightStartOffset();

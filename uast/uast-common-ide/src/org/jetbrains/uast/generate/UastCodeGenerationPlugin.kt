@@ -70,6 +70,10 @@ interface UastCodeGenerationPlugin {
    */
   fun shortenReference(reference: UReferenceExpression): UReferenceExpression?
 
+  fun shortenReference(uDeclaration: UDeclaration): UDeclaration? {
+    throw NotImplementedError()
+  }
+
   /**
    * Import the qualifier of the specified element as an on demand import (star import).
    *
@@ -211,11 +215,22 @@ interface UastElementFactory {
 
   fun createStringLiteralExpression(text: String, context: PsiElement?): UExpression?
 
+  fun createIntegerConstantExpression(integer: Int, context: PsiElement?): UExpression? {
+    throw NotImplementedError()
+  }
+
   fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression?
 
   fun createNullLiteral(context: PsiElement?): ULiteralExpression?
 
   fun createComment(text: String, context: PsiElement?): UComment
+
+  fun createClass(className: String,
+                  extends: List<String>,
+                  implements: List<String>,
+                  context: PsiElement): UClass? {
+    throw NotImplementedError()
+  }
 }
 
 @ApiStatus.Experimental

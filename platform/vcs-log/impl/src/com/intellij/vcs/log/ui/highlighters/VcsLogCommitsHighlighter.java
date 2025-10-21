@@ -10,9 +10,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Author;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
-import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,13 +61,7 @@ public class VcsLogCommitsHighlighter implements VcsLogHighlighter {
 
   @Override
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-    myShouldHighlightUser = !isSingleUser() && !isFilteredByCurrentUser(dataPack.getFilters());
-  }
-
-  // returns true if only one user commits to this repository
-  private boolean isSingleUser() {
-    Set<VcsUser> users = new ObjectOpenCustomHashSet<>(myLogData.getCurrentUser().values(), new VcsUserUtil.VcsUserHashingStrategy());
-    return myLogData.getUserRegistry().all(user -> users.contains(user));
+    myShouldHighlightUser = !myLogData.isSingleUser() && !isFilteredByCurrentUser(dataPack.getFilters());
   }
 
   // returns true if filtered by "me"

@@ -5,50 +5,39 @@ import com.google.protobuf.CodedInputStream
 import io.netty.buffer.ByteBufAllocator
 import java.io.InputStream
 
-open class WorkRequest(
+// https://github.com/bazelbuild/bazel/blob/8.2.1/src/main/protobuf/worker_protocol.proto#L22
+class Input(
+  @JvmField val path: String,
+  @JvmField val digest: ByteArray?,
+)
+
+// https://github.com/bazelbuild/bazel/blob/8.2.1/src/main/protobuf/worker_protocol.proto#L36
+class WorkRequest(
   @JvmField val arguments: Array<String>,
-  @JvmField val inputPaths: Array<String>,
+  @JvmField val inputs: Array<Input>,
   @JvmField val requestId: Int,
   @JvmField val cancel: Boolean,
   @JvmField val verbosity: Int,
-  @JvmField val sandboxDir: String?
+  @JvmField val sandboxDir: String?,
 )
 
-interface WorkRequestReader<T : WorkRequest> {
-  fun readWorkRequestFromStream(): T?
+interface WorkRequestReader {
+  fun readWorkRequestFromStream(): WorkRequest?
 }
 
-class WorkRequestReaderWithoutDigest(private val input: InputStream) : WorkRequestReader<WorkRequest> {
-  private val inputPathsToReuse = ArrayList<String>()
-  private val argListToReuse = ArrayList<String>()
-
+class WorkRequestReaderWithoutDigest(private val input: InputStream) : WorkRequestReader {
   override fun readWorkRequestFromStream(): WorkRequest? {
     return doReadWorkRequestFromStream(
       input = input,
-      inputPathsToReuse = inputPathsToReuse,
-      argListToReuse = argListToReuse,
-      readDigest = { codedInputStream, tag -> codedInputStream.skipField(tag) },
-      requestCreator = { argListToReuse, inputPathsToReuse, requestId, cancel, verbosity, sandboxDir ->
-        WorkRequest(
-          arguments = argListToReuse,
-          inputPaths = inputPathsToReuse,
-          requestId = requestId,
-          cancel = cancel,
-          verbosity = verbosity,
-          sandboxDir = sandboxDir
-        )
-      },
+      shouldReadDigest = false,
     )
   }
 }
 
-inline fun <T : WorkRequest> doReadWorkRequestFromStream(
+fun doReadWorkRequestFromStream(
   input: InputStream,
-  inputPathsToReuse: MutableList<String>,
-  argListToReuse: MutableList<String>,
-  readDigest: (CodedInputStream, Int) -> Unit,
-  requestCreator: RequestCreator<T>,
-): T? {
+  shouldReadDigest: Boolean,
+): WorkRequest? {
   // read the length-prefixed WorkRequest
   val firstByte = input.read()
   if (firstByte == -1) {
@@ -68,14 +57,14 @@ inline fun <T : WorkRequest> doReadWorkRequestFromStream(
     }
     assert(buffer.readableBytes() == size)
 
+    var arguments = ArrayList<String>()
+    var inputs = ArrayList<Input>()
     var requestId = 0
     var cancel = false
     var verbosity = 0
     var sandboxDir: String? = null
 
     val codedInputStream = CodedInputStream.newInstance(buffer.array(), buffer.arrayOffset() + buffer.readerIndex(), buffer.readableBytes())
-    argListToReuse.clear()
-    inputPathsToReuse.clear()
     while (true) {
       val tag = codedInputStream.readTag()
       if (tag == 0) {
@@ -83,11 +72,11 @@ inline fun <T : WorkRequest> doReadWorkRequestFromStream(
       }
 
       when (tag.shr(3)) {
-        1 -> argListToReuse.add(codedInputStream.readString())
+        1 -> arguments.add(codedInputStream.readString())
         2 -> {
           val messageSize = codedInputStream.readRawVarint32()
           val limit = codedInputStream.pushLimit(messageSize)
-          readInput(codedInputStream, inputPathsToReuse, readDigest)
+          readInput(codedInputStream, shouldReadDigest)?.let(inputs::add)
           codedInputStream.popLimit(limit)
         }
 
@@ -99,13 +88,13 @@ inline fun <T : WorkRequest> doReadWorkRequestFromStream(
       }
     }
 
-    return requestCreator(
-      (argListToReuse as java.util.ArrayList).toArray(emptyStringArray),
-      (inputPathsToReuse as java.util.ArrayList).toArray(emptyStringArray),
-      requestId,
-      cancel,
-      verbosity,
-      sandboxDir,
+    return WorkRequest(
+      arguments = arguments.toArray(emptyStringArray),
+      inputs = inputs.toArray(emptyInputArray),
+      requestId = requestId,
+      cancel = cancel,
+      verbosity = verbosity,
+      sandboxDir = sandboxDir,
     )
   }
   finally {
@@ -113,12 +102,42 @@ inline fun <T : WorkRequest> doReadWorkRequestFromStream(
   }
 }
 
+// ctx.file._jvm_builder_launcher and ctx.file._jvm_builder are declared as tools in jvm_library rule (see `isTool` in the action's inputs):
+// {
+//   "path": "external/rules_jvm+/rules/impl/MemoryLauncher.java",
+//   "digest": {
+//     "hash": "d5d7b879e969a2e8f9c293a2fcca83636bab22fbfe26e4834242fe3b25287392",
+//     "sizeBytes": "3598",
+//     "hashFunctionName": "SHA-256"
+//   },
+//   "isTool": true,
+//   "symlinkTargetPath": ""
+// }
+// but the worker request's Input message does not include any `is_tool` field (https://github.com/bazelbuild/bazel/blob/8.2.1/src/main/protobuf/worker_protocol.proto#L22)
+// and these tools are read as ordinary inputs that the worker then tries to compile, etc.
+//
+// Same for ctx.file._worker_launcher and ctx.file._worker in jvm_resources rule.
+private val KnownInputsThatAreTools = setOf(
+  // _jvm_builder attribute in jvm_library rule
+  "bazel-out/scrubbed_host-fastbuild/bin/external/community+/monorepo-jvm-builder_deploy.jar",
+  "bazel-out/scrubbed_host-fastbuild/bin/external/rules_jvm+/jvm-inc-builder/jvm-inc-builder_deploy.jar",
+  "bazel-out/scrubbed_host-fastbuild/bin/external/rules_jvm+/src/jvm-builder/jvm-builder_deploy.jar",
+
+  // _worker attribute in jvm_resources rule
+  "bazel-out/scrubbed_host-fastbuild/bin/external/rules_jvm+/src/misc/worker-jvm_deploy.jar",
+
+  // _jvm_builder_launcher attribute in jvm_library rule and _worker_launcher attribute in jvm_resources rule
+  "external/rules_jvm+/rules/impl/MemoryLauncher.java",
+)
+
 @PublishedApi
-internal inline fun readInput(
+internal fun readInput(
   codedInputStream: CodedInputStream,
-  inputPathsToReuse: MutableList<String>,
-  readDigest: (CodedInputStream, Int) -> Unit
-) {
+  shouldReadDigest: Boolean,
+): Input? {
+  var path: String? = null
+  var digest: ByteArray? = null
+
   while (true) {
     val tag = codedInputStream.readTag()
     if (tag == 0) {
@@ -126,21 +145,28 @@ internal inline fun readInput(
     }
 
     when (tag.shr(3)) {
-      1 -> inputPathsToReuse.add(codedInputStream.readString())
-      2 -> readDigest(codedInputStream, tag)
+      1 -> path = codedInputStream.readString()
+      2 -> {
+        if (shouldReadDigest) {
+          digest = codedInputStream.readByteArray()
+        }
+        else {
+          codedInputStream.skipField(tag)
+        }
+      }
+
       else -> codedInputStream.skipField(tag)
     }
   }
+
+  if (path in KnownInputsThatAreTools) {
+    return null  // ignore
+  }
+  return Input(path!!, digest)
 }
 
 @PublishedApi
 internal val emptyStringArray = emptyArray<String>()
 
-typealias RequestCreator<T> = (
-  argListToReuse: Array<String>,
-  inputPathsToReuse: Array<String>,
-  requestId: Int,
-  cancel: Boolean,
-  verbosity: Int,
-  sandboxDir: String?
-) -> T
+@PublishedApi
+internal val emptyInputArray = emptyArray<Input>()

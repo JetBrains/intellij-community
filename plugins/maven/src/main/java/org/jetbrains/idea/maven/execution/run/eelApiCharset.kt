@@ -182,8 +182,8 @@ private fun String?.normalizeCharset(): String? {
   val result = nullize(true)
     ?.substringAfter('.')
   if (result == "C") {
-    MavenLog.LOG.debug("Default C locale, using 7-bit US-ASCII as charset")
-    return Charsets.US_ASCII.name()
+    MavenLog.LOG.debug("Default C locale, using 7-bit US-ASCII as charset. Will return null instead")
+    return null
   }
   return result
 }

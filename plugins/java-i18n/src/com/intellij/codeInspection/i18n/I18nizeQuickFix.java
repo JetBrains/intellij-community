@@ -34,11 +34,11 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private TextRange mySelectionRange;
 
-  public I18nizeQuickFix(NlsInfo.Localized info) {
+  I18nizeQuickFix(NlsInfo.Localized info) {
     super(info);
   }
 
-  public I18nizeQuickFix() {
+  I18nizeQuickFix() {
     this(NlsInfo.localized());
   }
 

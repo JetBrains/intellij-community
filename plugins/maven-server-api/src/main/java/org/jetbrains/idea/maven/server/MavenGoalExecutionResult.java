@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.model.MavenResource;
+import org.jetbrains.idea.maven.model.MavenSource;
 
 import java.io.File;
 import java.io.Serializable;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MavenGoalExecutionResult implements Serializable {
   public final boolean success;
@@ -33,42 +35,43 @@ public class MavenGoalExecutionResult implements Serializable {
            '}';
   }
 
+
   public static class Folders implements Serializable {
-    private List<String> mySources = Collections.emptyList();
-    private List<String> myTestSources = Collections.emptyList();
-    private List<MavenResource> myResources = Collections.emptyList();
-    private List<MavenResource> myTestResources = Collections.emptyList();
+    private List<MavenSource> myMavenSources = Collections.emptyList();
+
+    public void setMavenSources(List<MavenSource> mavenSources) {
+      myMavenSources = mavenSources;
+    }
+
+    public List<MavenSource> getMavenSources() {
+      return myMavenSources;
+    }
 
     public List<String> getSources() {
-      return mySources == null ? Collections.emptyList() : mySources;
+      return myMavenSources.stream().filter(it -> MavenSource.isSource(it)).map(it -> it.getDirectory()).collect(Collectors.toList());
     }
 
-    public void setSources(List<String> sources) {
-      mySources = new ArrayList<>(sources);
-    }
 
     public List<String> getTestSources() {
-      return myTestSources == null ? Collections.emptyList() : myTestSources;
+      return myMavenSources.stream().filter(it -> MavenSource.isTestSource(it)).map(it -> it.getDirectory()).collect(Collectors.toList());
     }
 
-    public void setTestSources(List<String> testSources) {
-      myTestSources = new ArrayList<>(testSources);
-    }
-
-    public List<MavenResource> getResources() {
-      return myResources;
-    }
-
-    public void setResources(List<MavenResource> resources) {
-      myResources = new ArrayList<>(resources);
+    public void set(List<String> sources, List<String> testSources, List<MavenResource> resources, List<MavenResource> testResources) {
+      myMavenSources = new ArrayList<>();
+      sources.forEach(it -> myMavenSources.add(MavenSource.fromSrc(it, false)));
+      testSources.forEach(it -> myMavenSources.add(MavenSource.fromSrc(it, true)));
+      resources.forEach(it -> myMavenSources.add(MavenSource.fromResource(it, false)));
+      testResources.forEach(it -> myMavenSources.add(MavenSource.fromResource(it, true)));
     }
 
     public List<MavenResource> getTestResources() {
-      return myTestResources;
+      return myMavenSources.stream().filter(it -> MavenSource.isTestResource(it)).map(it -> new MavenResource(it))
+        .collect(Collectors.toList());
     }
 
-    public void setTestResources(List<MavenResource> testResources) {
-      myTestResources = new ArrayList<>(testResources);
+    public List<MavenResource> getResources() {
+      return myMavenSources.stream().filter(it -> MavenSource.isResource(it)).map(it -> new MavenResource(it))
+        .collect(Collectors.toList());
     }
   }
 }

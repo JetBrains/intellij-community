@@ -489,7 +489,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         myRenderer.renderChangeList(table, changeList);
 
         final Color bg = selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
-        final Color fg = selected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
+        final Color fg = selected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground();
 
         myRenderer.setBackground(bg);
         myRenderer.setForeground(fg);

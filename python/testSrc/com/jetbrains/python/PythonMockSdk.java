@@ -11,7 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData;
 import com.jetbrains.python.sdk.flavors.PyFlavorData;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;

@@ -28,6 +28,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -77,6 +78,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         return KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
     }
 
+    @RequiresBackgroundThread
     private fun scheduleOptimizeImportsOnTheFly(file: KtFile, data: KotlinOptimizeImportsFacility.ImportData) {
         if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) return
         val optimizedImports = KotlinOptimizeImportsFacility.getInstance().prepareOptimizedImports(file, data) ?: return // return if already optimized
@@ -186,11 +188,9 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     private class EnableOptimizeImportsOnTheFlyFix(file: KtFile) : LocalQuickFixOnPsiElement(file), LowPriorityAction {
         override fun getText(): String = QuickFixBundle.message("enable.optimize.imports.on.the.fly")
 
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = name
 
-        override fun startInWriteAction(): Boolean {
-            return false
-        }
+        override fun startInWriteAction(): Boolean = false
 
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
             SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)

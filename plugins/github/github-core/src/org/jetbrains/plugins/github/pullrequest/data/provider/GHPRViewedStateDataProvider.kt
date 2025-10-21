@@ -3,10 +3,12 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.collaboration.util.ComputedResult
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 
+@CodeReviewDomainEntity
 interface GHPRViewedStateDataProvider {
   val viewedStateNeedsReloadSignal: Flow<Unit>
 

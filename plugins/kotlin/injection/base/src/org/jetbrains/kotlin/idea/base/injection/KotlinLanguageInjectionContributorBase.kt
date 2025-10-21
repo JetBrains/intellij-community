@@ -52,8 +52,10 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import com.intellij.lang.injection.general.Injection as GeneralInjection
 
@@ -69,12 +71,12 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     abstract fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo?
 
     abstract fun injectionInfoByParameterAnnotation(functionReference: KtReference, argumentName: Name?, argumentIndex: Int): InjectionInfo?
+    
+    abstract fun injectionInfoByExtensionReceiverParameter(callableDeclaration: KtCallableDeclaration): InjectionInfo?
 
     private val absentKotlinInjection: BaseInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
 
     companion object {
-        private val STRING_LITERALS_REGEXP: Regex = "\"([^\"]*)\"".toRegex()
-
         private val trimIndentName = Name.identifier("trimIndent")
         private val trimMarginName = Name.identifier("trimMargin")
     }
@@ -253,41 +255,22 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         val qualifiedExpression = host.parent as? KtDotQualifiedExpression ?: return null
         if (qualifiedExpression.receiverExpression != host) return null
 
-        val callExpression = qualifiedExpression.selectorExpression as? KtCallExpression ?: return null
-        val callee = callExpression.calleeExpression ?: return null
+        val callee = qualifiedExpression.getCalleeExpressionIfAny() ?: return null
 
         val kotlinInjections: List<BaseInjection> = configuration.getInjections(KOTLIN_SUPPORT_ID)
-
-        val calleeName = callee.text
-        val possibleNames = collectPossibleNames(kotlinInjections)
-
-        if (calleeName !in possibleNames) {
-            return null
-        }
 
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
 
-            val resolvedTo = reference.resolve() as? KtFunction ?: continue
-            resolvedTo.receiverTypeReference?.findInjection(configuration, kotlinInjections)?.let { return it }
+            if (reference !is KtReference) continue
+
+            val resolvedTo = reference.resolve() as? KtCallableDeclaration ?: continue
+            val injectionInfo = resolvedTo.receiverTypeReference?.findInjection(configuration, kotlinInjections)
+                ?: injectionInfoByExtensionReceiverParameter(resolvedTo)
+            injectionInfo?.let { return it }
         }
 
         return null
-    }
-
-    private fun collectPossibleNames(injections: List<BaseInjection>): Set<String> {
-        val result = HashSet<String>()
-
-        for (injection in injections) {
-            val injectionPlaces = injection.injectionPlaces
-            for (place in injectionPlaces) {
-                val placeStr = place.toString()
-                val literals = STRING_LITERALS_REGEXP.findAll(placeStr).map { it.groupValues[1] }
-                result.addAll(literals)
-            }
-        }
-
-        return result
     }
 
     private fun injectWithVariableUsage(host: KtElement, containingFile: PsiFile, configuration: Configuration, originalHost: Boolean): InjectionInfo? {
@@ -333,13 +316,14 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
+            when (val resolvedTo = resolveReference(reference)) {
+                is PsiMethod ->
+                    injectionForJavaMethod(argument, resolvedTo, configuration)
+                        ?.let { return it }
 
-            val resolvedTo = resolveReference(reference)
-            if (resolvedTo is PsiMethod) {
-                val injectionForJavaMethod = injectionForJavaMethod(argument, resolvedTo, configuration)
-                injectionForJavaMethod?.let { return it }
-            } else if (resolvedTo is KtFunction) {
-                injectionForKotlinCall(argument, resolvedTo, reference, configuration)?.let { return it }
+                is KtFunction ->
+                    injectionForKotlinCall(argument, resolvedTo, reference, configuration)
+                        ?.let { return it }
             }
         }
 
@@ -399,8 +383,8 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
                       )
                       injectionForKotlinInfixCallParameter?.let { return it }
                   } else {
-                      val injectionInfo =
-                          ktFunction.receiverTypeReference?.findInjection(configuration) ?: injectionInfoByAnnotation(ktFunction)
+                      val injectionInfo = ktFunction.receiverTypeReference?.findInjection(configuration)
+                          ?: injectionInfoByExtensionReceiverParameter(ktFunction)
                       injectionInfo?.let { return it }
                   }
               }
@@ -637,25 +621,35 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     }
 
     private fun appendJavaPlaceTargetCallableNames(place: InjectionPlace, classNames: MutableCollection<String>, methodNames: MutableCollection<String>) {
+        if (!place.isEnabled) return
+
+        // intentionally imperative way is used to avoid intermediate objects on filter/flatMap etc to reduce GC pressure
         val patternConditions = place.elementPattern.condition.conditions
-
-        patternConditions
-            .filter { it.debugMethodName == "ofMethod" }
-            .mapNotNull { it as? PatternConditionPlus<*, *> }
-            .flatMap { it.valuePattern.condition.conditions }
-            .filterIsInstance<PsiNamePatternCondition<*>>()
-            .flatMap { it.valuePattern.condition.conditions }
-            .filterIsInstance<ValuePatternCondition<String>>()
-            .forEach { methodNames += it.values }
-
-        val classCondition = patternConditions.firstOrNull { it.debugMethodName == "definedInClass" }
-                as? PatternConditionPlus<*, *> ?: return
-        val psiClassNamePatternCondition =
-            classCondition.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return
-        val valuePatternCondition =
-            psiClassNamePatternCondition.namePattern.condition.conditions.firstIsInstanceOrNull<ValuePatternCondition<String>>()
-                ?: return
-        valuePatternCondition.values.forEach { classNames.add(StringUtilRt.getShortName(it)) }
+        for (condition in patternConditions) {
+            val conditionPlus = condition as? PatternConditionPlus<*, *> ?: continue
+            val methodName = condition.debugMethodName
+            when(methodName) {
+                "ofMethod" -> {
+                    for (patternCondition in conditionPlus.valuePattern.condition.conditions) {
+                        val namePatternCondition = patternCondition as? PsiNamePatternCondition<*> ?: continue
+                        for (item in namePatternCondition.valuePattern.condition.conditions) {
+                            val condition = item as? ValuePatternCondition<*> ?: continue
+                            condition.values.forEach {
+                                methodNames.addIfNotNull(it as? String)
+                            }
+                        }
+                    }
+                }
+                "definedInClass" -> {
+                    val psiClassNamePatternCondition =
+                        conditionPlus.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return
+                    val valuePatternCondition =
+                        psiClassNamePatternCondition.namePattern.condition.conditions.firstIsInstanceOrNull<ValuePatternCondition<String>>()
+                            ?: return
+                    valuePatternCondition.values.forEach { classNames.add(StringUtilRt.getShortName(it)) }
+                }
+            }
+        }
     }
 
     private fun appendKotlinPlaceTargetClassShortNames(place: InjectionPlace, classNames: MutableCollection<String>) {

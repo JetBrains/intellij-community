@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +10,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +39,7 @@ public abstract class Compressor implements Closeable {
     }
 
     /** @deprecated use {@link #Tar(Path, Compression)} instead */
+    @ApiStatus.Internal
     @Deprecated
     @SuppressWarnings("IO_FILE_USAGE")
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
@@ -216,9 +217,10 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addFile(@NotNull String entryName, @NotNull Path file, long timestamp) throws IOException {
+    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(file);
     entryName = entryName(entryName);
     if (accept(entryName, file)) {
-      addFile(file, Files.readAttributes(file, BasicFileAttributes.class), entryName, timestamp);
+      addFile(file, Files.readAttributes(file, BasicFileAttributes.class), entryName, timestamp, isWindows);
     }
   }
 
@@ -267,6 +269,7 @@ public abstract class Compressor implements Closeable {
   }
 
   /** @deprecated use {@link #addDirectory(String, Path)} instead */
+  @ApiStatus.Internal
   @Deprecated
   @SuppressWarnings("IO_FILE_USAGE")
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
@@ -301,17 +304,17 @@ public abstract class Compressor implements Closeable {
     return myFilter == null || myFilter.test(entryName, file);
   }
 
-  private void addFile(Path file, BasicFileAttributes attrs, String name, long explicitTimestamp) throws IOException {
+  private void addFile(Path file, BasicFileAttributes attrs, String name, long explicitTimestamp, boolean isWindows) throws IOException {
     try (InputStream source = Files.newInputStream(file)) {
       long timestamp = explicitTimestamp == -1 ? attrs.lastModifiedTime().toMillis() : explicitTimestamp;
       String symlinkTarget = attrs.isSymbolicLink() ? Files.readSymbolicLink(file).toString() : null;
-      writeFileEntry(name, source, attrs.size(), timestamp, mode(file), symlinkTarget);
+      writeFileEntry(name, source, attrs.size(), timestamp, mode(file, isWindows), symlinkTarget);
     }
     catch (NoSuchFileException ignored) { }  // ignoring disappearing files
   }
 
-  private static int mode(Path file) throws IOException {
-    if (SystemInfo.isWindows) {
+  private static int mode(Path file, boolean isWindows) throws IOException {
+    if (isWindows) {
       DosFileAttributeView attrs = Files.getFileAttributeView(file, DosFileAttributeView.class);
       if (attrs != null) {
         DosFileAttributes dosAttrs = attrs.readAttributes();
@@ -331,6 +334,7 @@ public abstract class Compressor implements Closeable {
   }
 
   private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {
+    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(root);
     boolean traceEnabled = LOG.isTraceEnabled();
     if (traceEnabled) LOG.trace("dir=" + root + " prefix=" + prefix);
 
@@ -356,7 +360,7 @@ public abstract class Compressor implements Closeable {
         String name = entryName(file);
         if (accept(name, file)) {
           if (traceEnabled) LOG.trace("  " + file + " -> " + name + (attrs.isSymbolicLink() ? " symlink" : " size=" + attrs.size()));
-          addFile(file, attrs, name, timestampMs);
+          addFile(file, attrs, name, timestampMs, isWindows);
         }
         return FileVisitResult.CONTINUE;
       }

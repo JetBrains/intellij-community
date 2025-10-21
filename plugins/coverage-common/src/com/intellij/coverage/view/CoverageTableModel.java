@@ -27,7 +27,7 @@ import javax.swing.tree.TreePath;
 import java.util.Comparator;
 import java.util.List;
 
-class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, SortableColumnModel, TreeModelListener, TreeVisitor.Acceptor {
+final class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, SortableColumnModel, TreeModelListener, TreeVisitor.Acceptor {
   private final ColumnInfo[] COLUMN_INFOS;
   private final AsyncTreeModel myAsyncModel;
   private final StructureTreeModel<CoverageViewTreeStructure> myStructureModel;

@@ -95,20 +95,3 @@ internal data class CreateTemporaryEntryOptionsImpl2(
 
 internal data class AbsoluteSymbolicLinkTarget(override val path: EelPath) : EelFileSystemPosixApi.SymbolicLinkTarget.Absolute
 internal data class RelativeSymbolicLinkTarget(override val reference: List<String>) : EelFileSystemPosixApi.SymbolicLinkTarget.Relative
-
-internal class WatchedPathBuilder(
-  private val path: EelPath,
-  private var recursive: Boolean = false,
-) : WatchedPath.Builder {
-  override fun build(): WatchedPath {
-    return WatchPathImpl(this.path, this.recursive)
-  }
-
-  override fun recursive(boolean: Boolean): WatchedPath.Builder {
-    this.recursive = recursive
-    return this
-  }
-
-  private class WatchPathImpl(override val path: EelPath, override val recursive: Boolean) : WatchedPath {}
-
-}

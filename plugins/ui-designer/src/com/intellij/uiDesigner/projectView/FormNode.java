@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.projectView;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -90,11 +89,6 @@ public final class FormNode extends ProjectViewNode<Form>{
   public boolean canNavigateToSource() {
     final Form value = getValue();
     return value != null && value.canNavigateToSource();
-  }
-
-  @Override
-  public String getToolTip() {
-    return IdeBundle.message("tooltip.ui.designer.form");
   }
 
   @Override

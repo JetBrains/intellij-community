@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.miglayout.swing` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "miglayout-swing_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "miglayout-swing",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":miglayout-swing_resources"],
+  exports = ["@lib//:libraries-miglayout-swing-miglayout-swing"],
+  runtime_deps = ["@lib//:libraries-miglayout-swing-miglayout-swing"]
+)
+### auto-generated section `build intellij.libraries.miglayout.swing` end

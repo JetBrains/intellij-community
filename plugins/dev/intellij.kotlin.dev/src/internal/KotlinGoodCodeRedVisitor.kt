@@ -3,7 +3,7 @@ package org.jetbrains.idea.dev.kotlin.internal
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.dev.codeInsight.internal.GoodCodeRedVisitor
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -30,7 +30,7 @@ internal class KotlinGoodCodeRedVisitor : GoodCodeRedVisitor {
           }
         }
         catch (e: Exception) {
-          if (e is ControlFlowException) throw e
+          if (Logger.shouldRethrow(e)) throw e
           holder.registerProblem(file, KotlinDevBundle.message("inspection.message.analysis.failed.with.exception", e.message))
         }
       }

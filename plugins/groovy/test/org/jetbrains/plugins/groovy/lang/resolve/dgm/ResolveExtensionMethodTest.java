@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.dgm;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -75,6 +76,7 @@ public class ResolveExtensionMethodTest extends GroovyResolveTestCase {
           static void myMethod(D d, Closure c) {}
         }
         """);
+    DumbService.getInstance(getProject()).waitForSmartMode();
     resolveByText(
       """
         import com.foo.bar.D

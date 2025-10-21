@@ -242,8 +242,8 @@ f:com.intellij.execution.target.value.TargetEnvironmentFunctions
 - showRunContent(com.intellij.execution.ExecutionResult,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
 c:com.intellij.execution.ui.RunContentDescriptor
 - com.intellij.openapi.Disposable
-- *:getDisplayNameProperty():com.intellij.execution.ui.ReactiveProperty
-- *:getIconProperty():com.intellij.execution.ui.ReactiveProperty
+- *:getDisplayNameProperty():kotlinx.coroutines.flow.StateFlow
+- *:getIconProperty():kotlinx.coroutines.flow.StateFlow
 - *:isHiddenContent():Z
 - *p:setDisplayName(java.lang.String):V
 - *p:setIcon(javax.swing.Icon):V

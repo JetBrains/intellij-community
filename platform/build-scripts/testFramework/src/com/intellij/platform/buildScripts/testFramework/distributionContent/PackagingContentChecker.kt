@@ -31,8 +31,10 @@ private data class PackageResult(
 
 private data class ContentReportList(
   @JvmField val platform: List<FileEntry>,
+  @JvmField val productModules: List<PluginContentReport>,
   @JvmField val bundled: List<PluginContentReport>,
   @JvmField val nonBundled: List<PluginContentReport>,
+  @JvmField val moduleSets: Map<String, List<String>>,
 )
 
 @ApiStatus.Internal
@@ -47,9 +49,15 @@ fun createContentCheckTests(
 ): Iterator<DynamicTest> {
   val packageResult by lazy {
     lateinit var result: PackageResult
-    computePackageResult(productProperties, testInfo, {
-      result = it
-    }, projectHomePath, buildTools)
+    computePackageResult(
+      productProperties = productProperties,
+      testInfo = testInfo,
+      contentConsumer = {
+        result = it
+      },
+      homePath = projectHomePath,
+      buildTools = buildTools,
+    )
     result
   }
 
@@ -67,8 +75,30 @@ fun createContentCheckTests(
       )
     })
 
+    for ((moduleSetName, moduleSetData) in contentList.moduleSets) {
+      yield(DynamicTest.dynamicTest("${testInfo.spanName}(moduleSet:$moduleSetName)") {
+        checkThatModuleListIsNotChanged(
+          actual = moduleSetData,
+          expectedFile = projectHome.resolve("build/expected/moduleSets/$moduleSetName.yaml"),
+          projectHome = projectHome,
+          suggestedReviewer = suggestedReviewer,
+        )
+      })
+    }
+
+    val project = packageResult.jpsProject
+
+    val productModules = toMap(contentList.productModules)
+    checkPlugins(
+      fileEntries = productModules.values.asSequence(),
+      project = project,
+      projectHome = projectHome,
+      nonBundled = null,
+      testInfo = testInfo,
+      contentFileName = "module-content.yaml",
+    )
+
     if (checkPlugins) {
-      val project = packageResult.jpsProject
       // a non-bundled plugin may duplicated bundled one
       // - first check non-bundled: any valid mismatch will lead to test failure
       // - then check bundled: may be a mismatch due to a difference between bundled and non-bundled one
@@ -110,11 +140,12 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
   projectHome: Path?,
   testInfo: TestInfo,
   suggestedReviewer: String? = null,
+  contentFileName: String = "plugin-content.yaml",
 ) {
   for (item in fileEntries) {
-    val module = project.modules.find { it.name == item.mainModule } ?: continue
+    val module = project.findModuleByName(item.mainModule) ?: continue
     val contentRoot = Path.of(JpsPathUtil.urlToPath(module.contentRootsList.urls.first()))
-    val expectedFile = contentRoot.resolve("plugin-content.yaml")
+    val expectedFile = contentRoot.resolve(contentFileName)
 
     //if (true) {
     //  java.nio.file.Files.writeString(expectedFile, serializeContentEntries(normalizeContentReport(fileEntries = item.content, short = true)))
@@ -148,7 +179,8 @@ private fun getPluginContentKey(item: PluginContentReport): String = item.mainMo
 
 private fun computePackageResult(
   productProperties: ProductProperties,
-  testInfo: TestInfo, contentConsumer: (PackageResult) -> Unit,
+  testInfo: TestInfo,
+  contentConsumer: (PackageResult) -> Unit,
   homePath: Path,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
 ) {
@@ -188,11 +220,22 @@ private fun computePackageResult(
           }
         }
 
+        // auto-discover all module set files from zip
+        val moduleSets = zip.entries
+          .asSequence()
+          .filter { it.name.startsWith("moduleSets/") && it.name.endsWith(".yaml") }
+          .associate {
+            val moduleSetName = it.name.removePrefix("moduleSets/").removeSuffix(".yaml")
+            moduleSetName to it.getData(zip).decodeToString().lines()
+          }
+
         contentConsumer(PackageResult(
           content = ContentReportList(
             platform = getPlatformData("platform.yaml"),
+            productModules = getData("product-modules.yaml"),
             bundled = getData("bundled-plugins.yaml"),
             nonBundled = getData("non-bundled-plugins.yaml"),
+            moduleSets = moduleSets,
           ),
           jpsProject = context.project,
           projectHome = context.paths.projectHome,

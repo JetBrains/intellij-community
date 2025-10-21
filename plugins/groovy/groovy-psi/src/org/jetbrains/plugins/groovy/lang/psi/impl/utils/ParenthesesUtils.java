@@ -48,6 +48,7 @@ public final class ParenthesesUtils {
   private static final int BINARY_OR_PRECEDENCE;
   public static final int AND_PRECEDENCE;
   public static final int OR_PRECEDENCE;
+  public static final int IMPL_PRECEDENCE;
   public static final int CONDITIONAL_PRECEDENCE;
   public static final int SAFE_CAST_PRECEDENCE;
   private static final int ASSIGNMENT_PRECEDENCE;
@@ -77,6 +78,7 @@ public final class ParenthesesUtils {
     BINARY_OR_PRECEDENCE = i++;
     AND_PRECEDENCE = i++;
     OR_PRECEDENCE = i++;
+    IMPL_PRECEDENCE = i++;
     CONDITIONAL_PRECEDENCE = i++;
     SAFE_CAST_PRECEDENCE = i++;
     ASSIGNMENT_PRECEDENCE = i++;
@@ -94,6 +96,7 @@ public final class ParenthesesUtils {
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mSTAR_STAR, EXPONENTIAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLAND, AND_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLOR, OR_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mIMPL, IMPL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mBAND, BINARY_AND_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mBOR, BINARY_OR_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mBXOR, BINARY_XOR_PRECEDENCE);
@@ -187,7 +190,17 @@ public final class ParenthesesUtils {
   }
 
   public static boolean checkPrecedenceForNonBinaryOps(int precedence, int parentPrecedence) {
-    return precedence > parentPrecedence;
+    return checkPrecedence(precedence, parentPrecedence);
+  }
+
+  /**
+   * Checks the priorities of the expressions based on their precedence. The lower precedence means that the expression has a higher priority.
+   * @param newPrecedence precedence of the new expression
+   * @param oldPrecedence precedence of the old expression
+   * @return {@code true} if new expression has higher priority than expression, false otherwise.
+   */
+  public static boolean checkPrecedence(int newPrecedence, int oldPrecedence) {
+    return newPrecedence > oldPrecedence;
   }
 
   public static boolean checkPrecedence(int precedence, @NotNull GrExpression oldExpr) {

@@ -18,7 +18,7 @@ class JavaCtrlMouseTest : LightJavaCodeInsightFixtureTestCase4(
     val testName = testName
     fixture.configureByFile("$testName.java")
     val docInfoString = CtrlMouseHandler.getGoToDeclarationOrUsagesText(fixture.editor)!!
-    assertEqualsFileText("$testDataPath$testName.html", UIUtil.getHtmlBody(docInfoString))
+    assertEqualsFileText("$testDataPath$testName.html", UIUtil.getHtmlBodyWithoutPreWrapper(docInfoString))
   }
 
   @Test

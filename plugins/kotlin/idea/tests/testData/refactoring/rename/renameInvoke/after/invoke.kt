@@ -5,6 +5,8 @@ class A(val n: Int) {
 fun test() {
     A(1).foo(2)
     A(1).foo(2)
+    val a = A(1)
+    a.foo(42).toString()
 }
 
 class Boo(val a: A)

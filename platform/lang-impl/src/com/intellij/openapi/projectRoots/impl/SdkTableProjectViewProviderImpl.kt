@@ -1,43 +1,69 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTableProjectViewProvider
 import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.project.ProjectStoreOwner
 import org.jetbrains.annotations.Unmodifiable
-import java.nio.file.Path
 
-@ApiStatus.Internal
-class SdkTableProjectViewProviderImpl(val project: Project) : SdkTableProjectViewProvider {
-  private val descriptor = project.basePath?.toNioPathOrNull()?.getEelDescriptor() ?: LocalEelDescriptor
+private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjectViewProvider, Disposable {
+  @Suppress("SimpleRedundantLet")
+  private val descriptor = (project as? ProjectStoreOwner)
+                             ?.let { it.componentStore.storeDescriptor.historicalProjectBasePath.getEelDescriptor() }
+                           ?: LocalEelDescriptor
+
+  private var perEnvironmentModelSeparation: Boolean
+
+  init {
+    val registryValue = Registry.get("ide.workspace.model.per.environment.model.separation")
+    perEnvironmentModelSeparation = registryValue.asBoolean()
+    registryValue.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        perEnvironmentModelSeparation = value.asBoolean()
+      }
+    }, this)
+  }
 
   override fun getSdkTableView(): ProjectJdkTable {
     val generalTable = ProjectJdkTable.getInstance()
-    if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    if (perEnvironmentModelSeparation) {
+      return ProjectJdkTableProjectView(descriptor, generalTable)
+    }
+    else {
       return generalTable
     }
-    return ProjectJdkTableProjectView(descriptor, generalTable)
+  }
+
+  override fun dispose() {
   }
 }
 
 private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val delegate: ProjectJdkTable) : ProjectJdkTable() {
   override fun findJdk(name: String): Sdk? {
+    if (delegate is EnvironmentScopedSdkTableOps) {
+      return delegate.findJdk(name, descriptor)
+    }
     return delegate.allJdks.find {
       it.name == name && validateDescriptor(it)
     }
   }
 
   override fun findJdk(name: String, type: String): Sdk? {
-    // sometimes delegate.findJdk can do mutating operations, like in case of ProjectJdkTableImpl
-    return allJdks.find { it.name == name && it.sdkType.name == type } ?: delegate.findJdk(name, type)
+    if (delegate is EnvironmentScopedSdkTableOps) {
+      return delegate.findJdk(name, type, descriptor)
+    }
+    // sometimes delegate.findJdk can do mutating operations, like in the case of ProjectJdkTableImpl
+    return delegate.allJdks.find { it.name == name && it.sdkType.name == type && validateDescriptor(it) } ?: delegate.findJdk(name, type)
   }
 
   override fun getAllJdks(): Array<out Sdk> {
@@ -45,7 +71,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
   }
 
   private fun validateDescriptor(sdk: Sdk): Boolean {
-    val sdkDescriptor = sdk.homePath?.let(Path::of)?.getEelDescriptor()
+    val sdkDescriptor = sdk.homePath?.let { getEffectiveWorkspaceEelDescriptorOfHomePath(it) }
     return if (sdkDescriptor == null) {
       true
     }
@@ -79,6 +105,9 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
   }
 
   override fun createSdk(name: String, sdkType: SdkTypeId): Sdk {
+    if (delegate is EnvironmentScopedSdkTableOps) {
+      return delegate.createSdk(name, sdkType, descriptor)
+    }
     return delegate.createSdk(name, sdkType)
   }
 

@@ -74,6 +74,6 @@ object KotlinHighlightInfoTypeSemanticNames {
   val ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
 
   private fun createSymbolTypeInfo(attributesKey: TextAttributesKey): HighlightInfoType {
-    return HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributesKey, false)
+    return HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributesKey)
   }
 }

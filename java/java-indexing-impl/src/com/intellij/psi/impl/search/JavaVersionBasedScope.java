@@ -1,12 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -29,12 +30,15 @@ public final class JavaVersionBasedScope extends DelegatingGlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    if (!super.contains(file)) return false;
+    return super.contains(file) && checkMultiReleaseJar(file);
+  }
+
+  private boolean checkMultiReleaseJar(@NotNull VirtualFile file) {
     // Do not filter directories, as they may contain non-versioned files
     if (file.isDirectory()) return true;
     VirtualFile baseFile = JavaMultiReleaseUtil.findBaseFile(file);
     if (myLevel.isLessThan(JavaMultiReleaseUtil.MIN_MULTI_RELEASE_VERSION)) {
-      // In pre-multi-release 
+      // In pre-multi-release
       return baseFile == null;
     }
     if (baseFile == null) {
@@ -42,6 +46,35 @@ public final class JavaVersionBasedScope extends DelegatingGlobalSearchScope {
     }
     VirtualFile specificFile = JavaMultiReleaseUtil.findVersionSpecificFile(baseFile, myLevel);
     return file.equals(specificFile);
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+    CodeInsightContextInfo info = super.getCodeInsightContextInfo();
+    if (info instanceof NoContextInformation) {
+      return info;
+    }
+
+    ActualCodeInsightContextInfo actualInfo = (ActualCodeInsightContextInfo)info;
+    return new ActualCodeInsightContextInfo() {
+      @Override
+      public boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+        return actualInfo.contains(file, context) && checkMultiReleaseJar(file);
+      }
+
+      @Override
+      public @NotNull CodeInsightContextFileInfo getFileInfo(@NotNull VirtualFile file) {
+        CodeInsightContextFileInfo fileInfo = actualInfo.getFileInfo(file);
+        if (fileInfo instanceof DoesNotContainFileInfo) {
+          return fileInfo;
+        }
+        if (!checkMultiReleaseJar(file)) {
+          return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
+        }
+        return fileInfo;
+      }
+    };
   }
 
   @Override

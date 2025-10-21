@@ -2,8 +2,10 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.path.platform
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
@@ -61,7 +63,8 @@ sealed class IjentNioPath protected constructor(
     toString().compareTo(other.toString())
 }
 
-internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cachedAttributes: BasicFileAttributes?) : IjentNioPath(nioFs, cachedAttributes) {
+@ApiStatus.Internal
+class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cachedAttributes: BasicFileAttributes?) : IjentNioPath(nioFs, cachedAttributes) {
   override fun isAbsolute(): Boolean = true
 
   override fun getRoot(): IjentNioPath? {
@@ -154,9 +157,9 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
   }
 
   override fun toUri(): URI {
-    val prefix = when (eelPath.os) {
-      EelPath.OS.WINDOWS -> "/" + eelPath.root.toString().replace('\\', '/')
-      EelPath.OS.UNIX -> null
+    val prefix = when (eelPath.platform) {
+      EelOsFamily.Windows -> "/" + eelPath.root.toString().replace('\\', '/')
+      EelOsFamily.Posix -> null
     }
     val allParts = listOfNotNull(prefix) + eelPath.parts
     return allParts.fold(nioFs.uri, URI::resolve)

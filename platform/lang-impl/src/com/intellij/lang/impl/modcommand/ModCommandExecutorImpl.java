@@ -8,10 +8,7 @@ import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionGroup;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
@@ -259,32 +256,39 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     WriteAction.run(() -> {
       TemplateBuilderImpl builder = new TemplateBuilderImpl(psiFile);
       for (ModStartTemplate.TemplateField field : template.fields()) {
-        if (field instanceof ModStartTemplate.ExpressionField expr) {
-          if (expr.varName() != null) {
-            builder.replaceElement(psiFile, expr.range(), expr.varName(), expr.expression(), true);
-          } else {
-            builder.replaceElement(psiFile, expr.range(), expr.expression());
+        switch (field) {
+          case ModStartTemplate.ExpressionField(TextRange range, String varName, Expression expression) -> {
+            if (varName != null) {
+              builder.replaceElement(psiFile, range, varName, expression, true);
+            } else {
+              builder.replaceElement(psiFile, range, expression);
+            }
           }
-        }
-        else if (field instanceof ModStartTemplate.DependantVariableField variableField) {
-          builder.replaceElement(psiFile, variableField.range(), variableField.varName(),
-                                 variableField.dependantVariableName(), variableField.alwaysStopAt());
-        }
-        else if (field instanceof ModStartTemplate.EndField endField) {
-          PsiElement leaf = psiFile.findElementAt(endField.range().getStartOffset());
-          if (leaf != null) {
-            builder.setEndVariableBefore(leaf);
+          case ModStartTemplate.DependantVariableField(TextRange range, String varName, String variableName, boolean alwaysStopAt) ->
+            builder.replaceElement(psiFile, range, varName, variableName, alwaysStopAt);
+          case ModStartTemplate.EndField(TextRange range) -> {
+            PsiElement leaf = psiFile.findElementAt(range.getStartOffset());
+            if (leaf != null) {
+              builder.setEndVariableBefore(leaf);
+            }
           }
         }
       }
 
       final Template tmpl = builder.buildInlineTemplate();
-      finalEditor.getCaretModel().moveToOffset(0);
-      TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
-        @Override
-        public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
-          ModCommandExecutor.executeInteractively(context, name, editor, () -> template.templateFinishFunction().apply(psiFile));
-        }
+      CaretAutoMoveController.forbidCaretMovementInsideIfNeeded(finalEditor, () -> {
+        finalEditor.getCaretModel().moveToOffset(0);
+        TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
+          @Override
+          public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
+            ModCommandExecutor.executeInteractively(
+              context,
+              name,
+              editor,
+              () -> template.templateFinishFunction().apply(psiFile)
+            );
+          }
+        });
       });
     });
     return true;

@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
@@ -111,15 +110,6 @@ fun KotlinFacet.configureFacet(
 
 fun IKotlinFacetSettings.noVersionAutoAdvance() {
     updateCompilerArguments {
-        autoAdvanceLanguageVersion = false
-        autoAdvanceApiVersion = false
-    }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use IKotlinFacetSettings.noVersionAutoAdvance() instead")
-fun KotlinFacet.noVersionAutoAdvance() {
-    configuration.settings.updateCompilerArguments {
         autoAdvanceLanguageVersion = false
         autoAdvanceApiVersion = false
     }

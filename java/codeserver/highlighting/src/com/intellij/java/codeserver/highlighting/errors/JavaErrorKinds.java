@@ -640,11 +640,11 @@ public final class JavaErrorKinds {
                                                 owner.getTypeParameters().length));
   public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
 
-  public static final Simple<PsiMethod> METHOD_DUPLICATE =
-    error(PsiMethod.class, "method.duplicate")
-      .withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange)
+  public static final Parameterized<PsiMethod, DuplicateMethodsContext> METHOD_DUPLICATE =
+    parameterized(PsiMethod.class, DuplicateMethodsContext.class, "method.duplicate")
+      .withRange((method, duplicates) -> getMethodDeclarationTextRange(method))
       .withDescription(
-        method -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
+        (method, duplicates) -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
   public static final Simple<PsiMethod> METHOD_NO_PARAMETER_LIST =
     error(PsiMethod.class, "method.no.parameter.list").withAnchor(PsiMethod::getNameIdentifier);
   public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
@@ -765,8 +765,11 @@ public final class JavaErrorKinds {
       .withDescription((cls, ctx) -> message("method.inheritance.clash.does.not.throw",
                                              formatClashMethodMessage(ctx.method(), ctx.superMethod()),
                                              formatType(ctx.exceptionType())));
-  public static final Parameterized<PsiMethod, String> METHOD_MISSING_RETURN_TYPE =
+  public static final Parameterized<PsiMethod, @NotNull String> METHOD_MISSING_RETURN_TYPE =
     parameterized(PsiMethod.class, String.class, "method.missing.return.type")
+      .withAnchor(method -> requireNonNullElse(method.getNameIdentifier(), method));
+  public static final Simple<PsiMethod> METHOD_MISSING_RETURN_TYPE_NOT_CONSTRUCTOR =
+    error(PsiMethod.class, "method.missing.return.type.not.constructor")
       .withAnchor(method -> requireNonNullElse(method.getNameIdentifier(), method));
 
   public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =
@@ -1126,10 +1129,6 @@ public final class JavaErrorKinds {
     parameterized(PsiReferenceParameterList.class, PsiDiamondType.DiamondInferenceResult.class, "new.expression.diamond.inference.failure")
       .withDescription(
         (list, inferenceResult) -> message("new.expression.diamond.inference.failure", inferenceResult.getErrorMessage()));
-  public static final Simple<PsiConstructorCall> NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL =
-    error(PsiConstructorCall.class, "new.expression.arguments.to.default.constructor.call")
-      .withAnchor(call -> call.getArgumentList())
-      .withNavigationShift(1);
   public static final Parameterized<PsiConstructorCall, UnresolvedConstructorContext> NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR =
     parameterized(PsiConstructorCall.class, UnresolvedConstructorContext.class, "new.expression.unresolved.constructor")
       .withAnchor(PsiCall::getArgumentList)
@@ -1775,4 +1774,6 @@ public final class JavaErrorKinds {
   public record DeconstructionCountMismatchContext(@NotNull PsiPattern @NotNull [] patternComponents,
                                                    @NotNull PsiRecordComponent @NotNull [] recordComponents,
                                                    boolean hasMismatch) {}
+
+  public record DuplicateMethodsContext(@NotNull List<@NotNull PsiMethod> methods) {}
 }

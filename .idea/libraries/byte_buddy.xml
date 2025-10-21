@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="byte-buddy" type="repository">
+    <properties maven-id="net.bytebuddy:byte-buddy:1.17.7">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7.jar">
+          <sha256sum>3575dcb8a98faf943d3c1595c47a16047c4fce8a83ebbb26262f1a2f67546357</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.7/byte-buddy-1.17.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

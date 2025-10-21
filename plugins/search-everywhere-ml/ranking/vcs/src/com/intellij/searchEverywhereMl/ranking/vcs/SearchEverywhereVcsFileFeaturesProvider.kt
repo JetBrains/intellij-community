@@ -14,7 +14,7 @@ import com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeatur
 import com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeaturesProvider.Fields.IS_CHANGED_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeaturesProvider.Fields.IS_IGNORED_DATA_KEY
 
-internal class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
+class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
   object Fields {
     val IS_IGNORED_DATA_KEY = EventFields.Boolean("isIgnored")
     val IS_CHANGED_DATA_KEY = EventFields.Boolean("isChanged")

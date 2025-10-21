@@ -230,7 +230,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   /**
    * @deprecated Use {@link DebuggerSettingsUtils#filterEquals} directly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean filterEquals(ClassFilter[] filters1, ClassFilter[] filters2) {
     return DebuggerSettingsUtils.filterEquals(filters1, filters2);
   }

@@ -24,7 +24,8 @@ class BackgroundStepFactory(
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) },
-                         config.reports.sessionsFilters, config.reports.comparisonFilters, feature)
+                         config.reports.sessionsFilters, config.reports.comparisonFilters,
+                         config.reports.lookupFilters, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
     ActionsInterpretationStep(config, environment, datasetContext, newWorkspace = true)
@@ -47,5 +48,9 @@ class BackgroundStepFactory(
 
   override fun featureSpecificSteps(): List<EvaluationStep> = feature.getEvaluationSteps(config)
 
-  override fun featureSpecificPreliminarySteps(): List<EvaluationStep> = feature.getPreliminaryEvaluationSteps()
+  override fun featureSpecificPreliminarySteps(): List<EvaluationStep> = allPreliminarySteps(feature)
 }
+
+fun allPreliminarySteps(feature: EvaluableFeature<*>): List<EvaluationStep> = listOfNotNull(
+  DisableDockerEel().takeIf { System.getenv("EVALUATION_DOCKER_LOCAL") == "true" },
+) + feature.getPreliminaryEvaluationSteps()

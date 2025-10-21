@@ -13,8 +13,10 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.RefValueHashMapUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -39,17 +41,17 @@ public final class DebugReflectionUtil {
     }));
 
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
-  private static final Method Unsafe_shouldBeInitialized;
+  private static final Method ClassLoader_findLoadedClass;
 
   static {
-    Method shouldBeInitialized;
+    Method findLoadedClass;
     try {
-      shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Class.forName("sun.misc.Unsafe"), "shouldBeInitialized", Class.class);
+      findLoadedClass = ReflectionUtil.getDeclaredMethod(Class.forName("java.lang.ClassLoader"), "findLoadedClass", String.class);
     }
     catch (ClassNotFoundException ignored) {
-      shouldBeInitialized = null;
+      findLoadedClass = null;
     }
-    Unsafe_shouldBeInitialized = shouldBeInitialized;
+    ClassLoader_findLoadedClass = findLoadedClass;
   }
 
   private static Field @NotNull [] getAllFields(@NotNull Class<?> aClass) {
@@ -98,11 +100,12 @@ public final class DebugReflectionUtil {
     return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
-  private static boolean isInitialized(@NotNull Class<?> root) {
-    if (Unsafe_shouldBeInitialized == null) return false;
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean isInitialized(ClassLoader classLoader, @NotNull String rootName) {
     boolean isInitialized = false;
     try {
-      isInitialized = !(Boolean)Unsafe_shouldBeInitialized.invoke(ReflectionUtil.getUnsafe(), root);
+      isInitialized = ClassLoader_findLoadedClass.invoke(classLoader, rootName) != null;
     }
     catch (Exception e) {
       //noinspection CallToPrintStackTrace
@@ -132,7 +135,7 @@ public final class DebugReflectionUtil {
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
       String description = entry.getValue();
-      toVisit.addLast(new BackLink<Object>(startRoot, null, "(root)", null) {
+      toVisit.addLast(new BackLink<Object>(startRoot, null, -2, null) {
         @Override
         void print(@NotNull StringBuilder result) {
           super.print(result);
@@ -185,26 +188,26 @@ public final class DebugReflectionUtil {
         throw new RuntimeException(e);
       }
 
-      queue(value, field, null, backLink, queue, maxQueueSize, shouldExamineValue);
+      queue(value, field, -1, backLink, queue, maxQueueSize, shouldExamineValue);
     }
     if (rootClass.isArray()) {
       try {
         Object[] objects = (Object[])root;
         for (int i = 0; i < objects.length; i++) {
           Object value = objects[i];
-          queue(value, null, "["+i+"]", backLink, queue, maxQueueSize, shouldExamineValue);
+          queue(value, null, i, backLink, queue, maxQueueSize, shouldExamineValue);
         }
       }
       catch (ClassCastException ignored) {
       }
     }
     // check for objects leaking via static fields. process initialized classes only
-    if (root instanceof Class && isInitialized((Class<?>)root)) {
+    if (root instanceof Class && isInitialized(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
         for (Field field : getAllFields((Class<?>)root)) {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
             Object value = field.get(null);
-            queue(value, field, null, backLink, queue, maxQueueSize, shouldExamineValue);
+            queue(value, field, -1, backLink, queue, maxQueueSize, shouldExamineValue);
           }
           catch (IllegalAccessException ignored) {
           }
@@ -214,7 +217,7 @@ public final class DebugReflectionUtil {
 
   private static void queue(@Nullable Object value,
                             @Nullable Field field,
-                            @Nullable String fieldName,
+                            int arrayIndex, // -1 if the field is not an array
                             @NotNull BackLink<?> backLink,
                             @NotNull Deque<? super BackLink<?>> queue,
                             int maxQueueSize,
@@ -223,7 +226,7 @@ public final class DebugReflectionUtil {
       return;
     }
     if (shouldExamineValue.test(value) && queue.size() < maxQueueSize) {
-      queue.addLast(new BackLink<>(value, field, fieldName, backLink));
+      queue.addLast(new BackLink<>(value, field, arrayIndex, backLink));
     }
   }
 
@@ -234,19 +237,15 @@ public final class DebugReflectionUtil {
   public static class BackLink<V> {
     private final @NotNull V value;
     private final Field field;
-    /**
-     * human-readable field name (sometimes the Field is not available, e.g., when it's synthetic).
-     * when null, it can be computed from field.getName()
-     */
-    private final String fieldName;
+    private final int arrayIndex; // -2 if the root, -1 if not an array, array index otherwise
     private final BackLink<?> backLink;
     private final int depth;
 
-    BackLink(@NotNull V value, @Nullable Field field, @Nullable String fieldName, @Nullable BackLink<?> backLink) {
+    BackLink(@NotNull V value, @Nullable Field field, int arrayIndex, @Nullable BackLink<?> backLink) {
       this.value = value;
       this.field = field;
-      this.fieldName = fieldName;
-      assert field != null ^ fieldName != null : "One of field/fieldName must be null and the other not-null, but got: "+field+"/"+fieldName;
+      this.arrayIndex = arrayIndex;
+      assert field != null ^ arrayIndex != -1 : "One of field/arrayIndex must be present and the other should not, but got: "+field+"/"+arrayIndex;
       this.backLink = backLink;
       depth = backLink == null ? 0 : backLink.depth + 1;
     }
@@ -267,7 +266,7 @@ public final class DebugReflectionUtil {
     }
 
     String getFieldName() {
-      return this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
+      return arrayIndex==-2 ?" (root)" : arrayIndex != -1 ? "["+arrayIndex+"]" : field.getDeclaringClass().getName() + "." + field.getName();
     }
 
     void print(@NotNull StringBuilder result) {

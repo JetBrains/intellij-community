@@ -44,12 +44,13 @@ import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
+import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.headless.PythonActivityKey;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -64,7 +65,6 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE;
 
 /**
@@ -304,7 +304,7 @@ public final class PythonSdkUpdater {
         ApplicationManager.getApplication().invokeLater(() -> {
           Disposer.dispose(indicatorDisposable);
           // restart code analysis
-          DaemonCodeAnalyzer.getInstance(myProject).restart();
+          DaemonCodeAnalyzer.getInstance(myProject).restart(this);
         }, myProject.getDisposed());
       }
     }
@@ -363,17 +363,11 @@ public final class PythonSdkUpdater {
         if (Disposer.isDisposed((Disposable)sdk)) {
           return;
         }
-        PyPackageManager instance = PyPackageManager.getInstance(sdk);
-        instance.refreshAndGetPackages(true);
+        PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, sdk);
+        PythonPackageManagerExt.reloadPackagesBlocking(manager);
       }
-      catch (ExecutionException e) {
-        if (LOG.isDebugEnabled()) {
-          e.initCause(myRequestData.myTraceback);
-          LOG.debug(e);
-        }
-        else {
-          LOG.warn(e.getMessage());
-        }
+      catch (Throwable e) {
+        LOG.warn(e.getMessage());
       }
     }
 

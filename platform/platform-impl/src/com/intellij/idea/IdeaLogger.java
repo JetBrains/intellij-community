@@ -9,6 +9,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -99,14 +101,23 @@ public final class IdeaLogger extends JulLogger {
       return;
     }
 
-    var app = ApplicationManager.getApplication();
-    if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
-      var pluginUtil = PluginUtil.getInstance();
-      if (pluginUtil != null) {
-        var pluginId = pluginUtil.findPluginId(t);
-        var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
-        LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
-      }
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode() || app.isDisposed()) {
+      return;
+    }
+
+    PluginUtil pluginUtil;
+    try {
+      pluginUtil = PluginUtil.getInstance();
+    }
+    catch (CancellationException e) {
+      return;
+    }
+
+    if (pluginUtil != null) {
+      var pluginId = pluginUtil.findPluginId(t);
+      var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
+      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
     }
   }
 

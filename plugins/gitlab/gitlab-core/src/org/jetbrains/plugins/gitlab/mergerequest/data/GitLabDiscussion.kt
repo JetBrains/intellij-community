@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.*
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestD
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
 import java.util.*
 
+@CodeReviewDomainEntity
 interface GitLabDiscussion {
   val id: GitLabId
 
@@ -25,7 +25,8 @@ interface GitLabDiscussion {
   val notes: StateFlow<List<GitLabNote>>
   val canAddDraftNotes: Boolean
 
-  val canResolve: Boolean
+  val resolvable: StateFlow<Boolean>
+  val resolveAllowed: Boolean
   val canAddNotes: StateFlow<Boolean>
   val resolved: StateFlow<Boolean>
 
@@ -41,8 +42,6 @@ val GitLabMergeRequestDiscussion.firstNote: Flow<GitLabMergeRequestNote?>
 interface GitLabMergeRequestDiscussion : GitLabDiscussion {
   override val notes: StateFlow<List<GitLabMergeRequestNote>>
 }
-
-private val LOG = logger<GitLabDiscussion>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoadedGitLabDiscussion(
@@ -66,7 +65,7 @@ class LoadedGitLabDiscussion(
   override val id: GitLabGid = discussionData.id
   override val createdAt: Date = discussionData.createdAt
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
 
@@ -116,8 +115,12 @@ class LoadedGitLabDiscussion(
     mr.details.value.userPermissions.createNote &&
     (glMetadata?.let { GitLabVersion(16, 3) <= it.version } ?: false)
 
-  // a little cheat that greatly simplifies the implementation
-  override val canResolve: Boolean = discussionData.notes.first().resolvable && discussionData.notes.first().userPermissions.resolveNote
+
+  override val resolvable: StateFlow<Boolean> =
+    loadedNotes.mapState { it.firstOrNull()?.resolvable ?: false }
+
+  // a little cheat that simplifies the implementation
+  override val resolveAllowed: Boolean = discussionData.notes.first().userPermissions.resolveNote
 
   override val resolved: StateFlow<Boolean> =
     loadedNotes.mapState { it.firstOrNull()?.resolved ?: false }
@@ -166,5 +169,5 @@ class LoadedGitLabDiscussion(
   }
 
   override fun toString(): String =
-    "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canAddNotes=$canAddNotes, canResolve=$canResolve)"
+    "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt)"
 }

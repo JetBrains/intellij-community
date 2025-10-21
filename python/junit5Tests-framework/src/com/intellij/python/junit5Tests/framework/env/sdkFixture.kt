@@ -16,7 +16,21 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * Sdk with environment info. Use it as a regular sdk, but env fixtures (venv, conda) might use [env]
  */
 @Internal
-class SdkFixture<ENV : Any> internal constructor(private val sdk: Sdk, val env: ENV) : Sdk by sdk
+class SdkFixture<ENV : Any> internal constructor(private val sdk: Sdk, val env: ENV) : Sdk by sdk {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+
+    return when (other) {
+      is SdkFixture<*> -> other.sdk == sdk
+      is Sdk -> other == sdk
+      else -> false
+    }
+  }
+
+  override fun hashCode(): Int {
+    return sdk.hashCode()
+  }
+}
 
 
 /**

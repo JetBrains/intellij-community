@@ -38,7 +38,9 @@ class DelayedProjectSynchronizer : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    suspend fun logJpsEntities(state: String) {
+    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
+
+    fun logJpsEntities(state: String) {
       val logger = thisLogger()
       if (logger.isDebugEnabled) {
         try {
@@ -46,7 +48,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
             return this.subList(fromIndex.coerceAtLeast(0), toIndex.coerceAtMost(this.size))
           }
 
-          val wsm = project.serviceAsync<WorkspaceModel>().currentSnapshot
+          val wsm = workspaceModel.currentSnapshot
           val jpsEntities = wsm.entitiesBySource { entitySource -> entitySource is JpsFileEntitySource }.toList()
           val sampleSize = 50
           val entitySources = jpsEntities.asSequence().map { it.entitySource }.distinct().take(sampleSize).toList()
@@ -61,7 +63,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
 
     logJpsEntities("Before Util.doSync")
     project.trackActivity(ProjectSynchronizerActivityKey) {
-      Util.doSync(project)
+      Util.doSync(project, workspaceModel)
     }
     logJpsEntities("After Util.doSync")
   }
@@ -72,15 +74,15 @@ class DelayedProjectSynchronizer : ProjectActivity {
     }
 
     // This function is effectively "private". It's internal because otherwise it's not available for DelayedProjectSynchronizer
-    internal suspend fun doSync(project: Project) {
-      val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
-      if (!(project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl).loadedFromCache) {
+    internal suspend fun doSync(project: Project, workspaceModel: WorkspaceModelImpl) {
+      if (!workspaceModel.loadedFromCache) {
         return
       }
 
+      val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
       val loadingTime = measureTimeMillis {
-        val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
-        projectModelSynchronizer.applyLoadedStorage(projectEntities)
+        val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project, workspaceModel)
+        projectModelSynchronizer.applyLoadedStorage(projectEntities, workspaceModel)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
       syncTimeMs.duration.addAndGet(loadingTime)
@@ -94,7 +96,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
       // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity, we should have this hack because
       // background activity doesn't start in the tests
       project.serviceAsync<StartupManager>().allActivitiesPassedFuture.join()
-      doSync(project)
+      doSync(project, project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl)
     }
 
     private val syncTimeMs = MillisecondsMeasurer()

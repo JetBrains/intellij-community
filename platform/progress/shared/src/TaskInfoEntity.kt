@@ -81,13 +81,13 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
    * The status is managed by user through [TaskManager]
    * The status updates can be subscribed using [statuses]
    */
-  var taskStatus: TaskStatus by TaskStatusType
+  val taskStatus: TaskStatus by TaskStatusType
 
   /**
    * Specifies whether the task would be fully shown in the status bar
    * or just in the number of running tasks and popup with the full list of tasks.
    */
-  var visibleInStatusBar: Boolean by ProgressBarVisibilityType
+  val visibleInStatusBar: Boolean by ProgressBarVisibilityType
 
   companion object : DurableEntityType<TaskInfoEntity>(
     TaskInfoEntity::class.java.name,

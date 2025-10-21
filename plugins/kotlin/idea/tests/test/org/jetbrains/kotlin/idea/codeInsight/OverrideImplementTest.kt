@@ -133,6 +133,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doOverrideFileTest()
     }
 
+    open fun testOverrideFunctionPropertyWithoutBody() {
+        doOverrideFileTest()
+    }
+
     open fun testOverridePrimitiveProperty() {
         doMultiImplementFileTest()
     }

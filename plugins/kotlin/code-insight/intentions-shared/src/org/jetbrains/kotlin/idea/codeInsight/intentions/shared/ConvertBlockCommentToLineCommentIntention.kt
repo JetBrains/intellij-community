@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal class ConvertBlockCommentToLineCommentIntention : SelfTargetingIntention<PsiComment>(
-    PsiComment::class.java, KotlinBundle.lazyMessage("replace.with.end.of.line.comment")
+    PsiComment::class.java, KotlinBundle.messagePointer("replace.with.end.of.line.comment")
 ) {
     override fun isApplicableTo(element: PsiComment, caretOffset: Int): Boolean = element.isBlockComment()
 

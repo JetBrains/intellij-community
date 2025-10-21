@@ -727,7 +727,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     myRootContainer.setStringDescriptorLocale(locale);
     refreshProperties();
     DesignerToolWindowManager.getInstance(this).updateComponentTree();
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
   }
 
   public @Nullable Locale getStringDescriptorLocale() {

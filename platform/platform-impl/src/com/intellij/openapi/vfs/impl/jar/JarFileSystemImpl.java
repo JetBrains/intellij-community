@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -68,12 +67,12 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
 
   @Override
   public VirtualFile findFileByPath(@NotNull String path) {
-    return isValid(path) ? VfsImplUtil.findFileByPath(this, path) : null;
+    return isValid(path) ? findFileByPath(this, path) : null;
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return isValid(path) ? VfsImplUtil.findFileByPathIfCached(this, path) : null;
+    return isValid(path) ? findFileByPathIfCached(this, path) : null;
   }
 
   @Override
@@ -103,18 +102,4 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   public @NotNull Map<String, Long> getArchiveCrcHashes(@NotNull VirtualFile file) throws IOException {
     return getHandler(file).getArchiveCrcHashes();
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated pointless; inline or avoid */
-  @Deprecated(forRemoval = true)
-  public @Nullable File getMirroredFile(@NotNull VirtualFile file) {
-    return new File(file.getPath());
-  }
-
-  /** @deprecated no-op; stop using */
-  @Deprecated(forRemoval = true)
-  public boolean isMakeCopyOfJar(@SuppressWarnings("unused") @NotNull File originalJar) {
-    return false;
-  }
-  //</editor-fold>
 }

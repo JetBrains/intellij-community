@@ -4,8 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -23,19 +26,19 @@ internal object OptInFixUtils {
         else -> null
     }
 
-    context (KaSession)
+    context(_: KaSession)
     fun optInFqName(): FqName? = OptInNames.OPT_IN_FQ_NAME.takeIf { it.annotationApplicable() }
         ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME.takeIf { it.annotationApplicable() }
 
-    context (KaSession)
+    context(_: KaSession)
     fun FqName.annotationApplicable(): Boolean =
         findClass(ClassId.topLevel(this)) != null
 
-    context (KaSession)
+    context(_: KaSession)
     fun findAnnotation(classId: ClassId): KaNamedClassSymbol? =
         findClass(classId) as? KaNamedClassSymbol
 
-    context (KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun annotationIsVisible(annotation: KaNamedClassSymbol, from: KtElement): Boolean {
         val file = from.containingKtFile.symbol

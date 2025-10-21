@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -141,7 +140,7 @@ internal class KotlinCopyPasteStringTemplatePostProcessor : CopyPastePostProcess
         val replacementResult = try {
             prepareReplacement(targetFile, bounds, stringTemplateData)
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            if (Logger.shouldRethrow(e)) throw e
             LOG.error(e)
             return
         }

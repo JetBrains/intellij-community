@@ -20,7 +20,7 @@ class CustomChartsheetView(Serialisable):
     @overload
     def __init__(
         self,
-        guid: Incomplete | None = None,
+        guid=None,
         *,
         scale: ConvertibleToInt,
         state: _VisibilityType = "visible",
@@ -45,4 +45,4 @@ class CustomChartsheetViews(Serialisable):
     tagname: ClassVar[str]
     customSheetView: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
-    def __init__(self, customSheetView: Incomplete | None = None) -> None: ...
+    def __init__(self, customSheetView=None) -> None: ...

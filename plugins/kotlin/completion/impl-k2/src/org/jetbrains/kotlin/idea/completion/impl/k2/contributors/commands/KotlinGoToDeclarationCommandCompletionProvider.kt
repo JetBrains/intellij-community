@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 
-class KotlinGoToDeclarationCommandCompletionProvider : AbstractGoToDeclarationCompletionCommandProvider() {
+internal class KotlinGoToDeclarationCommandCompletionProvider : AbstractGoToDeclarationCompletionCommandProvider() {
     override fun canNavigateToDeclaration(context: PsiElement): Boolean {
         if (context.tokenType != KtTokens.IDENTIFIER) return false
         val ref = context.parentOfType<KtReferenceExpression>() ?: return false

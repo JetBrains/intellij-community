@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -26,6 +25,7 @@ import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.platform.util.coroutines.transformConcurrent
 import com.intellij.platform.util.progress.*
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import java.lang.ref.WeakReference
@@ -117,7 +117,7 @@ private class TestCoroutineProgressAction : AnAction() {
           button("300ms BG Progress") {
             cs.launch {
               withBackgroundProgress(project, "300ms background progress") {
-                delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong() + 10) // + epsilon
+                delay(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS + 10) // + epsilon
               }
             }
           }

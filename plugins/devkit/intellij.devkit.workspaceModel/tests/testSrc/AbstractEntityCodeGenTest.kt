@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -16,6 +16,10 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testSimpleCase() {
+    doTest()
+  }
+  
+  fun testKeepOld() {
     doTest()
   }
 
@@ -44,6 +48,10 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testEntityWithDifferentChildrenTargets() {
+    doTest()
+  }
+
+  fun testEntityWithSelfReference() {
     doTest()
   }
 
@@ -86,6 +94,10 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   fun testPropertiesOrder() {
     doTest()
   }
+  
+  fun testCompatibilityInvoke() {
+    doTest()
+  }
 
   fun testBothLinksAreParents() {
     doTestAndCheckErrorMessage("Both fields MainEntity#secondaryEntity and SecondaryEntity#mainEntity are marked as parent. Probably both properties are annotated with @Parent, while only one should be.")
@@ -117,6 +129,10 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
 
   fun testInheritanceNonAbstract() {
     doTestAndCheckErrorMessage("Failed to generate code for IllegalEntity: Class 'LegalEntity' cannot be extended")
+  }
+  
+  fun testVisibilityModifier() {
+    doTest()
   }
 
   private fun doTestAndCheckErrorMessage(expectedMessage: String) {

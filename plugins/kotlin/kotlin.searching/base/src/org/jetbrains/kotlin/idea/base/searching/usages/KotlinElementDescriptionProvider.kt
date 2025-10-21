@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
@@ -42,7 +43,7 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
         }
 
         val internalSegments = generateSequence(this) { it.parentForFqName() }
-            .filterIsInstance<KtNamedDeclaration>()
+            .filter { it !is KtScript }
             .map { it.name ?: "<no name provided>" }
             .toList()
             .asReversed()
@@ -106,8 +107,8 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
     }
 
     //TODO: Implement in FIR
-    protected open val PsiElement.isRenameJavaSyntheticPropertyHandler get() = false
-    protected open val PsiElement.isRenameKotlinPropertyProcessor get() = false
+    protected open val PsiElement.isRenameJavaSyntheticPropertyHandler: Boolean get() = false
+    protected open val PsiElement.isRenameKotlinPropertyProcessor: Boolean get() = false
 
     override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
         val shouldUnwrap = location !is UsageViewShortNameLocation && location !is UsageViewLongNameLocation
@@ -181,8 +182,20 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
                 val desc = when (namedElement) {
                     is KtFunction -> {
                         val baseText = buildString {
-                            append(namedElement.name ?: "")
-                            namedElement.valueParameters.joinTo(this, prefix = "(", postfix = ")") {
+                            val isFunctionalLiteral = element is KtFunctionLiteral
+                            namedElement.name?.let { name ->
+                                if (isFunctionalLiteral && namedElement.name == "<anonymous>") {
+                                    val callExpression = namedElement.parent.parent.parent as? KtCallExpression
+                                    val referencedName = callExpression?.getCallNameExpression()?.getReferencedName()
+                                    append(referencedName ?: name)
+                                } else {
+                                    append(name)
+                                }
+                            }
+                            val prefix = if (isFunctionalLiteral) "{" else "("
+                            val postfix = if (isFunctionalLiteral) "}" else ")"
+
+                            namedElement.valueParameters.joinTo(this, prefix = prefix, postfix = postfix) { it.name
                                 (if (it.isVarArg) "vararg " else "") + (it.typeReference?.renderShort() ?: "")
                             }
                             namedElement.receiverTypeReference?.let { append(" on ").append(it.renderShort()) }

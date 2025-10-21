@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class TreeUtil {
   private static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
-  public static void ensureParsed(ASTNode node) {
+  public static void ensureParsed(@Nullable ASTNode node) {
     if (node != null) {
       node.getFirstChildNode();
     }
@@ -34,7 +34,7 @@ public final class TreeUtil {
     return node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
   }
 
-  public static @Nullable ASTNode findChildBackward(ASTNode parent, IElementType type) {
+  public static @Nullable ASTNode findChildBackward(@NotNull ASTNode parent, @NotNull IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED && parent instanceof TreeElement) {
       ((TreeElement)parent).assertReadAccessAllowed();
     }
@@ -56,14 +56,14 @@ public final class TreeUtil {
     return candidate;
   }
 
-  public static @Nullable ASTNode findParent(ASTNode element, IElementType type) {
+  public static @Nullable ASTNode findParent(@NotNull ASTNode element, @NotNull IElementType type) {
     for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
       if (parent.getElementType() == type) return parent;
     }
     return null;
   }
 
-  public static @Nullable ASTNode findParent(ASTNode element, TokenSet types) {
+  public static @Nullable ASTNode findParent(@NotNull ASTNode element, @NotNull TokenSet types) {
     for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
       if (types.contains(parent.getElementType())) return parent;
     }
@@ -78,11 +78,11 @@ public final class TreeUtil {
     return null;
   }
 
-  public static @Nullable LeafElement findFirstLeaf(ASTNode element) {
+  public static @Nullable LeafElement findFirstLeaf(@NotNull ASTNode element) {
     return (LeafElement)findFirstLeaf(element, true);
   }
 
-  public static ASTNode findFirstLeaf(ASTNode element, boolean expandChameleons) {
+  public static ASTNode findFirstLeaf(@NotNull ASTNode element, boolean expandChameleons) {
     if (element instanceof LeafElement || !expandChameleons && isCollapsedChameleon(element)) {
       return element;
     }
@@ -95,11 +95,11 @@ public final class TreeUtil {
     }
   }
 
-  public static @Nullable ASTNode findLastLeaf(ASTNode element) {
+  public static @Nullable ASTNode findLastLeaf(@NotNull ASTNode element) {
     return findLastLeaf(element, true);
   }
 
-  public static ASTNode findLastLeaf(ASTNode element, boolean expandChameleons) {
+  public static ASTNode findLastLeaf(@NotNull ASTNode element, boolean expandChameleons) {
     if (element instanceof LeafElement || !expandChameleons && isCollapsedChameleon(element)) {
       return element;
     }
@@ -110,7 +110,7 @@ public final class TreeUtil {
     return null;
   }
 
-  public static @Nullable ASTNode findSibling(ASTNode start, IElementType elementType) {
+  public static @Nullable ASTNode findSibling(ASTNode start, @NotNull IElementType elementType) {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
@@ -119,7 +119,7 @@ public final class TreeUtil {
     }
   }
 
-  public static @Nullable ASTNode findSibling(ASTNode start, TokenSet types) {
+  public static @Nullable ASTNode findSibling(ASTNode start, @NotNull TokenSet types) {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
@@ -128,7 +128,7 @@ public final class TreeUtil {
     }
   }
 
-  public static @Nullable ASTNode findSiblingBackward(ASTNode start, IElementType elementType) {
+  public static @Nullable ASTNode findSiblingBackward(ASTNode start, @NotNull IElementType elementType) {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
@@ -138,7 +138,7 @@ public final class TreeUtil {
   }
 
 
-  public static @Nullable ASTNode findSiblingBackward(ASTNode start, TokenSet types) {
+  public static @Nullable ASTNode findSiblingBackward(ASTNode start, @NotNull TokenSet types) {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
@@ -162,7 +162,7 @@ public final class TreeUtil {
     return null;
   }
 
-  public static Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
+  public static @NotNull Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
     if (one == two) return Couple.of(null, null);
 
     LinkedList<ASTNode> oneParents = new LinkedList<>();

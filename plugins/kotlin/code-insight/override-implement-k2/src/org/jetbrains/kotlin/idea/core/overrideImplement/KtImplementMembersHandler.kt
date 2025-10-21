@@ -7,18 +7,25 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
-import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.getImplementationStatus
+import org.jetbrains.kotlin.analysis.api.components.intersectionOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.fir.extensions.FirAnalysisHandlerExtension.Companion.analyze
-import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
@@ -56,12 +63,12 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     }
 
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
             classWithUnimplementedMembers.classSymbol?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
                 .mapToKtClassMemberInfo()
 
-        context(KaSession)
+        context(_: KaSession)
         @OptIn(KaExperimentalApi::class)
         private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassSymbol): List<KaCallableSymbol> {
             return buildList {
@@ -146,7 +153,8 @@ object MemberNotImplementedQuickfixFactories {
             listOf(KtImplementMembersQuickfix(missingDeclarations.mapToKtClassMemberInfo()))
         }
 
-    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
     private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
         includeImplementAsConstructorParameterQuickfix: Boolean = true
@@ -163,7 +171,7 @@ object MemberNotImplementedQuickfixFactories {
                 !(classWithUnimplementedMembers.hasActualModifier() && (ExpectActualSupport.getInstance(classWithUnimplementedMembers.project)
                     .expectDeclarationIfAny(classWithUnimplementedMembers) as? KtClass)?.primaryConstructor != null)
             ) {
-                val unimplementedProperties = unimplementedMembers.filter { it.isProperty }
+                val unimplementedProperties = unimplementedMembers.filter { memberInfo -> memberInfo.isProperty && with(session) { memberInfo.symbolPointer.restoreSymbol() }?.let { symbol -> symbol.contextParameters.isEmpty() && symbol.receiverParameter == null } != false }
                 if (unimplementedProperties.isNotEmpty()) {
                     add(KtImplementAsConstructorParameterQuickfix(unimplementedProperties))
                 }
@@ -172,7 +180,7 @@ object MemberNotImplementedQuickfixFactories {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
     return map { unimplementedMemberSymbol ->
@@ -183,14 +191,15 @@ private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberI
         KtClassMemberInfo.create(
             symbol = unimplementedMemberSymbol,
             memberText = unimplementedMemberSymbol.render(KtGenerateMembersHandler.renderer),
-            memberIcon = getIcon(unimplementedMemberSymbol),
+            memberIcon = KotlinIconProvider.getIcon(unimplementedMemberSymbol),
             containingSymbolText = fqName,
-            containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
+            containingSymbolIcon = containingSymbol?.let { symbol -> KotlinIconProvider.getIcon(symbol) }
         )
     }
 }
 
-private fun KaSession.isManyMemberNotImplementedError(callableSymbols: Collection<KaCallableSymbol>): Boolean {
+context(_: KaSession)
+private fun isManyMemberNotImplementedError(callableSymbols: Collection<KaCallableSymbol>): Boolean {
     if (callableSymbols.size < 2) return false
 
     // No compiler errors occur here:

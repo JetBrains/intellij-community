@@ -22,7 +22,8 @@ class MyClass {
     }
 }
 
-context(param1: String) fun MyClass.doSomething() {
+context(param1: String)
+fun MyClass.doSomething() {
     println("Value: $value, Param: $param1")
 }
 
@@ -33,16 +34,12 @@ fun MyClass.foo() {
 }
 
 fun String.bar(m: MyClass) {
-    with(this) {
-        m.doSomething()
-    }
+    m.doSomething()
 }
 
 class Bar {
     fun String.bar(m: MyClass) {
-        with(this@bar) {
-            m.doSomething()
-        }
+        m.doSomething()
     }
 }
 

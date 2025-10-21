@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.LogicalPosition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 
 public abstract class EditorMacro extends Macro {
@@ -54,4 +56,10 @@ public abstract class EditorMacro extends Macro {
   }
 
   protected abstract @Nullable String expand(Editor editor);
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable String expandTestAccessor(Editor editor) {
+    return expand(editor);
+  }
 }

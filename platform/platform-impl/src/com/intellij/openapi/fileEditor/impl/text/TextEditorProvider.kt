@@ -88,7 +88,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file)
   }
 
-  final override fun acceptRequiresReadAction() = false
+  final override fun acceptRequiresReadAction(): Boolean = false
 
   override suspend fun createFileEditor(
     project: Project,
@@ -123,22 +123,24 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   }
 
   override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
-    val state = TextEditorState()
     if (element.isEmpty) {
-      return state
+      return TextEditorState()
     }
+    return TextEditorState(readCarets(element), readRelativeCaretPosition(element))
+  }
 
+  private fun readCarets(element: Element): Array<TextEditorCaretState> {
     val caretElements = element.getChildren(CARET_ELEMENT)
     if (caretElements.isEmpty()) {
-      state.CARETS = arrayOf(readCaretInfo(element))
+      return arrayOf(readCaretInfo(element))
     }
-    else {
-      state.CARETS = Array(caretElements.size) { i ->
-        readCaretInfo(caretElements.get(i))
-      }
+    return Array(caretElements.size) { i ->
+      readCaretInfo(caretElements.get(i))
     }
-    state.relativeCaretPosition = StringUtilRt.parseInt(element.getAttributeValue(RELATIVE_CARET_POSITION_ATTR), 0)
-    return state
+  }
+
+  private fun readRelativeCaretPosition(element: Element): Int {
+    return StringUtilRt.parseInt(element.getAttributeValue(RELATIVE_CARET_POSITION_ATTR), 0)
   }
 
   override fun writeState(state: FileEditorState, project: Project, element: Element) {
@@ -147,18 +149,18 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
       element.setAttribute(RELATIVE_CARET_POSITION_ATTR, state.relativeCaretPosition.toString())
     }
 
-    for (caretState in state.CARETS) {
+    for (caretState in state.carets) {
       val e = Element(CARET_ELEMENT)
-      writeIfNot0(e, LINE_ATTR, caretState.LINE)
-      writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN)
-      if (caretState.LEAN_FORWARD) {
+      writeIfNot0(e, LINE_ATTR, caretState.line)
+      writeIfNot0(e, COLUMN_ATTR, caretState.column)
+      if (caretState.leanForward) {
         e.setAttribute(LEAN_FORWARD_ATTR, true.toString())
       }
-      writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE)
-      writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN)
-      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE)
-      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE)
-      writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN)
+      writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.selectionStartLine)
+      writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.selectionStartColumn)
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.selectionEndLine)
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.selectionEndLine)
+      writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.selectionEndColumn)
       if (!e.isEmpty) {
         element.addContent(e)
       }
@@ -182,43 +184,40 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
 
   @RequiresReadLock
   open fun getStateImpl(project: Project?, editor: Editor, level: FileEditorStateLevel): TextEditorState {
-    val state = TextEditorState()
-    val caretModel = editor.caretModel
-    val caretsAndSelections = caretModel.caretsAndSelections
-    state.CARETS = Array(caretsAndSelections.size) { i ->
-      val caretState = caretsAndSelections[i]
+    val carets = editor.caretModel.caretsAndSelections.map { caretState ->
       val caretPosition = caretState.caretPosition
       val selectionStartPosition = caretState.selectionStart
       val selectionEndPosition = caretState.selectionEnd
-      val s = TextEditorState.CaretState()
-      s.LINE = getLine(caretPosition)
-      s.COLUMN = getColumn(caretPosition)
-      s.LEAN_FORWARD = caretPosition != null && caretPosition.leansForward
-      s.VISUAL_COLUMN_ADJUSTMENT = caretState.visualColumnAdjustment
-      s.SELECTION_START_LINE = getLine(selectionStartPosition)
-      s.SELECTION_START_COLUMN = getColumn(selectionStartPosition)
-      s.SELECTION_END_LINE = getLine(selectionEndPosition)
-      s.SELECTION_END_COLUMN = getColumn(selectionEndPosition)
-      s
-    }
+      TextEditorCaretState(
+        getLine(caretPosition),
+        getColumn(caretPosition),
+        caretPosition != null && caretPosition.leansForward,
+        caretState.visualColumnAdjustment,
+        getLine(selectionStartPosition),
+        getColumn(selectionStartPosition),
+        getLine(selectionEndPosition),
+        getColumn(selectionEndPosition),
+      )
+    }.toTypedArray()
 
     // Saving a scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
     // scrolling proportion restored slightly differs from what have been saved.
-    state.relativeCaretPosition = if (level == FileEditorStateLevel.UNDO) Int.MAX_VALUE else EditorUtil.calcRelativeCaretPosition(editor)
-    return state
+    val relativeCaretPosition = if (level == FileEditorStateLevel.UNDO) Int.MAX_VALUE else EditorUtil.calcRelativeCaretPosition(editor)
+    return TextEditorState(carets, relativeCaretPosition)
   }
 
   @RequiresEdt
   open fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
-    val carets = state.CARETS
+    val carets = state.carets
     if (carets.isNotEmpty()) {
-      val states = ArrayList<CaretState>(carets.size)
-      for (caretState in carets) {
-        states.add(CaretState(LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
-                              caretState.VISUAL_COLUMN_ADJUSTMENT,
-                              LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
-                              LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)))
-      }
+      val states = carets.map { caretState ->
+        CaretState(
+          LogicalPosition(caretState.line, caretState.column, caretState.leanForward),
+          caretState.visualColumnAdjustment,
+          LogicalPosition(caretState.selectionStartLine, caretState.selectionStartColumn),
+          LogicalPosition(caretState.selectionEndLine, caretState.selectionEndColumn),
+        )
+      }.toList()
       editor.caretModel.setCaretsAndSelections(states, false)
     }
 
@@ -290,6 +289,10 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     override fun getFile(): VirtualFile? {
       return FileDocumentManager.getInstance().getFile(editor.document)
     }
+
+    override fun toString(): String {
+      return "EditorWrapper for ${editor.document}"
+    }
   }
 }
 
@@ -309,15 +312,17 @@ internal fun scrollToCaret(editor: Editor, exactState: Boolean, relativeCaretPos
   scrollingModel.enableAnimation()
 }
 
-private fun readCaretInfo(element: Element): TextEditorState.CaretState {
-  val caretState = TextEditorState.CaretState()
-  caretState.LINE = parseWithDefault(element, LINE_ATTR)
-  caretState.COLUMN = parseWithDefault(element, COLUMN_ATTR)
-  caretState.LEAN_FORWARD = element.getAttributeValue(LEAN_FORWARD_ATTR).toBoolean()
-  caretState.SELECTION_START_LINE = parseWithDefault(element, SELECTION_START_LINE_ATTR)
-  caretState.SELECTION_START_COLUMN = parseWithDefault(element, SELECTION_START_COLUMN_ATTR)
-  caretState.SELECTION_END_LINE = parseWithDefault(element, SELECTION_END_LINE_ATTR)
-  caretState.SELECTION_END_COLUMN = parseWithDefault(element, SELECTION_END_COLUMN_ATTR)
+private fun readCaretInfo(element: Element): TextEditorCaretState {
+  val caretState = TextEditorCaretState(
+    parseWithDefault(element, LINE_ATTR),
+    parseWithDefault(element, COLUMN_ATTR),
+    element.getAttributeValue(LEAN_FORWARD_ATTR).toBoolean(),
+    0,
+    parseWithDefault(element, SELECTION_START_LINE_ATTR),
+    parseWithDefault(element, SELECTION_START_COLUMN_ATTR),
+    parseWithDefault(element, SELECTION_END_LINE_ATTR),
+    parseWithDefault(element, SELECTION_END_COLUMN_ATTR),
+  )
   return caretState
 }
 

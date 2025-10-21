@@ -4,8 +4,8 @@ package org.jetbrains.jps.model.library.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
+import org.jetbrains.jps.model.JpsNamedElementCollection;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -14,9 +14,9 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import java.util.List;
 
 public final class JpsLibraryCollectionImpl implements JpsLibraryCollection {
-  private final JpsElementCollection<JpsLibrary> myCollection;
+  private final JpsNamedElementCollection<JpsLibrary> myCollection;
 
-  public JpsLibraryCollectionImpl(JpsElementCollection<JpsLibrary> collection) {
+  public JpsLibraryCollectionImpl(JpsNamedElementCollection<JpsLibrary> collection) {
     myCollection = collection;
   }
 
@@ -54,20 +54,14 @@ public final class JpsLibraryCollectionImpl implements JpsLibraryCollection {
 
   @Override
   public JpsLibrary findLibrary(@NotNull String name) {
-    for (JpsLibrary library : getLibraries()) {
-      if (name.equals(library.getName())) {
-        return library;
-      }
-    }
-    return null;
+    return myCollection.findChild(name);
   }
 
   @Override
   public @Nullable <E extends JpsElement> JpsTypedLibrary<E> findLibrary(@NotNull String name, @NotNull JpsLibraryType<E> type) {
-    for (JpsTypedLibrary<E> library : getLibraries(type)) {
-      if (name.equals(library.getName())) {
-        return library;
-      }
+    JpsLibrary byName = myCollection.findChild(name);
+    if (byName != null && type.equals(byName.getType())) {
+      return byName.asTyped(type);
     }
     return null;
   }

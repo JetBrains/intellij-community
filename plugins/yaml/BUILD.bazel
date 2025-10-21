@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "yaml_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,9 +11,11 @@ jvm_library(
   name = "yaml",
   module_name = "intellij.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":yaml_resources"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",
@@ -27,22 +29,22 @@ jvm_library(
     "//platform/refactoring",
     "//platform/core-ui",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/util/jdom",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:stream_ex",
-  ],
-  runtime_deps = [":yaml_resources"]
+    "//libraries/stream",
+  ]
 )
 
 jvm_library(
   name = "yaml_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":yaml"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",
@@ -51,7 +53,6 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/refactoring",
@@ -59,17 +60,20 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/util/jdom",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:stream_ex",
-  ],
-  runtime_deps = [":yaml_resources"]
+    "//libraries/stream",
+  ]
 )
+### auto-generated section `build intellij.yaml` end
 
-jvm_test(
+### auto-generated section `test intellij.yaml` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "yaml_test",
   runtime_deps = [":yaml_test_lib"]
 )
-### auto-generated section `build intellij.yaml` end
+### auto-generated section `test intellij.yaml` end

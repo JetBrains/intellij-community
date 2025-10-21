@@ -10,9 +10,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Utility for checking that private plugin modules are not bundled in the build.
+ * Utility for checking that private plugin modules are not bundled or prepared to be published in the build.
  */
-fun checkPrivatePluginModulesAreNotBundled(
+suspend fun checkPrivatePluginModulesAreNotPublic(
   context: BuildContext,
   softly: SoftAssertions,
 ) {
@@ -28,15 +28,26 @@ fun checkPrivatePluginModulesAreNotBundled(
 
   // Also check modules in pluginLayouts
   visited.clear()
-  val pluginLayoutsPrivateModules = context.productProperties.productLayout.pluginLayouts.asSequence()
+  val pluginLayoutsPrivateModules = context.distributionState().pluginsToPublish.asSequence()
     .flatMap { layout -> layout.includedModules.asSequence().map { it.moduleName } }
     .mapNotNull { context.findModule(it) }
     .flatMap { it.transitiveDependencies(visited) }
     .filter { privateModules.contains(it.name) }
     .toList()
 
-  softly.assertThat(bundledPrivateModules).`as`("No private modules should be bundled in bundledPluginModules").isEmpty()
-  softly.assertThat(pluginLayoutsPrivateModules).`as`("No private modules should be bundled in pluginLayouts").isEmpty()
+  // Also check modules in Maven artifacts
+  visited.clear()
+  val pluginModulesMavenArtifacts = context.productProperties.mavenArtifacts
+    .let { it.additionalModules + it.proprietaryModules }
+    .distinct()
+    .mapNotNull { context.findModule(it) }
+    .flatMap { it.transitiveDependencies(visited) }
+    .filter { privateModules.contains(it.name) }
+    .toList()
+
+  softly.assertThat(bundledPrivateModules).`as`("No private modules should be included in bundledPluginModules").isEmpty()
+  softly.assertThat(pluginLayoutsPrivateModules).`as`("No private modules should be included in pluginsToPublish").isEmpty()
+  softly.assertThat(pluginModulesMavenArtifacts).`as`("No private modules should be published as Maven artifacts").isEmpty()
 }
 
 /**

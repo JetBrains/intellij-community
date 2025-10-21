@@ -25,7 +25,7 @@ public class GenerateEqualsWizardTest extends LightJavaCodeInsightFixtureTestCas
     GenerateEqualsWizard wizard = new GenerateEqualsWizard(getProject(), aClass, true, true);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     try {
-      Set<Map.Entry<PsiMember, MemberInfo>> entries = wizard.myFieldsToNonNull.entrySet();
+      Set<Map.Entry<PsiMember, MemberInfo>> entries = wizard.getFieldsToNonNull();
       assertEquals(2, entries.size());
       for (Map.Entry<PsiMember, MemberInfo> entry : entries) {
         PsiMember member = entry.getKey();

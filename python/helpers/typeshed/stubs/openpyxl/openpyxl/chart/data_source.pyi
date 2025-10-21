@@ -23,7 +23,7 @@ class NumVal(Serialisable):
     idx: Integer[Literal[False]]
     formatCode: NestedText[str, Literal[True]]
     v: Incomplete
-    def __init__(self, idx: ConvertibleToInt, formatCode: object = None, v: Incomplete | None = None) -> None: ...
+    def __init__(self, idx: ConvertibleToInt, formatCode: object = None, v=None) -> None: ...
 
 class NumData(Serialisable):
     formatCode: NestedText[str, Literal[True]]

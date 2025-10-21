@@ -48,9 +48,6 @@ internal class BasicUiDataRule : UiDataRule {
         sink[NAVIGATABLE_ARRAY] = arrayOf(navigatable)
       }
     }
-    sink.lazyValue(NAVIGATABLE_ARRAY) {
-      NavigatableArrayRule.getData(it)
-    }
     sink.lazyValue(PROJECT_FILE_DIRECTORY) {
       ProjectFileDirectoryRule.getData(it)
     }

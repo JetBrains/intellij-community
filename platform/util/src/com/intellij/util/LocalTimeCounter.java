@@ -15,7 +15,7 @@ public final class LocalTimeCounter {
   /**
    * VirtualFile.modificationStamp is kept modulo this mask, and is compared with other stamps. Let's avoid accidental stamp inequalities
    * by normalizing all of them.
-   * @see VfsData.Segment.getModificationStamp()
+   * @see com.intellij.openapi.vfs.newvfs.impl.VfsData.Segment#getModificationStamp(int)
    */
   //TODO RC: rename to MOD_COUNTER_MASK after 1-2 releases
   @ApiStatus.Internal

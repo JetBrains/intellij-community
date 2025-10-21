@@ -2,7 +2,6 @@
 package com.intellij.platform.util.coroutines
 
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
@@ -21,15 +20,6 @@ fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext,
   requireNoJob(context)
   return ChildScope(coroutineContext + context, supervisor)
 }
-
-@Internal
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Renamed to `childScope`", replaceWith = ReplaceWith("childScope(name, context, supervisor)"))
-fun CoroutineScope.namedChildScope(
-  name: String,
-  context: CoroutineContext = EmptyCoroutineContext,
-  supervisor: Boolean = true,
-): CoroutineScope = childScope(name, context, supervisor)
 
 /**
  * @return a scope with a [Job] which parent is the [Job] of [this] scope.

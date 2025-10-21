@@ -46,8 +46,7 @@ class GrazieStaticSearchableOptionsTest {
   }
 
   private fun collectLanguageProofreadingOptions(): List<String> {
-    val languages = Lang.values()
-    return languages.map { "${it.displayName} ${it.nativeName}".trim() }
+    return Lang.entries.map { "${it.displayName} ${it.nativeName}".trim() }
   }
 
   private fun collectRuleOptions(): List<String> {

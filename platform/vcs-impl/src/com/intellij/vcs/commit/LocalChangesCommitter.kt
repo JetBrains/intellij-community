@@ -19,8 +19,8 @@ import com.intellij.vcs.VcsActivity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-private val FRESH_ROOTS_KEY = Key.create<Set<VirtualFile>>("Git.Commit.FreshRoots")
-var CommitContext.freshRoots: Set<VirtualFile>? by commitProperty(FRESH_ROOTS_KEY, null)
+private val FRESH_UNHOSTED_ROOTS_KEY = Key.create<Set<VirtualFile>>("Git.Commit.FreshUnhostedRoots")
+var CommitContext.freshUnhostedRoots: Set<VirtualFile>? by commitProperty(FRESH_UNHOSTED_ROOTS_KEY, null)
 
 private val COMMIT_WITHOUT_CHANGES_ROOTS_KEY = Key.create<Collection<VcsRoot>>("Vcs.Commit.CommitWithoutChangesRoots")
 var CommitContext.commitWithoutChangesRoots: Collection<VcsRoot> by commitProperty(COMMIT_WITHOUT_CHANGES_ROOTS_KEY, emptyList())

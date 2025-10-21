@@ -20,6 +20,7 @@ import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
@@ -30,11 +31,14 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.*;
@@ -329,31 +333,76 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   /**
-   * @param type    type which name will be calculated
-   * @param context type evaluation context
+   * Render a type in a human-readable format.
+   * <p>
+   * The format is our own compact representation of types, intended to be used in inspection warnings,
+   * documentation and other user-facing messages. It's not PEP-484 compatible.
+   * In particular callables are rendered as {@code (p1: T1, p2: T2, ...) -> R}, not as {@code Callable[[T1, T2, ...], R]}.
+   * To render a type as a valid expression for a type annotation use {@link #getTypeHint(PyType, TypeEvalContext)}.
+   *
+   * @param type     the type to render
+   * @param context  TypeEvalContext instance to infer extra types with
    * @return string representation of the type
+   * @see #getTypeHint(PyType, TypeEvalContext)
    */
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context)).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, EnumSet.noneOf(Feature.class))).toString();
   }
 
   /**
-   * Returns the provided type in PEP 484 compliant format.
+   * Render a type in a human-readable format, enabling additional rendering features of {@link PyTypeRenderer}.
+   *
+   * @param type     the type to render
+   * @param context  TypeEvalContext instance to infer extra types with
+   * @param features additional rendering features to enable
+   * @return string representation of the type
+   * @see PyTypeRenderer.Feature
+   */
+  @ApiStatus.Experimental
+  public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type,
+                                                     @NotNull TypeEvalContext context,
+                                                     Feature @NotNull ... features) {
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, EnumSet.copyOf(Arrays.asList(features)))).toString();
+  }
+
+  /**
+   * Render a type in PEP-484 compliant format, in other words, as a valid expression intended to be used inside type annotations.
+   * <p>
+   * The format is described in the <a href="https://typing.python.org/en/latest/spec/annotations.html">typing specification</a>.
+   *
+   * @param type    the type to render
+   * @param context TypeEvalContext instance to infer extra types with
+   * @return PEP-484 compatible representation of the type
    */
   public static @NotNull String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context)).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.noneOf(Feature.class))).toString();
   }
 
   /**
-   * Provides additional information about the type
+   * Render a type in PEP 484 compliant format, similarly to {@link #getTypeHint}, but with all names expanded to fully qualified.
+   * <p>
+   * For instance, this method will return {@code collections.defaultdict[str, main.MyClass]} instead of just
+   * {@code defaultdict[str, MyClass]}.
    *
-   * @param type    type which name will be calculated
-   * @param context type evaluation context
-   * @return string representation of the type similar to {@link #getTypeName(PyType, TypeEvalContext)}, but with additional information,
-   * such as bounds for TypeVar types in ' ≤: *bound*' format
+   * @param type    the type to render
+   * @param context TypeEvalContext instance to infer extra types with
+   * @return PEP-484 compatible representation of the type with fully qualified names
+   */
+  @ApiStatus.Experimental
+  public static @NotNull String getFullyQualifiedTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.of(Feature.USE_FQN))).toString();
+  }
+
+  /**
+   * Render a type in a human-readable format, with additional verbose features of {@link PyTypeRenderer},
+   * such as displaying TypeVar bounds inline in the {@code T <: MyClass} format.
+   *
+   * @param type    the type to render
+   * @param context TypeEvalContext instance to infer extra types with
+   * @return string representation of the type
    */
   public static @NotNull String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.VerboseDocumentation(context)).toString();
+    return getTypeName(type, context, Feature.TYPE_VAR_BOUNDS);
   }
 
   /**
@@ -365,11 +414,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @param anchor    anchor element
    * @param body      body to be used to append description
    */
-  public static void describeTypeWithLinks(@Nullable PyType type,
-                                           @Nullable PyTypedElement typeOwner,
-                                           @NotNull TypeEvalContext context,
-                                           @NotNull PsiElement anchor,
-                                           @NotNull HtmlBuilder body) {
+  private static void describeTypeWithLinks(@Nullable PyType type,
+                                            @Nullable PyTypedElement typeOwner,
+                                            @NotNull TypeEvalContext context,
+                                            @NotNull PsiElement anchor,
+                                            @NotNull HtmlBuilder body) {
     // Variable annotated with "typing.TypeAlias" marker is deliberately treated as having "Any" type
     if (typeOwner instanceof PyTargetExpression && type == null) {
       PyAssignmentStatement assignment = as(typeOwner.getParent(), PyAssignmentStatement.class);

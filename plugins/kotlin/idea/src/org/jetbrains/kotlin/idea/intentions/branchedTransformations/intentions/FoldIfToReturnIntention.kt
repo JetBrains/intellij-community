@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 
 class FoldIfToReturnIntention : SelfTargetingRangeIntention<KtIfExpression>(
     KtIfExpression::class.java,
-    KotlinBundle.lazyMessage("lift.return.out.of.if.expression")
+    KotlinBundle.messagePointer("lift.return.out.of.if.expression")
 ) {
 
     override fun applicabilityRange(element: KtIfExpression): TextRange? =

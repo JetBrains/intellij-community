@@ -115,10 +115,6 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     return map.get(key);
   }
 
-  public E getLast() {
-    return super.get(super.size() - 1);
-  }
-
   public boolean containsKey(K key) {
     return map.containsKey(key);
   }

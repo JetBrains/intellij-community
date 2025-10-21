@@ -6,7 +6,7 @@ import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import com.jetbrains.python.parser.icons.PythonParserIcons
 import javax.swing.Icon
 
 class CondaPackage(
@@ -15,7 +15,7 @@ class CondaPackage(
   val installedWithPip: Boolean = false,
 ) : PythonPackage(name, version, editableMode) {
   override val sourceRepoIcon: Icon = if (installedWithPip) {
-    PythonPsiApiIcons.Python
+    PythonParserIcons.PythonFile
   } else {
     PythonIcons.Python.Anaconda
   }

@@ -2,6 +2,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.CustomFieldInplaceEditor;
 import com.intellij.icons.AllIcons;
@@ -20,7 +21,8 @@ public class NewCustomFieldAction extends XDebuggerTreeActionBase {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    CustomFieldInplaceEditor.editNew(node);
+    DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    CustomFieldInplaceEditor.editNew(node, debuggerContext);
   }
 
   @Override

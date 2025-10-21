@@ -1,2 +1,0 @@
-# stubtest/stubgen sees languages.so as a module
-tree_sitter_languages.languages

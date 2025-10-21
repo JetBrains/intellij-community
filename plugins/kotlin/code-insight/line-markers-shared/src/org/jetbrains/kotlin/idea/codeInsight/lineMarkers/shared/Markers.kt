@@ -206,6 +206,7 @@ fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?, allNavigatabl
     }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'isExpectDeclaration()' instead", ReplaceWith("isExpectDeclaration()", "org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration"))
 fun KtDeclaration.isExpectDeclaration(): Boolean = isExpectDeclaration()
 

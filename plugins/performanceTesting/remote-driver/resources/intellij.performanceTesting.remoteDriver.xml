@@ -1,4 +1,4 @@
-<idea-plugin package="com.jetbrains.performancePlugin.remotedriver">
+<idea-plugin visibility="internal" package="com.jetbrains.performancePlugin.remotedriver">
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"
                     qualifiedName="com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension" dynamic="true"/>

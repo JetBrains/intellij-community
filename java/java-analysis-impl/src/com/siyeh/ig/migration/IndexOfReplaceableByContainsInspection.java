@@ -135,7 +135,7 @@ public final class IndexOfReplaceableByContainsInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new IndexOfReplaceableByContainsVisitor();
   }
 

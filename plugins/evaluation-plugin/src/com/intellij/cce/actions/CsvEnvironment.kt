@@ -12,12 +12,12 @@ class CsvEnvironment(
   override val datasetRef: DatasetRef,
   private val chunkSize: Int,
   private val targetField: String,
-  private val featureInvoker: FeatureInvoker,
+  private val featureInvoker: AsyncFeatureInvoker,
 ) : SimpleFileEnvironment {
 
   override val preparationDescription: String = "Checking that CSV file exists"
 
-  override fun initialize(datasetContext: DatasetContext) {
+  override suspend fun initialize(datasetContext: DatasetContext) {
     super.initialize(datasetContext)
 
     val datasetPath = datasetContext.path(datasetRef)
@@ -49,7 +49,7 @@ class CsvEnvironment(
       val (target, features) = props.value
       val call = callFeature(target, props.offset, features)
       ChunkHelper.Result(
-        featureInvoker.callFeature(call.expectedText, call.offset, call.nodeProperties, call.sessionId.id),
+        featureInvoker.call(call.expectedText, call.offset, call.nodeProperties, call.sessionId.id),
         "$target <- ${features.toList().joinToString(", ") { "${it.first} = ${it.second}" }}",
         call
       )

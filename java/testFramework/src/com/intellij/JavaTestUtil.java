@@ -15,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.List;
-
 public final class JavaTestUtil {
 
   public static String getJavaTestDataPath() {
@@ -62,7 +60,6 @@ public final class JavaTestUtil {
   }
 
   public static LanguageLevel getMaxRegisteredLanguageLevel() {
-    List<LanguageLevel> values = LanguageLevel.getEntries();
-    return values.get(values.size() - 1);
+    return LanguageLevel.getEntries().getLast();
   }
 }

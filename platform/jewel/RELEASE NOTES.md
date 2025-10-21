@@ -1,6 +1,64 @@
 # Jewel Release Notes
 
-## v0.31 (ETA 2025-10-21)
+## v0.32.1 (2025-11-27)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2025.3, (2026.1)           | 1.10.0-alpha01                |
+
+Hotfix release for an issue introduced by CMP 1.10.0-alpha01. Happy thanksgiving!
+
+### Bug fixes
+* **JEWEL-1160** Disabled the (broken) new context menus API introduced in Compose Foundation
+  * The CMP flag was enabled in 1.10.0-alpha01 and causes context menus to be broken across Jewel, as we do not support
+    the new API yet (we're still missing work on the CMP side to be able to adopt it)
+  * CMP disables the flag in 1.10.0-alpha03 but we've postponed bumping the CMP version to the 0.33 release due to other
+    issues in later CMP 1.10.0 builds that need to be addressed
+* **JEWEL-1158, JEWEL-1159** Fixed multiple issues with text context menus
+  * The copy/cut context menu items should not show/be enabled in that case, but due to [CMP-9329](https://youtrack.jetbrains.com/issue/CMP-9329) the copy menu is always visible
+    * When the copy or cut actions are clicked, there is a crash
+    * Making sure the actions are disabled if visible when the selection is empty fixes the issue
+  * Fixed a bug where, in the IDE, the `BasicTextField` context menu would not show a Paste action when it should
+    * This was because of an undocumented CMP requirement causing an internal casting to fail
+  * Fixed a bug where the context menu could show as empty in some cases, such as the one described above.
+    * Now, it checks whether it's empty before showing; it only shows if there are any items.
+    * As an additional cosmetic improvement, we now show a divider in the context menu between _Cut_/_Copy_/_Paste_, and _Select All_.
+  * Fixed a cosmetic issue where the disabled shortcuts and icons in menu items were not appropriately looking disabled.
+
+## v0.32 (2025-11-25)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2025.3, (2026.1)           | 1.10.0-alpha01                |
+
+This is a small release, not too much going on. But we still shipped a big improvement to Markdown rendering, which now supports some basic HTML too!
+
+### ⚠️ Important Changes
+
+* **This version is not available on IJP 252** since there has not been any 252 release since the Jewel 0.31 release.
+  * The upcoming IJP 2026.1 will include all changes from this version.
+* The CMP version is now [1.10.0-beta01](https://kotlinlang.org/docs/multiplatform/whats-new-compose-110.html) (new major version)
+* **JEWEL-1043** A few deprecated Markdown APIs have been hidden to promote new non-deprecated overloads ([#3267](https://github.com/JetBrains/intellij-community/pull/3267))
+  * The change is non-breaking, both in terms of binary and source compatibility
+* **IJPL-214896** The Compose Runtime dependency has been moved out of the `intellij.libraries.compose.foundation.desktop` module and into the `intellij.libraries.compose.runtime.desktop` module
+  * You will likely need to add that to your plugin's `plugin.xml` dependencies
+  * If you use Jewel in a plugin built through the IntelliJ Platform Gradle plugin, you'll also need to add a `bundledModule` dependency entry until the plugin includes it in the `composeUI` helper
+
+### New features
+
+* **JEWEL-1018** Added `SpeedSearchableComboBox` component that supports speed search ([#3250](https://github.com/JetBrains/intellij-community/pull/3250))
+  * It is available inside a `SpeedSearchArea` and has a similar syntax to a normal `ListComboBox`
+* **JEWEL-1043** Added initial support for basic HTML in the Markdown renderer ([#3267](https://github.com/JetBrains/intellij-community/pull/3267))
+  * Supported tags: `h1..6`, `b`/`strong`, `i`/`em`, `s`/`strike`/`del`, `p`, `br`, `code`, `pre`, `ol`/`ul`/`li`, `a`, `img`, `table`/`th`/`tr`/`td`
+  * Supported scroll syncing for code blocks and lists
+  * Attributes and custom CSS styling are out of scope of this feature
+  * Known issue: ordered and unordered list items use the top-level style regardless of their actual level (JEWEL-1056)
+  * Known issue: horizontal alignments are not supported yet (JEWEL-1074)
+
+### Bug fixes
+ * **JEWEL-1054** Fixed a race condition with selection management in the dropdown component if used in a non-canonical way
+
+## v0.31 (2025-10-14)
 
 | Min supported IJP versions | Compose Multiplatform version |
 |----------------------------|-------------------------------|

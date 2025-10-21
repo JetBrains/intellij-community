@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.inspections.dom
 
+import com.intellij.lang.annotation.HighlightSeverity
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
@@ -118,11 +119,11 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
       <artifactId>child</artifactId>
       <version>1.0</version>
         
-          <parent>
-      <groupId>mavenParent</groupId>
-      <artifactId>parent</artifactId>
-      <version>1.0</version>
-          </parent>
+      <parent>
+        <groupId>mavenParent</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0</version>
+      </parent>
         
       <dependencies>
         <dependency>
@@ -145,7 +146,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                          
                        <dependencies>
-                         <<warning>dependency</warning>>
+                         <dependency>
                            <groupId>junit</groupId>
                            <artifactId>junit</artifactId>
                            <version>3.8.1</version>
@@ -155,7 +156,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    checkHighlighting()
+    checkHighlighting(projectPom, Highlight(severity = HighlightSeverity.WARNING, text = "dependency", description = "Dependency is duplicated in file(s): child "))
   }
 
   @Test

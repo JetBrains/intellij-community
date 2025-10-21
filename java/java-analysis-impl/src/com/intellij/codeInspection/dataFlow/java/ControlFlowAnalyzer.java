@@ -177,7 +177,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.finishElement(element);
     if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) &&
         !(element instanceof PsiSwitchLabeledRuleStatement))) {
-      List<VariableDescriptor> synthetics = myCurrentFlow.getSynthetics(element);
+      int startOffset = myCurrentFlow.getStartOffset(element).getInstructionOffset();
+      List<VariableDescriptor> synthetics = myFactory.getTempVariableDescriptorsFrom(startOffset);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
       instruction.flushVars(synthetics);
       addInstruction(instruction);
@@ -1758,7 +1759,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
-      if (ControlFlow.isTempVariable(var)) {
+      if (DfaValueFactory.isTempVariable(var)) {
         addInstruction(new JvmPushForWriteInstruction(var));
         push(arrayType, expression);
         addInstruction(new AssignInstruction(null, var));

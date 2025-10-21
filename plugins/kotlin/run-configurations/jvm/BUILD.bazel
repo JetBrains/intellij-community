@@ -1,25 +1,28 @@
-### auto-generated section `build kotlin.run-configurations.jvm` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+### auto-generated section `build intellij.kotlin.runConfigurations.jvm` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "jvm_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
   name = "jvm",
-  module_name = "kotlin.run-configurations.jvm",
+  module_name = "intellij.kotlin.runConfigurations.jvm",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jvm_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/frontend-agnostic",
@@ -29,7 +32,6 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
@@ -43,7 +45,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/execution/impl",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":jvm_resources"]
+    "//plugins/kotlin/base/scripting/scripting.shared",
+  ]
 )
-### auto-generated section `build kotlin.run-configurations.jvm` end
+### auto-generated section `build intellij.kotlin.runConfigurations.jvm` end

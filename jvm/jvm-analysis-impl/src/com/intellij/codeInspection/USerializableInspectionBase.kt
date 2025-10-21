@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.codeInsight.options.JavaClassValidator
@@ -16,7 +16,7 @@ import org.jetbrains.uast.UElement
 
 abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : AbstractBaseUastLocalInspectionTool(*hint) {
   @JvmField
-  var ignoreAnonymousInnerClasses = false
+  var ignoreAnonymousInnerClasses: Boolean = false
 
   @JvmField
   var superClassString: @NonNls String = "java.awt.Component"

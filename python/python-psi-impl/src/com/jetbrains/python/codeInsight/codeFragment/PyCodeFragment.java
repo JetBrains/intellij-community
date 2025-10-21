@@ -16,51 +16,70 @@
 package com.jetbrains.python.codeInsight.codeFragment;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
 
+@NotNullByDefault
 public class PyCodeFragment extends CodeFragment {
-  private final @NotNull Map<@NotNull String, @NotNull String> myInputTypes;
+  /** Maps variable names to their type names and types. */
+  private final Map<String, Pair<String, PyType>> myInputTypes;
   private final @Nullable String myOutputType;
-  private final @NotNull Set<@NotNull String> myGlobalWrites;
-  private final @NotNull Set<@NotNull String> myNonlocalWrites;
+  private final Set<PyType> myOutputTypes;
+  private final Set<String> myGlobalWrites;
+  private final Set<String> myNonlocalWrites;
   private final boolean myYieldInside;
   private final boolean myAsync;
 
-  public PyCodeFragment(final @NotNull Set<@NotNull String> input,
-                        final @NotNull Set<@NotNull String> output,
-                        final @NotNull Map<@NotNull String, @NotNull String> inputTypes,
+  public PyCodeFragment(final Set<String> input,
+                        final Set<String> output,
+                        final Map<String, Pair<String, PyType>> inputTypeNames,
                         final @Nullable String outputType,
-                        final @NotNull Set<@NotNull String> globalWrites,
-                        final @NotNull Set<@NotNull String> nonlocalWrites,
+                        final Set<PyType> outputTypes,
+                        final Set<String> globalWrites,
+                        final Set<String> nonlocalWrites,
                         final boolean returnInside,
                         final boolean yieldInside,
                         final boolean isAsync) {
     super(input, output, returnInside);
-    myInputTypes = inputTypes;
+    myInputTypes = inputTypeNames;
     myOutputType = outputType;
+    myOutputTypes = outputTypes;
     myGlobalWrites = globalWrites;
     myNonlocalWrites = nonlocalWrites;
     myYieldInside = yieldInside;
     myAsync = isAsync;
   }
 
-  public @NotNull Map<@NotNull String, @NotNull String> getInputTypes() {
-    return myInputTypes;
+  /** Returns the type name of the input variable with the given name. */
+  public @Nullable String getInputTypeName(String varName) {
+    Pair<String, PyType> type = myInputTypes.get(varName);
+    return type == null ? null : type.first;
+  }
+
+  /** Returns the type of the input variable with the given name. */
+  public @Nullable PyType getInputType(String varName) {
+    Pair<String, PyType> type = myInputTypes.get(varName);
+    return type == null ? null : type.second;
   }
 
   public @Nullable String getOutputType() {
     return myOutputType;
   }
 
-  public @NotNull Set<@NotNull String> getGlobalWrites() {
+  public Set<PyType> getOutputTypes() {
+    return myOutputTypes;
+  }
+
+  public Set<String> getGlobalWrites() {
     return myGlobalWrites;
   }
 
-  public @NotNull Set<@NotNull String> getNonlocalWrites() {
+  public Set<String> getNonlocalWrites() {
     return myNonlocalWrites;
   }
 

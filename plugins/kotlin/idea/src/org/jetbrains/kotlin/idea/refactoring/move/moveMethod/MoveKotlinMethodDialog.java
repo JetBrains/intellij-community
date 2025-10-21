@@ -14,6 +14,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.PsiIconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
@@ -156,7 +157,7 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
             ) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof KtNamedDeclaration variable) {
-                  setIcon(KotlinIconProvider.Companion.getBaseIcon(variable));
+                    setIcon(PsiIconUtil.getIconFromProviders(variable, 0));
                     setText(variable.getName());
                     KotlinType type = MoveKotlinMethodProcessorKt.type(variable);
                     if (type != null) {

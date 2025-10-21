@@ -2,27 +2,36 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.toDto
-import com.intellij.terminal.session.dto.toStyleRange
-import com.intellij.terminal.session.dto.toTerminalState
+import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
+import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
+import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import org.jetbrains.plugins.terminal.block.reworked.*
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
-import java.util.concurrent.atomic.AtomicLong
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.view.impl.updateContent
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
 /**
  * TerminalSession implementation that stores the state of the [delegate] session output.
- * This state is then passed as the [TerminalInitialStateEvent] to the output flow as the first event
+ * This state is then passed as the [org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent] to the output flow as the first event
  * every time when [getOutputFlow] is requested.
  *
  * So, actually it allows restoring the state of UI that requests the [getOutputFlow].
@@ -32,19 +41,21 @@ import kotlin.time.TimeSource
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class StateAwareTerminalSession(
+  project: Project,
   private val delegate: BackendTerminalSession,
+  private val startupOptions: TerminalStartupOptions,
   override val coroutineScope: CoroutineScope,
 ) : BackendTerminalSession {
-  private val outputFlow = MutableSharedFlow<VersionedEvents>(replay = 1)
-  private val modelsLock = Mutex()
-
-  /** Requires [modelsLock] */
-  private var modelsVersion: Long = -1L
+  private val outputFlowProducer = IncrementalUpdateFlowProducer(State())
 
   private val sessionModel: TerminalSessionModel = TerminalSessionModelImpl()
-  private val outputModel: TerminalOutputModel
-  private val alternateBufferModel: TerminalOutputModel
-  private val blocksModel: TerminalBlocksModel
+  private val outputModel: MutableTerminalOutputModel
+  private val outputHyperlinkFacade: BackendTerminalHyperlinkFacade
+  private val alternateBufferModel: MutableTerminalOutputModel
+  private val alternateBufferHyperlinkFacade: BackendTerminalHyperlinkFacade
+  private val blocksModel: TerminalBlocksModelImpl
+
+  private val inputChannel: SendChannel<TerminalInputEvent>
 
   private val outputLatencyReporter = BatchLatencyReporter(batchSize = 100) { samples ->
     ReworkedTerminalUsageCollector.logBackendOutputLatency(
@@ -64,157 +75,177 @@ internal class StateAwareTerminalSession(
   }
 
   init {
+    val hyperlinkScope = coroutineScope.childScope("StateAwareTerminalSession hyperlink facades")
     // Create a Non-AWT thread document to be able to update it without switching to EDT and Write Action.
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
     val outputDocument = DocumentImpl("", true)
-    outputModel = TerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
+    outputModel = MutableTerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
+    outputHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false)
 
     val alternateBufferDocument = DocumentImpl("", true)
-    alternateBufferModel = TerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
+    alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
+    alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
 
-    blocksModel = TerminalBlocksModelImpl(outputDocument)
+    blocksModel = TerminalBlocksModelImpl(outputModel, sessionModel, coroutineScope.asDisposable())
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
-      val originalOutputFlow = delegate.getOutputFlow()
-      originalOutputFlow.collect { events ->
-        handleOriginalEvents(events)
+      merge(
+        delegate.getOutputFlow(),
+        outputHyperlinkFacade.heartbeatFlow.map { listOf(it) },
+        alternateBufferHyperlinkFacade.heartbeatFlow.map { listOf(it) },
+      ).collect { events ->
+        try {
+          outputFlowProducer.handleUpdate(events)
+        }
+        finally {
+          if (events.any { it is TerminalSessionTerminatedEvent }) {
+            coroutineScope.cancel()
+          }
+        }
+      }
+    }
+
+    inputChannel = Channel<TerminalInputEvent>(capacity = Channel.UNLIMITED)
+    coroutineScope.launch(CoroutineName("StateAwareTerminalSession: input channel")) {
+      val original = delegate.getInputChannel()
+      try {
+        for (event in inputChannel) {
+          original.send(event)
+          handleInputEvent(event)
+        }
+      }
+      finally {
+        inputChannel.close()
+        original.close()
       }
     }
   }
 
   override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
-    return delegate.getInputChannel()
+    return inputChannel
   }
 
-  override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
-    return flow {
-      var initialStateVersion: Long = -1
-      outputFlow.collect {
-        if (initialStateVersion == -1L) {
-          val initialState: VersionedEvents = modelsLock.withLock {
-            createInitialStateEvents()
-          }
-          emit(initialState.events)
-          initialStateVersion = initialState.version
-        }
-
-        if (it.version > initialStateVersion) {
-          emit(it.events)
-        }
+  private fun handleInputEvent(event: TerminalInputEvent) {
+    if (event is TerminalHyperlinkClickedEvent) {
+      coroutineScope.launch(CoroutineName("StateAwareTerminalSession: hyperlink click")) {
+        getHyperlinkFacade(event)?.hyperlinkClicked(event.hyperlinkId, event.mouseEvent)
       }
     }
   }
+
+  private fun getHyperlinkFacade(event: TerminalHyperlinkClickedEvent): BackendTerminalHyperlinkFacade? =
+    getHyperlinkFacade(event.isInAlternateBuffer)
+
+  private fun getHyperlinkFacade(event: TerminalHyperlinksHeartbeatEvent): BackendTerminalHyperlinkFacade? =
+    getHyperlinkFacade(event.isInAlternateBuffer)
+
+  fun getHyperlinkFacade(isInAlternateBuffer: Boolean): BackendTerminalHyperlinkFacade? =
+    if (isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
+
+  override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> = outputFlowProducer.getIncrementalUpdateFlow()
 
   override val isClosed: Boolean
     get() = delegate.isClosed
 
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
 
-  private suspend fun handleOriginalEvents(events: List<TerminalOutputEvent>) {
-    val versionedEvents = VersionedEvents(events)
-    try {
-      modelsLock.withLock {
-        doHandleEvents(events)
-        modelsVersion = versionedEvents.version
-      }
-    }
-    finally {
-      forwardEventsToOutputFlow(versionedEvents)
-    }
-  }
-
-  private fun doHandleEvents(events: List<TerminalOutputEvent>) {
-    for (event in events) {
-      try {
-        handleEvent(event)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (t: Throwable) {
-        thisLogger().error(t)
-      }
-    }
-  }
-
-  private suspend fun forwardEventsToOutputFlow(versionedEvents: VersionedEvents) {
-    try {
-      outputFlow.emit(versionedEvents)
-    }
-    finally {
-      if (versionedEvents.events.any { it is TerminalSessionTerminatedEvent }) {
-        coroutineScope.cancel()
-      }
-    }
-  }
-
-  private fun handleEvent(event: TerminalOutputEvent) {
-    when (event) {
-      is TerminalContentUpdatedEvent -> {
-        val model = getCurrentOutputModel()
-        updateOutputModelContent(model, event)
-
-        val latency = event.readTime?.elapsedNow()
-        if (latency != null) {
-          outputLatencyReporter.update(latency)
+  private inner class State : MutableStateWithIncrementalUpdates<List<TerminalOutputEvent>> {
+    override suspend fun applyUpdate(update: List<TerminalOutputEvent>): List<TerminalOutputEvent> {
+      for (event in update) {
+        try {
+          val replacement = handleEvent(event)
+          if (replacement !== event) {
+            check(update.size == 1) { "Multiple event replacement not supported, events = $update" }
+            return listOfNotNull(replacement)
+          }
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (t: Throwable) {
+          thisLogger().error(t)
         }
       }
-      is TerminalCursorPositionChangedEvent -> {
-        val model = getCurrentOutputModel()
-        model.updateCursorPosition(event.logicalLineIndex, event.columnIndex)
-      }
-      is TerminalStateChangedEvent -> {
-        val state = event.state.toTerminalState()
-        sessionModel.updateTerminalState(state)
-      }
-      TerminalPromptStartedEvent -> {
-        blocksModel.promptStarted(outputModel.cursorOffsetState.value)
-      }
-      TerminalPromptFinishedEvent -> {
-        blocksModel.promptFinished(outputModel.cursorOffsetState.value)
-      }
-      is TerminalCommandStartedEvent -> {
-        blocksModel.commandStarted(outputModel.cursorOffsetState.value)
-      }
-      is TerminalCommandFinishedEvent -> {
-        blocksModel.commandFinished(event.exitCode)
-      }
-      else -> {
-        // Do nothing: other events are not related to the models we update
-      }
+      return update
     }
-  }
 
-  private fun createInitialStateEvents(): VersionedEvents {
-    val event = TerminalInitialStateEvent(
-      sessionState = sessionModel.terminalState.value.toDto(),
-      outputModelState = outputModel.dumpState().toDto(),
-      alternateBufferState = alternateBufferModel.dumpState().toDto(),
-      blocksModelState = blocksModel.dumpState().toDto(),
-    )
-    return VersionedEvents(listOf(event), modelsVersion)
-  }
+    private fun handleEvent(event: TerminalOutputEvent): TerminalOutputEvent? {
+      when (event) {
+        is TerminalContentUpdatedEvent -> {
+          val model = getCurrentOutputModel()
+          updateOutputModelContent(model, event)
 
-  private fun getCurrentOutputModel(): TerminalOutputModel {
-    return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferModel else outputModel
-  }
+          val latency = event.readTime?.elapsedNow()
+          if (latency != null) {
+            outputLatencyReporter.update(latency)
+          }
+        }
+        is TerminalCursorPositionChangedEvent -> {
+          val model = getCurrentOutputModel()
+          model.updateCursorPosition(event.logicalLineIndex, event.columnIndex)
+        }
+        is TerminalStateChangedEvent -> {
+          val state = event.state.toTerminalState()
+          sessionModel.updateTerminalState(state)
+        }
+        TerminalPromptStartedEvent -> {
+          blocksModel.startNewBlock(outputModel.cursorOffset)
+        }
+        TerminalPromptFinishedEvent -> {
+          blocksModel.updateActiveCommandBlock { block ->
+            block.copy(commandStartOffset = outputModel.cursorOffset)
+          }
+        }
+        is TerminalCommandStartedEvent -> {
+          blocksModel.updateActiveCommandBlock { block ->
+            block.copy(outputStartOffset = outputModel.cursorOffset, executedCommand = event.command)
+          }
+        }
+        is TerminalCommandFinishedEvent -> {
+          blocksModel.updateActiveCommandBlock { block ->
+            block.copy(exitCode = event.exitCode)
+          }
+        }
+        is TerminalHyperlinksHeartbeatEvent -> {
+          val facade = getHyperlinkFacade(event)
+          checkNotNull(facade) { "The hyperlink facade is null, so who sent the TerminalHyperlinksHeartbeatEvent event then? It's a bug" }
+          val changeEvent = facade.collectResultsAndMaybeStartNewTask()
+          if (changeEvent != null) {
+            facade.updateModelState(changeEvent)
+          }
+          return changeEvent // if null, don't send anything, otherwise send the update, not the heartbeat
+        }
+        else -> {
+          // Do nothing: other events are not related to the models we update
+        }
+      }
+      return event
+    }
 
-  private fun updateOutputModelContent(model: TerminalOutputModel, event: TerminalContentUpdatedEvent) {
-    val startTime = TimeSource.Monotonic.markNow()
+    override suspend fun takeSnapshot(): List<List<TerminalOutputEvent>> {
+      val event = TerminalInitialStateEvent(
+        startupOptions = startupOptions.toDto(),
+        sessionState = sessionModel.terminalState.value.toDto(),
+        outputModelState = outputModel.dumpState().toDto(),
+        alternateBufferState = alternateBufferModel.dumpState().toDto(),
+        blocksModelState = blocksModel.dumpState().toDto(),
+        outputHyperlinksState = outputHyperlinkFacade.dumpState().toDto(),
+        alternateBufferHyperlinksState = alternateBufferHyperlinkFacade.dumpState().toDto(),
+      )
+      return listOf(listOf(event))
+    }
 
-    val styles = event.styles.map { it.toStyleRange() }
-    model.updateContent(event.startLineLogicalIndex, event.text, styles)
+    private fun getCurrentOutputModel(): MutableTerminalOutputModel {
+      return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferModel else outputModel
+    }
 
-    val latencyData = DurationAndTextLength(duration = startTime.elapsedNow(), textLength = event.text.length)
-    documentUpdateLatencyReporter.update(latencyData)
-  }
+    private fun updateOutputModelContent(model: MutableTerminalOutputModel, event: TerminalContentUpdatedEvent) {
+      val startTime = TimeSource.Monotonic.markNow()
 
-  private data class VersionedEvents(
-    val events: List<TerminalOutputEvent>,
-    val version: Long = eventsVersionCounter.getAndIncrement(),
-  )
+      model.updateContent(event)
 
-  companion object {
-    private val eventsVersionCounter = AtomicLong(0)
+      val latencyData = DurationAndTextLength(duration = startTime.elapsedNow(), textLength = event.text.length)
+      documentUpdateLatencyReporter.update(latencyData)
+    }
   }
 }

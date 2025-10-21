@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target.wizard
 
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.CapturingProcessRunner
@@ -17,6 +18,7 @@ import com.intellij.execution.wsl.executeInShellAndGetCommandOnlyStdout
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.execution.ParametersListUtil
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
@@ -24,25 +26,15 @@ import java.util.function.Consumer
 class WslTargetIntrospectable(val distribution: WSLDistribution, val console: ConsoleView) : LanguageRuntimeType.Introspectable() {
   override val targetPlatform: CompletableFuture<TargetPlatform> = CompletableFuture.completedFuture(TargetPlatform(Platform.UNIX))
 
-  override fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> {
-    try {
-      val value = distribution.getEnvironmentVariable(varName)
-      console.print("$varName=$value\n\n", ConsoleViewContentType.NORMAL_OUTPUT)
-      return CompletableFuture.completedFuture(value)
-    }
-    catch (t: Throwable) {
-      return CompletableFuture.failedFuture(t)
-    }
-  }
+  override fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> =
+    CompletableFuture.supplyAsync(captureThreadContext {
+      distribution.getEnvironmentVariable(varName)
+    })
 
-  override fun promiseExecuteScript(script: List<String>): CompletableFuture<ProcessOutput> {
-    try {
-      return CompletableFuture.completedFuture(executeCommand(script))
-    }
-    catch (t: Throwable) {
-      return CompletableFuture.failedFuture(t)
-    }
-  }
+  override fun promiseExecuteScript(script: List<String>): CompletableFuture<ProcessOutput> =
+    CompletableFuture.supplyAsync(captureThreadContext {
+      executeCommand(script)
+    })
 
   @Deprecated("Use the override with List<String> parameter type")
   override fun promiseExecuteScript(script: String): CompletableFuture<String?> =
@@ -52,6 +44,7 @@ class WslTargetIntrospectable(val distribution: WSLDistribution, val console: Co
       output.stdout
     }
 
+  @RequiresBackgroundThread
   private fun executeCommand(cmd: List<@NlsSafe String>): ProcessOutput {
     val executeCommandInShell = cmd != listOf("pwd")
     val options = WSLCommandLineOptions().setExecuteCommandInShell(executeCommandInShell)

@@ -393,9 +393,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     private List<ActionWrapper> myOptions;
 
     private ComplexPushAction(@NotNull List<ActionWrapper> actions) {
-      super(actions.get(0).getName());
+      super(actions.getFirst().getName());
       myActions = actions;
-      myDefaultAction = actions.get(0);
+      myDefaultAction = actions.getFirst();
       myOptions = actions.subList(1, actions.size());
     }
 

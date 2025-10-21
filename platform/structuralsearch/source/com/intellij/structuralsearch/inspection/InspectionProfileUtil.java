@@ -32,7 +32,7 @@ public final class InspectionProfileUtil {
   /**
    * @deprecated Use {@link CustomInspectionActions#fireProfileChanged(InspectionProfileImpl)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void fireProfileChanged(@NotNull InspectionProfileImpl profile) {
     CustomInspectionActions.fireProfileChanged(profile);
   }

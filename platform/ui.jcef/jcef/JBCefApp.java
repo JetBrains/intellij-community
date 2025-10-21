@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.execution.Platform;
@@ -19,6 +19,7 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
@@ -72,7 +73,7 @@ public final class JBCefApp {
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 18;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 20;
 
   private static final String MIN_SUPPORTED_GLIBC_DEFAULT = "2.28.0";
 
@@ -121,11 +122,9 @@ public final class JBCefApp {
       if (isRemoteEnabledSystemProp != null) {
         final boolean val = isRemoteEnabledSystemProp.trim().compareToIgnoreCase("true") == 0;
         LOG.info(String.format("Force %s out-of-process jcef mode.", val ? "enabled" : "disabled"));
-      } else {
-        if (SystemInfo.isWayland)
-          LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
-        else
-          System.setProperty(PROPERTY_NAME, "true");
+      }
+      else {
+        System.setProperty(PROPERTY_NAME, "true");
       }
     }
 
@@ -167,6 +166,8 @@ public final class JBCefApp {
     }
     else {
       CefSettings settings = Cancellation.forceNonCancellableSectionInClassInitializer(() -> SettingsHelper.loadSettings(config));
+      final String logPath = SettingsHelper.getLogPath();
+      CefLog.init(logPath, settings.log_severity);
 
       JBCefHealthMonitor.getInstance().performHealthCheckAsync(settings, () -> {
         CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
@@ -181,8 +182,8 @@ public final class JBCefApp {
         // Init verbose chromium logging to stderr via 'vmodule' (to decrease output size)
         args = ArrayUtil.mergeArrays(args, "--enable-logging=stderr", "--vmodule=statistics_recorder*=0", "--v=1");
       }
-      if (settings.log_severity != CefSettings.LogSeverity.LOGSEVERITY_DISABLE || settings.log_file != null)
-        LOG.info(String.format("JCEF logging: level=%s, file=%s", settings.log_severity, settings.log_file));
+      if (settings.log_severity != CefSettings.LogSeverity.LOGSEVERITY_DISABLE || settings.log_file != null || logPath != null)
+        LOG.info(String.format("JCEF logging: level=%s, file=%s, chromium_log=%s", settings.log_severity, logPath, settings.log_file));
 
       myCefArgs = args;
       CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
@@ -389,8 +390,6 @@ public final class JBCefApp {
         !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
       return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
     }
-    if (SystemInfo.isWindows && !SystemInfo.isWin8OrNewer)
-      return unsupported.apply("JCEF isn't supported in Windows 7");
 
     if (!SKIP_VERSION_CHECK) {
       JCefVersionDetails version;
@@ -462,7 +461,7 @@ public final class JBCefApp {
   /**
    * @deprecated use {@link JBCefApp#getRemoteDebuggingPort(Consumer)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Contract(pure = true)
   public @NotNull Integer getRemoteDebuggingPort() {
     if (myCefSettings == null) throw new UnsupportedOperationException();

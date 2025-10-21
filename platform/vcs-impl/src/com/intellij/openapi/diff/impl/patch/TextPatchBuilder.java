@@ -59,7 +59,7 @@ public final class TextPatchBuilder {
   /**
    * @deprecated Use {@link #buildPatch(Collection, Path, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
                                                     @NotNull Path basePath,
                                                     boolean reversePatch,

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,7 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
 
   /**
    * for n > 1: list of offsets
-   * for n = 1: -offset (most common case)
+   * for n = 1: -offset (the most common case)
    */
   private final DataExternalizer<IntList> myValueExternalizer = new DataExternalizer<>() {
     @Override
@@ -127,7 +127,7 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
   }
 
   public static List<ExtensionPoint> getExtensionPointsByClass(Project project, PsiClass psiClass, GlobalSearchScope scope) {
-    final String key = ClassUtil.getJVMClassName(psiClass);
+    final String key = ClassUtil.getBinaryClassName(psiClass);
     if (key == null) return Collections.emptyList();
 
     List<ExtensionPoint> result = new SmartList<>();

@@ -34,3 +34,6 @@ fun main() {
 
 // EXPRESSION: child.privateVarCustomAccessors = 1; child.privateVarCustomAccessors
 // RESULT: 3: I
+
+// IGNORE_K1
+// SKIP_WRONG_DIRECTIVE_CHECK

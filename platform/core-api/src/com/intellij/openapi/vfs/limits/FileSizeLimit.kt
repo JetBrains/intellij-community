@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.PersistentFSConstants
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.max
 
 @Suppress("DEPRECATION")
 @ApiStatus.Internal
@@ -50,9 +51,7 @@ interface FileSizeLimit {
 
     @JvmStatic
     fun getContentLoadLimit(extension: String?): Int {
-      @Suppress("DEPRECATION")
-      val limit = findApplicable(extension ?: "")?.content ?: getDefaultContentLoadLimit()
-      return limit
+      return getValue(extension, ExtensionSizeLimitInfo::content, getDefaultContentLoadLimit())
     }
 
     @JvmStatic
@@ -64,15 +63,17 @@ interface FileSizeLimit {
     @JvmStatic
     fun getIntellisenseLimit(extension: String?): Int {
       @Suppress("DEPRECATION")
-      val limit = findApplicable(extension ?: "")?.intellijSense ?: PersistentFSConstants.getMaxIntellisenseFileSize()
-      return limit
+      return getValue(extension, ExtensionSizeLimitInfo::intellijSense, PersistentFSConstants.getMaxIntellisenseFileSize())
     }
 
     @JvmStatic
     fun getPreviewLimit(extension: String?): Int {
-      @Suppress("DEPRECATION")
-      val limit = findApplicable(extension ?: "")?.preview ?: FileUtilRt.LARGE_FILE_PREVIEW_SIZE
-      return limit
+      return getValue(extension, ExtensionSizeLimitInfo::preview, FileUtilRt.LARGE_FILE_PREVIEW_SIZE)
+    }
+
+    private fun getValue(extension: String?, getter: (ExtensionSizeLimitInfo) -> Int?, minValue: Int): Int {
+      val providedValue = findApplicable(extension ?: "")?.let(getter) ?: return minValue
+      return max(providedValue, minValue)
     }
 
     private fun getLimits(): Map<String, ExtensionSizeLimitInfo> {

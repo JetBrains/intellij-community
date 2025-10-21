@@ -3,7 +3,7 @@ package com.intellij.lang.logging
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-class Slf4jLogger : JvmLogger by JvmLoggerFieldDelegate(
+public class Slf4jLogger : JvmLogger by JvmLoggerFieldDelegate(
   JavaLoggingUtils.SLF4J_FACTORY,
   "getLogger",
   "%s.class",

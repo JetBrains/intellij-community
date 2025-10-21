@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.Disposable;
@@ -103,7 +103,14 @@ public interface ApplicationEx extends Application {
    * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
    * @param elevate       if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
    */
-  void restart(boolean exitConfirmed, boolean elevate);
+  default void restart(boolean exitConfirmed, boolean elevate) {
+    restart();
+  }
+
+  @ApiStatus.Internal
+  default void restart(int flags, String @NotNull [] beforeRestart) {
+    restart();
+  }
 
   /**
    * Runs a modal process.
@@ -111,10 +118,12 @@ public interface ApplicationEx extends Application {
    * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
-  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                      @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                      boolean canBeCanceled,
-                                                      Project project) {
+  default boolean runProcessWithProgressSynchronously(
+    @NotNull Runnable process,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    boolean canBeCanceled,
+    Project project
+  ) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, true, project, null, null);
   }
 
@@ -124,13 +133,15 @@ public interface ApplicationEx extends Application {
    * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
-  boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                              @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                              boolean canBeCanceled,
-                                              boolean shouldShowModalWindow,
-                                              @Nullable Project project,
-                                              @Nullable JComponent parentComponent,
-                                              @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText);
+  boolean runProcessWithProgressSynchronously(
+    @NotNull Runnable process,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    boolean canBeCanceled,
+    boolean shouldShowModalWindow,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText
+  );
 
   void assertIsDispatchThread(@Nullable JComponent component);
 
@@ -148,18 +159,22 @@ public interface ApplicationEx extends Application {
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
-                                                                        @Nullable Project project,
-                                                                        @Nullable JComponent parentComponent,
-                                                                        @NotNull Consumer<? super ProgressIndicator> action) {
+  default boolean runWriteActionWithCancellableProgressInDispatchThread(
+    @NotNull @NlsContexts.ProgressTitle String title,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @NotNull Consumer<? super ProgressIndicator> action
+  ) {
     throw new UnsupportedOperationException();
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull @NlsContexts.ModalProgressTitle String title,
-                                                                           @Nullable Project project,
-                                                                           @Nullable JComponent parentComponent,
-                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
+  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(
+    @NotNull @NlsContexts.ModalProgressTitle String title,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @NotNull Consumer<? super ProgressIndicator> action
+  ) {
     throw new UnsupportedOperationException();
   }
 
@@ -177,6 +192,7 @@ public interface ApplicationEx extends Application {
    * This method is used to implement higher-level API. Please do not use it directly.
    */
   @ApiStatus.Internal
+  @SuppressWarnings("UnusedReturnValue")
   default <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     return action.compute();
   }
@@ -186,8 +202,8 @@ public interface ApplicationEx extends Application {
    * if no write-intent action is currently running or blocked until the currently running write-intent action completes.
    * <p>
    * This method is used to implement higher-level API. Please do not use it directly.
-   * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or
-   * {@link com.intellij.openapi.application.AppUIExecutor#onWriteThread()} to run code under the write-intent lock asynchronously.
+   * Use {@link #invokeLaterOnWriteThread} or {@link com.intellij.openapi.application.WriteThread}
+   * to run code under the write-intent lock asynchronously.
    *
    * @param action the action to run
    */
@@ -204,17 +220,13 @@ public interface ApplicationEx extends Application {
     return true;
   }
 
-  // in some cases, we cannot get service by class
-
-  /**
-   * @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()}
-   */
+  /** @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()} */
   @ApiStatus.Internal
   @Deprecated
   default void flushNativeEventQueue() {}
 
   @ApiStatus.Internal
-  default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state) {
+  default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state, boolean acquireWriteIntentLockInNonBlockingWay) {
     invokeLater(runnable, state, Conditions.alwaysFalse());
   }
 
@@ -238,16 +250,11 @@ public interface ApplicationEx extends Application {
 
   /**
    * Similar to {@link #invokeAndWait(Runnable, ModalityState)}, but does not take the Write-Intent lock inside.
-   * This is useful when you still need to schedule a computation with the required modality state, but don't want to acqure the WI lock inside.
+   * This is useful when you still need to schedule a computation with the required modality state, but don't want to acquire the WI lock inside.
    * In the future, this method may go public
    */
   @ApiStatus.Internal
   default void invokeAndWaitRelaxed(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     invokeAndWait(runnable, modalityState);
-  }
-
-  @ApiStatus.Internal
-  default void allowTakingLocksInsideAndRun(@NotNull Runnable runnable) {
-    runnable.run();
   }
 }

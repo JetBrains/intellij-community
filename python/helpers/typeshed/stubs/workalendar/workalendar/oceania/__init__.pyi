@@ -12,3 +12,20 @@ from .australia import (
 )
 from .marshall_islands import MarshallIslands as MarshallIslands
 from .new_zealand import NewZealand as NewZealand
+
+__all__ = (
+    # Australia and al.
+    "Australia",
+    "AustralianCapitalTerritory",
+    "NewSouthWales",
+    "NorthernTerritory",
+    "Queensland",
+    "SouthAustralia",
+    "Tasmania",
+    "Hobart",
+    "Victoria",
+    "WesternAustralia",
+    # Other oceanian countries
+    "MarshallIslands",
+    "NewZealand",
+)

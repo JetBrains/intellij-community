@@ -96,11 +96,6 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinClassConstructorInfoHandler"/>
 
-    <codeInsight.nonBlockingContextChecker
-            implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineNonBlockingContextChecker"/>
-    <codeInsight.blockingMethodChecker
-            implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
-
     <codeInsight.implementMethod language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin"
@@ -331,11 +326,6 @@
     <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.slicer.KotlinSliceProvider"/>
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
-  </extensions>
-
-  <!-- legacy JS decompiler for .kjsm files, not supported in K2 -->
-  <extensions defaultExtensionNs="com.intellij">
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
   </extensions>
 
   <!-- notification about unsupported K2 features in K1 mode -->

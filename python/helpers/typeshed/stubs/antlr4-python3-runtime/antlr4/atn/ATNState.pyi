@@ -5,6 +5,7 @@ from antlr4.atn.Transition import Transition as Transition
 INITIAL_NUM_TRANSITIONS: int
 
 class ATNState:
+    __slots__ = ("atn", "stateNumber", "stateType", "ruleIndex", "epsilonOnlyTransitions", "transitions", "nextTokenWithinRule")
     INVALID_TYPE: int
     BASIC: int
     RULE_START: int
@@ -39,11 +40,13 @@ class BasicState(ATNState):
     def __init__(self) -> None: ...
 
 class DecisionState(ATNState):
+    __slots__ = ("decision", "nonGreedy")
     decision: int
     nonGreedy: bool
     def __init__(self) -> None: ...
 
 class BlockStartState(DecisionState):
+    __slots__ = "endState"
     endState: Incomplete
     def __init__(self) -> None: ...
 
@@ -52,6 +55,7 @@ class BasicBlockStartState(BlockStartState):
     def __init__(self) -> None: ...
 
 class BlockEndState(ATNState):
+    __slots__ = "startState"
     stateType: Incomplete
     startState: Incomplete
     def __init__(self) -> None: ...
@@ -61,6 +65,7 @@ class RuleStopState(ATNState):
     def __init__(self) -> None: ...
 
 class RuleStartState(ATNState):
+    __slots__ = ("stopState", "isPrecedenceRule")
     stateType: Incomplete
     stopState: Incomplete
     isPrecedenceRule: bool
@@ -71,6 +76,7 @@ class PlusLoopbackState(DecisionState):
     def __init__(self) -> None: ...
 
 class PlusBlockStartState(BlockStartState):
+    __slots__ = "loopBackState"
     stateType: Incomplete
     loopBackState: Incomplete
     def __init__(self) -> None: ...
@@ -84,12 +90,14 @@ class StarLoopbackState(ATNState):
     def __init__(self) -> None: ...
 
 class StarLoopEntryState(DecisionState):
+    __slots__ = ("loopBackState", "isPrecedenceDecision")
     stateType: Incomplete
     loopBackState: Incomplete
     isPrecedenceDecision: Incomplete
     def __init__(self) -> None: ...
 
 class LoopEndState(ATNState):
+    __slots__ = "loopBackState"
     stateType: Incomplete
     loopBackState: Incomplete
     def __init__(self) -> None: ...

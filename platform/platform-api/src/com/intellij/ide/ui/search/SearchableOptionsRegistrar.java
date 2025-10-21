@@ -7,9 +7,10 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import javax.swing.event.DocumentEvent;
 import java.nio.file.Path;
@@ -24,14 +25,14 @@ public abstract class SearchableOptionsRegistrar {
     return ApplicationManager.getApplication().getService(SearchableOptionsRegistrar.class);
   }
 
-  @ApiStatus.Internal
+  @Internal
   public abstract @NotNull ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                             DocumentEvent.EventType type,
                                                             @Nullable Set<? extends Configurable> configurables,
                                                             @NotNull String option,
                                                             @Nullable Project project);
 
-  public abstract @NotNull Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option);
+  public abstract @NotNull @UnmodifiableView Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option);
 
   /**
    * @deprecated Use {@link SearchableOptionContributor}
@@ -48,6 +49,11 @@ public abstract class SearchableOptionsRegistrar {
   public abstract @NotNull Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
+
+  @Internal
+  public boolean isInitialized() {
+    return true;
+  }
 
   public interface AdditionalLocationProvider {
     /**

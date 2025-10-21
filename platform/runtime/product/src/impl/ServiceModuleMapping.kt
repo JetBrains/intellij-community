@@ -6,6 +6,7 @@ import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.RuntimeModuleGroup
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.util.SmartList
 import com.intellij.util.containers.FList
 
@@ -33,9 +34,13 @@ interface ServiceModuleMapping {
           if (dependency !in mainGroupModulesSet && dependency !in pluginGroupModules) {
             val previousGroup = moduleOutsideGroupsToPlugin[dependency]
             if (previousGroup == null) {
-              moduleOutsideGroupsToPlugin[dependency] = pluginGroup
-              if (dependencyPathToModule != null && dependencyPath != null) {
-                dependencyPathToModule[dependency] = dependencyPath
+              /* if a runtime module corresponds to a library in the source code, it's safe to include it in the classpath of multiple 
+                 plugins */
+              if (!dependency.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
+                moduleOutsideGroupsToPlugin[dependency] = pluginGroup
+                if (dependencyPathToModule != null && dependencyPath != null) {
+                  dependencyPathToModule[dependency] = dependencyPath
+                }
               }
               serviceModules.getOrPut(pluginGroup) { ArrayList() }.add(dependency)
               collectDependencies(dependency, pluginGroup, dependencyPath?.prepend(dependency))

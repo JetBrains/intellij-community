@@ -13,12 +13,16 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -155,8 +159,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     @Override
     public boolean shouldShowTextValue() {
       return myValue != null &&
-             myValue instanceof XValueTextProvider &&
-             ((XValueTextProvider)myValue).shouldShowTextValue();
+             myValue instanceof XValueTextProvider textValue &&
+             textValue.shouldShowTextValue();
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {

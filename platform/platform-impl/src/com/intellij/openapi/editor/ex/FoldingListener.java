@@ -62,6 +62,9 @@ public interface FoldingListener {
   default void onFoldProcessingEnd() {
   }
 
+  default void onFoldInitializationStatusChanged(boolean initInProgress) {
+  }
+
   @ApiStatus.Experimental
   interface ChangeFlags {
     int WIDTH_CHANGED = 0x1;

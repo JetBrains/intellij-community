@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see TaskSupport for more info about how tasks are started
  */
-val activeTasks: Query<TaskInfoEntity>
+val activeTasks: Query<Many, TaskInfoEntity>
   @ApiStatus.Internal
   get() = TaskInfoEntity.each()
 
@@ -24,7 +24,7 @@ val activeTasks: Query<TaskInfoEntity>
  *
  * For a finite flow use [asFiniteFlow] extension
  */
-val TaskInfoEntity.updates: Query<ProgressState>
+val TaskInfoEntity.updates: StateQuery<ProgressState>
   @ApiStatus.Internal
   get() = asQuery()[TaskInfoEntity.ProgressStateType]
 
@@ -34,7 +34,7 @@ val TaskInfoEntity.updates: Query<ProgressState>
  *
  * For a finite flow use [asFiniteFlow] extension
  */
-val TaskInfoEntity.statuses: Query<TaskStatus>
+val TaskInfoEntity.statuses: StateQuery<TaskStatus>
   @ApiStatus.Internal
   get() = asQuery()[TaskInfoEntity.TaskStatusType]
 
@@ -42,7 +42,7 @@ val TaskInfoEntity.statuses: Query<TaskStatus>
  * Returns a query that provides changes in the suspendable status of the task.
  * For more info about suspendable see [TaskSuspension].
  */
-val TaskInfoEntity.suspensionState: Query<TaskSuspension>
+val TaskInfoEntity.suspensionState: StateQuery<TaskSuspension>
   @ApiStatus.Internal
   get() = asQuery()[TaskInfoEntity.TaskSuspensionType]
 
@@ -55,7 +55,7 @@ val TaskInfoEntity.suspensionState: Query<TaskSuspension>
  * @return a finite flow of query results that will complete when the entity is disposed.
  */
 @ApiStatus.Internal
-fun <T> Query<T>.asFiniteFlow(entity: TaskInfoEntity, rete: Rete): Flow<T> {
+fun <T> Query<*, T>.asFiniteFlow(entity: TaskInfoEntity, rete: Rete): Flow<T> {
   val entityIsAlive = MutableStateFlow(true)
   entity.onDispose(rete) { entityIsAlive.value = false }
 

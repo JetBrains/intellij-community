@@ -3,31 +3,24 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.openapi.components.service
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class JSONSupportTest : GrazieTestBase() {
+
+  override val enableGrazieChecker: Boolean = true
+
   fun `test grammar check in file`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     runHighlightTestForFile("ide/language/json/Example.json")
   }
 
-  fun `test code-like and non-english words in json spellcheck performance`() {
+  fun `test json typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.json file") {
       runHighlightTestForFile("ide/language/json/i18n.json")
     }.setup {
       psiManager.dropPsiCaches()
-      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
-    }.start()
-  }
-
-  fun `test json spellcheck performance with English only`() {
-    configureGrazieSettings(enabledLanguages = setOf(Lang.AMERICAN_ENGLISH))
-    Benchmark.newBenchmark("Highlight typos without suggestions in i18n.json file") {
-      runHighlightTestForFile("ide/language/json/i18n_eng.json")
-    }.setup {
-      psiManager.dropPsiCaches()
-      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
     }.start()
   }
 }

@@ -1,45 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.RunContentDescriptorId;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
-import java.util.function.Predicate;
+
 
 /**
  * @author konstantin.aleev
  */
 public interface RunDashboardManager {
-  Topic<RunDashboardListener> DASHBOARD_TOPIC =
-    Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
+
+  @ApiStatus.Internal
+  void updateServiceRunContentDescriptor(@NotNull Content contentWithNewDescriptor, @NotNull RunContentDescriptor oldDescriptor);
 
   static RunDashboardManager getInstance(@NotNull Project project) {
-    return project.getService(RunDashboardManager.class);
+    return RunDashboardManagerProxy.getInstance(project);
   }
 
-  ContentManager getDashboardContentManager();
-
-  @NotNull
-  String getToolWindowId();
-
-  @NotNull
-  Icon getToolWindowIcon();
+  // Sorry for that, but it's unbearable to move the api classes from the actual dashboard module to lang or execution
+  // only to be able to add them into an interface which in turn can not be moved to the dashboard module because of existing external dependencies
+  // AND the fact that it solves cyclic dependencies issue between debugger, execution and lang modules
+  @ApiStatus.Internal
+  @Nullable default Object findService(@NotNull RunContentDescriptorId descriptorId) { return null; };
 
   void updateDashboard(boolean withStructure);
 
-  List<RunDashboardService> getRunConfigurations();
-
+  // todo split: do not add this method to frontend implementation - in frontend code use FrontendRunDashboardManager.isShowInDashboard :/
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
 
   @NotNull
@@ -48,17 +44,31 @@ public interface RunDashboardManager {
 
   void setTypes(Set<String> types);
 
+  @ApiStatus.Internal
   @NotNull
-  Predicate<Content> getReuseCondition();
+  Set<RunConfiguration> getHiddenConfigurations();
 
-  interface RunDashboardService {
-    @NotNull
-    RunnerAndConfigurationSettings getSettings();
+  @ApiStatus.Internal
+  void hideConfigurations(@NotNull Collection<? extends RunConfiguration> configurations);
 
-    @Nullable
-    RunContentDescriptor getDescriptor();
+  @ApiStatus.Internal
+  void restoreConfigurations(@NotNull Collection<? extends RunConfiguration> configurations);
 
-    @Nullable
-    Content getContent();
-  }
+  @ApiStatus.Internal
+  boolean isNewExcluded(@NotNull String typeId);
+
+  @ApiStatus.Internal
+  void setNewExcluded(@NotNull String typeId, boolean newExcluded);
+
+  @ApiStatus.Internal
+  void clearConfigurationStatus(@NotNull RunConfiguration configuration);
+
+  @ApiStatus.Internal
+  boolean isOpenRunningConfigInNewTab();
+
+  @ApiStatus.Internal
+  void setOpenRunningConfigInNewTab(boolean value);
+
+  @ApiStatus.Internal
+  Set<String> getEnableByDefaultTypes();
 }

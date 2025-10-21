@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.sh.backend.rename.ShRenameAllOccurrencesHandler;
 import com.intellij.sh.highlighting.ShHighlightUsagesTest;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;

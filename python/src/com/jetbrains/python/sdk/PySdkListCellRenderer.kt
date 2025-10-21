@@ -15,13 +15,15 @@ class PySdkListCellRenderer @JvmOverloads constructor(
 ) : ColoredListCellRenderer<Any>() {
 
   override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean,
-                                            hasFocus: Boolean): Component =
-    when (value) {
+                                            hasFocus: Boolean): Component {
+    if (list == null) return this
+    return when (value) {
       SEPARATOR -> TitledSeparator(null).apply {
         border = JBUI.Borders.empty()
       }
       else -> super.getListCellRendererComponent(list, value, index, selected, hasFocus)
     }
+  }
 
   override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
     customizeWithSdkValue(value, nullSdkName, nullSdkValue)

@@ -263,7 +263,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
 
     private fun getKotlinLibrary(project: Project): Library? {
         return LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.firstOrNull { isKotlinLibrary(it, project) }
-            ?: LibraryTablesRegistrar.getInstance().libraryTable.libraries.firstOrNull { isKotlinLibrary(it, project) }
+            ?: LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project).libraries.firstOrNull { isKotlinLibrary(it, project) }
     }
 
     private fun addLibraryToModuleIfNeeded(

@@ -75,9 +75,9 @@ class InnerComponent : JPanel() {
 
     override fun getLayoutAlignmentY(target: Container?): Float = 0.5f
 
-    override fun invalidateLayout(target: Container?) = Unit
+    override fun invalidateLayout(target: Container?): Unit = Unit
 
-    override fun addLayoutComponent(name: String?, comp: Component?) = Unit
+    override fun addLayoutComponent(name: String?, comp: Component?): Unit = Unit
 
     override fun removeLayoutComponent(comp: Component?) {
       componentToConstraints.remove(comp)
@@ -105,7 +105,7 @@ class InnerComponent : JPanel() {
       }
 
       if (GraphicsUtil.isRemoteEnvironment()) {
-        (parent as SurroundingComponent).fireResize()
+        (parent as? SurroundingComponent)?.fireResize()
       }
     }
 

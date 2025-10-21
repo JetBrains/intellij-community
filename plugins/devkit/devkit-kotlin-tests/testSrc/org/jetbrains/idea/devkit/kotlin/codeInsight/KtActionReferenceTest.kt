@@ -17,9 +17,16 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInsight/actionReference")
-class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
+class KtActionReferenceTest : JavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
 
   override fun getBasePath(): String {
     return DevkitKtTestsUtil.TESTDATA_PATH + "codeInsight/actionReference"

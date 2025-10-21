@@ -125,7 +125,9 @@ open class MessageBusImpl : MessageBus, MessageBusEx {
       this.topicClassToListenerDescriptor = map
     }
     else {
-      topicClassToListenerDescriptor.putAll(map)
+      for ((key, value) in map) {
+        topicClassToListenerDescriptor.computeIfAbsent(key) { mutableListOf() }.addAll(value)
+      }
       // adding a project level listener to an app level topic is not recommended but supported
       if (rootBus !== this) {
         rootBus.subscriberCache.clear()

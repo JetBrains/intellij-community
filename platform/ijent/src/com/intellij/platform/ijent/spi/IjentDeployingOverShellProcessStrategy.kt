@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.execution.CommandLineUtil.posixQuote
@@ -6,13 +6,14 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
+import com.intellij.platform.ijent.TcpConnectionInfo
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.fileSize
@@ -21,7 +22,11 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
+// The timeout is based on internal measurements done on CI (max: 21.5s, p98: 12.2s)
+private const val SHELL_INIT_TIMEOUT_MILLS = "30000"
+
 private val EP_NAME = ExtensionPointName<IjentDeploymentListener>("com.intellij.ijent.deploymentListener")
+
 interface IjentDeploymentListener {
   fun shellInitialized(initializationTime: Duration)
 }
@@ -44,7 +49,8 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         val initializationTime = measureTime {
-          withTimeout(runCatching { Registry.intValue("ijent.shell.initialization.timeout") }.getOrDefault(30_000).milliseconds) {
+          val timeout = System.getProperty("ijent.shell.initialization.timeout", SHELL_INIT_TIMEOUT_MILLS).toInt()
+          withTimeout(timeout.milliseconds) {
             val debugOption = if (LOG.isDebugEnabled) "x" else ""
             write("set -e$debugOption")
             ensureActive()
@@ -58,15 +64,22 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     context
   }
 
-  override suspend fun getTargetPlatform(): EelPlatform.Posix {
-    return myContext.await().execCommand {
+  private val myTargetPlatform = scope.async(start = CoroutineStart.LAZY) {
+    myContext.await().execCommand {
       getTargetPlatform()
     }
   }
 
+  override suspend fun getTargetPlatform(): EelPlatform.Posix {
+    return myTargetPlatform.await()
+  }
+
   final override suspend fun createProcess(binaryPath: String): IjentSessionMediator {
     return myContext.await().execCommand {
-      execIjent(binaryPath)
+      when (val strategy = getConnectionStrategy()) {
+        is IjentConnectionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.config)
+        else -> execIjent(binaryPath)
+      }
     }
   }
 
@@ -110,6 +123,12 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
         val stream = mediator!!.process.inputStream
         while (true) {
           ensureActive()
+          while (stream.available() == 0) {
+            if (mediator!!.processExit.isCompleted) {
+              throw IOException("Shell process exited instead of reading a line.")
+            }
+            delay(1.milliseconds)
+          }
           val c = stream.read()
           if (c < 0 || c == '\n'.code) {
             break
@@ -366,8 +385,16 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
   return process.readLineWithoutBuffering()
 }
 
+
 private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = context.env).joinToString(" ")
+    return createMediator(remotePathToBinary, joinedCmd)
+  }
+
+private suspend fun DeployingContextAndShell.createMediator(
+  remotePathToBinary: String,
+  joinedCmd: String,
+): IjentSessionMediator {
   val commandLineArgs = context.run {
     """
     | cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))};
@@ -378,6 +405,15 @@ private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: Strin
   }
   process.write(commandLineArgs)
   return process.extractProcess()
+}
+
+
+private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, tcpConfiguration: TcpConnectionInfo): IjentSessionMediator {
+  val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
+                                   selfDeleteOnExit = true,
+                                   usrBinEnv = context.env,
+                                   tcpConfig = tcpConfiguration).joinToString(" ")
+  return createMediator(remotePathToBinary, joinedCmd)
 }
 
 /**

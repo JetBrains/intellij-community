@@ -37,7 +37,7 @@ class StatisticsEventLogFormatter(private val model: LogFilterModel) : DefaultLo
     val fieldValueList = parseEventData(msg.substring(eventDataOffset))
     val formatedEventData = if (isMultilineLog) formatEventDataToMultiline(fieldValueList, isStderr)
     else formatEventDataToOneLine(fieldValueList, isStderr)
-    return msg.substring(0, eventDataOffset).trim() + formatedEventData
+    return msg.take(eventDataOffset).trim() + formatedEventData
   }
 
   fun updateLogPresentation(isMultilineLog: Boolean) {
@@ -79,7 +79,7 @@ class StatisticsEventLogFormatter(private val model: LogFilterModel) : DefaultLo
     var isFieldValueInProgress = false
     var bracketsCount = 0
     while (parser.nextToken() != null) {
-      val token = parser.currentToken
+      val token = parser.currentToken()
       when (token) {
         JsonToken.START_OBJECT -> {
           if (isFieldValueInProgress) {
@@ -121,7 +121,7 @@ class StatisticsEventLogFormatter(private val model: LogFilterModel) : DefaultLo
 
   private fun parseFieldValuePair(fieldValuePair: String): Pair<String, String> {
     val valueOffset = fieldValuePair.indexOf(':')
-    val field = fieldValuePair.substring(0, valueOffset)
+    val field = fieldValuePair.take(valueOffset)
     val value = fieldValuePair.substring(valueOffset + 1).trimEnd(',')
     return Pair(field, value)
   }

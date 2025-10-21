@@ -26,6 +26,11 @@ interface SpacingConfiguration {
   val horizontalColumnsGap: Int
 
   /**
+   * Horizontal gap between component and related comment
+   */
+  val horizontalCommentGap: Int
+
+  /**
    * The horizontal left indent of one level
    */
   val horizontalIndent: Int
@@ -39,6 +44,11 @@ interface SpacingConfiguration {
    * Top and bottom gaps for components like CheckBox, JTextField etc
    */
   val verticalComponentGap: Int
+
+  /**
+   * Vertical gap after component-related comments placed below the component
+   */
+  val verticalCommentBottomGap: Int
 
   /**
    * Vertical small gap between unrelated settings
@@ -75,9 +85,12 @@ open class EmptySpacingConfiguration : SpacingConfiguration {
   override val horizontalSmallGap: Int = 0
   override val horizontalDefaultGap: Int = 0
   override val horizontalColumnsGap: Int = 0
+  override val horizontalCommentGap: Int = 0
   override val horizontalIndent: Int = 0
   override val horizontalToggleButtonIndent: Int = 0
+
   override val verticalComponentGap: Int = 0
+  override val verticalCommentBottomGap: Int = 0
   override val verticalSmallGap: Int = 0
   override val verticalMediumGap: Int = 0
   override val buttonGroupHeaderBottomGap: Int = 0
@@ -90,10 +103,12 @@ open class IntelliJSpacingConfiguration : SpacingConfiguration {
   override val horizontalSmallGap: Int = 6
   override val horizontalDefaultGap: Int = 16
   override val horizontalColumnsGap: Int = 60
+  override val horizontalCommentGap: Int = 12
   override val horizontalIndent: Int = calculateHorizontalIndent()
   override val horizontalToggleButtonIndent: Int = calculateHorizontalIndent()
 
   override val verticalComponentGap: Int = 6
+  override val verticalCommentBottomGap: Int = 2
   override val verticalSmallGap: Int = 8
   override val verticalMediumGap: Int = 20
   override val buttonGroupHeaderBottomGap: Int = 2

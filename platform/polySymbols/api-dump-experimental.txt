@@ -1132,9 +1132,12 @@
 - pf:getDataHolder():com.intellij.openapi.util.UserDataHolder
 - pf:getFramework():java.lang.String
 - pf:getKey():java.lang.Object
+- p:getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,java.util.Set):java.util.List
 - getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - getModificationCount():J
 - pf:getProject():com.intellij.openapi.project.Project
+- p:getRequiresResolve():Z
+- p:getSupportsSymbolsMatchingWithoutFullCacheInitialization():Z
 - getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - hashCode():I
 - pa:initialize(kotlin.jvm.functions.Function1,java.util.Set):V

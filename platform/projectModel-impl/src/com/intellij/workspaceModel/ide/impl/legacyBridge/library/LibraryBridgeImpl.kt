@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
@@ -49,7 +49,7 @@ interface LibraryBridge : LibraryEx {
 @ApiStatus.Internal
 sealed interface LibraryOrigin {
   class OfProject(val project: Project) : LibraryOrigin
-  class OfDescriptor(val descriptor: EelDescriptor) : LibraryOrigin
+  class OfMachine(val eelMachine: EelMachine) : LibraryOrigin
 }
 
 @ApiStatus.Internal
@@ -126,7 +126,7 @@ class LibraryBridgeImpl(
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
     val virtualFileUrlManager = when (origin) {
-      is LibraryOrigin.OfDescriptor -> GlobalWorkspaceModel.getInstance(origin.descriptor).getVirtualFileUrlManager()
+      is LibraryOrigin.OfMachine -> GlobalWorkspaceModel.getInstance(origin.eelMachine).getVirtualFileUrlManager()
       is LibraryOrigin.OfProject -> WorkspaceModel.getInstance(origin.project).getVirtualFileUrlManager()
     }
     return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
@@ -185,7 +185,7 @@ class LibraryBridgeImpl(
       }
       val isDisposedGlobally = libraryEntity?.let {
         val snapshot = when (origin) {
-          is LibraryOrigin.OfDescriptor -> GlobalWorkspaceModel.getInstance(origin.descriptor).currentSnapshot
+          is LibraryOrigin.OfMachine -> GlobalWorkspaceModel.getInstance(origin.eelMachine).currentSnapshot
           is LibraryOrigin.OfProject -> WorkspaceModel.getInstance(origin.project).currentSnapshot
         }
         snapshot.libraryMap.getDataByEntity(it)?.isDisposed
@@ -196,7 +196,7 @@ class LibraryBridgeImpl(
         Entity: ${libraryEntity.run { "$name, $this" }}
         Is disposed in ${
         when (origin) {
-          is LibraryOrigin.OfProject -> "project"; is LibraryOrigin.OfDescriptor -> "global (${origin.descriptor})"
+          is LibraryOrigin.OfProject -> "project"; is LibraryOrigin.OfMachine -> "global (${origin.eelMachine})"
         }
       } model: ${isDisposedGlobally != false}
         Stack trace: $stackTrace

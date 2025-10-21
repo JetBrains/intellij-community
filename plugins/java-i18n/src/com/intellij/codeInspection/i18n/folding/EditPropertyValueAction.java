@@ -101,12 +101,12 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
     return getEditableElement(region) != null;
   }
 
-  public static @Nullable PsiElement getEditableElement(@NotNull FoldRegion region) {
+  static @Nullable PsiElement getEditableElement(@NotNull FoldRegion region) {
     PsiElement psiElement = EditorFoldingInfo.get(region.getEditor()).getPsiElement(region);
     return psiElement == null || psiElement.getUserData(EDITABLE_PROPERTY_VALUE) == null ? null : psiElement;
   }
 
-  public static void doEdit(@NotNull Editor editor) {
+  static void doEdit(@NotNull Editor editor) {
     if (!(editor instanceof EditorImpl) || editor.getProject() == null) {
       return;
     }
@@ -290,7 +290,7 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
     return EditPropertyValueTooltipManager.showTooltip(editor, panel, true);
   }
 
-  public static void registerFoldedElement(@NotNull PsiElement element, @NotNull Document document) {
+  static void registerFoldedElement(@NotNull PsiElement element, @NotNull Document document) {
     element.putUserData(EDITABLE_PROPERTY_VALUE, Boolean.TRUE);
     EditPropertyValueTooltipManager.initializeForDocument(document);
   }

@@ -27,7 +27,7 @@ class AssertCurrentFileCommand(text: String, line: Int) : PerformanceCommandCoro
 
     readAction {
       val editor = checkNotNull(FileEditorManager.getInstance(context.project).selectedTextEditor)
-      val currentFileName = editor.virtualFile.name
+      val currentFileName = editor.virtualFile?.name
       if (fileName != currentFileName) {
         throw Exception("Current file name is $currentFileName, expected $fileName")
       }

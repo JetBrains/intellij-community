@@ -11,15 +11,18 @@ import org.jetbrains.annotations.Nullable;
 
 public interface CommonJavaInlineUtil {
   /**
-   * @param var variable to inline (local variable or pattern variable)
-   * @return a modcommand that inlines this variable (may display UI)
+   * Obtains a service instance
+   * @return a service instance
    */
-  @NotNull ModCommand inline(@NotNull PsiVariable var);
-
   static CommonJavaInlineUtil getInstance() {
     return ApplicationManager.getApplication().getService(CommonJavaInlineUtil.class);
   }
 
+  /**
+   * @param var variable to inline (local variable or pattern variable)
+   * @return a modcommand that inlines this variable (may display UI)
+   */
+  @NotNull ModCommand inline(@NotNull PsiVariable var);
 
   /**
    * Inlines single occurence of variable

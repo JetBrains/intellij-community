@@ -154,8 +154,15 @@ internal class ChangeMethodParameters(
     }
 
     private fun doChangeParameter(project: Project, target: KtNamedFunction) {
+        val expectedParameters = request.expectedParameters.filter {
+            // we have to filter out synthetic parameters like `$completion`, `$continuation`, etc
+            it !is ChangeParametersRequest.ExistingParameterWrapper ||
+                    // see org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightSuspendContinuationParameter.getKotlinOrigin
+                    it.existingKtParameter != null
+        }
+
         val parameterActions =
-            getParametersModifications(target, target.valueParameters, request.expectedParameters)
+            getParametersModifications(target, target.valueParameters, expectedParameters)
 
         val psiFactory = KtPsiFactory(project)
 

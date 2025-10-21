@@ -101,7 +101,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
                                                       @Nullable String message,
                                                       boolean recursiveInvocation,
                                                       @Nullable Object trace) {
-    @NonNls String reason = "Element: " + element.getClass();
+    @NonNls String reason = "Invalid PSI Element: " + element.getClass();
     if (!recursiveInvocation) {
       try {
         reason += " #" + getLanguage(element).getID() + " ";

@@ -3,10 +3,10 @@ package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,10 +35,10 @@ public class ExportingModulesTest extends JavaProjectTestCase {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-      Module moduleA = moduleModel.newModule(dir.resolve("A.iml"), StdModuleTypes.JAVA.getId());
+      Module moduleA = moduleModel.newModule(dir.resolve("A.iml"), JavaModuleType.getModuleType().getId());
 
-      moduleB[0] = moduleModel.newModule(dir.resolve("B.iml"), StdModuleTypes.JAVA.getId());
-      moduleC[0] = moduleModel.newModule(dir.resolve("C.iml"), StdModuleTypes.JAVA.getId());
+      moduleB[0] = moduleModel.newModule(dir.resolve("B.iml"), JavaModuleType.getModuleType().getId());
+      moduleC[0] = moduleModel.newModule(dir.resolve("C.iml"), JavaModuleType.getModuleType().getId());
       moduleModel.commit();
 
       configureModule(moduleA, testRoot, "A");

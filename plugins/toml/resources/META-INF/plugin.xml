@@ -12,7 +12,7 @@
         <plugin id="com.intellij.modules.lang"/>
     </dependencies>
 
-    <content>
+    <content namespace="jetbrains">
         <module name="intellij.toml.core" loading="embedded"/>
         <module name="intellij.toml.backend"/>
         <module name="intellij.toml.frontend"/>

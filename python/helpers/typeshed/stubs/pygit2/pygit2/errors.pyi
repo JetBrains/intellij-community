@@ -1,6 +1,0 @@
-value_errors: set[int]
-
-def check_error(err: int, io: bool = False) -> None: ...
-
-class Passthrough(Exception):
-    def __init__(self) -> None: ...

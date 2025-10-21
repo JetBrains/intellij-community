@@ -41,7 +41,7 @@ public class SynchronizedValueContainerImplWithChecks<V> extends ValueContainerI
   }
 
   @Override
-  protected synchronized void removeValue(int inputId, V value) {
+  public synchronized void removeValue(int inputId, V value) {
     super.removeValue(inputId, value);
   }
 

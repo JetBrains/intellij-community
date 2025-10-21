@@ -1,17 +1,18 @@
-### auto-generated section `build kotlin.gradle.code-insight-common` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
-  name = "code-insight-common_resources",
-  files = glob(["resources/**/*"]),
+resourcegroup(
+  name = "kotlin-gradle-codeInsight-common_resources",
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "code-insight-common",
-  module_name = "kotlin.gradle.code-insight-common",
+  name = "kotlin-gradle-codeInsight-common",
+  module_name = "intellij.kotlin.gradle.codeInsight.common",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-gradle-codeInsight-common_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -48,13 +49,9 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core",
     "//plugins/gradle/java",
     "//plugins/kotlin/base/statistics",
-    "//platform/diff-api:diff",
-    "//platform/diff-impl",
-    "//platform/util/diff",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/core-ui",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-  ],
-  runtime_deps = [":code-insight-common_resources"]
+  ]
 )
-### auto-generated section `build kotlin.gradle.code-insight-common` end
+### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` end

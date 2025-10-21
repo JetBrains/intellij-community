@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
 import java.util.Locale
 
-class JavaContextFeaturesProvider : ContextFeatureProvider {
+public class JavaContextFeaturesProvider : ContextFeatureProvider {
   override fun getName(): String = "java"
 
   override fun calculateFeatures(environment: @NotNull CompletionEnvironment): @NotNull MutableMap<String, MLFeatureValue> {

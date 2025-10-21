@@ -114,7 +114,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     if (myBrowseButtonActionListener != null) {
       if (myComponent instanceof ExtendableTextComponent) {
         ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
-          getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListener));
+          getDefaultIcon(), getHoveredIcon(), getIconTooltip(), true, this::notifyActionListener));
         new DumbAwareAction() {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {

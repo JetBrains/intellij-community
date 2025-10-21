@@ -20,6 +20,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EDT;
+import kotlin.jvm.Volatile;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -46,6 +47,12 @@ public final class LaterInvocator {
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
   private static final FlushQueue ourEdtQueue = new FlushQueue();
+  @Volatile
+  private static NonBlockingFlushQueue ourNonBlockingEdtQueue = null;
+
+  public static void initializeNonBlockingFlushQueue(@NotNull ThreadingSupport threadingSupport) {
+    ourNonBlockingEdtQueue = new NonBlockingFlushQueue(threadingSupport);
+  }
 
   public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable) {
     if (!ourModalityStateMulticaster.getListeners().contains(listener)) {
@@ -78,18 +85,36 @@ public final class LaterInvocator {
 
   @ApiStatus.Internal
   public static void invokeLater(@NotNull ModalityState modalityState,
-                          @NotNull Condition<?> expired,
-                          @NotNull Runnable runnable) {
+                                 @NotNull Condition<?> expired,
+                                 @NotNull Runnable runnable) {
+    invokeLater(modalityState, expired, true, runnable);
+  }
+
+  @ApiStatus.Internal
+  public static void invokeLater(@NotNull ModalityState modalityState,
+                                 @NotNull Condition<?> expired,
+                                 boolean needsWriteIntentLock,
+                                 @NotNull Runnable runnable) {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.INVOKE_LATER);
     if (expired.value(null)) {
       return;
     }
-    ourEdtQueue.push(modalityState, expired, runnable);
+    if (useNonBlockingFlushQueue()) {
+      ourNonBlockingEdtQueue.push(modalityState, runnable, needsWriteIntentLock, expired);
+    } else {
+      ourEdtQueue.push(modalityState, expired, runnable);
+    }
+  }
+
+  private static boolean useNonBlockingFlushQueue() {
+    // non-blocking flush queue can either be explicitly disabled, or be null, like in ServerApplication
+    // it is currently a TODO: use non-blocking flush queue in code server
+    return ThreadingRuntimeFlagsKt.getUseNonBlockingFlushQueue() && ourNonBlockingEdtQueue != null;
   }
 
   @RequiresBackgroundThread
   @ApiStatus.Internal
-  public static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
+  public static void invokeAndWait(@NotNull ModalityState modalityState, boolean wrapWithLocks, final @NotNull Runnable runnable) {
     final AtomicReference<Runnable> runnableRef = new AtomicReference<>(runnable);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -118,7 +143,7 @@ public final class LaterInvocator {
         return "InvokeAndWait[" + (runnable == null ? "(cancelled)" : runnable.toString()) + "]";
       }
     };
-    invokeLater(modalityState, Conditions.alwaysFalse(), runnable1);
+    invokeLater(modalityState, Conditions.alwaysFalse(), wrapWithLocks, runnable1);
     try {
       while (!semaphore.waitFor(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)) {
         ProgressManager.checkCanceled();
@@ -344,7 +369,11 @@ public final class LaterInvocator {
   }
 
   static boolean isFlushNow(@NotNull Runnable runnable) {
-    return ourEdtQueue.isFlushNow(runnable);
+    if (useNonBlockingFlushQueue()) {
+      return ourNonBlockingEdtQueue.isFlushNow(runnable);
+    } else {
+      return ourEdtQueue.isFlushNow(runnable);
+    }
   }
   public static void pollWriteThreadEventsOnce() {
     LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
@@ -353,12 +382,20 @@ public final class LaterInvocator {
 
   @TestOnly
   public static @NotNull Object getLaterInvocatorEdtQueue() {
-    return ourEdtQueue.getQueue();
+    if (useNonBlockingFlushQueue()) {
+      return ourNonBlockingEdtQueue;
+    } else {
+      return ourEdtQueue.getQueue();
+    }
   }
 
   @RequiresEdt
   private static void reincludeSkippedItemsAndRequestFlush() {
-    ourEdtQueue.reincludeSkippedItems();
+    if (useNonBlockingFlushQueue()) {
+      ourNonBlockingEdtQueue.onModalityChanged();
+    } else {
+      ourEdtQueue.reincludeSkippedItems();
+    }
   }
 
   @RequiresEdt

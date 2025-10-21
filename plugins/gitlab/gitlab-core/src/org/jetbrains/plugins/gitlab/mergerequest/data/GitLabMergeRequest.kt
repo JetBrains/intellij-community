@@ -1,15 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.resultOrErrorFlow
-import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.async.*
+import com.intellij.collaboration.util.CodeReviewDomainEntity
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitStandardRemoteBranch
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.repo.GitRepository
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 private val LOG = logger<GitLabMergeRequest>()
 
+@CodeReviewDomainEntity
 interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val glProject: GitLabProjectCoordinates
   val gitRepository: GitRepository
@@ -93,6 +93,9 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
 }
 
+internal fun GitLabMergeRequest.changesComputationState(): Flow<ComputedResult<GitBranchComparisonResult>> =
+  computationStateFlow(changes) { it.getParsedChanges() }
+
 internal class LoadedGitLabMergeRequest(
   private val project: Project,
   parentCs: CoroutineScope,
@@ -102,7 +105,7 @@ internal class LoadedGitLabMergeRequest(
   private val currentUser: GitLabUserDTO,
   mergeRequest: GitLabMergeRequestDTO
 ) : GitLabMergeRequest {
-  private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class, Dispatchers.Default)
 
   override val glProject: GitLabProjectCoordinates = projectMapping.repository
   override val gitRepository: GitRepository = projectMapping.gitRepository
@@ -374,8 +377,6 @@ internal class LoadedGitLabMergeRequest(
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
   override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes
   override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> = discussionsContainer.draftNotes
-  override val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> = discussionsContainer.nonEmptyDiscussionsData
-  override val draftNotesData: SharedFlow<Result<List<GitLabMergeRequestDraftNoteRestDTO>>> = discussionsContainer.draftNotesData
 
   override val canAddNotes: Boolean = discussionsContainer.canAddNotes
   override val canAddDraftNotes: Boolean = discussionsContainer.canAddDraftNotes

@@ -82,6 +82,14 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     assertFalse(variants.contains("tmp_path"))
   }
 
+  fun testClassLevelParametrizeCompletion() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_class_level_parametrize.py")
+    myFixture.completeBasic()
+    val text = myFixture.editor.document.text
+    assertTrue(text.contains("def test_(self, arg"))
+  }
+
   fun testRename() {
     myFixture.configureByFile("test_for_rename.py")
     myFixture.renameElementAtCaret("spam")

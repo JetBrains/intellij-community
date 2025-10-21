@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 internal object PyPackagesManagerUIBridge {
   @JvmStatic
   fun runInstallInBackground(project: Project, sdk: Sdk, requirements: List<PyRequirement>?, extraArgs: List<String>, listener: PyPackageManagerUI.Listener?) {
-    PyPackageCoroutine.getScope(project).launch {
+    PyPackageCoroutine.launch(project) {
       val manager = PythonPackageManagerUI.forSdk(project, sdk)
       listener?.started()
       manager.installPyRequirementsBackground(requirements?.toList() ?: emptyList(), extraArgs)

@@ -1,5 +1,6 @@
 // ERROR: This annotation is not applicable to target 'destructuring declaration'
 // SKIP_ERRORS_BEFORE
+// K2_AFTER_ERROR: This annotation is not applicable to target 'destructuring declaration'. Applicable targets: class, annotation class, property, field, local variable, value parameter, constructor, function, getter, setter, backing field
 data class XY(val x: Int, val y: Int)
 
 fun create() = XY(1, 2)

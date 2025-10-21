@@ -5,7 +5,6 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -24,14 +23,14 @@ import org.jetbrains.uast.kotlin.resolveToDeclarationImpl
 private class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     @Deprecated(
         "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
-                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+                "Please use analysis API: https://kotl.in/analysis-api",
         replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
     )
     override fun getBindingContext(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
 
     @Deprecated(
         "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
-                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+                "Please use analysis API: https://kotl.in/analysis-api",
         replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
     )
     override fun getBindingContextIfAny(element: KtElement): BindingContext? =
@@ -57,7 +56,7 @@ private class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderSe
     }
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
-        return ktElement.actionUnderSafeAnalyzeBlock({ ktElement.toLightAnnotation() }, { null })
+        return ktElement.actionUnderSafeAnalyzeBlock({ super.convertToPsiAnnotation(ktElement) }, { null })
     }
 
     override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {

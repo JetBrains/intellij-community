@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.java.syntax.element.JavaDocSyntaxElementType;
+import com.intellij.java.syntax.lexer.JavaDocLexer;
 import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer;
 import com.intellij.java.syntax.parser.JavaDocParser;
@@ -17,6 +18,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaDocElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,14 +27,21 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
-//todo remove and merge with standard
 /**
  * @see JavaDocSyntaxElementType
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             Use {@link com.intellij.psi.JavaDocTokenType} directly.
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public interface BasicJavaDocElementType {
   IElementType BASIC_DOC_TAG = new IJavaDocElementType("DOC_TAG");
   IElementType BASIC_DOC_INLINE_TAG = new IJavaDocElementType("DOC_INLINE_TAG");
   IElementType BASIC_DOC_METHOD_OR_FIELD_REF = new IJavaDocElementType("DOC_METHOD_OR_FIELD_REF");
+  IElementType BASIC_DOC_FRAGMENT_REF = new IJavaDocElementType("DOC_FRAGMENT_REF");
+  IElementType BASIC_DOC_FRAGMENT_NAME = new IJavaDocElementType("DOC_FRAGMENT_NAME");
   IElementType BASIC_DOC_PARAMETER_REF = new IJavaDocElementType("DOC_PARAMETER_REF");
   IElementType BASIC_DOC_TAG_VALUE_ELEMENT = new IJavaDocElementType("DOC_TAG_VALUE_ELEMENT");
   IElementType BASIC_DOC_SNIPPET_TAG = new IJavaDocElementType("DOC_SNIPPET_TAG");
@@ -57,6 +66,11 @@ public interface BasicJavaDocElementType {
     BASIC_DOC_REFERENCE_HOLDER, BASIC_DOC_TYPE_HOLDER, BASIC_DOC_COMMENT);
 
 
+  /**
+   * @deprecated Use {@link com.intellij.psi.impl.source.tree.JavaDocElementType.JavaDocCompositeElementType}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType, ParentProviderElementType {
     private final Supplier<? extends ASTNode> myConstructor;
     private final Set<IElementType> myParentElementTypes;
@@ -147,16 +161,19 @@ public interface BasicJavaDocElementType {
 
     @Override
     public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser);
+      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser, JavaDocLexer::new);
     }
 
     @Override
-    public boolean isParsable(final @NotNull CharSequence buffer, @NotNull Language fileLanguage, final @NotNull Project project) {
-      if (!StringUtil.startsWith(buffer, "/**") || !StringUtil.endsWith(buffer, "*/")) return false;
+    public boolean isReparseable(@NotNull ASTNode currentNode,
+                                 @NotNull CharSequence newText,
+                                 @NotNull Language fileLanguage,
+                                 @NotNull Project project) {
+      if (!StringUtil.startsWith(newText, "/**") || !StringUtil.endsWith(newText, "*/")) return false;
 
       LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
       JavaLexer lexer = new JavaLexer(level);
-      lexer.start(buffer);
+      lexer.start(newText);
       if (lexer.getTokenType() == JavaDocSyntaxElementType.DOC_COMMENT) {
         lexer.advance();
         return lexer.getTokenType() == null;

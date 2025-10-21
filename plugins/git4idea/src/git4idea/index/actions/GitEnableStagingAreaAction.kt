@@ -13,7 +13,7 @@ abstract class GitToggleStagingAreaAction(private val enable: Boolean) : DumbAwa
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null ||
-        ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod != GitVcs.getKey()) {
+        ProjectLevelVcsManager.getInstance(project).getSingleVCS()?.keyInstanceMethod != GitVcs.getKey()) {
       e.presentation.isEnabledAndVisible = false
     }
     super.update(e)

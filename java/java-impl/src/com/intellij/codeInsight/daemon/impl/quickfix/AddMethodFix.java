@@ -36,11 +36,11 @@ public class AddMethodFix extends PsiUpdateModCommandAction<PsiClass> {
     ContainerUtil.addAll(myExceptions, exceptions);
   }
 
-  private static @NotNull PsiMethod createMethod(final String methodText, final PsiClass implClass) {
+  private static @NotNull PsiMethod createMethod(@NotNull String methodText, @NotNull PsiClass implClass) {
     return JavaPsiFacade.getElementFactory(implClass.getProject()).createMethodFromText(methodText, implClass);
   }
 
-  private static PsiMethod reformat(Project project, PsiMethod result) throws IncorrectOperationException {
+  private static @NotNull PsiMethod reformat(@NotNull Project project, @NotNull PsiMethod result) throws IncorrectOperationException {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     result = (PsiMethod)codeStyleManager.reformat(result);
 

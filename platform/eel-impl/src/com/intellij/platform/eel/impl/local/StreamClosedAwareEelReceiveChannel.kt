@@ -35,5 +35,7 @@ internal class StreamClosedAwareEelReceiveChannel(
     }
   }
 
-  override suspend fun close(): Unit = delegate.close()
+  override suspend fun closeForReceive() {
+    delegate.closeForReceive()
+  }
 }

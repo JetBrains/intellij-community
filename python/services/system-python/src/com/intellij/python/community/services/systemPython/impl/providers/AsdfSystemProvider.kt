@@ -6,8 +6,8 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.python.community.services.shared.UICustomization
-import com.intellij.python.community.services.systemPython.PythonCommunityServicesSystemPythonIcons
+import com.jetbrains.python.PyToolUIInfo
+import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -56,9 +56,9 @@ private class AsdfSystemPythonProvider : SystemPythonProvider {
     return PyResult.success(pythons)
   }
 
-  override val uiCustomization: UICustomization?
+  override val uiCustomization: PyToolUIInfo?
     get() {
       // TODO: proper icon
-      return UICustomization(title = "asdf", icon = PythonCommunityServicesSystemPythonIcons.Asdf)
+      return PyToolUIInfo(toolName = "asdf", icon = PythonCommunityServicesSystemPythonIcons.Asdf)
     }
 }

@@ -99,6 +99,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     );
   }
 
+  public void testFlexibleConstructorBody() {
+    doTest(null,
+           new ParameterInfoImpl[]{
+             ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("0")
+           }, false
+    );
+  }
+
   public void testGenerateDelegate() {
     doTest(null,
            new ParameterInfoImpl[]{

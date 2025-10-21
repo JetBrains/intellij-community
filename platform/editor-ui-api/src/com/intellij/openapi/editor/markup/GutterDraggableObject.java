@@ -37,7 +37,7 @@ public interface GutterDraggableObject {
    * @return the cursor to show.
    * @deprecated override {@link #getCursor(int, VirtualFile, int)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default Cursor getCursor(int line, int actionId) {
     return DragSource.DefaultMoveDrop;
   }

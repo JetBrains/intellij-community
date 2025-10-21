@@ -40,7 +40,7 @@ class ConvertReferenceToLambdaInspection : IntentionBasedInspection<KtCallableRe
 )
 
 class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntention<KtCallableReferenceExpression>(
-    KtCallableReferenceExpression::class.java, KotlinBundle.lazyMessage("convert.reference.to.lambda")
+    KtCallableReferenceExpression::class.java, KotlinBundle.messagePointer("convert.reference.to.lambda")
 ) {
     override fun applyTo(element: KtCallableReferenceExpression, editor: Editor?) {
         Holder.applyTo(element)

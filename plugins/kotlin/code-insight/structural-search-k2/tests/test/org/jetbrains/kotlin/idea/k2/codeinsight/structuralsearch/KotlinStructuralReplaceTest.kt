@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch
 
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.structuralsearch.Matcher
 import com.intellij.structuralsearch.PatternContext
@@ -34,6 +36,10 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
 
     override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
+    override fun runInDispatchThread(): Boolean {
+        return false
+    }
+
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
@@ -52,7 +58,9 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
                 fillSearchCriteria(searchPattern)
                 patternContext = context
                 setFileType(KotlinFileType.INSTANCE)
-                scope = GlobalSearchScopes.openFilesScope(project)
+                scope = readAction {
+                    GlobalSearchScopes.openFilesScope(project)
+                }
             }
             val sink = async(Dispatchers.IO) {
                 val matcher = Matcher(project, matchOptions)
@@ -66,12 +74,14 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
                 StringToConstraintsTransformer.transformCriteria(replacePattern, matchOptions)
                 replacement = matchOptions.searchPattern
             }
-            val replacer = Replacer(project, replaceOptions)
-            val replacements: MutableList<ReplacementInfo> = SmartList()
-            sink.matches.mapTo(replacements, replacer::buildReplacement)
-            myFixture.project.executeWriteCommand("Structural Replace") { replacements.forEach(replacer::replace) }
-            NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-            assertEquals(result, myFixture.file.text)
+            invokeAndWaitIfNeeded {
+                val replacer = Replacer(project, replaceOptions)
+                val replacements: MutableList<ReplacementInfo> = SmartList()
+                sink.matches.mapTo(replacements, replacer::buildReplacement)
+                myFixture.project.executeWriteCommand("Structural Replace") { replacements.forEach(replacer::replace) }
+                NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+                assertEquals(result, myFixture.file.text)
+            }
         }
     }
 

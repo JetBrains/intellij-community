@@ -5,6 +5,7 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
+import com.intellij.cce.workspace.copy
 import java.io.File
 
 fun <T : EvaluationStrategy> List<EvaluationWorkspace>.buildMultipleEvaluationsConfig(

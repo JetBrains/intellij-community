@@ -4,17 +4,20 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.List;
 
@@ -57,6 +60,19 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
       ProcessHandler handler = descriptor.getProcessHandler();
       if (handler == null) return;
       handler.addProcessListener(new ProcessListener() {
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          String eventText = event.getText();
+          if (outputType == ProcessOutputTypes.STDERR || eventText.contains("[ERROR]")) {
+            MavenLog.LOG.warn(eventText);
+          }
+          else if (outputType == ProcessOutputTypes.SYSTEM) {
+            MavenLog.LOG.info(eventText);
+          }
+          else if (outputType == ProcessOutputTypes.STDOUT) {
+            MavenLog.LOG.trace(eventText);
+          }
+        }
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (event.getExitCode() == 0 && onComplete != null) {

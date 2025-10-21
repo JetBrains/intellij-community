@@ -1,8 +1,0 @@
-UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> Decompiled_Class: Boolean
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = Local) -> Kotlin_Light_Class:class Local: Local
-        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = Local) -> Kotlin_Light_Class:class Local: Local
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Variable: bar
-    UBinaryExpression (operator = ==) -> USimpleNameReferenceExpression (identifier = ==) -> Decompiled_Method: equals
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = Local) -> Kotlin_Light_Class:class Local: Local

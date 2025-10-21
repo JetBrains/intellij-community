@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.DifferentiateParameters;
+import org.jetbrains.jps.dependency.LogConsumer;
 import org.jetbrains.jps.dependency.NodeSource;
 
 import java.util.function.Predicate;
@@ -15,6 +16,7 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
   private boolean compiledWithErrors = false;
   private Predicate<? super NodeSource> myAffectionFilter = s -> true;
   private Predicate<? super NodeSource> myCurrentChunkFilter = s -> true;
+  private LogConsumer myLogConsumer = LogConsumer.EMPTY;
 
   private DifferentiateParametersBuilder(String sessionName) {
     mySessionName = sessionName;
@@ -50,6 +52,11 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
     return myCurrentChunkFilter;
   }
 
+  @Override
+  public @NotNull LogConsumer logConsumer() {
+    return myLogConsumer;
+  }
+
   public DifferentiateParameters get() {
     return this;
   }
@@ -68,7 +75,8 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
       .processConstantsIncrementally(params.isProcessConstantsIncrementally())
       .calculateAffected(params.isCalculateAffected())
       .withAffectionFilter(params.affectionFilter())
-      .withChunkStructureFilter(params.belongsToCurrentCompilationChunk());
+      .withChunkStructureFilter(params.belongsToCurrentCompilationChunk())
+      .withLogConsumer(params.logConsumer());
   }
 
   public static DifferentiateParameters withDefaultSettings() {
@@ -101,6 +109,11 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
 
   public DifferentiateParametersBuilder withChunkStructureFilter(Predicate<? super NodeSource> filter) {
     myCurrentChunkFilter = filter;
+    return this;
+  }
+
+  public DifferentiateParametersBuilder withLogConsumer(LogConsumer logConsumer) {
+    myLogConsumer = logConsumer;
     return this;
   }
 }

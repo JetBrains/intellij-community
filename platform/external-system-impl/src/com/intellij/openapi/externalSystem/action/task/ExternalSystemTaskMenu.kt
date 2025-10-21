@@ -2,7 +2,9 @@
 package com.intellij.openapi.externalSystem.action.task
 
 import com.intellij.execution.Executor
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector
@@ -11,7 +13,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 
 internal class ExternalSystemTaskMenu : DefaultActionGroup(), DumbAware {
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return super.getChildren(e)
 
     return Executor.EXECUTOR_EXTENSION_NAME.extensionList

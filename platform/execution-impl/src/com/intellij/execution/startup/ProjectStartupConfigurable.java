@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ChooseRunConfigurationManager;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -260,7 +261,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final List<ChooseRunConfigurationPopup.ItemWrapper<?>> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
-    var allSettings = ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
+    var allSettings = ChooseRunConfigurationManager.createSettingsList(myProject, new ExecutorProvider() {
       @Override
       public Executor getExecutor() {
         return executor;

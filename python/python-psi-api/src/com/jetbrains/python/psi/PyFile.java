@@ -110,7 +110,10 @@ public interface PyFile extends PyAstFile, PyElement, PsiFile, PyDocStringOwner,
    * Returns the sequential list of import statements in the beginning of the file.
    */
   @Override
-  List<PyImportStatementBase> getImportBlock();
+  default List<PyImportStatementBase> getImportBlock() {
+    //noinspection unchecked
+    return (List<PyImportStatementBase>)PyAstFile.super.getImportBlock();
+  }
 
   @Override
   default @Nullable PyStringLiteralExpression getDocStringExpression() {

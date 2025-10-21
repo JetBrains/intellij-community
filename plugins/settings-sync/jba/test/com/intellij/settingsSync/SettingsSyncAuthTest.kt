@@ -2,10 +2,8 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncMain
 import com.intellij.settingsSync.core.SettingsSyncSettings
-import com.intellij.settingsSync.core.SettingsSyncStatusTracker
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.CloudConfigServerCommunicator
 import com.intellij.settingsSync.jba.CloudConfigVersionContext
@@ -24,7 +22,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runCurrent
 import org.junit.jupiter.api.BeforeEach
 import org.mockito.Mockito.*
 import java.util.Date
@@ -73,9 +70,9 @@ internal class SettingsSyncAuthTest() : BasePlatformTestCase() {
         super.createCloudConfigClient(url, versionContext)
 
         return object : CloudConfigFileClientV2("http://localhost:7777/cloudconfig", Configuration(),
-                                                CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, CloudConfigVersionContext()) {
+                                                CloudConfigServerCommunicator.DUMMY_E_TAG_STORAGE, CloudConfigVersionContext()) {
           override fun getLatestVersion(file: String?): FileVersionInfo {
-            if (_currentIdTokenVar != "NEW-ID-TOKEN") {
+            if (currentIdTokenVar != "NEW-ID-TOKEN") {
               throw UnauthorizedException("Invalid credentials!!!")
             }
             return dummyFileVersionInfo()
@@ -101,7 +98,7 @@ internal class SettingsSyncAuthTest() : BasePlatformTestCase() {
 
     // Check that userId was updated in communicator
     communicator.checkServerState()
-    assertEquals("NEW-ID-TOKEN", communicator._currentIdTokenVar)
+    assertEquals("NEW-ID-TOKEN", communicator.currentIdTokenVar)
   }
 
   @Test
@@ -124,9 +121,9 @@ internal class SettingsSyncAuthTest() : BasePlatformTestCase() {
         super.createCloudConfigClient(url, versionContext)
 
         return object : CloudConfigFileClientV2("http://localhost:7777/cloudconfig", Configuration(),
-                                                CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, CloudConfigVersionContext()) {
+                                                CloudConfigServerCommunicator.DUMMY_E_TAG_STORAGE, CloudConfigVersionContext()) {
           override fun getLatestVersion(file: String?): FileVersionInfo {
-            if (_currentIdTokenVar != invalidToken) {
+            if (currentIdTokenVar != invalidToken) {
               fail("current token must be invalid!!")
             }
             throw UnauthorizedException("Invalid credentials!!!")

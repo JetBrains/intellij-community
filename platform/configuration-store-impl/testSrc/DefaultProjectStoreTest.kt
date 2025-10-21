@@ -106,7 +106,8 @@ class DefaultProjectStoreTest {
     moveComponentConfiguration(ProjectManager.getInstance().defaultProject, element, { "" }) {
       if (it == "workspace.xml") tempDir.resolve("test.iws") else { projectFile }
     }
-    assertThat(JDOMUtil.isEmpty(element)).isTrue()
+    assertThat(ProjectStorePathManager.getInstance().testStoreDirectoryExistsForProjectRoot(projectFile)).isTrue()
+    assertThat(element.isEmpty).isTrue()
     assertThat(tempDir.getDirectoryTree()).toMatchSnapshot(testData.resolve("testData1-ipr.txt"))
   }
 }

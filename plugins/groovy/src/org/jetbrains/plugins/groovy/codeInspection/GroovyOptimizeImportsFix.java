@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.codeInspection;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -95,10 +94,9 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
       }
     }
 
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myFile.getProject());
-    if (!codeAnalyzer.isHighlightingAvailable(myFile)) return false;
-
-    if (!codeAnalyzer.isErrorAnalyzingFinished(myFile)) return false;
+    if (!DaemonCodeAnalyzer.getInstance(myFile.getProject()).isHighlightingAvailable(myFile)) {
+      return false;
+    }
     Document myDocument = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
     boolean errors = containsErrorsPreventingOptimize(myFile, myDocument);
 

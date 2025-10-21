@@ -37,7 +37,7 @@ internal abstract class AbstractForbidRenamingSymbolByReferenceHandler : RenameH
 
     open fun shouldForbidRenamingFromJava(file: PsiFile, editor: Editor): Boolean = false
 
-    context(KaSession)
+    context(_: KaSession)
     abstract fun shouldForbidRenaming(symbol: KaSymbol): Boolean
 
     abstract fun getErrorMessage(): @DialogMessage String

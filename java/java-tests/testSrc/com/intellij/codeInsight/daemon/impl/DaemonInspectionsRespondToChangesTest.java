@@ -651,7 +651,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         @Override
         public void visitIdentifier(@NotNull PsiIdentifier identifier) {
           if (identifier.getText().contains("XXX")) {
-            holder.registerProblem(identifier.getContainingFile(),"blah", ProblemHighlightType.WARNING);
+            holder.registerProblem(identifier.getContainingFile(), "Blah", ProblemHighlightType.WARNING);
           }
         }
       };
@@ -800,7 +800,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
 
     AtomicBoolean fastToolFinished = new AtomicBoolean();
     // highlights all "xxx" comments, only when there are no comments after it
-    String fastToolText = "blah";
+    String fastToolText = "Blah";
     LocalInspectionTool fastTool = new MyInspectionBase() {
       @Override
       public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {

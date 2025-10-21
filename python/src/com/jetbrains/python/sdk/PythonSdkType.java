@@ -18,35 +18,39 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.progress.ModalTaskOwner;
+import com.intellij.platform.ide.progress.TaskCancellation;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.ExceptionFix;
 import com.intellij.remote.ext.LanguageCaseCollector;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
-import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
+import kotlin.coroutines.Continuation;
+import kotlin.jvm.functions.Function2;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -61,8 +65,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
+import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 
 /**
@@ -74,7 +80,7 @@ public final class PythonSdkType extends SdkType {
 
   @ApiStatus.Internal public static final @NotNull Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
 
-  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
+  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = Key.create("MOCK_PY_MARKER_KEY");
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
@@ -87,7 +93,7 @@ public final class PythonSdkType extends SdkType {
   private static final @NotNull String LEGACY_TARGET_PREFIX = "target://";
 
   public static PythonSdkType getInstance() {
-    return SdkType.findInstance(PythonSdkType.class);
+    return findInstance(PythonSdkType.class);
   }
 
   private PythonSdkType() {
@@ -96,7 +102,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public Icon getIcon() {
-    return PythonPsiApiIcons.Python;
+    return PythonParserIcons.PythonFile;
   }
 
   @Override
@@ -150,7 +156,19 @@ public final class PythonSdkType extends SdkType {
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           VirtualFile file = files[0];
-          if (!isLocatedInWsl(file) && !isLocalPathValid(file.toNioPath())) {
+
+          Boolean isValid = runWithModalProgressBlocking(
+            ModalTaskOwner.guess(), PyBundle.message("modal.progress.title.path.validation"), TaskCancellation.cancellable(),
+            new Function2<>() {
+              @Override
+              public Boolean invoke(CoroutineScope scope,
+                                    Continuation<? super Boolean> continuation) {
+                return isLocatedInWsl(file) || isLocalPathValid(file.toNioPath());
+              }
+            }
+          );
+
+          if (!isValid) {
             throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.selected", file.getName()));
           }
         }
@@ -176,17 +194,16 @@ public final class PythonSdkType extends SdkType {
     return true;
   }
 
+  @ApiStatus.Internal
   @Override
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
-    PyAddSdkDialog.show(project, null, Arrays.asList(sdkModel.getSdks()), sdk -> {
-      if (sdk != null) {
-        sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
-        sdkCreatedCallback.consume(sdk);
-      }
+    PyAddSdkDialog.show(project, null, sdk -> {
+      sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
+      sdkCreatedCallback.accept(sdk);
     });
   }
 
@@ -233,7 +250,7 @@ public final class PythonSdkType extends SdkType {
     final File virtualEnvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome);
     if (virtualEnvRoot != null) {
       final String path = FileUtil.getLocationRelativeToUserHome(virtualEnvRoot.getAbsolutePath());
-      return name + " virtualenv at " + path;
+      return name + " " + path;
     }
     else {
       return name;
@@ -415,7 +432,8 @@ public final class PythonSdkType extends SdkType {
       // TODO [targets] Cache version as for `PyRemoteSdkAdditionalDataBase`
       String versionString;
       try {
-        versionString = PyInterpreterVersionUtil.getInterpreterVersion((PyTargetAwareAdditionalData)sdkAdditionalData, null, true);
+        versionString =
+          PyInterpreterVersionUtil.getInterpreterVersionForJava((PyTargetAwareAdditionalData)sdkAdditionalData).toPythonVersion();
       }
       catch (Exception e) {
         versionString = "undefined";
@@ -534,7 +552,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   /**
-   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk)} instead
+   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(Sdk)} instead
    */
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {

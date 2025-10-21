@@ -294,7 +294,7 @@ public abstract class GridEditorPanelBase extends JPanel
     public void update(@NotNull AnActionEvent e) {
       DataGrid grid = getDataGrid(e.getDataContext());
       GridEditorPanel panel = grid == null ? null : myGetPanel.fun(grid);
-      e.getPresentation().setEnabled(panel != null && LookupManager.getActiveLookup(panel.getEditor()) == null);
+      e.getPresentation().setEnabled(panel != null && panel.getComponent().isEnabled() && LookupManager.getActiveLookup(panel.getEditor()) == null);
     }
 
     @Override

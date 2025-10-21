@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
@@ -34,6 +35,8 @@ import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
@@ -147,6 +150,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         if (multiline) top = gap; // do not center icon for multiline text fields
       }
       holder.bounds.y = bounds.y + top;
+
+      if (holder.iconButton != null) {
+        holder.iconButton.setBounds(holder.bounds);
+      }
     }
 
     if (!Objects.equals(c.getMargin(), margin))
@@ -196,6 +203,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     component.removeMouseMotionListener(handler);
     component.removePropertyChangeListener(handler);
     handler.uninstallListener(component.getDocument());
+
+    for (IconHolder holder : icons.values()) {
+      if (holder.iconButton instanceof IconButton iconButton) {
+        iconButton.removeListeners();
+      }
+    }
   }
 
   @Override
@@ -291,6 +304,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         setVariant(event.getNewValue());
       } else if (SEARCH_ICON.equals(event.getPropertyName())) {
         updateIcons();
+      }
+      else if ("enabled".equals(event.getPropertyName())) {
+        boolean enabled = Boolean.TRUE.equals(event.getNewValue());
+        for (IconHolder holder : icons.values()) {
+          if (holder.iconButton != null) {
+            holder.iconButton.setEnabled(enabled);
+          }
+        }
       }
     }
 
@@ -472,25 +493,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   private void paintHolder(@NotNull Graphics g, @NotNull IconHolder holder) {
-    boolean selected = holder.extension.isSelected();
-    if ((ExperimentalUI.isNewUI() || selected) && holder.isClickable() && holder.icon != AllIcons.Actions.CloseHovered) {
-      Color background;
-      if (selected) {
-        background = holder.hovered ? JBUI.CurrentTheme.SearchOption.BUTTON_SELECTED_HOVERED_BACKGROUND
-                                    : JBUI.CurrentTheme.SearchOption.BUTTON_SELECTED_BACKGROUND;
-      }
-      else {
-        background = holder.hovered ? JBUI.CurrentTheme.ActionButton.hoverBackground() : null;
-      }
-      if (background != null) {
-        GraphicsUtil.setupAAPainting(g);
-        int arc = DarculaUIUtil.BUTTON_ARC.get();
-        g.setColor(background);
-        g.fillRoundRect(holder.bounds.x, holder.bounds.y, holder.bounds.width, holder.bounds.height, arc, arc);
-      }
+    if (holder.iconButton != null) return;
+
+    holder.paintBackground(g, holder.bounds);
+    if (holder.icon != null) {
+      holder.icon.paintIcon(getComponent(), g, holder.bounds.x + (holder.bounds.width - holder.icon.getIconWidth()) / 2,
+                            holder.bounds.y + (holder.bounds.height - holder.icon.getIconHeight()) / 2);
     }
-    holder.icon.paintIcon(getComponent(), g, holder.bounds.x + (holder.bounds.width - holder.icon.getIconWidth()) / 2,
-                          holder.bounds.y + (holder.bounds.height - holder.icon.getIconHeight()) / 2);
   }
 
   /**
@@ -566,9 +575,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     if (!Objects.equals(this.variant, variant)) {
       this.variant = variant;
 
+      JTextComponent component = getComponent();
+      if (component != null) {
+        for (IconHolder holder : icons.values()) {
+          if (holder.iconButton instanceof IconButton iconButton) {
+            iconButton.removeListeners();
+            component.remove(iconButton);
+          }
+        }
+      }
+
       icons.clear();
       if (ExtendableTextComponent.VARIANT.equals(variant)) {
-        JTextComponent component = getComponent();
         if (component instanceof ExtendableTextComponent field) {
           for (Extension extension : field.getExtensions()) {
             if (extension != null) addExtension(extension);
@@ -590,7 +608,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected void addExtension(Extension extension) {
-    icons.put(extension.toString(), new IconHolder(extension));
+    IconHolder holder = new IconHolder(extension);
+    icons.put(extension.toString(), holder);
+
+    JTextComponent component = getComponent();
+    if (component != null && holder.iconButton != null) {
+      component.add(holder.iconButton);
+      holder.iconButton.setEnabled(component.isEnabled());
+    }
   }
 
   private void setMonospaced(Object value) {
@@ -619,14 +644,24 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     public boolean hovered;
     public Icon icon;
+    public @Nullable JButton iconButton;
 
     private IconHolder(Extension extension) {
       this.extension = extension;
+      if (extension.isFocusable() && Registry.is("text.field.extension.buttons.focusable", true)) {
+        iconButton = new IconButton(this);
+        iconButton.setToolTipText(extension.getTooltip());
+        iconButton.getAccessibleContext().setAccessibleName(extension.getTooltip());
+      }
       setIcon(extension.getIcon(false));
     }
 
     private boolean setIcon(Icon icon) {
       this.icon = icon;
+      if (iconButton != null) {
+        iconButton.setIcon(icon);
+      }
+
       Dimension size = extension.getButtonSize();
       int width;
       int height;
@@ -640,6 +675,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         height = size.height;
       }
 
+      // Adjust bounds for the focus border
+      if (iconButton != null) {
+        int lw = DarculaUIUtil.LW.get() * 2;
+        width += lw;
+        height += lw;
+      }
+
       if (bounds.width == width && bounds.height == height) {
         return false;
       }
@@ -650,6 +692,28 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     public boolean isClickable() {
       return null != extension.getActionOnClick();
+    }
+
+    private void paintBackground(Graphics g, Rectangle bounds) {
+      boolean selected = extension.isSelected();
+      if ((!ExperimentalUI.isNewUI() && !selected) || !isClickable() || icon == AllIcons.Actions.CloseHovered) {
+        return;
+      }
+
+      Color background;
+      if (selected) {
+        background = hovered ? JBUI.CurrentTheme.SearchOption.BUTTON_SELECTED_HOVERED_BACKGROUND
+                             : JBUI.CurrentTheme.SearchOption.BUTTON_SELECTED_BACKGROUND;
+      }
+      else {
+        background = hovered ? JBUI.CurrentTheme.ActionButton.hoverBackground() : null;
+      }
+      if (background != null) {
+        GraphicsUtil.setupAAPainting(g);
+        int arc = DarculaUIUtil.BUTTON_ARC.get();
+        g.setColor(background);
+        g.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
+      }
     }
   }
 
@@ -776,5 +840,52 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       return isSearchField(c) && !searchPopupDisabled;
     }
     return false;
+  }
+
+  private static class IconButton extends JButton {
+    private final IconHolder myIconHolder;
+    private final ActionListener myActionListener;
+
+    private IconButton(IconHolder holder) {
+      myIconHolder = holder;
+      setOpaque(false);
+      setContentAreaFilled(false);
+      setBorderPainted(false);
+      myActionListener = e -> {
+        Runnable action = myIconHolder.extension.getActionOnClick();
+        if (action != null) action.run();
+      };
+      addActionListener(myActionListener);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      Rectangle r = new Rectangle(0, 0, getWidth(), getHeight());
+      myIconHolder.paintBackground(g, r);
+
+      if (hasFocus()) {
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+          g2.setColor(JBUI.CurrentTheme.ActionButton.focusedBorder());
+          float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+          float lw = DarculaUIUtil.LW.getFloat();
+          Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+          border.append(new RoundRectangle2D.Float(r.x, r.y, r.width, r.height, arc, arc), false);
+          border.append(new RoundRectangle2D.Float(r.x + lw, r.y + lw, r.width - lw * 2, r.height - lw * 2, arc - lw, arc - lw), false);
+          g2.fill(border);
+        }
+        finally {
+          g2.dispose();
+        }
+      }
+
+      super.paintComponent(g);
+    }
+
+    private void removeListeners() {
+      removeActionListener(myActionListener);
+    }
   }
 }

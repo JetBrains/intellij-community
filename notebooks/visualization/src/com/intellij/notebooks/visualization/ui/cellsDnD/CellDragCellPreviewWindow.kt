@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Point
@@ -16,9 +17,8 @@ import javax.swing.JWindow
 class CellDragCellPreviewWindow(@Nls private val text: String, private val editor: EditorImpl) : JWindow() {
   init {
     val label = JLabel(text).apply {
-      val fontsize = editor.colorsScheme.editorFontSize
-      font = editor.colorsScheme.getFont(EditorFontType.PLAIN).deriveFont(fontsize)
-      border = BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
+      font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
+      border = JBUI.Borders.empty(PADDING)
       foreground = editor.colorsScheme.defaultForeground
     }
 
@@ -26,8 +26,6 @@ class CellDragCellPreviewWindow(@Nls private val text: String, private val edito
       layout = BorderLayout()
       background = editor.colorsScheme.defaultBackground
       border = BorderFactory.createLineBorder(JBColor.LIGHT_GRAY, BORDER_WIDTH, true)
-      opacity = OPACITY
-
       add(label, BorderLayout.CENTER)
     }
 
@@ -42,7 +40,6 @@ class CellDragCellPreviewWindow(@Nls private val text: String, private val edito
   companion object {
     private val PADDING = JBUIScale.scale(8)
     private val BORDER_WIDTH = JBUIScale.scale(1)
-    private const val OPACITY = 0.8f
     private val CURSOR_OFFSET = JBUIScale.scale(5)
   }
 }

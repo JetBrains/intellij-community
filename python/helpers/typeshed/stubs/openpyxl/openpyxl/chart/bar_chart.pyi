@@ -52,12 +52,7 @@ class BarChart(_BarChartBase):
     __elements__: ClassVar[tuple[str, ...]]
     legend: Incomplete
     def __init__(
-        self,
-        gapWidth: int = 150,
-        overlap: Incomplete | None = None,
-        serLines: ChartLines | None = None,
-        extLst: Unused = None,
-        **kw,
+        self, gapWidth: int = 150, overlap=None, serLines: ChartLines | None = None, extLst: Unused = None, **kw
     ) -> None: ...
 
 class BarChart3D(_BarChartBase, _3DBase):

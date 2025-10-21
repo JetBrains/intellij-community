@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.java.dev">
+<idea-plugin visibility="internal" package="com.intellij.java.dev">
   <resource-bundle>messages.JavaDevBundle</resource-bundle>
 
   <dependencies>

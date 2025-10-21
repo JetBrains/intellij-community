@@ -274,7 +274,7 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
                    public static void main(String[] args) {
                     Object aa = new Object()
                     assert aa instanceof String
-                    a<caret>a
+                    a<caret>a.hashCode()
                    }
                  }
              """, "java.lang.String");
@@ -286,7 +286,7 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
                    public static void main(String[] args) {
                     def aa = new Object()
                     assert aa instanceof String
-                    a<caret>a
+                    a<caret>a.hashCode()
                    }
                  }
              """, "java.lang.String");

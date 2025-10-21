@@ -1,0 +1,85 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.sh.core"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.spellchecker"/>
+  </dependencies>
+
+  <resource-bundle>messages.ShBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runMarkerContributionAdditionalCondition"
+                    interface="com.intellij.sh.run.ShRunnerAdditionalCondition"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
+                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport" />
+    <applicationService serviceInterface="com.intellij.sh.formatter.ShFormatterDownloader"
+                        serviceImplementation="com.intellij.sh.backend.formatter.ShBackendFormatterDownloader" />
+
+    <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.backend.ShUrlReferenceContributor"/>
+    <resolveScopeProvider implementation="com.intellij.sh.psi.impl.ShResolveScopeProvider"/>
+    <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.backend.ShStructureViewFactory"/>
+    <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShFindUsagesProvider"/>
+    <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.backend.ShDocumentationProvider"/>
+    <lang.elementManipulator forClass="com.intellij.sh.psi.ShLiteral" implementationClass="com.intellij.sh.psi.manipulator.ShLiteralManipulator" />
+    <lang.floatingToolbar language="Shell Script" minimal="true"/>
+    <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>
+    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.sh.backend.run.ShRunConfigurationProducer"/>
+    <programRunner implementation="com.intellij.sh.backend.run.ShRunProgramRunner"/>
+    <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
+    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.backend.run.ShRunLineMarkerContributor"/>
+    <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.backend.spellchecker.ShSpellcheckingStrategy"/>
+    <editorNotificationProvider implementation="com.intellij.sh.backend.shellcheck.ShellcheckSetupNotificationProvider"/>
+    <formattingService implementation="com.intellij.sh.backend.formatter.ShExternalFormatter"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.sh.backend.highlighting.ShOccurrencesHighlightingFactory"/>
+    <fileDocumentManagerListener implementation="com.intellij.sh.backend.formatter.ShLineEndingsAdapter"/>
+    <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckExternalAnnotator"/>
+    <localInspection language="Shell Script" shortName="ShellCheck" enabledByDefault="true"
+                     bundle="messages.ShBundle" groupKey="sh.shell.script" key="display.name.shell.check"
+                     level="ERROR" unfair="true" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckInspection"/>
+    <virtualFileCustomDataProvider implementation="com.intellij.sh.codeStyle.ShCodeStyleSettingsCustomDataSynchronizer"/>
+    <completion.contributor id="shShebang" language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShShebangCompletionContributor"
+                            order="first"/>
+    <completion.contributor id="shFilePathCompletionContributor" language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShFilePathCompletionContributor"
+                            order="after shShebang"/>
+    <completion.contributor id="shCommand" language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShCommandCompletionContributor"
+                            order="after shFilePathCompletionContributor"/>
+    <completion.contributor language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShKeywordCompletionContributor"
+                            order="after shCommand"/>
+    <intentionAction>
+      <language>Shell Script</language>
+      <className>com.intellij.sh.backend.ShExplainShellIntention</className>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>Shell Script</language>
+      <className>com.intellij.sh.backend.rename.ShRenameAllOccurrencesIntention</className>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
+    </intentionAction>
+    <renameHandler implementation="com.intellij.sh.backend.rename.ShRenameHandler"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScriptHidden.xml" hidden="true"/>
+    <liveTemplateContext contextId="SHELL_SCRIPT" implementation="com.intellij.sh.backend.template.ShContextType"/>
+  </extensions>
+
+  <actions>
+    <action id="runShellFileAction" class="com.intellij.sh.backend.run.ShRunFileAction" use-shortcut-of="RunClass"/>
+    <group id="ShGenerateGroup">
+      <action id="ShGenerateForLoop" class="com.intellij.sh.backend.actions.ShGenerateForLoop"/>
+      <action id="ShGenerateWhileLoop" class="com.intellij.sh.backend.actions.ShGenerateWhileLoop"/>
+      <action id="ShGenerateUntilLoop" class="com.intellij.sh.backend.actions.ShGenerateUntilLoop"/>
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
+  </actions>
+</idea-plugin>

@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -29,6 +28,7 @@ import com.intellij.util.progress.sleepCancellable
 import java.io.File
 import java.nio.file.Paths
 
+// TODO rewrite without blocking
 class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
   init {
     TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
@@ -126,10 +126,10 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
     FileEditorManager.getInstance(project).closeFile(virtualFile)
   }
 
-  override fun optimiseImports(file: String) {
+  override suspend fun optimiseImports(file: String) {
     LOG.info("Optimise imports in file: $file")
     val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(fullPath(file)))!!
-    return runBlockingCancellable { ImportOptimiser.optimiseImports(project, virtualFile) }
+    return ImportOptimiser.optimiseImports(project, virtualFile)
   }
 
   override fun isOpen(file: String): Boolean = readActionInSmartMode(project) {

@@ -18,7 +18,7 @@ class ComponentWithIconHasNonDefaultAccessibleNameInspection : UiInspectorAccess
       is SimpleColoredComponent -> Triple(accessible.icon, accessible.toString(), accessible.accessibleContext?.accessibleName)
       else -> return true
     }
-    if (icon == null || text.isNullOrEmpty() || accessibleName == null) return true
+    if (icon == null || icon.iconWidth == 0 || icon.iconHeight == 0 || text.isNullOrEmpty() || accessibleName == null) return true
     return accessibleName != text
   }
 }

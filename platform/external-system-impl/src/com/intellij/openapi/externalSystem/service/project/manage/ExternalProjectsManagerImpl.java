@@ -37,7 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -109,6 +109,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
       });
   }
 
+  @RequiresBlockingContext
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
     return (ExternalProjectsManagerImpl)ExternalProjectsManager.getInstance(project);
   }
@@ -124,9 +125,10 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   }
 
   public void setStoreExternally(boolean value) {
-    ExternalStorageConfigurationManager externalStorageConfigurationManager =
-      ExternalStorageConfigurationManager.getInstance(myProject);
-    if (externalStorageConfigurationManager.isEnabled() == value) return;
+    ExternalStorageConfigurationManager externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(myProject);
+    if (externalStorageConfigurationManager.isEnabled() == value) {
+      return;
+    }
     externalStorageConfigurationManager.setEnabled(value);
 
     // force re-save
@@ -304,12 +306,11 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
 
   @ApiStatus.Internal
   @Override
-  @RequiresReadLock
   public @NotNull ExternalProjectsState getState() {
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
       if (externalProjectsView instanceof ExternalProjectsViewImpl) {
-        final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
-        final ExternalProjectsState.State state = myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId());
+        ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
+        ExternalProjectsState.State state = myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId());
         assert state != null;
         state.setProjectsViewState(externalProjectsViewState);
       }

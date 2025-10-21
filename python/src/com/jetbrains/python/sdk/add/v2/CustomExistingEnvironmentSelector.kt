@@ -4,9 +4,8 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.util.notEqualsTo
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -24,33 +23,36 @@ import java.util.*
 
 
 @Internal
-internal abstract class CustomExistingEnvironmentSelector(
+internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
   private val name: String,
-  model: PythonMutableTargetAddInterpreterModel,
+  model: PythonMutableTargetAddInterpreterModel<P>,
   private val module: Module?,
-) : PythonExistingEnvironmentConfigurator(model) {
+) : PythonExistingEnvironmentConfigurator<P>(model) {
 
-  private lateinit var comboBox: PythonInterpreterComboBox
-  private val existingEnvironments: MutableStateFlow<List<PythonSelectableInterpreter>?> = MutableStateFlow(null)
-  protected val selectedEnv: ObservableMutableProperty<PythonSelectableInterpreter?> = propertyGraph.property(null)
+  private lateinit var comboBox: PythonInterpreterComboBox<P>
+  private lateinit var executablePath: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
+
+  private val existingEnvironments: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
+  protected val selectedEnv: ObservableMutableProperty<PythonSelectableInterpreter<P>?> = propertyGraph.property(null)
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
-      executableSelector(
-        executable = executable,
+      executablePath = validatablePathField(
+        fileSystem = model.fileSystem,
+        pathValidator = toolState,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", name),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", name),
-      ).component
+      )
 
-      val nameTitle = name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
       comboBox = pythonInterpreterComboBox(
-        title = message("sdk.create.custom.existing.env.title", nameTitle),
+        model.fileSystem,
+        title = message("sdk.create.custom.existing.env.title"),
         selectedSdkProperty = selectedEnv,
         validationRequestor = validationRequestor,
-        onPathSelected = { path -> addEnvByPath(path) }
+        onPathSelected = model::addManuallyAddedPythonNotNecessarilySystem,
       ) {
-        visibleIf(executable.notEqualsTo(""))
+        visibleIf(toolState.backProperty.transform { it?.validationResult?.successOrNull != null })
       }
     }
   }
@@ -65,11 +67,12 @@ internal abstract class CustomExistingEnvironmentSelector(
       }
     }
 
+    executablePath.initialize(scope)
     comboBox.initialize(
       scope = scope,
       flow = existingEnvironments.map { existing ->
         existing ?: return@map null
-        val withUniquePath = existing.distinctBy { interpreter ->  interpreter.homePath }
+        val withUniquePath = existing.distinctBy { interpreter -> interpreter.homePath }
         sortForExistingEnvironment(withUniquePath, module)
       }
     )
@@ -87,13 +90,13 @@ internal abstract class CustomExistingEnvironmentSelector(
     )
   }
 
-  private fun addEnvByPath(python: VanillaPythonWithLanguageLevel): PythonSelectableInterpreter {
-    val interpreter = ManuallyAddedSelectableInterpreter(python)
-    existingEnvironments.value = (existingEnvironments.value ?: emptyList()) + interpreter
-    return interpreter
-  }
+  //private fun addEnvByPath(python: VanillaPythonWithLanguageLevel): PythonSelectableInterpreter {
+  //  val interpreter = ManuallyAddedSelectableInterpreter(python)
+  //  existingEnvironments.value = (existingEnvironments.value ?: emptyList()) + interpreter
+  //  return interpreter
+  //}
 
-  internal abstract val executable: ObservableMutableProperty<String>
+  internal abstract val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>>
   internal abstract val interpreterType: InterpreterType
-  internal abstract suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter>
+  internal abstract suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>>
 }

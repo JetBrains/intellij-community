@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.commons.codec` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "codec_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "codec",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":codec_resources"],
+  exports = ["@lib//:commons-codec"],
+  runtime_deps = ["@lib//:commons-codec"]
+)
+### auto-generated section `build intellij.libraries.commons.codec` end

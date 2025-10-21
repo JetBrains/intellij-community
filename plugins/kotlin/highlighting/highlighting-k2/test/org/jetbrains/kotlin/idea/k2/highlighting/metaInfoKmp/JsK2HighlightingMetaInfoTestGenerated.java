@@ -59,6 +59,11 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
         public void testMppIsNotEnabled() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
         }
+
+        @TestMetadata("uselessCast.kt")
+        public void testUselessCast() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/uselessCast.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -212,6 +217,16 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Invokes.kt");
         }
 
+        @TestMetadata("kt77707.kt")
+        public void testKt77707() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/kt77707.kt");
+        }
+
+        @TestMetadata("Redundant.kt")
+        public void testRedundant() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Redundant.kt");
+        }
+
         @TestMetadata("Unstable_explicitReceiver.kt")
         public void testUnstable_explicitReceiver() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
@@ -309,6 +324,21 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
         @TestMetadata("Labels.kt")
         public void testLabels() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/Labels.kt");
+        }
+
+        @TestMetadata("mismatchPackageDirectory.kt")
+        public void testMismatchPackageDirectory() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectory.kt");
+        }
+
+        @TestMetadata("mismatchPackageDirectoryFileLevelProblem.kt")
+        public void testMismatchPackageDirectoryFileLevelProblem() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblem.kt");
+        }
+
+        @TestMetadata("mismatchPackageDirectoryFileLevelProblemDeclarations.kt")
+        public void testMismatchPackageDirectoryFileLevelProblemDeclarations() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblemDeclarations.kt");
         }
 
         @TestMetadata("NamedArguments.kt")

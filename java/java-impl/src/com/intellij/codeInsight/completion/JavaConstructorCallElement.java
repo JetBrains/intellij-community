@@ -103,7 +103,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
       }
     }
     if (callExpression != null) {
-      JavaMethodCallElement.showParameterHints(this, context, myConstructor, callExpression);
+      JavaMethodCallInsertHandler.showParameterHints(this, context, myConstructor, callExpression);
     }
   }
 

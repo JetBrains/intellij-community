@@ -6,6 +6,8 @@ import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.PlatformUtils.PLATFORM_PREFIX_KEY;
+
 @Internal
 public final class AppModeAssertions {
 
@@ -74,7 +76,10 @@ public final class AppModeAssertions {
   static final class AppModeAssertionError extends AssertionError {
 
     AppModeAssertionError(@NotNull String expectedMode) {
-      super("The operations is allowed only in " + expectedMode);
+      super("The operations is allowed only in " + expectedMode +
+            "; Platform prefix: " + System.getProperty(PLATFORM_PREFIX_KEY, "not defined") +
+            "; getPlatformPrefix: " + PlatformUtils.getPlatformPrefix()
+      );
     }
   }
 }

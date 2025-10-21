@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -58,10 +59,16 @@ class OutputDirectoriesInProjectFileIndexTest {
     module2Dir = projectModel.baseProjectDir.newVirtualDirectory("module1/module2")
     module1 = projectModel.createModule("module1")
     module2 = projectModel.createModule("module2")
-    compilerProjectExtension.compilerOutputUrl = outputDir.url
+    setCompilerOutput(outputDir.url)
     PsiTestUtil.addContentRoot(module1, module1Dir)
     PsiTestUtil.addSourceRoot(module1, srcDir1)
     PsiTestUtil.addContentRoot(module2, module2Dir)
+  }
+
+  private fun setCompilerOutput(outputDirUrl: String){
+    runWriteActionAndWait {
+      compilerProjectExtension.compilerOutputUrl = outputDirUrl
+    }
   }
 
   @Test
@@ -87,7 +94,7 @@ class OutputDirectoriesInProjectFileIndexTest {
 
     // project output inside module content shouldn't be projectExcludeRoot
     var projectOutputUnderContent = projectModel.baseProjectDir.newVirtualDirectory("module1/projectOutputUnderContent")
-    compilerProjectExtension.compilerOutputUrl = projectOutputUnderContent.url
+    setCompilerOutput(projectOutputUnderContent.url)
     fireRootsChanged()
     fileIndex.assertScope(outputDir, NOT_IN_PROJECT)
     fileIndex.assertInModule(projectOutputUnderContent, module1, module1Dir, EXCLUDED)
@@ -104,13 +111,13 @@ class OutputDirectoriesInProjectFileIndexTest {
     val output2 = projectModel.baseProjectDir.newVirtualDirectory("module1/output2")
     fileIndex.assertInModule(output1, module1, module1Dir)
     fileIndex.assertInModule(output2, module1, module1Dir)
-    
-    compilerProjectExtension.compilerOutputUrl = output1.url
+
+    setCompilerOutput(output1.url)
     fireRootsChanged()
     fileIndex.assertInModule(output1, module1, module1Dir, EXCLUDED)
     fileIndex.assertInModule(output2, module1, module1Dir)
-    
-    compilerProjectExtension.compilerOutputUrl = output2.url
+
+    setCompilerOutput(output2.url)
     fireRootsChanged()
     fileIndex.assertInModule(output1, module1, module1Dir)
     fileIndex.assertInModule(output2, module1, module1Dir, EXCLUDED)
@@ -124,8 +131,8 @@ class OutputDirectoriesInProjectFileIndexTest {
     fileIndex.assertInModule(projectOutput, module1, module1Dir)
     fileIndex.assertInModule(module2Output, module1, module1Dir)
     fileIndex.assertInModule(module2TestOutput, module2, module2Dir)
-    
-    compilerProjectExtension.compilerOutputUrl = projectOutput.url
+
+    setCompilerOutput(projectOutput.url)
     PsiTestUtil.setCompilerOutputPath(module2, module2Output.url, false)
     PsiTestUtil.setCompilerOutputPath(module2, module2TestOutput.url, true)
     PsiTestUtil.setExcludeCompileOutput(module2, true)

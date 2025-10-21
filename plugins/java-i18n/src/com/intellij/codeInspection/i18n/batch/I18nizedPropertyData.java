@@ -8,11 +8,11 @@ public record I18nizedPropertyData<D>(@NotNull String key, @NotNull String value
     this(key, value, contextData, false);
   }
 
-  public I18nizedPropertyData<D> changeKey(@NotNull String newKey) {
+  @NotNull I18nizedPropertyData<D> changeKey(@NotNull String newKey) {
     return new I18nizedPropertyData<>(newKey, value, contextData, markAsNonNls);
   }
 
-  public I18nizedPropertyData<D> setMarkAsNonNls(boolean markAsNonNls) {
+  @NotNull I18nizedPropertyData<D> setMarkAsNonNls(boolean markAsNonNls) {
     return new I18nizedPropertyData<>(key, value, contextData, markAsNonNls);
   }
 }

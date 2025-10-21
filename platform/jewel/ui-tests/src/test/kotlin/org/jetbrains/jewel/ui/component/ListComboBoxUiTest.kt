@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -17,12 +18,14 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -42,8 +45,13 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
 import junit.framework.TestCase.assertEquals
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.styling.default
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
+import org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics
+import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.theme.comboBoxStyle
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -901,6 +909,201 @@ class ListComboBoxUiTest {
         popupMenu.performKeyPress(Key.Escape)
     }
 
+    @Test
+    fun `popup width equals combobox width when nothing is set`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+        composeRule.waitForIdle()
+
+        // The popup should have the same width as the combobox (200dp)
+        popupMenu.assertWidthIsEqualTo(200.dp)
+    }
+
+    @Test
+    fun `popup can have a width that is bigger than the combo box`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupWidth = 500.dp,
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the width specified in popupModifier (500dp)
+        popupMenu.assertWidthIsEqualTo(500.dp)
+    }
+
+    @Test
+    fun `popup cannot be smaller than the combo box width when setting maxPopupWidth to a smaller value`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                    // Will be ignored as it cannot be smaller than the combobox width
+                    maxPopupHeight = 100.dp,
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        popupMenu.assertWidthIsEqualTo(200.dp)
+    }
+
+    @Test
+    fun `popup cannot be smaller than the combo box width by setting width in the popup modifier`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                    // Will be ignored as it cannot be smaller than the combobox width
+                    popupModifier = Modifier.width(100.dp),
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        popupMenu.assertWidthIsEqualTo(200.dp)
+    }
+
+    @Test
+    fun `popup max height from parameters should be respected`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = List(10) { comboBoxItems }.flatten(),
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    style =
+                        ComboBoxStyle(
+                            colors = JewelTheme.comboBoxStyle.colors,
+                            metrics = ComboBoxMetrics.default(maxPopupHeight = 200.dp), // Small size on theme
+                            icons = JewelTheme.comboBoxStyle.icons,
+                        ),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupHeight = 500.dp,
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        popupMenu.assertHeightIsEqualTo(500.dp)
+    }
+
+    @Test
+    fun `commit mapped selection to external on popup close after delete and re-add`() {
+        val focusRequester = FocusRequester()
+        // Hoist states outside composition to mutate during the test
+        var items by mutableStateOf((1..5).map { "Item $it" })
+        var selectedIndex by mutableIntStateOf(2) // start at "Item 3"
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = items,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { selectedIndex = it },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    // Use item text as key to allow mapping across re-adds
+                    itemKeys = { _: Int, item: String -> item },
+                )
+            }
+        }
+
+        // Focus and open popup
+        focusRequester.requestFocus()
+        comboBox.assertIsDisplayed().assertIsFocused().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // Simulate delete + re-add while popup is open
+        composeRule.runOnUiThread { items = emptyList() }
+        composeRule.waitForIdle()
+        composeRule.runOnUiThread { items = (1..5).map { "Item $it" } }
+        composeRule.waitForIdle()
+
+        // Drive: Down then Enter
+        comboBox.performKeyPress(Key.DirectionDown, rule = composeRule)
+        comboBox.performKeyPress(Key.Enter, rule = composeRule)
+
+        // Popup should close and selection should advance to Item 4 (index 3)
+        popupMenu.assertDoesNotExist()
+        assertEquals(3, selectedIndex)
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 4", includeEditableText = false)
+    }
+
+    @Test
+    fun `external selection is reconciled to mapped keys on popup close when changed programmatically while visible`() {
+        val focusRequester = FocusRequester()
+        val items by mutableStateOf((1..5).map { "Item $it" })
+        var selectedIndex by mutableIntStateOf(2) // start at "Item 3"
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = items,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { selectedIndex = it },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    itemKeys = { _: Int, item: String -> item },
+                )
+            }
+        }
+
+        // Focus and open popup
+        focusRequester.requestFocus()
+        comboBox.assertIsDisplayed().assertIsFocused().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // Programmatic external change while popup is visible (should be gated by ListComboBoxImpl)
+        composeRule.runOnUiThread { selectedIndex = 3 } // "Item 4"
+        composeRule.waitForIdle()
+
+        // Close without selecting anything from the popup so that commit-on-close logic reconciles divergence
+        comboBox.performKeyPress(Key.Enter, rule = composeRule)
+
+        // After close, external selection should be reconciled to mapped keys (back to index 2 -> "Item 3")
+        popupMenu.assertDoesNotExist()
+        assertEquals(2, selectedIndex)
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 3", includeEditableText = false)
+    }
+
     private fun editableListComboBox(): SemanticsNodeInteraction {
         val focusRequester = FocusRequester()
         composeRule.setContent {
@@ -985,7 +1188,7 @@ class ListComboBoxUiTest {
             "Laughter",
             "Whisper",
             "Ocean",
-            "Serendipity lorem ipsum",
+            "Serendipity lorem ipsum dolor sit amet consectetur",
             "Umbrella",
             "Joy",
         )

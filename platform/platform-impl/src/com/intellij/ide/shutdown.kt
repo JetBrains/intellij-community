@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.isCoroutineDumpEnabled
 import com.intellij.openapi.application.ApplicationManager
@@ -22,6 +24,7 @@ import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import javax.swing.SwingUtilities
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
@@ -30,10 +33,12 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 
 // todo convert ApplicationImpl and IdeEventQueue to kotlin
 
-internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
+internal fun cancelAndJoinBlocking(application: ApplicationImpl, exitContext: CoroutineContext) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
-  cancelAndJoinBlocking(application.getCoroutineScope(), debugString = "Application $application") { containerJob, dumpJob ->
+  cancelAndJoinBlocking(application.getCoroutineScope(),
+                        debugString = "Application $application",
+                        ourOwnJob = exitContext[Job]) { containerJob, dumpJob ->
     containerJob.invokeOnCompletion {
       // Unblock `getNextEvent()` in case it's blocked.
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
@@ -59,16 +64,19 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
 }
 
 internal fun cancelAndJoinBlocking(project: ProjectImpl) {
-  cancelAndJoinBlocking(project.getCoroutineScope(), debugString = "Project $project") { job, _ ->
+  cancelAndJoinBlocking(project.getCoroutineScope(),
+                        debugString = "Project $project") { job, _ ->
     runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
       job.join()
     }
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal fun cancelAndJoinBlocking(
   containerScope: CoroutineScope,
   debugString: String,
+  ourOwnJob: Job? = currentThreadContext()[Job],
   joinBlocking: (containerJob: Job, dumpJob: Job) -> Unit,
 ) {
   val containerJob = containerScope.coroutineContext.job
@@ -78,6 +86,14 @@ internal fun cancelAndJoinBlocking(
     LOG.trace("$debugString: scope is already completed")
     return
   }
+
+  if (ourOwnJob != null) {
+    val uroboros = generateSequence(ourOwnJob) { it.parent }.any { job -> job == containerJob }
+    if (uroboros) {
+      LOG.error("$debugString: attempt to synchronously wait our own completion", Throwable())
+    }
+  }
+
   LOG.trace("$debugString: waiting for scope completion")
   @OptIn(DelicateCoroutinesApi::class)
   val dumpJob = GlobalScope.launch(@OptIn(IntellijInternalApi::class) blockingDispatcher) {

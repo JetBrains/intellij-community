@@ -77,6 +77,7 @@ internal class SearchEverywhereTabTest : BasePlatformTestCase() {
    return SearchEverywhereTab.allTabs
      .asSequence()
      .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
+     .filter { it.isExperimentEnabled }
      .associateWith { tab ->
        tab.experiments.firstNotNullOfOrNull { (groupNumber, experimentType) ->
          if (experimentType is ActiveExperiment && experimentCondition(experimentType)) {

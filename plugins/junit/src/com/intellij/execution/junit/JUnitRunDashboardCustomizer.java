@@ -4,7 +4,6 @@ package com.intellij.execution.junit;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -19,9 +18,8 @@ public final class JUnitRunDashboardCustomizer extends RunDashboardCustomizer {
   }
 
   @Override
-  public @Nullable PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
-    RunConfiguration runConfiguration = node.getConfigurationSettings().getConfiguration();
-    if (!(runConfiguration instanceof JUnitConfiguration jUnitConfiguration)) return null;
+  public @Nullable PsiElement getPsiElement(@NotNull RunConfiguration configuration) {
+    if (!(configuration instanceof JUnitConfiguration jUnitConfiguration)) return null;
 
     String runClassName = jUnitConfiguration.getRunClass();
     if (runClassName == null) return null;

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.TestInfo
 import java.io.File
 import java.lang.reflect.Method
 
-abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBaseTest() {
+abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBaseTest() {
 
     protected open val filesBasedTest: Boolean = true
 
@@ -128,6 +128,19 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 setProjectName("version-catalogs-kotlin-dsl")
                 includeBuild("includedBuild1")
                 includeBuild("includedBuildWithoutSettings")
+                addCode(
+                    $$"""
+                    fun includeSubprojectsDynamically(path: String) {
+                        val dirsWithBuildScripts = file(path).listFiles()
+                            ?.filter { File(it, "build.gradle.kts").exists() }
+                        dirsWithBuildScripts?.forEach { subproject ->
+                            val relativePath = subproject.relativeTo(rootDir).path
+                            include(":${relativePath.replace('/', ':')}")
+                        }
+                    }
+                    includeSubprojectsDynamically("subprojectsDir")
+                    """.trimIndent()
+                )
             }
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinDsl()
@@ -145,6 +158,11 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 some_test-bundle = [ "some_test-library" ]
                 """.trimIndent()
             )
+            // subprojects files
+            withBuildFile(gradleVersion, "subprojectsDir/subproject1", gradleDsl = GradleDsl.KOTLIN) {
+                withKotlinDsl()
+                withMavenCentral()
+            }
             // included build files
             withSettingsFile(gradleVersion, "includedBuild1", gradleDsl = GradleDsl.KOTLIN) { }
             withBuildFile(gradleVersion, "includedBuild1", gradleDsl = GradleDsl.KOTLIN) {

@@ -29,7 +29,7 @@ class IgnoredError(Serialisable):
     calculatedColumn: Bool[Literal[True]]
     def __init__(
         self,
-        sqref: Incomplete | None = None,
+        sqref=None,
         evalError: _ConvertibleToBool | None = False,
         twoDigitTextYear: _ConvertibleToBool | None = False,
         numberStoredAsText: _ConvertibleToBool | None = False,

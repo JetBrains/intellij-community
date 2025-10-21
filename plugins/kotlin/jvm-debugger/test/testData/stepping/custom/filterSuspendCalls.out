@@ -1,9 +1,9 @@
-LineBreakpoint created at filterSuspendCalls.kt:12
+LineBreakpoint created at filterSuspendCalls.kt:13
 Run Java
 Connected to the target VM
-filterSuspendCalls.kt:12
-filterSuspendCalls.kt:5
-filterSuspendCalls.kt:12
+filterSuspendCalls.kt:13
+filterSuspendCalls.kt:6
+filterSuspendCalls.kt:13
 Disconnected from the target VM
 
 Process finished with exit code 0

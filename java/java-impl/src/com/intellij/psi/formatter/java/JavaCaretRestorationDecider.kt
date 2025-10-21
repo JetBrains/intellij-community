@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiLiteralExpression
 
-class JavaCaretRestorationDecider : CaretRestorationDecider {
+public class JavaCaretRestorationDecider : CaretRestorationDecider {
   override fun shouldRestoreCaret(document: Document, editor: Editor, caretOffset: Int): Boolean {
     val defaultRestorationResult = DefaultCaretRestorationDecider.shouldRestoreCaret(document, editor, caretOffset)
     

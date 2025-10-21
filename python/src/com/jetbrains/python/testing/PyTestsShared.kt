@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.google.gson.Gson
 import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
@@ -41,9 +42,11 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.remote.PathMappingProvider
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
+import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.*
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -59,16 +62,20 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
+import org.jdom.Element
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import java.io.File
 import java.nio.file.Path
 import java.util.regex.Matcher
+import java.util.regex.Pattern
+import javax.swing.JComponent
 
 fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
   // user may have "pytest" because it was used instead of py.test (old id) for some time
@@ -101,7 +108,7 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
   is PsiDirectory -> isTestFolder(element, testCaseClassRequired, typeEvalContext)
   is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
                                                                          testCaseClassRequired, typeEvalContext)
-  is com.jetbrains.python.psi.PyClass -> {
+  is PyClass -> {
     PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
   }
   else -> false
@@ -156,7 +163,7 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 
 
 // folder provided by python side. Resolve test names versus it
-private val PATH_URL = java.util.regex.Pattern.compile("^python<([^<>]+)>$")
+private val PATH_URL = Pattern.compile("^python<([^<>]+)>$")
 
 
 private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData)?.let { data ->
@@ -259,7 +266,7 @@ abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(confi
 
   override fun generateCommandLine(): GeneralCommandLine {
     val line = super.generateCommandLine()
-    line.workDirectory = java.io.File(configuration.workingDirectorySafe)
+    line.workDirectory = File(configuration.workingDirectorySafe)
     return line
   }
 }
@@ -280,7 +287,7 @@ abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestShared
     s.copyFrom(getProperties(sharedForm, usePojoProperties = true))
   }
 
-  override fun createEditor(): javax.swing.JComponent = sharedForm.panel
+  override fun createEditor(): JComponent = sharedForm.panel
 }
 
 /**
@@ -469,7 +476,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * Args after it passed to test runner itself
    */
-  protected val rawArgumentsSeparator = "--"
+  protected val rawArgumentsSeparator: String = "--"
 
   @DelegationProperty
   val target: ConfigurationTarget = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
@@ -482,7 +489,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   fun isTestClassRequired(): ThreeState {
     val sdk = sdk ?: return ThreeState.UNSURE
-    return if (testFactory.onlyClassesAreSupported(sdk)) {
+    return if (testFactory.onlyClassesAreSupported(project, sdk)) {
       ThreeState.YES
     }
     else {
@@ -612,7 +619,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   private fun generateRawArguments(forRerun: Boolean = false): List<String> {
     val rawArguments = additionalArguments + " " + getCustomRawArgumentsString(forRerun)
     if (rawArguments.isNotBlank()) {
-      return listOf(rawArgumentsSeparator) + com.intellij.util.execution.ParametersListUtil.parse(rawArguments, false, true)
+      return listOf(rawArgumentsSeparator) + ParametersListUtil.parse(rawArguments, false, true)
     }
     return emptyList()
   }
@@ -620,7 +627,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * If true, then framework name must be used as part of the run configuration name i.e "pytest: spam.eggs"
    */
-  protected open val useFrameworkNameInConfiguration = true
+  protected open val useFrameworkNameInConfiguration: Boolean = true
 
   override fun suggestedName(): String {
     val testFrameworkName = if (useFrameworkNameInConfiguration) testFrameworkName else PyBundle.message("runcfg.test.display_name")
@@ -659,10 +666,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
   }
 
 
-  override fun writeExternal(element: org.jdom.Element) {
+  override fun writeExternal(element: Element) {
     super.writeExternal(element)
 
-    val gson = com.google.gson.Gson()
+    val gson = Gson()
 
     getConfigFields().properties.forEach {
       val value = it.get()
@@ -673,10 +680,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
     }
   }
 
-  override fun readExternal(element: org.jdom.Element) {
+  override fun readExternal(element: Element) {
     super.readExternal(element)
 
-    val gson = com.google.gson.Gson()
+    val gson = Gson()
 
     getConfigFields().properties.forEach {
       val fromJson: Any? = gson.fromJson(readField(element, it.prefixedName), it.getType())
@@ -738,16 +745,17 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   /**
    * Only UnitTest inheritors are supported
    */
-  abstract fun onlyClassesAreSupported(sdk: Sdk): Boolean
+  abstract fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean
 
   /**
    * Test framework needs package to be installed
    */
   open val packageRequired: String? = null
 
-  open fun isFrameworkInstalled(sdk: Sdk): Boolean {
+  open fun isFrameworkInstalled(project: Project, sdk: Sdk): Boolean {
     val requiredPackage = packageRequired ?: return true // No package required
-    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+    val isInstalled = PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage)
+    return isInstalled
   }
 }
 
@@ -831,7 +839,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
       getExplicitlyConfiguredTestRoot(file)?.let {
-        return PsiManager.getInstance(file.project).findDirectory(it)
+        return file.manager.findDirectory(it)
       }
 
       module?.baseDir?.let {

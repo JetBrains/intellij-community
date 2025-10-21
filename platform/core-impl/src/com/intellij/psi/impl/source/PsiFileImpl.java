@@ -336,10 +336,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     String string = getViewProvider().getContents().toString();
     if (tree != null && string.length() != tree.getTextLength()) {
-      throw new AssertionError("File text mismatch: tree.length=" + tree.getTextLength() +
-                               "; psi.length=" + string.length() +
-                               "; this=" + this +
-                               "; vp=" + getViewProvider());
+      PsiConsistencyAssertions.assertNoFileTextMismatch(this, getFileDocument(), string);
     }
     return string;
   }

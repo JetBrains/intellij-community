@@ -138,7 +138,12 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @Override
   public @NotNull PsiDocComment createDocCommentFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
-    PsiMethod method = createMethodFromText(text.trim() + "void m();", context);
+    String trimmed = text.trim();
+    //can be markdown
+    if (!trimmed.endsWith("\n") && !trimmed.endsWith("*/")) {
+      trimmed += "\n";
+    }
+    PsiMethod method = createMethodFromText(trimmed + "void m();", context);
     PsiDocComment comment = method.getDocComment();
     if (comment == null) {
       throw new IncorrectOperationException("Incorrect comment '" + text + "'");

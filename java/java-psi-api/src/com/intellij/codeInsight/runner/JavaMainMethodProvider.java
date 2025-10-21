@@ -16,11 +16,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * An extension that can provide a custom entry point for Java application (like a {@code main()} method).
  * For example, a custom framework (like JavaFX) may have a separate entry point.
- * These extensions used in some methods in {@link PsiMethodUtil}, like {@link PsiMethodUtil#hasMainMethod(PsiClass)},
+ * These extensions are used in some methods in {@link PsiMethodUtil}, like {@link PsiMethodUtil#hasMainMethod(PsiClass)},
  * and can affect the behavior of various IDE features.
  * <p>
- *   The methods of this extension might be called from {@linkplain com.intellij.openapi.project.DumbService dumb mode}.
- * </p>
+ * The methods of this extension might be called while the IDE is in {@linkplain com.intellij.openapi.project.DumbService dumb mode}.
  */
 public interface JavaMainMethodProvider extends PossiblyDumbAware {
 
@@ -52,11 +51,22 @@ public interface JavaMainMethodProvider extends PossiblyDumbAware {
 
   /**
    * @param clazz class to check
-   * @return a pretty class name. e.x. for Kotlin it allows to return `MyClass` instead of `MyClass.Companion`
+   * @return a pretty class name. e.x. for Kotlin it allows returning `MyClass` instead of `MyClass.Companion`
+   * @deprecated Use {@link #getMainClassQualifiedName(PsiClass)} instead.
    */
+  @Deprecated
   @Contract(pure = true)
   default @Nullable String getMainClassName(@NotNull PsiClass clazz) {
     return ClassUtil.getJVMClassName(clazz);
+  }
+
+  /**
+   * @param clazz class to check
+   * @return a "prettified" qualified class name. E.g., for Kotlin it allows returning `MyClass` instead of `MyClass.Companion`
+   */
+  @Contract(pure = true)
+  default @Nullable String getMainClassQualifiedName(@NotNull PsiClass clazz) {
+    return clazz.getQualifiedName();
   }
 
   /**

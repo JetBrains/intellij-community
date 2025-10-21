@@ -50,8 +50,7 @@ public final class SslSocketFactory extends DelegateSslSocketFactory {
     return ctx.getSocketFactory();
   }
 
-  @NotNull
-  public static TrustManager[] createTrustManagers(@NotNull String caCertPath) throws Exception {
+  public static TrustManager @NotNull [] createTrustManagers(@NotNull String caCertPath) throws Exception {
     List<X509Certificate> certs = loadCertificates(caCertPath);
     List<TrustManager> result = new ArrayList<>(certs.size());
     for (X509Certificate cert : certs) {
@@ -97,15 +96,14 @@ public final class SslSocketFactory extends DelegateSslSocketFactory {
     }
 
     @Override
-    @NotNull
-    public X509Certificate[] getAcceptedIssuers() {
+    public X509Certificate @NotNull [] getAcceptedIssuers() {
       return new X509Certificate[0];
     }
   }
 
   private static final class MyKeyManager extends X509ExtendedKeyManager {
     private final String myAlias = UUID.randomUUID().toString();
-    @NotNull private final X509Certificate[] myCertificates;
+    private final X509Certificate @NotNull [] myCertificates;
     @NotNull private final PrivateKey myPrivateKey;
 
     private MyKeyManager(@NotNull String certPath, @NotNull String keyPath) throws Exception {
@@ -114,8 +112,7 @@ public final class SslSocketFactory extends DelegateSslSocketFactory {
     }
 
     @Override
-    @NotNull
-    public String[] getClientAliases(String s, Principal[] principals) {
+    public String @NotNull [] getClientAliases(String s, Principal[] principals) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
@@ -125,8 +122,7 @@ public final class SslSocketFactory extends DelegateSslSocketFactory {
     }
 
     @Override
-    @NotNull
-    public String[] getServerAliases(String s, Principal[] principals) {
+    public String @NotNull [] getServerAliases(String s, Principal[] principals) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
@@ -137,8 +133,7 @@ public final class SslSocketFactory extends DelegateSslSocketFactory {
     }
 
     @Override
-    @NotNull
-    public X509Certificate[] getCertificateChain(String s) {
+    public X509Certificate @NotNull [] getCertificateChain(String s) {
       return myCertificates;
     }
 

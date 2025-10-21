@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ThreadDumpAction;
@@ -206,7 +207,7 @@ class ReloadClassesWorker {
 
     final Semaphore waitSemaphore = new Semaphore();
     waitSemaphore.down();
-    SwingUtilities.invokeLater(() -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
       try {
         if (!project.isDisposed()) {
           debugProcess.getRequestsManager().clearWarnings();

@@ -3,10 +3,7 @@ package com.intellij.mcpserver.impl.util.network
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCallPipeline
-import io.ktor.server.application.PipelineCall
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import io.ktor.server.request.ApplicationRequest
 import io.ktor.server.response.respond
 import io.ktor.server.routing.RoutingContext
@@ -18,8 +15,10 @@ import io.ktor.server.sse.sse
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.util.pipeline.PipelineContext
 import io.ktor.utils.io.KtorDsl
-import io.modelcontextprotocol.kotlin.sdk.server.Server
+import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import io.modelcontextprotocol.kotlin.sdk.server.SseServerTransport
+import io.modelcontextprotocol.kotlin.sdk.shared.Transport
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
@@ -30,7 +29,7 @@ private val logger = logger<RoutingContext>()
  * Temporary copied code from MCP SDK to pass thought sse session into handler
  */
 @KtorDsl
-fun Application.mcpPatched(prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit, block: suspend ServerSSESession.() -> Server) {
+fun Application.mcpPatched(prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit, block: suspend (ApplicationCall, Transport) -> ServerSession) {
   val transports = ConcurrentMap<String, SseServerTransport>()
 
   install(SSE)
@@ -52,19 +51,19 @@ fun Application.mcpPatched(prePhase: suspend PipelineContext<*, PipelineCall>.()
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
-  block: suspend ServerSSESession.() -> Server,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val transport =  mcpSseTransport(postEndpoint, transports)
 
-  val server = this.block()
+  val serverSession = block(call, transport)
 
-  server.onClose {
+  serverSession.onClose {
     logger.trace { "Server connection closed for sessionId: ${transport.sessionId}" }
     transports.remove(transport.sessionId)
   }
 
-  server.connect(transport)
   logger.trace { "Server connected to transport for sessionId: ${transport.sessionId}" }
+  awaitCancellation()
 }
 
 internal fun ServerSSESession.mcpSseTransport(

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.diff.util.Side
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -16,8 +17,10 @@ interface GHPRReviewThreadDiffViewModel : GHPRCompactReviewThreadViewModel {
   data class MappingData(
     val isVisible: Boolean,
     val change: RefComparisonChange?,
-    val location: DiffLineLocation?,
-  )
+    val commentRange: Pair<Side, IntRange>?,
+  ) {
+    val location: DiffLineLocation? = commentRange?.let { (side, range) -> side to range.last }
+  }
 }
 
 internal class MappedGHPRReviewThreadDiffViewModel(

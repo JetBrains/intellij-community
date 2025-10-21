@@ -39,7 +39,7 @@ import org.jetbrains.annotations.VisibleForTesting;
  * <p> This class represents an immutable character sequence with
  *     fast {@link #concat concatenation}, {@link #insert insertion} and
  *     {@link #delete deletion} capabilities (O[Log(n)]) instead of
- *     O[n] for StringBuffer/StringBuilder).</p>
+ *     O[n] for StringBuffer/StringBuilder.</p>
  *
  * <p><i> Implementation Note: To avoid expensive copy operations ,
  *        {@link ImmutableText} instances are broken down into smaller immutable

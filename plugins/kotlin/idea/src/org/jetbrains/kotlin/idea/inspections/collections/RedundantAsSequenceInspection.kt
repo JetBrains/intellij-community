@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.inspections.dfa.fqNameEquals
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -23,15 +24,15 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 private val allowedSequenceFunctionFqNames: List<FqName> = listOf(
-    FqName("kotlin.sequences.asSequence"),
-    FqName("kotlin.collections.asSequence")
+    StandardKotlinNames.Sequences.asSequence,
+    StandardKotlinNames.Collections.asSequence
 )
 
-private val terminations: Map<String, FqName> =
-    collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
-
 private val transformationsAndTerminations: Map<String, FqName> =
-    collectionTransformationFunctionNames.associateWith { FqName("kotlin.sequences.$it") } + terminations
+    (StandardKotlinNames.Sequences.transformations + StandardKotlinNames.Sequences.terminations).associateBy { it.shortName().asString() }
+
+private val terminations: Map<String, FqName> =
+    StandardKotlinNames.Sequences.terminations.associateBy { it.shortName().asString() }
 
 class RedundantAsSequenceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = qualifiedExpressionVisitor(fun(qualified) {

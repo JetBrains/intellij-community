@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -17,7 +18,7 @@ import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.representer.Representer
-import java.net.SocketTimeoutException
+import java.net.SocketException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -41,7 +42,9 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
    * Returns the content object for given coordinates.
    * The algorithm:
    * 1. If there is cached data, and it is not older than [CACHE_TTL_MS], return it.
-   * 2. If the data is outdated:
+   * 2. If the current IDE build is a snapshot one, try to load the data from resources ([coordinates.localPath]) assuming that it will be
+   *    newer than the uploaded one.
+   * 3. If the data is outdated:
    *     - Try to use the previously downloaded and cached file (see the last point).
    *     - If the cached file is missing, use the local file from resources ([coordinates.localPath]).
    *     - Download data asynchronously from [coordinates.url], so it is up to date on the next content request.
@@ -53,6 +56,12 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
       val lastUpdated = oldValue?.second ?: 0
       if (now - lastUpdated < CACHE_TTL_MS) {
         return@compute oldValue
+      }
+      if (ApplicationInfo.getInstance().build.isSnapshot) {
+        val localContent = loadContentFromResources(coordinates.localPath)
+        if (localContent != null) {
+          return@compute localContent to System.currentTimeMillis()
+        }
       }
       val content = loadLocallyCachedContent(coordinates.localPath)
       downloadContentAsync(coordinates)
@@ -95,7 +104,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
           contentCache.remove(coordinates) // so it is refreshed on the next content request
         }
       }
-      catch (_: SocketTimeoutException) {
+      catch (_: SocketException) {
         // offline mode
       }
       catch (e: Exception) {

@@ -57,6 +57,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isPlusPlusOrMin
 public abstract class GroovyRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(GroovyRefactoringUtil.class);
 
+  public static final Collection<String> CONTEXTUAL_KEYWORDS = ContainerUtil.map(TokenSets.CONTEXTUAL_KEYWORDS.getTypes(), Object::toString);
+
   public static final Collection<String> KEYWORDS = ContainerUtil.map(TokenSets.KEYWORDS.getTypes(), Object::toString);
 
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
@@ -401,7 +403,7 @@ public abstract class GroovyRefactoringUtil {
         return false;
       }
     }
-    if (KEYWORDS.contains(newName)) {
+    if (!CONTEXTUAL_KEYWORDS.contains(newName) && KEYWORDS.contains(newName)) {
       return false;
     }
     try {

@@ -2,6 +2,9 @@ inputs:
   os:
     description: 'linux, windows or mac'
     required: true
+  arch:
+    description: 'x64 or aarch64'
+    required: true
   extension:
     description: 'tar.gz, exe, sit or dmg'
     required: true
@@ -31,10 +34,10 @@ runs:
         if ls *.${{inputs.extension}}.spdx.json; then
           for it in *.${{inputs.extension}}.spdx.json; do checksum "$it"; done
         fi
-    - name: Upload .${{inputs.extension}}
+    - name: Upload ${{inputs.arch}}.${{inputs.extension}}
       uses: actions/upload-artifact@v4.4.3
       with:
-        name: ${{inputs.os}}-${{inputs.extension}}-unsigned
+        name: ${{inputs.os}}-${{inputs.arch}}-${{inputs.extension}}-unsigned
         if-no-files-found: 'error'
         retention-days: 1
         path: |

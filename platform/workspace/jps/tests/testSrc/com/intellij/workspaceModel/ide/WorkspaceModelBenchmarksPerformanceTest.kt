@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -37,7 +38,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
@@ -64,7 +65,7 @@ import kotlin.time.Duration
 import kotlin.time.measureTime
 
 
-@TestApplication
+@StressTestApplication
 class WorkspaceModelBenchmarksPerformanceTest {
   @JvmField
   @RegisterExtension
@@ -311,7 +312,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     Benchmark.newBenchmark(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
-          EntitiesOrphanage.getInstance(projectModel.project).update {
+          projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = listOf(ContentRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/data$counter")), emptyList(), MySource))
@@ -347,7 +348,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     Benchmark.newBenchmark(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
-          EntitiesOrphanage.getInstance(projectModel.project).update {
+          projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = listOf(
@@ -394,7 +395,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     Benchmark.newBenchmark(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
-          EntitiesOrphanage.getInstance(projectModel.project).update {
+          projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = List(10) { contentCounter ->

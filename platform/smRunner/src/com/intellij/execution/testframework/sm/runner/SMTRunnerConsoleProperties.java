@@ -5,7 +5,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardManagerProxy;
+import com.intellij.execution.dashboard.RunDashboardUiManager;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -217,9 +218,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Override
   public @NotNull String getWindowId() {
     if (myConfiguration instanceof RunConfiguration configuration) {
-      RunDashboardManager manager = RunDashboardManager.getInstance(getProject());
-      if (manager.isShowInDashboard(configuration)) {
-        return manager.getToolWindowId();
+      if (RunDashboardManagerProxy.getInstance(getProject()).isShowInDashboard(configuration)) {
+        return RunDashboardUiManager.getInstance(getProject()).getToolWindowId();
       }
     }
     return super.getWindowId();

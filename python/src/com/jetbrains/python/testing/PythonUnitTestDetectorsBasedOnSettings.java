@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +121,7 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
       return true;
     }
     var factory = TestRunnerService.getInstance(module).getSelectedFactory();
-    return factory.onlyClassesAreSupported(sdk);
+    return factory.onlyClassesAreSupported(module.getProject(), sdk);
   }
 
   private static boolean isTestCaseClassRequired(final @NotNull PsiElement anchor, final @NotNull ThreeState userProvidedValue) {

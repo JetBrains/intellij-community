@@ -88,7 +88,7 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
     }
     this.maxRecords = maxRecords;
     //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
-    this.records = ByteBuffer.allocate(maxRecords * RecordLayout.RECORD_SIZE_IN_BYTES + HEADER_SIZE)
+    this.records = ByteBuffer.allocateDirect(maxRecords * RecordLayout.RECORD_SIZE_IN_BYTES + HEADER_SIZE)
       .order(nativeOrder());
 
     if (Files.exists(path)) {

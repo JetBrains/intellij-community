@@ -9,13 +9,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 import java.util.List;
 
-public interface GrArrayInitializer extends GroovyPsiElement {
+/**
+ * Represents an array initializer expression.
+ */
+public interface GrArrayInitializer extends GrExpression {
 
   @NotNull
   PsiElement getLBrace();
 
   boolean isEmpty();
 
+  /**
+   * Returns the list of expressions initializing members of the .
+   */
   @NotNull
   List<GrExpression> getExpressions();
 

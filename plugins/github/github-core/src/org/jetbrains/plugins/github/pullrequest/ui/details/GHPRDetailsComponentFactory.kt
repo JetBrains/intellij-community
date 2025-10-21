@@ -48,12 +48,20 @@ object GHPRDetailsComponentFactory {
     scope: CoroutineScope,
     project: Project,
     detailsVm: GHPRDetailsViewModel,
+    withTitle: Boolean = true,
   ): JComponent {
     val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
-    val title = CodeReviewDetailsTitleComponentFactory.create(scope, detailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
-                                                              htmlPaneFactory = { SimpleHtmlPane() })
-    val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
-      showTimelineAction(it.source as JComponent)
+
+    val titlePanel = if (withTitle) {
+      val title = CodeReviewDetailsTitleComponentFactory.create(scope, detailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
+                                                                htmlPaneFactory = { SimpleHtmlPane() })
+      val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
+        showTimelineAction(it.source as JComponent)
+      }
+      ReviewDetailsUIUtil.createTitlePanel(title, timelineLink)
+    }
+    else {
+      null
     }
 
     val commitsAndBranches = createCommitsAndBranchesComponent(project, scope, detailsVm)
@@ -70,7 +78,9 @@ object GHPRDetailsComponentFactory {
     )).apply {
       isOpaque = false
 
-      add(ReviewDetailsUIUtil.createTitlePanel(title, timelineLink), CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
+      if (titlePanel != null) {
+        add(titlePanel, CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
+      }
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(createCommitsInfoComponent(project, scope, detailsVm), CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(createCommitFilesBrowserComponent(scope, detailsVm.changesVm), CC().grow().shrinkPrioY(200))
@@ -94,7 +104,7 @@ object GHPRDetailsComponentFactory {
       })
   }
 
-  fun createCommitsAndBranchesComponent(project: Project, cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
+  private fun createCommitsAndBranchesComponent(project: Project, cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
     return JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(CodeReviewDetailsCommitsComponentFactory.create(cs, detailsVm.changesVm) { commit: GHCommit ->
@@ -121,7 +131,7 @@ object GHPRDetailsComponentFactory {
   )
 
 
-  fun createCommitFilesBrowserComponent(cs: CoroutineScope, changesVm: GHPRChangesViewModel): JComponent {
+  private fun createCommitFilesBrowserComponent(cs: CoroutineScope, changesVm: GHPRChangesViewModel): JComponent {
     return Wrapper(LoadingLabel()).apply {
       bindContentIn(cs, changesVm.changeListVm) { res ->
         res.result?.let {

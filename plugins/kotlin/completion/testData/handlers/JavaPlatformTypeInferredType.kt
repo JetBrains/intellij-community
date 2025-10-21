@@ -1,0 +1,6 @@
+
+fun bar(test: Foo<Int>) {
+    test.foo<caret>
+}
+
+// ELEMENT: foo

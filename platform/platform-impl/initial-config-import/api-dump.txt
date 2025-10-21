@@ -1,0 +1,5 @@
+f:com.intellij.ide.ImportOldConfigsPanel
+- javax.swing.JDialog
+- b:$$$getRootComponent$$$():javax.swing.JComponent
+- <init>(java.util.List,java.util.function.Function):V
+- getSelectedFile():com.intellij.openapi.util.Pair

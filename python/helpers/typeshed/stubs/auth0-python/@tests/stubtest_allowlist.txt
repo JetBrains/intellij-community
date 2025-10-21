@@ -1,0 +1,10 @@
+# Omit tests
+auth0\.test.*
+
+# Omit _async functions because they aren't present at runtime
+# The way these stubs are currently implemented is that we pretend all classes have async methods
+# Even though in reality, users need to call `auth0.asyncify.asyncify` to generate async subclasses
+auth0\..*_async
+
+# Inconsistently implemented, ommitted
+auth0\.management\.Auth0\..*

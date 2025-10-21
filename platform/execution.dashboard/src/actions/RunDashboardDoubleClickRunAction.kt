@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.actions
 
-import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.dashboard.RunDashboardUiManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -28,7 +28,7 @@ class RunDashboardDoubleClickRunAction : ToggleAction(), DumbAware, ActionRemote
       return
     }
     e.presentation.isEnabledAndVisible =
-      RunDashboardManager.getInstance(project).toolWindowId == toolWindow.id
+      RunDashboardUiManager.getInstance(project).toolWindowId == toolWindow.id
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {

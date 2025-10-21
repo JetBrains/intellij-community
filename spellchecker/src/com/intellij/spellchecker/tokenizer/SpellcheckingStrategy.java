@@ -9,6 +9,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -25,10 +26,7 @@ import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -44,6 +42,7 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
   protected static final Pattern CODE_IDENTIFIER_LIKE = Pattern.compile("([a-zA-Z][a-zA-Z0-9_]*)");
 
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
+  private static final int SCOPE_COUNT = SpellCheckingInspection.SpellCheckingScope.values().length;
 
   public static final ExtensionPointName<KeyedLazyInstance<SpellcheckingStrategy>> EP_NAME =
     new ExtensionPointName<>("com.intellij.spellchecker.support");
@@ -71,9 +70,6 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
    * @return {@link #EMPTY_TOKENIZER} to skip spellchecking, {@link #TEXT_TOKENIZER} for full element text or custom Tokenizer implementation.
    */
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PsiWhiteSpace) {
-      return EMPTY_TOKENIZER;
-    }
     if (isInjectedLanguageFragment(element)) {
       return EMPTY_TOKENIZER;
     }
@@ -100,6 +96,7 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
   }
 
   public boolean elementFitsScope(@NotNull PsiElement element, Set<SpellCheckingInspection.SpellCheckingScope> scope) {
+    if (scope.size() == SCOPE_COUNT) return true;
     Language language = element.getLanguage();
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
 
@@ -131,29 +128,58 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
     return parserDefinition.getCommentTokens().contains(psiElement.getNode().getElementType());
   }
 
+
+  /**
+   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.GrazieSpellcheckingExtension}.
+   */
+  public boolean useTextLevelSpellchecking() {
+    return false;
+  }
+
   protected static boolean isInjectedLanguageFragment(@Nullable PsiElement element) {
     return element instanceof PsiLanguageInjectionHost
            && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
   }
 
+  // Used by 3rd party plugins
+  @SuppressWarnings("unused")
   public LocalQuickFix[] getRegularFixes(@NotNull PsiElement element,
                                          @NotNull TextRange textRange,
                                          boolean useRename,
                                          String typo) {
-    return getDefaultRegularFixes(useRename, typo, element, textRange);
+    return getDefaultRegularFixes(useRename, typo, element, textRange, null);
+  }
+
+  public LocalQuickFix[] getRegularFixes(@NotNull PsiElement element,
+                                         @NotNull TextRange textRange,
+                                         boolean useRename,
+                                         String typo,
+                                         @Nullable Set<String> suggestions) {
+    return getDefaultRegularFixes(useRename, typo, element, textRange, suggestions);
+  }
+
+  public static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element) {
+    DumbService dumbService = DumbService.getInstance(element.getProject());
+    for (SpellcheckingStrategy strategy : LanguageSpellchecking.INSTANCE.allForLanguage(element.getLanguage())) {
+      if (dumbService.isUsableInCurrentContext(strategy) && strategy.isMyContext(element)) {
+        return strategy;
+      }
+    }
+    return null;
   }
 
   public static LocalQuickFix[] getDefaultRegularFixes(boolean useRename,
                                                        String typo,
                                                        @NotNull PsiElement element,
-                                                       @NotNull TextRange range) {
+                                                       @NotNull TextRange range,
+                                                       @Nullable Set<String> suggestions) {
     ArrayList<LocalQuickFix> result = new ArrayList<>();
     SpellcheckerRateTracker tracker = new SpellcheckerRateTracker(element);
 
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
-      result.add(SpellCheckerQuickFixFactory.rename(element, tracker));
+      result.add(SpellCheckerQuickFixFactory.rename(typo, range, element, tracker));
     } else {
-      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker);
+      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions);
       result.addAll(fixes);
     }
 

@@ -344,10 +344,14 @@ public class CustomizableActionsPanel {
   }
 
   boolean isModified(boolean optimized) {
-    if (optimized) {
-      CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
+    if (CustomActionsSchema.getInstance().isModified(mySelectedSchema)) {
+      if (optimized) {
+        CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
+        return CustomActionsSchema.getInstance().isModified(mySelectedSchema);
+      }
+      return true;
     }
-    return CustomActionsSchema.getInstance().isModified(mySelectedSchema);
+    return false;
   }
 
   protected void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {

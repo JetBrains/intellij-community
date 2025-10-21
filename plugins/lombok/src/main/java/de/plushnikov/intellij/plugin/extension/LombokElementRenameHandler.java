@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public final class LombokElementRenameHandler extends MemberInplaceRenameHandler {
 
   @Override
-  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
+  protected boolean isAvailable(PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
     return super.isAvailable(element, editor, file) &&
       ((element instanceof LombokLightMethodBuilder || element instanceof LombokLightFieldBuilder)
         && !(element.getNavigationElement() instanceof PsiAnnotation));

@@ -39,7 +39,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +70,7 @@ import static com.intellij.execution.target.value.TargetEnvironmentFunctions.tar
  * <i>NB! This class doesn't provide full support for Targets API but does it best to emulate it in some cases. Use targets API directly.</i>
  */
 @ApiStatus.Obsolete
+@ApiStatus.Internal
 public class PythonTask {
   /**
    * Mils we wait to process to be stopped when "rerun" called

@@ -1,6 +1,0 @@
--Varargs.kt
- -Bar
-  bar(String…): Unit
-  constructor Bar(Int…)
-  constructor Bar(Int…, String)
- foo(String…): Unit

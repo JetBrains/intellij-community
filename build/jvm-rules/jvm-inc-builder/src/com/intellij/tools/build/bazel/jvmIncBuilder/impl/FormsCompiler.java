@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
-import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.util.SystemInfo;
@@ -70,7 +69,7 @@ public class FormsCompiler implements CompilerRunner {
     NestedFormLoader nestedLoader = null;
     Map<NodeSource, String> toInstrument = new HashMap<>();
     // check all just compiled classes
-    for (String jvmClassName : unique(filter(map(out.getNodes(), ns -> ns.node instanceof JVMClassNode jvmNode? jvmNode.getName() : null), Objects::nonNull))) {
+    for (String jvmClassName : unique(filter(map(out.getNodes(), ns -> ns.node() instanceof JVMClassNode jvmNode? jvmNode.getName() : null), Objects::nonNull))) {
       NodeSource form = binding.getBoundForm(jvmClassName.replace('/', '.').replace('$', '.'));
       if (form != null) {
         toInstrument.put(form, jvmClassName + CLASS_FILE_EXTENSION);
@@ -97,7 +96,7 @@ public class FormsCompiler implements CompilerRunner {
       for (NodeSource form : modifiedForms) {
         Path formPath = pathMapper.toPath(form);
         try (InputStream in = Files.newInputStream(formPath)) {
-          abiOut.putEntry(getFormOutputPath(formPath.getFileName().toString()), RW.readAllBytes(in));
+          abiOut.putEntry(getFormOutputPath(formPath.getFileName().toString()), in.readAllBytes());
         }
       }
     }

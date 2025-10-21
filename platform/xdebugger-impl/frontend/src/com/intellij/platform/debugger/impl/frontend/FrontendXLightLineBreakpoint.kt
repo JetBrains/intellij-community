@@ -37,8 +37,6 @@ internal class FrontendXLightLineBreakpoint(
 
   fun dispose() {
     cs.cancel()
-    visualRepresentation.removeHighlighter()
-    visualRepresentation.redrawInlineInlays(getFile(), getLine())
   }
 
   override fun isDisposed(): Boolean {

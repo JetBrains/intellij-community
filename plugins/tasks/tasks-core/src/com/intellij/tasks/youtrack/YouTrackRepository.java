@@ -111,6 +111,11 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
+  public boolean isConfigured() {
+    return super.isConfigured() && StringUtil.isNotEmpty(getUsername());
+  }
+
+  @Override
   public @Nullable CancellableConnection createCancellableConnection() {
     return new HttpTestConnection(new HttpGet()) {
       @Override

@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
+import com.intellij.lexer.XmlLexerKt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.tree.IElementType;
@@ -18,7 +18,7 @@ public class XmlIndexPatternBuilder implements IndexPatternBuilder {
   @Override
   public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {
     if (file instanceof XmlFile) {
-      return new XmlLexer();
+      return XmlLexerKt.createXmlLexer();
     }
     return null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.core.CoreBundle;
@@ -13,8 +13,7 @@ import javax.swing.*;
 public class ArchiveFileType implements FileType {
   public static final ArchiveFileType INSTANCE = new ArchiveFileType();
 
-  protected ArchiveFileType() {
-  }
+  protected ArchiveFileType() { }
 
   @Override
   public @NotNull String getName() {
@@ -27,7 +26,7 @@ public class ArchiveFileType implements FileType {
   }
 
   @Override
-  public @Nls @NotNull String getDisplayName() {
+  public @NotNull @Nls String getDisplayName() {
     return CoreBundle.message("filetype.archive.display.name");
   }
 

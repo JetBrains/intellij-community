@@ -9,8 +9,10 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import kotlin.reflect.KClass
 
 internal class K2MemberInfoStorageSupport : KotlinMemberInfoStorageSupport {
     @OptIn(KaAllowAnalysisOnEdt::class)
@@ -18,21 +20,19 @@ internal class K2MemberInfoStorageSupport : KotlinMemberInfoStorageSupport {
         member1: KtNamedDeclaration,
         member: KtNamedDeclaration,
     ): Boolean = allowAnalysisOnEdt {
-        analyze(member1) {
-            val symbol1 = member1.symbol
-            val symbol = member.symbol
-            if (symbol1.name != symbol.name) return false
-
-            when (symbol1) {
-                is KaFunctionSymbol if symbol is KaFunctionSymbol -> {
-                    // TODO: KT-74009
-                    true
-                }
-                is KaPropertySymbol if symbol is KaPropertySymbol -> true
-                is KaClassSymbol if symbol is KaClassSymbol -> true
-                else -> false
+        fun getMemberDescription(m: KtNamedDeclaration): Pair<Name?, KClass<*>> {
+            return analyze(m) {
+               val symbol = m.symbol
+                symbol.name to symbol::class
             }
         }
+
+        val description = getMemberDescription(member)
+        val description1 = getMemberDescription(member1)
+        if (description.first != description1.first) return false
+        // TODO: KT-74009
+        if (description.second != description1.second) return false
+        return@allowAnalysisOnEdt true
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)

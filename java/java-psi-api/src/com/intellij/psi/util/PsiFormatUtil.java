@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -92,7 +92,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
     if (BitUtil.isSet(options, SHOW_TYPE) && BitUtil.isSet(options, TYPE_AFTER)) {
       if (BitUtil.isSet(options, SHOW_NAME) && variable.getName() != null) {
-        buffer.append(':');
+        buffer.append(": ");
       }
       buffer.append(formatTypeSafe(variable, variable.getType(), options, substitutor));
     }
@@ -190,7 +190,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     if (BitUtil.isSet(options, SHOW_TYPE) && BitUtil.isSet(options, TYPE_AFTER)) {
       PsiType type = method.getReturnType();
       if (type != null) {
-        if (buffer.length() > 0) buffer.append(':');
+        if (buffer.length() > 0) buffer.append(": ");
         buffer.append(formatTypeSafe(method, type, options, substitutor));
       }
     }

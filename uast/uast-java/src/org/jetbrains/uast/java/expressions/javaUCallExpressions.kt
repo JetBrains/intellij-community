@@ -175,9 +175,9 @@ class JavaConstructorUCallExpression(
     get() {
       val initializer = sourcePsi.arrayInitializer
       return when {
-        initializer != null -> initializer.initializers.size
+        initializer != null -> initializer.initializerCount
         sourcePsi.arrayDimensions.isNotEmpty() -> sourcePsi.arrayDimensions.size
-        else -> sourcePsi.argumentList?.expressions?.size ?: 0
+        else -> sourcePsi.argumentList?.expressionCount ?: 0
       }
     }
 
@@ -196,7 +196,7 @@ class JavaConstructorUCallExpression(
   override val typeArgumentCount: Int
     get() {
       if (typeArgumentCountLazy == Int.MIN_VALUE) {
-        typeArgumentCountLazy = sourcePsi.classReference?.typeParameters?.size ?: 0
+        typeArgumentCountLazy = sourcePsi.classReference?.typeParameterCount ?: 0
       }
 
       return typeArgumentCountLazy
@@ -212,16 +212,7 @@ class JavaConstructorUCallExpression(
     get() = null
 
   override fun resolve(): PsiMethod? = sourcePsi.resolveMethod()
-  override fun multiResolve(): Iterable<ResolveResult> {
-    val methodResolve = sourcePsi.resolveMethodGenerics()
-    if (methodResolve != JavaResolveResult.EMPTY) {
-      // if there is a non-default constructor
-      return listOf<ResolveResult>(methodResolve)
-    }
-    // unable to resolve constructor method - resolve to class
-    val classResolve = sourcePsi.classReference?.multiResolve(false) ?: emptyArray()
-    return classResolve.asIterable()
-  }
+  override fun multiResolve() = sourcePsi.multiResolve(false).asIterable()
 }
 
 @ApiStatus.Internal
@@ -244,7 +235,7 @@ class JavaArrayInitializerUCallExpression(
   override val valueArgumentCount: Int
     get() {
       if (valueArgumentCountLazy == Int.MIN_VALUE) {
-        valueArgumentCountLazy = sourcePsi.initializers.size
+        valueArgumentCountLazy = sourcePsi.initializerCount
       }
 
       return valueArgumentCountLazy
@@ -303,7 +294,7 @@ class JavaAnnotationArrayInitializerUCallExpression(
   override val valueArgumentCount: Int
     get() {
       if (valueArgumentCountLazy == Int.MIN_VALUE) {
-        valueArgumentCountLazy = sourcePsi.initializers.size
+        valueArgumentCountLazy = sourcePsi.initializerCount
       }
       return valueArgumentCountLazy
     }

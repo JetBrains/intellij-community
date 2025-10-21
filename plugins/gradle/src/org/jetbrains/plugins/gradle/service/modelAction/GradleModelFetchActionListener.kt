@@ -14,6 +14,12 @@ interface GradleModelFetchActionListener {
   suspend fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase)
 
   /**
+   * Called once Gradle has loaded projects but before any task execution.
+   * These models do not contain those models that are created when the build finished.
+   */
+  suspend fun onProjectLoadedActionCompleted()
+
+  /**
    * Called once Gradle has finished executing everything, including any tasks that might need to be run.
    * The models are obtained separately and in some cases before this method is called.
    */
@@ -26,10 +32,4 @@ interface GradleModelFetchActionListener {
    * @param exception the exception thrown by Gradle, if everything completes successfully, then this will be null.
    */
   suspend fun onModelFetchFailed(exception: Throwable)
-
-  /**
-   * Called once Gradle has loaded projects but before any task execution.
-   * These models do not contain those models that are created when the build finished.
-   */
-  suspend fun onProjectLoadedActionCompleted()
 }

@@ -61,14 +61,14 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
   val hasher = Hashing.xxh3_64().hashStream()
 
   val appInfo = ApplicationInfoImpl.getShadowInstance()
-  if (AppMode.isDevServer()) {
-    hasher.putBytes(Files.readAllBytes(Path.of(PathManager.getHomePath(), "fingerprint.txt")))
+  if (AppMode.isRunningFromDevBuild()) {
+    hasher.putBytes(Files.readAllBytes(PathManager.getHomeDir().resolve("fingerprint.txt")))
   }
   else {
     hasher.putLong(appInfo.buildTime.toEpochSecond())
   }
   hasher.putString(appInfo.build.asString())
-  hasher.putString(System.getProperty("idea.kotlin.plugin.use.k2") ?: "") // IJPL-156028
+  hasher.putString(System.getProperty("idea.kotlin.plugin.use.k1") ?: "k2") // IJPL-156028
 
   // the loadedPlugins list is sorted
   val loadedPlugins = PluginManagerCore.loadedPlugins

@@ -1,9 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 
-interface BuildMessages: System.Logger {
+interface BuildMessages {
+  fun debug(message: String)
+
   fun info(message: String)
 
   fun warning(message: String)
@@ -11,9 +14,9 @@ interface BuildMessages: System.Logger {
   /**
    * Report an error and stop the build process
    */
-  fun error(message: String)
+  fun logErrorAndThrow(message: String)
 
-  fun error(message: String, cause: Throwable)
+  fun logErrorAndThrow(message: String, cause: Throwable)
 
   fun compilationErrors(compilerName: String, messages: List<String>)
 
@@ -28,6 +31,7 @@ interface BuildMessages: System.Logger {
   /**
    * Use [spanBuilder]
    */
+  @ApiStatus.Internal
   @Deprecated(message = "Use [org.jetbrains.intellij.build.telemetry.block]")
   fun block(blockName: String, task: Callable<Unit>)
 

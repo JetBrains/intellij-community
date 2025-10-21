@@ -57,10 +57,12 @@ interface CellBase<out T : CellBase<T>> {
    */
   fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T>
 
+  @ApiStatus.Internal
   @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
+  @ApiStatus.Internal
   @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>

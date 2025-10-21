@@ -84,16 +84,29 @@ final class CommonCodeStyleSettingsManager {
    * @return Common code style settings for the given language or a new instance with default values if not found.
    */
   public @NotNull CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
-    Map<String, CommonCodeStyleSettings> map = getCommonSettingsMap();
-    for (Language language : Language.getRegisteredLanguages()) {
-      if (langName.equals(language.getDisplayName())) {
-        CommonCodeStyleSettings settings = map.get(language.getID());
-        if (settings != null) {
-          return settings;
-        }
+    Language language = findLanguageByDisplayName(langName);
+
+    if (language != null) {
+      Map<String, CommonCodeStyleSettings> map = getCommonSettingsMap();
+      CommonCodeStyleSettings settings = map.get(language.getID());
+      if (settings != null) {
+        return settings;
       }
     }
     return new CommonCodeStyleSettings(Language.ANY);
+  }
+
+  private static Language findLanguageByDisplayName(@NotNull String langName) {
+    Language l = Language.findLanguageByID(langName); // optimization
+    if (l == null || !l.getDisplayName().equals(langName)) {
+      for (Language language : Language.getRegisteredLanguages()) {
+        if (langName.equals(language.getDisplayName())) {
+          l = language;
+          break;
+        }
+      }
+    }
+    return l;
   }
 
 
@@ -114,6 +127,7 @@ final class CommonCodeStyleSettingsManager {
     registerCommonSettings(langId, initialSettings);
   }
 
+  @NotNull
   private Map<String, CommonCodeStyleSettings> initCommonSettingsMap() {
     Map<String, CommonCodeStyleSettings> map = new LinkedHashMap<>();
     myCommonSettingsMap = map;

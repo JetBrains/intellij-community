@@ -4,6 +4,8 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
+import com.intellij.codeInsight.template.TemplateFilter;
+import com.intellij.codeInsight.template.TemplateGroupHintProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -47,6 +49,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferenceType;
@@ -500,6 +503,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
         else if (value instanceof TemplateGroup group) {
           String[] path = group.getPath();
           getTextRenderer().append(path[path.length - 1], SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+
+          String allHints = TemplateGroupHintProvider.EP_NAME.getExtensionList()
+            .stream()
+            .map(provider -> provider.getHint(group))
+            .filter(it -> it != null)
+            .sorted()
+            .collect(Collectors.joining("; "));
+
+          if (!allHints.isEmpty()) {
+            getTextRenderer().append(" " + allHints, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
         }
       }
     }, myTreeRoot, this);
@@ -1097,9 +1111,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
     for (final TemplateImpl template : templates) {
       myTemplateOptions.put(template, template.createOptions());
       myTemplateContext.put(template, template.createContext());
-      CheckedTreeNode node = new CheckedTreeNode(template);
-      node.setChecked(!template.isDeactivated());
-      groupNode.add(node);
+
+      if (TemplateFilter.globalAccept(template)) {
+        CheckedTreeNode node = new CheckedTreeNode(template);
+        node.setChecked(!template.isDeactivated());
+        groupNode.add(node);
+      }
     }
   }
 

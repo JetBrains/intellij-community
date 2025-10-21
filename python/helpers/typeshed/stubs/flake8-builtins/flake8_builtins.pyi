@@ -1,12 +1,12 @@
 import ast
 from argparse import Namespace
-from binascii import Incomplete
 from collections.abc import Iterator
 from typing import ClassVar
 from typing_extensions import TypeAlias
 
+from flake8.options.manager import OptionManager
+
 _Error: TypeAlias = tuple[int, int, str, type[BuiltinsChecker]]
-_OptionManager: TypeAlias = Incomplete  # flake8.options.manager.OptionManager
 
 class BuiltinsChecker:
     name: ClassVar[str]
@@ -18,13 +18,16 @@ class BuiltinsChecker:
     module_name_msg: ClassVar[str]
     lambda_argument_msg: ClassVar[str]
 
+    default_line_number: ClassVar[int]
+    default_column_offset: ClassVar[int]
+
     names: ClassVar[list[str]]
     ignore_list: ClassVar[set[str]]
     ignored_module_names: ClassVar[set[str]]
 
     def __init__(self, tree: ast.AST, filename: str) -> None: ...
     @classmethod
-    def add_options(cls, option_manager: _OptionManager) -> None: ...
+    def add_options(cls, option_manager: OptionManager) -> None: ...
     @classmethod
     def parse_options(cls, options: Namespace) -> None: ...
     def run(self) -> Iterator[_Error]: ...

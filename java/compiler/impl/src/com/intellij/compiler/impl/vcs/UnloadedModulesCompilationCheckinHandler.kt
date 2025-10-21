@@ -25,12 +25,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CompletableFuture
 
-private class UnloadedModulesCompilationCheckinHandler(private val project: Project,
-                                               private val checkinPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
+private class UnloadedModulesCompilationCheckinHandler(
+  private val project: Project,
+  private val checkinPanel: CheckinProjectPanel,
+) : CheckinHandler(), CommitCheck {
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent? {
     return if (ModuleManager.getInstance(project).unloadedModuleDescriptions.isNotEmpty())
-      create(checkinPanel.getProject(), this, false,
+      create(checkinPanel.getProject(), this, disableWhenDumb = true,
              JavaCompilerBundle.message("checkbox.text.compile.affected.unloaded.modules"),
              { settings.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT },
              { value: Boolean -> settings.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = value }
@@ -85,7 +87,8 @@ private class UnloadedModulesCompilationCheckinHandler(private val project: Proj
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
 
-  override fun isEnabled(): Boolean = settings.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT
+  override fun isEnabled(): Boolean = settings.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT &&
+                                      ModuleManager.getInstance(project).unloadedModuleDescriptions.isNotEmpty()
 
   private val settings: CompilerWorkspaceConfiguration
     get() = CompilerWorkspaceConfiguration.getInstance(project)

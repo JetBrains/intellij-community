@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.NakedRunnable;
 import com.intellij.mock.MockApplication;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Ref;
@@ -100,13 +101,16 @@ public final class EdtTestUtil {
         Runnable pr = r;
         // Wrap r to writeIntent unlock and mark to avoid wrapping, or it will be passed through wrapping around IdeEventQueue.dispatchEvent():385
         r = (NakedRunnable)() -> pr.run();
+        app.invokeAndWaitRelaxed(r, ModalityState.defaultModalityState());
       }
-      try {
-        SwingUtilities.invokeAndWait(r);
-      }
-      catch (InterruptedException | InvocationTargetException e) {
-        // must not happen
-        throw new RuntimeException(e);
+      else {
+        try {
+          SwingUtilities.invokeAndWait(r);
+        }
+        catch (InterruptedException | InvocationTargetException e) {
+          // must not happen
+          throw new RuntimeException(e);
+        }
       }
     }
 

@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsNativeLibraryRootType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.File
+import kotlin.io.path.Path
 
 class JpsPluginBuildTest : JpsBuildTestCase() {
   fun `test show proper error message if jdk type is invalid`() {
@@ -44,13 +45,13 @@ class JpsPluginBuildTest : JpsBuildTestCase() {
 
     val library = m.libraryCollection.addLibrary("l", JpsJavaLibraryType.INSTANCE)
     m.dependenciesList.addLibraryDependency(library)
-    val libDir = createDir("lib")
+    val libDir = Path(createDir("lib"))
     directoryContent {
       zip("a.jar") { file("a.txt") }
-    }.generate(File(libDir))
+    }.generate(libDir)
 
-    library.addRoot(File(libDir, "a.jar"), JpsOrderRootType.COMPILED)
-    library.addRoot(File(createFile("lib/a.so")), JpsNativeLibraryRootType.INSTANCE)
+    library.addRoot(libDir.resolve( "a.jar"), JpsOrderRootType.COMPILED)
+    library.addRoot(Path(createFile("lib/a.so")), JpsNativeLibraryRootType.INSTANCE)
 
     doBuild(CompileScopeTestBuilder.rebuild().allModules().allArtifacts()).assertSuccessful()
 

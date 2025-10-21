@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.references
 
 import com.intellij.patterns.StandardPatterns.string
@@ -18,6 +18,13 @@ class JUnitReferenceContributor : PsiReferenceContributor() {
         PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
       ),
       uastInjectionHostReferenceProvider { _, host -> arrayOf(MethodSourceReference(host)) }
+    )
+    registrar.registerUastReferenceProvider(
+      injectionHostUExpression().annotationParam(
+        ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE,
+        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+      ),
+      uastInjectionHostReferenceProvider { _, host -> arrayOf(FieldSourceReference(host)) }
     )
     registrar.registerUastReferenceProvider(
       injectionHostUExpression().annotationParams(

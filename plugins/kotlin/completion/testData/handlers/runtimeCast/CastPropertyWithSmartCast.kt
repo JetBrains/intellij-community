@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 fun main(klass: A) {
     <caret>if (a !is B) return
     val a = 1

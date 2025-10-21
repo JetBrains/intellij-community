@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandToken;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
@@ -12,13 +13,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class CommandProcessorImpl extends CoreCommandProcessor {
+@ApiStatus.Internal
+public final class CommandProcessorImpl extends CoreCommandProcessor implements Disposable {
   @Override
   public void finishCommand(final @NotNull CommandToken command, final @Nullable Throwable throwable) {
-    if (myCurrentCommand != command) return;
+    if (!isCommandTokenActive(command)) return;
     final boolean failed;
     try {
       if (throwable != null) {
@@ -62,6 +65,10 @@ final class CommandProcessorImpl extends CoreCommandProcessor {
   @Override
   public void markCurrentCommandAsGlobal(Project project) {
     getUndoManager(project).markCurrentCommandAsGlobal();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static UndoManagerImpl getUndoManager(Project project) {

@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.JvmDebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.CustomFieldInplaceEditor;
@@ -18,10 +20,12 @@ import java.util.List;
 public class EditCustomFieldAction extends XDebuggerTreeActionBase {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    ValueDescriptorImpl descriptor = ((JavaValue)node.getValueContainer()).getDescriptor();
+    ValueDescriptorImpl descriptor = JvmDebuggerUtils.getDescriptorFromNode(node, e);
+    if (descriptor == null) return;
     EnumerationChildrenRenderer enumerationChildrenRenderer = getParentEnumerationRenderer(descriptor);
+    DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     if (enumerationChildrenRenderer != null) {
-      new CustomFieldInplaceEditor(node, (UserExpressionDescriptorImpl)descriptor, enumerationChildrenRenderer).show();
+      new CustomFieldInplaceEditor(node, (UserExpressionDescriptorImpl)descriptor, enumerationChildrenRenderer, debuggerContext).show();
     }
   }
 

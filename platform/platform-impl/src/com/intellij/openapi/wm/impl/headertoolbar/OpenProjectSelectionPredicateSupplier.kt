@@ -2,17 +2,15 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface OpenProjectSelectionPredicateSupplier {
-
   companion object {
-    @JvmStatic fun getInstance(): OpenProjectSelectionPredicateSupplier =
-      ApplicationManager.getApplication().getService(OpenProjectSelectionPredicateSupplier::class.java)
+    fun getInstance(): OpenProjectSelectionPredicateSupplier = service()
   }
 
   fun getPredicate(): Predicate<AnAction>

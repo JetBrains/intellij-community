@@ -44,6 +44,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   val softWrapAppliancePlace: SoftWrapAppliancePlaces
   private val computableSettings = ArrayList<CacheableBackgroundComputable<*>>()
 
+  private var indentOptionsUpdateJob: Job? = null
   private val tabSize = object : CacheableBackgroundComputable<Int>(
     CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE) {
     override fun computeValue(project: Project?): Int {
@@ -331,19 +332,26 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     val document = editor.document
     val file = getVirtualFile() ?: return
     LOG.debug { "reinitDocumentIndentOptions, file ${file.name}" }
+    val app = ApplicationManager.getApplication()
     val editorCodeStyleSettings = editor.getUserData(CODE_STYLE_SETTINGS)
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      computeIndentOptions(project, file, editorCodeStyleSettings).associateWithDocument(document)
+    if (app.isUnitTestMode) {
+      app.runReadAction {
+        computeIndentOptions(project, file, editorCodeStyleSettings).associateWithDocument(document)
+      }
     }
     else {
-      (project as ComponentManagerEx).getCoroutineScope().launch {
+      val job = (project as ComponentManagerEx).getCoroutineScope().launch {
         val result = readAction {
           computeIndentOptions(project, file, editorCodeStyleSettings)
         }
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           result.associateWithDocument(document)
         }
-      }.cancelOnDispose(editor.disposable)
+      }
+      job.cancelOnDispose(editor.disposable)
+
+      indentOptionsUpdateJob?.cancel()
+      indentOptionsUpdateJob = job
     }
   }
 

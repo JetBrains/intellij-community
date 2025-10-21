@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 @Deprecated("Provide an extension for com.intellij.debugger.collections.visualizer.core.GridBasedCollectionVisualizer instead.")
 @ApiStatus.ScheduledForRemoval
 object CollectionVisualizerEvaluator {
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("This method always returns null. Provide an extension for com.intellij.debugger.collections.visualizer.core.GridBasedCollectionVisualizer instead.")
   @JvmStatic
   fun createFor(evaluationContext: EvaluationContextImpl, valueDescriptor: ValueDescriptor): XFullValueEvaluator? = null

@@ -22,8 +22,10 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * User : ktisha
@@ -126,7 +128,9 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), "refactoring.renameRefactorings");
   }
 
-  protected static @Nullable PyFunction getSuperMethod(@Nullable PyFunction function) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable PyFunction getSuperMethod(@Nullable PyFunction function) {
     if (function == null) {
       return null;
     }

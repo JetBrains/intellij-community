@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.sh.python` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "python_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,13 +11,14 @@ jvm_library(
   name = "python",
   module_name = "intellij.sh.python",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":python_resources"],
   deps = [
     "//python/python-psi-api:psi",
     "//plugins/sh/core",
     "//platform/util",
     "//platform/core-api:core",
-  ],
-  runtime_deps = [":python_resources"]
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.sh.python` end

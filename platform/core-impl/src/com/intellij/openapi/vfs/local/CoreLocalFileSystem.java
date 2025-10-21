@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
@@ -12,6 +12,21 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * {@link com.intellij.openapi.vfs.VirtualFileSystem} implementation for local files, that doesn't co-operate with
+ * {@link com.intellij.openapi.vfs.newvfs.ManagingFS} -- i.e. doesn't use caching and refreshing mechanisms.
+ * 2 main use-cases:
+ * <ol>
+ *   <li>
+ *     VFS outside IDE: e.g. kotlin compiler, or some other service, that uses JB API, which often requires VFS -- but doesn't
+ *     want to instantiate whole {@link com.intellij.openapi.vfs.newvfs.ManagingFS} machinery
+ *   </li>
+ *   <li>
+ *     VFS inside IDE, before {@link com.intellij.openapi.vfs.newvfs.ManagingFS} is initialized -- i.e. to open config files
+ *     early during IDE startup while {@link com.intellij.openapi.vfs.newvfs.ManagingFS} is not yet initialized.
+ *   </li>
+ * </ol>
+ */
 public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
   @Override
   public @NotNull String getProtocol() {

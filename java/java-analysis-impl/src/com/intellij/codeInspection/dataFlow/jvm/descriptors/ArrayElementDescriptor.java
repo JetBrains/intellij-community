@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
@@ -175,7 +175,7 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     }
     PsiType type = expression.getType();
     if (expression instanceof PsiArrayInitializerExpression) {
-      int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
+      int length = ((PsiArrayInitializerExpression)expression).getInitializerCount();
       return factory.fromDfType(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length))
                                   .meet(DfTypes.typedObject(type, Nullability.NOT_NULL)));
     }

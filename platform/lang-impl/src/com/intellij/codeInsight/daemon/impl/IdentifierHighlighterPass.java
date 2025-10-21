@@ -97,9 +97,9 @@ public final class IdentifierHighlighterPass {
     }
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static void clearMyHighlights(@NotNull Document document, @NotNull Project project) {
-    IdentifierHighlighterUpdater.Companion.clearMyHighlights(document, project);
+
   }
 }

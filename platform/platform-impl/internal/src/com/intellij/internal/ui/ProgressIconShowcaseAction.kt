@@ -24,7 +24,7 @@ internal class ProgressIconShowcaseAction : DumbAwareAction() {
       row {
         icon(icon)
         link("Change color") {
-          ColorChooserService.instance.showPopup(null, icon.getIconColor(), { color, _ -> color?.let {
+          ColorChooserService.getInstance().showPopup(null, icon.getIconColor(), { color, _ -> color?.let {
             icon.setIconColor(it)
             iconBig.setIconColor(it)
           }})

@@ -139,7 +139,7 @@ internal class IRFragmentCompilerCodegen {
                 target is LocalVariableDescriptor && target.isDelegated -> CodeFragmentParameter.Kind.DELEGATED
                 else -> CodeFragmentParameter.Kind.ORDINARY
             }
-            val dumb = CodeFragmentParameter.Dumb(kind, name)
+            val dumb = CodeFragmentParameter.Dumb(kind, name, depthRelativeToCurrentFrame = 0)
             SmartCodeFragmentParameter(dumb, type, target)
         }
 
@@ -155,7 +155,7 @@ internal class IRFragmentCompilerCodegen {
                 else ->
                     it.name to it.name
             }
-            val dumb = CodeFragmentParameter.Dumb(it.dumb.kind, newName, newDebugName)
+            val dumb = CodeFragmentParameter.Dumb(it.dumb.kind, newName, depthRelativeToCurrentFrame = 0, newDebugName)
             SmartCodeFragmentParameter(dumb, it.targetType, it.targetDescriptor)
         }
 

@@ -124,4 +124,9 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
   static @Nullable LocalQuickFix from(@Nullable ModCommandAction action) {
     return action == null ? null : ModCommandService.getInstance().wrapToQuickFix(action);
   }
+
+  @Contract("null, _ -> null; !null, _ -> !null")
+  static @Nullable LocalQuickFix from(@Nullable ModCommandAction action, boolean availableInBatchMode) {
+    return action == null ? null : ModCommandService.getInstance().wrapToQuickFix(action, availableInBatchMode);
+  }
 }

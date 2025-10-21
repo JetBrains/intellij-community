@@ -91,7 +91,7 @@ public final @NonNls class PyNames {
   public static final String SUPER = "super";
 
   public static final String OBJECT = "object";
-  public static final String NONE = "None";
+  public static final @NlsSafe String NONE = "None";
   public static final String TRUE = "True";
   public static final String FALSE = "False";
   public static final String ELLIPSIS = "...";
@@ -157,6 +157,8 @@ public final @NonNls class PyNames {
 
   public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";
+  public static final String ABSTRACT_CONTEXT_MANAGER = "AbstractContextManager";
+  public static final String ABSTRACT_ASYNC_CONTEXT_MANAGER = "AbstractAsyncContextManager";
 
   public static final String ABC_NUMBER = "Number";
   public static final String ABC_COMPLEX = "Complex";

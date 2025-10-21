@@ -88,7 +88,6 @@ import kotlin.math.min
 private val ABC_COMPARATOR: Comparator<TabInfo> = Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.text, o2.text) }
 private val LOG = logger<JBTabsImpl>()
 private const val SCROLL_BAR_THICKNESS = 5
-private const val ADJUST_BORDERS = true
 private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
 @Internal
@@ -1147,7 +1146,7 @@ open class JBTabsImpl internal constructor(
               val tabInfo = ClientProperty.get(renderer, TAB_INFO_KEY) ?: return
 
               // The last one is expected to be 'CloseTab'
-              val tabAction = tabInfo.tabLabelActions?.getChildren(null)?.lastOrNull()
+              val tabAction = (tabInfo.tabLabelActions as? DefaultActionGroup)?.childActionsOrStubs?.lastOrNull()
               if (tabAction == null && !tabInfo.isPinned) {
                 return
               }
@@ -1377,7 +1376,6 @@ open class JBTabsImpl internal constructor(
 
     updateSideComponent(info)
     add(label)
-    adjust(info)
     return false
   }
 
@@ -2746,6 +2744,13 @@ open class JBTabsImpl internal constructor(
     return this
   }
 
+  override fun removeTabMouseListener(listener: MouseListener): JBTabs {
+    removeListeners()
+    tabMouseListeners.remove(listener)
+    addListeners()
+    return this
+  }
+
   override fun getComponent(): JComponent = this
 
   private fun addListeners() {
@@ -3089,17 +3094,7 @@ open class JBTabsImpl internal constructor(
         tab.tabLabel?.apply(uiDecoration)
       }
     }
-    for (tabInfo in tabs) {
-      adjust(tabInfo)
-    }
     relayout(forced = true, layoutNow = false)
-  }
-
-  protected open fun adjust(tabInfo: TabInfo) {
-    if (ADJUST_BORDERS) {
-      @Suppress("DEPRECATION")
-      UIUtil.removeScrollBorder(tabInfo.component)
-    }
   }
 
   override fun sortTabs(comparator: Comparator<TabInfo>) {

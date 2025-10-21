@@ -28,8 +28,8 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     BuildNumber buildNumber = BuildNumber.fromString("IU-142.100");
     for (String name : new String[]{"plugin1.xml", "plugin2.xml"}) {
       IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoadUtilsKt
-        .readAndInitDescriptorFromBytesForTest(base.resolve(name), false, Files.readAllBytes(base.resolve(name)),
-                                               PluginId.getId("UpdatePluginsFromCustomRepositoryTest"));
+        .readDescriptorFromBytesForTest(base.resolve(name), false, Files.readAllBytes(base.resolve(name)),
+                                        PluginId.getId("UpdatePluginsFromCustomRepositoryTest"));
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, buildNumber);
       UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate);
     }

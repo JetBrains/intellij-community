@@ -47,7 +47,6 @@ internal class K1IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlin
 
         project.service<LibraryUsageIndex>()
             .getDependentModules(module.libraryInfo)
-            .mapNotNullTo(to) { it.toKaSourceModuleForProductionOrTest() }
+            .flatMapTo(to) { it.toKaSourceModules() }
     }
-
 }

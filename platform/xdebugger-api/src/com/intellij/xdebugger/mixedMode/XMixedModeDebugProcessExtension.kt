@@ -14,4 +14,5 @@ interface XMixedModeDebugProcessExtension {
   fun getStoppedThreadId(context : XSuspendContext) : Long
   fun belongsToMe(frame: XStackFrame): Boolean
   fun belongsToMe(file: VirtualFile): Boolean
+  fun belongsToMe(context: XSuspendContext) : Boolean
 }

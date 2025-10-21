@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,10 +35,7 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
@@ -63,14 +61,17 @@ public final class PyResolveUtil {
     PsiElement parent = element.getParent();
     ScopeOwner owner = originalOwner;
     if (parent instanceof PyNonlocalStatement) {
-      /* wee need to search in one step out scope for nonlocal statements */
-      final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
-      if (outerScopeOwner != null) {
-        owner = outerScopeOwner;
+      /* we need to search in one step out scope for nonlocal statements */
+      if (owner == roof) {
+        return;
+      }
+      owner = ScopeUtil.getScopeOwner(owner);
+      if (owner == null) {
+        return;
       }
     }
     else if (parent instanceof PyGlobalStatement) {
-      /* wee need to search directly in global scope of the module for global statements */
+      /* we need to search directly in the global scope of the module for global statements */
       final PsiFile globalScope = element.getContainingFile();
       if (globalScope instanceof PyFile) {
         owner = (PyFile)globalScope;
@@ -106,26 +107,20 @@ public final class PyResolveUtil {
                                   @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
     while (scopeOwner != null) {
       final Scope scope = ControlFlowCache.getScope(scopeOwner);
+      final Collection<PsiNamedElement> namedElements;
       if (name != null) {
         final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
-        for (PsiNamedElement resolved : scope.getNamedElements(name, includeNestedGlobals)) {
-          if (isClassLevelDefinitionInvisibleToReference(resolved, scopeOwner, originalScopeOwner)) continue;
-          if (!processor.execute(resolved, ResolveState.initial())) {
-            return;
-          }
-        }
+        namedElements = scope.getNamedElements(name, includeNestedGlobals);
       }
       else {
-        for (PsiNamedElement element : scope.getNamedElements()) {
-          if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
-          if (!processor.execute(element, ResolveState.initial())) {
-            return;
-          }
-        }
+        namedElements = scope.getNamedElements();
       }
-      for (PyImportedNameDefiner definer : scope.getImportedNameDefiners()) {
-        if (isClassLevelDefinitionInvisibleToReference(definer, scopeOwner, originalScopeOwner)) continue;
-        if (!processor.execute(definer, ResolveState.initial())) {
+      Iterable<PsiElement> elements = Iterables.concat(Iterables.filter(namedElements, t -> !(t instanceof PyTypeParameter)),
+                                                       scope.getImportedNameDefiners(),
+                                                       Iterables.filter(namedElements, PyTypeParameter.class));
+      for (PsiElement element : elements) {
+        if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
+        if (!processor.execute(element, ResolveState.initial())) {
           return;
         }
       }
@@ -287,19 +282,24 @@ public final class PyResolveUtil {
 
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
     final List<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(StreamEx.of(unqualifiedResults), (prev, name) ->
-      prev
-        .map(RatedResolveResult::getElement)
-        .select(PyTypedElement.class)
-        .map(context::getType)
-        .nonNull()
-        .flatMap(type -> {
-          // An instance type has access to instance attributes defined in __init__, a class type does not.
-          final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-          final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
-          return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
-        }))
-      .toList();
+        prev
+          .map(RatedResolveResult::getElement)
+          .select(PyTypedElement.class)
+          .map(context::getType)
+          .nonNull()
+          .flatMap(type -> {
+            assert type != null; // see filter nonNull()
+            // An instance type has access to instance attributes defined in __init__, a class type does not.
+            final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
+            final List<? extends RatedResolveResult> results = instanceType instanceof PyModuleType moduleType
+                                                               ? moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ,
+                                                                                                resolveContext)
+                                                               : instanceType.resolveMember(name, null, AccessDirection.READ,
+                                                                                            resolveContext);
 
+            return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
+          }))
+      .toList();
     return PyUtil.filterTopPriorityElements(result);
   }
 

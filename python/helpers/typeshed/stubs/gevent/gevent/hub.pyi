@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Generic, Protocol, TextIO, TypeVar, overload
+from typing import Any, Generic, Protocol, TextIO, TypeVar, overload, type_check_only
 from typing_extensions import ParamSpec
 
 import gevent._hub_local
@@ -23,13 +23,14 @@ getcurrent = greenlet.getcurrent
 get_hub = gevent._hub_local.get_hub
 Waiter = gevent._waiter.Waiter
 
+@type_check_only
 class _DefaultReturnProperty(Protocol[_T]):
     @overload
     def __get__(self, obj: None, owner: type[object] | None = None) -> property: ...
     @overload
     def __get__(self, obj: object, owner: type[object] | None = None) -> _T: ...
     def __set__(self, obj: object, value: _T | None) -> None: ...
-    def __del__(self, obj: object) -> None: ...
+    def __del__(self) -> None: ...
 
 def spawn_raw(function: Callable[..., object], *args: object, **kwargs: object) -> greenlet.greenlet: ...
 def sleep(seconds: float = 0, ref: bool = True) -> None: ...
@@ -104,7 +105,10 @@ class Hub(WaitOperationsGreenlet):
     threadpool: _DefaultReturnProperty[ThreadPool]
 
 class linkproxy:
+    __slots__ = ["callback", "obj"]
     callback: Callable[[object], object]
     obj: object
     def __init__(self, callback: Callable[[_T], object], obj: _T) -> None: ...
     def __call__(self, *args: object) -> None: ...
+
+__all__ = ["getcurrent", "GreenletExit", "spawn_raw", "sleep", "kill", "signal", "reinit", "get_hub", "Hub", "Waiter"]

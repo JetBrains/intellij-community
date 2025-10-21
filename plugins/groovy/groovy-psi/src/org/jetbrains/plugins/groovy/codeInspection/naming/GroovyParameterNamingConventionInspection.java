@@ -75,6 +75,7 @@ public final class GroovyParameterNamingConventionInspection extends ConventionI
     @Override
     public void visitParameter(@NotNull GrParameter grParameter) {
       super.visitParameter(grParameter);
+      if (grParameter.isUnnamed()) return;
       final String name = grParameter.getName();
       final PsiElement scope = grParameter.getDeclarationScope();
       if (scope instanceof GrCatchClause ||

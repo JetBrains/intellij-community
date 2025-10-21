@@ -4,11 +4,9 @@ package com.intellij.ide.ui.laf.darcula.ui
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.awt.Graphics
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -48,15 +46,16 @@ object OnboardingDialogButtons {
     btn.isBorderPainted = true
     btn.putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.ActionButton.hoverBackground())
     btn.putClientProperty("JButton.borderColor", Color(0, true))
+    makeTransparent(btn, isContentAreaFilled = false)
 
     val listener: MouseAdapter = object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent) {
-        btn.setContentAreaFilled(true)
+        makeTransparent(btn, isContentAreaFilled = true)
         btn.repaint()
       }
 
       override fun mouseExited(e: MouseEvent) {
-        btn.setContentAreaFilled(false)
+        makeTransparent(btn, isContentAreaFilled = false)
         btn.repaint()
       }
     }
@@ -119,15 +118,15 @@ object OnboardingDialogButtons {
   }
 
   fun createButton(isDefault: Boolean): JButton {
-    val btn = object: JButton() {
-      override fun getComponentGraphics(g: Graphics?): Graphics {
-        return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
-      }
-    }
+    // Background painting doesn't work well with island themes.
+    // Instead, make the buttons transparent to show the dialog background.
+    val btn = JButton()
     btn.putClientProperty("ActionToolbar.smallVariant", true)
     btn.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, isDefault)
     btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_BORDER_GRAPHICS, true)
-    btn.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, isDefault)
+    btn.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
+    // Default buttons still get their content area filled with the usual blue color.
+    makeTransparent(btn, isContentAreaFilled = isDefault)
     val listener: MouseAdapter = object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent) {
         btn.putClientProperty("JButton.borderColor",
@@ -145,4 +144,13 @@ object OnboardingDialogButtons {
     return btn
   }
 
+}
+
+private fun makeTransparent(btn: JButton, isContentAreaFilled: Boolean) {
+  // The order is important here: setting isContentAreaFilled = true makes the button opaque.
+  // (See javax.swing.plaf.basic.BasicButtonListener.propertyChange.)
+  // But we need ONLY the content area, other parts of the button should remain transparent.
+  // Otherwise, we'll get a blue button with an ugly opaque border around it.
+  btn.isContentAreaFilled = isContentAreaFilled
+  btn.isOpaque = false
 }

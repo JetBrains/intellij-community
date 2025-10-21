@@ -1,113 +1,119 @@
 package com.intellij.cce.java.test
 
 
-import com.intellij.cce.core.Language
-import com.intellij.cce.test.TestRunRequest
 import com.intellij.cce.test.TestRunResult
-import com.intellij.cce.test.TestRunner
-import com.intellij.cce.test.TestRunnerParams
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.runners.ProgramRunner
-import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.util.Key
-import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 
-private val LOG = fileLogger()
+/**
+ * Just a maven runner.
+ */
+internal object JavaTestRunnerForMaven {
 
-internal class JavaTestRunnerForMaven: TestRunner {
-  override fun isApplicable(params: TestRunnerParams): Boolean {
-    return params.language == Language.JAVA
-           || params.language == Language.KOTLIN // TODO temporary solution for docker testing
-  }
-
-  override fun runTests(request: TestRunRequest): TestRunResult {
-    LOG.info("Running tests: ${request.tests.joinToString()}")
-    if (request.tests.isEmpty()) {
-      return TestRunResult(0, emptyList(), emptyList(), true, "")
-    }
-
-    val project = request.project
+  suspend fun run(project: Project, moduleTests: List<ModuleTests>): TestRunResult {
 
     val projectDir = project.guessProjectDir()!!
 
     val params = MavenRunnerParameters(/* isPomExecution = */ true,
                                        /* workingDirPath = */ projectDir.path,
-                                       /* pomFileName = */ "",
+                                       /* pomFileName = */ null,
                                        /* goals = */ listOf("test"),
                                        /* explicitEnabledProfiles = */ emptyList<String>())
-    val deferred = CompletableDeferred<Int>()
 
-    val sb = StringBuilder()
+    params.cmdOptions = "-am"
 
-    val callback = ProgramRunner.Callback { descriptor ->
-      LOG.info("processStarted $descriptor")
-      val processHandler = descriptor.processHandler ?: error("processHandler is null")
-      processHandler.addProcessListener(object : ProcessListener {
-        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          sb.append(event.text)
+    // in multi-module projects tests will be prefixed with module:test
+    moduleTests
+      .mapNotNull { it.module }
+      .also {
+        if (it.isNotEmpty()) {
+          params.projectsCmdOptionValues = it
         }
-
-        override fun processTerminated(event: ProcessEvent) {
-          LOG.info("processTerminated. exitCode=${event.exitCode}")
-          deferred.complete(event.exitCode)
-        }
-
-        override fun processNotStarted() {
-          LOG.error("processNotStarted")
-          deferred.complete(-1)
-        }
-      })
-    }
-    val runnerSettings = MavenRunnerSettings().also {
-      if (request.tests.any()) {
-        //todo check
-        it.setVmOptions("-Dtest=${request.tests.joinToString(separator = ",") { it.split(":").last() }}")
       }
+
+    val runnerSettings = MavenRunnerSettings().also {
+      it.mavenProperties = mapOf(
+        "surefire.reportFormat" to "plain",
+        "surefire.useFile" to "false",
+        "surefire.failIfNoSpecifiedTests" to "false",
+        "failIfNoTests" to "false",
+        "maven.gitcommitid.skip" to "true",
+        "test" to moduleTests.flatMap { it.tests }.joinToString(separator = ",")
+      )
     }
 
-    MavenRunConfigurationType.runConfiguration(project,
-                                               params,
-                                               null,
-                                               runnerSettings,
-                                               callback)
-
-    LOG.info("await for process termination")
-    val exitCode = runBlockingCancellable {
-      deferred.await()
+    val results = RunConfigurationResults.compute { callback ->
+      MavenRunConfigurationType.runConfiguration(project, params, null, runnerSettings, callback)
     }
 
-    val output = sb.toString()
+    val output = results.output
     val compilationSuccessful = MavenOutputParser.compilationSuccessful(output)
+    val projectIsResolvable = MavenOutputParser.checkIfProjectIsResolvable(output)
     val (passed, failed) = MavenOutputParser.parse(output)
-    return TestRunResult(exitCode, passed, failed, compilationSuccessful, output)
+    return TestRunResult(
+      results.exitCode,
+      passed,
+      failed,
+      moduleTests.flatMap { it.tests },
+      compilationSuccessful,
+      projectIsResolvable,
+      output
+    )
   }
 }
 
 object MavenOutputParser {
+  private val classNameRegex = Regex("""^.+\((\S+)\)\s+Time elapsed:.*""")
   private val testPrefixes = mutableListOf(" -- in ", " - in ")
+  private val errorSubstrings = listOf("ERROR", "FAILURE")
   fun parse(text: String): Pair<List<String>, List<String>> {
-    val linesWithTests = text.lines().filter { line ->
+    val lines = text.lines()
+
+    val failed = mutableListOf<String>()
+    val passed = mutableListOf<String>()
+    for (line in lines) {
+      val matchResult = classNameRegex.find(line)
+      if (matchResult != null) {
+        val className = matchResult.groupValues[1]
+        if (errorSubstrings.any { line.contains(it) }) {
+          failed.add(className)
+        }
+        else {
+          passed.add(className)
+        }
+      }
+    }
+
+    if (passed.isNotEmpty() || failed.isNotEmpty()) {
+      return Pair(passed.distinct().filterNot { failed.contains(it) }.sorted(), failed.distinct().sorted())
+    }
+
+    return suitBasedParseParse(lines)
+  }
+
+  private fun suitBasedParseParse(lines: List<String>): Pair<List<String>, List<String>> {
+    val linesWithTests = lines.filter { line ->
       line.contains("Tests run") &&
       testPrefixes.any { line.contains(it) }
     }
     val passed = linesWithTests
-      .filter { !it.contains("FAILURE") }
+      .filter { !errorSubstrings.any(it::contains) }
       .map { trimTestLinePrefix(it) }
       .sorted()
     val failed = linesWithTests
-      .filter { it.contains("FAILURE") }
+      .filter { errorSubstrings.any(it::contains) }
       .map { trimTestLinePrefix(it) }
       .sorted()
     return Pair(passed, failed)
   }
 
   fun compilationSuccessful(text: String): Boolean = !text.contains("COMPILATION ERROR")
+
+  fun checkIfProjectIsResolvable(text: String): Boolean =
+    !text.contains("[ERROR] Some problems were encountered while processing the POMs")
 
   private fun trimTestLinePrefix(source: String): String {
     var res = source

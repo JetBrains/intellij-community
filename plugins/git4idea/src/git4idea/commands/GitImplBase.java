@@ -232,10 +232,7 @@ public abstract class GitImplBase implements Git {
     return root.getName();
   }
 
-  /**
-   * Only public because of {@link GitExecutableValidator#isExecutableValid()}
-   */
-  public static @NotNull Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
+  private static @NotNull Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
     Map<@NonNls String, @NonNls String> environment = new HashMap<>(5);
     int logLevel = Registry.intValue("git.execution.trace");
     if (logLevel == 0) {

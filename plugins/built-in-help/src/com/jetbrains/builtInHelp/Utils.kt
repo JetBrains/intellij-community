@@ -5,6 +5,7 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.annotations.NonNls
 
@@ -12,10 +13,42 @@ class Utils {
   companion object {
     @NonNls
     private const val EMPTY_STRING = ""
+
     @NonNls
-    const val BASE_HELP_URL = "https://www.jetbrains.com/"
+    const val BASE_HELP_URL: String = "https://www.jetbrains.com/"
 
     private val secureKey = CredentialAttributes("Web Help Bundle")
+
+    fun getResourceWithFallback(resPath: String, resName: String, localePath: String): ByteArray? {
+
+      val resStream = ResourceUtil.getResourceAsStream(
+        HelpRequestHandlerBase::class.java.classLoader,
+        "${if (localePath.isNotEmpty()) "$localePath/" else ""}$resPath", resName
+      )
+
+      return resStream.use { res ->
+        try {
+          res.readAllBytes()
+        }
+        catch (e: Exception) {
+          LOG.warn("$localePath resource failed", e)
+          //So we couldn't find any localized resource, try the default English one
+          ResourceUtil.getResourceAsStream(
+            HelpRequestHandlerBase::class.java.classLoader,
+            resPath, resName
+          ).use { res ->
+            try {
+              res.readAllBytes()
+            }
+            catch (e: Exception) {
+              LOG.warn("Fallback resource failed", e)
+              null
+            }
+          }
+        }
+      }
+    }
+
 
     @JvmStatic
     @NonNls
@@ -30,14 +63,14 @@ class Utils {
     }
 
     @JvmStatic
-    fun setStoredValue(key: SettingsPage.SettingKey, value: String?): Boolean {
+    fun setStoredValue(key: SettingsPage.SettingKey, value: String?) {
       if (!key.second) {
         PropertiesComponent.getInstance().setValue(key.first, value, EMPTY_STRING)
-        return true
       }
-      val passwordSafe = PasswordSafe.instance
-      passwordSafe.set(secureKey, Credentials(key.first, value))
-      return true
+      else {
+        val passwordSafe = PasswordSafe.instance
+        passwordSafe.set(secureKey, Credentials(key.first, value))
+      }
     }
   }
 }

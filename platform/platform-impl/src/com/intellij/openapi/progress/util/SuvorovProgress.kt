@@ -3,24 +3,46 @@ package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadWriteActionSupport
+import com.intellij.openapi.application.impl.InternalThreading
+import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
+import com.intellij.openapi.application.useDebouncedDrawingInSuvorovProgress
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
+import com.intellij.openapi.progress.util.ui.NiceOverlayUi
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.ui.KeyStrokeAdapter
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.application
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.GraphicsUtil
+import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.getLogger
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
+import java.awt.Component
 import java.awt.KeyboardFocusManager
-import java.awt.event.InvocationEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
+import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 /**
@@ -45,6 +67,8 @@ import javax.swing.SwingUtilities
 @ApiStatus.Internal
 object SuvorovProgress {
 
+  private val awtComponentLock = (object : Component() {}).treeLock
+
   @Volatile
   private lateinit var eternalStealer: EternalEventStealer
 
@@ -52,18 +76,60 @@ object SuvorovProgress {
     eternalStealer = EternalEventStealer(disposable)
   }
 
+  private val title: AtomicReference<@Nls String?> = AtomicReference()
+
+  fun <T> withProgressTitle(title: String, action: () -> T): T {
+    val oldTitle = this.title.getAndSet(title)
+    try {
+      return action()
+    }
+    finally {
+      this.title.set(oldTitle)
+    }
+  }
+
+  /**
+   * We have a major conceptual problem -- many rendering computations are executing under [Component.treeLock],
+   * where they access PSI and consequently they acquire read action.
+   * At the same time, some computations inside read actions initialize Swing components which internally also acquire [Component.treeLock]
+   *
+   * This results in a deadlock caused by the incorrect order of locks.
+   * This is particularly actual with the background write action which can stall of read actions.
+   *
+   * Too many clients already rely on this behavior, so we solve the problem for this particular pair of locks:
+   * when we detect such situation, we forcefully retry the pending background write action -- after release of pending WA,
+   * some read actions can progress, including the one on EDT.
+   *
+   * See IJPL-211485
+   */
+  fun tryProgressWithPendingBackgroundWriteAction() {
+    if (Thread.holdsLock(awtComponentLock)) {
+      val application = ApplicationManager.getApplication()
+      val rwService = application.serviceIfCreated<ReadWriteActionSupport>()
+      if (rwService is PlatformReadWriteActionSupport) {
+        rwService.signalWriteActionNeedsToBeRetried()
+      }
+    }
+  }
+
   @JvmStatic
   fun dispatchEventsUntilComputationCompletes(awaitedValue: Deferred<*>) {
     val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
+
+    tryProgressWithPendingBackgroundWriteAction()
+
     processInvocationEventsWithoutDialog(awaitedValue, showingDelay)
 
     if (awaitedValue.isCompleted) {
       return
     }
 
-    FreezeUiUsageCollector.reportUiFreezePopupVisible()
+    LifecycleUsageTriggerCollector.onFreezePopupShown()
 
-    val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+    // in tests, there is no UI scale, but we still want to run SuvorovProgress
+    val isScaleInitialized = (application.isUnitTestMode || JBUIScale.isInitialized())
+
+    val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred || !isScaleInitialized) {
       "None"
     }
     else {
@@ -78,8 +144,85 @@ object SuvorovProgress {
         thisLogger().warn("Spinning progress would not work without enabled registry value `editor.allow.raw.access.on.edt`")
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
+      "NiceOverlay" -> {
+        val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
+        // IJPL-203107 in remote development, there is no graphics for a component
+        if (currentFocusedPane == null || GraphicsUtil.safelyGetGraphics(currentFocusedPane) == null) {
+          // can happen also in tests
+          processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
+        }
+        else if (title.get() != null) {
+          showPotemkinProgress(awaitedValue, true)
+        } else {
+          showNiceOverlay(awaitedValue, currentFocusedPane)
+        }
+      }
       "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, isBar = value == "Bar")
       else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
+    }
+  }
+
+  private fun showNiceOverlay(awaitedValue: Deferred<*>, rootPane: JRootPane) {
+    val niceOverlay = NiceOverlayUi(rootPane, false)
+
+    val disposable = Disposer.newDisposable()
+    val stealer = EventStealer(disposable, true) { event ->
+      var dumpThreads = false
+      if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED) {
+        event.consume()
+        val reaction = niceOverlay.mouseClicked(event.point)
+        when (reaction) {
+          NiceOverlayUi.ClickOutcome.DUMP_THREADS -> dumpThreads = true
+          NiceOverlayUi.ClickOutcome.CLOSED, NiceOverlayUi.ClickOutcome.NOTHING -> Unit
+        }
+      }
+      if (event is MouseEvent && event.id == MouseEvent.MOUSE_MOVED) {
+        event.consume()
+        niceOverlay.mouseMoved(event.point)
+      }
+      if (event is KeyEvent && niceOverlay.dumpThreadsButtonShortcut == KeyStrokeAdapter.getDefaultKeyStroke(event)?.let { KeyboardShortcut(it, null) }) {
+        event.consume()
+        dumpThreads = true
+      }
+      if (dumpThreads) {
+        ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+          val dumpFile = PerformanceWatcher.getInstance().dumpThreads("freeze-popup", true, false)
+          if (dumpFile != null) {
+            if (Files.exists(dumpFile)) {
+              RevealFileAction.openFile(dumpFile)
+            }
+            else {
+              getLogger<SuvorovProgress>().error { "Failed to dump threads to $dumpFile" }
+            }
+          }
+        })
+      }
+    }
+
+    repostAllEvents()
+    var oldTimestamp = System.currentTimeMillis()
+    try {
+      while (!awaitedValue.isCompleted) {
+        if (useDebouncedDrawingInSuvorovProgress) {
+          val newTimestamp = System.currentTimeMillis()
+          if (newTimestamp - oldTimestamp >= 10) {
+            // we do not want to redraw the UI too frequently
+            oldTimestamp = newTimestamp
+            niceOverlay.redrawMainComponent()
+          }
+          stealer.dispatchEvents(0)
+          stealer.waitForPing(10)
+        }
+        else {
+          niceOverlay.redrawMainComponent()
+          stealer.dispatchEvents(0)
+          Thread.sleep(10)
+        }
+      }
+    }
+    finally {
+      niceOverlay.close()
+      Disposer.dispose(disposable)
     }
   }
 
@@ -87,8 +230,9 @@ object SuvorovProgress {
     // some focus machinery may require Write-Intent read action
     // we need to remove it from there
     getGlobalThreadingSupport().relaxPreventiveLockingActions {
-      val progress = if (isBar) {
-        PotemkinProgress(CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
+      @Suppress("HardCodedStringLiteral") val title = this.title.get()
+      val progress = if (title != null || isBar) {
+        PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
       }
       else {
         val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
@@ -100,6 +244,11 @@ object SuvorovProgress {
       progress.start()
       try {
         do {
+          if (progress is PotemkinProgress) {
+            progress.dispatchAllInvocationEvents()
+          } else if (progress is PotemkinOverlayProgress) {
+            progress.dispatchAllInvocationEvents()
+          }
           progress.interact()
           sleep() // avoid touching the progress too much
         }
@@ -120,13 +269,7 @@ object SuvorovProgress {
 
   @OptIn(InternalCoroutinesApi::class)
   private fun processInvocationEventsWithoutDialog(awaitedValue: Deferred<*>, showingDelay: Int) {
-    eternalStealer.enable()
-    try {
-      eternalStealer.dispatchAllEventsForTimeout(showingDelay.toLong(), awaitedValue)
-    }
-    finally {
-      eternalStealer.disable()
-    }
+    eternalStealer.dispatchAllEventsForTimeout(showingDelay.toLong(), awaitedValue)
   }
 
   private fun showSpinningProgress(awaitedValue: Deferred<*>) {
@@ -190,21 +333,6 @@ object SuvorovProgress {
   private fun sleep() {
     Thread.sleep(0, 100_000)
   }
-
-  abstract class ForcedWriteActionRunnable : Runnable {
-
-    companion object {
-      private const val NAME = "ForcedWriteActionRunnable"
-
-      fun isMarkedRunnable(event: InvocationEvent): Boolean {
-        return event.toString().contains(NAME)
-      }
-    }
-
-    override fun toString(): String {
-      return NAME
-    }
-  }
 }
 
 /**
@@ -215,102 +343,76 @@ object SuvorovProgress {
  * One needs to be careful to maintain keep AWT events in the order they were posted.
  */
 private class EternalEventStealer(disposable: Disposable) {
-  @Volatile
-  private var enabled = false
-
-  private val specialEvents = LinkedBlockingQueue<SpecialDispatchEvent>()
+  private var counter = 0
+  private val specialEvents = LinkedBlockingQueue<ForcedEvent>()
 
   init {
     IdeEventQueue.getInstance().addPostEventListener(
       { event ->
-        if (enabled && event.toString().contains(",runnable=ForcedWriteActionRunnable")) {
-          val specialDispatchEvent = SpecialDispatchEvent(event)
-          specialEvents.add(specialDispatchEvent)
-          IdeEventQueue.getInstance().doPostEvent(specialDispatchEvent, true)
-          return@addPostEventListener true
+        if (event is InternalThreading.TransferredWriteActionEvent) {
+          specialEvents.add(TransferredWriteActionWrapper(event))
         }
         false
       }, disposable)
   }
 
-  fun enable() {
-    enabled = true
-  }
-
   fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
     val initialMark = System.nanoTime()
 
+    val id = counter++
     deferred.invokeOnCompletion {
-      synchronized(this@EternalEventStealer) {
-        (this@EternalEventStealer as Object).notifyAll()
-      }
+      specialEvents.add(TerminalEvent(id))
     }
 
-    synchronized(this) {
-      while (true) {
-        val currentMark = System.nanoTime()
-        val elapsedSinceStartNanos = currentMark - initialMark
-        val toSleep = timeoutMillis - (elapsedSinceStartNanos / 1_000_000)
-        if (toSleep <= 0) {
-          return
+    while (true) {
+      val currentMark = System.nanoTime()
+      val elapsedSinceStartNanos = currentMark - initialMark
+      val toSleep = timeoutMillis - (elapsedSinceStartNanos / 1_000_000)
+      if (toSleep <= 0) {
+        return
+      }
+      if (deferred.isCompleted) {
+        return
+      }
+      try {
+        when (val event = specialEvents.poll() ?: specialEvents.poll(toSleep, TimeUnit.MILLISECONDS)) {
+          is TerminalEvent -> {
+            // return only if we get the event for the right id
+            if (event.id == id) {
+              return
+            }
+          }
+          is TransferredWriteActionWrapper -> getGlobalThreadingSupport().relaxPreventiveLockingActions {
+            event.event.execute()
+          }
+          null -> Unit
         }
-        if (deferred.isCompleted) {
-          return
-        }
-        try {
-          (this as Object).wait(toSleep)
-        } catch (_ : InterruptedException) {
-          // we still return locking result regardless of interruption
-          Thread.currentThread().interrupt()
-        }
-        while (true) {
-          val event = specialEvents.poll() ?: break
-          event.execute()
-        }
-        if (!deferred.isActive) {
-          return
-        }
+      } catch (_ : InterruptedException) {
+        // we still return locking result regardless of interruption
+        Thread.currentThread().interrupt()
       }
     }
-  }
-
-  fun disable() {
-    enabled = false
   }
 }
 
-private class SpecialDispatchEvent private constructor(val reference: AtomicReference<AWTEvent>) : InvocationEvent(Any(), {
-  execute(reference)
-}) {
-  companion object {
-    fun execute(ref: AtomicReference<AWTEvent>) {
-      val actualEvent = ref.getAndSet(null) ?: return
-      IdeEventQueue.getInstance().dispatchEvent(actualEvent)
-    }
-  }
+private sealed interface ForcedEvent
 
-  constructor(event: AWTEvent) : this(AtomicReference(event))
+private class TerminalEvent(val id: Int) : ForcedEvent
 
-  fun execute() {
-    execute(reference)
-  }
-
-  override fun toString(): String {
-    return "SpecialDispatchEvent"
-  }
-}
-
+@JvmInline
+private value class TransferredWriteActionWrapper(val event: InternalThreading.TransferredWriteActionEvent) : ForcedEvent
 
 /**
- * Protection against race condition: imagine someone posted an event that wants lock, and then they post [SuvorovProgress.ForcedWriteActionRunnable].
+ * Protection against race condition: imagine someone posted an event that wants lock, and then they post [TransferredWriteActionWrapper].
  * The second event will go into the main event queue because event stealer was not installed, but we need to execute it very quickly.
- * todo: we might get some performance if we catch [SuvorovProgress.ForcedWriteActionRunnable] in [EternalEventStealer]
- *  and execute it when [EternalEventStealer] starts dispatching events.
- *  This way we would avoid iterating over all stored events
  */
 private fun repostAllEvents() {
   val queue = IdeEventQueue.getInstance()
   val events = ArrayList<AWTEvent>()
+  val topEvent = IdeEventQueue.getInstance().trueCurrentEvent
+  if (EventStealer.isUrgentInvocationEvent(topEvent)) {
+    events.add(IdeEventQueue.getInstance().trueCurrentEvent)
+  }
   while (true) {
     queue.peekEvent() ?: break
     val actualEvent = queue.nextEvent

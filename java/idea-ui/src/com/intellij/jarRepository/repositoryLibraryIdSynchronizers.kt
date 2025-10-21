@@ -2,6 +2,7 @@
 package com.intellij.jarRepository
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
@@ -42,15 +43,15 @@ internal class GlobalChangedRepositoryLibraryIdSynchronizer(private val queue: L
   }
 }
 
-internal fun installOnExistingLibraries(listener: RootProvider.RootSetChangedListener, disposable: Disposable) {
-  getGlobalAndCustomLibraryTables()
+internal fun installOnExistingLibraries(project: Project, listener: RootProvider.RootSetChangedListener, disposable: Disposable) {
+  getGlobalAndCustomLibraryTables(project)
     .flatMap { it.libraries.asIterable() }
     .filterIsInstance<LibraryEx>()
     .forEach { it.rootProvider.addRootSetChangedListener(listener, disposable) }
 }
 
-internal fun getGlobalAndCustomLibraryTables(): Sequence<LibraryTable> {
-  return LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable
+internal fun getGlobalAndCustomLibraryTables(project: Project): Sequence<LibraryTable> {
+  return LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project)
 }
 
 internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: LibraryIdSynchronizationQueue) : WorkspaceModelChangeListener {

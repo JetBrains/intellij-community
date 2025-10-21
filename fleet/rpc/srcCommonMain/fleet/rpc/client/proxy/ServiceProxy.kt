@@ -7,8 +7,8 @@ import fleet.rpc.client.IRpcClient
 import fleet.rpc.client.asHandlerFactory
 import fleet.rpc.core.InstanceId
 import fleet.util.UID
+import kotlinx.coroutines.currentCoroutineContext
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 interface ServiceProxy {
   fun <A : RemoteApi<*>> proxy(remoteApiDescriptor: RemoteApiDescriptor<A>, route: UID, instanceId: InstanceId): A
@@ -25,7 +25,7 @@ fun ServiceProxy.asContextElement(): ServiceProxy.ContextElement =
   ServiceProxy.ContextElement(this)
 
 suspend fun requireServiceProxy(): ServiceProxy =
-  requireNotNull(coroutineContext[ServiceProxy.ContextElement]) { "ServiceProxy is not on context" }.serviceProxy
+  requireNotNull(currentCoroutineContext()[ServiceProxy.ContextElement]) { "ServiceProxy is not on context" }.serviceProxy
 
 fun serviceProxy(handlerFactory: InvocationHandlerFactory<ProxyClosure>): ServiceProxy =
   object : ServiceProxy {

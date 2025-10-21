@@ -297,7 +297,7 @@ public abstract class ScrollingSynchronizer {
         }
 
         override fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange): MarkdownBlock {
-            val locatableMarkdownBlock = LocatableMarkdownBlock(block, sourceRange)
+            val locatableMarkdownBlock = block as? LocatableMarkdownBlock ?: LocatableMarkdownBlock(block, sourceRange)
             for (line in sourceRange) {
                 // DFS -- keep the innermost block for the given line
                 lines2Blocks.putIfAbsent(line, locatableMarkdownBlock)

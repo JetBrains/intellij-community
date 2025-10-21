@@ -143,7 +143,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> {
           if (project.isDisposed()) return;
 
-          DaemonCodeAnalyzer.getInstance(project).restart();
+          DaemonCodeAnalyzer.getInstance(project).restart(AntConfigurationImpl.this);
         });
       }
     });

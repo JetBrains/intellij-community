@@ -38,7 +38,7 @@ class ChangeAccessorTypeFix(
         updater: ModPsiUpdater,
     ) {
         val newTypeReference = KtPsiFactory(actionContext.project).createType(typeSourceCode)
-        val typeReference = if (element.isGetter) element.returnTypeReference else element.parameter!!.typeReference
+        val typeReference = if (element.isGetter) element.typeReference else element.parameter!!.typeReference
 
         val insertedTypeRef = typeReference!!.replaced(newTypeReference)
         ShortenReferencesFacility.getInstance().shorten(insertedTypeRef)

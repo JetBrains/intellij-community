@@ -1,6 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
@@ -21,56 +25,30 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
-class RedundantWithInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, RedundantWithInspection.Context>() {
+class RedundantWithInspection : KotlinApplicableInspectionBase<KtCallExpression, RedundantWithInspection.Context>() {
 
     data class Context(val receiver: KtExpression, val typeReference: KtTypeReference?)
 
-    override fun createQuickFix(
+    override fun InspectionManager.createProblemDescriptor(
         element: KtCallExpression,
         context: Context,
-    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
-
-        override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.with.fix.text")
-
-        override fun applyFix(
-            project: Project,
-            element: KtCallExpression,
-            updater: ModPsiUpdater,
-        ) {
-            val lambdaExpression = element.valueArguments.getOrNull(1)?.getLambdaExpression() ?: return
-            val lambdaBody = lambdaExpression.bodyExpression ?: return
-
-            val function = element.getStrictParentOfType<KtFunction>()
-            val functionBody = function?.bodyExpression
-
-            val replaced = if (functionBody?.safeDeparenthesize() == element) {
-                val singleStatement = lambdaBody.statements.singleOrNull()
-                if (singleStatement != null) {
-                    element.replaced((singleStatement as? KtReturnExpression)?.returnedExpression ?: singleStatement)
-                } else {
-                    function.setTypeReference(context.typeReference)?.let { shortenReferences(it) }
-                    val lambdaStatements = lambdaBody.statements
-                    val lastStatement = lambdaStatements.lastOrNull()
-                    if (lastStatement != null && lastStatement !is KtReturnExpression) {
-                        lastStatement.replaced(KtPsiFactory(project).createExpressionByPattern("return $0", lastStatement))
-                    }
-
-                    function.equalsToken?.delete()
-
-                    functionBody.replace(KtPsiFactory.contextual(function).createSingleStatementBlock(lambdaBody))
-                }
-            } else {
-                element.replace(lambdaBody)
-            } ?: return
-
-            updater.moveCaretTo(replaced)
+        rangeInElement: TextRange?,
+        onTheFly: Boolean,
+    ): ProblemDescriptor {
+        val fixes = when (context.receiver) {
+            is KtSimpleNameExpression, is KtStringTemplateExpression, is KtConstantExpression -> arrayOf(RemoveRedundantWithFix(context))
+            else -> LocalQuickFix.EMPTY_ARRAY
         }
-    }
 
-    override fun getProblemDescription(
-        element: KtCallExpression,
-        context: Context,
-    ): String = KotlinBundle.message("inspection.redundant.with.display.name")
+        return createProblemDescriptor(
+            /* psiElement = */ element,
+            /* rangeInElement = */ rangeInElement,
+            /* descriptionTemplate = */ KotlinBundle.message("inspection.redundant.with.display.name"),
+            /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+            /* onTheFly = */ onTheFly,
+            /* ...fixes = */ *fixes,
+        )
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -88,7 +66,7 @@ class RedundantWithInspection : KotlinApplicableInspectionBase.Simple<KtCallExpr
         val valueArguments = element.valueArguments
         if (valueArguments.size != 2) return false
         val receiver = valueArguments[0].getArgumentExpression()
-        if (receiver == null || receiver !is KtSimpleNameExpression && receiver !is KtStringTemplateExpression && receiver !is KtConstantExpression) return false
+        if (receiver == null) return false
         val lambda = valueArguments[1].getLambdaExpression() ?: return false
         val lambdaBody = lambda.bodyExpression
         return lambdaBody != null
@@ -125,6 +103,47 @@ class RedundantWithInspection : KotlinApplicableInspectionBase.Simple<KtCallExpr
         return null
     }
 
-    private fun KtValueArgument.getLambdaExpression(): KtLambdaExpression? =
-        (this as? KtLambdaArgument)?.getLambdaExpression() ?: this.getArgumentExpression() as? KtLambdaExpression
 }
+
+private class RemoveRedundantWithFix(
+    private val context: RedundantWithInspection.Context,
+) : KotlinModCommandQuickFix<KtCallExpression>() {
+    override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.with.fix.text")
+
+    override fun applyFix(
+        project: Project,
+        element: KtCallExpression,
+        updater: ModPsiUpdater,
+    ) {
+        val lambdaExpression = element.valueArguments.getOrNull(1)?.getLambdaExpression() ?: return
+        val lambdaBody = lambdaExpression.bodyExpression ?: return
+
+        val function = element.getStrictParentOfType<KtFunction>()
+        val functionBody = function?.bodyExpression
+
+        val replaced = if (functionBody?.safeDeparenthesize() == element) {
+            val singleStatement = lambdaBody.statements.singleOrNull()
+            if (singleStatement != null) {
+                element.replaced((singleStatement as? KtReturnExpression)?.returnedExpression ?: singleStatement)
+            } else {
+                function.setTypeReference(context.typeReference)?.let { shortenReferences(it) }
+                val lambdaStatements = lambdaBody.statements
+                val lastStatement = lambdaStatements.lastOrNull()
+                if (lastStatement != null && lastStatement !is KtReturnExpression) {
+                    lastStatement.replaced(KtPsiFactory(project).createExpressionByPattern("return $0", lastStatement))
+                }
+
+                function.equalsToken?.delete()
+
+                functionBody.replace(KtPsiFactory.contextual(function).createSingleStatementBlock(lambdaBody))
+            }
+        } else {
+            element.replace(lambdaBody)
+        } ?: return
+
+        updater.moveCaretTo(replaced)
+    }
+}
+
+private fun KtValueArgument.getLambdaExpression(): KtLambdaExpression? =
+    (this as? KtLambdaArgument)?.getLambdaExpression() ?: this.getArgumentExpression() as? KtLambdaExpression

@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.jetbrains.JBR;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,30 +104,16 @@ final class HidpiInfo extends AnAction implements DumbAware {
       {USR_SCALE_TEXT, "" + JBUIScale.scale(1f), _USR_SCALE_DESC},
     };
 
-    if (SystemInfo.isLinux && SystemInfo.isJetBrainsJvm) {
-      try {
-        Class<?> cls = Class.forName("sun.awt.X11GraphicsDevice");
-        MethodInvocator getDpiInfo = new MethodInvocator(cls, "getDpiInfo");
-        if (getDpiInfo.isAvailable()) {
-          GraphicsDevice gd = null;
-          try {
-            gd = activeFrame.getGraphicsConfiguration().getDevice();
-            String[][] dpiInfo = (String[][])getDpiInfo.invoke(gd);
-            if (dpiInfo != null && dpiInfo.length > 0) {
-              for (String[] row : dpiInfo) {
-                row[2] = "<html><span style='font-size:x-small'>" + row[2] + "</span></html>";
-              }
-              String[][] _exData = new String[data.length + dpiInfo.length][];
-              System.arraycopy(data, 0, _exData, 0, data.length);
-              System.arraycopy(dpiInfo, 0, _exData, data.length, dpiInfo.length);
-              data = _exData;
-            }
-          } catch (IllegalArgumentException e) {
-            Logger.getInstance(HidpiInfo.class).warn("Unexpected GraphicsDevice type (value): " + (gd != null ? gd.getClass().getName() : "null"));
-          }
+    if (JBR.isHiDPIInfoSupported()) {
+      String[][] dpiInfo = JBR.getHiDPIInfo().getInfo();
+      if (dpiInfo != null && dpiInfo.length > 0) {
+        for (String[] row : dpiInfo) {
+          row[2] = "<html><span style='font-size:x-small'>" + row[2] + "</span></html>";
         }
-      }
-      catch (ClassNotFoundException ignore) {
+        String[][] _exData = new String[data.length + dpiInfo.length][];
+        System.arraycopy(data, 0, _exData, 0, data.length);
+        System.arraycopy(dpiInfo, 0, _exData, data.length, dpiInfo.length);
+        data = _exData;
       }
     }
     final String[][] exData = data;

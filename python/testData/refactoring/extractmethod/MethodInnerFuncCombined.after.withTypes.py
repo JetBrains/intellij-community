@@ -1,3 +1,6 @@
+from typing import Any
+
+
 class Test:
     a = 5
     def method(self, b):

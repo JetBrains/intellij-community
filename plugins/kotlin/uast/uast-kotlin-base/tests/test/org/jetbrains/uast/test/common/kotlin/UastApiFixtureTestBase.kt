@@ -2134,11 +2134,14 @@ interface UastApiFixtureTestBase {
             """
                 package test.pkg
 
-                annotation class Anno
+                annotation class Anno(
+                  val value: Int = 0
+                )
 
                 @JvmInline
                 value class IntValue(val value: Int) {
                     companion object {
+                        @get:Anno(1) val withValueClassTypeSpecified_AnnoOnGetter: IntValue = IntValue(0)
                         @Anno val withValueClassTypeSpecified: IntValue = IntValue(0)
                         @Anno val withValueClassTypeUnspecified = IntValue(1)
                         @Anno val withNonValueClassTypeSpecified: Int = 2
@@ -2174,19 +2177,158 @@ interface UastApiFixtureTestBase {
                     if (!node.name.startsWith("getWith"))
                         return super.visitMethod(node)
 
+                    val expected = if (node.name.endsWith("AnnoOnGetter")) 1 else 0
+
                     val uAnnos = node.uAnnotations.filter { it.qualifiedName == annoName }
-                    TestCase.assertEquals(node.name, 0, uAnnos.size)
+                    TestCase.assertEquals(node.name, expected, uAnnos.size)
+
+                    val uAttr = uAnnos.singleOrNull()?.attributeValues?.find { it.name == "value" }
+                    if (expected > 0) {
+                        TestCase.assertNotNull(uAttr)
+                    } else {
+                        TestCase.assertNull(uAttr)
+                    }
 
                     val jAnnos = node.javaPsi.annotations.filter { it.qualifiedName == annoName }
-                    TestCase.assertEquals(node.name, 0, jAnnos.size)
+                    TestCase.assertEquals(node.name, expected, jAnnos.size)
+
+                    val jAttr = jAnnos.singleOrNull()?.findAttribute("value")
+                    if (expected > 0) {
+                        TestCase.assertNotNull(jAttr)
+                    } else {
+                        TestCase.assertNull(jAttr)
+                    }
 
                     count++
                     return super.visitMethod(node)
                 }
             }
         )
-        // 4 fields and 4 getters
-        TestCase.assertEquals(8, count)
+        // 5 fields and 5 getters
+        TestCase.assertEquals(10, count)
+    }
+
+    fun checkAnnotationOnJvmSynthetic(myFixture: JavaCodeInsightTestFixture) {
+        // https://youtrack.jetbrains.com/issue/KTIJ-34874
+        myFixture.configureByText(
+            "test.kt",
+            """
+                package test.pkg
+                
+                annotation class Anno(
+                  val value: String
+                )
+                
+                class Test {
+                  @Anno("attr")
+                  @JvmSynthetic
+                  fun foo() {}
+                }
+            """.trimIndent()
+        )
+
+        val annoName = "test.pkg.Anno"
+        var count = 0
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitMethod(node: UMethod): Boolean {
+                    if (node.name != "foo")
+                        return super.visitMethod(node)
+
+                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == annoName }
+                    TestCase.assertEquals(node.name, 1, uAnnos.size)
+
+                    val jAnnos = node.javaPsi.annotations.filter { it.qualifiedName == annoName }
+                    TestCase.assertEquals(node.name, 1, jAnnos.size)
+
+                    val attr = jAnnos.single().findAttribute("value")
+                    TestCase.assertNotNull(attr)
+
+                    count++
+                    return super.visitMethod(node)
+                }
+            }
+        )
+        TestCase.assertEquals(1, count)
+    }
+
+    fun checkAnnotationOnReifiedInlineAndBackToUAnnotation(myFixture: JavaCodeInsightTestFixture) {
+        // https://issuetracker.google.com/issues/351244334
+        // https://youtrack.jetbrains.com/issue/KTIJ-35762
+        myFixture.configureByText(
+            "test.kt",
+            """
+                annotation class CheckResult
+
+                class Example {
+                    @CheckResult
+                    fun regular(): Int = 1 
+
+                    @CheckResult
+                    inline fun inlined(crossinline block: () -> Int) = block()
+
+                    @CheckResult
+                    inline fun <reified T : Any> reified(crossinline block: () -> T): String {
+                        val t = block()
+                        return t::class.java.simpleName
+                    }
+
+                    // usage example
+                    fun usage() {
+                        val a = Example()
+                        a.regular()
+                        a.inlined { 2 }
+                        a.reified { 3 }
+                    }
+                }
+            """.trimIndent()
+        )
+
+        var count = 0
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                private var currentMethod: UMethod? = null
+
+                override fun visitMethod(node: UMethod): Boolean {
+                    currentMethod = node
+                    return super.visitMethod(node)
+                }
+
+                override fun afterVisitMethod(node: UMethod) {
+                    currentMethod = null
+                    super.afterVisitMethod(node)
+                }
+
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    if (currentMethod?.name != "usage") {
+                        return super.visitCallExpression(node)
+                    }
+
+                    // E.g., Example()
+                    if (node.isConstructorCall()) {
+                        return super.visitCallExpression(node)
+                    }
+
+                    val resolved = node.resolve()
+                        ?: return super.visitCallExpression(node)
+
+                    // PsiAnnotation on the resolved call, even including reified inline, i.e., fake PSI
+                    val anno = resolved.annotations.find { it.qualifiedName == "CheckResult" }
+                    TestCase.assertNotNull(node.sourcePsi?.text, anno)
+                    // Converting that back to UAnnotation
+                    val uAnno =
+                        UastFacade.convertElement(anno!!, node.uastParent, UAnnotation::class.java) as? UAnnotation
+                    TestCase.assertNotNull(node.sourcePsi?.text, uAnno)
+                    TestCase.assertEquals(anno.qualifiedName, uAnno!!.qualifiedName)
+
+                    count++
+                    return super.visitCallExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(3, count)
     }
 
     fun checkTypealiasAnnotation(myFixture: JavaCodeInsightTestFixture) {

@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
@@ -802,7 +805,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testInstanceAttrOtherMethodAndAbove() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
     final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
-    assertEquals("f", function.getName());
+    assertEquals("g", function.getName());
   }
 
   public void testInstanceAttrBelowAndOtherMethodAbove() {
@@ -876,5 +879,66 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-48012
   public void testKeywordPatternResolvesToInheritedProperty() {
     assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  // PY-82115
+  public void testNonlocalInPresenceOfGlobalInNestedFunction() {
+    PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "s");
+    PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("outer1", function.getName());
+  }
+
+  // PY-82115
+  public void testNonlocalInPresenceOfGlobalInOuterScope() {
+    assertResolvesToItself();
+  }
+
+  // PY-82115
+  public void testNonlocalNotResolvedToGlobalName() {
+    assertResolvesToItself();
+  }
+
+  // PY-82699
+  public void testTypeParameterRebindToLocalVariableInEnclosingScope() {
+    assertResolvesTo(PyTargetExpression.class, "T");
+  }
+
+  // PY-82699
+  public void testTypeParameterRebindToLocalVariableInSameScope() {
+    assertUnresolved();
+  }
+
+  // PY-82850
+  public void testNonIdempotentComputation() {
+    PyTestCase.fixme("PY-83181", StackOverflowPreventedException.class, () -> {
+      RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+
+      myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+      PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
+      assertNotNull(result1);
+
+      PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
+      assertNotNull(result2);
+    });
+  }
+
+  // PY-83803
+  public void testNonIdempotentComputation2() {
+    PyTestCase.fixme("PY-83803", StackOverflowPreventedException.class, () -> {
+      RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+
+      myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+      PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
+      assertNotNull(result1);
+
+      PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
+      assertNotNull(result2);
+    });
+  }
+
+  private void assertResolvesToItself() {
+    PsiElement resolved = doResolve();
+    PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+    assertEquals(reference.getElement(), resolved);
   }
 }

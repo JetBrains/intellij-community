@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
@@ -170,8 +171,8 @@ public final class MavenRunnerParameters implements Cloneable {
 
   }
 
-  public List<String> getGoals() {
-    return myGoals;
+  public @Unmodifiable List<String> getGoals() {
+    return Collections.unmodifiableList(myGoals);
   }
 
   public void setGoals(@Nullable List<String> goals) {

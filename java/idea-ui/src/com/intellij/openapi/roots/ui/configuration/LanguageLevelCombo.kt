@@ -36,7 +36,7 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
 
     val regularItems = items.filterAndAdd(buildList {
       LanguageLevel.entries
-        .sortedBy { -it.feature() }
+        .sortedByDescending { it.feature() }
         .filter { level: LanguageLevel -> level <= highestWithPreview && !level.isUnsupported }
         .forEach { level: LanguageLevel -> add(level) }
     })

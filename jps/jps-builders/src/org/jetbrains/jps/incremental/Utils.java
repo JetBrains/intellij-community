@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading;
@@ -20,13 +21,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class Utils {
   public static final Key<Map<BuildTarget<?>, Collection<Path>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   public static final Key<Boolean> PROCEED_ON_ERROR_KEY = Key.create("_proceed_on_error_");
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
+  @ApiStatus.Internal
+  public static final Key<Boolean> TEST_MODE_KEY = Key.create("_is_test_mode_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
   public static final boolean IS_TEST_MODE = Boolean.parseBoolean(System.getProperty("test.mode", "false"));
   private static final String PROFILING_MODE_PROPERTY = "profiling.mode";
@@ -36,6 +36,11 @@ public final class Utils {
     NONE,
     YOURKIT_SAMPLING,
     YOURKIT_TRACING,
+  }
+
+  @ApiStatus.Internal
+  public static boolean isTestMode(CompileContext context) {
+    return IS_TEST_MODE || TEST_MODE_KEY.get(context, Boolean.FALSE);
   }
 
   public static ProfilingMode getProfilingMode() {

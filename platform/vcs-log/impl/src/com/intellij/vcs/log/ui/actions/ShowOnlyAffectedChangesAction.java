@@ -4,7 +4,7 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser;
+import com.intellij.vcs.log.ui.frame.VcsLogAsyncChangesTreeModel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +17,7 @@ public final class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAc
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Boolean hasAffectedFiles = e.getData(VcsLogChangesBrowser.HAS_AFFECTED_FILES);
+    Boolean hasAffectedFiles = e.getData(VcsLogAsyncChangesTreeModel.HAS_AFFECTED_FILES);
     if (hasAffectedFiles == null || !hasAffectedFiles) {
       e.getPresentation().setEnabledAndVisible(false);
       return;

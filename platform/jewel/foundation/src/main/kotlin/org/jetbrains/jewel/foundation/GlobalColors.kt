@@ -5,6 +5,17 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
+/**
+ * Defines the global colors used in the Jewel UI. These colors are not component-specific and can be used to style any
+ * part of the application.
+ *
+ * @param borders The colors used for component borders.
+ * @param outlines The colors used for component outlines, which are drawn outside the borders.
+ * @param text The colors used for text elements.
+ * @param panelBackground The background color for panels and windows.
+ * @param toolwindowBackground The background color for tool windows. It is [`Unspecified`][Color.Unspecified] outside
+ *   of the IDE.
+ */
 @Immutable
 @GenerateDataFunctions
 public class GlobalColors(
@@ -12,7 +23,19 @@ public class GlobalColors(
     public val outlines: OutlineColors,
     public val text: TextColors,
     public val panelBackground: Color,
+    public val toolwindowBackground: Color,
 ) {
+    @Deprecated(
+        "Use the constructor with toolwindowBackground instead",
+        ReplaceWith("GlobalColors(borders, outlines, text, panelBackground, toolwindowBackground)"),
+    )
+    public constructor(
+        borders: BorderColors,
+        outlines: OutlineColors,
+        text: TextColors,
+        panelBackground: Color,
+    ) : this(borders, outlines, text, panelBackground, Color.Unspecified)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -23,6 +46,7 @@ public class GlobalColors(
         if (outlines != other.outlines) return false
         if (text != other.text) return false
         if (panelBackground != other.panelBackground) return false
+        if (toolwindowBackground != other.toolwindowBackground) return false
 
         return true
     }
@@ -32,21 +56,33 @@ public class GlobalColors(
         result = 31 * result + outlines.hashCode()
         result = 31 * result + text.hashCode()
         result = 31 * result + panelBackground.hashCode()
+        result = 31 * result + toolwindowBackground.hashCode()
         return result
     }
 
-    override fun toString(): String {
-        return "GlobalColors(" +
+    override fun toString(): String =
+        "GlobalColors(" +
             "borders=$borders, " +
             "outlines=$outlines, " +
             "text=$text, " +
-            "panelBackground=$panelBackground" +
+            "panelBackground=$panelBackground, " +
+            "toolwindowBackground=$toolwindowBackground" +
             ")"
-    }
 
     public companion object
 }
 
+/**
+ * Defines the different colors for text elements in various states.
+ *
+ * @param normal The default text color.
+ * @param selected The text color for selected elements.
+ * @param disabled The text color for disabled elements.
+ * @param disabledSelected The text color for disabled and selected elements.
+ * @param info The text color for informational messages.
+ * @param error The text color for error messages.
+ * @param warning The text color for warning messages.
+ */
 @Immutable
 @GenerateDataFunctions
 public class TextColors(
@@ -105,6 +141,13 @@ public class TextColors(
     public companion object
 }
 
+/**
+ * Defines the colors for component borders in different states.
+ *
+ * @param normal The default border color.
+ * @param focused The border color when the component is focused.
+ * @param disabled The border color when the component is disabled.
+ */
 @Immutable
 @GenerateDataFunctions
 public class BorderColors(public val normal: Color, public val focused: Color, public val disabled: Color) {
@@ -133,6 +176,15 @@ public class BorderColors(public val normal: Color, public val focused: Color, p
     public companion object
 }
 
+/**
+ * Defines the colors for component outlines in different states. Outlines are drawn outside the component's borders.
+ *
+ * @param focused The outline color when the component is focused.
+ * @param focusedWarning The outline color when the component is focused and has a warning.
+ * @param focusedError The outline color when the component is focused and has an error.
+ * @param warning The outline color for components with a warning.
+ * @param error The outline color for components with an error.
+ */
 @Immutable
 @GenerateDataFunctions
 public class OutlineColors(
@@ -166,19 +218,23 @@ public class OutlineColors(
         return result
     }
 
-    override fun toString(): String {
-        return "OutlineColors(" +
+    override fun toString(): String =
+        "OutlineColors(" +
             "focused=$focused, " +
             "focusedWarning=$focusedWarning, " +
             "focusedError=$focusedError, " +
             "warning=$warning, " +
             "error=$error" +
             ")"
-    }
 
     public companion object
 }
 
+/**
+ * Provides the [GlobalColors] for the current composition.
+ *
+ * @see org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.globalColors
+ */
 public val LocalGlobalColors: ProvidableCompositionLocal<GlobalColors> = staticCompositionLocalOf {
     error("No GlobalColors provided. Have you forgotten the theme?")
 }

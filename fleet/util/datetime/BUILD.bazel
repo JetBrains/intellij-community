@@ -1,0 +1,23 @@
+### auto-generated section `build fleet.util.datetime` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_datetime",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+  x_consistent_data_class_copy_visibility = True,
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "datetime",
+  module_name = "fleet.util.datetime",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_datetime",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-datetime-jvm",
+  ]
+)
+### auto-generated section `build fleet.util.datetime` end

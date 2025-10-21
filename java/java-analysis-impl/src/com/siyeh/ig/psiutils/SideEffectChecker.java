@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,7 +343,7 @@ public final class SideEffectChecker {
     if (qualifiedName == null) return ThreeState.UNSURE;
     if (ourSideEffectFreeClasses.contains(qualifiedName)) return ThreeState.NO;
     PsiMethod method = newExpression.resolveConstructor();
-    if (method != null) {
+    if (method != null && !method.isDefaultConstructor()) {
       MutationSignature signature = MutationSignature.fromMethod(method);
       if (signature.isPure()) {
         return ThreeState.NO;
@@ -360,12 +360,11 @@ public final class SideEffectChecker {
 
     // all Throwable descendants from java.lang are side effects free
     if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName) || "java.io".equals(packageName)) {
-      PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
-      if (throwableClass != null && com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
+      if (PsiClassUtil.isThrowable(aClass)) {
         return ThreeState.NO;
       }
     }
-    if (method == null) {
+    if (method == null || method.isDefaultConstructor()) {
       PsiClass superClass = aClass.getSuperClass();
       if (superClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         for (PsiClassInitializer initializer : aClass.getInitializers()) {

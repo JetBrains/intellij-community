@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
-import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityPointer
@@ -105,17 +104,13 @@ internal class WorkspaceFileSetImpl(
 
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
 
-  fun isUnloaded(project: Project): Boolean {
-    return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
-  }
-
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
     return if (fileSet is WorkspaceFileSetImpl) TwoWorkspaceFileSets(this, fileSet) else MultipleStoredWorkspaceFileSets(mutableListOf(fileSet, this))
   }
 
   override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
     val acceptedKindMask = (currentMasks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL
-    val update = if (accepts(acceptedKindMask, project, file)) {
+    val update = if (accepts(acceptedKindMask, file)) {
       StoredFileSetKindMask.ACCEPTED_FILE_SET
     }
     else {
@@ -124,8 +119,8 @@ internal class WorkspaceFileSetImpl(
     return currentMasks or update
   }
 
-  fun accepts(acceptedKindMask: Int, project: Project, file: VirtualFile?): Boolean {
-    return acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && (recursive || root == file)
+  fun accepts(acceptedKindMask: Int, file: VirtualFile?): Boolean {
+    return acceptedKindMask and kind.toMask() != 0 && (recursive || root == file)
   }
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
@@ -327,7 +322,7 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   class ByPattern(val root: VirtualFile, patterns: List<String>,
                   override val entityPointer: EntityPointer<WorkspaceEntity>,
                   override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
-    val table = FileTypeAssocTable<Boolean>()
+    val table = FileTypeAssocTableUtil.newScalableFileTypeAssocTable<Boolean>()
 
     init {
       for (pattern in patterns) {

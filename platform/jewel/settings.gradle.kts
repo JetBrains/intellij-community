@@ -37,6 +37,7 @@ include(
     ":ide-laf-bridge",
     ":int-ui:int-ui-decorated-window",
     ":int-ui:int-ui-standalone",
+    ":int-ui:int-ui-standalone-tests",
     ":detekt-plugin",
     ":markdown:core",
     ":markdown:extensions:autolink",

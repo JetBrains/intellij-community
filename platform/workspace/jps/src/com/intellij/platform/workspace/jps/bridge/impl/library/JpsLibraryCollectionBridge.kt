@@ -16,6 +16,9 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary
 internal class JpsLibraryCollectionBridge(entities: List<LibraryEntity>, sdkEntities: List<SdkEntity>?, parentElement: JpsElementBase<*>) 
   : JpsElementBase<JpsLibraryCollectionBridge>(), JpsLibraryCollection {
   private val libraries: List<JpsLibraryBridgeBase<*>> 
+  private val libraryByName by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    libraries.associateBy { it.name }
+  }
   
   init {
     parent = parentElement
@@ -35,12 +38,11 @@ internal class JpsLibraryCollectionBridge(entities: List<LibraryEntity>, sdkEnti
   }
 
   override fun findLibrary(name: String): JpsLibrary? {
-    return libraries.find { it.name == name }
+    return libraryByName[name]
   }
 
   override fun <E : JpsElement> findLibrary(name: String, type: JpsLibraryType<E>): JpsTypedLibrary<E>? {
-    @Suppress("UNCHECKED_CAST")
-    return libraries.find { it.name == name && it.type == type } as JpsTypedLibrary<E>?
+    return libraryByName[name]?.asTyped(type)
   }
 
   override fun <P : JpsElement?, LibraryType> addLibrary(name: String, type: LibraryType & Any): JpsLibrary where LibraryType : JpsLibraryType<P>?, LibraryType : JpsElementTypeWithDefaultProperties<P>? {

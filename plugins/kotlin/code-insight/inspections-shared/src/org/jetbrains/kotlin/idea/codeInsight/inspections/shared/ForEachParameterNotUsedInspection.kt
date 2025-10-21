@@ -15,6 +15,8 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -136,7 +138,7 @@ internal class ForEachParameterNotUsedInspection :
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtLambdaExpression.useLambdaParameter(): Boolean {
         var used = false
         bodyExpression?.acceptChildren(object : KtVisitorVoid() {

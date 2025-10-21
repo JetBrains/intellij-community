@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.*;
@@ -41,6 +42,10 @@ public interface SymbolNavigationService {
    */
   @Contract("_ -> new")
   @NotNull NavigationTarget psiElementNavigationTarget(@NotNull PsiElement element);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @NotNull Navigatable getNavigatable(@NotNull Project project, @NotNull NavigationTarget target);
 
   /**
    * Please use {@link TargetPresentation#builder(String)}

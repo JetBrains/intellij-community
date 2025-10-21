@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
@@ -9,7 +10,9 @@ import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.fs.EelOpenedFile
+import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -21,13 +24,31 @@ fun EelExecApi.fetchLoginShellEnvVariablesBlocking(): Map<String, String> {
 }
 
 @ApiStatus.Internal
-fun CpuArch.toEelArch(): EelPlatform.Arch = when (this) {
-  CpuArch.X86 -> EelPlatform.Arch.X86
-  CpuArch.X86_64 -> EelPlatform.Arch.X86_64
-  CpuArch.ARM32 -> EelPlatform.Arch.ARM_32
-  CpuArch.ARM64 -> EelPlatform.Arch.ARM_64
-  CpuArch.OTHER, CpuArch.UNKNOWN -> EelPlatform.Arch.Unknown
+fun EelPlatform.toOs(): OS {
+  return when (this) {
+    is EelPlatform.Windows -> OS.Windows
+    is EelPlatform.Linux -> OS.Linux
+    is EelPlatform.Darwin -> OS.macOS
+    is EelPlatform.FreeBSD -> OS.FreeBSD
+  }
 }
+
+private val archMap by lazy {
+  BidirectionalMap<CpuArch, EelPlatform.Arch>().apply {
+    put(CpuArch.X86, EelPlatform.Arch.X86)
+    put(CpuArch.X86_64, EelPlatform.Arch.X86_64)
+    put(CpuArch.ARM32, EelPlatform.Arch.ARM_32)
+    put(CpuArch.ARM64, EelPlatform.Arch.ARM_64)
+    put(CpuArch.OTHER, EelPlatform.Arch.Unknown)
+    put(CpuArch.UNKNOWN, EelPlatform.Arch.Unknown)
+  }
+}
+
+@ApiStatus.Internal
+fun CpuArch.toEelArch(): EelPlatform.Arch = archMap[this] ?: EelPlatform.Arch.Unknown
+
+@ApiStatus.Internal
+fun EelPlatform.Arch.toCpuArch(): CpuArch = archMap.getKeysByValue(this)?.single() ?: CpuArch.UNKNOWN
 
 @Throws(FileSystemException::class)
 @ApiStatus.Internal
@@ -67,6 +88,8 @@ fun EelFsError.throwFileSystemException(): Nothing {
       -> throw IllegalArgumentException(message)
     is EelOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
     is EelFileSystemApi.DeleteError.UnresolvedLink -> throw FileSystemException(where.toString(), null, message)
+    is EelFileSystemApi.FileReaderError.FileBiggerThanRequested ->
+      throw FileSystemException(where.toString(), null, "File is too big").apply { initCause(FileTooBigException("File is too big")) }
     is EelFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
   }
 }

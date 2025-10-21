@@ -69,3 +69,5 @@ class Dumper(Emitter, Serializer, Representer, Resolver):
         tags: Mapping[str, str] | None = None,
         sort_keys: bool = True,
     ) -> None: ...
+
+__all__ = ["BaseDumper", "SafeDumper", "Dumper"]

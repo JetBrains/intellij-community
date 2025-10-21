@@ -54,7 +54,7 @@ private fun Collection<FileEditor>.getWorthy(): List<TextEditor> {
 private fun isTrafficLightExists(editor: Editor): Boolean {
   //MD file in preview mode doesn't have traffic light.
   //TODO Learn how to determine MD file view mode
-  val isMdFile = editor.virtualFile.extension?.contains("md", ignoreCase = true) ?: false
+  val isMdFile = editor.virtualFile?.extension?.contains("md", ignoreCase = true) ?: false
   return (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null || isMdFile
 }
 
@@ -355,7 +355,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     if (EDT.isCurrentThreadEdt()) return
     try {
       ReadAction.run<Throwable> {
-        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor).use { it.daemonCodeAnalyzerStatus }}")
+        LOG.info("Analyzer status for ${editor.virtualFile!!.path}\n ${TrafficLightRenderer(project, editor).use { it.daemonCodeAnalyzerStatus }}")
       }
     }
     catch (ex: CancellationException) {

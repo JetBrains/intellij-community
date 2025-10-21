@@ -44,7 +44,7 @@ abstract class AbstractCommitChangesAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val initialChangeList = CheckinActionUtil.getInitiallySelectedChangeList(project, e)
-    val pathsToCommit = ProjectLevelVcsManager.getInstance(project).allVersionedRoots
+    val pathsToCommit = ProjectLevelVcsManager.getInstance(project).getAllVersionedRoots()
       .map { VcsUtil.getFilePath(it) }
 
     val executor = getExecutor(project)

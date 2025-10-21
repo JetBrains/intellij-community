@@ -11,29 +11,29 @@ import java.nio.file.Path
  * Provides methods which analyze *.class files.
  * Such analysis works faster than the regular analysis via PSI because all references are resolved but requires the modules to be compiled.
  */
-interface JvmBytecodeAnalysis {
-  companion object {
+public interface JvmBytecodeAnalysis {
+  public companion object {
     @JvmStatic
-    fun getInstance(): JvmBytecodeAnalysis = service()
+    public fun getInstance(): JvmBytecodeAnalysis = service()
   }
 
   /**
    * Creates a new instance of [ClassFileAnalyzer] which will process references in *.class files.
    */
   @Contract(pure = true)
-  fun createReferenceAnalyzer(processor: JvmBytecodeReferenceProcessor): ClassFileAnalyzer
+  public fun createReferenceAnalyzer(processor: JvmBytecodeReferenceProcessor): ClassFileAnalyzer
 
   /**
    * Creates a new instance of [ClassFileAnalyzer] which will process declarations in *.class files.
    */
   @Contract(pure = true)
-  fun createDeclarationAnalyzer(processor: JvmBytecodeDeclarationProcessor): ClassFileAnalyzer
+  public fun createDeclarationAnalyzer(processor: JvmBytecodeDeclarationProcessor): ClassFileAnalyzer
 
   /**
    * Creates a new instance of [ClassFileAnalyzer] which will process both declarations and references in *.class files.
    */
   @Contract(pure = true)
-  fun createDeclarationAndReferencesAnalyzer(
+  public fun createDeclarationAndReferencesAnalyzer(
     declarationProcessor: JvmBytecodeDeclarationProcessor?,
     referenceProcessor: JvmBytecodeReferenceProcessor?,
   ): ClassFileAnalyzer
@@ -41,16 +41,16 @@ interface JvmBytecodeAnalysis {
 
 /**
  * Processes *.class files using processors passed via [JvmBytecodeAnalysis]'s functions.
- * 
- * The implementation is not thread-safe. 
+ *
+ * The implementation is not thread-safe.
  * If you want to process multiple *.class files in parallel, create separate instances.
  */
-interface ClassFileAnalyzer {
+public interface ClassFileAnalyzer {
   @Throws(IOException::class)
-  fun processFile(path: Path)
+  public fun processFile(path: Path)
 
-  fun processData(data: ByteArray)
-  
+  public fun processData(data: ByteArray)
+
   @Throws(IOException::class)
-  fun processInputStream(inputStream: InputStream)
+  public fun processInputStream(inputStream: InputStream)
 }

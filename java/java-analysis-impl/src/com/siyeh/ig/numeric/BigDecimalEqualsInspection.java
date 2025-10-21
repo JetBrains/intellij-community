@@ -78,7 +78,7 @@ public final class BigDecimalEqualsInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BigDecimalEqualsVisitor();
   }
 

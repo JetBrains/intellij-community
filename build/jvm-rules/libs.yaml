@@ -67,6 +67,8 @@
       version: 26.0.2
     - id: org.jetbrains.kotlin:kotlin-stdlib
       version: 2.2.0-RC
+    - id: org.jetbrains.kotlin:kotlin-reflect
+      version: 2.2.0-RC
     - id: org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm
       version: 0.3.8
     - id: org.slf4j:slf4j-api

@@ -31,7 +31,10 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.impl.zombie.BLIGHT_MARK_KEY
+import com.intellij.openapi.editor.impl.zombie.BlightMark
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -43,6 +46,8 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.util.getOrMaybeCreateUserData
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
@@ -52,6 +57,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -67,7 +73,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
-import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 open class CodeVisionHost(val project: Project) {
@@ -108,6 +113,7 @@ open class CodeVisionHost(val project: Project) {
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
+  @RequiresEdt
   open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       runReadAction {
@@ -121,6 +127,15 @@ open class CodeVisionHost(val project: Project) {
         subscribeCVSettingsChanged(enableCodeVisionLifetime)
       }
     }
+  }
+
+  @get:RequiresEdt
+  val isInitialised: Boolean get() = _isInitialised
+  private var _isInitialised = false
+
+  @RequiresEdt
+  fun finishInitialisation() {
+    _isInitialised = true
   }
 
   open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
@@ -303,7 +318,7 @@ open class CodeVisionHost(val project: Project) {
           for (editor in EditorFactory.getInstance().allEditors) {
             ModificationStampUtil.clearModificationStamp(editor)
           }
-          DaemonCodeAnalyzer.getInstance(project).restart()
+          DaemonCodeAnalyzer.getInstance(project).restart("CodeVisionHost.providerAvailabilityChanged $id")
           invalidateProviderSignal.fire(LensInvalidateSignal(null))
         }
       })
@@ -446,7 +461,11 @@ open class CodeVisionHost(val project: Project) {
     }
 
     editorLifetime.onTermination {
-      context.clearLenses()
+      val editorEx = editor as? EditorEx ?: run { context.clearLenses(); return@onTermination }
+      val editorExAsUserDataHolderEx = editorEx as? UserDataHolderEx ?: run { context.clearLenses(); return@onTermination }
+      val blightMark = editorExAsUserDataHolderEx.getOrMaybeCreateUserData(BLIGHT_MARK_KEY) { BlightMark(editorEx) } ?: run { context.clearLenses(); return@onTermination }
+
+      blightMark.onceBlightedOrNow { context.clearLenses() }
     }
   }
 

@@ -18,7 +18,7 @@ class ActionsInterpretationStep(
 
   override val description: String = "Interpretation of generated actions"
 
-  override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
+  override suspend fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val resultWorkspace =
       if (newWorkspace) EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
       else workspace

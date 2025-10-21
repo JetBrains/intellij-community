@@ -19,7 +19,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
     protected abstract val uselessNames: Set<String>
 
-    context(KaSession)
+    context(_: KaSession)
     protected abstract fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,

@@ -18,10 +18,10 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.XDebuggerBundle;
 
-import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -156,7 +156,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         groups = Collections.emptyList();
       }
 
-      DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      DebuggerInvocationUtil.invokeLaterAnyModality(getProject(), () -> {
         getMutableModel().setRoot(root);
         treeChanged();
         if (hasThreadToSelect) {
@@ -166,7 +166,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
     }
 
     private void selectThread(final List<ThreadGroupReferenceProxyImpl> pathToThread, final ThreadReferenceProxyImpl thread, final boolean expand) {
-      LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+      EDT.assertIsEdt();
       class MyTreeModelAdapter extends TreeModelAdapter {
         private void structureChanged(DebuggerTreeNodeImpl node) {
           for (Enumeration enumeration = node.children(); enumeration.hasMoreElements(); ) {
@@ -196,7 +196,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
         private void removeListener() {
           final TreeModelAdapter listener = this;
-          SwingUtilities.invokeLater(() -> getModel().removeTreeModelListener(listener));
+          DebuggerInvocationUtil.invokeLaterAnyModality(() -> getModel().removeTreeModelListener(listener));
         }
 
         @Override

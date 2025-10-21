@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -7,10 +7,21 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.getImplementationStatus
+import org.jetbrains.kotlin.analysis.api.components.intersectionOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
@@ -24,21 +35,25 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
         }
     }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
     if (classOrObject is KtClass && classOrObject.isAnnotation()) return emptyList()
     val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.enumEntryInitializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
-    return getOverridableMembers(classSymbol).map { (symbol, bodyType, containingSymbol) ->
+    return getOverridableMembers(classSymbol).map { overrideMember ->
+        val symbol = overrideMember.symbol
+        val bodyType = overrideMember.bodyType
+        val containingSymbol = overrideMember.containingSymbol
+
         @NlsSafe
         val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
         KtClassMember(
             KtClassMemberInfo.create(
                 symbol,
                 symbol.render(renderer),
-                getIcon(symbol),
+                KotlinIconProvider.getIcon(symbol),
                 fqName,
-                containingSymbol?.let { getIcon(it) },
+                containingSymbol?.let { KotlinIconProvider.getIcon(it) },
             ),
             bodyType,
             preferConstructorParameter = false,
@@ -47,7 +62,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
 }
 
 
-    context(KaSession)
+    context(_: KaSession)
     fun noConcreteDirectOverriddenSymbol(symbol: KaCallableSymbol): Boolean {
         fun isConcreteFunction(superSymbol: KaCallableSymbol): Boolean {
             if (superSymbol.modality == KaSymbolModality.ABSTRACT) return false
@@ -58,7 +73,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
         return symbol.directlyOverriddenSymbols.none { isConcreteFunction(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<OverrideMember> {
         return buildList {
@@ -113,18 +128,23 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
                     // that doesn't work because this callback function is holding a read lock and `symbol.render(renderOption)` requires
                     // the write lock.
                     // Hence, we store the data in an intermediate `OverrideMember` data class and do the rendering later in the `map` call.
-                    add(OverrideMember(symbolToProcess, bodyType, containingSymbol, token))
+                    add(OverrideMember(symbolToProcess, bodyType, containingSymbol))
                 }
             }
         }
     }
 
-    private data class OverrideMember(
-        val symbol: KaCallableSymbol,
-        val bodyType: BodyType,
-        val containingSymbol: KaClassSymbol?,
-        override val token: KaLifetimeToken
-    ) : KaLifetimeOwner
+    private class OverrideMember(
+        private val backingSymbol: KaCallableSymbol,
+        bodyType: BodyType,
+        containingSymbol: KaClassSymbol?,
+    ) : KaLifetimeOwner {
+        override val token: KaLifetimeToken get() = backingSymbol.token
+
+        val symbol: KaCallableSymbol get() = withValidityAssertion { backingSymbol }
+        val bodyType: BodyType by validityAsserted(bodyType)
+        val containingSymbol: KaClassSymbol? by validityAsserted(containingSymbol)
+    }
 
     override fun getChooserTitle() = KotlinIdeaCoreBundle.message("override.members.handler.title")
 

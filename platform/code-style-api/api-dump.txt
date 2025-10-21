@@ -50,7 +50,6 @@ a:com.intellij.codeStyle.CodeStyleFacade
 - a:getIndentSize(com.intellij.openapi.fileTypes.FileType):I
 - s:getInstance():com.intellij.codeStyle.CodeStyleFacade
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeStyle.CodeStyleFacade
-- a:getLineIndent(com.intellij.openapi.editor.Document,I):java.lang.String
 - getLineIndent(com.intellij.openapi.editor.Editor,com.intellij.lang.Language,I,Z):java.lang.String
 - a:useTabCharacter(com.intellij.openapi.fileTypes.FileType):Z
 com.intellij.formatting.ASTBlock
@@ -302,6 +301,7 @@ a:com.intellij.formatting.service.AsyncDocumentFormattingService
 - pa:getNotificationGroupId():java.lang.String
 - p:getTimeout():java.time.Duration
 - p:getTimeoutActions(com.intellij.formatting.FormattingContext):com.intellij.openapi.actionSystem.AnAction[]
+- p:getTimeoutNotificationDisplayId():java.lang.String
 - p:needToUpdate():Z
 - p:prepareForFormatting(com.intellij.openapi.editor.Document,com.intellij.formatting.FormattingContext):V
 p:com.intellij.formatting.service.AsyncDocumentFormattingService$FormattingTask
@@ -317,15 +317,20 @@ com.intellij.formatting.service.AsyncFormattingRequest
 - a:isQuickFormat():Z
 - a:onError(java.lang.String,java.lang.String):V
 - a:onError(java.lang.String,java.lang.String,I):V
+- onError(java.lang.String,java.lang.String,java.lang.String):V
+- onError(java.lang.String,java.lang.String,java.lang.String,I):V
 - a:onTextReady(java.lang.String):V
 com.intellij.formatting.service.DocumentMerger
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:updateDocument(com.intellij.openapi.editor.Document,java.lang.String):Z
 com.intellij.formatting.service.FormattingNotificationService
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.formatting.service.FormattingNotificationService
-- a:reportError(java.lang.String,java.lang.String,java.lang.String):V
+- reportError(java.lang.String,java.lang.String,java.lang.String):V
+- reportError(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- a:reportError(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnAction[]):V
 - reportError(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnAction[]):V
-- a:reportErrorAndNavigate(java.lang.String,java.lang.String,java.lang.String,com.intellij.formatting.FormattingContext,I):V
+- reportErrorAndNavigate(java.lang.String,java.lang.String,java.lang.String,com.intellij.formatting.FormattingContext,I):V
+- a:reportErrorAndNavigate(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.formatting.FormattingContext,I):V
 com.intellij.formatting.service.FormattingService
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canFormat(com.intellij.psi.PsiFile):Z
@@ -1077,7 +1082,6 @@ com.intellij.psi.codeStyle.arrangement.ArrangementSettings
 - java.lang.Cloneable
 - a:clone():com.intellij.psi.codeStyle.arrangement.ArrangementSettings
 - a:getGroupings():java.util.List
-- a:getRules():java.util.List
 - a:getRulesSortedByPriority():java.util.List
 - a:getSections():java.util.List
 com.intellij.psi.codeStyle.arrangement.ArrangementSettingsSerializer

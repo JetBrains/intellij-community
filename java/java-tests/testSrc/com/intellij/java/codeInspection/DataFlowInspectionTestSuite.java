@@ -54,6 +54,7 @@ import org.junit.platform.suite.api.Suite;
   ReplaceWithNullCheckFixTest.class,
   ReplaceFromOfNullableFixTest.class,
   ReplaceWithTrivialLambdaFixTest.class,
+  AnnotateNullabilityFixTest.class,
   UnwrapIfStatementFixTest.class,
   StreamFilterNotNullFixTest.class,
   RedundantInstanceofFixTest.class,

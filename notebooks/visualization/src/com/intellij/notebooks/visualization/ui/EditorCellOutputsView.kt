@@ -155,7 +155,7 @@ class EditorCellOutputsView(
     for ((idx, pair1) in newOutputsIterator.zip(oldComponentsWithFactories).withIndex()) {
       val (output, pair2) = pair1
       val (oldComponent: JComponent, oldFactory: NotebookOutputComponentFactory<*, *>) = pair2
-      val outputDataKey = output.dataKey.get()
+      val outputDataKey = output.dataKey
       isFilled =
         when (oldFactory.matchWithTypes(oldComponent, outputDataKey)) {
           NotebookOutputComponentFactory.Match.NONE -> {
@@ -201,15 +201,16 @@ class EditorCellOutputsView(
   }
 
   private fun createOutputGuessingFactory(output: EditorCellOutput): NotebookOutputComponentFactory.CreatedComponent<*>? {
-    val outputDataKey = output.dataKey.get()
-    return NotebookOutputComponentFactoryGetter.instance.list.asSequence()
+    val outputDataKey = output.dataKey
+    val createdComponent = NotebookOutputComponentFactoryGetter.instance.list.asSequence()
       .filter { factory ->
         factory.outputDataKeyClass.isAssignableFrom(outputDataKey.javaClass)
       }
-      .mapNotNull { factory ->
+      .firstNotNullOfOrNull { factory ->
         createOutput(@Suppress("UNCHECKED_CAST") (factory as NotebookOutputComponentFactory<*, NotebookOutputDataKey>), output, outputDataKey)
       }
-      .firstOrNull()
+
+    return createdComponent
   }
 
   private fun <K : NotebookOutputDataKey> createOutput(
@@ -223,18 +224,17 @@ class EditorCellOutputsView(
     catch (t: Throwable) {
       thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at .createComponent()", t)
       null
-    }
-    result?.also {
-      val component = it.component
-      component.outputComponentFactory = factory
-      component.executionCountHolder = it.executionCountHolder
+    } ?: return null
 
-      val disposable = it.disposable
-      if (disposable != null) {
-        // Parent disposable might be better, but it's better than nothing
-        Disposer.register(editor.disposable, disposable)
-      }
+    val component = result.component
+    component.outputComponentFactory = factory
+    component.executionCountHolder = result.executionCountHolder
+
+    val disposable = result.disposable
+    if (disposable != null) {
+      Disposer.register(this, disposable)
     }
+
     return result
   }
 

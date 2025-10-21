@@ -12,8 +12,8 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.vcs.commit.AmendCommitAware
-import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.EditedCommitDetailsImpl
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails

@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 
 class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntention<KtTypeReference>(
     KtTypeReference::class.java,
-    KotlinBundle.lazyMessage("convert.receiver.to.parameter")
+    KotlinBundle.messagePointer("convert.receiver.to.parameter")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtTypeReference): Boolean = (element.parent as? KtNamedFunction)?.receiverTypeReference == element
 

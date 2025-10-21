@@ -183,7 +183,7 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
       }
     }
   }
-  backChannel.close()
+  backChannel.closeForReceive()
 }
 
 @ApiStatus.Experimental

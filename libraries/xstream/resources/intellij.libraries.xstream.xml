@@ -1,0 +1,6 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- depends on jettison (https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration)  -->
+    <module name="intellij.libraries.jettison"/>
+  </dependencies>
+</idea-plugin>

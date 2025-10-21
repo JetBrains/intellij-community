@@ -67,10 +67,10 @@ internal class RunConfigurationIconAndInvalidCache : RunConfigurationIconCache {
         settings.checkSettings()
         ProgramRunnerUtil.getConfigurationIcon(settings, false) to false
       }
-      catch (e: IndexNotReadyException) {
+      catch (_: IndexNotReadyException) {
         ProgramRunnerUtil.getConfigurationIcon(settings, false) to false
       }
-      catch (ignored: RuntimeConfigurationException) {
+      catch (_: RuntimeConfigurationException) {
         val invalid = !DumbService.isDumb(runManagerImpl.project)
         ProgramRunnerUtil.getConfigurationIcon(settings, invalid) to invalid
       }

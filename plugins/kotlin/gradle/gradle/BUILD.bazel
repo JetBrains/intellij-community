@@ -1,33 +1,40 @@
-### auto-generated section `build kotlin.gradle.gradle` start
+### auto-generated section `build intellij.kotlin.gradle.gradle` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  opt_in = ["org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi"]
+  name = "custom_gradle",
+  opt_in = [
+    "org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi",
+    "com.intellij.openapi.util.IntellijInternalApi",
+  ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "gradle_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "gradle_resources_1",
-  files = glob(["resources-en/**/*"]),
+  srcs = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
 jvm_library(
   name = "gradle",
-  module_name = "kotlin.gradle.gradle",
+  module_name = "intellij.kotlin.gradle.gradle",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":gradle_resources",
+    ":gradle_resources_1",
+  ],
+  kotlinc_opts = ":custom_gradle",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
@@ -39,20 +46,20 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:gradle",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-impl:externalSystem-impl",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-model",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/statistics",
     "//plugins/kotlin/formatter",
@@ -62,7 +69,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
@@ -75,10 +81,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/facet",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [
-    ":gradle_resources",
-    ":gradle_resources_1",
   ]
 )
-### auto-generated section `build kotlin.gradle.gradle` end
+### auto-generated section `build intellij.kotlin.gradle.gradle` end

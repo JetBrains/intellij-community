@@ -102,7 +102,7 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   private void doTest() {

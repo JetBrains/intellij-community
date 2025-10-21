@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -9,12 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -175,7 +175,10 @@ class IteratingContentUnderExcludedTest {
     IoTestUtil.assumeSymLinkCreationIsSupported()
     val root = projectModel.baseProjectDir.virtualFileRoot
     generateSymlinkExplosion(VfsUtilCore.virtualToIoFile(root), 17)
-    Benchmark.newBenchmark("traversing non-project roots") { checkIterate(root) }.start()
+
+    Benchmark.newBenchmark("traversing non-project roots") { checkIterate(root) }
+      .runAsStressTest()
+      .start()
   }
 
   companion object {

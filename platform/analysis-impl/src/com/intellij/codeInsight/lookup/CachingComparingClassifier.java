@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
@@ -19,12 +19,12 @@ import java.util.Map;
 @ApiStatus.Internal
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
   private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<>();
-  private final LookupElementWeigher myWeigher;
+  private final @NotNull LookupElementWeigher myWeigher;
   private Ref<Comparable> myFirstWeight;
   private volatile boolean myPrimitive = true;
   private int myPrefixChanges = -1;
 
-  public CachingComparingClassifier(Classifier<LookupElement> next, LookupElementWeigher weigher) {
+  public CachingComparingClassifier(Classifier<LookupElement> next, @NotNull LookupElementWeigher weigher) {
     super(next, weigher.toString(), weigher.isNegated());
     myWeigher = weigher;
   }

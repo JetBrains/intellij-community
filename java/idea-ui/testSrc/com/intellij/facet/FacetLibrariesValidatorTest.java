@@ -28,9 +28,9 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
   private MockFacetValidatorsManager myValidatorsManager;
   private static final LibraryInfo
     FAST_UTIL = new LibraryInfo("fastutil.jar", (String)null, null, null, "it.unimi.dsi.fastutil.objects.ObjectOpenHashSet");
-  private static final LibraryInfo HASH4J = new LibraryInfo("hash4j.jar", (String)null, null, null, "com.dynatrace.hash4j.hashing.Hasher");
+  private static final LibraryInfo BB = new LibraryInfo("bb.jar", (String)null, null, null, "net.bytebuddy.build.BuildLogger");
   private VirtualFile myFastUtilJar;
-  private VirtualFile myHash4jJar;
+  private VirtualFile myBBJar;
   @NonNls private static final String LIB_NAME = "lib";
   private MockFacet myFacet;
   private FacetLibrariesValidatorDescription myDescription;
@@ -41,7 +41,7 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     myValidatorsManager = new MockFacetValidatorsManager();
     myFacet = createFacet();
     myFastUtilJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
-    myHash4jJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("hash4j");
+    myBBJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("byte-buddy");
     myDescription = new FacetLibrariesValidatorDescription(LIB_NAME);
   }
 
@@ -75,27 +75,27 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     validator.setRequiredLibraries(LibraryInfo.EMPTY_ARRAY);
     assertNoErrors();
 
-    validator.setRequiredLibraries(new LibraryInfo[]{HASH4J});
-    assertError("hash4j.jar");
+    validator.setRequiredLibraries(new LibraryInfo[]{BB});
+    assertError("bb.jar");
   }
 
   public void testAddJars() {
-    final FacetLibrariesValidatorImpl validator = createValidator(FAST_UTIL, HASH4J);
+    final FacetLibrariesValidatorImpl validator = createValidator(FAST_UTIL, BB);
     assertError("");
 
     ModuleRootModificationUtil.addModuleLibrary(myModule, myFastUtilJar.getUrl());
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     myValidatorsManager.validate();
-    assertError("hash4j");
+    assertError("bb");
 
-    ModuleRootModificationUtil.addModuleLibrary(myModule, myHash4jJar.getUrl());
+    ModuleRootModificationUtil.addModuleLibrary(myModule, myBBJar.getUrl());
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     myValidatorsManager.validate();
     validator.onFacetInitialized(createFacet());
 
     final List<VirtualFile> classpath = Arrays.asList(OrderEnumerator.orderEntries(myModule).getClassesRoots());
     assertTrue(classpath.contains(myFastUtilJar));
-    assertTrue(classpath.contains(myHash4jJar));
+    assertTrue(classpath.contains(myBBJar));
   }
 
   public void testUnresolvedLibrary() {
@@ -104,8 +104,8 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
   }
 
   public void testLibrary() {
-    PsiTestUtil.addProjectLibrary(myModule, "lib1", myFastUtilJar, myHash4jJar);
-    createValidator(FAST_UTIL, HASH4J);
+    PsiTestUtil.addProjectLibrary(myModule, "lib1", myFastUtilJar, myBBJar);
+    createValidator(FAST_UTIL, BB);
     assertNoErrors();
   }
 

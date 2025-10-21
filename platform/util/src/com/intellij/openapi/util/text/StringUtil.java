@@ -33,14 +33,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-//TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings({"NonFinalUtilityClass", "UtilityClassWithPublicConstructor"})
 @NonExtendable
 public class StringUtil {
-
-  /**
-   * @deprecated do not inherit from this class
-   */
+  /** @deprecated do not inherit from this class */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public StringUtil() { }
@@ -49,6 +45,12 @@ public class StringUtil {
   public static final String ELLIPSIS = "\u2026";
   public static final String THREE_DOTS = "...";
   public static final String NON_BREAK_SPACE = "\u00A0";
+
+  private static final class HtmlPatterns {
+    // "(?>" removes backtraces; this is not just important for matching speed, but also to stop stack overflows
+    private static final Pattern HTML_PATTERN = Pattern.compile("(?><[^>]*>)", Pattern.MULTILINE);
+    private static final Pattern BREAKS_PATTERN = Pattern.compile("(?><[bB][rR](?>\\s*)/?\\s*>)");
+  }
 
   private static final class Splitters {
     private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
@@ -138,18 +140,9 @@ public class StringUtil {
   }
 
   /**
-   * @deprecated use {@link Object#toString()} instead
+   * Unlike {@link String#replace(CharSequence, CharSequence)}, does not allocate intermediate objects on non-match.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @Contract(pure = true)
-  public static @NotNull <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
-    return Object::toString;
-  }
-
-  // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
-  // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
-  @ReviseWhenPortedToJDK("9")
+  @ReviseWhenPortedToJDK(value = "9", description = "JRE's `String#replace(CharSequence, CharSequence)` is more optimized")
   @Contract(pure = true)
   public static @NotNull String replace(@NotNull String text, @NotNull String oldS, @NotNull String newS) {
     return replace(text, oldS, newS, false);
@@ -222,13 +215,13 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  @SuppressWarnings("unused")
   public static int lastIndexOfIgnoreCase(@NotNull String where, char c, int fromIndex) {
     for (int i = Math.min(fromIndex, where.length() - 1); i >= 0; i--) {
       if (charsEqualIgnoreCase(where.charAt(i), c)) {
         return i;
       }
     }
-
     return -1;
   }
 
@@ -255,10 +248,9 @@ public class StringUtil {
   @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String html, @Nullable String breaks) {
     if (breaks != null) {
-      html = html.replaceAll("<br/?>", breaks);
+      html = HtmlPatterns.BREAKS_PATTERN.matcher(html).replaceAll(breaks);
     }
-
-    return html.replaceAll("<(.|\n)*?>", "");
+    return HtmlPatterns.HTML_PATTERN.matcher(html).replaceAll("");
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
@@ -266,13 +258,16 @@ public class StringUtil {
     return Strings.toLowerCase(str);
   }
 
+  /**
+   * @see #getPackageName(String, char)
+   */
   @Contract(pure = true)
   public static @NlsSafe @NotNull String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
 
   /**
-   * Given a fqName returns the package name for the type or the containing type.
+   * Given a fqName returns the package name for the type <i>or the containing type</i>.
    * <p/>
    * <ul>
    * <li>{@code java.lang.String} -> {@code java.lang}</li>
@@ -281,7 +276,7 @@ public class StringUtil {
    *
    * @param fqName    a fully qualified type name. Not supposed to contain any type arguments
    * @param separator the separator to use. Typically, '.'
-   * @return the package name of the type or the declarator of the type. The empty string if the given fqName is unqualified
+   * @return the package name of the type or the declarator of the type. The empty string if the given {@code fqName} is unqualified
    */
   @Contract(pure = true)
   public static @NlsSafe @NotNull String getPackageName(@NotNull String fqName, char separator) {
@@ -900,7 +895,7 @@ public class StringUtil {
    * @return word in plural form
    */
   @Contract(pure = true)
-  public static @NotNull @NonNls String pluralize(@NotNull @NonNls String word) {
+  public static @NotNull String pluralize(@NotNull String word) {
     return Strings.pluralize(word);
   }
 
@@ -1253,7 +1248,7 @@ public class StringUtil {
     return ExceptionUtil.getMessage(e);
   }
 
-  @ReviseWhenPortedToJDK(value = "11", description = "Character.toString(aChar).repeat(count)")
+  @ReviseWhenPortedToJDK(value = "11", description = "String#repeat(int)")
   @Contract(pure = true)
   public static @NotNull String repeatSymbol(char aChar, int count) {
     char[] buffer = new char[count];
@@ -1261,6 +1256,7 @@ public class StringUtil {
     return new String(buffer);
   }
 
+  @ReviseWhenPortedToJDK(value = "11", description = "String#repeat(int)")
   @Contract(pure = true)
   public static @NotNull String repeat(@NotNull String s, int count) {
     if (count == 0) return "";
@@ -1574,17 +1570,17 @@ public class StringUtil {
    * @see com.intellij.ide.nls.NlsMessages NlsMessages for localized output.
    */
   @Contract(pure = true)
-  public static @NotNull @NonNls String formatDuration(long duration) {
+  public static @NotNull String formatDuration(long duration) {
     return Formats.formatDuration(duration);
   }
 
   /**
    * Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds)
    * This method is intended to be used in non-localized contexts (primarily in log output).
-   * See com.intellij.ide.nls.NlsMessages for localized output.
+   * @see com.intellij.ide.nls.NlsMessages NlsMessages for localized output.
    */
   @Contract(pure = true)
-  public static @NotNull @NonNls String formatDuration(@NotNull Duration duration) {
+  public static @NotNull String formatDuration(@NotNull Duration duration) {
     return Formats.formatDuration(duration);
   }
 
@@ -1592,7 +1588,7 @@ public class StringUtil {
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns {@code null} if failed to match appropriate heuristic.
    *
-   * @param word english word in plural form
+   * @param word English word in plural form
    * @return name in singular form or {@code null} if failed to find one.
    */
   @Contract(pure = true)
@@ -1609,7 +1605,7 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  public static boolean containsAnyChar(@NotNull String value, @NotNull @NonNls String chars) {
+  public static boolean containsAnyChar(@NotNull String value, @NotNull String chars) {
     return Strings.containsAnyChar(value, chars);
   }
 
@@ -1778,6 +1774,7 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  @SuppressWarnings("unused")
   public static @NotNull String commonSuffix(@NotNull String s1, @NotNull String s2) {
     return s1.substring(s1.length() - commonSuffixLength(s1, s2));
   }
@@ -2226,10 +2223,9 @@ public class StringUtil {
     return Strings.countChars(text, c, start, end, stopAtOtherChar);
   }
 
-  /**
-   * @param args Strings to join.
-   * @return {@code null} if any of given Strings is {@code null}.
-   */
+  /** @deprecated use standard library instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @Contract(pure = true)
   public static @Nullable String joinOrNull(String @NotNull ... args) {
     StringBuilder r = new StringBuilder();
@@ -2318,12 +2314,9 @@ public class StringUtil {
   }
 
   private interface CodePointProcessor {
-    /**
-     * @return true iff should continue
-     */
+    /** @return true iff should continue */
     boolean acceptCodePoint(int codePoint);
   }
-
 
   private static boolean processCodePoints(@NotNull CharSequence str, int startIncl, int endExcl, CodePointProcessor processor) {
     int i = startIncl;
@@ -2404,7 +2397,7 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull @NlsSafe String getQualifiedName(@Nullable @NonNls String packageName, @NotNull @NonNls String className) {
+  public static @NotNull @NlsSafe String getQualifiedName(@Nullable String packageName, @NotNull String className) {
     if (packageName == null || packageName.isEmpty()) {
       return className;
     }
@@ -2608,7 +2601,9 @@ public class StringUtil {
   public static String @NotNull [] splitByLinesKeepSeparators(@NotNull String string) {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
+
   @Contract(pure = true)
+  @SuppressWarnings("unused")
   public static @Unmodifiable @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     FreezableArrayList<Pair<String, Integer>> result = new FreezableArrayList<>();
     s += " ";
@@ -2764,10 +2759,7 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull String shortenTextWithEllipsis(@NotNull String text,
-                                                        int maxLength,
-                                                        int suffixLength,
-                                                        @NotNull String symbol) {
+  public static @NotNull String shortenTextWithEllipsis(@NotNull String text, int maxLength, int suffixLength, @NotNull String symbol) {
     int textLength = text.length();
     if (textLength > maxLength) {
       int prefixLength = maxLength - suffixLength - symbol.length();
@@ -2780,10 +2772,7 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull String shortenTextWithEllipsis(@NotNull String text,
-                                                        int maxLength,
-                                                        int suffixLength,
-                                                        boolean useEllipsisSymbol) {
+  public static @NotNull String shortenTextWithEllipsis(@NotNull String text, int maxLength, int suffixLength, boolean useEllipsisSymbol) {
     String symbol = useEllipsisSymbol ? ELLIPSIS : "...";
     return shortenTextWithEllipsis(text, maxLength, suffixLength, symbol);
   }
@@ -2885,7 +2874,7 @@ public class StringUtil {
   @Contract(pure = true)
   public static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
     try {
-      return Enum.valueOf(clazz, string);
+      return string.isEmpty() ? defaultValue : Enum.valueOf(clazz, string);
     }
     catch (Exception e) {
       return defaultValue;
@@ -2897,13 +2886,28 @@ public class StringUtil {
     return StringUtilRt.getShortName(aClass);
   }
 
+  /**
+   * @see #getShortName(String, char)
+   */
   @Contract(pure = true)
-  public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull String fqName) {
     return StringUtilRt.getShortName(fqName);
   }
 
+  /**
+   * Given a fqName returns the short class name.
+   * <p/>
+   * <ul>
+   * <li>{@code java.lang.String} -> {@code String}</li>
+   * <li>{@code java.util.Map.Entry} -> {@code Entry}</li>
+   * </ul>
+   *
+   * @param fqName    a fully qualified type name. Not supposed to contain any type arguments
+   * @param separator the separator to use. Typically, '.'
+   * @return the short class name of the type. If {@code fqName} is unqualified, it is returned as-is.
+   */
   @Contract(pure = true)
-  public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName, char separator) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
   }
 
@@ -2921,24 +2925,6 @@ public class StringUtil {
     int diff = fqName.length() - shortName.length();
     if (fqName.charAt(diff - 1) != '.') return false;
     return fqName.regionMatches(diff, shortName, 0, shortName.length());
-  }
-
-  /**
-   * Strips class name from Object#toString if present.
-   * To be used as custom data type renderer for java.lang.Object.
-   * To activate just add {@code StringUtil.toShortString(this)}
-   * expression in <em>Settings | Debugger | Data Views</em>.
-   */
-  @Contract("null->null;!null->!null")
-  @SuppressWarnings("UnusedDeclaration")
-  static String toShortString(@Nullable Object o) {
-    if (o == null) return null;
-    if (o instanceof CharSequence) return o.toString();
-    String className = o.getClass().getName();
-    String s = o.toString();
-    if (!s.startsWith(className)) return s;
-    return s.length() > className.length() && !Character.isLetter(s.charAt(className.length())) ?
-           trimStart(s, className) : s;
   }
 
   /**
@@ -3009,9 +2995,10 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  @SuppressWarnings("AssignmentToForLoopParameter")
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
-    final int length = text.length();
+    int length = text.length();
     StringBuilder sb = new StringBuilder(text.length());
     outer:
     for (int i = 0; i < length; i++) {
@@ -3028,7 +3015,7 @@ public class StringUtil {
           i = j - 1;
           continue;
         }
-        while (j < length && (c = text.charAt(j)) == 'u') j++;
+        while (j < length && text.charAt(j) == 'u') j++;
         if (j > length - 4) {
           sb.append(text, i, j);
           i = j - 1;
@@ -3041,7 +3028,7 @@ public class StringUtil {
             continue outer;
           }
         }
-        final char d = (char)Integer.parseInt(text.substring(j, j + 4), 16);
+        char d = (char)Integer.parseInt(text.substring(j, j + 4), 16);
         sb.append(d);
         i = j + 3;
       }
@@ -3111,8 +3098,7 @@ public class StringUtil {
   private static final class ChildBombedCharSequence extends BombedCharSequence {
     private final BombedCharSequence myBombedParent;
 
-    ChildBombedCharSequence(@NotNull CharSequence sequence,
-                            @NotNull BombedCharSequence bombedParent) {
+    ChildBombedCharSequence(CharSequence sequence, BombedCharSequence bombedParent) {
       super(sequence);
       myBombedParent = bombedParent;
     }
@@ -3151,7 +3137,7 @@ public class StringUtil {
 
   /**
    * @return {@code true} if the passed string is not {@code null} and not empty
-   * and contains only latin upper- or lower-case characters and digits; {@code false} otherwise.
+   * and contains only Latin upper- or lower-case characters and digits; {@code false} otherwise.
    */
   @Contract(pure = true)
   public static boolean isLatinAlphanumeric(@Nullable CharSequence str) {
@@ -3285,10 +3271,12 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull String convertLineSeparators(@NotNull String text,
-                                                      @NotNull String newSeparator,
-                                                      int @Nullable [] offsetsToKeep,
-                                                      boolean keepCarriageReturn) {
+  public static @NotNull String convertLineSeparators(
+    @NotNull String text,
+    @NotNull String newSeparator,
+    int @Nullable [] offsetsToKeep,
+    boolean keepCarriageReturn
+  ) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn);
   }
 

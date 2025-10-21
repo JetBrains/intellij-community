@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import kotlin.jvm.JvmField;
+import org.junit.*;
+import org.junit.rules.TestName;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +30,13 @@ public class IDEA232594Test {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   static final AtomicInteger CALLBACL_COUNT = new AtomicInteger(0);
+
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
+
+  @Rule
+  @JvmField
+  public TestName name = new TestName();
 
   @Before
   public void before() {
@@ -55,6 +63,7 @@ public class IDEA232594Test {
 
     invokeAndWaitForLoad(browser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+      Disposer.register(myDisposableRule.getDisposable(), () -> frame.removeNotify());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent(), BorderLayout.CENTER);

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class UnfoldAssignmentToIfIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("replace.assignment.with.if.expression")
+    KotlinBundle.messagePointer("replace.assignment.with.if.expression")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtBinaryExpression): TextRange? {
         if (element.operationToken !in KtTokens.ALL_ASSIGNMENTS) return null

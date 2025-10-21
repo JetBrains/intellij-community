@@ -13,6 +13,17 @@ from antlr4.Utils import str_list as str_list
 ATNSimulator: Incomplete
 
 class ATNConfigSet:
+    __slots__ = (
+        "configLookup",
+        "fullCtx",
+        "readonly",
+        "configs",
+        "uniqueAlt",
+        "conflictingAlts",
+        "hasSemanticContext",
+        "dipsIntoOuterContext",
+        "cachedHashCode",
+    )
     configLookup: Incomplete
     fullCtx: Incomplete
     readonly: bool
@@ -24,7 +35,7 @@ class ATNConfigSet:
     cachedHashCode: int
     def __init__(self, fullCtx: bool = True) -> None: ...
     def __iter__(self): ...
-    def add(self, config: ATNConfig, mergeCache: Incomplete | None = None): ...
+    def add(self, config: ATNConfig, mergeCache=None): ...
     def getOrAdd(self, config: ATNConfig): ...
     def getStates(self): ...
     def getPredicates(self): ...

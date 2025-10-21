@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ReplaceAddWithPlusAssignIntention : SelfTargetingOffsetIndependentIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
-    KotlinBundle.lazyMessage("replace.with1")
+    KotlinBundle.messagePointer("replace.with1")
 ) {
     @SafeFieldForPreview
     private val compatibleNames = setOf("add", "addAll")
@@ -29,7 +29,7 @@ class ReplaceAddWithPlusAssignIntention : SelfTargetingOffsetIndependentIntentio
         if (element.callExpression?.valueArguments?.size != 1) return false
 
         if (element.calleeName !in compatibleNames) return false
-        setTextGetter(KotlinBundle.lazyMessage("replace.0.with", element.calleeName.toString()))
+        setTextGetter(KotlinBundle.messagePointer("replace.0.with", element.calleeName.toString()))
 
         val context = element.analyze(BodyResolveMode.PARTIAL)
         BindingContextUtils.extractVariableDescriptorFromReference(context, element.receiverExpression)?.let {

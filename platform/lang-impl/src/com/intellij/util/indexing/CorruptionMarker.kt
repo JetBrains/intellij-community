@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage
 import com.intellij.psi.stubs.SerializationManagerEx
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
@@ -58,7 +59,7 @@ object CorruptionMarker {
         val corruptionReason = corruptionMarker.readText()
         FileBasedIndexImpl.LOG.info("$message (reason = $corruptionReason)")
       }
-      catch (e: Exception) {
+      catch (_: Exception) {
         FileBasedIndexImpl.LOG.info(message)
       }
     }
@@ -70,13 +71,26 @@ object CorruptionMarker {
     FileBasedIndexImpl.LOG.info("Indexes are dropped")
     val indexRoot = PathManager.getIndexRoot()
 
+    //FIXME RC: this method of resetting the indexes works badly with mmapped storages for IndexingFlag, PersistentSubIndexerRetriever,
+    //          etc -- because there is no way to 'notify' those storages about the need to re-create/reset to 0, those storages
+    //          will just start failing with IOException("Parent dir[...] is not exist/was removed") -- see MMappedFileStorage...start().
+    //          Really, the method works questionably even with regular storages, before mmapped -- most storages implementations
+    //          are not well-suited to find all their files have just disappeared -- but regular storages have some chance to work
+    //          around that sometimes, while mmapped storages follow 'if something is off => don't overthink, fail early' principle.
+    //          ...Actually, I don't think it is possible to implement ReIndexing reliably without IDE restart.
+
+    //To prove this is the main reason for apt. error in MMappedFileStorage
+    //FIXME RC: drop after proved
+    MMappedFileStorage.DEBUG_INDEXES_WAS_DROPPED = true
+
     if (Files.exists(indexRoot)) {
-      val filesToBeIgnored = FileBasedIndexInfrastructureExtension.EP_NAME.extensions.mapNotNull { it.persistentStateRoot }.toSet() +
+      val filesToBeIgnored = FileBasedIndexInfrastructureExtension.EP_NAME.extensionList.mapNotNull { it.persistentStateRoot }.toSet() +
                              ID.INDICES_ENUM_FILE +
                              IndexLayoutPersistentSettings.INDICES_LAYOUT_FILE
       indexRoot.directoryStreamIfExists { dirStream ->
         dirStream.forEach {
           if (!filesToBeIgnored.contains(it.fileName.toString())) {
+            @Suppress("UsagesOfObsoleteApi")
             FileUtil.deleteWithRenaming(it.toFile())
           }
         }
@@ -95,7 +109,7 @@ object CorruptionMarker {
     ID.reinitializeDiskStorage()
     PersistentIndicesConfiguration.saveConfiguration()
     FileUtil.delete(corruptionMarker)
-    FileBasedIndexInfrastructureExtension.EP_NAME.extensions.forEach { it.resetPersistentState() }
+    FileBasedIndexInfrastructureExtension.EP_NAME.forEachExtensionSafe { it.resetPersistentState() }
     IndexLayoutPersistentSettings.forceSaveCurrentLayout()
   }
 

@@ -33,7 +33,7 @@ internal class SyncProjectQuickFix : LocalQuickFix {
         }
         packageManager.sync()
       }
-      DaemonCodeAnalyzer.getInstance(project).restart(element.containingFile)
+      DaemonCodeAnalyzer.getInstance(project).restart(element.containingFile, this)
     }
   }
 }

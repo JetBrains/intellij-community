@@ -80,7 +80,21 @@ class DebugTensorWatch(google.protobuf.message.Message):
         debug_urls: collections.abc.Iterable[builtins.str] | None = ...,
         tolerate_debug_op_creation_failures: builtins.bool | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["debug_ops", b"debug_ops", "debug_urls", b"debug_urls", "node_name", b"node_name", "output_slot", b"output_slot", "tolerate_debug_op_creation_failures", b"tolerate_debug_op_creation_failures"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "debug_ops",
+            b"debug_ops",
+            "debug_urls",
+            b"debug_urls",
+            "node_name",
+            b"node_name",
+            "output_slot",
+            b"output_slot",
+            "tolerate_debug_op_creation_failures",
+            b"tolerate_debug_op_creation_failures",
+        ],
+    ) -> None: ...
 
 global___DebugTensorWatch = DebugTensorWatch
 
@@ -105,7 +119,9 @@ class DebugOptions(google.protobuf.message.Message):
     are cleaned up from the disk after each Session.run.
     """
     @property
-    def debug_tensor_watch_opts(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___DebugTensorWatch]:
+    def debug_tensor_watch_opts(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___DebugTensorWatch]:
         """Debugging options"""
 
     def __init__(
@@ -115,7 +131,17 @@ class DebugOptions(google.protobuf.message.Message):
         global_step: builtins.int | None = ...,
         reset_disk_byte_usage: builtins.bool | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["debug_tensor_watch_opts", b"debug_tensor_watch_opts", "global_step", b"global_step", "reset_disk_byte_usage", b"reset_disk_byte_usage"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "debug_tensor_watch_opts",
+            b"debug_tensor_watch_opts",
+            "global_step",
+            b"global_step",
+            "reset_disk_byte_usage",
+            b"reset_disk_byte_usage",
+        ],
+    ) -> None: ...
 
 global___DebugOptions = DebugOptions
 
@@ -149,7 +175,12 @@ class DebuggedSourceFile(google.protobuf.message.Message):
         bytes: builtins.int | None = ...,
         lines: collections.abc.Iterable[builtins.str] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["bytes", b"bytes", "file_path", b"file_path", "host", b"host", "last_modified", b"last_modified", "lines", b"lines"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "bytes", b"bytes", "file_path", b"file_path", "host", b"host", "last_modified", b"last_modified", "lines", b"lines"
+        ],
+    ) -> None: ...
 
 global___DebuggedSourceFile = DebuggedSourceFile
 
@@ -162,11 +193,7 @@ class DebuggedSourceFiles(google.protobuf.message.Message):
     def source_files(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___DebuggedSourceFile]:
         """A collection of source code files."""
 
-    def __init__(
-        self,
-        *,
-        source_files: collections.abc.Iterable[global___DebuggedSourceFile] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, source_files: collections.abc.Iterable[global___DebuggedSourceFile] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["source_files", b"source_files"]) -> None: ...
 
 global___DebuggedSourceFiles = DebuggedSourceFiles

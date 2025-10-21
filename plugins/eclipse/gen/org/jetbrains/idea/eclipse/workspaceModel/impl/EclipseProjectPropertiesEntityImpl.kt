@@ -1,20 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config.impl
 
-import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
-import com.intellij.platform.workspace.jps.JpsFileEntitySource
-import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
-import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -29,17 +25,18 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity
+import org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipseProjectPropertiesEntityData) :
-  EclipseProjectPropertiesEntity, WorkspaceEntityBase(dataSource) {
+internal class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipseProjectPropertiesEntityData) : EclipseProjectPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ModuleEntity::class.java, EclipseProjectPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
-    )
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
+                                                                          EclipseProjectPropertiesEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -100,9 +97,8 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
   }
 
 
-  internal class Builder(result: EclipseProjectPropertiesEntityData?) :
-    ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity, EclipseProjectPropertiesEntityData>(result),
-    EclipseProjectPropertiesEntity.Builder {
+  internal class Builder(result: EclipseProjectPropertiesEntityData?) : ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity, EclipseProjectPropertiesEntityData>(
+    result), EclipseProjectPropertiesEntityBuilder {
     internal constructor() : this(EclipseProjectPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -189,8 +185,7 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
       if (this.unknownCons != dataSource.unknownCons) this.unknownCons = dataSource.unknownCons.toMutableList()
       if (this.knownCons != dataSource.knownCons) this.knownCons = dataSource.knownCons.toMutableList()
       if (this.forceConfigureJdk != dataSource.forceConfigureJdk) this.forceConfigureJdk = dataSource.forceConfigureJdk
-      if (this.expectedModuleSourcePlace != dataSource.expectedModuleSourcePlace) this.expectedModuleSourcePlace =
-        dataSource.expectedModuleSourcePlace
+      if (this.expectedModuleSourcePlace != dataSource.expectedModuleSourcePlace) this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
       if (this.srcPlace != dataSource.srcPlace) this.srcPlace = dataSource.srcPlace.toMutableMap()
       updateChildToParentReferences(parents)
     }
@@ -205,16 +200,16 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
 
       }
 
-    override var module: ModuleEntity.Builder
+    override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder
         }
       }
       set(value) {
@@ -362,7 +357,7 @@ internal class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseP
 
   internal fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EclipseProjectPropertiesEntity> {
     val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -397,11 +392,10 @@ internal class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseP
     return EclipseProjectPropertiesEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return EclipseProjectPropertiesEntity(
-      variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace, srcPlace, entitySource
-    ) {
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return EclipseProjectPropertiesEntity(variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace,
+                                          srcPlace, entitySource) {
+      parents.filterIsInstance<ModuleEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
 

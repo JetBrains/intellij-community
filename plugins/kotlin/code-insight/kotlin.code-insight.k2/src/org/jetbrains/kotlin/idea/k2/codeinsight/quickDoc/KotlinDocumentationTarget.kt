@@ -17,6 +17,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.getExpectsForActual
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -153,7 +157,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
     return null
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     val containingSymbol = ktDeclaration.symbol.containingDeclaration
     val fqName = (containingSymbol as? KaClassLikeSymbol)?.classId?.asFqNameString()
@@ -319,7 +323,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun renderKDoc(
     symbol: KaSymbol,
     stringBuilder: StringBuilder,
@@ -345,7 +349,7 @@ private fun renderKDoc(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun findKDoc(symbol: KaSymbol): KDocContent? {
     val ktElement = symbol.psi?.navigationElement as? KtElement
@@ -374,7 +378,7 @@ private fun findKDoc(symbol: KaSymbol): KDocContent? {
     return (symbol as? KaDeclarationSymbol)?.getExpectsForActual()?.mapNotNull { declarationSymbol -> findKDoc(declarationSymbol) }?.firstOrNull()
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclarationSymbol,
                                                            declaration: KtDeclaration,

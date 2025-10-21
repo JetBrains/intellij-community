@@ -3,7 +3,6 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -489,12 +488,9 @@ class IntroduceConstantDialog extends DialogWrapper {
   private class ChooseClassAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
-        }
-      }, null);
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(
+        RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject),
+        aClass -> aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC), null);
       if (myTargetClass != null) {
         chooser.selectDirectory(myTargetClass.getContainingFile().getContainingDirectory());
       }

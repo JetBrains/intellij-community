@@ -271,6 +271,10 @@ class IndexUpdateRunner(
     private val fileBasedIndex: FileBasedIndexImpl,
     private val indexingRequest: IndexingRequestToken,
   ) {
+    companion object {
+      private val badFileCounter = AtomicInteger(0)
+    }
+
     private val doubleCheckFilesAreStillInProject = Registry.`is`("indexing.double.check.files.still.in.project", true)
     private val indexingAttemptCount = AtomicInteger()
     private val indexingSuccessfulCount = AtomicInteger()
@@ -307,9 +311,15 @@ class IndexUpdateRunner(
           ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToContentNonIndexable)
         }
         if (excluded) {
+          val counter = badFileCounter.incrementAndGet()
           // respect user: only log file names in debug level
-          val fileDebugDetails = if (LOG.isDebugEnabled) file.name else ""
-          LOG.info("File has been excluded: $fileDebugDetails #${(file as VirtualFileWithId).id}")
+          // abort logging at some point: 100Mb of fileIds do not help the investigation
+          when {
+            LOG.isDebugEnabled -> LOG.info("File has been excluded: ${file.name} #${(file as VirtualFileWithId).id}")
+            counter < 1000 -> LOG.info("File has been excluded: #${(file as VirtualFileWithId).id}")
+            counter == 1000 -> LOG.info("File has been excluded: too many files, logger is disabled")
+            counter % 10000 == 0 -> LOG.info("File has been excluded: #${(file as VirtualFileWithId).id} (${counter}th)")
+          }
           return
         }
       }

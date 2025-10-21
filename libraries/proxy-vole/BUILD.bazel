@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.proxy.vole` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "proxy-vole_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "proxy-vole",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":proxy-vole_resources"],
+  exports = ["@lib//:proxy-vole"],
+  runtime_deps = ["@lib//:proxy-vole"]
+)
+### auto-generated section `build intellij.libraries.proxy.vole` end

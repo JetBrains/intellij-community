@@ -121,7 +121,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
  * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
  * @param contentColor The default content (text) color for this theme definition.
  */
-@Deprecated("Please, use the overload with disabledAppearanceValues.")
+@Deprecated("Please, use the overload with disabledAppearanceValues.", level = DeprecationLevel.HIDDEN)
 public fun JewelTheme.Companion.lightThemeDefinition(
     colors: GlobalColors = GlobalColors.light(),
     metrics: GlobalMetrics = GlobalMetrics.defaults(),
@@ -158,7 +158,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
  * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
  * @param contentColor The default content (text) color for this theme definition.
  */
-@Deprecated("Please, use the overload with disabledAppearanceValues.")
+@Deprecated("Please, use the overload with disabledAppearanceValues.", level = DeprecationLevel.HIDDEN)
 public fun JewelTheme.Companion.darkThemeDefinition(
     colors: GlobalColors = GlobalColors.dark(),
     metrics: GlobalMetrics = GlobalMetrics.defaults(),
@@ -318,7 +318,7 @@ public fun ComponentStyling.dark(
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
-@Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.ERROR)
+@Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.dark(
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
@@ -393,7 +393,7 @@ public fun ComponentStyling.dark(
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
-@Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.ERROR)
+@Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.dark(
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
@@ -543,7 +543,7 @@ public fun ComponentStyling.light(
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
-@Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.ERROR)
+@Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
@@ -618,7 +618,7 @@ public fun ComponentStyling.light(
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
-@Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.ERROR)
+@Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),

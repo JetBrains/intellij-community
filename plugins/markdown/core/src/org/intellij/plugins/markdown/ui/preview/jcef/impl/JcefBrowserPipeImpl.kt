@@ -70,7 +70,7 @@ internal class JcefBrowserPipeImpl(
   override fun send(type: String, data: String) {
     val raw = jacksonObjectMapper().writeValueAsString(PackedMessage(type, data))
     logger.debug("Sending message: $raw")
-    browser.cefBrowser.executeJavaScript(postToBrowserFunctionCall(raw), null, 0)
+    browser.runJavaScript(postToBrowserFunctionCall(raw), null, 0)
   }
 
   override fun dispose() {

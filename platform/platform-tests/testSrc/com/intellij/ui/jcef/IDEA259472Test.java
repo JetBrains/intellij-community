@@ -1,16 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
+import kotlin.jvm.JvmField;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
 import org.cef.network.CefRequest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.TestName;
 
 import javax.swing.*;
 import java.util.concurrent.CountDownLatch;
@@ -33,14 +34,22 @@ public class IDEA259472Test {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  Disposable disposable;
+
+  @Rule
+  @JvmField
+  public TestName name = new TestName();
+
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    disposable = Disposer.newDisposable(name.getMethodName());
   }
 
   @After
   public void after() {
     TestScaleHelper.restoreSystemProperties();
+    Disposer.dispose(disposable);
   }
 
   @Test
@@ -84,6 +93,7 @@ public class IDEA259472Test {
 
     invokeAndWaitForLoad(jbCefBrowser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+      Disposer.register(disposable, () -> frame.removeNotify());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(jbCefBrowser.getComponent());

@@ -55,7 +55,9 @@ object GitLabMergeRequestsPanelFactory {
     PopupHandler.installPopupMenu(progressStripe, popupActionGroup, place)
     PopupHandler.installPopupMenu(list, popupActionGroup, place)
 
-    val searchPanel = createSearchPanel(scope, listVm)
+    val searchPanel = GitLabFiltersPanelFactory(listVm.filterVm).create(scope).apply {
+      border = JBUI.Borders.empty(0, 10)
+    }
 
     GitLabMergeRequestsListController(scope, accountVm, listVm, list.emptyText, listLoaderPanel, listWrapper)
 
@@ -76,7 +78,4 @@ object GitLabMergeRequestsPanelFactory {
     return listModel
   }
 
-  private fun createSearchPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
-    return GitLabFiltersPanelFactory(listVm.filterVm).create(scope)
-  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -53,6 +53,8 @@ public class PsiToDocumentSynchronizer {
   PsiToDocumentSynchronizer(@NotNull PsiDocumentManagerBase psiDocumentManager, @NotNull MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;
     myBus = bus;
+    myBus.connect(psiDocumentManager)
+      .subscribe(PsiDocumentTransactionListenerBackgroundable.TOPIC, new PsiDocumentTransactionListenerBackgroundableAdapter(bus));
   }
 
   public @Nullable DocumentChangeTransaction getTransaction(@NotNull Document document) {
@@ -127,7 +129,7 @@ public class PsiToDocumentSynchronizer {
     }
   }
 
-  private boolean myIgnorePsiEvents;
+  private volatile boolean myIgnorePsiEvents;
   public void setIgnorePsiEvents(boolean ignorePsiEvents) {
     myIgnorePsiEvents = ignorePsiEvents;
   }
@@ -156,6 +158,28 @@ public class PsiToDocumentSynchronizer {
     }
   }
 
+  private final static class PsiDocumentTransactionListenerBackgroundableAdapter implements PsiDocumentTransactionListenerBackgroundable {
+    private final MessageBus bus;
+
+    private PsiDocumentTransactionListenerBackgroundableAdapter(MessageBus bus) {
+      this.bus = bus;
+    }
+
+    @Override
+    public void transactionStarted(@NotNull Document document, @NotNull PsiFile psiFile) {
+      PsiManagerImpl.runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
+        bus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(document, psiFile);
+      });
+    }
+
+    @Override
+    public void transactionCompleted(@NotNull Document document, @NotNull PsiFile psiFile) {
+      PsiManagerImpl.runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
+        bus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, psiFile);
+      });
+    }
+  }
+
   public void startTransaction(@NotNull Project project, @NotNull Document doc, @NotNull PsiFile scope) {
     LOG.assertTrue(!project.isDisposed());
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
@@ -164,7 +188,7 @@ public class PsiToDocumentSynchronizer {
       PsiFile psiFile = scope.getContainingFile();
       pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
       if (scope.isPhysical()) {
-        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
+        myBus.syncPublisher(PsiDocumentTransactionListenerBackgroundable.TOPIC).transactionStarted(doc, psiFile);
       }
     }
     else {
@@ -186,7 +210,7 @@ public class PsiToDocumentSynchronizer {
       checkPsiModificationAllowed(fakeEvent);
       doSync(fakeEvent, (document1, event) -> doCommitTransaction(document1, documentChangeTransaction));
       if (PomModelImpl.shouldFirePhysicalPsiEvents(changeScope)) {
-        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, changeScope);
+        myBus.syncPublisher(PsiDocumentTransactionListenerBackgroundable.TOPIC).transactionCompleted(document, changeScope);
       }
     }
     catch (Throwable e) {

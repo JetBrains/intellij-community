@@ -1,0 +1,18 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+    <plugin id="org.toml.lang"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoDeclarationHandler
+            implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleTomlVersionCatalogGotoDeclarationHandler"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleTomlVersionCatalogReferencesSearcher"/>
+    <lang.elementManipulator
+            forClass="org.jetbrains.kotlin.psi.KtDotQualifiedExpression"
+            implementationClass="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinDotQualifiedExpressionManipulator"/>
+  </extensions>
+
+</idea-plugin>

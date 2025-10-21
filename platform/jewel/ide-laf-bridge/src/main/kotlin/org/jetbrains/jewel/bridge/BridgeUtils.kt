@@ -30,6 +30,7 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -502,6 +503,7 @@ internal fun scaleDensityWithIdeScale(sourceDensity: Density): Density {
 internal fun isNewUiTheme(): Boolean = NewUI.isEnabled()
 
 internal fun lafName(): String {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) return "Unknown"
     val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
     return lafInfo.name
 }

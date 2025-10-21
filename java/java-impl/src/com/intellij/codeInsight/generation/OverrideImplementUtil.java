@@ -63,6 +63,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.*;
 
@@ -498,15 +499,24 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                       @NotNull Collection<CandidateInfo> candidates,
                                                       @NotNull Collection<CandidateInfo> secondary,
                                                       @NotNull java.util.function.Consumer<JavaOverrideImplementMemberChooser> callback) {
-    ReadAction.nonBlocking(() -> {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      var container = ReadAction.compute(() -> {
         return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
-      })
-      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
-        JavaOverrideImplementMemberChooser chooser = showJavaOverrideImplementChooser(container, editor, aClass);
-        callback.accept(chooser);
-      })
-      .expireWhen(() -> !aClass.isValid())
-      .submit(AppExecutorUtil.getAppExecutorService());
+      });
+      JavaOverrideImplementMemberChooser chooser = showJavaOverrideImplementChooser(container, editor, aClass);
+      callback.accept(chooser);
+    }
+    else {
+      ReadAction.nonBlocking(() -> {
+          return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+        })
+        .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+          JavaOverrideImplementMemberChooser chooser = showJavaOverrideImplementChooser(container, editor, aClass);
+          callback.accept(chooser);
+        })
+        .expireWhen(() -> !aClass.isValid())
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   /**

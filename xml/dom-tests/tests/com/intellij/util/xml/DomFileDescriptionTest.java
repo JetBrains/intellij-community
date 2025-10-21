@@ -208,7 +208,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     getDomManager().registerFileDescription(description, myDisposable);
     DomFileElementImpl<FooElement> fileElement = getDomManager().getFileElement(file, FooElement.class);
     assertNotNull(fileElement);
-    assertEquals("a", fileElement.getFileDescription().myRootTagName);
+    assertEquals("a", fileElement.getFileDescription().getRootTagName());
   }
 
   public interface AbstractElement extends GenericDomValue<String> {

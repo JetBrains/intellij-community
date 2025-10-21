@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import java.awt.event.KeyEvent
 
@@ -29,7 +28,7 @@ open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
     }
     else {
       // ChooseDebugConfigurationPopupAction is not supported on fronted yet
-      val isActionSupported = FrontendApplicationInfo.getFrontendType() !is FrontendType.RemoteDev
+      val isActionSupported = FrontendApplicationInfo.getFrontendType() !is FrontendType.Remote
       // we may trigger the Choose Run Configuration dialog via the action shortcut, the action must be enabled,
       // but in the Run / Debug toolbar it should be disabled when no session. There the action is attached to the concrete process.
       e.presentation.isEnabled = isActionSupported && isFromShortcutOrSearch(e)
@@ -57,7 +56,7 @@ open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
       performDebuggerActionAsync(e) {
         XDebuggerActionsCollector.sessionResumedOnResume(e)
 
-        XDebugSessionApi.getInstance().resume(session.id)
+        session.resume()
       }
     }
   }

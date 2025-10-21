@@ -1,4 +1,6 @@
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = ["stochastic_graph"]
+
+@_dispatchable
 def stochastic_graph(G, copy: bool = True, weight: str = "weight"): ...

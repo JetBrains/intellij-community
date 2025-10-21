@@ -39,7 +39,7 @@ class GradleDCLImportingTest: GradleImportingTestCase() {
               testJavaVersion = 21
 
               dependencies {
-                  implementation("org.junit.jupiter:junit-jupiter:5.10.2")
+                  implementation("org.junit.jupiter:junit-jupiter:5.12.2")
               }
           }
       }
@@ -61,6 +61,6 @@ class GradleDCLImportingTest: GradleImportingTestCase() {
     assertModules("test-dcl", "test-dcl.main", "test-dcl.test")
     assertModuleModuleDeps("test-dcl.test", "test-dcl.main")
     assertModuleLibDep("test-dcl.main", "Gradle: com.google.guava:guava:32.1.3-jre")
-    assertModuleLibDep("test-dcl.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
+    assertModuleLibDep("test-dcl.test", "Gradle: org.junit.jupiter:junit-jupiter:5.12.2")
   }
 }

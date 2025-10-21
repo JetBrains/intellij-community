@@ -1,0 +1,8 @@
+LineBreakpoint created at constructorRef.kt:13
+Run Java
+Connected to the target VM
+constructorRef.kt:13
+Compile bytecode for block(42).x
+Disconnected from the target VM
+
+Process finished with exit code 0

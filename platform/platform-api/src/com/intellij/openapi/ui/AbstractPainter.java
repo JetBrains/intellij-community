@@ -10,46 +10,43 @@ import java.awt.*;
 import java.util.List;
 
 public abstract class AbstractPainter implements Painter {
-  private boolean myNeedsRepaint;
+  private boolean isRepaintNeeded;
 
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Listener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
   public boolean needsRepaint() {
-    return myNeedsRepaint;
+    return isRepaintNeeded;
   }
 
   public void setNeedsRepaint(boolean needsRepaint) {
     setNeedsRepaint(needsRepaint, null);
   }
 
-  public void setNeedsRepaint(boolean needsRepaint, @Nullable JComponent dirtyComponent) {
-    myNeedsRepaint = needsRepaint;
-    if (myNeedsRepaint) {
+  public void setNeedsRepaint(boolean value, @Nullable JComponent dirtyComponent) {
+    isRepaintNeeded = value;
+    if (isRepaintNeeded) {
       fireNeedsRepaint(dirtyComponent);
     }
   }
 
   @Override
   public void addListener(@NotNull Listener listener) {
-    myListeners.add(listener);
+    listeners.add(listener);
   }
 
   @Override
   public void removeListener(@NotNull Listener listener) {
-    myListeners.remove(listener);
+    listeners.remove(listener);
   }
 
   public @Nullable <T> T setNeedsRepaint(T oldValue, T newValue) {
-    if (!myNeedsRepaint) {
-      if (oldValue != null) {
-        setNeedsRepaint(!oldValue.equals(newValue));
-      }
-      else if (newValue != null) {
-        setNeedsRepaint(true);
+    if (!isRepaintNeeded) {
+      if (oldValue == null) {
+        setNeedsRepaint(newValue != null);
       }
       else {
-        setNeedsRepaint(false);
+        setNeedsRepaint(!oldValue.equals(newValue));
       }
     }
 
@@ -57,16 +54,16 @@ public abstract class AbstractPainter implements Painter {
   }
 
   protected void fireNeedsRepaint(JComponent dirtyComponent) {
-    for (Listener each : myListeners) {
+    for (Listener each : listeners) {
       each.onNeedsRepaint(this, dirtyComponent);
     }
   }
 
   @Override
-  public final void paint(Component component, Graphics2D g) {
-    myNeedsRepaint = false;
+  public final void paint(@NotNull Component component, @NotNull Graphics2D g) {
+    isRepaintNeeded = false;
     executePaint(component, g);
   }
 
-  public abstract void executePaint(final Component component, final Graphics2D g);
+  public abstract void executePaint(@NotNull Component component, @NotNull Graphics2D g);
 }

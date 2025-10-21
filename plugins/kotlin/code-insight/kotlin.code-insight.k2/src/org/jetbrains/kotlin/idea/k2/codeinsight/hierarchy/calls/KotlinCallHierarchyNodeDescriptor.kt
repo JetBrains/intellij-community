@@ -18,6 +18,8 @@ import com.intellij.ui.LayeredIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -126,7 +128,7 @@ class KotlinCallHierarchyNodeDescriptor(
     }
 
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         @NlsSafe
         private fun renderElement(element: PsiElement?): String? {
             when (element) {
@@ -189,7 +191,7 @@ class KotlinCallHierarchyNodeDescriptor(
             }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         @OptIn(KaExperimentalApi::class)
         fun renderNamedFunction(symbol: KaFunctionSymbol): String? {
             val name = ((symbol as? KaNamedFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.containingDeclaration as? KaClassSymbol)?.name)?.asString() ?: return null

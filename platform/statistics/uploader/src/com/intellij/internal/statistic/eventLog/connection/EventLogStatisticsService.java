@@ -5,11 +5,11 @@ import com.intellij.internal.statistic.config.EventLogOptions;
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpResponse;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestBuilder;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,7 @@ public class EventLogStatisticsService implements StatisticsService {
     final boolean isInternal = info.isInternal();
     final String productCode = info.getProductCode();
     EventLogBuildType defaultBuildType = getDefaultBuildType(info.isEAP());
-    LogEventFilter baseFilter = settings.provideBaseEventFilter(info.getBaselineVersion());
+    LogEventFilter baseFilter = settings.provideBaseEventFilter();
 
     MachineId machineId = getActualOrDisabledMachineId(config.getMachineId(), settings);
     try {

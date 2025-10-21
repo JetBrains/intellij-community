@@ -30,7 +30,7 @@ public class MoveAnnotationToPackageInfoFileFix extends PsiUpdateModCommandActio
     PsiPackageStatement packageStatementInPackageInfoFile = PsiTreeUtil.findChildOfType(packageInfoFile, PsiPackageStatement.class);
     if (packageStatementInPackageInfoFile == null) return null;
     PsiModifierList missingAnnotations = findMissingAnnotations(packageStatement, packageStatementInPackageInfoFile);
-    if (missingAnnotations == null || missingAnnotations.getAnnotations().length == 0) return null;
+    if (missingAnnotations == null || !missingAnnotations.hasAnnotations()) return null;
     return Presentation.of(getFamilyName());
   }
 

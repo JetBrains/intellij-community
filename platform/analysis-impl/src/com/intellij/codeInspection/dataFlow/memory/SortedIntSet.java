@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.memory;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.function.IntConsumer;
 
 class SortedIntSet implements Comparable<SortedIntSet> {
@@ -67,6 +70,12 @@ class SortedIntSet implements Comparable<SortedIntSet> {
   public void remove(int offset) {
     System.arraycopy(myData, offset + 1, myData, offset, mySize - offset - 1);
     mySize--;
+  }
+
+  void setAll(@NotNull BitSet bitSet) {
+    for (int i = 0; i < mySize; i++) {
+      bitSet.set(myData[i]);
+    }    
   }
 
   public boolean containsAll(SortedIntSet that) {

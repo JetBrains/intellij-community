@@ -6,7 +6,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.testSdkFixture
-import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
 import com.intellij.platform.testFramework.junit5.eel.fixture.tempDirFixture
@@ -18,14 +18,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
 
 @TestApplication
 class ProjectJdkEelTest {
-  val eel = eelFixture(EelPath.OS.UNIX)
+  val eel = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
 
   val localProject = projectFixture(openAfterCreation = true)
 
@@ -42,11 +42,9 @@ class ProjectJdkEelTest {
         val localModel = getLocalSdkModel()
         val eelModel = getEelSdkModel()
 
-        Assertions.assertTrue { localModel.sdks.size == 1 }
-        Assertions.assertTrue { eelModel.sdks.size == 1 }
-        Assertions.assertTrue {
-          localModel.sdks.intersect(eelModel.sdks.asList()).isEmpty()
-        }
+        Assertions.assertThat(localModel.sdks).hasSize(1)
+        Assertions.assertThat(eelModel.sdks).hasSize(1)
+        Assertions.assertThat(localModel.sdks.intersect(eelModel.sdks.toSet())).isEmpty()
       }
     }
   }
@@ -63,14 +61,10 @@ class ProjectJdkEelTest {
         val localModel = getLocalSdkModel()
         val eelModel = getEelSdkModel()
 
-        Assertions.assertTrue { localModel.sdks.size == 1 }
-        Assertions.assertTrue { eelModel.sdks.size == 1 }
-        Assertions.assertTrue {
-          localModel.sdks.intersect(eelModel.sdks.asList()).isEmpty()
-        }
-        Assertions.assertTrue {
-          localModel.sdks[0].name == eelModel.sdks[0].name
-        }
+        Assertions.assertThat(localModel.sdks).hasSize(1)
+        Assertions.assertThat(eelModel.sdks).hasSize(1)
+        Assertions.assertThat(localModel.sdks.intersect(eelModel.sdks.asList())).isEmpty()
+        Assertions.assertThat(localModel.sdks[0].name).isEqualTo(eelModel.sdks[0].name)
       }
     }
   }
@@ -87,19 +81,17 @@ class ProjectJdkEelTest {
         val localModel = getLocalSdkModel()
         val eelModel = getEelSdkModel()
 
-        Assertions.assertTrue { localModel.sdks.size == 1 }
-        Assertions.assertTrue { eelModel.sdks.size == 1 }
+        Assertions.assertThat(localModel.sdks).hasSize(1)
+        Assertions.assertThat(eelModel.sdks).hasSize(1)
 
         eelModel.removeSdk(eelModel.sdks[0])
         withContext(Dispatchers.EDT) {
           eelModel.apply()
         }
 
-        Assertions.assertTrue { localModel.sdks.size == 1 }
-        Assertions.assertTrue { eelModel.sdks.size == 0 }
-        Assertions.assertTrue {
-          localModel.sdks[0].name == sharedName
-        }
+        Assertions.assertThat(localModel.sdks).hasSize(1)
+        Assertions.assertThat(eelModel.sdks).hasSize(0)
+        Assertions.assertThat(localModel.sdks[0].name).isEqualTo(sharedName)
       }
     }
   }
@@ -117,8 +109,8 @@ class ProjectJdkEelTest {
 
 
       val newSdk = testSdkGenerator.get().createTestSdk(SdkInfo(sharedName, "1", Files.createTempDirectory(sharedName).toString()))
-      Assertions.assertTrue { localModel.sdks.size == 0 }
-      Assertions.assertTrue { eelModel.sdks.size == 1 }
+      Assertions.assertThat(localModel.sdks).hasSize(0)
+      Assertions.assertThat(eelModel.sdks).hasSize(1)
 
       edtWriteAction {
         jdkTable.addJdk(newSdk)
@@ -127,10 +119,10 @@ class ProjectJdkEelTest {
         withContext(Dispatchers.EDT) {
           localModel.reset(localProject.get())
         }
-        Assertions.assertTrue { localModel.sdks.size == 1 }
-        Assertions.assertTrue { eelModel.sdks.size == 1 }
-        Assertions.assertEquals(newSdk.homePath, localModel.sdks[0].homePath)
-        Assertions.assertNotEquals(newSdk.homePath, eelModel.sdks[0].homePath)
+        Assertions.assertThat(localModel.sdks).hasSize(1)
+        Assertions.assertThat(eelModel.sdks).hasSize(1)
+        Assertions.assertThat(localModel.sdks[0].homePath).isEqualTo(newSdk.homePath)
+        Assertions.assertThat(eelModel.sdks[0].homePath).isNotEqualTo(newSdk.homePath)
       }
       finally {
         edtWriteAction {
@@ -150,8 +142,8 @@ class ProjectJdkEelTest {
       withAddedSdk(eelJdkTableView, "eel sdk", EnvKind.Eel) {
         val localModel = getLocalSdkModel()
         val eelModel = getEelSdkModel()
-        Assertions.assertEquals(1, localModel.sdks.size)
-        Assertions.assertEquals(1, eelModel.sdks.size)
+        Assertions.assertThat(localModel.sdks).hasSize(1)
+        Assertions.assertThat(eelModel.sdks).hasSize(1)
       }
     }
   }
@@ -169,12 +161,12 @@ class ProjectJdkEelTest {
         val allJdks = globalTable.allJdks.toList()
         val allLocalJdks = localJdkTableView.allJdks.toList()
         val allEelJdks = eelJdkTableView.getAllJdks().toList()
-        Assertions.assertEquals(2, allJdks.size)
-        Assertions.assertEquals(1, allLocalJdks.size)
-        Assertions.assertEquals(1, allEelJdks.size)
-        Assertions.assertNotEquals(allLocalJdks[0], allEelJdks[0])
-        Assertions.assertTrue { allLocalJdks.all { it in allJdks } }
-        Assertions.assertTrue { allEelJdks.all { it in allJdks } }
+        Assertions.assertThat(allJdks).hasSize(2)
+        Assertions.assertThat(allLocalJdks).hasSize(1)
+        Assertions.assertThat(allEelJdks).hasSize(1)
+        Assertions.assertThat(allLocalJdks[0]).isNotEqualTo(allEelJdks[0])
+        Assertions.assertThat(allLocalJdks).allMatch { it in allJdks }
+        Assertions.assertThat(allEelJdks).allMatch { it in allJdks }
       }
     }
   }
@@ -191,8 +183,8 @@ class ProjectJdkEelTest {
       withAddedSdk(globalTable, commonName, EnvKind.Eel) {
         val localSdk = localJdkTableView.findJdk(commonName)!!
         val eelSdk = eelJdkTableView.findJdk(commonName)!!
-        Assertions.assertEquals(localSdk.name, eelSdk.name)
-        Assertions.assertNotEquals(localSdk.homePath, eelSdk.homePath)
+        Assertions.assertThat(localSdk.name).isEqualTo(eelSdk.name)
+        Assertions.assertThat(localSdk.homePath).isNotEqualTo(eelSdk.homePath)
       }
     }
   }

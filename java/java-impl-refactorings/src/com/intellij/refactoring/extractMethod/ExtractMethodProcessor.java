@@ -398,7 +398,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean areAllExitPointsNotNull(PsiType returnStatementType) {
-    if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false).length == 0) {
+    if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false, 1).length == 0) {
       if (returnStatementType != null && !PsiTypes.voidType().equals(returnStatementType)) {
         return getReturnsNullability(false);
       }
@@ -711,8 +711,9 @@ public class ExtractMethodProcessor implements MatchProvider {
   private Nullability initNullability() {
     if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    String defaultAnnotation = manager.getDefaultAnnotation(Nullability.NULLABLE, myElements[0]);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
-      .findClass(manager.getDefaultNullable(), myElements[0].getResolveScope());
+      .findClass(defaultAnnotation, myElements[0].getResolveScope());
     if (nullableAnnotationClass != null) {
       final PsiElement elementInCopy = myTargetClass.getContainingFile().copy().findElementAt(myTargetClass.getTextOffset());
       final PsiClass classCopy = PsiTreeUtil.getParentOfType(elementInCopy, PsiClass.class);
@@ -1076,9 +1077,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       switch (myNullability) {
         case NOT_NULL ->
-          updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultNotNull(), nullManager.getNotNulls());
+          updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultAnnotation(myNullability, myTargetClass), nullManager.getNotNulls());
         case NULLABLE ->
-          updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultNullable(), nullManager.getNullables());
+          updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultAnnotation(myNullability, myTargetClass), nullManager.getNullables());
         default -> { }
       }
     }
@@ -1221,7 +1222,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private String declareVariableAtMethodCallLocation(String name, PsiType type) {
-    if (myControlFlowWrapper.getOutputVariables(false).length == 0) {
+    if (myControlFlowWrapper.getOutputVariables(false, 1).length == 0) {
       PsiElement lastStatement = PsiTreeUtil.getNextSiblingOfType(myEnclosingBlockStatement != null ? myEnclosingBlockStatement : myElements[myElements.length - 1], PsiStatement.class);
       if (lastStatement != null) {
         name = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(name, lastStatement, true);
@@ -1437,41 +1438,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected @Nullable PsiMethodCallExpression getMatchMethodCallExpression(PsiElement element) {
-    PsiMethodCallExpression methodCallExpression = null;
-    if (element instanceof PsiMethodCallExpression) {
-      methodCallExpression = (PsiMethodCallExpression)element;
-    }
-    else if (element instanceof PsiExpressionStatement) {
-      final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-      if (expression instanceof PsiMethodCallExpression) {
-        methodCallExpression = (PsiMethodCallExpression)expression;
-      }
-      else if (expression instanceof PsiAssignmentExpression) {
-        final PsiExpression psiExpression = ((PsiAssignmentExpression)expression).getRExpression();
-        if (psiExpression instanceof PsiMethodCallExpression) {
-          methodCallExpression = (PsiMethodCallExpression)psiExpression;
-        }
-      }
-    }
-    else if (element instanceof PsiDeclarationStatement) {
-      final PsiElement[] declaredElements = ((PsiDeclarationStatement)element).getDeclaredElements();
-      for (PsiElement declaredElement : declaredElements) {
-        if (declaredElement instanceof PsiLocalVariable) {
-          final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
-          if (initializer instanceof PsiMethodCallExpression) {
-            methodCallExpression = (PsiMethodCallExpression)initializer;
-            break;
-          }
-        }
-      }
-    }
-    else if (element instanceof PsiIfStatement) {
-      PsiExpression condition = ((PsiIfStatement)element).getCondition();
-      if (condition instanceof PsiMethodCallExpression) {
-        methodCallExpression = (PsiMethodCallExpression)condition;
-      }
-    }
-    return methodCallExpression;
+    return switch (element) {
+      case PsiMethodCallExpression expression -> expression;
+      case PsiExpressionStatement expressionStatement -> switch (expressionStatement.getExpression()) {
+        case PsiMethodCallExpression call -> call;
+        case PsiAssignmentExpression assignment -> ObjectUtils.tryCast(assignment.getRExpression(), PsiMethodCallExpression.class);
+        default -> null;
+      };
+      case PsiDeclarationStatement decl -> StreamEx.of(decl.getDeclaredElements())
+        .select(PsiLocalVariable.class)
+        .map(lv -> lv.getInitializer())
+        .select(PsiMethodCallExpression.class)
+        .findFirst().orElse(null);
+      case PsiIfStatement ifStatement -> ObjectUtils.tryCast(ifStatement.getCondition(), PsiMethodCallExpression.class);
+      case null, default -> null;
+    };
   }
 
   protected void deleteExtracted() throws IncorrectOperationException {
@@ -1691,7 +1672,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         boolean isNotNull = nullability == Nullability.NOT_NULL;
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
         final List<String> toRemove = isNotNull ? nullableAnnotations : notNullAnnotations;
-        final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
+        final String toAdd = nullabilityManager.getDefaultAnnotation(nullability, parm);
         updateAnnotations(parm, toRemove, toAdd, toKeep);
       }
     }

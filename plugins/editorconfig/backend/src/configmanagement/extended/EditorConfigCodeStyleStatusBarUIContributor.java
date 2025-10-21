@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarUIContributor {
+  private IndentOptions myIndentOptionsForFileInEditor;
 
   @Override
   public boolean areActionsAvailable(@NotNull VirtualFile file) {
@@ -36,7 +37,10 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
 
   @Override
   public @Nullable String getTooltip() {
-    return EditorConfigBundle.message("config.code.style.overridden");
+    if (myIndentOptionsForFileInEditor == null) return null; // not ready yet
+    return IndentStatusBarUIContributor.createTooltip(
+      IndentStatusBarUIContributor.getIndentInfo(myIndentOptionsForFileInEditor), 
+      getActionGroupTitle());
   }
 
   @Override
@@ -46,13 +50,8 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
 
   @Override
   public @NotNull String getStatusText(@NotNull PsiFile psiFile) {
-    IndentOptions fileOptions = CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile);
-    String indentInfo = IndentStatusBarUIContributor.getIndentInfo(fileOptions);
-    IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
-    if (projectOptions.INDENT_SIZE != fileOptions.INDENT_SIZE || projectOptions.USE_TAB_CHARACTER != fileOptions.USE_TAB_CHARACTER) {
-      indentInfo += "*";
-    }
-    return indentInfo;
+    myIndentOptionsForFileInEditor = CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile);
+    return IndentStatusBarUIContributor.getIndentInfo(myIndentOptionsForFileInEditor);
   }
 
   @Override

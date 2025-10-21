@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
@@ -60,7 +60,7 @@ public class VFSFileNameAccessBenchmark {
           minFileId = fileId;
         }
         //avg(fileName.length in monorepo) = 27 bytes:
-        String name = "name." + "%s$22".formatted(fileId % FILE_NAMES_COUNT);
+        String name = "name.%022d".formatted(fileId % FILE_NAMES_COUNT);
         int nameId = vfs.getNameId(name);
         records.updateNameId(fileId, nameId);
       }
@@ -201,7 +201,7 @@ public class VFSFileNameAccessBenchmark {
       //.warmupIterations(1000)
       //.warmupBatchSize(1000)
       //.measurementIterations(1000)
-      .include("\\W" + VFSFileNameAccessBenchmark.class.getSimpleName() + "\\.valueOfRandomId.*")
+      .include("\\W" + VFSFileNameAccessBenchmark.class.getSimpleName() + "\\.")
       .build();
 
     new Runner(opt).run();

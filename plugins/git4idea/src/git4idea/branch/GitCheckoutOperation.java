@@ -134,13 +134,23 @@ class GitCheckoutOperation extends GitBranchOperation {
           new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
         StructuredIdeActivity checkoutOperation = CHECKOUT_OPERATION.startedWithParent(myProject, activity);
-        GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset,
-                                                 localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
-        checkoutOperation.finished();
+        GitCommandResult result;
+        try {
+          result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset,
+                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
+        }
+        finally {
+          checkoutOperation.finished();
+        }
+
         if (result.success()) {
           StructuredIdeActivity vfsRefresh = VFS_REFRESH.startedWithParent(myProject, activity);
-          updateAndRefreshChangedVfs(repository, startHash);
-          vfsRefresh.finished();
+          try {
+            updateAndRefreshChangedVfs(repository, startHash);
+          }
+          finally {
+            vfsRefresh.finished();
+          }
           markSuccessful(repository);
         }
         else if (unmergedFiles.isDetected()) {

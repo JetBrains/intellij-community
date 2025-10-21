@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.JavaModuleTestCase
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
@@ -63,15 +63,15 @@ class NavigationWithMultipleRuntimesTest : AbstractNavigationToSourceOrDecompile
     }
 
     override fun createProjectLib(libraryName: String, withSources: Boolean): Library {
-        val libraryJar = TestKotlinArtifacts.kotlinStdlib.copyTo(File(createTempDirectory(), "$libraryName.jar"))
+        val libraryJar = TestKotlinArtifacts.kotlinStdlib.toFile().copyTo(File(createTempDirectory(), "$libraryName.jar"))
         val jarUrl = libraryJar.jarRoot
         return runWriteAction {
             val library = ProjectLibraryTable.getInstance(project).createLibrary(libraryName)
             val modifiableModel = library.modifiableModel
             modifiableModel.addRoot(jarUrl, OrderRootType.CLASSES)
             if (withSources) {
-                val sourcesJar = TestKotlinArtifacts.kotlinStdlibSources.copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
-                val commonSourcesJar = TestKotlinArtifacts.kotlinStdlibCommonSources.copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
+                val sourcesJar = TestKotlinArtifacts.kotlinStdlibSources.toFile().copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
+                val commonSourcesJar = TestKotlinArtifacts.kotlinStdlibCommonSources.toFile().copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
                 modifiableModel.addRoot(sourcesJar.jarRoot, OrderRootType.SOURCES)
                 modifiableModel.addRoot(commonSourcesJar.jarRoot, OrderRootType.SOURCES)
             }
@@ -127,7 +127,7 @@ class NavigationToSingleJarInMultipleLibrariesTest : AbstractNavigationWithMulti
 abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase() {
     abstract fun getTestDataDirectory(): File
 
-    protected fun module(name: String, srcPath: String) = createModuleFromTestData(srcPath, name, StdModuleTypes.JAVA, true)
+    protected fun module(name: String, srcPath: String) = createModuleFromTestData(srcPath, name, JavaModuleType.getModuleType(), true)
 
     protected fun checkReferencesInModule(module: Module, libraryName: String, expectedFileName: String) {
         checkAnnotatedCode(findSourceFile(module), File(getTestDataDirectory(), expectedFileName)) {

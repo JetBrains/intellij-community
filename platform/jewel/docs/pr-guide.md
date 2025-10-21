@@ -17,6 +17,8 @@ these steps:
 6. Run the `ApiCheckTest` to make sure the API dumps are up to date
 7. Ensure there are no breaking changes in stable APIs (they look like removed lines in `api-dump.txt` files), and try
    to avoid or at least minimise changes in experimental APIs too (see `api-dump-experimental.txt` files)
+8. Check that there are no new issues reported by Metalava either, with `scripts/metalava-signatures.main.kts validate`;
+   if any is found, update the baseline files accordingly with the `--update-baseline` parameter.
 
 If your change includes changes to the module structure and/or to dependencies, refer to the following sections as well
 for more guidance.

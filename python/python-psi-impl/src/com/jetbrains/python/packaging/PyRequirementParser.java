@@ -365,7 +365,8 @@ public final class PyRequirementParser {
     return createVcsOrArchiveRequirement(nameAndVersion, calculateVcsInstallOptions(matcher), getVcsExtras(matcher));
   }
 
-  private static @NotNull List<PyRequirementVersionSpec> parseVersionSpecs(@Nullable String versionSpecs) {
+  @ApiStatus.Internal
+  public static @NotNull List<@NotNull PyRequirementVersionSpec> parseVersionSpecs(@Nullable String versionSpecs) {
     if (versionSpecs == null) return Collections.emptyList();
 
     versionSpecs = versionSpecs.trim();

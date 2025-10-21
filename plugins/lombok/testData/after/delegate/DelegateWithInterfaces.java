@@ -1,5 +1,6 @@
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -66,12 +67,12 @@ class ItemsList<T> implements List<T> {
     return this.items.retainAll(collection);
   }
 
-  public void replaceAll(UnaryOperator<T> unaryOperator) {
-    this.items.replaceAll(unaryOperator);
+  public void replaceAll(UnaryOperator<T> operator) {
+    this.items.replaceAll(operator);
   }
 
-  public void sort(Comparator<? super T> comparator) {
-    this.items.sort(comparator);
+  public void sort(Comparator<? super T> c) {
+    this.items.sort(c);
   }
 
   public void clear() {
@@ -118,8 +119,40 @@ class ItemsList<T> implements List<T> {
     return this.items.spliterator();
   }
 
-  public boolean removeIf(Predicate<? super T> predicate) {
-    return this.items.removeIf(predicate);
+  public void addFirst(T e) {
+    this.items.addFirst(e);
+  }
+
+  public void addLast(T e) {
+    this.items.addLast(e);
+  }
+
+  public T getFirst() {
+    return this.items.getFirst();
+  }
+
+  public T getLast() {
+    return this.items.getLast();
+  }
+
+  public T removeFirst() {
+    return this.items.removeFirst();
+  }
+
+  public T removeLast() {
+    return this.items.removeLast();
+  }
+
+  public List<T> reversed() {
+    return this.items.reversed();
+  }
+
+  public <T> T[] toArray(IntFunction<T[]> generator) {
+    return this.items.toArray(generator);
+  }
+
+  public boolean removeIf(Predicate<? super T> filter) {
+    return this.items.removeIf(filter);
   }
 
   public Stream<T> stream() {
@@ -130,8 +163,8 @@ class ItemsList<T> implements List<T> {
     return this.items.parallelStream();
   }
 
-  public void forEach(Consumer<? super T> consumer) {
-    this.items.forEach(consumer);
+  public void forEach(Consumer<? super T> action) {
+    this.items.forEach(action);
   }
 }
 

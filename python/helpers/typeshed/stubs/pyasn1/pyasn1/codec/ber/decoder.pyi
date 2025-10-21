@@ -17,7 +17,7 @@ class AbstractPayloadDecoder:
         asn1Spec,
         tagSet: TagSet | None = None,
         length: int | None = None,
-        state: Incomplete | None = None,
+        state=None,
         decodeFun: Callable[..., Incomplete] | None = None,
         substrateFun: Callable[..., Incomplete] | None = None,
         **options,
@@ -29,7 +29,7 @@ class AbstractPayloadDecoder:
         asn1Spec,
         tagSet: TagSet | None = None,
         length: int | None = None,
-        state: Incomplete | None = None,
+        state=None,
         decodeFun: Callable[..., Incomplete] | None = None,
         substrateFun: Callable[..., Incomplete] | None = None,
         **options,
@@ -232,7 +232,7 @@ class ChoicePayloadDecoder(AbstractConstructedPayloadDecoder):
         asn1Spec,
         tagSet: TagSet | None = None,
         length: int | None = None,
-        state: Incomplete | None = None,
+        state=None,
         decodeFun: Callable[..., Incomplete] | None = None,
         substrateFun: Callable[..., Incomplete] | None = None,
         **options,
@@ -243,7 +243,7 @@ class ChoicePayloadDecoder(AbstractConstructedPayloadDecoder):
         asn1Spec,
         tagSet: TagSet | None = None,
         length: int | None = None,
-        state: Incomplete | None = None,
+        state=None,
         decodeFun: Callable[..., Incomplete] | None = None,
         substrateFun: Callable[..., Incomplete] | None = None,
         **options,
@@ -346,11 +346,11 @@ decode: Decoder
 class StreamingDecoder:
     SINGLE_ITEM_DECODER: type[SingleItemDecoder]
 
-    def __init__(self, substrate, asn1Spec=None, tagMap=..., typeMap=..., **ignored: Unused) -> None: ...
+    def __init__(self, substrate, asn1Spec=None, *, tagMap=..., typeMap=..., **ignored: Unused) -> None: ...
     def __iter__(self): ...
 
 class Decoder:
     STREAMING_DECODER: type[StreamingDecoder]
 
     @classmethod
-    def __call__(cls, substrate, asn1Spec=None, tagMap=..., typeMap=..., **ignored: Unused): ...
+    def __call__(cls, substrate, asn1Spec=None, *, tagMap=..., typeMap=..., **ignored: Unused): ...

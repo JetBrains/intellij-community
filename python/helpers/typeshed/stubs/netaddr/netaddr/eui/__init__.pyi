@@ -8,11 +8,13 @@ from netaddr.strategy.eui48 import mac_eui48
 from netaddr.strategy.eui64 import eui64_base
 
 class BaseIdentifier:
+    __slots__ = ("_value", "__weakref__")
     def __init__(self) -> None: ...
     def __int__(self) -> int: ...
     def __index__(self) -> int: ...
 
 class OUI(BaseIdentifier):
+    __slots__ = ("records",)
     records: list[dict[str, object]]
     def __init__(self, oui: str | int) -> None: ...
     def __eq__(self, other: object) -> bool: ...
@@ -22,6 +24,7 @@ class OUI(BaseIdentifier):
     def registration(self, index: int = 0) -> DictDotLookup: ...
 
 class IAB(BaseIdentifier):
+    __slots__ = ("record",)
     IAB_EUI_VALUES: ClassVar[tuple[int, int]]
     @classmethod
     def split_iab_mac(cls, eui_int: int, strict: bool = False) -> tuple[int, int]: ...
@@ -32,6 +35,7 @@ class IAB(BaseIdentifier):
     def registration(self) -> DictDotLookup: ...
 
 class EUI(BaseIdentifier):
+    __slots__ = ("_module", "_dialect")
     def __init__(
         self, addr: EUI | int | str, version: int | None = None, dialect: type[mac_eui48 | eui64_base] | None = None
     ) -> None: ...

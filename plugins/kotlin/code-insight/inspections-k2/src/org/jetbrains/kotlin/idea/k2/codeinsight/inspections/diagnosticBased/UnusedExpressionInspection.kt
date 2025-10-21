@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.psi.*
 
 internal class UnusedExpressionInspection : KotlinApplicableInspectionBase<KtExpression, UnusedExpressionInspection.Context>() {
 
-    data class Context(val isQuickFixAvailable: Boolean)
+    @JvmInline
+    value class Context(val isQuickFixAvailable: Boolean)
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtExpression): Context? {

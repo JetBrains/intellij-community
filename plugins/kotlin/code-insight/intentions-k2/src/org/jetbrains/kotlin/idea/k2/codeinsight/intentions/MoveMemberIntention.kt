@@ -17,13 +17,14 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
+import java.util.function.Supplier
 
-internal abstract class MoveMemberIntention(textGetter: () -> @IntentionName String) : SelfTargetingRangeIntention<KtNamedDeclaration>(
+internal abstract class MoveMemberIntention(textGetter: Supplier<@IntentionName String>) : SelfTargetingRangeIntention<KtNamedDeclaration>(
     elementType = KtNamedDeclaration::class.java,
     textGetter = textGetter
 ) {
-
     internal abstract fun getTarget(element: KtNamedDeclaration): Declaration<*>?
+
     override fun startInWriteAction(): Boolean = false
 
     @OptIn(KaAllowAnalysisOnEdt::class)

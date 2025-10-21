@@ -12,7 +12,7 @@ import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.CommonJavaRefactoringUtil
 
-abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
+public abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   call: T,
   private val modifiers: Collection<JvmModifier>
 ) : CreateExecutableRequest {
@@ -20,7 +20,7 @@ abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   private val psiManager = call.manager
   private val project = psiManager.project
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
-  val call: T get() = callPointer.element ?: error("dead pointer")
+  public val call: T get() = callPointer.element ?: error("dead pointer")
 
   override fun isValid(): Boolean = callPointer.element != null
 
@@ -43,5 +43,5 @@ abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
     }
   }
 
-  val context: PsiElement? get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
+  public val context: PsiElement? get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
 }

@@ -9,6 +9,10 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.LOCAL
@@ -151,7 +155,7 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun KaType.asAnnotationArgumentText(): String {
     // Account for typealiases: we want to render `RuntimeException` instead of `java.lang.RuntimeException`
@@ -173,7 +177,7 @@ private fun KtThrowExpression.containingDeclaration(): KtDeclaration? {
     return parent as? KtDeclaration
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtDeclaration.findExistingThrowsAnnotation(): KtAnnotationEntry? {
     val annotations = this.annotationEntries + (parent as? KtProperty)?.annotationEntries.orEmpty()
     return annotations.find { annotation ->
@@ -182,7 +186,7 @@ private fun KtDeclaration.findExistingThrowsAnnotation(): KtAnnotationEntry? {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun ValueArgument.containsType(type: KaType): Boolean {
     val classLiteralExpressions = when (val argumentExpression = getArgumentExpression()) {
         is KtClassLiteralExpression -> listOf(argumentExpression)

@@ -1,20 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.ide.CliResult
+import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
+@ApiStatus.Internal
 abstract class ModernApplicationStarter : ApplicationStarter {
   final override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "use start", level = DeprecationLevel.ERROR)
-  final override fun main(args: List<String>) {
-    throw UnsupportedOperationException("Use start(args)")
-  }
+  final override fun main(args: List<String>): Unit = throw UnsupportedOperationException("Use start(args)")
 
   abstract suspend fun start(args: List<String>)
 }
@@ -31,6 +30,12 @@ interface ApplicationStarter {
     const val NON_MODAL: Int = 1
     const val ANY_MODALITY: Int = 2
     const val NOT_IN_EDT: Int = 3
+
+    private val EP_NAME = ExtensionPointName<ApplicationStarter>("com.intellij.appStarter")
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun findStarter(key: String): ApplicationStarter? = EP_NAME.findByIdOrFromInstance(key, idGetter = { "no-${key}" })
   }
 
   /**
@@ -46,14 +51,6 @@ interface ApplicationStarter {
     get() = NON_MODAL
 
   /**
-   * Command-line switch to start with this runner.
-   * For example, return `"inspect"` if you would like to start an app with `"idea.exe inspect ..."` command.
-   */
-  @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
-  val commandName: String?
-    get() = null
-
-  /**
    * Called before application initialization.
    *
    * @param args program arguments (including the command)
@@ -61,7 +58,6 @@ interface ApplicationStarter {
   fun premain(args: List<String>) {}
 
   /**
-   *
    * Called when application has been initialized. Invoked in event dispatch thread.
    *
    * An application starter should take care of terminating JVM when appropriate by calling [System.exit].
@@ -83,7 +79,6 @@ interface ApplicationStarter {
   fun canProcessExternalCommandLine(): Boolean = false
 
   /** @see [canProcessExternalCommandLine] */
-  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
+  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult =
     throw UnsupportedOperationException("Class ${javaClass.name} must implement `processExternalCommandLineAsync()`")
-  }
 }

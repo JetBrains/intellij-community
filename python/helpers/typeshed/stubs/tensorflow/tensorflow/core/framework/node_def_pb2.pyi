@@ -29,10 +29,7 @@ class NodeDef(google.protobuf.message.Message):
         @property
         def value(self) -> tensorflow.core.framework.attr_value_pb2.AttrValue: ...
         def __init__(
-            self,
-            *,
-            key: builtins.str | None = ...,
-            value: tensorflow.core.framework.attr_value_pb2.AttrValue | None = ...,
+            self, *, key: builtins.str | None = ..., value: tensorflow.core.framework.attr_value_pb2.AttrValue | None = ...
         ) -> None: ...
         def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
@@ -71,7 +68,12 @@ class NodeDef(google.protobuf.message.Message):
             original_node_names: collections.abc.Iterable[builtins.str] | None = ...,
             original_func_names: collections.abc.Iterable[builtins.str] | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["original_func_names", b"original_func_names", "original_node_names", b"original_node_names"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "original_func_names", b"original_func_names", "original_node_names", b"original_node_names"
+            ],
+        ) -> None: ...
 
     NAME_FIELD_NUMBER: builtins.int
     OP_FIELD_NUMBER: builtins.int
@@ -121,7 +123,9 @@ class NodeDef(google.protobuf.message.Message):
         """
 
     @property
-    def attr(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, tensorflow.core.framework.attr_value_pb2.AttrValue]:
+    def attr(
+        self,
+    ) -> google.protobuf.internal.containers.MessageMap[builtins.str, tensorflow.core.framework.attr_value_pb2.AttrValue]:
         """Operation-specific graph-construction-time configuration.
         Note that this should include all attrs defined in the
         corresponding OpDef, including those with a value matching
@@ -159,7 +163,30 @@ class NodeDef(google.protobuf.message.Message):
         experimental_debug_info: global___NodeDef.ExperimentalDebugInfo | None = ...,
         experimental_type: tensorflow.core.framework.full_type_pb2.FullTypeDef | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["experimental_debug_info", b"experimental_debug_info", "experimental_type", b"experimental_type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["attr", b"attr", "device", b"device", "experimental_debug_info", b"experimental_debug_info", "experimental_type", b"experimental_type", "input", b"input", "name", b"name", "op", b"op"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "experimental_debug_info", b"experimental_debug_info", "experimental_type", b"experimental_type"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "attr",
+            b"attr",
+            "device",
+            b"device",
+            "experimental_debug_info",
+            b"experimental_debug_info",
+            "experimental_type",
+            b"experimental_type",
+            "input",
+            b"input",
+            "name",
+            b"name",
+            "op",
+            b"op",
+        ],
+    ) -> None: ...
 
 global___NodeDef = NodeDef

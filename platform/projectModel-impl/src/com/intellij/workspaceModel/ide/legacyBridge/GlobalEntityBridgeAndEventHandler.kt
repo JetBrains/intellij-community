@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.roots.impl.libraries.CustomLibraryTableImpl
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
@@ -18,10 +18,10 @@ interface GlobalEntityBridgeAndEventHandler {
   fun handleChangedEvents(event: VersionedStorageChange)
 
   companion object {
-    fun getAllGlobalEntityHandlers(descriptor: EelDescriptor): List<GlobalEntityBridgeAndEventHandler> {
+    fun getAllGlobalEntityHandlers(eelMachine: EelMachine): List<GlobalEntityBridgeAndEventHandler> {
       val result = mutableListOf<GlobalEntityBridgeAndEventHandler>()
-      result.add(GlobalLibraryTableBridge.getInstance(descriptor))
-      result.add(GlobalSdkTableBridge.getInstance(descriptor))
+      result.add(GlobalLibraryTableBridge.getInstance(eelMachine))
+      result.add(GlobalSdkTableBridge.getInstance(eelMachine))
       LibraryTablesRegistrar.getInstance().customLibraryTables.forEach { customLibraryTable ->
         customLibraryTable as CustomLibraryTableImpl
         result.add(customLibraryTable.getDelegate() as CustomLibraryTableBridge)

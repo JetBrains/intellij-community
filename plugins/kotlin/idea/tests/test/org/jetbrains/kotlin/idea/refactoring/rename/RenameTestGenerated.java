@@ -185,6 +185,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/classUsagesInTextFiles/classUsagesInTextFiles.test");
     }
 
+    @TestMetadata("companionExplicitRefSameName/companionExplicitRefSameName.test")
+    public void testCompanionExplicitRefSameName_CompanionExplicitRefSameName() throws Exception {
+        runTest("testData/refactoring/rename/companionExplicitRefSameName/companionExplicitRefSameName.test");
+    }
+
     @TestMetadata("companionFullRef/companionFullRef.test")
     public void testCompanionFullRef_CompanionFullRef() throws Exception {
         runTest("testData/refactoring/rename/companionFullRef/companionFullRef.test");
@@ -203,6 +208,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("companionObject/companionObject.test")
     public void testCompanionObject_CompanionObject() throws Exception {
         runTest("testData/refactoring/rename/companionObject/companionObject.test");
+    }
+
+    @TestMetadata("companionShortRefSameName/companionShortRefSameName.test")
+    public void testCompanionShortRefSameName_CompanionShortRefSameName() throws Exception {
+        runTest("testData/refactoring/rename/companionShortRefSameName/companionShortRefSameName.test");
     }
 
     @TestMetadata("companionShortRef/companionShortRef.test")
@@ -228,6 +238,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("dataClassPropertyWithJava/dataClassPropertyWithJava.test")
     public void testDataClassPropertyWithJava_DataClassPropertyWithJava() throws Exception {
         runTest("testData/refactoring/rename/dataClassPropertyWithJava/dataClassPropertyWithJava.test");
+    }
+
+    @TestMetadata("dataClassValuePropertyWithJava/dataClassPropertyWithJava.test")
+    public void testDataClassValuePropertyWithJava_DataClassPropertyWithJava() throws Exception {
+        runTest("testData/refactoring/rename/dataClassValuePropertyWithJava/dataClassPropertyWithJava.test");
     }
 
     @TestMetadata("enumGetEntriesFromJava/enumValueOf.test")
@@ -943,6 +958,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinFile/renameFile.test")
     public void testRenameKotlinFile_RenameFile() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinFile/renameFile.test");
+    }
+
+    @TestMetadata("renameKotlinFunWithJvmExposeBoxedByJavaRef/renameKotlinFunWithJvmExposeBoxedByJavaRef.test")
+    public void testRenameKotlinFunWithJvmExposeBoxedByJavaRef_RenameKotlinFunWithJvmExposeBoxedByJavaRef() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinFunWithJvmExposeBoxedByJavaRef/renameKotlinFunWithJvmExposeBoxedByJavaRef.test");
     }
 
     @TestMetadata("renameKotlinFunWithJvmNameByJavaRef/renameKotlinFunWithJvmNameByJavaRef.test")

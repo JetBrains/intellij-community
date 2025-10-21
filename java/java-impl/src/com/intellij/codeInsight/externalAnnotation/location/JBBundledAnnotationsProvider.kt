@@ -18,7 +18,7 @@ import java.nio.file.Files
 
 private val LOG = logger<JBBundledAnnotationsProvider>()
 
-class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
+public class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
   private val pluginId = PluginManagerCore.JAVA_PLUGIN_ID
   private val knownAnnotations: Map<String, Map<VersionRange, AnnotationsLocation>> by lazy { buildAnnotations() }
 

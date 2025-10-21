@@ -2,28 +2,32 @@
 package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.EelPlatformKt;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
+import com.pty4j.windows.conpty.WinConPtyProcess;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.*;
-import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellNameUtil;
 import org.jetbrains.plugins.terminal.util.ShellType;
@@ -39,8 +43,8 @@ import java.util.Map;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
-import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.supportsBlocksShellIntegration;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
 
 @ApiStatus.Internal
@@ -49,9 +53,9 @@ public final class LocalShellIntegrationInjector {
   public static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final Logger LOG = Logger.getInstance(LocalShellIntegrationInjector.class);
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
-  private static final String IJ_COMMAND_END_MARKER = "JETBRAINS_INTELLIJ_COMMAND_END_MARKER";
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
-  private static final String ZDOTDIR = "ZDOTDIR";
+  @VisibleForTesting
+  public static final String ZDOTDIR = "ZDOTDIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String BASH_RCFILE_OPTION = "--rcfile";
   private static final String SHELL_INTEGRATIONS_DIR_NAME = "shell-integrations";
@@ -76,14 +80,14 @@ public final class LocalShellIntegrationInjector {
     EelDescriptor eelDescriptor = findEelDescriptor(options.getWorkingDirectory(), shellCommand);
     String remoteRcFilePath = rcFile != null ? transferAndGetRemotePath(rcFile, eelDescriptor) : null;
     if (remoteRcFilePath != null) {
-      boolean addBlocksIntegration = supportsBlocksShellIntegration(shellName);
+      boolean addBlocksIntegration = supportsBlocksShellIntegration(shellName, eelDescriptor);
       if (ShellNameUtil.isBash(shellName) || (SystemInfo.isMac && shellName.equals(ShellNameUtil.SH_NAME))) {
         addBashRcFileArgument(envs, arguments, resultCommand, remoteRcFilePath);
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
         setCommandHistoryFile(options, envs, eelDescriptor);
-        integration = new ShellIntegration(ShellType.BASH, addBlocksIntegration ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.BASH, addBlocksIntegration);
       }
       else if (ShellNameUtil.isZshName(shellName)) {
         String originalZDotDir = envs.get(ZDOTDIR);
@@ -93,23 +97,23 @@ public final class LocalShellIntegrationInjector {
         String intellijZDotDir = PathUtil.getParentPath(remoteRcFilePath);
         envs.put(ZDOTDIR, intellijZDotDir);
         envs.put(IJ_ZSH_DIR, PathUtil.getParentPath(intellijZDotDir));
-        integration = new ShellIntegration(ShellType.ZSH, addBlocksIntegration ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.ZSH, addBlocksIntegration);
       }
       else if (shellName.equals(ShellNameUtil.FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(remoteRcFilePath));
-        integration = new ShellIntegration(ShellType.FISH, addBlocksIntegration ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.FISH, addBlocksIntegration);
       }
       else if (ShellNameUtil.isPowerShell(shellName)) {
         resultCommand.addAll(arguments);
         arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", remoteRcFilePath));
-        integration = new ShellIntegration(ShellType.POWERSHELL, addBlocksIntegration ? new CommandBlockIntegration(true) : null);
+        integration = new ShellIntegration(ShellType.POWERSHELL, addBlocksIntegration);
       }
     }
 
-    if ((isGenOneTerminal || isGenTwoTerminal) && integration != null && integration.getCommandBlockIntegration() != null) {
+    if ((isGenOneTerminal || isGenTwoTerminal) && integration != null && integration.getCommandBlocks()) {
       // If Gen1 is enabled, use its integration even if Gen2 is enabled.
       // So the Gen1 setting takes precedence over Gen2 setting.
       var commandBlocksOption = isGenOneTerminal
@@ -126,12 +130,6 @@ public final class LocalShellIntegrationInjector {
       envs.put("PROCESS_LAUNCHED_BY_CW", "1");
       // The same story as the above. Amazon Q is a renamed CodeWhisperer. So, they also renamed the env variables.
       envs.put("PROCESS_LAUNCHED_BY_Q", "1");
-    }
-
-    CommandBlockIntegration commandIntegration = integration != null ? integration.getCommandBlockIntegration() : null;
-    String commandEndMarker = commandIntegration != null ? commandIntegration.getCommandEndMarker() : null;
-    if (commandEndMarker != null) {
-      envs.put(IJ_COMMAND_END_MARKER, commandEndMarker);
     }
 
     resultCommand.addAll(arguments);
@@ -222,7 +220,7 @@ public final class LocalShellIntegrationInjector {
       Instant started = Instant.now();
       Path remoteBaseDirectory = transferLocalContentToRemote(baseDirectory, new EelPathUtils.TransferTarget.Temporary(eelDescriptor));
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Transferred shell integration files to remote (" + eelDescriptor + ") in "
+        LOG.debug("Transferred shell integration files to remote (" + eelDescriptor.getMachine().getName() + ") in "
                   + Duration.between(started, Instant.now()).toMillis() + "ms: "
                   + baseDirectory + " -> " + remoteBaseDirectory
          );
@@ -230,7 +228,7 @@ public final class LocalShellIntegrationInjector {
       return asEelPath(remoteBaseDirectory.resolve(relativePath)).toString();
     }
     catch (Exception e) {
-      LOG.warn("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor + ")", e);
+      LOG.warn("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor.getMachine().getName() + ")", e);
       return null;
     }
   }
@@ -264,7 +262,7 @@ public final class LocalShellIntegrationInjector {
     if (idx >= 0) {
       arguments.remove(idx);
       if (idx < arguments.size()) {
-        String userRcFile = FileUtil.expandUserHome(arguments.get(idx));
+        String userRcFile = OSAgnosticPathUtil.expandUserHome(arguments.get(idx));
         // do not set the same RC file path to avoid sourcing recursion
         if (!userRcFile.equals(rcFilePath)) {
           envs.put(JEDITERM_USER_RCFILE, userRcFile);
@@ -295,4 +293,34 @@ public final class LocalShellIntegrationInjector {
     TerminalWidget widget = options != null ? options.getWidget() : null;
     return widget != null ? ShellTerminalWidget.asShellJediTermWidget(widget) : null;
   }
+
+  /**
+   * @return true if the command block shell integration is available for the specified shell and environment
+   */
+  public static boolean supportsBlocksShellIntegration(@NotNull String shellName, @NotNull EelDescriptor eelDescriptor) {
+    return isCommandBlockShellIntegrationAvailable(shellName, eelDescriptor) &&
+           isSystemCompatibleWithCommandBlocks(eelDescriptor); // the last part of the condition, as it may load the ConPTY library
+  }
+  
+  private static boolean isCommandBlockShellIntegrationAvailable(@NotNull String shellName, @NotNull EelDescriptor eelDescriptor) {
+    return shellName.equals(ShellNameUtil.BASH_NAME) ||
+           eelDescriptor == LocalEelDescriptor.INSTANCE && OS.CURRENT == OS.macOS && shellName.equals(ShellNameUtil.SH_NAME) ||
+           shellName.equals(ShellNameUtil.ZSH_NAME) ||
+           shellName.equals(ShellNameUtil.FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false) ||
+           ShellNameUtil.isPowerShell(shellName);
+  }
+
+  private static boolean isSystemCompatibleWithCommandBlocks(@NotNull EelDescriptor eelDescriptor) {
+    if (!EelPlatformKt.isWindows(eelDescriptor.getOsFamily())) {
+      return true;
+    }
+    // On Windows, command block support requires recent versions of ConPTY (https://github.com/microsoft/terminal/issues/8698).
+    // Unfortunately, there is no reliable way to check whether the system ConPTY includes this change.
+    // However, the bundled ConPTY does include it (IJPL-190952).
+    // Therefore, let's require local Windows with the bundled ConPTY for the command blocks.
+    return eelDescriptor == LocalEelDescriptor.INSTANCE &&
+           LocalPtyOptions.shouldUseWinConPty() &&
+           WinConPtyProcess.isBundledConPtyLibraryLoaded();
+  }
+
 }

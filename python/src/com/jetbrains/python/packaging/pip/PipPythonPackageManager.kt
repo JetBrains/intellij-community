@@ -7,6 +7,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -21,7 +22,7 @@ import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,7 +32,7 @@ import java.nio.file.Path
 @ApiStatus.Experimental
 @ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   private val engine = PipPackageManagerEngine(project, sdk)
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = engine.loadOutdatedPackagesCommand()
@@ -60,6 +61,13 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     else {
       engine.syncProject()
     }
+  }
+
+  suspend fun syncRequirementsTxt(requirementsFile: VirtualFile): PyResult<Unit> {
+    engine.syncRequirementsTxt(requirementsFile).getOr {
+      return it
+    }
+    return reloadPackages().mapSuccess { }
   }
 
   override suspend fun updatePackageCommand(
@@ -95,8 +103,10 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
 
   private suspend fun installWheelIfMissing(requirementCheck: suspend () -> Boolean, wheelNameToInstall: String): Boolean {
     if (!requirementCheck()) {
-      val wheelPathToInstall = withContext(Dispatchers.IO) { findPathInHelpers(wheelNameToInstall).toString() }
-      return installUsingPipWheel("--no-index", wheelPathToInstall)
+      return withContext(Dispatchers.IO) {
+        val wheelPathToInstall = findPathInHelpers(wheelNameToInstall).toString()
+        installUsingPipWheel("--no-index", wheelPathToInstall)
+      }
     }
     return true
   }

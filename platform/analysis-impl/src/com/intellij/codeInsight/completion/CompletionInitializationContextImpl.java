@@ -13,10 +13,11 @@ import org.jetbrains.annotations.NotNull;
 public class CompletionInitializationContextImpl extends CompletionInitializationContext {
   private final OffsetsInFile myHostOffsets;
 
-  public CompletionInitializationContextImpl(Editor editor,
-                                      @NotNull Caret caret,
-                                      PsiFile file,
-                                      CompletionType completionType, int invocationCount) {
+  public CompletionInitializationContextImpl(@NotNull Editor editor,
+                                             @NotNull Caret caret,
+                                             @NotNull PsiFile file,
+                                             @NotNull CompletionType completionType,
+                                             int invocationCount) {
     super(editor, caret, PsiUtilBase.getLanguageInEditor(editor, file.getProject()), file, completionType, invocationCount);
     myHostOffsets = new OffsetsInFile(file, getOffsetMap()).toTopLevelFile();
   }

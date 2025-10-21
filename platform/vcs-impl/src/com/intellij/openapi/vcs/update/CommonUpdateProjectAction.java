@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public class CommonUpdateProjectAction extends AbstractCommonUpdateAction {
   public CommonUpdateProjectAction() {
     super(ActionInfo.UPDATE, ScopeInfo.PROJECT, true);

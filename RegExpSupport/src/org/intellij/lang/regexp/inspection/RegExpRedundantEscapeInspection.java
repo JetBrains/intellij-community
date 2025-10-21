@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -27,11 +27,14 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
 
   public boolean ignoreEscapedMetaCharacters = false;
+  public boolean ignoreEscapedForwardSlashes = false;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("ignoreEscapedMetaCharacters", RegExpBundle.message("inspection.option.ignore.escaped.closing.brackets")));
+      checkbox("ignoreEscapedMetaCharacters", RegExpBundle.message("inspection.option.ignore.escaped.closing.brackets")),
+      checkbox("ignoreEscapedForwardSlashes", RegExpBundle.message("inspection.option.ignore.escaped.forward.slashes"))
+    );
   }
 
   @Override
@@ -57,6 +60,9 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
         return;
       }
       if (ignoreEscapedMetaCharacters && (text.equals("\\}") || text.equals("\\]")) && !(ch.getParent() instanceof RegExpClass)) {
+        return;
+      }
+      if (ignoreEscapedForwardSlashes && text.equals("\\/")) {
         return;
       }
       final ASTNode astNode = ch.getNode().getFirstChildNode();

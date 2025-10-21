@@ -11,7 +11,9 @@ import java.util.Set;
  * A marker interface to be implemented by classes that provide
  * information about the parent element types.
  * Could be used to create hierarchy for IElementType
+ * @deprecated Use direct comparison
  */
+@Deprecated
 public interface ParentProviderElementType {
   @NotNull
   @Unmodifiable

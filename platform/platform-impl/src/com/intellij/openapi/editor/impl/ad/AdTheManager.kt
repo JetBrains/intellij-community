@@ -7,6 +7,7 @@ import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollingModel
@@ -14,23 +15,17 @@ import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
-import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.impl.EditorFilteringMarkupModelEx
-import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.FocusModeModel
-import com.intellij.openapi.editor.impl.FoldingModelInternal
-import com.intellij.openapi.editor.impl.KERNEL_EDITOR_ID_KEY
+import com.intellij.openapi.editor.impl.*
 import com.intellij.openapi.editor.impl.ad.document.AdDocument
 import com.intellij.openapi.editor.impl.ad.document.AdDocumentManager
-import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
 import com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManager
 import com.intellij.openapi.editor.impl.ad.markup.AdEditorMarkupManager
+import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
 import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import fleet.kernel.transactor
 import fleet.util.UID
-import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 
@@ -83,7 +78,7 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
             }
           }
         }.onFailure {
-          LOG.error(it) { "failed to create editor model $debugName" }
+          LOG.error("failed to create editor model $debugName", it)
         }
       }
     }

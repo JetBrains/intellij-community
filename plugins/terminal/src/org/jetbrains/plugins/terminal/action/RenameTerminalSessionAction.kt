@@ -11,6 +11,7 @@ import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
+@Deprecated("Please avoid referencing the action class directly, get it by action ID instead: ActionManager.getInstance().getAction(\"Terminal.RenameSession\"")
 class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
   TerminalToolWindowFactory.TOOL_WINDOW_ID,
   TerminalBundle.message("action.RenameSession.newSessionName.label")
@@ -26,5 +27,3 @@ class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
     }
   }
 }
-
-const val ACTION_ID : String = "Terminal.RenameSession"

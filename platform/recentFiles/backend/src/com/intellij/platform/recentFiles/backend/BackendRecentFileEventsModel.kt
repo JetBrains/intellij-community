@@ -4,6 +4,8 @@ package com.intellij.platform.recentFiles.backend
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.ide.actions.shouldUseFallbackSwitcher
+import com.intellij.ide.ui.colors.rpcId
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
@@ -12,6 +14,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,40 +22,53 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentFileHistoryOrderListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.recentFiles.shared.FileChangeKind
-import com.intellij.platform.recentFiles.shared.RecentFileKind
-import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
-import com.intellij.platform.recentFiles.shared.RecentFilesEvent
+import com.intellij.platform.recentFiles.shared.*
 import com.intellij.problems.ProblemListener
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.Icon
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG by lazy { fileLogger() }
 
 @Service(Service.Level.PROJECT)
 internal class BackendRecentFileEventsModel(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val bufferSize = Registry.intValue("editor.navigation.history.stack.size").coerceIn(100, 1000)
+  private val updateDebounceMs = Registry.intValue("switcher.presentation.update.debounce.interval.ms").coerceIn(0, 10000)
 
-  private val recentlyOpenedFiles = MutableSharedFlow<RecentFilesEvent>(
+  private val orderChangeEvents = Channel<OrderChangeEvent>(capacity = UNLIMITED)
+  private val fileChangeEvents = Channel<List<VirtualFile>>(capacity = UNLIMITED)
+
+  private val recentlyOpenedFiles = MutableSharedFlow<BackendRecentFilesEvent>(
     extraBufferCapacity = bufferSize,
     replay = bufferSize,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
-  private val recentlyEditedFiles = MutableSharedFlow<RecentFilesEvent>(
+  private val recentlyEditedFiles = MutableSharedFlow<BackendRecentFilesEvent>(
     extraBufferCapacity = bufferSize,
     replay = bufferSize,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
-  private val recentlyOpenedUnpinnedFiles = MutableSharedFlow<RecentFilesEvent>(
+  private val recentlyOpenedUnpinnedFiles = MutableSharedFlow<BackendRecentFilesEvent>(
     extraBufferCapacity = bufferSize,
     replay = bufferSize,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -73,9 +89,17 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
         subscribe(ProblemListener.TOPIC, RecentFilesProblemsListener(project))
       }
     }
+
+    coroutineScope.launch {
+      processOrderChangeEvents()
+    }
+
+    coroutineScope.launch {
+      processFileUpdateEvents()
+    }
   }
 
-  fun getRecentFiles(fileKind: RecentFileKind): Flow<RecentFilesEvent> {
+  fun getRecentFiles(fileKind: RecentFileKind): Flow<BackendRecentFilesEvent> {
     LOG.debug("Switcher get recent files for kind: $fileKind")
     return chooseTargetFlow(fileKind)
   }
@@ -92,9 +116,9 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
     }
 
     val event = if (metadataRequest.forceAddToModel)
-      RecentFilesEvent.ItemsAdded(metadata)
+      BackendRecentFilesEvent.ItemsAdded(metadata)
     else
-      RecentFilesEvent.ItemsUpdated(metadata, false)
+      BackendRecentFilesEvent.ItemsUpdated(metadata, false)
 
     targetFlow.emit(event)
   }
@@ -103,49 +127,121 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
     LOG.debug("Switcher emit recent files: $searchRequest")
     val targetFlow = chooseTargetFlow(searchRequest.filesKind)
 
-    targetFlow.emit(RecentFilesEvent.AllItemsRemoved())
+    targetFlow.emit(BackendRecentFilesEvent.AllItemsRemoved())
     val freshRecentFiles = collectRecentFiles(searchRequest)
     if (freshRecentFiles != null) {
       targetFlow.emit(freshRecentFiles)
     }
   }
 
-  fun scheduleApplyBackendChangesToAllFileKinds(changeKind: FileChangeKind, files: List<VirtualFile>) {
-    for (fileKind in RecentFileKind.entries) {
-      scheduleApplyBackendChanges(fileKind, changeKind, files)
+  fun scheduleApplyBackendChanges(changeKind: FileChangeKind, files: Collection<VirtualFile>) {
+    if (files.isEmpty()) return
+    val reasonablyLimitedFilesList = files.take(bufferSize)
+
+    LOG.debug { "Switcher emit file update initiated by backend, file: $reasonablyLimitedFilesList, change kind: ${changeKind}, project: $project" }
+    when (changeKind) {
+      FileChangeKind.UPDATED -> {
+        fileChangeEvents.trySend(reasonablyLimitedFilesList)
+      }
+      else -> {
+        orderChangeEvents.trySend(OrderChangeEvent(changeKind, reasonablyLimitedFilesList))
+      }
     }
   }
 
-  fun scheduleApplyBackendChanges(fileKind: RecentFileKind, changeKind: FileChangeKind, files: List<VirtualFile>) {
-    val reasonablyLimitedFilesList = files.take(bufferSize).takeIf { it.isNotEmpty() } ?: return
+  private suspend fun processOrderChangeEvents(): Nothing {
+    orderChangeEvents.consumeEach { event ->
+      try {
+        processOrderChangeEvent(event)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        LOG.error(t)
+      }
+    }
+    awaitCancellation() // unreachable
+  }
 
-    coroutineScope.launch {
-      LOG.debug("Switcher emit file update initiated by backend, file: $reasonablyLimitedFilesList, change kind: ${changeKind}, project: $project")
-      val fileEvent = when (changeKind) {
-        FileChangeKind.ADDED -> {
-          val models = readAction {
-            reasonablyLimitedFilesList.map { createRecentFileViewModel(it, project) }
+  private suspend fun processFileUpdateEvents(): Nothing {
+    val pendingFiles = mutableSetOf<VirtualFile>()
+    val isProcessing = AtomicBoolean(false)
+
+    fileChangeEvents.consumeEach { files ->
+      pendingFiles.addAll(files)
+
+      if (pendingFiles.isNotEmpty() && isProcessing.compareAndSet(false, true)) {
+        val filesToUpdate = pendingFiles.toList()
+        pendingFiles.clear()
+
+        coroutineScope.launch {
+          try {
+            processFileUpdateEvent(filesToUpdate, putOnTop = false)
+
+            delay(updateDebounceMs.milliseconds) // debounce update events
           }
-          RecentFilesEvent.ItemsAdded(models)
-        }
-        FileChangeKind.UPDATED -> {
-          val models = readAction {
-            reasonablyLimitedFilesList.map { createRecentFileViewModel(it, project) }
+          finally {
+            isProcessing.set(false)
+            fileChangeEvents.trySend(emptyList()) // schedule a new processing job for pending changes if needed
           }
-          RecentFilesEvent.ItemsUpdated(models, false)
-        }
-        FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
-          val models = readAction {
-            reasonablyLimitedFilesList.map { createRecentFileViewModel(it, project) }
-          }
-          RecentFilesEvent.ItemsUpdated(models, true)
-        }
-        FileChangeKind.REMOVED -> {
-          RecentFilesEvent.ItemsRemoved(reasonablyLimitedFilesList.map { it.rpcId() })
         }
       }
+    }
+    awaitCancellation() // unreachable
+  }
 
+  private suspend fun processOrderChangeEvent(event: OrderChangeEvent) {
+    when (event.changeKind) {
+      FileChangeKind.ADDED -> {
+        val models = createRecentFilesViewModels(event.files)
+        val fileEvent = BackendRecentFilesEvent.ItemsAdded(models)
+
+        for (fileKind in RecentFileKind.entries) {
+          chooseTargetFlow(fileKind).emit(fileEvent)
+        }
+      }
+      FileChangeKind.REMOVED -> {
+        val fileEvent = BackendRecentFilesEvent.ItemsRemoved(event.files)
+
+        for (fileKind in RecentFileKind.entries) {
+          chooseTargetFlow(fileKind).emit(fileEvent)
+        }
+      }
+      FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
+        processFileUpdateEvent(event.files, putOnTop = true)
+      }
+      FileChangeKind.UPDATED -> {
+        LOG.error("Unexpected change kind: ${event.changeKind}")
+        return
+      }
+    }
+  }
+
+  private suspend fun processFileUpdateEvent(files: List<VirtualFile>, putOnTop: Boolean = true) {
+    val knownFilesByKind = RecentFileKind.entries.associateWith { fileKind ->
+      BackendRecentFilesModel.getInstance(project).getFilesByKind(fileKind).toSet()
+    }
+
+    val filesToUpdate = files.filter { file -> knownFilesByKind.values.any { known -> known.contains(file) } }
+
+    val models = createRecentFilesViewModels(filesToUpdate)
+    assert(models.size == filesToUpdate.size)
+
+    for (fileKind in RecentFileKind.entries) {
+      val knownFiles = knownFilesByKind[fileKind]!!
+      val eventModels = models.filterIndexed { index, _ -> knownFiles.contains(filesToUpdate[index]) }
+
+      val fileEvent = BackendRecentFilesEvent.ItemsUpdated(eventModels, putOnTop)
       chooseTargetFlow(fileKind).emit(fileEvent)
+    }
+  }
+
+  private suspend fun createRecentFilesViewModels(files: List<VirtualFile>): List<BackendRecentFilePresentation> {
+    return files.map {
+      readAction {
+        createRecentFileViewModel(it, project)
+      }
     }
   }
 
@@ -159,7 +255,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
       }
     }
     chooseTargetFlow(hideFilesRequest.filesKind)
-      .emit(RecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide))
+      .emit(BackendRecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide.mapNotNull { it.virtualFile() }))
   }
 
   fun scheduleRehighlightUnopenedFiles() {
@@ -173,7 +269,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
     return recentFiles.subtract(openFiles.toSet()).toList()
   }
 
-  private suspend fun collectRecentFiles(filter: RecentFilesBackendRequest.FetchFiles): RecentFilesEvent? {
+  private suspend fun collectRecentFiles(filter: RecentFilesBackendRequest.FetchFiles): BackendRecentFilesEvent? {
     LOG.debug("Switcher started fetching recent files")
     val project = filter.projectId.findProjectOrNull() ?: return null
 
@@ -186,10 +282,10 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
     LOG.debug("Switcher collected ${collectedFiles.size} recent files")
     LOG.trace { "Switcher collected recent files list: ${collectedFiles.joinToString(prefix = "\n", separator = "\n") { it.mainText }}" }
 
-    return RecentFilesEvent.ItemsAdded(collectedFiles)
+    return BackendRecentFilesEvent.ItemsAdded(collectedFiles)
   }
 
-  private fun chooseTargetFlow(fileKind: RecentFileKind): MutableSharedFlow<RecentFilesEvent> {
+  private fun chooseTargetFlow(fileKind: RecentFileKind): MutableSharedFlow<BackendRecentFilesEvent> {
     return when (fileKind) {
       RecentFileKind.RECENTLY_OPENED -> recentlyOpenedFiles
       RecentFileKind.RECENTLY_EDITED -> recentlyEditedFiles
@@ -206,4 +302,47 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
       return project.serviceAsync<BackendRecentFileEventsModel>()
     }
   }
+}
+
+private data class OrderChangeEvent(val changeKind: FileChangeKind, val files: List<VirtualFile>)
+
+
+@ApiStatus.Internal
+internal sealed interface BackendRecentFilesEvent {
+  class ItemsUpdated(val batch: List<BackendRecentFilePresentation>, val putOnTop: Boolean) : BackendRecentFilesEvent
+  class ItemsAdded(val batch: List<BackendRecentFilePresentation>) : BackendRecentFilesEvent
+  class ItemsRemoved(val batch: List<VirtualFile>) : BackendRecentFilesEvent
+  class AllItemsRemoved : BackendRecentFilesEvent
+}
+
+internal class BackendRecentFilePresentation(
+  val mainText: @NlsSafe String,
+  val statusText: @NlsSafe String,
+  val pathText: @NlsSafe String,
+  val hasProblems: Boolean,
+  val icon: Icon,
+  val foregroundTextColor: Color?,
+  val backgroundColor: Color?,
+  val virtualFile: VirtualFile,
+)
+
+@ApiStatus.Internal
+internal fun BackendRecentFilesEvent.toRpcModel(): RecentFilesEvent = when (this) {
+  is BackendRecentFilesEvent.ItemsUpdated -> RecentFilesEvent.ItemsUpdated(batch.map { it.toRpcModel() }, putOnTop)
+  is BackendRecentFilesEvent.ItemsAdded -> RecentFilesEvent.ItemsAdded(batch.map { it.toRpcModel() })
+  is BackendRecentFilesEvent.ItemsRemoved -> RecentFilesEvent.ItemsRemoved(batch.map { it.rpcId() })
+  is BackendRecentFilesEvent.AllItemsRemoved -> RecentFilesEvent.AllItemsRemoved()
+}
+
+internal fun BackendRecentFilePresentation.toRpcModel(): SwitcherRpcDto {
+  return SwitcherRpcDto.File(
+    mainText = mainText,
+    statusText = statusText,
+    pathText = pathText,
+    hasProblems = hasProblems,
+    iconId = icon.rpcId(),
+    foregroundTextColorId = foregroundTextColor?.rpcId(),
+    backgroundColorId = backgroundColor?.rpcId(),
+    virtualFileId = virtualFile.rpcId()
+  )
 }

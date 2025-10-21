@@ -9,6 +9,8 @@ from networkx.classes.multigraph import MultiGraph
 _G = TypeVar("_G", bound=Graph[Hashable])
 _D = TypeVar("_D", bound=DiGraph[Hashable])
 
+__all__ = ["generic_graph_view", "subgraph_view", "reverse_view"]
+
 @overload
 def generic_graph_view(G: _G, create_using: None = None) -> _G: ...
 @overload

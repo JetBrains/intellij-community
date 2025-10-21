@@ -13,7 +13,7 @@
     <plugin id="org.jetbrains.kotlin" />
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.compose.ide.plugin.shared"/>
     <module name="intellij.compose.ide.plugin.k1"/>
     <module name="intellij.compose.ide.plugin.k2"/>

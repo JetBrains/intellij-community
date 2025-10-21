@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports coroutine builders calls that violate structured concurrency by accepting a <code>CoroutineContext</code> containing a
+<code>Job</code>.
+<p>
+  Passing contexts with a <code>Job</code> to coroutine builders like <code>launch</code>, <code>async</code>, <code>produce</code>, <code>promise</code>,
+  or to <code>withContext</code>
+  breaks the parent-child relationship between coroutines, defeating the purpose of structured concurrency.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+coroutineScope.launch(Job()) {
+  // this coroutine does not have parent relationship with the `coroutineScope` receiver 
+}
+</code></pre>
+</body>
+</html>

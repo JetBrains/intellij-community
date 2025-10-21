@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinGenerateCommandCompletion : AbstractGenerateCommandProvider() {
+internal class KotlinGenerateCommandCompletion : AbstractGenerateCommandProvider() {
     override fun generationIsAvailable(element: PsiElement, offset: Int): Boolean {
         val parent = element.parent
         if (parent !is KtClass && parent !is KtFile && parent !is KtClassBody) return false

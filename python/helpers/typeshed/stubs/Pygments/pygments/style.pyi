@@ -1,10 +1,11 @@
 from collections.abc import Iterator, Mapping, Set as AbstractSet
-from typing import TypedDict
+from typing import TypedDict, type_check_only
 
 from pygments.token import _TokenType
 
 ansicolors: AbstractSet[str]  # not intended to be mutable
 
+@type_check_only
 class _StyleDict(TypedDict):
     color: str | None
     bold: bool

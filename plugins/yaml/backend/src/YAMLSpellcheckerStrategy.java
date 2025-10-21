@@ -5,6 +5,7 @@ import com.intellij.json.JsonSchemaSpellcheckerClient;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -19,10 +20,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl;
 
 import java.util.regex.Pattern;
 
-final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
+public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
 
   private static final Pattern CODE_LIKE_PATTERN = Pattern.compile("[\"']?" + CODE_IDENTIFIER_LIKE + "[\"']?");
 
@@ -38,10 +40,10 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements Du
   };
 
   @Override
-  public @NotNull Tokenizer<?> getTokenizer(final PsiElement element) {
+  public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
-    if (node != null){
-      final IElementType type = node.getElementType();
+    if (node != null) {
+      IElementType type = node.getElementType();
       if (type == YAMLTokenTypes.SCALAR_TEXT ||
           type == YAMLTokenTypes.SCALAR_LIST ||
           type == YAMLTokenTypes.TEXT ||
@@ -56,6 +58,13 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements Du
           return EMPTY_TOKENIZER;
         }
 
+        if (useTextLevelSpellchecking() &&
+            (type == YAMLTokenTypes.SCALAR_KEY ||
+             type == YAMLTokenTypes.TEXT ||
+             type == YAMLTokenTypes.SCALAR_TEXT ||
+             type == YAMLTokenTypes.SCALAR_LIST)) {
+          return EMPTY_TOKENIZER;
+        }
         return TEXT_TOKENIZER;
       } else if (element instanceof YAMLQuotedText) {
         if (isInjectedLanguageFragment(element)) {
@@ -69,6 +78,10 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements Du
         return myQuotedTextTokenizer;
       }
     }
+
+    if (shouldBeIgnored(element)) {
+      return EMPTY_TOKENIZER;
+    }
     return super.getTokenizer(element);
   }
 
@@ -77,10 +90,24 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements Du
     return super.isLiteral(element) || !super.isComment(element) && !CODE_LIKE_PATTERN.matcher(element.getText()).matches();
   }
 
-  private static class JsonSchemaSpellcheckerClientForYaml extends JsonSchemaSpellcheckerClient {
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled", false);
+  }
+
+  private boolean shouldBeIgnored(@NotNull PsiElement element) {
+    if (element.getNode() == null) {
+      return false;
+    }
+    IElementType type = element.getNode().getElementType();
+    return useTextLevelSpellchecking() &&
+           (type == YAMLTokenTypes.SCALAR_DSTRING || type == YAMLTokenTypes.ANCHOR || element instanceof YAMLAnchorImpl);
+  }
+
+  public static class JsonSchemaSpellcheckerClientForYaml extends JsonSchemaSpellcheckerClient {
     private final @NotNull PsiElement element;
 
-    protected JsonSchemaSpellcheckerClientForYaml(@NotNull PsiElement element) {
+    public JsonSchemaSpellcheckerClientForYaml(@NotNull PsiElement element) {
       this.element = element;
     }
 
@@ -94,6 +121,9 @@ final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements Du
       PsiElement parent = element.getParent();
       if (element.getNode().getElementType() == YAMLTokenTypes.SCALAR_KEY) {
         return ((YAMLKeyValue)parent).getKeyText();
+      }
+      if (parent instanceof YAMLKeyValue) {
+        return ((YAMLKeyValue)parent).getValueText();
       }
       else if (parent instanceof YAMLScalar) {
         return ((YAMLScalar)parent).getTextValue();

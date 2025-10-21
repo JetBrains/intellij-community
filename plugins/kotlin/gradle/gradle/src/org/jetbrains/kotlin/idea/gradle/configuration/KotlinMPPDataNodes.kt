@@ -12,13 +12,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.serialization.PropertyMapping
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -46,12 +44,6 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
     var gradleModuleId: String = ""
 
     var actualPlatforms: KotlinPlatformContainer = KotlinPlatformContainerImpl()
-
-    @Deprecated("Returns only single TargetPlatform", ReplaceWith("actualPlatforms.actualPlatforms"), DeprecationLevel.ERROR)
-    @get:ApiStatus.ScheduledForRemoval
-    @get:Deprecated("Returns only single TargetPlatform", ReplaceWith("actualPlatforms.actualPlatforms"), DeprecationLevel.ERROR)
-    val platform: KotlinPlatform
-        get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
     @Transient
     var compilerArguments: CompilerArgumentsProvider? = null

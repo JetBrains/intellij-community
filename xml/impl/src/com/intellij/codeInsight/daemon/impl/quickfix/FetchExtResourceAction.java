@@ -160,7 +160,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
           try {
             HttpConfigurable.getInstance().prepareURL(url);
             fetchDtd(project, uri, url, indicator);
-            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(psiFile));
+            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this));
             return;
           }
           catch (IOException ex) {

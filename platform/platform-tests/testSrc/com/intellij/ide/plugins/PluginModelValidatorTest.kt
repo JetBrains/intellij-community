@@ -26,7 +26,7 @@ private val testSnapshotDir = Path.of(getCommunityPath(), "platform/platform-tes
 
 private const val TEST_PLUGIN_ID = "plugin"
 
-@TestDataPath("\$CONTENT_ROOT/testSnapshots/plugin-validator")
+@TestDataPath($$"$CONTENT_ROOT/testSnapshots/plugin-validator")
 class PluginModelValidatorTest {
   @Rule
   @JvmField
@@ -155,6 +155,76 @@ class PluginModelValidatorTest {
         depends=DependsElement(pluginId=com.intellij.modules.lang)
       )
     """.trimIndent())
+  }
+
+  @Test
+  fun `dependencies from required to optional are not allowed`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.plugin",
+      project = project,
+      sourceRoot = root / "plugin",
+      content = """
+            <idea-plugin>
+               <id>intellij.plugin</id>
+               <content>
+                  <module name="intellij.optional.module"/>
+                  <module name="intellij.required.module" loading='required'/>
+               </content>
+            </idea-plugin>
+      """)
+    createContentModule(project, "intellij.optional.module", "<idea-plugin/>")
+    createContentModule(project, "intellij.required.module", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.optional.module"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    val result = validatePluginModel(project)
+    assertThat(result.errorsAsString()).contains("""
+      The content module 'intellij.required.module' is registered as 'required', but it depends on the module 'intellij.optional.module' which is declared as optional
+    """.trimIndent())
+  }
+  
+  @Test
+  fun `dependencies from embedded to optional are not allowed`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.plugin",
+      project = project,
+      sourceRoot = root / "plugin",
+      content = """
+            <idea-plugin>
+               <id>intellij.plugin</id>
+               <content>
+                  <module name="intellij.optional.module"/>
+                  <module name="intellij.embedded.module" loading='embedded'/>
+               </content>
+            </idea-plugin>
+      """)
+    createContentModule(project, "intellij.optional.module", "<idea-plugin/>")
+    createContentModule(project, "intellij.embedded.module", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.optional.module"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    val result = validatePluginModel(project)
+    assertThat(result.errorsAsString()).contains("""
+      The content module 'intellij.embedded.module' is registered as 'embedded', but it depends on the module 'intellij.optional.module' which is declared as optional
+    """.trimIndent())
+  }
+  
+  private fun createContentModule(project: JpsProject, name: String, @Language("xml") content: String) {
+    createModuleWithXml(
+      name = name,
+      project = project,
+      sourceRoot = root / name,
+      path = name,
+      content = content,
+    )
   }
 
   private fun produceDependencyAndDependentPlugins(mutator: (String) -> String = { it }): JpsProject {

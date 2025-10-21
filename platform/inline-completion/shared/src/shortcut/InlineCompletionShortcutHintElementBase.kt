@@ -18,7 +18,11 @@ import java.awt.Rectangle
 import kotlin.random.Random
 
 @ApiStatus.Internal
-sealed class InlineCompletionShortcutHintElementBase(val lineNumber: Int) : InlineCompletionElement {
+sealed class InlineCompletionShortcutHintElementBase @JvmOverloads constructor(
+  val lineNumber: Int,
+  private val insertActionId: String,
+  private val forcedHint: InlineCompletionShortcutHint? = null,
+) : InlineCompletionElement {
 
   override val text: String
     get() = ""
@@ -28,7 +32,13 @@ sealed class InlineCompletionShortcutHintElementBase(val lineNumber: Int) : Inli
   protected abstract fun getHintWeight(hint: InlineCompletionShortcutHint): Int
 
   private fun chooseHint(): InlineCompletionShortcutHint {
-    val entries = InlineCompletionShortcutHint.entries
+    forcedHint?.let { return it }
+
+    val entries = when (insertActionId) {
+      IdeActions.ACTION_INSERT_INLINE_COMPLETION -> InlineCompletionShortcutHint.entries
+      else -> return InlineCompletionShortcutHint.INSERT_TERMINAL
+    }
+
     var randomPoint = Random.nextInt(entries.sumOf { getHintWeight(it) }) + 1
     return entries.firstOrNull {
       randomPoint -= getHintWeight(it)
@@ -158,6 +168,12 @@ enum class InlineCompletionShortcutHint {
       get() = IdeActions.ACTION_INSERT_INLINE_COMPLETION_LINE
     override val suffixText: String
       get() = MessageBundle.message("inline.completion.shortcut.hint.insert.line.text")
+  },
+  INSERT_TERMINAL {
+    override val actionId: String
+      get() = ""
+    override val suffixText: String
+      get() = MessageBundle.message("inline.completion.shortcut.hint.insert.text")
   };
 
   abstract val actionId: String

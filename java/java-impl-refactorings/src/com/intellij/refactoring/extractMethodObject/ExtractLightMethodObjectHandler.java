@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightFrontbackUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -29,7 +29,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public final class ExtractLightMethodObjectHandler {
   private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);
@@ -42,7 +44,7 @@ public final class ExtractLightMethodObjectHandler {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
-      elements = CodeInsightUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
+      elements = CodeInsightFrontbackUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
     }
     if (elements.length == 0) {
       return null;
@@ -73,7 +75,8 @@ public final class ExtractLightMethodObjectHandler {
     }
 
     final TextRange range = originalContext.getTextRange();
-    PsiElement originalAnchor = CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
+    PsiElement originalAnchor =
+      CodeInsightFrontbackUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
     if (originalAnchor == null) {
       final PsiElement elementAt = copy.findElementAt(range.getStartOffset());
       if (elementAt != null && elementAt.getClass() == originalContext.getClass()) {
@@ -121,9 +124,15 @@ public final class ExtractLightMethodObjectHandler {
     }
 
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
-    final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
+    final PsiElement[] allElementsCopy = CodeInsightFrontbackUtil.findStatementsInRange(copy,
                                                                             firstElementCopy.getTextRange().getStartOffset(),
                                                                             anchor.getTextRange().getStartOffset());
+
+    // remove all comments
+    final PsiElement[] elementsCopy = Arrays.stream(allElementsCopy)
+      .filter(e -> !(e instanceof PsiComment))
+      .toArray(PsiElement[]::new);
+
     if (elementsCopy.length == 0) {
       return null;
     }
@@ -141,7 +150,6 @@ public final class ExtractLightMethodObjectHandler {
 
 
     LOG.assertTrue(elementsCopy[0].getParent() == container, "element: " +  elementsCopy[0].getText() + "; container: " + container.getText());
-    final int startOffsetInContainer = elementsCopy[0].getStartOffsetInParent();
 
     final ControlFlow controlFlow;
     try {
@@ -210,24 +218,30 @@ public final class ExtractLightMethodObjectHandler {
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = extractMethodObjectProcessor.getExtractProcessor();
+    int startOffsetInContainer;
     if (extractProcessor.prepare()) {
-      if (extractProcessor.showDialog()) {
-        try {
-          extractProcessor.doExtract();
-          final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
-          extractMethodObjectProcessor.performRefactoring(usages);
-          extractMethodObjectProcessor.runChangeSignature();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        if (extractMethodObjectProcessor.isCreateInnerClass()) {
-          extractMethodObjectProcessor.changeInstanceAccess(project);
-        }
-        final PsiElement method = extractMethodObjectProcessor.getMethod();
-        LOG.assertTrue(method != null);
-        method.delete();
+      boolean shown = extractProcessor.showDialog();
+      if (!shown) {
+        throw new IllegalStateException("Must return success");
       }
+      try {
+        extractProcessor.doExtract();
+        startOffsetInContainer = Objects.requireNonNull(PsiTreeUtil.getParentOfType(extractProcessor.getMethodCall(), PsiStatement.class))
+          .getTextRangeInParent().getStartOffset();
+        final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
+        extractMethodObjectProcessor.performRefactoring(usages);
+        extractMethodObjectProcessor.runChangeSignature();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
+      }
+      if (extractMethodObjectProcessor.isCreateInnerClass()) {
+        extractMethodObjectProcessor.changeInstanceAccess(project);
+      }
+      final PsiElement method = extractMethodObjectProcessor.getMethod();
+      LOG.assertTrue(method != null);
+      method.delete();
     } else {
       return null;
     }
@@ -256,7 +270,7 @@ public final class ExtractLightMethodObjectHandler {
       }
     }
 
-    final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset());
+    final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset()).trim();
     return new LightMethodObjectExtractedData(generatedCall,
                                               (PsiClass)CodeStyleManager.getInstance(project).reformat(generatedClass),
                                               originalAnchor, useMagicAccessor);
@@ -299,7 +313,7 @@ public final class ExtractLightMethodObjectHandler {
   }
 
   private static PsiElement @Nullable [] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
-    PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
+    PsiExpression expression = CodeInsightFrontbackUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
     if (expression != null) {
       String completeExpressionText = null;
       if (expression instanceof PsiArrayInitializerExpression) {

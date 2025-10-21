@@ -9,6 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="commons-imaging" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.imaging" />
   </component>
 </module>

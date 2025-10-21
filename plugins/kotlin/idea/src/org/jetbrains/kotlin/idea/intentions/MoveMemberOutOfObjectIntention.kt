@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
@@ -17,8 +18,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+import java.util.function.Supplier
 
-abstract class MoveMemberOutOfObjectIntention(textGetter: () -> String) : SelfTargetingRangeIntention<KtNamedDeclaration>(
+internal abstract class MoveMemberOutOfObjectIntention(textGetter: Supplier<@IntentionName String>) : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
     textGetter
 ) {

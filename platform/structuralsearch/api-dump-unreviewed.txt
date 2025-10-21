@@ -1055,6 +1055,7 @@ c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationP
 - getDocumentationElementForLookupItem(com.intellij.psi.PsiManager,java.lang.Object,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplatesCompletionContributor
 - com.intellij.codeInsight.completion.CompletionContributor
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet):V
 c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler
@@ -1099,7 +1100,6 @@ f:com.intellij.structuralsearch.plugin.ui.UIUtil
 - s:detectFileType(com.intellij.structuralsearch.plugin.ui.SearchContext):com.intellij.openapi.fileTypes.LanguageFileType
 - s:getOrAddReplacementVariable(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.ReplacementVariableDefinition
 - s:getOrAddVariableConstraint(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.MatchVariableConstraint
-- s:getTemplateContextType(com.intellij.structuralsearch.StructuralSearchProfile):com.intellij.codeInsight.template.TemplateContextType
 - s:invokeAction(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
 - s:isTarget(java.lang.String,com.intellij.structuralsearch.MatchOptions):Z
 - s:setContent(com.intellij.openapi.editor.Editor,java.lang.String):V

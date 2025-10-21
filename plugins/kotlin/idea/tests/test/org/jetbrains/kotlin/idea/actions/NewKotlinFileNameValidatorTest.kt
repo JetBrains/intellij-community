@@ -3,15 +3,24 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class NewKotlinFileNameValidatorTest : LightJavaCodeInsightFixtureTestCase() {
+class NewKotlinFileNameValidatorTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
     companion object {
         private const val EMPTY_PARTS_ERROR = "Name can't have empty parts"
         private const val EMPTY_ERROR = "Name can't be empty"
     }
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
 
     fun testEmptyName() {
         validateName("", EMPTY_ERROR)

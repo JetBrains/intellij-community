@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class ShowCodeVisionPopupAction : AnAction(CodeVisionBundle.message("ShowCodeVisionPopupAction.action.show.code.vision.text")), ActionRemoteBehaviorSpecification.Frontend {
+class ShowCodeVisionPopupAction : AnAction(CodeVisionMessageBundle.message("ShowCodeVisionPopupAction.action.show.code.vision.text")), ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

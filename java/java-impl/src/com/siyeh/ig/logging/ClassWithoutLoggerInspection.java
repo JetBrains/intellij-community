@@ -96,7 +96,7 @@ public final class ClassWithoutLoggerInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ClassWithoutLoggerVisitor();
   }
 

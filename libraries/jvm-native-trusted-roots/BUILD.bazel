@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jvm-native-trusted-roots_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jvm-native-trusted-roots",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jvm-native-trusted-roots_resources"],
+  exports = ["@lib//:jvm-native-trusted-roots"],
+  runtime_deps = ["@lib//:jvm-native-trusted-roots"]
+)
+### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` end

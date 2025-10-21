@@ -16,7 +16,7 @@ import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +61,7 @@ public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
     FrameworkDetectionProcessor processor = new FrameworkDetectionProcessor(new MockProgressIndicator(), new FrameworkDetectionInWizardContext() {
       @Override
       protected List<ModuleDescriptor> getModuleDescriptors() {
-        final ModuleDescriptor descriptor = new ModuleDescriptor(root, StdModuleTypes.JAVA, new JavaModuleSourceRoot(root, null, "java"));
+        final ModuleDescriptor descriptor = new ModuleDescriptor(root, JavaModuleType.getModuleType(), new JavaModuleSourceRoot(root, null, "java"));
         descriptor.setName(myModule.getName());
         return Collections.singletonList(descriptor);
       }

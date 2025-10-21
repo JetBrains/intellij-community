@@ -21,6 +21,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -103,7 +104,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   }
 
   private val allPythonSdksInEdit: List<Sdk>
-    get() = pythonConfigurableInterpreterList.getAllPythonSdks(project, module)
+    get() = pythonConfigurableInterpreterList.getAllPythonSdks(project, module, false)
 
   override fun reset() {
     pythonPathsModified = false

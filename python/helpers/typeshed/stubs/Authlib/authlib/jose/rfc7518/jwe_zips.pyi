@@ -1,0 +1,9 @@
+from authlib.jose.rfc7516 import JWEZipAlgorithm
+
+class DeflateZipAlgorithm(JWEZipAlgorithm):
+    name: str
+    description: str
+    def compress(self, s): ...
+    def decompress(self, s): ...
+
+def register_jwe_rfc7518() -> None: ...

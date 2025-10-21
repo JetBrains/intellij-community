@@ -331,7 +331,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   @Override
   public void updateConfig() {
     basicUpdateConfig();
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
   }
 
   public void setTreeViewAnsiColor(final boolean value) {

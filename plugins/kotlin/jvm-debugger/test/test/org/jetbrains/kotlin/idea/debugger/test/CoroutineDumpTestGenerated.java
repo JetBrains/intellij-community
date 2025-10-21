@@ -35,9 +35,9 @@ public class CoroutineDumpTestGenerated extends AbstractCoroutineDumpTest {
         runTest("testData/coroutines/noCoroutines.kt");
     }
 
-    @TestMetadata("threeCoroutines.kt")
-    public void testThreeCoroutines() throws Exception {
-        runTest("testData/coroutines/threeCoroutines.kt");
+    @TestMetadata("sequenceNoCoroutines.kt")
+    public void testSequenceNoCoroutines() throws Exception {
+        runTest("testData/coroutines/sequenceNoCoroutines.kt");
     }
 
     @TestMetadata("twoDumps.kt")

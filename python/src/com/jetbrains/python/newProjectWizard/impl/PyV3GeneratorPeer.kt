@@ -10,13 +10,11 @@ import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.jetbrains.python.newProjectWizard.PyV3UIServices
 import com.jetbrains.python.newProjectWizard.impl.projectPath.ProjectPathImpl
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import javax.swing.JComponent
 
 internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   baseSettings: PyV3BaseProjectSettings,
   private val specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,
-  private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>?,
   private val uiServices: PyV3UIServices,
 ) : ProjectGeneratorPeer<PyV3BaseProjectSettings> {
   private val settings = baseSettings
@@ -24,7 +22,7 @@ internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecifi
 
 
   override fun getComponent(projectPathField: TextFieldWithBrowseButton, checkValid: Runnable): JComponent {
-    panel = PyV3UI(settings, ProjectPathImpl(projectPathField, uiServices), specificUiAndSettings, allowedInterpreterTypes)
+    panel = PyV3UI(settings, ProjectPathImpl(projectPathField, uiServices), specificUiAndSettings)
     return panel.mainPanel
   }
 

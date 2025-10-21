@@ -1,5 +1,7 @@
 // WITH_STDLIB
 // PROBLEM: none
+// K2_ERROR: Condition type mismatch: inferred type is 'Boolean?' but 'Boolean' was expected.
+// K2_ERROR: Smart cast to 'List<Int>' is impossible, because 'list' is a mutable property that could be mutated concurrently.
 
 // ERROR: Smart cast to 'List<Int>' is impossible, because 'foo.bar.list' is a mutable property that could have been changed by this time
 // ERROR: Type mismatch: inferred type is Boolean? but Boolean was expected

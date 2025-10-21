@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -152,11 +153,15 @@ public /* sealed */ interface NullabilitySource {
         if (packageStatement.getAnnotationList() != modifierList) {
           throw new IllegalStateException("Modifier list parent is incorrect");
         }
-        PsiElement targetPackage = packageStatement.getPackageReference().resolve();
-        if (!(targetPackage instanceof PsiPackage)) {
+        String packageName = packageStatement.getPackageName();
+        if (packageName == null) {
+          throw new IllegalStateException("Package name is empty");
+        }
+        PsiPackage psiPackage = JavaPsiFacade.getInstance(packageStatement.getProject()).findPackage(packageName);
+        if (psiPackage == null) {
           throw new IllegalStateException("Package reference is not resolved");
         }
-        return (PsiPackage)targetPackage;
+        return psiPackage;
       }
       else {
         throw new IllegalStateException("Unsupported modifier list parent: " + owner.getClass().getName());
@@ -256,6 +261,9 @@ public /* sealed */ interface NullabilitySource {
     }
     if (set.isEmpty()) return Standard.NONE;
     if (set.size() == 1) return set.iterator().next();
+    if (ContainerUtil.and(set, s -> s instanceof ExtendsBound)) {
+      return new MultiSource(ContainerUtil.map2LinkedSet(set, s -> ((ExtendsBound)s).boundSource())).inherited();
+    }
     return new MultiSource(set);
   }
 }

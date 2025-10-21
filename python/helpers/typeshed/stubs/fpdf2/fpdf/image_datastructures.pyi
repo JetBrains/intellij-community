@@ -4,7 +4,6 @@ from typing import Any, Literal
 from typing_extensions import TypeAlias
 
 from fpdf.enums import Align
-from fpdf.fpdf import FPDF
 
 from .image_parsing import _ImageFilter
 
@@ -31,7 +30,7 @@ _AlignLiteral: TypeAlias = Literal[
     "r",
     "j",
 ]
-_TextAlign: TypeAlias = Align | _AlignLiteral
+_TextAlign: TypeAlias = Align | _AlignLiteral  # noqa: Y047
 
 class ImageInfo(dict[str, Any]):
     @property
@@ -43,8 +42,6 @@ class ImageInfo(dict[str, Any]):
     @property
     def rendered_height(self) -> int: ...
     def scale_inside_box(self, x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]: ...
-    @staticmethod
-    def x_by_align(x: _TextAlign, w: float, pdf: FPDF, keep_aspect_ratio: Literal[False]) -> float: ...
 
 class RasterImageInfo(ImageInfo):
     def size_in_document_units(self, w: float, h: float, scale=1) -> tuple[float, float]: ...

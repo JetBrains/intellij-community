@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @GeneratedBuilder.Result
 @ApiStatus.Internal
-class WatchOptionsBuilder() {
+class WatchOptionsBuilder {
   private var changeTypes: Set<FileChangeType> = emptySet()
 
   private var paths: Set<WatchedPath> = emptySet()

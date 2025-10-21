@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -142,10 +142,12 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     myActivateToolWindowWhenAdded = activateToolWindowWhenAdded;
   }
 
+  /// Return whether the build toolwindow should be activated when the build failed.
   public boolean isActivateToolWindowWhenFailed() {
     return myActivateToolWindowWhenFailed;
   }
 
+  /// Set whether the build toolwindow should be activated when the build failed.
   public void setActivateToolWindowWhenFailed(boolean activateToolWindowWhenFailed) {
     myActivateToolWindowWhenFailed = activateToolWindowWhenFailed;
   }

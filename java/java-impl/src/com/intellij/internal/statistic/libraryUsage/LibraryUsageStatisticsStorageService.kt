@@ -19,7 +19,7 @@ import kotlin.concurrent.write
   reloadable = false,
 )
 @ApiStatus.Internal
-class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsageStatisticsStorageService.LibraryUsageStatisticsState> {
+public class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsageStatisticsStorageService.LibraryUsageStatisticsState> {
   private val lock = ReentrantReadWriteLock()
   private var statistics = Object2IntOpenHashMap<LibraryUsage>()
 
@@ -33,35 +33,35 @@ class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsa
     statistics = Object2IntOpenHashMap(state.statistics)
   }
 
-  fun getStatisticsAndResetState(): Map<LibraryUsage, Int> = lock.write {
+  public fun getStatisticsAndResetState(): Map<LibraryUsage, Int> = lock.write {
     val old = statistics
     statistics = Object2IntOpenHashMap()
     old
   }
 
-  fun increaseUsages(libraries: Collection<LibraryUsage>): Unit = lock.write {
+  public fun increaseUsages(libraries: Collection<LibraryUsage>): Unit = lock.write {
     for (it in libraries) {
       statistics.addTo(it, 1)
     }
   }
 
-  class LibraryUsageStatisticsState {
+  public class LibraryUsageStatisticsState {
     @XMap
     @JvmField
-    val statistics: HashMap<LibraryUsage, Int> = HashMap()
+    public val statistics: HashMap<LibraryUsage, Int> = HashMap()
   }
 
-  companion object {
-    fun getInstance(project: Project): LibraryUsageStatisticsStorageService = project.service()
+  public companion object {
+    public fun getInstance(project: Project): LibraryUsageStatisticsStorageService = project.service()
   }
 }
 
-data class LibraryUsage(
+public data class LibraryUsage(
   var name: String? = null,
   var version: String? = null,
   var fileTypeName: String? = null,
 ) {
-  constructor(name: String, version: String, fileType: FileType) : this(name = name, version = version, fileTypeName = fileType.name)
+  public constructor(name: String, version: String, fileType: FileType) : this(name = name, version = version, fileTypeName = fileType.name)
 
   override fun toString(): String = "$name-$version for $fileTypeName"
 }

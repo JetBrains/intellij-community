@@ -1192,6 +1192,9 @@ public class InferenceSession {
         return PsiTypes.nullType();
       } else {
         type = eqBound;
+        if (!lowerBound.equals(PsiTypes.nullType())) {
+          type = type.withNullability(eqBound.getNullability().join(lowerBound.getNullability()));
+        }
 
         if (isLowerBoundNotAssignable(var, eqBound, false)) {
           setErased();

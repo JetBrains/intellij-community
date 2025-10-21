@@ -6,6 +6,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TitledHandler;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsActions;
@@ -15,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DeleteAction extends AnAction implements DumbAware, LightEditCompatible {
+public class DeleteAction extends AnAction implements DumbAware, LightEditCompatible,
+                                                      ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   private static final Logger LOG = Logger.getInstance(DeleteAction.class);
 
   public DeleteAction() { }
@@ -44,6 +47,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, null);
 
     if (e.isFromContextMenu()) {
       presentation.setText(IdeBundle.messagePointer("action.delete.ellipsis"));
@@ -61,6 +65,8 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     }
 
     CopyAction.updateWithProvider(e, getDeleteProvider(e.getDataContext()), false, provider -> {
+      // if a provider is found on the frontend, don't look for it on the backend
+      presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, true);
       boolean isPopupPlace = e.isFromContextMenu();
       boolean enabled = provider.canDeleteElement(e.getDataContext());
       presentation.setEnabled(enabled);

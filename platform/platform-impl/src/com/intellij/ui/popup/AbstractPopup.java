@@ -1005,10 +1005,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public boolean canClose() {
+    Computable<Boolean> callBack = myCallBack;
     return
       (!anyModalWindowsKeepPopupOpen() &&
-      (myCallBack == null || myCallBack.compute().booleanValue()) &&
-      !preventImmediateClosingAfterOpening()) ||
+       (callBack == null || callBack.compute().booleanValue()) &&
+       !preventImmediateClosingAfterOpening()) ||
       myDisposed; // check for myDisposed last to allow `myCallBack` to be executed
   }
 
@@ -1402,6 +1403,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     window.setAutoRequestFocus(myRequestFocus);
 
+    if (myCaption instanceof TitlePanel titlePanel) {
+      window.getAccessibleContext()
+        .setAccessibleName(StringUtil.unescapeXmlEntities(titlePanel.getLabel().getText()).replace("&nbsp;", " "));
+    }
+
     if (roundedCornerParams != null) {
       WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
@@ -1498,9 +1504,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       if (myPreferredFocusedComponent != null) {
         // `resetThreadContext` here is needed because `setVisible` runs event loop
         // IJPL-161712
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           myPreferredFocusedComponent.requestFocus();
-        }
+          return null;
+        });
       }
       else {
         _requestFocus();

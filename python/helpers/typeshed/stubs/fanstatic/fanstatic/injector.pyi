@@ -1,13 +1,14 @@
 from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 from abc import abstractmethod
 from collections.abc import Iterable
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal, TypedDict, type_check_only
 from typing_extensions import Unpack
 
 from fanstatic.core import Dependable, NeededResources, Resource
 from fanstatic.inclusion import Inclusion
 from webob import Request, Response
 
+@type_check_only
 class _NeededResourcesConfig(TypedDict, total=False):
     versioning: bool
     versioning_use_md5: bool
@@ -17,6 +18,7 @@ class _NeededResourcesConfig(TypedDict, total=False):
     publisher_signature: str
     resources: Iterable[Dependable] | None
 
+@type_check_only
 class _InjectorPluginOptions(TypedDict, total=False):
     compile: bool
     bundle: bool
@@ -24,6 +26,7 @@ class _InjectorPluginOptions(TypedDict, total=False):
     debug: bool
     minified: bool
 
+@type_check_only
 class _TopBottomInjectorPluginOptions(_InjectorPluginOptions, total=False):
     bottom: bool
     force_bottom: bool

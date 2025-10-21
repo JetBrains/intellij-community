@@ -30,7 +30,7 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class ImplicitSubclassInspection : LocalInspectionTool() {
+public class ImplicitSubclassInspection : LocalInspectionTool() {
   private val allModifiers = listOf(PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC)
 
   private fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {

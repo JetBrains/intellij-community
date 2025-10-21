@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
@@ -11,10 +12,13 @@ import org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTest
 import org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
@@ -25,17 +29,21 @@ import org.junit.Test
  * If a project has no jvm target (as here) and other-ones producers mistakenly delegate to gradle plugin tests are not available.
  */
 
-class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfigurationProducerTestCase() {
+class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfigurationProducerTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
     private lateinit var projectData: ProjectData
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         projectData = generateAndImportMppNoJvmProject()
     }
 
     //// ALL IN CLASS /////
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInJsClass() {
         enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestClassGradleConfigurationProducer>(
@@ -48,6 +56,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInNativeClass() {
         assertConfigurationFromContext<KotlinMultiplatformNativeTestClassGradleConfigurationProducer>(
             """:cleanNativeTest :nativeTest --tests "org.jetbrains.NativeTests"""",
@@ -61,6 +71,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// METHOD /////
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun testForJsMethod() {
         enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestMethodGradleConfigurationProducer>(
@@ -73,6 +85,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun testForNativeMethod() {
         assertConfigurationFromContext<KotlinMultiplatformNativeTestMethodGradleConfigurationProducer>(
             """:cleanNativeTest :nativeTest --tests "org.jetbrains.NativeTests.nativeTest"""",
@@ -86,6 +100,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// ALL IN PACKAGE /////
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInJsPackage() {
         enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
@@ -98,6 +114,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInNativePackage() {
         assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
             """:cleanNativeTest :nativeTest --tests "org.jetbrains.*"""",
@@ -112,6 +130,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// ALL IN DIRECTORY /////
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInJsDirectory() {
         enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
@@ -125,6 +145,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInNativeDirectory() {
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanNativeTest :nativeTest""",
@@ -140,6 +162,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// ALL IN MODULE /////
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInJsModule() {
         enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
@@ -154,6 +178,8 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
+    // The test is incompatible with Gradle 9.0 - KTIJ-34799
+    @TargetVersions("<9.0")
     fun allTestsInNativeModule() {
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanNativeTest :nativeTest""",

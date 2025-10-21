@@ -4,6 +4,7 @@ public class LambdaParameterNamingConvention {
   void n(int abcd) {
     F f = (<warning descr="Lambda parameter name 'i' is too short (1 < 2)">i</warning>) -> 10;
     F g = abc -> 12;
+    F h = _ -> 1;
   }
 
   interface F {

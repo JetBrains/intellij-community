@@ -150,10 +150,6 @@ private class FileOutputStreamWriteBreakpoint(project: Project, private val data
     val request = requestsManager.createBreakpointRequest(this, location)
     requestsManager.enableRequest(request)
   }
-
-  override fun getDisplayName(): String = "Who looks at me?" // FIXME
-
-  override fun getEventMessage(event: LocatableEvent?): String = ""
 }
 
 // FIXME: copypasted from spring?

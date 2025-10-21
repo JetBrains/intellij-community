@@ -9,9 +9,7 @@ class MyClass {
     }
 
     fun inside1(param: String) {
-        with(this) {
-            doSomething(param)
-        }
+        doSomething(param)
     }
 
     fun inside2(param: String, another: MyClass) {
@@ -21,7 +19,8 @@ class MyClass {
     }
 }
 
-context(klass: MyClass) private fun doSomething(param1: String) {
+context(klass: MyClass)
+private fun doSomething(param1: String) {
     println("Value: ${klass.value}, Param: $param1")
 }
 

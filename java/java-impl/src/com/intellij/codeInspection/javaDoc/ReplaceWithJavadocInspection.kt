@@ -19,7 +19,7 @@ import java.util.*
 import java.util.function.Predicate
 import java.util.stream.Collectors
 
-class ReplaceWithJavadocInspection : LocalInspectionTool() {
+public class ReplaceWithJavadocInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : JavaElementVisitor() {
@@ -40,7 +40,7 @@ class ReplaceWithJavadocInspection : LocalInspectionTool() {
     }
   }
 
-  class ReplaceWithJavadocFix : PsiUpdateModCommandQuickFix() {
+  public class ReplaceWithJavadocFix : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): String {
       return JavaBundle.message("inspection.replace.with.javadoc")
     }

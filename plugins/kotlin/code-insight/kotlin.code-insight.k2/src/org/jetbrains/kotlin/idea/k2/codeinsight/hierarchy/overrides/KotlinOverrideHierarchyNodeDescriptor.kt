@@ -16,6 +16,11 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.callableSymbol
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.components.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -36,7 +41,7 @@ class KotlinOverrideHierarchyNodeDescriptor(
     private var rawIcon: Icon? = null
     private var stateIcon: Icon? = null
 
-    context(KaSession)
+    context(_: KaSession)
     private fun resolveToSymbol(psiElement: PsiElement): KaSymbol? {
         return when (psiElement) {
             is KtNamedDeclaration -> psiElement.symbol
@@ -46,16 +51,16 @@ class KotlinOverrideHierarchyNodeDescriptor(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getBaseSymbol() = baseElement.element?.let { e ->
         val symbol = resolveToSymbol(e)
         (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol
     } as? KaCallableSymbol
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getCurrentClassSymbol() = psiElement?.let { resolveToSymbol(it) } as? KaClassSymbol
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getCurrentSymbol(): KaCallableSymbol? {
         val classSymbol = getCurrentClassSymbol() ?: return null

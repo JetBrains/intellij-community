@@ -10,7 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
-    <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.logging" />
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.impl" />

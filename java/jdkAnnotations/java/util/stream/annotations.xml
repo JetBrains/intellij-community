@@ -42,6 +42,7 @@
   </item>
   <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,C&gt; toCollection(java.util.function.Supplier&lt;C&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;)'>
@@ -54,6 +55,7 @@
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 2'>
@@ -70,6 +72,7 @@
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 2'>
@@ -94,6 +97,7 @@
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 3'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;)'>
@@ -114,6 +118,7 @@
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 3'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; filtering(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,R&gt;)'>
@@ -134,6 +139,7 @@
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; flatMapping(java.util.function.Function&lt;? super T,? extends java.util.stream.Stream&lt;? extends U&gt;&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="/2/*"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; flatMapping(java.util.function.Function&lt;? super T,? extends java.util.stream.Stream&lt;? extends U&gt;&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;) 1'>
@@ -502,11 +508,13 @@
   <item name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence) 0'>
@@ -516,6 +524,7 @@
     name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence, java.lang.CharSequence, java.lang.CharSequence)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence, java.lang.CharSequence, java.lang.CharSequence) 0'>

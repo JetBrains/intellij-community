@@ -6,10 +6,10 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.impl.base.imports.KaBaseDefaultImportsProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.resolve.DefaultImportProvider
+import org.jetbrains.kotlin.resolve.DefaultImportsProvider
 
 @OptIn(KaImplementationDetail::class)
 internal class KaFe10DefaultImportsProvider(private val project: Project) : KaBaseDefaultImportsProvider() {
-    override fun getCompilerDefaultImportProvider(targetPlatform: TargetPlatform): DefaultImportProvider =
-        targetPlatform.findAnalyzerServices(project)
+    override fun getCompilerDefaultImportsProvider(targetPlatform: TargetPlatform): DefaultImportsProvider =
+        targetPlatform.findAnalyzerServices(project).defaultImportsProvider
 }

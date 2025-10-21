@@ -13,7 +13,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.util.SystemProperties
@@ -155,7 +155,7 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
 
   val classReport = System.getProperty("idea.log.class.list.file")
   if (!classReport.isNullOrBlank()) {
-    generateJarAccessLog(Path.of(FileUtil.expandUserHome(classReport)))
+    generateJarAccessLog(Path.of(OSAgnosticPathUtil.expandUserHome(classReport)))
   }
 
   for (instantEvent in instantEvents.filter { setOf("splash shown", "splash hidden").contains(it.name) }) {

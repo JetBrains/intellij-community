@@ -16,7 +16,7 @@ object MultiRoutingFileSystemUtils {
   val isMultiRoutingFsEnabled: Boolean by lazy {
     val defaultProvider = FileSystems.getDefault().provider()
     when {
-      defaultProvider.javaClass.name == MultiRoutingFileSystemProvider::class.java.name -> true
+      defaultProvider is MultiRoutingFileSystemProvider -> true
       else -> {
         val vmOptions = runCatching {
           VMOptions.getUserOptionsFile()?.bufferedReader()?.use { it.readText() }

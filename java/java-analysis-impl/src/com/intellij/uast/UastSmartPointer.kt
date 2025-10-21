@@ -7,15 +7,15 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.toUElement
 
-class UastSmartPointer<T : UElement>(uElement: T, val targetClass: Class<T>) {
+public class UastSmartPointer<T : UElement>(uElement: T, public val targetClass: Class<T>) {
 
   private val sourcePointer: SmartPsiElementPointer<PsiElement>? = uElement.sourcePsi?.let { psi ->
     SmartPointerManager.getInstance(psi.project).createSmartPsiElementPointer(psi)
   }
 
-  val element: T?
+  public val element: T?
     get() = sourcePointer?.element?.toUElement(targetClass)
 }
 
-inline fun <reified T : UElement> T.createUastSmartPointer(): UastSmartPointer<T> = UastSmartPointer(this, T::class.java)
+public inline fun <reified T : UElement> T.createUastSmartPointer(): UastSmartPointer<T> = UastSmartPointer(this, T::class.java)
 

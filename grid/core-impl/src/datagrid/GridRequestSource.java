@@ -67,6 +67,14 @@ public class GridRequestSource {
   }
 
   public interface RequestPlace {
+    enum RowIdPolicy {
+      AUTO,
+      EXCLUDE
+    }
+
+    default @NotNull RowIdPolicy rowIdPolicy() {
+      return RowIdPolicy.AUTO;
+    }
   }
 
   public interface GridRequestPlace<Row, Column> extends RequestPlace {

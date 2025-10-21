@@ -1,7 +1,7 @@
 // COMPILER_ARGUMENTS: -XXLanguage:-WhenGuards
 // IS_APPLICABLE: false
-// ERROR: The feature "when guards" is only available since language version 2.2
-// K2_ERROR: The feature "when guards" is only available since language version 2.2
+// ERROR: The feature "when guards" is disabled
+// K2_ERROR: The feature "when guards" is disabled
 
 private fun test(s: Any) {
     when (s) {

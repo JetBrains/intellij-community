@@ -1,7 +1,8 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
-    <eelProvider implementation="com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler$WslEelProvider" os="windows"/>
+    <eelProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelProvider" os="windows"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
                         serviceImplementation="com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager"/>
+    <multiRoutingFileSystemBackend implementation="com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend" os="windows"/>
   </extensions>
 </idea-plugin>

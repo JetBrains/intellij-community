@@ -1632,6 +1632,25 @@ abstract class AbstractSmartEnterTest : KotlinLightCodeInsightFixtureTestCaseBas
             """
     )
 
+    fun testLambdaExistingArgument() = doFileTest(
+        before = """
+            fun foo(bool: Boolean) {
+                if (bool) <caret>
+                bar {}
+            }
+            fun bar(a: Int = 5, d: () -> Unit) {}
+        """,
+        after = """
+            fun foo(bool: Boolean) {
+                if (bool) {
+                    
+                } 
+                bar {}
+            }
+            fun bar(a: Int = 5, d: () -> Unit) {}
+        """
+    )
+
     fun testClassBodyHasNotInitializedAbstractJavaClassSuperType() = doFileTest(
         before = """
                     class A : C<caret>

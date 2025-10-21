@@ -1,0 +1,90 @@
+for (var i, int in [1, 2, 3]) {}
+
+for (var i, int : [1, 2, 3]) {}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Traditional FOR clause
+      Variable definitions
+        Modifiers
+          PsiElement(var)('var')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('i')
+        PsiElement(,)(',')
+        PsiErrorElement:identifier expected, got 'int'
+          <empty list>
+      PsiWhiteSpace(' ')
+      GrInExpressionImpl(IN_EXPRESSION)
+        builtin type class expression
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(in)('in')
+        PsiWhiteSpace(' ')
+        Generalized list
+          PsiElement([)('[')
+          Literal
+            PsiElement(Integer)('1')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('2')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('3')
+          PsiElement(])(']')
+      PsiErrorElement:';' expected, got ')'
+        <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Traditional FOR clause
+      Variable definitions
+        Modifiers
+          PsiElement(var)('var')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('i')
+        PsiElement(,)(',')
+        PsiErrorElement:identifier expected, got 'int'
+          <empty list>
+      PsiWhiteSpace(' ')
+      builtin type class expression
+        PsiElement(int)('int')
+      PsiErrorElement:';' expected, got ':'
+        <empty list>
+  PsiWhiteSpace(' ')
+  PsiElement(:)(':')
+  PsiWhiteSpace(' ')
+  Generalized list
+    PsiElement([)('[')
+    Literal
+      PsiElement(Integer)('1')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('2')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('3')
+    PsiElement(])(']')
+  PsiErrorElement:')' unexpected
+    PsiElement())(')')
+  PsiWhiteSpace(' ')
+  Block statement
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

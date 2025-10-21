@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -190,6 +190,12 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
   private fun checkIfSubPathIsForbidden(relPath: String, errors: MutableCollection<String>) {
     if (forbiddenSubPathExceptions.contains(relPath)) {
       Span.current().addEvent("$relPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
+      return
+    }
+
+    // Check if relPath starts with any exception prefix
+    if (forbiddenSubPathExceptions.any { relPath.startsWith(it) }) {
+      Span.current().addEvent("$relPath matches an exception prefix and will be excepted from the forbidden sub paths check.")
       return
     }
 

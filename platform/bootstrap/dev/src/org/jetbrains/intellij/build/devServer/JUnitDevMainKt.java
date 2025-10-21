@@ -44,7 +44,8 @@ public final class JUnitDevMainKt {
     if (jUnitStarterModule != null) System.setProperty("idea.dev.build.test.additional.modules", jUnitStarterModule);
 
     String testEntryPointModulePlugin = System.getProperty("idea.dev.build.test.entry.point.module") + ".plugin";
-    System.setProperty("additional.modules", testEntryPointModulePlugin);
+    String additionalModules = System.getProperty("additional.modules");
+    System.setProperty("additional.modules", (additionalModules != null ? additionalModules + "," : "") + testEntryPointModulePlugin);
 
     // separate method to not retain local variables like implClass
     if (!build(lookup, classLoader)) {
@@ -62,8 +63,7 @@ public final class JUnitDevMainKt {
   private static boolean build(MethodHandles.Lookup lookup, PathClassLoader classLoader) throws Throwable {
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
-    Class<?> implClass = new PathClassLoader(UrlClassLoader.build()
-                                               .files(classLoader.getFiles())
+    Class<?> implClass = new PathClassLoader(UrlClassLoader.buildAsSystemClassLoader(classLoader.getFiles())
                                                .parent(ClassLoader.getPlatformClassLoader()))
       .loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 

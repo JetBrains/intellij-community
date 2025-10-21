@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.IdeaPluginOsRequirement;
@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class IdeaPluginConverter extends IdeaPluginConverterBase {
-  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> plugin.hasRealPluginId();
+  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = IdeaPlugin::hasRealPluginId;
 
   @Override
   public @NotNull @Unmodifiable Collection<? extends IdeaPlugin> getVariants(final @NotNull ConvertContext context) {
@@ -66,7 +66,8 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
     if (self == null) return Collections.emptyList();
 
     final Collection<IdeaPlugin> plugins = getAllPlugins(context.getProject());
-    return ContainerUtil.filter(plugins, plugin -> !Comparing.strEqual(self.getPluginId(), plugin.getPluginId()));
+    String selfPluginId = self.getPluginId();
+    return ContainerUtil.filter(plugins, plugin -> !Comparing.strEqual(selfPluginId, plugin.getPluginId()));
   }
 
   private static Collection<IdeaPlugin> getAllPlugins(final Project project) {

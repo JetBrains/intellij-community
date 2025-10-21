@@ -25,6 +25,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static final String ID = "python-line";
 

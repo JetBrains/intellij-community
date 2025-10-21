@@ -7,21 +7,17 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 object PySdkConfigurationCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("python.sdk.configuration", 2)
 
   override fun getGroup(): EventLogGroup = GROUP
 
   internal enum class Source { CONFIGURATOR, INSPECTION }
   internal enum class InputData { NOT_FILLED, SPECIFIED }
   internal enum class VirtualEnvResult { DEPS_NOT_FOUND, INSTALLATION_FAILURE, }
-  internal enum class CondaEnvResult {
-    LISTING_FAILURE,
-    CREATION_FAILURE,
-    NO_LISTING_DIFFERENCE,
-    AMBIGUOUS_LISTING_DIFFERENCE,
-    CREATED
-  }
-
+  internal enum class CondaEnvResult { CREATION_FAILURE, CREATED }
   internal enum class PipEnvResult { CREATION_FAILURE, CREATED }
+  private enum class DialogResult { OK, CANCELLED, SKIPPED }
+
 
   internal fun logVirtualEnvDialog(project: Project, permitted: Boolean, source: Source, baseSdk: InputData) {
     venvDialogEvent.log(project, permitted.asDialogResult, source, baseSdk)
@@ -45,8 +41,6 @@ object PySdkConfigurationCollector : CounterUsagesCollector() {
 
   internal fun logPipEnv(project: Project, result: PipEnvResult): Unit = pipenvEvent.log(project, result)
 
-  private val GROUP = EventLogGroup("python.sdk.configuration", 2)
-  private enum class DialogResult { OK, CANCELLED, SKIPPED }
 
   private val Boolean.asDialogResult: DialogResult
     get() = if (this) DialogResult.OK else DialogResult.CANCELLED

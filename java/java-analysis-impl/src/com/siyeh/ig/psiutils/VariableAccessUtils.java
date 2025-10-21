@@ -637,6 +637,7 @@ public final class VariableAccessUtils {
   /// It's possible there are cases not covered by this method.
   /// If you discover such a case, consider updating the implementation.
   public static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
+    if (targetType instanceof PsiLambdaParameterType || PsiTypes.nullType().equals(targetType)) return false;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(reference.getParent());
     if (PsiUtil.isAccessedForWriting(reference)) {
       if (!(parent instanceof PsiAssignmentExpression assignment)) return false;
@@ -664,7 +665,6 @@ public final class VariableAccessUtils {
     }
     // Some method call can be mis-resolved after update, check this
     if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression call) {
-      if (PsiTypes.nullType().equals(targetType)) return false;
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
       Object mark = new Object();
@@ -679,8 +679,8 @@ public final class VariableAccessUtils {
       Objects.requireNonNull(insertedCast.getCastType()).replace(factory.createTypeElement(targetType));
       return callCopy.resolveMethod() == method;
     }
-    if (parent instanceof PsiReferenceExpression) {
-      final PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
+    if (parent instanceof PsiReferenceExpression ref) {
+      final PsiElement resolve = ref.resolve();
       // private member cannot be accessed on a subtype qualifier
       if (resolve instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE)) {
         return false;

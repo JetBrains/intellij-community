@@ -798,6 +798,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinExtensionFunction.0.kt");
             }
 
+            @TestMetadata("kotlinFunctionWithPropertyFromSuperClass.0.kt")
+            public void testKotlinFunctionWithPropertyFromSuperClass() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinFunctionWithPropertyFromSuperClass.0.kt");
+            }
+
             @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
             public void testKotlinInterfaceImplThroughDelegate() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceImplThroughDelegate.0.kt");
@@ -2013,6 +2018,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("JKFieldUsagesReadWriteAccess.0.java")
             public void testJKFieldUsagesReadWriteAccess() throws Exception {
                 runTest("testData/findUsages/java/findJavaFieldUsages/JKFieldUsagesReadWriteAccess.0.java");
+            }
+
+            @TestMetadata("JKRecordFieldUsages.0.java")
+            public void testJKRecordFieldUsages() throws Exception {
+                runTest("testData/findUsages/java/findJavaFieldUsages/JKRecordFieldUsages.0.java");
             }
         }
 

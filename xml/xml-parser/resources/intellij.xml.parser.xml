@@ -1,0 +1,21 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.xml.syntax"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider" dynamic="true"/>
+
+    <extensionPoint name="html.scriptContentProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.HtmlScriptContentProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="html.embeddedContentSupport"
+                    interface="com.intellij.html.embedding.HtmlEmbeddedContentSupport"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <syntax.elementTypeConverter language="XML" implementationClass="com.intellij.psi.xml.XmlElementTypeConverterExtension"/>
+  </extensions>
+</idea-plugin>

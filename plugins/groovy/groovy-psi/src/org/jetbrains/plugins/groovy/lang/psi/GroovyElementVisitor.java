@@ -471,6 +471,10 @@ public abstract class GroovyElementVisitor {
     visitStatement(variableDeclaration);
   }
 
+  public void visitPatternVariable(@NotNull GrPatternVariable variable) {
+    visitVariable(variable);
+  }
+
   public void visitVariable(@NotNull GrVariable variable) {
     visitElement(variable);
   }

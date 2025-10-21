@@ -10,7 +10,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.descendants
 import com.intellij.psi.util.parents
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.util.takeWhileIsInstance
 
 internal class PutCallsOnSeparateLinesIntention :
-    KotlinApplicableModCommandAction<KtQualifiedExpression, Unit>(KtQualifiedExpression::class) {
+    KotlinApplicableModCommandAction.Simple<KtQualifiedExpression>(KtQualifiedExpression::class) {
 
     override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> {
         val textRange = (element.operationTokenNode as? PsiElement)
@@ -48,9 +47,6 @@ internal class PutCallsOnSeparateLinesIntention :
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("put.calls.on.separate.lines")
-
-    override fun KaSession.prepareContext(element: KtQualifiedExpression) {
-    }
 
     override fun invoke(
       actionContext: ActionContext,

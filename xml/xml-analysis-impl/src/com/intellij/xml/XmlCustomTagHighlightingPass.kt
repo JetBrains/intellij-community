@@ -2,10 +2,10 @@
 package com.intellij.xml
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType.INFORMATION
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType.SYMBOL_TYPE_SEVERITY
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection
 import com.intellij.lang.ASTNode
@@ -38,10 +38,10 @@ private val attributeKeyMapping: Map<TextAttributesKey, TextAttributesKey> = map
 )
 
 internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEditorHighlightingPass(file.project, editor.document, true) {
-  private val myHolder: HighlightInfoHolder = HighlightInfoHolder(file)
   private val myHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.language, file.project, file.virtualFile)
 
   override fun doCollectInformation(progress: ProgressIndicator) {
+    val myHolder = HighlightInfoHolder(file)
     file.acceptChildren(object : XmlRecursiveElementWalkingVisitor() {
       override fun visitXmlTag(tag: XmlTag) {
         super.visitXmlTag(tag)
@@ -55,12 +55,17 @@ internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) :
         if (isCustomTag(file, tag)) {
           tag.node?.let {
             for (child in it.getChildren(null)) {
-              applyHighlighting(tag, child, child.elementType)
+              applyHighlighting(tag, child, child.elementType, myHolder)
             }
           }
         }
       }
     })
+    val highlights: MutableList<HighlightInfo> = mutableListOf()
+    for (i in 0 until myHolder.size()) {
+      highlights.add(myHolder[i])
+    }
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, file, myDocument, 0, file.textLength, highlights, id)
   }
 
   private fun getCustomNames() =
@@ -69,14 +74,14 @@ internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) :
       ?.mapTo(HashSet()) { StringUtil.toLowerCase(it) }
     ?: emptySet()
 
-  private fun applyHighlighting(originalXmlTag: XmlTag, node: ASTNode, elementType: IElementType) {
+  private fun applyHighlighting(originalXmlTag: XmlTag, node: ASTNode, elementType: IElementType, holder: HighlightInfoHolder) {
     if (node !is LeafElement) return
     val effectiveElementType = if (elementType == XmlTokenType.XML_NAME) XmlTokenType.XML_TAG_NAME else elementType
 
     val attributesKeys = myHighlighter.getTokenHighlights(effectiveElementType)
     val newAttributesKeys = replaceTextAttributeKeys(originalXmlTag, attributesKeys)
     if (!newAttributesKeys.contentEquals(attributesKeys)) {
-      myHolder.add(highlight(originalXmlTag, node, newAttributesKeys))
+      holder.add(highlight(originalXmlTag, node, newAttributesKeys))
     }
   }
 
@@ -115,11 +120,6 @@ internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) :
       .firstNotNullOfOrNull { it.highlightCustomTag(file, originalXmlTag) }
 
   override fun doApplyInformationToEditor() {
-    val highlights: MutableList<HighlightInfo> = mutableListOf()
-    for (i in 0 until myHolder.size()) {
-      highlights.add(myHolder[i])
-    }
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, highlights, colorsScheme, id)
   }
 }
 

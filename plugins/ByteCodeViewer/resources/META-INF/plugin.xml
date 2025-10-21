@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.byteCodeViewer">
+<idea-plugin package="com.intellij.byteCodeViewer" allow-bundled-update="true">
   <name>Bytecode Viewer</name>
   <id>ByteCodeViewer</id>
   <category>JVM Tools</category>
@@ -19,9 +19,12 @@
 
   <extensionPoints>
     <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher" dynamic="true"/>
+    <extensionPoint name="classFileFinder" interface="com.intellij.byteCodeViewer.BytecodeViewerClassFileFinder" dynamic="true"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="com.intellij"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Bytecode Viewer Errors" displayType="BALLOON" key="notification.group.error.report"/>
+  </extensions>
 
   <actions>
     <group id="ByeCodeViewerGroup">

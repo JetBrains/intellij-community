@@ -697,7 +697,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                             <version>1</version>
                                           </parent>
                                           """.trimIndent())
-    waitForImportWithinTimeout{
+    waitForImportWithinTimeout {
       projectsManager.addManagedFiles(listOf(child))
     }
     assertEquals("child", tree.findProject(child)!!.mavenId.artifactId)
@@ -980,6 +980,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     deleteProject(child)
     assertEquals("\${subChildName}", tree.findProject(subChild)!!.mavenId.artifactId)
   }
+
 
   @Test
   fun testRecursiveInheritanceAndAggregation() = runBlocking {
@@ -1728,7 +1729,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   @Test
   fun testCollectingProfilesFromParentsAfterResolve() = runBlocking {
     val parent1 = createModulePom("parent1",
-                    """
+                                  """
                       <groupId>test</groupId>
                       <artifactId>parent1</artifactId>
                       <version>1</version>
@@ -1741,7 +1742,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                       """.trimIndent())
 
     val parent2 = createModulePom("parent2",
-                    """
+                                  """
                       <groupId>test</groupId>
                       <artifactId>parent2</artifactId>
                       <version>1</version>

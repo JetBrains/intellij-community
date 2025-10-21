@@ -20,6 +20,10 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.util.userData
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.util.getOrMaybeCreateUserData
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
@@ -27,6 +31,8 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 private val LOG: Logger = logger<Necropolis>()
 
@@ -35,6 +41,39 @@ private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.
 internal fun necropolisPath(): Path {
   return PathManager.getSystemDir().resolve("editor")
 }
+
+// https://liquipedia.net/warcraft/Blight
+class BlightMark(val blightHolder: EditorEx) {
+
+  private val blightLock = ReentrantLock()
+  private val blightAwaiters = mutableListOf<(EditorEx) -> Unit>()
+
+  private var isBlighted: Boolean = false
+
+  fun blight() {
+    blightLock.withLock {
+      if (!isBlighted) {
+        isBlighted = true
+        blightAwaiters.forEach { it(blightHolder) }
+        blightAwaiters.clear()
+      }
+    }
+  }
+
+  fun onceBlightedOrNow(action: (EditorEx) -> Unit) {
+    blightLock.withLock {
+      if (isBlighted) {
+        action(blightHolder)
+      }
+      else {
+        blightAwaiters.add(action)
+      }
+    }
+  }
+}
+
+val BLIGHT_MARK_KEY: Key<BlightMark?> = Key.create<BlightMark>("necropolis.blight.mark")
+var EditorEx.blightMark: BlightMark? by userData(BLIGHT_MARK_KEY)
 
 /**
  * Service managing all necromancers.
@@ -110,6 +149,12 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
             WriteIntentReadAction.run {
               turnIntoZombiesAndBury(necromancers, recipe)
             }
+
+            val editorEx = event.editor as? EditorEx ?: return
+            val editorAsUserDataHolderEx = editorEx as? UserDataHolderEx ?: return
+            val blightMark = editorAsUserDataHolderEx.getOrMaybeCreateUserData(BLIGHT_MARK_KEY) { BlightMark(editorEx) } ?: return
+
+            blightMark.blight()
           }
         }
       },

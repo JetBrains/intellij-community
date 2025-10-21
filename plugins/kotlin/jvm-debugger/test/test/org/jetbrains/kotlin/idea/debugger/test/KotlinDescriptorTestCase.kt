@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -473,11 +473,12 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         compilerFacility: DebuggerTestCompilerFacility
     ) {
         for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
-            if (library.startsWith("maven("))
-                addMavenDependency(compilerFacility, library)
-            else
-                compilerFacility.compileExternalLibrary(library, librarySrcDirectory, libraryOutputDirectory)
+            compilerFacility.compileExternalLibrary(library, librarySrcDirectory, libraryOutputDirectory)
         }
+
+        val libraries = preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY_BY_LABEL]
+        val agents = preferences[DebuggerPreferenceKeys.ATTACH_JAVA_AGENT_BY_LABEL]
+        addDependenciesByLabels(compilerFacility, libraries, agents)
 
         compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
         compileAdditionalLibraries(compilerFacility)
@@ -604,7 +605,11 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         return debuggerSession
     }
 
-    open fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
+    /**
+     * attach external dependencies defined by // ATTACH_LIBRARY_BY_LABEL: notation,
+     * add javaagents defined by // ATTACH_JAVA_AGENT_BY_LABEL: notation
+     */
+    open fun addDependenciesByLabels(compilerFacility: DebuggerTestCompilerFacility, libraryLabels: List<String>, agentLabels: List<String>) {
     }
 
     abstract fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences)
@@ -643,7 +648,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
                     classPath.add(output)
                 }
             }
-            classPath.add(TestKotlinArtifacts.kotlinStdlib)
+            classPath.add(TestKotlinArtifacts.kotlinStdlib.toFile())
             classPath.add(libraryOutputDirectory)
         }
     }
@@ -655,8 +660,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             try {
                 attachLibrary(
                   model, KOTLIN_LIBRARY_NAME,
-                  listOf(TestKotlinArtifacts.kotlinStdlib, TestKotlinArtifacts.jetbrainsAnnotations),
-                  listOf(TestKotlinArtifacts.kotlinStdlibSources, TestKotlinArtifacts.kotlinStdlibCommonSources)
+                  listOf(TestKotlinArtifacts.kotlinStdlib.toFile(), TestKotlinArtifacts.jetbrainsAnnotations.toFile()),
+                  listOf(TestKotlinArtifacts.kotlinStdlibSources.toFile(), TestKotlinArtifacts.kotlinStdlibCommonSources.toFile())
                 )
 
                 attachLibrary(model, TEST_LIBRARY_NAME, listOf(libraryOutputDirectory), listOf(librarySrcDirectory))

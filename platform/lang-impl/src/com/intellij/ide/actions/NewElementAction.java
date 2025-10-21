@@ -266,6 +266,8 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
         // The capitalization is wrong here because this line continues the previous one.
         //noinspection DialogTitleCapitalization
         emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.3"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, emptyTextAction);
+
+        list.getAccessibleContext().setAccessibleName(IdeBundle.message("popup.new.element.list.accessible.name"));
       }
     }
 

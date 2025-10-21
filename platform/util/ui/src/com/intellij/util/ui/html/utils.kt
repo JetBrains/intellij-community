@@ -2,6 +2,7 @@
 package com.intellij.util.ui.html
 
 import com.intellij.util.asSafely
+import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -9,8 +10,10 @@ import java.awt.geom.RoundRectangle2D
 import java.util.*
 import javax.swing.SizeRequirements
 import javax.swing.text.*
+import javax.swing.text.View.X_AXIS
 import javax.swing.text.html.*
 import javax.swing.text.html.StyleSheet.BoxPainter
+import kotlin.math.max
 
 internal val HTML_Tag_SUMMARY: HTML.Tag get() = SUMMARY_TAG
 internal val HTML_Tag_DETAILS: HTML.Tag get() = DETAILS_TAG
@@ -20,7 +23,7 @@ internal val HTML_Tag_CUSTOM_BLOCK_TAGS: Set<HTML.Tag> get() = CUSTOM_BLOCK_TAGS
 @Suppress("UseDPIAwareInsets")
 val View.cssPadding: Insets
   get() {
-    val styleSheet = (document as HTMLDocument).styleSheet
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
     val attributeSet = attributes ?: return Insets(0, 0, 0, 0)
     return Insets(
       attributeSet.getLength(CSS.Attribute.PADDING_TOP, styleSheet).toInt(),
@@ -33,7 +36,7 @@ val View.cssPadding: Insets
 @Suppress("UseDPIAwareInsets")
 val View.cssMargin: Insets
   get() {
-    val styleSheet = (document as HTMLDocument).styleSheet
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
     val attributeSet = attributes ?: return Insets(0, 0, 0, 0)
     return Insets(
       attributeSet.getLength(CSS.Attribute.MARGIN_TOP, styleSheet).toInt(),
@@ -46,7 +49,7 @@ val View.cssMargin: Insets
 @Suppress("UseDPIAwareInsets")
 val View.cssBorderWidths: Insets
   get() {
-    val styleSheet = (document as HTMLDocument).styleSheet
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
     val attributeSet = attributes ?: return Insets(0, 0, 0, 0)
     return Insets(
       attributeSet.getLength(CSS.Attribute.BORDER_TOP_WIDTH, styleSheet).toInt(),
@@ -64,12 +67,15 @@ val View.cssBorderRadius: Float
           ?: 0f
 
 val View.cssBorderColors: BorderColors
-  get() = BorderColors(
-    attributes.getColor(CSS.Attribute.BORDER_TOP_COLOR),
-    attributes.getColor(CSS.Attribute.BORDER_LEFT_COLOR),
-    attributes.getColor(CSS.Attribute.BORDER_BOTTOM_COLOR),
-    attributes.getColor(CSS.Attribute.BORDER_RIGHT_COLOR),
-  )
+  get() {
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
+    return BorderColors(
+      attributes.getColor( CSS.Attribute.BORDER_TOP_COLOR, styleSheet),
+      attributes.getColor( CSS.Attribute.BORDER_LEFT_COLOR, styleSheet),
+      attributes.getColor(CSS.Attribute.BORDER_BOTTOM_COLOR, styleSheet),
+      attributes.getColor(CSS.Attribute.BORDER_RIGHT_COLOR, styleSheet),
+    )
+  }
 
 val Insets.width: Int
   get() = right + left
@@ -161,14 +167,10 @@ internal fun paintControlBackgroundAndBorder(
 }
 
 private fun AttributeSet.getLength(attribute: CSS.Attribute, styleSheet: StyleSheet): Float =
-  cssLengthMethod.invoke(css, this, attribute, styleSheet) as Float
+  cssLengthMethod.invoke(styleSheet.css, this, attribute, styleSheet) as Float
 
-private fun AttributeSet.getColor(attribute: CSS.Attribute): Color? =
-  cssGetColorMethod.invoke(css, this, attribute) as Color?
-
-private val css: CSS by lazy(LazyThreadSafetyMode.PUBLICATION) {
-  CSS().patchAttributes()
-}
+private fun AttributeSet.getColor(attribute: CSS.Attribute, styleSheet: StyleSheet): Color? =
+  cssGetColorMethod.invoke(styleSheet.css, this, attribute) as Color?
 
 private val CUSTOM_BLOCK_TAGS_SET = mutableSetOf<HTML.Tag>()
 
@@ -180,8 +182,70 @@ private fun createNewHtmlBlockTag(name: String): HTML.Tag {
   return newTag
 }
 
+internal fun Element.getIntAttr(attribute: HTML.Attribute, defaultValue: Int): Int {
+  val attr = attributes
+  if (!attr.isDefined(attribute)) return defaultValue
+
+  val value = attr.getAttribute(attribute) as? String ?: return defaultValue
+  return try {
+    max(0, value.toInt())
+  }
+  catch (_: NumberFormatException) {
+    defaultValue
+  }
+}
+
+internal class ImageViewPreferredSpan(
+  private val view: View,
+  private val getBaseSpan: (Int) -> Float,
+) {
+  private var myAvailableWidth = 0
+
+  fun get(axis: Int): Float {
+    val baseSpan = getBaseSpan(axis)
+    if (axis == X_AXIS) {
+      return baseSpan
+    }
+    else {
+      var availableWidth = view.availableWidth
+      if (availableWidth <= 0) return baseSpan
+      val baseXSpan = getBaseSpan(X_AXIS)
+      if (baseXSpan <= 0) return baseSpan
+      if (availableWidth > baseXSpan) {
+        availableWidth = baseXSpan.toInt()
+      }
+      if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
+        view.preferenceChanged(null, false, true)
+      }
+      myAvailableWidth = availableWidth
+      return baseSpan * availableWidth / baseXSpan
+    }
+  }
+}
+
+
+private val View.availableWidth: Int
+  get() {
+    var v: View? = this
+    while (v != null) {
+      val parent = v.parent
+      if (parent is FlowView) {
+        val childCount = parent.viewCount
+        for (i in 0 until childCount) {
+          if (parent.getView(i) === v) {
+            return parent.getFlowSpan(i)
+          }
+        }
+      }
+      v = parent
+    }
+    return 0
+  }
+
+internal val StyleSheet.css: CSS
+  get() = styleSheetCssField.get(this) as CSS
+
 internal fun StyleSheet.patchAttributes(): StyleSheet {
-  val css = styleSheetCssField.get(this) as CSS
   css.patchAttributes()
   return this
 }

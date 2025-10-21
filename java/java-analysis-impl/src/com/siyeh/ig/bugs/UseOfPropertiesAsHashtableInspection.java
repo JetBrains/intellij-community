@@ -117,7 +117,7 @@ public final class UseOfPropertiesAsHashtableInspection extends BaseInspection i
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UseOfPropertiesAsHashtableVisitor();
   }
 

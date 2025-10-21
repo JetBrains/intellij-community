@@ -36,10 +36,10 @@ import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.PsiTreeUtil
 import java.io.File
 
-class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
-  data class Info(val file: PsiFile)
-  data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
-  data class Result(val annotations: List<Anno>)
+public class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
+  public data class Info(val file: PsiFile)
+  public data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
+  public data class Result(val annotations: List<Anno>)
 
   override fun getPairedBatchInspectionShortName(): String = JavadocHtmlLintInspection.SHORT_NAME
 

@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,8 +23,8 @@ public final class CommonJavaRunDashboardCustomizer extends RunDashboardCustomiz
   }
 
   @Override
-  public @Nullable PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
-    return findMainClass(node.getConfigurationSettings().getConfiguration());
+  public @Nullable PsiElement getPsiElement(@NotNull RunConfiguration configuration) {
+    return findMainClass(configuration);
   }
 
   private static @Nullable PsiClass findMainClass(@NotNull RunConfiguration runConfiguration) {

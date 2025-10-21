@@ -10,11 +10,11 @@ import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlib
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibCommonSources
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8Sources
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinStdlibSources
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlib
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibCommonSources
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8Sources
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibSources
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile

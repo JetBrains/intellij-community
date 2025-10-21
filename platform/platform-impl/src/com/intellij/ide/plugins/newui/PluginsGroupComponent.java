@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.accessibility.AccessibilityUtils;
+import com.intellij.ide.plugins.ListPluginModel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.JBColor;
@@ -75,7 +76,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
 
   protected abstract @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                       @NotNull PluginsGroup group,
-                                                                      @NotNull List<HtmlChunk> errors);
+                                                                      @NotNull ListPluginModel listPluginModel);
 
   public final @NotNull List<UIPluginGroup> getGroups() {
     return Collections.unmodifiableList(myGroups);
@@ -249,7 +250,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
                           int index,
                           int eventIndex) {
     for (PluginUiModel pluginUiModel : models) {
-      ListPluginComponent pluginComponent = createListComponent(pluginUiModel, group, group.getErrors(pluginUiModel));
+      ListPluginComponent pluginComponent = createListComponent(pluginUiModel, group, group.getPreloadedModel());
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
@@ -268,7 +269,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     ListPluginComponent anchor = null;
     int uiIndex = -1;
 
-    if (index == group.ui.plugins.size()) {
+    List<ListPluginComponent> plugins = group.ui.plugins;
+    if (index == plugins.size()) {
       int groupIndex = myGroups.indexOf(group.ui);
       if (groupIndex < myGroups.size() - 1) {
         UIPluginGroup nextGroup = myGroups.get(groupIndex + 1);
@@ -277,12 +279,12 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
       }
     }
     else {
-      anchor = group.ui.plugins.get(index);
+      anchor = plugins.get(index);
       uiIndex = getComponentIndex(anchor);
     }
 
-    ListPluginComponent pluginComponent = createListComponent(model, group, group.getErrors(model));
-    group.ui.plugins.add(index, pluginComponent);
+    ListPluginComponent pluginComponent = createListComponent(model, group, group.getPreloadedModel());
+    plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
     pluginComponent.setListeners(myEventHandler);

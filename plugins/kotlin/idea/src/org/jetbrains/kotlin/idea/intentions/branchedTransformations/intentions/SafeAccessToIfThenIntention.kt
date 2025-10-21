@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class SafeAccessToIfThenIntention : SelfTargetingRangeIntention<KtSafeQualifiedExpression>(
     KtSafeQualifiedExpression::class.java,
-    KotlinBundle.lazyMessage("replace.safe.access.expression.with.if.expression")
+    KotlinBundle.messagePointer("replace.safe.access.expression.with.if.expression")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtSafeQualifiedExpression): TextRange? {
         if (element.selectorExpression == null) return null

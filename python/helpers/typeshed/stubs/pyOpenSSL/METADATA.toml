@@ -1,9 +1,0 @@
-version = "24.1.*"
-upstream_repository = "https://github.com/pyca/pyopenssl"
-# Requires a version of cryptography with a `py.typed` file
-requires = ["cryptography>=35.0.0", "types-cffi"]
-partial_stub = true
-obsolete_since = "24.2.1" # Released on 2024-07-20
-
-[tool.stubtest]
-ignore_missing_stub = true

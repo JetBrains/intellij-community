@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
+import jetbrains.buildServer.messages.serviceMessages.*;
 import org.junit.platform.engine.*;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -25,6 +26,22 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public final class JUnit5TeamCityRunnerForTestsOnClasspath {
   private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes");
+
+  public static void assertNoUnhandledExceptions(String kind, Throwable e) {
+    String runConfigurationName = System.getProperty("intellij.build.run.configuration.name");
+    final String testName =
+      kind + ".assertNoUnhandledExceptions" + (runConfigurationName == null ? "" : ("(" + runConfigurationName + ")"));
+
+    System.out.println(new TestStarted(testName, true, null));
+    if (e != null) {
+      var testFailedServiceMessage = new TestFailed(testName, e).toString();
+      if (!isLeak(testFailedServiceMessage)) {
+        // leaks are already checked by _LastInSuiteTest.testProjectLeak
+        System.out.println(testFailedServiceMessage);
+      }
+    }
+    System.out.println(new TestFinished(testName, 0));
+  }
 
   public static void main(String[] args) {
     try {
@@ -77,7 +94,12 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
         System.exit(42);
       }
     }
+    catch (Throwable e) {
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", e);
+      System.exit(1);
+    }
     finally {
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", null);
       System.exit(0);
     }
   }
@@ -191,5 +213,14 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       e.printStackTrace();
       System.exit(1);
     }
+  }
+
+  private static boolean isLeak(String testFailedServiceMessage) {
+    return
+      // copied from com.intellij.testFramework.LeakHunter#getLeakedObjectDetails
+      testFailedServiceMessage.contains("Found a leaked instance of") ||
+      // copied from com.intellij.openapi.util.ObjectNode#assertNoChildren
+      testFailedServiceMessage.contains("Memory leak detected") &&
+      testFailedServiceMessage.contains("was registered in Disposer");
   }
 }

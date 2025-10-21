@@ -2,21 +2,17 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.codeInsight.documentation.render.DocRenderer
-import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.THREAD_TOP_MARGIN
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.editor.CustomFoldRegion
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseListener
-import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -29,17 +25,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import javax.swing.Icon
-import kotlin.math.min
 import kotlin.properties.Delegates.observable
 
 /**
@@ -50,26 +44,26 @@ private constructor(
   private val model: CodeReviewEditorGutterControlsModel,
   private val editor: EditorEx,
   initialState: CodeReviewEditorGutterControlsModel.ControlsState,
-)
-  : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer, Disposable {
+) : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer, Disposable {
 
   private var hoveredLogicalLine: Int? = null
   private var columnHovered: Boolean = false
+  private var selectedRangeForMultilineComment: LineRange? = null
 
   @set:RequiresEdt
   private var state: CodeReviewEditorGutterControlsModel.ControlsState by observable(initialState) { _, oldState, newState ->
-    hoveredLogicalLine = null
-    columnHovered = false
     if (newState != oldState) {
       repaintColumn(editor)
     }
   }
 
   private val hoverHandler = HoverHandler(editor)
+  private val multilineCommentSelectionListener = MultilineCommentSelectionListener()
 
   init {
     editor.addEditorMouseListener(hoverHandler)
     editor.addEditorMouseMotionListener(hoverHandler)
+    editor.selectionModel.addSelectionListener(multilineCommentSelectionListener)
 
     editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(this, ICON_AREA_WIDTH)
   }
@@ -77,12 +71,14 @@ private constructor(
   override fun dispose() {
     editor.removeEditorMouseListener(hoverHandler)
     editor.removeEditorMouseMotionListener(hoverHandler)
+    editor.selectionModel.removeSelectionListener(multilineCommentSelectionListener)
   }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     if (editor !is EditorImpl) return
     paintCommentIcons(editor, g, r)
     paintHoveredLineIcons(editor, g, r)
+    paintIconForMultiline(editor, g, r)
   }
 
   /**
@@ -107,58 +103,75 @@ private constructor(
   private fun paintHoveredLineIcons(editor: EditorImpl, g: Graphics, r: Rectangle) {
     val lineData = hoverHandler.calcHoveredLineData() ?: return
 
-    var yShift = 0
-    for (action in lineData.getActions()) {
+    for ((action, yRange) in layoutActions(lineData, editor.lineHeight)) {
       val rawIcon = if (lineData.columnHovered) action.hoveredIcon else action.icon
       val icon = EditorUIUtil.scaleIcon(rawIcon, editor)
 
-      val y = lineData.yRangeWithInlays.first + yShift + (editor.lineHeight - icon.iconHeight) / 2
-      icon.paintIcon(null, g, r.x, y)
-
-      yShift += editor.lineHeight
-      // do not paint if there's not enough space
-      if (yShift > 0 && lineData.yRangeWithInlays.last - lineData.yRangeWithInlays.first < yShift + editor.lineHeight) break
+      icon.paintIcon(null, g, r.x, yRange.first)
     }
+  }
 
+  /**
+   * Paint a new comment icon on the last line of selected range as a setup for multiline comment
+   */
+  private fun paintIconForMultiline(editor: EditorImpl, g: Graphics, r: Rectangle) {
+    val selectionEndLine = selectedRangeForMultilineComment?.end
+    if (selectionEndLine != null && selectionEndLine in 0 until editor.document.lineCount) {
+      val lineData = LogicalLineData(this.editor, state, selectionEndLine, false)
+      for ((action, yRange) in layoutActions(lineData, editor.lineHeight)) {
+        val rawIcon = if (lineData.columnHovered) action.hoveredIcon else action.icon
+        val icon = EditorUIUtil.scaleIcon(rawIcon, editor)
+        icon.paintIcon(null, g, r.x, yRange.first)
+      }
+    }
   }
 
   override fun canDoAction(editor: Editor, e: MouseEvent): Boolean {
     val lineData = hoverHandler.calcHoveredLineData() ?: return false
     if (!lineData.columnHovered) return false
 
-    val actions = lineData.getActions()
-    if (actions.isEmpty()) return false
-
-    val actionableHeight = editor.lineHeight * actions.size
-    val yRange = lineData.yRangeWithInlays
-    val actionableYStart = yRange.first
-    val actionableYEnd = min(yRange.first + actionableHeight, yRange.last)
-
-    return e.y in actionableYStart..actionableYEnd
+    val actions = layoutActions(lineData, editor.lineHeight)
+    return actions.entries.any { (_, yRange) -> e.y in yRange }
   }
 
   override fun doAction(editor: Editor, e: MouseEvent) {
     val lineData = hoverHandler.calcHoveredLineData() ?: return
     if (!lineData.columnHovered) return
 
-    val hoveredIconIdx = getHoveredIconSlotIndex(lineData.yRangeWithInlays, e.y)
-    val action = lineData.getActions().getOrNull(hoveredIconIdx) ?: return
+    val actions = layoutActions(lineData, editor.lineHeight)
+    val action = actions.entries.firstOrNull { (_, yRange) -> e.y in yRange }?.key ?: return
 
     action.doAction()
 
     e.consume()
   }
 
-  private fun getHoveredIconSlotIndex(range: IntRange, y: Int): Int {
-    if (y < range.first) return -1
-    var idx: Int = -1
-    for (slotEnd in range.first + editor.lineHeight..range.last step editor.lineHeight) {
-      idx++
-      if (y < slotEnd) {
-        break
+  private fun layoutActions(lineData: LogicalLineData, lineHeight: Int): Map<GutterAction, IntRange> {
+    val actions = lineData.getActions()
+    val yRange = lineData.yRangeWithInlays
+
+    if (actions.isEmpty()) return emptyMap()
+
+    var y = yRange.first
+    return actions.associateWith { action ->
+      val iconHeight = action.icon.iconHeight
+      val iconPadding = (lineHeight - iconHeight) / 2
+
+      if (action.actionType == GutterAction.ActionType.CLOSE_NEW_COMMENT) {
+        val visualLine = editor.offsetToVisualLine(editor.document.getLineEndOffset(lineData.logicalLine), true)
+        val lastThread = editor.inlayModel.getBlockElementsForVisualLine(visualLine, false).lastOrNull()
+
+        // makes sure that icons don't overlap
+        y = maxOf(y, lastThread?.bounds?.y?.minus(iconPadding) ?: y) + JBUI.scale(THREAD_TOP_MARGIN)
       }
-    }
-    return idx
+
+      val range = y + iconPadding..y + iconPadding + iconHeight
+      if (range.last > yRange.last) return@associateWith null
+
+      y += lineHeight
+
+      range
+    }.filterValues { it != null }.mapValues { it.value!! }
   }
 
   private fun unfoldOrToggle(lineData: LogicalLineData) {
@@ -216,21 +229,58 @@ private constructor(
     }
   }
 
+  private inner class MultilineCommentSelectionListener : SelectionListener {
+    override fun selectionChanged(e: SelectionEvent) {
+      if (e.newRange.isEmpty) {
+        selectedRangeForMultilineComment = null
+        return
+      }
+      val selectedRange = e.newRange.takeIf { it.length > 0 }
+        ?.let { LineRange(editor.offsetToLogicalPosition(it.startOffset).line, editor.offsetToLogicalPosition(it.endOffset).line) }
+      selectedRangeForMultilineComment = selectedRange
+    }
+  }
+
   private fun LogicalLineData.getActions(): List<GutterAction> =
     listOfNotNull(
       if (hasComments) toggleCommentAction else null,
       if (commentable && !hasCommentsUnderFoldedRegion) {
-        if (hasNewComment) closeNewCommentAction else startNewCommentAction
+        if (hasNewComment) closeNewCommentAction
+        else if (selectedRangeForMultilineComment == null) startNewCommentAction
+        // lines in the selected range are not commentable except the last one
+        else if (logicalLine !in selectedRangeForMultilineComment!!.let { it.start..it.end }) startNewCommentAction
+        else if (logicalLine == selectedRangeForMultilineComment!!.end) startNewCommentAction
+        else null
       }
       else null
     )
 
   private val LogicalLineData.toggleCommentAction
-    get() = GutterAction(CollaborationToolsIcons.Comment) { unfoldOrToggle(this) }
+    get() = GutterAction(CollaborationToolsIcons.Comment, GutterAction.ActionType.TOGGLE_COMMENT) { unfoldOrToggle(this) }
   private val LogicalLineData.closeNewCommentAction
-    get() = GutterAction(AllIcons.General.InlineClose, AllIcons.General.InlineCloseHover) { model.cancelNewComment(logicalLine) }
+    get() = GutterAction(AllIcons.Diff.Remove, GutterAction.ActionType.CLOSE_NEW_COMMENT) {
+      model.cancelNewComment(logicalLine)
+      repaintColumn(editor)
+    }
   private val LogicalLineData.startNewCommentAction
-    get() = GutterAction(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover) { model.requestNewComment(logicalLine) }
+    get() = GutterAction(AllIcons.General.InlineAdd, GutterAction.ActionType.START_NEW_COMMENT, AllIcons.General.InlineAddHover) {
+      requestNewComment(logicalLine)
+    }
+
+  private fun requestNewComment(logicalLine: Int) {
+    if (model is CodeReviewCommentableEditorModel.WithMultilineComments) {
+      val selectedRange = selectedRangeForMultilineComment
+      if (selectedRange != null && logicalLine == selectedRange.end && model.canCreateComment(selectedRange)) {
+        val scrollingModel = editor.scrollingModel
+        scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+        scrollingModel.runActionOnScrollingFinished {
+          model.requestNewComment(selectedRange)
+        }
+        return
+      }
+    }
+    model.requestNewComment(logicalLine)
+  }
 
   companion object {
     private const val ICON_AREA_WIDTH = 16
@@ -326,15 +376,14 @@ private constructor(
 
     private data class GutterAction(
       val icon: Icon,
+      val actionType: ActionType,
       val hoveredIcon: Icon = icon,
       val doAction: () -> Unit,
-    )
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use a suspending function", ReplaceWith("cs.launch { render(model, editor) }"))
-    fun setupIn(cs: CoroutineScope, model: CodeReviewEditorGutterControlsModel, editor: EditorEx) {
-      cs.launchNow(Dispatchers.EDT) {
-        render(model, editor)
+    ) {
+      enum class ActionType {
+        TOGGLE_COMMENT,
+        CLOSE_NEW_COMMENT,
+        START_NEW_COMMENT
       }
     }
 

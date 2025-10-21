@@ -102,6 +102,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private void updateUI(long now) {
     if (myApp.isUnitTestMode()) {
       if (now - myLastUiUpdate > delayInMillis) {
+        myEventStealer.dispatchAllExistingEvents();
         drainUndispatchedInputEvents();
       }
       return;
@@ -177,17 +178,20 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private void ensureBackgroundThreadStarted(@NotNull Runnable action) {
     Semaphore started = new Semaphore();
     started.down();
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
-      ProgressManager.getInstance().runProcess(() -> {
-        started.up();
-        action.run();
-      }, this);
-    });
+    AppExecutorUtil.getAppExecutorService().execute(() -> ProgressManager.getInstance().runProcess(() -> {
+      started.up();
+      action.run();
+    }, this));
 
     started.waitFor();
   }
 
   private List<InputEvent> drainUndispatchedInputEvents() {
     return myEventStealer.drainUndispatchedInputEvents();
+  }
+
+  @ApiStatus.Internal
+  public void dispatchAllInvocationEvents() {
+    myEventStealer.dispatchAllExistingEvents();
   }
 }

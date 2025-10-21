@@ -13,12 +13,14 @@ import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyDebuggerException
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.statistics.PyDataViewerCollector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 abstract class PyDataViewerAbstractPanel(
   val dataViewerModel: PyDataViewerModel,
   val isPanelFromFactory: Boolean = false,
@@ -73,6 +75,8 @@ abstract class PyDataViewerAbstractPanel(
   }
 
   fun apply(debugValue: PyDebugValue, modifier: Boolean, commandSource: DataViewerCommandSource? = null) {
+    val dimensions: List<Int>? = getValueDimensions(debugValue)
+    val dimensionsSize = dimensions?.size ?: 0
     if (!modifier) {
       when (commandSource) {
         DataViewerCommandSource.SLICING -> PyDataViewerCollector.logDataSlicingApplied(isPanelFromFactory)
@@ -81,9 +85,8 @@ abstract class PyDataViewerAbstractPanel(
         else -> Unit
       }
 
-      val dimensions = getValueDimensions(debugValue)
       PyDataViewerCollector.logDataOpened(dataViewerModel.project, debugValue.type,
-                                          dimensions?.size,
+                                          dimensionsSize,
                                           dimensions?.getOrNull(0) ?: 0,
                                           dimensions?.getOrNull(1) ?: 0,
                                           isNewTable = isPanelFromFactory)
@@ -96,10 +99,12 @@ abstract class PyDataViewerAbstractPanel(
       return
     }
 
+    // For 3D, 4D, we should pass the "%" as the format parameter to correctly reduce tables' dimensions to 2.
+    val format = if (dimensionsSize > 2) "%" else formatValueFromUI
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         doStrategyInitExecution(debugValue.frameAccessor, strategy)
-        val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, formatValueFromUI)
+        val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, format)
         ApplicationManager.getApplication().invokeLater {
           updateUI(arrayChunk, debugValue, strategy, modifier)
           dataViewerModel.isModified = modifier

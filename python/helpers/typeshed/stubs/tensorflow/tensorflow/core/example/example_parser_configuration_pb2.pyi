@@ -36,7 +36,19 @@ class VarLenFeatureProto(google.protobuf.message.Message):
         indices_output_tensor_name: builtins.str | None = ...,
         shapes_output_tensor_name: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["dtype", b"dtype", "indices_output_tensor_name", b"indices_output_tensor_name", "shapes_output_tensor_name", b"shapes_output_tensor_name", "values_output_tensor_name", b"values_output_tensor_name"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "dtype",
+            b"dtype",
+            "indices_output_tensor_name",
+            b"indices_output_tensor_name",
+            "shapes_output_tensor_name",
+            b"shapes_output_tensor_name",
+            "values_output_tensor_name",
+            b"values_output_tensor_name",
+        ],
+    ) -> None: ...
 
 global___VarLenFeatureProto = VarLenFeatureProto
 
@@ -63,7 +75,19 @@ class FixedLenFeatureProto(google.protobuf.message.Message):
         values_output_tensor_name: builtins.str | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["default_value", b"default_value", "shape", b"shape"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["default_value", b"default_value", "dtype", b"dtype", "shape", b"shape", "values_output_tensor_name", b"values_output_tensor_name"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "default_value",
+            b"default_value",
+            "dtype",
+            b"dtype",
+            "shape",
+            b"shape",
+            "values_output_tensor_name",
+            b"values_output_tensor_name",
+        ],
+    ) -> None: ...
 
 global___FixedLenFeatureProto = FixedLenFeatureProto
 
@@ -83,9 +107,21 @@ class FeatureConfiguration(google.protobuf.message.Message):
         fixed_len_feature: global___FixedLenFeatureProto | None = ...,
         var_len_feature: global___VarLenFeatureProto | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["config", b"config", "fixed_len_feature", b"fixed_len_feature", "var_len_feature", b"var_len_feature"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["config", b"config", "fixed_len_feature", b"fixed_len_feature", "var_len_feature", b"var_len_feature"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["config", b"config"]) -> typing.Literal["fixed_len_feature", "var_len_feature"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "config", b"config", "fixed_len_feature", b"fixed_len_feature", "var_len_feature", b"var_len_feature"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "config", b"config", "fixed_len_feature", b"fixed_len_feature", "var_len_feature", b"var_len_feature"
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["config", b"config"]
+    ) -> typing.Literal["fixed_len_feature", "var_len_feature"] | None: ...
 
 global___FeatureConfiguration = FeatureConfiguration
 
@@ -102,12 +138,7 @@ class ExampleParserConfiguration(google.protobuf.message.Message):
         key: builtins.str
         @property
         def value(self) -> global___FeatureConfiguration: ...
-        def __init__(
-            self,
-            *,
-            key: builtins.str | None = ...,
-            value: global___FeatureConfiguration | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.str | None = ..., value: global___FeatureConfiguration | None = ...) -> None: ...
         def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
@@ -115,9 +146,7 @@ class ExampleParserConfiguration(google.protobuf.message.Message):
     @property
     def feature_map(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, global___FeatureConfiguration]: ...
     def __init__(
-        self,
-        *,
-        feature_map: collections.abc.Mapping[builtins.str, global___FeatureConfiguration] | None = ...,
+        self, *, feature_map: collections.abc.Mapping[builtins.str, global___FeatureConfiguration] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["feature_map", b"feature_map"]) -> None: ...
 

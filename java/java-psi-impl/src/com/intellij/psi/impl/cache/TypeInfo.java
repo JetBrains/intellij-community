@@ -655,21 +655,7 @@ public /*sealed*/ abstract class TypeInfo {
     return new DerivedTypeInfo(TypeKind.ARRAY, this);
   }
 
-  /**
-   * @param text type text
-   * @param ellipsis if true, then the last array component will be replaced with an ellipsis 
-   * @return the type created from the text
-   * @deprecated avoid using it, as this method cannot correctly process inner types and actually requires parsing.
-   * Instead, create the type structure explicitly, using the corresponding constructors of {@link SimpleTypeInfo}, {@link RefTypeInfo} and
-   * {@link DerivedTypeInfo}.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @NotNull TypeInfo fromString(@Nullable String text, boolean ellipsis) {
-    TypeInfo typeInfo = fromString(text);
-    return ellipsis ? typeInfo.withEllipsis() : typeInfo;
-  }
-
+  @ApiStatus.Internal
   public static @NotNull TypeInfo fromString(@Nullable String text) {
     if (text == null) return TypeInfo.SimpleTypeInfo.NULL;
     TypeKind kind = TEXT_TO_KIND.get(text);
@@ -800,16 +786,6 @@ public /*sealed*/ abstract class TypeInfo {
     if (hasTypeAnnotations) {
       ExplicitTypeAnnotationContainer.writeTypeAnnotations(dataStream, (ExplicitTypeAnnotationContainer)typeInfo.myTypeAnnotations);
     }
-  }
-
-  /**
-   * @return type text without annotations
-   * @deprecated Use simply {@link TypeInfo#text()}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @Nullable String createTypeText(@NotNull TypeInfo typeInfo) {
-    return typeInfo.text();
   }
 
   public static @NotNull String internFrequentType(@NotNull String type) {

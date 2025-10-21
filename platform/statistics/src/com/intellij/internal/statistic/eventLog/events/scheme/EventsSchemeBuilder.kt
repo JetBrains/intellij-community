@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import java.util.regex.Pattern
 
 object EventsSchemeBuilder {
-
   val pluginInfoFields = setOf(
     FieldDescriptor("plugin", setOf("{util#plugin}"), false),
     FieldDescriptor("plugin_type", setOf("{util#plugin_type}"), false),
@@ -168,14 +167,16 @@ object EventsSchemeBuilder {
             }
           }
 
+          val eventDescription = RegisteredLogDescriptionsProcessor.calculateEventDescription(group.id, eventId)
           EventDescriptor(eventId,
                           buildFields(events, eventId, group.id),
-                          getEventDescription(events, eventId, group.id),
+                          eventDescription,
                           objectArrays = arrays)
         }
         .toSet()
+      val groupDescription = RegisteredLogDescriptionsProcessor.calculateGroupDescription(group.id)
       result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder,
-                                         PluginSchemeDescriptor(plugin.id), group.description, collector.fileName)
+                                         PluginSchemeDescriptor(plugin.id), groupDescription, collector.fileName)
     }
     return result.values
   }
@@ -209,15 +210,6 @@ object EventsSchemeBuilder {
     return FeatureUsageCollectorInfo(eventLogSystemCollector, PluginSchemeDescriptor(eventLogProviderPlugin
                                                                                      ?: PluginManagerCore.CORE_PLUGIN_ID))
   }
-
-  private fun getEventDescription(events: List<BaseEventId>, eventName: String, groupId: String): String? {
-    val eventDescriptions = events.mapNotNullTo(HashSet()) { it.description }
-    if (eventDescriptions.size > 1) {
-      throw IllegalMetadataSchemeStateException("Events couldn't be defined twice with different descriptions (group=$groupId, event=$eventName)")
-    }
-    return eventDescriptions.firstOrNull()
-  }
-
 
   private fun validateGroupId(collector: FeatureUsagesCollector) {
     try {

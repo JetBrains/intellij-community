@@ -6,6 +6,7 @@ import org.commonmark.renderer.text.TextContentRenderer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
 /**
@@ -30,4 +31,6 @@ public class GitHubStrikethroughProcessorExtension(requireTwoTildes: Boolean = f
 
     override val delimitedInlineProcessorExtension: MarkdownDelimitedInlineProcessorExtension =
         GitHubStrikethroughInlineProcessorExtension
+
+    override val htmlConverterExtension: MarkdownHtmlConverterExtension = GitHubStrikethroughHtmlConverterExtension
 }

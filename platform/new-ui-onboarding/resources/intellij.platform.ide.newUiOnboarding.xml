@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.ide.newUiOnboarding">
+<idea-plugin visibility="internal" package="com.intellij.platform.ide.newUiOnboarding">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding.step"
                     beanClass="com.intellij.util.KeyedLazyInstanceEP"

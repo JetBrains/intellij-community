@@ -6,6 +6,7 @@ package com.intellij.ui
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationCollector
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
@@ -74,7 +75,7 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
       relayoutRequests
         .debounce(200.milliseconds)
         .collect {
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.UI) {
             if (layeredPane != null) {
               relayout()
               fireRelayout()
@@ -125,6 +126,9 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
 
   val topBalloonComponent: Component?
     get() = (balloons.lastOrNull() as? BalloonImpl)?.component
+
+  val balloonComponents: List<Component?>
+    get() = balloons.map { (it as? BalloonImpl)?.component }
 
   override fun add(balloon: Balloon) {
     add(newBalloon = balloon, layoutData = null)

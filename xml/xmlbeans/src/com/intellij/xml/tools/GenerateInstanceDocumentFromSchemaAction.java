@@ -21,7 +21,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,18 +70,18 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     final String url = dialog.getUrl().getText();
     final VirtualFile relativeFile = VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
     if (relativeFile == null) {
-      Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBeansBundle.message("file.doesnt.exist", url), XmlBeansBundle.message("error"));
       return;
     }
     final PsiFile file = PsiManager.getInstance(project).findFile(relativeFile);
     if (!(file instanceof XmlFile)) {
-      Messages.showErrorDialog(project, " (" + file.getFileType().getDescription() + ")", XmlBundle.message("error"));
+      Messages.showErrorDialog(project, " (" + file.getFileType().getDescription() + ")", XmlBeansBundle.message("error"));
       return;
     }
 
     VirtualFile relativeFileDir = relativeFile.getParent();
     if (relativeFileDir == null) {
-      Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBeansBundle.message("file.doesnt.exist", url), XmlBeansBundle.message("error"));
       return;
     }
 
@@ -136,7 +135,7 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       xml = Xsd2InstanceUtils.generate(ArrayUtilRt.toStringArray(parameters));
     }
     catch (Throwable e) {
-      Messages.showErrorDialog(project, ExceptionUtil.getMessage(e), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, ExceptionUtil.getMessage(e), XmlBeansBundle.message("error"));
       return;
     }
 
@@ -152,8 +151,8 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, XmlBundle.message("could.not.save.generated.xml.document.0", StringUtil.getMessage(e)),
-                               XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBeansBundle.message("could.not.save.generated.xml.document.0", StringUtil.getMessage(e)),
+                               XmlBeansBundle.message("error"));
     }
   }
 

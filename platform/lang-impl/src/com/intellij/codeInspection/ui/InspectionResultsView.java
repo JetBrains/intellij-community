@@ -13,7 +13,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -68,8 +67,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
@@ -106,6 +105,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
   private ToolWindow myToolWindow;
   private ContentManagerListener myContentManagerListener;
 
+  @ApiStatus.Internal
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
     setLayout(new BorderLayout());
@@ -247,7 +247,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
 
   private static DefaultActionGroup createExportActions() {
     var result = new DefaultActionGroup(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.ToolbarDecorator.Export);
-    result.addAll(InspectionResultsExportActionProvider.Companion.getEP_NAME().getExtensionList());
+    result.addAll(InspectionResultsExportActionProvider.EP_NAME.getExtensionList());
     result.setPopup(true);
     return result;
   }
@@ -544,15 +544,16 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
       }
       else {
         myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), false, EditorKind.PREVIEW);
-        DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
         settings.setFoldingOutlineShown(true);
+        settings.setAutoCodeFoldingEnabled(false);
         settings.setLineMarkerAreaShown(true);
         settings.setGutterIconsShown(false);
         settings.setAdditionalColumnsCount(0);
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
+        myPreviewEditor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
         myPreviewEditor.getScrollPane().setBorder(JBUI.Borders.empty());
       }
       if (problemCount == 0) {
@@ -813,6 +814,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return PsiNavigationSupport.getInstance().createNavigatable(psiElement.getProject(), virtualFile, startOffset);
   }
 
+  @ApiStatus.Internal
   public @NotNull InspectionTree getTree() {
     return myTree;
   }
@@ -821,6 +823,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return myGlobalInspectionContext;
   }
 
+  @ApiStatus.Internal
   public @NotNull InspectionRVContentProvider getProvider() {
     return myProvider;
   }
@@ -861,6 +864,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return hasProblems(myGlobalInspectionContext.getTools().values(), myGlobalInspectionContext, myProvider);
   }
 
+  @ApiStatus.Internal
   public static boolean hasProblems(@NotNull Collection<? extends Tools> tools,
                                     @NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionRVContentProvider contentProvider) {

@@ -9,6 +9,7 @@ class K1JUnitMalformedDeclarationInspectionTestV57 : KotlinJUnitMalformedDeclara
 
 class K1JUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTest() {
   override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override val pluginVersion: String = "K1"
 }
 
 class K1JUnitMalformedDeclarationInspectionTestV6 : KotlinJUnitMalformedDeclarationInspectionTestV6() {

@@ -10,13 +10,14 @@ import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
@@ -27,6 +28,10 @@ import static com.intellij.ui.paint.RectanglePainter.DRAW;
 public final class WideSelectionListUI extends BasicListUI {
   private static final Logger LOG = Logger.getInstance(WideSelectionListUI.class);
   private Rectangle myPaintBounds;
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public WideSelectionListCache cacheSupport;
 
   @Override
   public void paint(Graphics g, JComponent c) {
@@ -170,6 +175,20 @@ public final class WideSelectionListUI extends BasicListUI {
   }
 
   @Override
+  protected void installListeners() {
+    super.installListeners();
+    cacheSupport = new WideSelectionListCache(list);
+    cacheSupport.installListeners();
+  }
+
+  @Override
+  protected void uninstallListeners() {
+    cacheSupport.uninstallListeners();
+    cacheSupport = null;
+    super.uninstallListeners();
+  }
+
+  @Override
   protected void updateLayoutState() {
     if (list.getLayoutOrientation() != JList.VERTICAL) {
       super.updateLayoutState();
@@ -193,14 +212,9 @@ public final class WideSelectionListUI extends BasicListUI {
       int dataModelSize = dataModel.getSize();
       ListCellRenderer<Object> renderer = list.getCellRenderer();
       if (renderer != null) {
+        boolean immutableRenderer = ClientProperty.isTrue(list, JBList.IMMUTABLE_MODEL_AND_RENDERER);
         for (int index = 0; index < dataModelSize; index++) {
-          Object value = dataModel.getElementAt(index);
-          Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
-          rendererPane.add(c);
-          Dimension cellSize = c.getPreferredSize();
-          if (ClientProperty.get(c, JBList.IGNORE_LIST_ROW_HEIGHT) == null) {
-            cellSize = UIUtil.updateListRowHeight(cellSize);
-          }
+          Dimension cellSize = getItemPreferredSize(index, dataModel, renderer, immutableRenderer);
           if (fixedCellWidth == -1) {
             cellWidth = Math.max(cellSize.width, cellWidth);
           }
@@ -221,6 +235,55 @@ public final class WideSelectionListUI extends BasicListUI {
         }
       }
     }
+  }
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public void updateLayoutStateTestAccessor() {
+    updateLayoutState();
+  }
+
+  private @NotNull Dimension getItemPreferredSize(int index,
+                                                  @NotNull ListModel<Object> dataModel,
+                                                  @NotNull ListCellRenderer<Object> renderer,
+                                                  boolean immutableRenderer) {
+    Object value = dataModel.getElementAt(index);
+
+    return cacheSupport.getCachedPreferredSizeOrCalculate(value, immutableRenderer, () -> {
+      Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
+      rendererPane.add(c);
+      var result = c.getPreferredSize();
+      if (ClientProperty.get(c, JBList.IGNORE_LIST_ROW_HEIGHT) == null) {
+        result = UIUtil.updateListRowHeight(result);
+      }
+      return result;
+    });
+  }
+
+  @Override
+  protected FocusListener createFocusListener() {
+    var superFocusListener = super.createFocusListener();
+
+    // Support selected items background while changing focus
+    return new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (list.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
+          superFocusListener.focusGained(e);
+        } else {
+          list.repaint();
+        }
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        if (list.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
+          superFocusListener.focusLost(e);
+        } else {
+          list.repaint();
+        }
+      }
+    };
   }
 
   /** @noinspection MethodOverridesStaticMethodOfSuperclass, unused */

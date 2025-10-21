@@ -16,6 +16,7 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -23,8 +24,6 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.getExternalConfigurationDir
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -51,7 +50,7 @@ import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeIntern
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.project.stateStore
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.util.PlatformUtils.*
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
@@ -112,8 +111,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private var activity: Activity? = null
   private var childActivity: Activity? = null
 
-  fun needToReloadProjectEntities(): Boolean {
-    if (StoreReloadManager.getInstance(project).isReloadBlocked() || serializers.get() == null) {
+  suspend fun needToReloadProjectEntities(): Boolean {
+    if (project.serviceAsync<StoreReloadManager>().isReloadBlocked() || serializers.get() == null) {
       return false
     }
 
@@ -124,7 +123,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   @OptIn(EntityStorageInstrumentationApi::class)
   suspend fun reloadProjectEntities(): Unit = reloadProjectEntitiesTimeMs.addMeasuredTime {
-    if (StoreReloadManager.getInstance(project).isReloadBlocked()) {
+    if (project.serviceAsync<StoreReloadManager>().isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
       return@addMeasuredTime
     }
@@ -143,7 +142,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
 
-    val unloadedModuleNameHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
+    val unloadedModuleNameHolder = project.serviceAsync<UnloadedModulesListStorage>().unloadedModuleNameHolder
     val reloadingResult = loadAndReportErrors {
       serializers.reloadFromChangedFiles(changes, fileContentReader, unloadedModuleNameHolder, it)
     }
@@ -165,22 +164,38 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       || it is DummyParentEntitySource
     }
 
-    applyLoadedEntities(affectedEntityFilter, reloadingResult.builder, reloadingResult.unloadedEntityBuilder, reloadingResult.orphanageBuilder,
-                        description) {
+    applyLoadedEntities(
+      sourcesFilter = affectedEntityFilter,
+      builder = reloadingResult.builder,
+      unloadedEntityBuilder = reloadingResult.unloadedEntityBuilder,
+      orphanageBuilder = reloadingResult.orphanageBuilder,
+      description = description,
+      workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl,
+    ) {
       sourcesToSave.removeAll(reloadingResult.affectedSources)
     }
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  private suspend fun applyLoadedEntities(sourcesFilter: (EntitySource) -> Boolean, builder: MutableEntityStorage,
-                                          unloadedEntityBuilder: MutableEntityStorage, orphanageBuilder: MutableEntityStorage,
-                                          description: String, onSuccessCallback: () -> Unit) {
-
-    class CalculationResult(val builderSnapshot: BuilderSnapshot, val unloadBuilderSnapshot: BuilderSnapshot, val unloadedBuilderCopy: MutableEntityStorage,
-                            val modulesToLoad: List<String>, val modulesToUnload: List<String>)
+  private suspend fun applyLoadedEntities(
+    sourcesFilter: (EntitySource) -> Boolean,
+    builder: MutableEntityStorage,
+    unloadedEntityBuilder: MutableEntityStorage,
+    orphanageBuilder: MutableEntityStorage,
+    description: String,
+    workspaceModel: WorkspaceModelImpl,
+    onSuccessCallback: () -> Unit,
+  ) {
+    class CalculationResult(
+      val builderSnapshot: BuilderSnapshot,
+      val unloadBuilderSnapshot: BuilderSnapshot,
+      val unloadedBuilderCopy: MutableEntityStorage,
+      val modulesToLoad: List<String>,
+      val modulesToUnload: List<String>,
+    )
 
     @OptIn(EntityStorageInstrumentationApi::class)
-    fun calculateChanges(workspaceModel: WorkspaceModelImpl): CalculationResult {
+    fun calculateChanges(workspaceModel: WorkspaceModelImpl, moduleManager: ModuleManagerEx): CalculationResult {
       val unloadBuilderSnapshot = workspaceModel.getUnloadBuilderSnapshot()
       // Update builder of unloaded entities
       if ((unloadedEntityBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
@@ -192,14 +207,16 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       builderSnapshot.builder.replaceBySource(sourcesFilter, builder.toSnapshot())
 
       val unloadedBuilderCopy = MutableEntityStorage.from(unloadBuilderSnapshot.builder.toSnapshot())
-      val moduleManagerEx = ModuleManagerEx.getInstanceEx(project)
-      val (modulesToLoad, modulesToUnload) = moduleManagerEx.calculateUnloadModules(builderSnapshot.builder, unloadedBuilderCopy)
+      val (modulesToLoad, modulesToUnload) = moduleManager.calculateUnloadModules(builderSnapshot.builder, unloadedBuilderCopy)
       return CalculationResult(builderSnapshot, unloadBuilderSnapshot, unloadedBuilderCopy, modulesToLoad, modulesToUnload)
     }
 
     @OptIn(EntityStorageInstrumentationApi::class)
-    fun applyLoadedChanges(calculationResult: CalculationResult, workspaceModel: WorkspaceModelImpl): Boolean {
-      val moduleManagerEx = ModuleManagerEx.getInstanceEx(project)
+    fun applyLoadedChanges(
+      calculationResult: CalculationResult,
+      workspaceModel: WorkspaceModelImpl,
+      moduleManager: ModuleManagerEx,
+    ): Boolean {
       // TODO If we don't have changes in [UNLOAD] part, it doesn't make sense to use this method
       val isSuccessful = workspaceModel.replaceProjectModel(
         mainStorageReplacement = calculationResult.builderSnapshot.getStorageReplacement(),
@@ -209,23 +226,24 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         return false
       }
 
-      moduleManagerEx.updateUnloadedStorage(calculationResult.modulesToLoad, calculationResult.modulesToUnload)
+      moduleManager.updateUnloadedStorage(calculationResult.modulesToLoad, calculationResult.modulesToUnload)
       addUnloadedModuleEntities(calculationResult.unloadedBuilderCopy, workspaceModel)
 
       if ((orphanageBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
-        EntitiesOrphanage.getInstance(project).update { it.applyChangesFrom(orphanageBuilder) }
+        project.service<EntitiesOrphanage>().update { it.applyChangesFrom(orphanageBuilder) }
       }
 
       onSuccessCallback()
       return true
     }
 
+    val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerEx
+
     suspend fun applyChangesWithRetry(retryCount: Int): Boolean {
-      val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
       for (i in 1..retryCount) {
         LOG.info("Attempt $i: $description")
-        val calculationResult = calculateChanges(workspaceModel)
-        val isSuccessful = backgroundWriteAction { applyLoadedChanges(calculationResult, workspaceModel) }
+        val calculationResult = calculateChanges(workspaceModel, moduleManager)
+        val isSuccessful = backgroundWriteAction { applyLoadedChanges(calculationResult, workspaceModel, moduleManager) }
         if (isSuccessful) {
           LOG.info("Attempt $i: Changes were successfully applied")
           return true
@@ -239,12 +257,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return
     }
 
-    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
     // Fallback strategy after the two unsuccessful attempts to apply the changes
     backgroundWriteAction {
       LOG.info("Fallback strategy after the unsuccessful attempts to apply the changes from BGT")
-      val calculationResult = calculateChanges(workspaceModel)
-      applyLoadedChanges(calculationResult, workspaceModel)
+      val calculationResult = calculateChanges(workspaceModel, moduleManager)
+      applyLoadedChanges(calculationResult, workspaceModel, moduleManager)
     }
   }
 
@@ -341,10 +358,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  suspend fun loadProjectToEmptyStorage(project: Project): LoadedProjectEntities? {
+  suspend fun loadProjectToEmptyStorage(project: Project, workspaceModel: WorkspaceModelImpl): LoadedProjectEntities? {
     val start = Milliseconds.now()
-
-    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
 
     val configLocation = getJpsProjectConfigLocation(project, workspaceModel.virtualFileManager)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
@@ -366,7 +381,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
     else if (TrustedProjects.isProjectTrusted(project)) {
       childActivity = childActivity?.endAndStart("loading entities from files")
-      val unloadedModuleNamesHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
+      val unloadedModuleNamesHolder = project.serviceAsync<UnloadedModulesListStorage>().unloadedModuleNameHolder
       val sourcesToUpdate = loadAndReportErrors {
         serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNamesHolder, it)
       }
@@ -374,7 +389,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       workspaceModel.entityTracer.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying entities from global storage")
       val mutableStorage = MutableEntityStorage.create()
-      GlobalWorkspaceModel.getInstance(project.getEelDescriptor()).applyStateToProjectBuilder(project, mutableStorage)
+      GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine).applyStateToProjectBuilder(mutableStorage, workspaceModel)
       builder.applyChangesFrom(mutableStorage)
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
@@ -382,7 +397,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     else {
       childActivity = childActivity?.endAndStart("loading untrusted project")
 
-      NotificationGroupManager.getInstance()
+      serviceAsync<NotificationGroupManager>()
         .getNotificationGroup("Project Loading Error")
         .createNotification(ProjectBundle.message("notification.title.error.loading.project"),
                             IdeBundle.message("untrusted.jps.project.not.loaded.notification"),
@@ -419,7 +434,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     builder.addEntity(module)
   }
 
-  suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?): Unit = applyLoadedStorageTimeMs.addMeasuredTime {
+  suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?, workspaceModel: WorkspaceModelImpl): Unit = applyLoadedStorageTimeMs.addMeasuredTime {
     if (projectEntities == null) {
       return@addMeasuredTime
     }
@@ -432,7 +447,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       || entitySource is LegacyCustomLibraryEntitySource // covers custom libraries
     }
     childActivity = childActivity?.endAndStart("applying loaded changes")
-    applyLoadedEntities(sourceFilter, projectEntities.builder, projectEntities.unloadedEntitiesBuilder, projectEntities.orphanageBuilder, description) {
+    applyLoadedEntities(
+      sourcesFilter = sourceFilter,
+      builder = projectEntities.builder,
+      unloadedEntityBuilder = projectEntities.unloadedEntitiesBuilder,
+      orphanageBuilder = projectEntities.orphanageBuilder,
+      description = description,
+      workspaceModel = workspaceModel,
+    ) {
       sourcesToSave.clear()
       sourcesToSave.addAll(projectEntities.sourcesToUpdate)
     }
@@ -474,11 +496,16 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private suspend fun createSerializers(): JpsProjectSerializers {
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
 
-    val configLocation = getJpsProjectConfigLocation(project, workspaceModel.virtualFileManager)!!
-    fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
+    val componentStore = (project as ProjectStoreOwner).componentStore
+    fileContentReader = (componentStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
-    val externalStorageConfigurationManager = (project as ComponentManagerEx)
-      .getServiceAsyncIfDefined(ExternalStorageConfigurationManager::class.java)
+    val externalStorageConfigurationManager = if (componentStore.isExternalStorageSupported) {
+      (project as ComponentManagerEx)
+        .getServiceAsyncIfDefined(ExternalStorageConfigurationManager::class.java)
+    }
+    else {
+      null
+    }
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(workspaceModel.currentSnapshot)
     val context = IdeSerializationContext(
       virtualFileUrlManager = workspaceModel.virtualFileManager,
@@ -486,6 +513,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       fileInDirectorySourceNames = fileInDirectorySourceNames,
       externalStorageConfigurationManager = externalStorageConfigurationManager,
     )
+
+    val configLocation = getJpsProjectConfigLocation(project, workspaceModel.virtualFileManager)!!
     return createProjectSerializers(configLocation, externalStoragePath, context)
   }
 
@@ -512,7 +541,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val newSerializers = createSerializers()
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
     backgroundWriteAction {
-      workspaceModel.updateProjectModel("Convert to directory based format") {
+      workspaceModel.updateProjectModel("Convert to a directory-based format") {
         newSerializers.changeEntitySourcesToDirectoryBasedFormat(it)
       }
       val moduleSources = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).map { it.entitySource }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -67,7 +67,7 @@ public final class GroovyTypedHandler extends TypedHandlerDelegate {
   }
 
   private static void autoPopupMemberLookup(Project project, final Editor editor, Condition<PsiFile> condition) {
-    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, condition);
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, condition);
   }
 
 

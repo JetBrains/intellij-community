@@ -20,13 +20,13 @@ import org.jetbrains.kotlin.idea.configuration.getJvmTargetNumber
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 
-val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS = setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")
+val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS: Set<String> = setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")
     @ApiStatus.Internal get
 
-val FOOJAY_RESOLVER_NAME = "org.gradle.toolchains.foojay-resolver"
+val FOOJAY_RESOLVER_NAME: String = "org.gradle.toolchains.foojay-resolver"
     @ApiStatus.Internal get
 
-val FOOJAY_RESOLVER_CONVENTION_NAME = "org.gradle.toolchains.foojay-resolver-convention"
+val FOOJAY_RESOLVER_CONVENTION_NAME: String = "org.gradle.toolchains.foojay-resolver-convention"
     @ApiStatus.Internal get
 
 class DefinedKotlinPluginManagementVersion(

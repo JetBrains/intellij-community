@@ -6,10 +6,10 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 
 fun Finder.kubernetesPodShellPanel(action: KubernetesPodShellPanelUI.() -> Unit) {
-  x("//div[@class='KubernetesPodShellPanel']", KubernetesPodShellPanelUI::class.java).action()
+  x("//div[@class='KubernetesPodConsolePanel']", KubernetesPodShellPanelUI::class.java).action()
 }
 
-class KubernetesPodShellPanelUI(data: ComponentData): UiComponent(data) {
+class KubernetesPodShellPanelUI(data: ComponentData) : UiComponent(data) {
   private val terminal = x("//div[@class='JBTerminalPanel']")
 
   fun executeCommand(text: String) {

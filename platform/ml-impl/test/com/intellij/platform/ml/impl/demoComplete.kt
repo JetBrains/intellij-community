@@ -5,8 +5,11 @@ import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Version
+import com.intellij.openapi.util.use
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.analysis.SessionAnalyser
 import com.intellij.platform.ml.analysis.StructureAnalyser
@@ -66,21 +69,19 @@ class RandomModel(val seed: Int) : MLModel<Double>, Versioned, LanguageSpecific 
   override val version: Version = Version(0, 0, 1)
 }
 
-private class MockTaskFusLogger : CounterUsagesCollector() {
-  companion object {
-    val GROUP = EventLogGroup("mock-task", 1).also {
-      it.registerMLTaskLogging("finished", MockTask, EntireSessionLoggingStrategy.DOUBLE,
-                               AnalysisMethods(
-                                 sessionAnalysers = listOf(FailureLogger(),
-                                                           ExceptionLogger(),
-                                                           RandomModelSeedAnalyser,
-                                                           VeryUselessSessionAnalyser()),
-                                 structureAnalysers = listOf(SomeStructureAnalyser())
-                               ))
-    }
+private class MockTaskFusLogger(private val disposable: Disposable) : CounterUsagesCollector() {
+  private val myGroup = EventLogGroup("mock-task", 1).also {
+    it.registerMLTaskLogging("finished", MockTask, EntireSessionLoggingStrategy.DOUBLE,
+                             AnalysisMethods(
+                               sessionAnalysers = listOf(FailureLogger(),
+                                                         ExceptionLogger(),
+                                                         RandomModelSeedAnalyser,
+                                                         VeryUselessSessionAnalyser()),
+                               structureAnalysers = listOf(SomeStructureAnalyser())
+                             ), disposable = disposable)
   }
 
-  override fun getGroup() = GROUP
+  override fun getGroup() = myGroup
 }
 
 private object ThisTestApiPlatform : TestApiPlatform() {
@@ -262,48 +263,50 @@ class MockTaskTaskTest : MLApiLogsTestCase() {
     }
 
     ReplaceableIJPlatform.replacingWith(ThisTestApiPlatform) {
-      registerEventLogger(MockTaskFusLogger())
+      Disposer.newCheckedDisposable("MLTask::test ml task").use { disposable ->
+        registerEventLogger(MockTaskFusLogger(disposable))
 
-      FUCollectorTestCase.listenForEvents("FUS", this.testRootDisposable, collectLogs) {
+        FUCollectorTestCase.listenForEvents("FUS", this.testRootDisposable, collectLogs) {
 
-        repeat(3) { sessionIndex ->
+          repeat(3) { sessionIndex ->
 
-          println("Demo session #$sessionIndex has started")
+            println("Demo session #$sessionIndex has started")
 
-          runBlocking {
+            runBlocking {
 
-            val startOutcome = MockTask.startMLSession(
-              callParameters = Environment.of(),
-              permanentSessionEnvironment = Environment.of(
-                TierCompletionSession with CompletionSession(
-                  language = PlainTextLanguage.INSTANCE,
-                  callOrder = 1,
-                  completionType = CompletionType.SMART
+              val startOutcome = MockTask.startMLSession(
+                callParameters = Environment.of(),
+                permanentSessionEnvironment = Environment.of(
+                  TierCompletionSession with CompletionSession(
+                    language = PlainTextLanguage.INSTANCE,
+                    callOrder = 1,
+                    completionType = CompletionType.SMART
+                  )
                 )
               )
-            )
 
-            val completionSession = startOutcome.session ?: return@runBlocking
-            completionSession.withNestedSessions { lookupSessionCreator ->
+              val completionSession = startOutcome.session ?: return@runBlocking
+              completionSession.withNestedSessions { lookupSessionCreator ->
 
-              lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(true, 1)))
-                .withPredictions {
-                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("hello", emptyMap())))
-                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("world", emptyMap())))
-                }
+                lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(true, 1)))
+                  .withPredictions {
+                    it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("hello", emptyMap())))
+                    it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("world", emptyMap())))
+                  }
 
-              lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(false, 2)))
-                .withPredictions {
-                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("hello!!!", mapOf("bold" to true))))
-                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("AAAAA!!", mapOf("strikethrough" to true))))
-                  it.consider(Environment.of(), Environment.of(TierItem with LookupItem("AAAAAAAAAAAAAAAAA", mapOf("cursive" to true))))
-                }
+                lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(false, 2)))
+                  .withPredictions {
+                    it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("hello!!!", mapOf("bold" to true))))
+                    it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("AAAAA!!", mapOf("strikethrough" to true))))
+                    it.consider(Environment.of(), Environment.of(TierItem with LookupItem("AAAAAAAAAAAAAAAAA", mapOf("cursive" to true))))
+                  }
+              }
             }
+
+            Thread.sleep(3 * 1000)
+
+            println("Demo session #$sessionIndex has finished")
           }
-
-          Thread.sleep(3 * 1000)
-
-          println("Demo session #$sessionIndex has finished")
         }
       }
     }

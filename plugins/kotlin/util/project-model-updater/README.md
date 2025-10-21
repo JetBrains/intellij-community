@@ -1,76 +1,51 @@
-# Advance Kotlin Analyzer Version Script
+# Project Model Updater
 
-[advance-analyzer-version.main.kts](advance-analyzer-version.main.kts) is supposed to automate the process of advancing the Kotlin compiler version in the monorepo.
-The script helps update configuration files and related resources, ensures consistency, and integrates with version control.
+This module contains a tool for interacting with the Kotlin compiler.   
+In particular, it is related to [Kotlin Cooperative Development](../../docs/cooperative-development/environment-setup.md).
 
-## Prerequisites
+## Run Configurations
 
-- **Gradle:** Make sure `gradle` is available for updating libraries.
-- **Network access:** The script queries build information from internal TeamCity, so the corporate network is required.
-- **Kotlin scripting:** Make sure `kotlin` is available on your PATH (part of [Kotlin command line tools](https://kotlinlang.org/docs/command-line.html)) if you want to run the script directly from the terminal.
+All run configurations starts with `Kotlin Coop:` prefix and support as arguments:
 
-## Usage
+1. Properties from [model.properties](resources/model.properties) (the base configuration file stored in Git)
+2. Properties from [local.properties](resources/local.properties) (the local configuration file excluded from Git)
+3. A set of additional properties passed as command line arguments (with the same `key=value` format)
 
-### Bootstrap the analyzer version:
+**The order of arguments is important**: the last one overrides the previous ones.
 
-- Run `Bootstrap Kotlin Analyzer Version` run configuration
-- From a terminal, run
-```bash
-./advance-analyzer-version.main.kts --bootstrap
-``` 
-or
-```bash
-kotlinc -script advance-analyzer-version.main.kts -- --bootstrap
-```
+Alternatively, you can run all configurations below from a terminal via `gradle run` command with required arguments (they can be found in the corresponding run configuration).
 
-### Advance the analyzer version:
+### `Kotlin Coop: Publish Compiler JARs`
 
-- From IntelliJ IDEA (`Advance Kotlin Analyzer Version`)
-  - Pass a version to advance to via the run configuration arguments
-  - Or via changing [advance-analyzer-version.main.kts](advance-analyzer-version.main.kts)
-    1. Open [advance-analyzer-version.main.kts](advance-analyzer-version.main.kts)
-    2. Set `Configuration#NEW_VERSION` to a version to advance to 
-    3. Run `Advance Kotlin Analyzer Version` run configuration
-    4. Reset `Configuration#NEW_VERSION` to `null`
-- From a terminal
-```bash
-./advance-analyzer-version.main.kts <version-to-advance-to>
-``` 
-or
-```bash
-kotlinc -script advance-analyzer-version.main.kts <version-to-advance-to>
-```
+The configuration runs the Kotlin compiler artifacts publication directly to this project. This is needed to work with a bootstrap compiler in `kt-master` setup.  
 
-## What the Script Does
+#### Essential options:
 
-1. **Reads the Current Version**  
-   The script checks the current `kotlincVersion` from the [model.properties](resources/model.properties) file.
+- `kotlinCompilerRepoPath` – path to the local copy of the Kotlin compiler repository. It can be either a relative or an absolute path. `.` points to the root of this project
+  - Default: `..` (the parent directory of this project)
 
-2. **Fetches Revision Information**  
-   Obtains build revisions (commits) for both the current and target versions from TeamCity.
+### `Kotlin Coop: Update Compiler Version`
 
-3. **Compares Versions**  
-   Shows a GitHub compare link with the range of changes if there are any differences.
+The configuration applies current settings to the project. In particular, it generates libraries depending on the provided compiler version.
 
-4. **Checks for Uncommitted Changes**  
-   The script ensures there are no uncommitted changes in specific project files.
+#### Essential options:
 
-5. **Updates Version and Mode**  
-   Updates the `kotlincVersion` and sets artifact mode as needed in the relevant properties.
+- `kotlincVersion` – version of the Kotlin compiler to use in the project for kotlinc libraries. Usually some dev version
+- `jpsPluginVersion` – version of the bundled Kotlin JPS plugin which can be used to build user projects. Usually the last stable version
+- `convertJpsToBazel` – whether to convert the JPS project model to Bazel
+  - Default: `false`
 
-6. **Runs the Gradle Task**  
-   Updates libraries via `gradle run`.
+### `Kotlin Coop: Advance Compiler Version`
 
-7. **Commits Changes**  
-   Stages and commits the updated files with a properly formatted commit message (including the compare link).
+The configuration automatically updates the compiler version in the project and commits the changes.
 
-8. **Rollback on Failure**  
-   If any critical step fails, the script attempts to revert the affected files.
+#### Essential options:
 
-## Troubleshooting
+- `newKotlincVersion` – version of the Kotlin compiler to use in the project for kotlinc libraries. It has to be a publicly available version
+  - Default: the version is requested interactively
+- `kotlinCompilerRepoPath` – path to the local copy of the Kotlin compiler repository. It is recommended to use `local.properties` file to specify it to not place the project inside the Kotlin repository
+  - Default: `..` (the parent directory of this project)
 
-- **Permission Denied:** Make the script executable:
-  ```bash
-  chmod +x advance-analyzer-version.main.kts
-  ```
-- **Uncommitted Changes Detected:** Commit or discard changes in related files before running the script.
+### `Kotlin Coop: Switch to Bootstrap`
+
+The configuration switches the Kotlin compiler version in the project to the bootstrap mode. It is a necessary step to work with a bootstrap compiler in `kt-master` setup locally.

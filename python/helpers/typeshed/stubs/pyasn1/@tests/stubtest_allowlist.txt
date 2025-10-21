@@ -1,13 +1,3 @@
 # typeshed typing differences with runtime collections.OrderedDict and builtins.dict
 pyasn1.codec.native.encoder.SequenceEncoder.protoDict
 pyasn1.codec.native.encoder.SetEncoder.protoDict
-
-# Attempted "__ne__" operation on ASN.1 schema object
-pyasn1.type.base
-pyasn1.type.univ
-
-# Specifying kwargs
-pyasn1.codec.ber.decoder.Decoder.__call__
-pyasn1.codec.ber.decoder.StreamingDecoder.__init__
-pyasn1.codec.native.decoder.Decoder.__init__
-pyasn1.codec.native.encoder.Encoder.__init__

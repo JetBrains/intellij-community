@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.typeignore
 
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.psi.PsiFile
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.*
@@ -53,7 +53,7 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
   }
 
   fun testWithNoqa() {
-    myFixture.enableInspections(SpellCheckingInspection::class.java)
+    myFixture.enableInspections(GrazieSpellCheckingInspection::class.java)
     doTestByText("""
       def foo(x: str):
           print(x.bar + 'ajsd') # type: ignore # noqa

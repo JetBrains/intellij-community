@@ -29,7 +29,7 @@ internal class RenameSyntheticDeclarationByReferenceHandler : AbstractForbidRena
         return false
     }
 
-    context(KaSession)
+    context(_: KaSession)
     override fun shouldForbidRenaming(symbol: KaSymbol): Boolean {
         return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && !(symbol is KaConstructorSymbol && symbol.isPrimary)
     }

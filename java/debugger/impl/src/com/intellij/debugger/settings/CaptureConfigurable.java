@@ -514,16 +514,14 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
       mySettings = DebuggerProjectSettings.getInstance(myProject);
       myAsyncSchedulePanel = new AnnotationsPanel(project,
                                                   JavaDebuggerBundle.message("settings.async.schedule"),
-                                                  "",
                                                   getAsyncAnnotations(mySettings, true),
-                                                  Collections.singletonList(getAnnotationName(true)),
-                                                  Collections.emptySet(), false, false);
+                                                  Collections.singletonList(getAnnotationName(true))
+      );
       myAsyncExecutePanel = new AnnotationsPanel(project,
                                                  JavaDebuggerBundle.message("settings.async.execute"),
-                                                 "",
                                                  getAsyncAnnotations(mySettings, false),
-                                                 Collections.singletonList(getAnnotationName(false)),
-                                                 Collections.emptySet(), false, false);
+                                                 Collections.singletonList(getAnnotationName(false))
+      );
       init();
       setTitle(JavaDebuggerBundle.message("settings.async.annotations.configuration"));
     }

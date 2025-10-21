@@ -40,135 +40,136 @@ object ScientificUtils {
     transform.rotate(Math.toRadians(angle.toDouble()))
     transform.translate(-width / 2.0, -height / 2.0)
 
-    val rotatedImage = BufferedImage(targetWidth, targetHeight, image.type)
-    val graphics = rotatedImage.createGraphics()
-    graphics.transform = transform
-    graphics.drawImage(image, 0, 0, null)
-    graphics.dispose()
-    rotatedImage
+    BufferedImage(targetWidth, targetHeight, image.type).also { rotatedImage ->
+      rotatedImage.createGraphics().apply {
+        this.transform = transform
+        drawImage(image, 0, 0, null)
+        dispose()
+      }
+    }
   }
 
   internal suspend fun applyGrayscale(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
     BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_GRAY).also { grayscaleImage ->
-      val graphics = grayscaleImage.createGraphics()
-      try {
-        graphics.drawImage(image, 0, 0, null)
-      } finally {
-        graphics.dispose()
+      grayscaleImage.createGraphics().apply {
+        drawImage(image, 0, 0, null)
+        dispose()
       }
     }
   }
 
   internal suspend fun displaySingleChannel(image: BufferedImage, channelIndex: Int): BufferedImage = withContext(Dispatchers.IO) {
-    val raster = image.raster
+    val inRaster = image.raster
     BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_GRAY).also { channelImage ->
-      for (x in 0 until image.width) {
-        for (y in 0 until image.height) {
-          raster.getSample(x, y, channelIndex).let { value ->
-            channelImage.raster.setSample(x, y, 0, value)
-          }
-        }
-      }
+      val outRaster = channelImage.raster
+      for (y in 0 until image.height)
+        for (x in 0 until image.width)
+          outRaster.setSample(x, y, 0, inRaster.getSample(x, y, channelIndex))
     }
   }
 
   internal suspend fun applyInvertChannels(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
-    BufferedImage(image.width, image.height, image.type).also { invertedImage ->
-      for (x in 0 until image.width) {
-        for (y in 0 until image.height) {
-          val rgba = image.getRGB(x, y)
-          val alpha = rgba ushr 24
-          val invertedRgba = (alpha shl 24) or (rgba.inv() and 0xFFFFFF)
-          invertedImage.setRGB(x, y, invertedRgba)
+    val width = image.width
+    val height = image.height
+    val numBands = image.raster.numBands
+    val pixel = IntArray(numBands)
+    val inRaster = image.raster
+
+    BufferedImage(width, height, image.type).also { invertedImage ->
+      val outRaster = invertedImage.raster
+      for (y in 0 until height) {
+        for (x in 0 until width) {
+          inRaster.getPixel(x, y, pixel)
+          val invertedPixel = IntArray(numBands) { i -> if (numBands == 4 && i == 0) pixel[0] else 255 - pixel[i] }
+          outRaster.setPixel(x, y, invertedPixel)
         }
       }
     }
   }
 
   internal suspend fun applyReverseChannelsOrder(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
-    BufferedImage(image.width, image.height, image.type).also { reversedImage ->
-      for (x in 0 until image.width) {
-        for (y in 0 until image.height) {
-          val rgba = image.getRGB(x, y)
-          val alpha = rgba ushr 24
-          val blue = rgba and 0xFF
-          val green = (rgba shr 8) and 0xFF
-          val red = (rgba shr 16) and 0xFF
-          val reversedRgba = (alpha shl 24) or (blue shl 16) or (green shl 8) or red
-          reversedImage.setRGB(x, y, reversedRgba)
+    val width = image.width
+    val height = image.height
+    val numBands = image.raster.numBands
+    val pixel = IntArray(numBands)
+    val inRaster = image.raster
+
+    BufferedImage(width, height, image.type).also { reversedImage ->
+      val outRaster = reversedImage.raster
+      for (y in 0 until height) {
+        for (x in 0 until width) {
+          inRaster.getPixel(x, y, pixel)
+          val reversedPixel = when (numBands) {
+            4 -> intArrayOf(pixel[0], pixel[3], pixel[2], pixel[1])
+            3 -> intArrayOf(pixel[2], pixel[1], pixel[0])
+            else -> pixel
+          }
+          outRaster.setPixel(x, y, reversedPixel)
         }
       }
     }
   }
 
   internal suspend fun applyBinarization(image: BufferedImage, threshold: Int): BufferedImage = withContext(Dispatchers.IO) {
-    BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_BINARY).also { binarizedImage ->
-      for (y in 0 until image.height) {
-        for (x in 0 until image.width) {
-          val rgba = image.getRGB(x, y)
-          val alpha = rgba ushr 24
-          val brightness = calculateBrightness(rgba)
-          val binaryColor = if (brightness < threshold) 0x000000 else 0xFFFFFF
-          binarizedImage.setRGB(x, y, (alpha shl 24) or binaryColor)
+    val width = image.width
+    val height = image.height
+    val inRaster = image.raster
+    val numBands = inRaster.numBands
+    val pixel = IntArray(numBands)
+
+    BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY).also { binarizedImage ->
+      val outRaster = binarizedImage.raster
+      for (y in 0 until height) {
+        for (x in 0 until width) {
+          inRaster.getPixel(x, y, pixel)
+          val brightness = when (numBands) {
+            4 -> calculateBrightness(pixel[1], pixel[2], pixel[3])
+            3 -> calculateBrightness(pixel[0], pixel[1], pixel[2])
+            else -> pixel[0]
+          }
+          val binaryValue = if (brightness < threshold) 0 else 1
+          outRaster.setSample(x, y, 0, binaryValue)
         }
       }
     }
   }
 
   internal suspend fun normalizeImage(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
-    val (width, height) = image.width to image.height
-    var (rMin, rMax) = 255 to 0
-    var (gMin, gMax) = 255 to 0
-    var (bMin, bMax) = 255 to 0
-    for (y in 0 until height) {
+    val width = image.width
+    val height = image.height
+    val numBands = image.raster.numBands
+    val pixel = IntArray(numBands)
+    val inRaster = image.raster
+    val mins = IntArray(numBands) { 255 }
+    val maxs = IntArray(numBands) { 0 }
+    for (y in 0 until height)
       for (x in 0 until width) {
-        val rgb = image.getRGB(x, y)
-        val (red, green, blue) = Triple(
-          (rgb shr 16) and 0xFF,
-          (rgb shr 8) and 0xFF,
-          rgb and 0xFF
-        )
-        if (red < rMin) rMin = red else if (red > rMax) rMax = red
-        if (green < gMin) gMin = green else if (green > gMax) gMax = green
-        if (blue < bMin) bMin = blue else if (blue > bMax) bMax = blue
-      }
-    }
-    val (finalRed, finalGreen, finalBlue) = Triple(rMin to rMax, gMin to gMax, bMin to bMax)
-    BufferedImage(width, height, image.type).also { normalizedImage ->
-      for (y in 0 until height) {
-        for (x in 0 until width) {
-          val rgb = image.getRGB(x, y)
-          val alpha = rgb and 0xFF000000.toInt()
-          val (red, green, blue) = Triple(
-            (rgb shr 16) and 0xFF,
-            (rgb shr 8) and 0xFF,
-            rgb and 0xFF
-          )
-          val (normalizedRed, normalizedGreen, normalizedBlue) = Triple(
-            normalizeChannel(red, finalRed.first, finalRed.second),
-            normalizeChannel(green, finalGreen.first, finalGreen.second),
-            normalizeChannel(blue, finalBlue.first, finalBlue.second)
-          )
-          val normalizedARGB = alpha or
-            (normalizedRed shl 16) or
-            (normalizedGreen shl 8) or
-            normalizedBlue
-          normalizedImage.setRGB(x, y, normalizedARGB)
+        inRaster.getPixel(x, y, pixel)
+        for (i in 0 until numBands) {
+          if (pixel[i] < mins[i]) mins[i] = pixel[i]
+          if (pixel[i] > maxs[i]) maxs[i] = pixel[i]
         }
       }
+
+    BufferedImage(width, height, image.type).also { normalizedImage ->
+      val outRaster = normalizedImage.raster
+      for (y in 0 until height)
+        for (x in 0 until width) {
+          inRaster.getPixel(x, y, pixel)
+          val normalizedPixel = IntArray(numBands) { i ->
+            if (numBands == 4 && i == 0) pixel[0] else normalizeChannel(pixel[i], mins[i], maxs[i])
+          }
+          outRaster.setPixel(x, y, normalizedPixel)
+        }
     }
   }
 
-  private fun normalizeChannel(value: Int, min: Int, max: Int): Int {
-    return if (max > min) ((value - min) * 255 / (max - min)).coerceIn(0, 255) else value
-  }
+  private fun normalizeChannel(value: Int, min: Int, max: Int): Int =
+    if (max > min) ((value - min) * 255 / (max - min)).coerceIn(0, 255) else value
 
   // Calculate brightness using standard coefficients for RGB to luminance conversion
   // https://www.itu.int/rec/R-REC-BT.709
-  private fun calculateBrightness(rgba: Int): Int {
-    val red = (rgba shr 16) and 0xFF
-    val green = (rgba shr 8) and 0xFF
-    val blue = rgba and 0xFF
-    return (0.2126 * red + 0.7152 * green + 0.0722 * blue).toInt()
+  private fun calculateBrightness(r: Int, g: Int, b: Int): Int {
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b).toInt()
   }
 }

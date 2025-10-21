@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -64,7 +65,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         })
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun callReceiverRefersToCompanionObject(call: KaCall, companionObject: KtObjectDeclaration): Boolean {
         if (call !is KaCallableMemberCall<*, *>) return false
         val implicitReceivers = call.getImplicitReceivers()

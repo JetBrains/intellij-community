@@ -25,12 +25,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ValidationInfo
@@ -40,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
@@ -47,9 +47,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val jdkIntentProperty = propertyGraph.property<ProjectWizardJdkIntent?>(null)
-  final override val sdkProperty = propertyGraph.property<Sdk?>(null)
-  final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
+  final override val jdkIntentProperty = propertyGraph.property<ProjectWizardJdkIntent>(ProjectWizardJdkIntent.NoJdk)
+  val sdkDownloadTaskProperty = jdkIntentProperty.transform { intent -> intent.downloadTask }
   final override val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
   final override val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
@@ -57,8 +56,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
   final override var jdkIntent by jdkIntentProperty
-  final override var sdk by sdkProperty
-  final override var sdkDownloadTask by sdkDownloadTaskProperty
+  val sdkDownloadTask by sdkDownloadTaskProperty
   final override var moduleName by moduleNameProperty
   final override var contentRoot by contentRootProperty
   final override var moduleFileLocation by moduleFileLocationProperty
@@ -87,18 +85,18 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
     moduleFileLocationProperty.dependsOn(contentRootProperty, ::suggestModuleFilePath)
 
-    sdkProperty.afterChange {
-      if (it != null) {
-        service<SdkPreIndexingService>().requestPreIndexation(it)
+    jdkIntentProperty.afterChange {
+      if (it is ProjectWizardJdkIntent.ExistingJdk) {
+        service<SdkPreIndexingService>().requestPreIndexation(it.jdk)
       }
     }
   }
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(this, sdkProperty, sdkDownloadTaskProperty)
-        .whenItemSelectedFromUi { logSdkChanged(sdk) }
-        .onApply { logSdkFinished(sdk) }
+      projectWizardJdkComboBox(this, jdkIntentProperty)
+        .whenItemSelectedFromUi { jdkIntent.javaVersion?.let { logSdkChanged(it.feature) } }
+        .onApply { jdkIntent.javaVersion?.let { logSdkFinished(it.feature) } }
     }.bottomGap(BottomGap.SMALL)
   }
 
@@ -111,6 +109,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("The onboarding tips generated unconditionally")
   protected fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) = Unit
 
@@ -212,14 +211,14 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
     builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
 
-    if (context.isCreatingNewProject) {
-      // New project with a single module: set project JDK
-      context.projectJdk = sdk
-    }
-    else {
+    configureSdk(project, builder)
+  }
+
+  private fun configureSdk(project: Project, builder: ModuleBuilder) {
+    if (!context.isCreatingNewProject) {
       // New module in an existing project: set module JDK
-      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == sdk?.name
-      builder.moduleJdk = if (isSameSdk) null else sdk
+      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent?.name
+      builder.moduleJdk = if (isSameSdk) null else context.projectJdk
     }
   }
 

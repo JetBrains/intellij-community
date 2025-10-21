@@ -12,7 +12,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -22,10 +24,12 @@ import java.io.IOException;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
 
+  @VisibleForTesting
   @Override
-  protected @Nullable String encodeFileText(final String content, final VirtualFile file, final Project project) throws IOException {
+  public @Nullable String encodeFileText(final String content, final VirtualFile file, final Project project) throws IOException {
     if (MavenConstants.POM_XML.equals(file.getName())) {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<String, IOException>)() -> {
         PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XmlFileType.INSTANCE, content);

@@ -1,11 +1,14 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
 
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
+
+__all__ = ["read_pajek", "parse_pajek", "generate_pajek", "write_pajek"]
 
 def generate_pajek(G) -> Generator[Incomplete, None, None]: ...
 def write_pajek(G, path, encoding: str = "UTF-8") -> None: ...
-@_dispatch
+@_dispatchable
 def read_pajek(path, encoding: str = "UTF-8"): ...
-@_dispatch
+@_dispatchable
 def parse_pajek(lines): ...
+def make_qstr(t): ...

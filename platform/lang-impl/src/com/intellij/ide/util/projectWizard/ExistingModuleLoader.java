@@ -78,7 +78,7 @@ public final class ExistingModuleLoader extends ModuleBuilder {
     }
 
     Path file = Paths.get(moduleFilePath);
-    if (!Files.exists(file)) {
+    if (Files.notExists(file)) {
       Messages.showErrorDialog(currentProject, IdeBundle.message("title.module.file.does.not.exist", moduleFilePath),
                                CommonBundle.getErrorTitle());
       return false;
@@ -90,13 +90,13 @@ public final class ExistingModuleLoader extends ModuleBuilder {
       if (result != null && result.openingIsCanceled()) {
         return false;
       }
-      final Element root = JDOMUtil.load(file);
-      final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
+      Element root = JDOMUtil.load(file);
+      Set<String> usedMacros = PathMacrosCollector.Companion.getMacroNames(root);
       usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
       usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
 
       if (!usedMacros.isEmpty()) {
-        final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
+        boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
         if (!ok) {
           return false;
         }

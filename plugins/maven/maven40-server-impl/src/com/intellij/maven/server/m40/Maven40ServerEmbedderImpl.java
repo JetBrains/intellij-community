@@ -2,20 +2,7 @@
 package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.compat.Maven40InvokerRequestFactory;
-import com.intellij.maven.server.m40.utils.ExceptionUtils;
-import com.intellij.maven.server.m40.utils.Maven40ApiModelConverter;
-import com.intellij.maven.server.m40.utils.Maven40EffectivePomDumper;
-import com.intellij.maven.server.m40.utils.Maven40ExecutionResult;
-import com.intellij.maven.server.m40.utils.Maven40ImporterSpy;
-import com.intellij.maven.server.m40.utils.Maven40Invoker;
-import com.intellij.maven.server.m40.utils.Maven40ModelConverter;
-import com.intellij.maven.server.m40.utils.Maven40ProjectResolver;
-import com.intellij.maven.server.m40.utils.Maven40RepositorySystemSessionFactory;
-import com.intellij.maven.server.m40.utils.Maven40ServerConsoleLogger;
-import com.intellij.maven.server.m40.utils.Maven40Sl4jLoggerWrapper;
-import com.intellij.maven.server.m40.utils.Maven40Slf4jServiceProvider;
-import com.intellij.maven.server.m40.utils.Maven40TransferListenerAdapter;
-import com.intellij.maven.server.m40.utils.Maven40WorkspaceMapReader;
+import com.intellij.maven.server.m40.utils.*;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -46,11 +33,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenParser;
-import org.apache.maven.execution.DefaultMavenExecutionResult;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionResult;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.execution.ProfileActivation;
+import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
@@ -775,13 +758,19 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @Override
-  public @Nullable String evaluateEffectivePom(@NotNull File file,
-                                               @NotNull ArrayList<String> activeProfiles,
-                                               @NotNull ArrayList<String> inactiveProfiles,
-                                               MavenToken token) {
+  public @NotNull MavenServerResponse<@NotNull String> evaluateEffectivePom(@NotNull LongRunningTaskInput longRunningTaskInput,
+                                                                            @NotNull File file,
+                                                                            @NotNull ArrayList<String> activeProfiles,
+                                                                            @NotNull ArrayList<String> inactiveProfiles,
+                                                                            MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven40EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+      String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
+      try (LongRunningTask task = newLongRunningTask(longRunningTaskId, 1, myConsoleWrapper)) {
+        String result = Maven40EffectivePomDumper.evaluateEffectivePom(this, task.getIndicator(), file, activeProfiles, inactiveProfiles);
+        task.incrementFinishedRequests();
+        return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
+      }
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -852,12 +841,27 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenGoalExecutionResult(false, file, folders, problems);
 
-    folders.setSources(mavenProject.getCompileSourceRoots());
-    folders.setTestSources(mavenProject.getTestCompileSourceRoots());
-    folders.setResources(Maven40ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
-    folders.setTestResources(Maven40ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
+    folders.setMavenSources(convertSourceRoots(mavenProject.getSourceRoots()));
 
     return new MavenGoalExecutionResult(true, file, folders, problems);
+  }
+
+  private static List<MavenSource> convertSourceRoots(List<Source> roots) {
+    List<MavenSource> list = new ArrayList<>();
+    for (Source it : roots) {
+      MavenSource convert = Maven40ModelConverter.convert(it);
+      list.add(convert);
+    }
+    return list;
+  }
+
+  private static List<MavenSource> convertSourceRoots(Collection<SourceRoot> roots) {
+    List<MavenSource> list = new ArrayList<>();
+    for (SourceRoot it : roots) {
+      MavenSource convert = Maven40ModelConverter.convert(it);
+      list.add(convert);
+    }
+    return list;
   }
 
   private static List<Exception> filterExceptions(List<Throwable> list) {

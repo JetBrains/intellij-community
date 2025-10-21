@@ -7,11 +7,14 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-object InsertStringTemplateBracesInsertHandler : InsertHandler<LookupElement> {
+@Serializable
+object InsertStringTemplateBracesInsertHandler : SerializableInsertHandler {
 
     override fun handleInsert(
         insertionContext: InsertionContext,

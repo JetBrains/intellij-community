@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ExceptionUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -77,7 +76,7 @@ inline fun Logger.traceThrowable(lazyThrowable: () -> Throwable) {
   }
 }
 
-/** Consider using [Result.getOrLogException] for more straight-forward API instead. */
+/** Consider using [Result.getOrHandleException] for more straight-forward API instead. */
 @Internal
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   return runCatching {
@@ -85,21 +84,61 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   }.getOrLogException(this)
 }
 
+/**
+ * Returns the result value if it's a success, or logs the exception returns null if it's a failure.
+ *
+ * Control flow exceptions are rethrown, not logged. See [Result.getOrHandleException] for details.
+ *
+ * Consider using [Result.getOrHandleException] to have more control over how the exception is handled.
+ * Especially consider passing a custom message to the logger, not just the exception.
+ */
 @Internal
 fun <T> Result<T>.getOrLogException(logger: Logger): T? {
-  return getOrLogException {
+  return getOrHandleException {
     logger.error(it)
   }
 }
 
+/**
+ * Returns the result value if it's a success, or calls the given handler and returns null if it's a failure.
+ *
+ * If the result is a success, its value is returned and the handler is not called.
+ *
+ * If the result is a failure, and the exception is a control flow exception (`CancellationException` or `ControlFlowException`),
+ * then the exception is rethrown and the current stack trace is added to it as a suppressed exception.
+ *
+ * If the result is a failure, and the exception is not a control flow exception,
+ * then the given [handler] is called and `null` is returned.
+ */
 @Internal
-inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? {
+@Deprecated(
+  "The name is misleading, as the handler can do anything, not just log",
+  replaceWith = ReplaceWith("getOrHandleException")
+)
+inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? = getOrHandleException(log)
+
+@Internal
+inline fun <T> Result<T>.getOrHandleException(handler: (Throwable) -> Unit): T? {
   return onFailure { e ->
-    if (e is ProcessCanceledException || e is CancellationException) {
-      throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
-    }
-    else {
-      log(e)
-    }
+    rethrowControlFlowException(e)
+    handler(e)
   }.getOrNull()
+}
+
+/**
+ * Rethrows the given exception if it's a control flow exception.
+ *
+ * The control flow exceptions are currently defined as [CancellationException]
+ * (including [com.intellij.openapi.progress.ProcessCanceledException])
+ * and anything marked [ControlFlowException].
+ *
+ * The current stack trace is added to the rethrown exception as a suppressed exception.
+ *
+ * @param e the exception (`null` means do nothing)
+ */
+@Internal
+fun rethrowControlFlowException(e: Throwable?) {
+  if (e is CancellationException || e is ControlFlowException) {
+    throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
+  }
 }

@@ -8,6 +8,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isStringType
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -18,6 +23,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getContentRange
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Recursively visits all operands of binary expression with plus and,
@@ -40,7 +46,7 @@ fun KtExpression.containNoNewLine(): Boolean {
  * - is a binary expression with string plus, and
  * - has no operand with a new line.
  */
-context(KaSession)
+context(_: KaSession)
 fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpression): Boolean {
     if (expression.operationToken != KtTokens.PLUS) return false
 
@@ -63,7 +69,7 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
  *  - For "a" + 'b' + "c", this function returns true for "a" + 'b' + "c", but returns false for 'b' + "c" since 'b' + "c" has a parent
  *    (i.e., "a" + 'b' + "c") that consists of only string plus operations.
  */
-context(KaSession)
+context(_: KaSession)
 fun isFirstStringPlusExpressionWithoutNewLineInOperands(element: KtBinaryExpression): Boolean {
     if (!isStringPlusExpressionWithoutNewLineInOperands(element)) return false
 
@@ -104,8 +110,8 @@ private fun KtExpression.dropToStringAndParenthesis(): KtExpression =
  *     "a" + 1 + 'b' + foo + 2.3f + bar -> "a1b${foo}2.3f${bar}"
  *   this function can convert `bar` to "${bar}", `2.3f` to "2.3f", ...
  */
-context(KaSession)
-private fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: Boolean, nextText: String?): String {
+context(_: KaSession)
+fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: Boolean, nextText: String?): String {
     if (expr == null) return ""
     val expression = expr.dropToStringAndParenthesis()
 
@@ -126,7 +132,7 @@ private fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: B
     return defaultStringTemplateForExpression
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtConstantExpression.buildStringTemplateForExpression(forceBraces: Boolean): String? {
     val constantValue = evaluate() ?: return "\${${text}}"
     val isChar = constantValue is KaConstantValue.CharValue
@@ -162,7 +168,7 @@ private fun KtStringTemplateExpression.buildStringTemplateForExpression(forceBra
     return stringContent
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun foldOperandsOfBinaryExpression(left: KtExpression?, right: String, factory: KtPsiFactory): KtStringTemplateExpression {
     val forceBraces = right.isNotEmpty()
             && right.first() != '$'
@@ -177,13 +183,13 @@ private fun foldOperandsOfBinaryExpression(left: KtExpression?, right: String, f
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 fun buildStringTemplateForBinaryExpression(expression: KtBinaryExpression): KtStringTemplateExpression {
     val rightText = buildStringTemplateForExpression(expression.right, forceBraces = false, nextText = null)
     return foldOperandsOfBinaryExpression(expression.left, rightText, KtPsiFactory(expression.project))
 }
 
-context(KaSession)
+context(_: KaSession)
 fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
     if (expression.textContains('\n')) return false
 
@@ -275,4 +281,31 @@ fun KtBinaryExpression?.containsPrefixedStringOperands(): Boolean {
     })
 
     return containsMultiDollarString
+}
+
+fun KtStringTemplateExpression.isSurroundedByLineBreaksOrBlanks(): Boolean {
+    return listOfNotNull(entries.firstOrNull(), entries.lastOrNull()).all { it.text.isLineBreakOrBlank() }
+}
+
+fun String.isLineBreakOrBlank(): Boolean = this == "\n" || this.isBlank()
+
+fun KtStringTemplateExpression.calculateIndent(): String =
+    entries
+        .asSequence()
+        .mapNotNull { entry -> if (entry.isStartOfLine()) entry.text.takeWhile { it.isWhitespace() } else null }
+        .minByOrNull { it.length } ?: ""
+
+fun KtStringTemplateEntry.isStartOfLine(): Boolean =
+    this.text != "\n" &&
+            prevSibling.safeAs<KtStringTemplateEntry>()?.text == "\n" &&
+            nextSibling.safeAs<KtStringTemplateEntry>() != null
+
+fun KtCallExpression.marginPrefix(): String? {
+    val argument = valueArguments.firstOrNull()?.getArgumentExpression()
+    if (argument != null) {
+        val stringTemplate = argument as? KtStringTemplateExpression ?: return null
+        val entry = stringTemplate.entries.toList().singleOrNull() as? KtLiteralStringTemplateEntry ?: return null
+        return entry.text.replace("\"", "")
+    }
+    return "|"
 }

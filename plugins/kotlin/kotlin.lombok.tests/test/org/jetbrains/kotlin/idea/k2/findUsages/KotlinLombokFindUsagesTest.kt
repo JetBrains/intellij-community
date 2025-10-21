@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinLombokFindUsagesTest: KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR
+        return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR
     }
 
     override val pluginMode: KotlinPluginMode

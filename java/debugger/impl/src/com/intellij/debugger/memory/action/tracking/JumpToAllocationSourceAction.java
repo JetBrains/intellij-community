@@ -3,23 +3,26 @@ package com.intellij.debugger.memory.action.tracking;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.memory.action.DebuggerTreeAction;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.StackFramePopup;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue;
+import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JumpToAllocationSourceAction extends DebuggerTreeAction {
+public class JumpToAllocationSourceAction extends XDebuggerTreeBackendOnlyActionBase {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -31,7 +34,7 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
   }
 
   @Override
-  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+  protected void perform(@NotNull XValue value, @NlsSafe @NotNull String nodeName, @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final List<StackFrameItem> stack = getStack(e);
     if (project != null && stack != null) {
@@ -46,8 +49,8 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
 
   private static @Nullable List<StackFrameItem> getStack(AnActionEvent e) {
     final Project project = e.getProject();
-    final XValueNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    final ObjectReference ref = selectedNode != null ? getObjectReference(selectedNode) : null;
+    final XDebuggerTreeSelectedValue selectedValue = getSelectedValue(e.getDataContext());
+    final ObjectReference ref = selectedValue != null ? getObjectReference(selectedValue.getXValue()) : null;
     if (project == null || ref == null) {
       return null;
     }

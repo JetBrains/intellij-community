@@ -583,6 +583,7 @@ a:com.intellij.util.indexing.FileBasedIndexExtension
 - indexDirectories():Z
 - traceKeyHashToVirtualFileMapping():Z
 a:com.intellij.util.indexing.IdFilter
+- sf:ACCEPT_ALL:com.intellij.util.indexing.IdFilter
 - <init>():V
 - a:containsFileId(I):Z
 - s:getProjectIdFilter(com.intellij.openapi.project.Project,Z):com.intellij.util.indexing.IdFilter

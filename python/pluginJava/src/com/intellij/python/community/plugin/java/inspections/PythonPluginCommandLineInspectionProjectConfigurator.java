@@ -19,7 +19,7 @@ import com.intellij.python.community.plugin.java.facet.JavaPythonFacet;
 import com.intellij.python.community.plugin.java.facet.JavaPythonFacetType;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

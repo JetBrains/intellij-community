@@ -56,7 +56,7 @@ final class SettingsHelper {
     CefSettings settings = config.getCefSettings();
     settings.windowless_rendering_enabled = isOffScreenRenderingModeEnabled();
     settings.log_severity = getLogLevel();
-    settings.log_file = getLogPath();
+    settings.log_file = getChromiumLogPath();
 
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
@@ -136,7 +136,7 @@ final class SettingsHelper {
     String[] proxyArgs = null;
     if (proxySettings.USE_PROXY_PAC) {
       if (proxySettings.USE_PAC_URL) {
-        proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL + ":" + proxySettings.PROXY_PORT};
+        proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL};
       }
       else {
         // when "Auto-detect proxy settings" proxy option is enabled in IntelliJ:
@@ -239,7 +239,7 @@ final class SettingsHelper {
       case "warning" -> CefSettings.LogSeverity.LOGSEVERITY_WARNING;
       case "error" -> CefSettings.LogSeverity.LOGSEVERITY_ERROR;
       case "fatal" -> CefSettings.LogSeverity.LOGSEVERITY_FATAL;
-      default -> CefSettings.LogSeverity.LOGSEVERITY_DEFAULT;
+      default -> CefSettings.LogSeverity.LOGSEVERITY_DISABLE;
     };
   }
 
@@ -257,7 +257,13 @@ final class SettingsHelper {
 
     final String def = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log";
     final String result = Utils.getString("ide.browser.jcef.log.path", def).trim();
-    return result.isEmpty() || result.equals("null") ? null : result;
+    return result.isEmpty() || result.equals("null") || result.equals("stderr") ? null : result;
+  }
+
+  static String getChromiumLogPath() {
+    final String def = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_chromium_" + ProcessHandle.current().pid() + ".log";
+    final String result = Utils.getString("ide.browser.jcef.log_chromium.path", def).trim();
+    return result.isEmpty() || result.equals("null") || result.equals("stderr") ? null : result;
   }
 
   private static @Nullable String readLinuxDistributionFromOsRelease() {

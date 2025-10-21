@@ -5,5 +5,3 @@ class C {
 fun foo(c: C) {
     c[<caret>]
 }
-
-//Text: (<highlight>pInt: Int</highlight>, pString: String), Disabled: false, Strikeout: false, Green: true

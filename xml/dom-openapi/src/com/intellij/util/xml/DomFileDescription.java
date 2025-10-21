@@ -14,9 +14,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.reflect.Type;
@@ -120,6 +118,12 @@ public class DomFileDescription<T> {
 
   protected final void registerReferenceInjector(DomReferenceInjector injector) {
     myInjectors.add(injector);
+  }
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public void registerReferenceInjectorTestAccessor(DomReferenceInjector injector) {
+    registerReferenceInjector(injector);
   }
 
   public List<DomReferenceInjector> getReferenceInjectors() {

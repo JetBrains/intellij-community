@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.debugger.settings.ThreadsViewSettings
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
@@ -15,8 +16,23 @@ abstract class AbstractCoroutineAsyncStackTraceTest : AbstractAsyncStackTraceTes
         preferences: DebuggerPreferences
     ) {
         XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = false
+        setSettingForTest(
+            { ThreadsViewSettings.getInstance().SHOW_LINE_NUMBER },
+            { ThreadsViewSettings.getInstance().SHOW_LINE_NUMBER = it },
+            true
+        )
+        setSettingForTest(
+            { ThreadsViewSettings.getInstance().SHOW_CLASS_NAME },
+            { ThreadsViewSettings.getInstance().SHOW_CLASS_NAME = it },
+            true
+        )
+        setSettingForTest(
+            { ThreadsViewSettings.getInstance().SHOW_PACKAGE_NAME },
+            { ThreadsViewSettings.getInstance().SHOW_PACKAGE_NAME = it },
+            false
+        )
         doWhenXSessionPausedThenResume {
-            printAsyncStackTrace(true)
+            printAsyncStackTrace()
         }
     }
 

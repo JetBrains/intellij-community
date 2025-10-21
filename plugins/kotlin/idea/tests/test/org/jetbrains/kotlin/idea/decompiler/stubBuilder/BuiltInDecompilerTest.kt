@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.util.indexing.FileContentImpl
-import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInMetadataStubBuilder
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.metadata.builtins.BuiltInsBinaryVersion
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -23,7 +23,8 @@ abstract class AbstractBuiltInDecompilerTest : KotlinLightCodeInsightFixtureTest
         val stubTreeFromDecompiler = configureAndBuildFileStub(packageFqName, classNameForDirectorySearch)
         val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(myFixture.file)
         val expectedText = stubTreeFromDecompiledText.serializeToString()
-        Assert.assertEquals("Stub mismatch for package $packageFqName", expectedText, stubTreeFromDecompiler.serializeToString())
+        val actualText = stubTreeFromDecompiler.serializeToString()
+        Assert.assertEquals("Stub mismatch for package $packageFqName", expectedText, actualText)
         return expectedText
     }
 
@@ -41,7 +42,7 @@ class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
         val dirInRuntime = findDir(packageFqName, project, classNameForDirectorySearch)
         val kotlinBuiltInsVirtualFile = dirInRuntime.children.single { it.extension == BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION }
         myFixture.configureFromExistingVirtualFile(kotlinBuiltInsVirtualFile)
-        return KotlinBuiltInDecompiler().stubBuilder.buildFileStub(FileContentImpl.createByFile(kotlinBuiltInsVirtualFile))!!
+        return KotlinBuiltInMetadataStubBuilder.buildFileStub(FileContentImpl.createByFile(kotlinBuiltInsVirtualFile))!!
     }
 
     fun testBuiltInStubTreeEqualToStubTreeFromDecompiledText() {
@@ -57,14 +58,14 @@ class BuiltInDecompilerForWrongMetadataVersionTest : AbstractBuiltInDecompilerTe
 
     override fun configureAndBuildFileStub(packageFqName: String, classNameForDirectorySearch: String?): PsiFileStub<*> {
         myFixture.configureByFile(BuiltInSerializerProtocol.getBuiltInsFilePath(FqName(packageFqName)))
-        return KotlinBuiltInDecompiler().stubBuilder.buildFileStub(FileContentImpl.createByFile(myFixture.file.virtualFile))!!
+        return KotlinBuiltInMetadataStubBuilder.buildFileStub(FileContentImpl.createByFile(myFixture.file.virtualFile))!!
     }
 
     fun testStubTreesEqualForIncompatibleAbiVersion() {
-        val serializedStub = doTest("test")
+        val serializedStub = doTest("test").replace(BuiltInsBinaryVersion.INSTANCE.toString(), $$"$VERSION$")
         KotlinTestUtils.assertEqualsToFile(
             File(testDataDirectory, "test.text"),
-            myFixture.file.text.replace(BuiltInsBinaryVersion.INSTANCE.toString(), "\$VERSION\$")
+            myFixture.file.text.replace(BuiltInsBinaryVersion.INSTANCE.toString(), $$"$VERSION$")
         )
         KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "test.stubs"), serializedStub)
     }

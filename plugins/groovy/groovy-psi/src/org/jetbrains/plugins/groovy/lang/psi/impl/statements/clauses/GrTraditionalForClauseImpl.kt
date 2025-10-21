@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditiona
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespacesAndComments
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessLocals
 
 internal class GrTraditionalForClauseImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrTraditionalForClause {
 
@@ -37,12 +38,21 @@ internal class GrTraditionalForClauseImpl(node: ASTNode) : GroovyPsiElementImpl(
 
   override fun getUpdate(): GrExpressionList? = lastChild as? GrExpressionList
 
-  override fun processDeclarations(processor: PsiScopeProcessor,
-                                   state: ResolveState,
-                                   lastParent: PsiElement?,
-                                   place: PsiElement): Boolean {
-    val initialization = initialization ?: return true
-    return lastParent === initialization ||
-           initialization.processDeclarations(processor, state, null, place)
+  override fun processDeclarations(
+    processor: PsiScopeProcessor,
+    state: ResolveState,
+    lastParent: PsiElement?,
+    place: PsiElement,
+  ): Boolean {
+    if(!processor.shouldProcessLocals()) return true
+
+    val initialization = initialization
+    if (initialization != null && initialization == lastParent) return true
+
+    if (initialization != null && !initialization.processDeclarations(processor, state, null, place)) return false
+
+    val condition: GrExpression? = getCondition()
+    if ((lastParent == null || lastParent == update) && condition != null) return condition.processDeclarations(processor, state, null, place)
+    return true
   }
 }

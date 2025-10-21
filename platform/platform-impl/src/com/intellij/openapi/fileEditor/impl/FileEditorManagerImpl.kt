@@ -6,7 +6,9 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
@@ -21,6 +23,8 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.*
@@ -82,6 +86,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ObjectUtils
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -115,7 +120,6 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
-import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<FileEditorManagerImpl>()
@@ -317,7 +321,7 @@ open class FileEditorManagerImpl(
       })
     }
     else {
-      initJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      initJob = coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
         val component = EditorsSplitters(manager = this@FileEditorManagerImpl, coroutineScope = coroutineScope)
         component.isFocusable = false
         InternalUICustomization.getInstance()?.configureEditorsSplitters(component)
@@ -374,6 +378,11 @@ open class FileEditorManagerImpl(
   internal suspend fun init(): kotlin.Pair<EditorsSplitters, EditorSplitterState?> {
     initJob.join()
     return mainSplitters to state.getAndSet(null)
+  }
+
+  @Internal
+  suspend fun waitInitialization() {
+    initJob.join()
   }
 
   companion object {
@@ -480,22 +489,24 @@ open class FileEditorManagerImpl(
   private suspend fun rootsChanged(fileEditorProviderManager: FileEditorProviderManager) {
     val fileToProviders = IdentityHashMap<VirtualFile, List<FileEditorProvider>>()
     val providerChanges = openedComposites.toList().mapNotNull { composite ->
-      val file = composite.file
-      val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
-      val editorTypeIds = providers.mapTo(LinkedHashSet()) { it.editorTypeId }
-      val oldEditorTypeIds = getEditorTypeIds(composite)
-      if (oldEditorTypeIds.isEmpty()) {
-        // not initialized or invalid
-        return@mapNotNull null
-      }
+      withContext(composite.clientId.asContextElement()) {
+        val file = composite.file
+        val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
+        val editorTypeIds = providers.mapTo(LinkedHashSet()) { it.editorTypeId }
+        val oldEditorTypeIds = getEditorTypeIds(composite)
+        if (oldEditorTypeIds.isEmpty()) {
+          // not initialized or invalid
+          return@withContext null
+        }
 
-      val newProviders = providers.filter { !oldEditorTypeIds.contains(it.editorTypeId) }
-      val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }
-      if (newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
-        null
-      }
-      else {
-        ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
+        val newProviders = providers.filter { !oldEditorTypeIds.contains(it.editorTypeId) }
+        val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }
+        if (newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
+          null
+        }
+        else {
+          ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
+        }
       }
     }
     if (providerChanges.isEmpty()) {
@@ -887,7 +898,7 @@ open class FileEditorManagerImpl(
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
-        openInRightSplit(file, options.requestFocus, options.explicitlyOpenCompositeProvider)?.let {
+        openInRightSplit(file, options.requestFocus, options.forceFocus, options.explicitlyOpenCompositeProvider)?.let {
           return it
         }
       }
@@ -931,7 +942,7 @@ open class FileEditorManagerImpl(
     }
     else if (mode == OpenMode.RIGHT_SPLIT) {
       withContext(Dispatchers.EDT) {
-        openInRightSplit(file, options.requestFocus, explicitlySetCompositeProvider = options.explicitlyOpenCompositeProvider)
+        openInRightSplit(file, options.requestFocus, options.forceFocus, explicitlySetCompositeProvider = options.explicitlyOpenCompositeProvider)
       }?.let { composite ->
         if (composite is EditorComposite) {
           composite.waitForAvailable()
@@ -1057,6 +1068,7 @@ open class FileEditorManagerImpl(
   private fun openInRightSplit(
     file: VirtualFile,
     requestFocus: Boolean,
+    forceFocus: Boolean,
     explicitlySetCompositeProvider: (() -> EditorComposite?)? = null
   ): FileEditorComposite? {
     val window = splitters.currentWindow ?: return null
@@ -1066,12 +1078,12 @@ open class FileEditorManagerImpl(
         // already in right splitter
         if (requestFocus) {
           window.setCurrentCompositeAndSelectTab(composite)
-          focusEditorOnComposite(composite = composite, splitters = window.owner)
+          focusEditorOnComposite(composite = composite, splitters = window.owner, forceFocus = forceFocus)
         }
         return composite
       }
     }
-    return window.owner.openInRightSplit(file, explicitlySetCompositeProvider = explicitlySetCompositeProvider)?.composites()?.firstOrNull { it.file == file }
+    return window.owner.openInRightSplit(file, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)?.composites()?.firstOrNull { it.file == file }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -2481,6 +2493,7 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
 
   // https://youtrack.jetbrains.com/issue/IDEA-319932
   // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
+  // IJPL-196175 & IJPL-202195: `pumpEventsForHierarchy` can't be used within `runWithModalProgressBlocking`
   if (ApplicationManager.getApplication().isWriteAccessAllowed) {
     // todo silenceWriteLock instead of executeSuspendingWriteAction
     (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(
@@ -2492,22 +2505,36 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
       }
     }
   }
+  else if (LaterInvocator.isInModalContext()) {
+    inModalContext(ObjectUtils.sentinel("Opening file=${composite.file.name}")) {
+      job.waitBlockingAndPumpEdt()
+    }
+  }
   else {
     // we don't need progress - handled by async editor loader
-    val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
-    try {
-      runBlocking(parallelizedLockContext) {
-        job.invokeOnCompletion {
-          EventQueue.invokeLater(EmptyRunnable.getInstance())
-        }
+    job.waitBlockingAndPumpEdt()
+  }
+}
 
+@Suppress("RAW_RUN_BLOCKING")
+@RequiresEdt
+private fun Job.waitBlockingAndPumpEdt() {
+  val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+  try {
+    runBlocking(parallelizedLockContext) {
+      invokeOnCompletion {
+        EventQueue.invokeLater(EmptyRunnable.getInstance())
+      }
+
+      PerformanceWatcher.getInstance().smokeAndMirrors("blockingWaitForCompositeFileOpen").use {
         IdeEventQueue.getInstance().pumpEventsForHierarchy {
-          job.isCompleted
+          isCompleted
         }
       }
-    } finally {
-      cleanup()
     }
+  }
+  finally {
+    cleanup()
   }
 }
 

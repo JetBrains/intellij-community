@@ -1,0 +1,6 @@
+<idea-plugin>
+  <id>main</id>
+  <content>
+    <module name="my.module"/>
+  </content>
+</idea-plugin>

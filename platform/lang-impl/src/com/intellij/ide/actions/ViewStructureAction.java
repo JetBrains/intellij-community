@@ -2,15 +2,16 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
+import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.FileStructurePopupListener;
 import com.intellij.ide.util.StructureViewCompositeModel;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,16 +30,27 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PlaceHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class ViewStructureAction extends DumbAwareAction {
 
+  @Nullable
+  private final Consumer<AbstractTreeNode<?>> myCallbackAfterNavigation;
+
   public ViewStructureAction() {
     setEnabledInModalContext(true);
+    myCallbackAfterNavigation = null;
+  }
+
+  @ApiStatus.Internal
+  public ViewStructureAction(@Nullable Consumer<AbstractTreeNode<?>> callbackAfterNavigation) {
+    myCallbackAfterNavigation = callbackAfterNavigation;
   }
 
   @Override
@@ -55,7 +67,7 @@ public final class ViewStructureAction extends DumbAwareAction {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     }
 
-    FileStructurePopup popup = createPopup(project, fileEditor);
+    FileStructurePopup popup = createPopup(project, fileEditor, myCallbackAfterNavigation);
     if (popup == null) return;
 
     String title = virtualFile == null ? fileEditor.getName() : virtualFile.getName();
@@ -64,6 +76,13 @@ public final class ViewStructureAction extends DumbAwareAction {
   }
 
   public static @Nullable FileStructurePopup createPopup(@NotNull Project project, @NotNull FileEditor fileEditor) {
+    return createPopup(project, fileEditor, null);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable FileStructurePopup createPopup(@NotNull Project project,
+                                                         @NotNull FileEditor fileEditor,
+                                                         @Nullable Consumer<AbstractTreeNode<?>> callbackAfterNavigation) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     StructureViewBuilder builder = fileEditor.getStructureViewBuilder();
     if (builder == null) return null;
@@ -83,10 +102,9 @@ public final class ViewStructureAction extends DumbAwareAction {
       treeModel = createStructureViewModel(project, fileEditor, structureView);
     }
     if (treeModel instanceof PlaceHolder) {
-      //noinspection unchecked
       ((PlaceHolder)treeModel).setPlace(TreeStructureUtil.PLACE);
     }
-    FileStructurePopup popup = new FileStructurePopup(project, fileEditor, treeModel);
+    FileStructurePopup popup = new FileStructurePopup(project, fileEditor, treeModel, callbackAfterNavigation);
     if (structureView != null) Disposer.register(popup, structureView);
     return popup;
   }

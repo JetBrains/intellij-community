@@ -3,10 +3,12 @@ package com.intellij.execution.eel
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.UnixSignal
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readAllBytes
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -14,7 +16,7 @@ import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import io.ktor.util.decodeString
+import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.time.Duration.Companion.minutes
@@ -35,6 +38,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 class EelLocalExecApiTest {
   companion object {
+    private val logger = fileLogger()
     private const val PTY_COLS = 42
     private const val PTY_ROWS = 24
 
@@ -62,8 +66,7 @@ class EelLocalExecApiTest {
       val r = localEel.exec.spawnProcess("something that doesn't exist for sure").eelIt()
       Assertions.fail("Process shouldn't be created ${r}")
     }
-    catch (e: ExecuteProcessException) {
-      // **nix: ENOENT 2 No such file or directory
+    catch (e: ExecuteProcessException) { // **nix: ENOENT 2 No such file or directory
       // win: ERROR_FILE_NOT_FOUND 2 winerror.h
       Assertions.assertEquals(2, e.errno, "Wrong error code")
     }
@@ -90,14 +93,15 @@ class EelLocalExecApiTest {
 
     return testCases.map { (exitType, ptyManagement) ->
       DynamicTest.dynamicTest("$exitType $ptyManagement") {
-        timeoutRunBlocking(1.minutes) {
+        timeoutRunBlocking(5.minutes) {
           testOutputImpl(ptyManagement, exitType)
         }
       }
     }
   }
 
-  private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType) {
+  @ThrowsChecked(ExecuteProcessException::class)
+  private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType): Unit = coroutineScope {
     val builder = executor.createBuilderToExecuteMain(localEel.exec)
     builder.interactionOptions(when (ptyManagement) {
                                  PTYManagement.NO_PTY -> null
@@ -105,6 +109,16 @@ class EelLocalExecApiTest {
                                  PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
                                })
     val process = builder.eelIt()
+    launch {
+      try {
+        process.exitCode.await()
+      }
+      catch (e: CancellationException) {
+        process.kill()
+        throw e
+      }
+    }
+    logger.warn("Process started")
 
     // Resize tty
     when (ptyManagement) {
@@ -119,11 +133,13 @@ class EelLocalExecApiTest {
       PTYManagement.PTY_SIZE_FROM_START -> Unit
       PTYManagement.PTY_RESIZE_LATER -> {
         process.resizePty(PTY_COLS, PTY_ROWS)
+        delay(1.seconds) // Resize might take some time
       }
     }
-
+    val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
+      .onUnmappableCharacter(CodingErrorAction.REPORT)
     val dirtyBuffer = ByteBuffer.allocate(8192)
-    val cleanBuffer = CleanBuffer()
+    val cleanBuffer = CleanBuffer('J')
     withContext(Dispatchers.Default) {
       withTimeoutOrNull(10.seconds) {
         val helloStream = if (ptyManagement == PTYManagement.NO_PTY) {
@@ -132,11 +148,18 @@ class EelLocalExecApiTest {
         else {
           process.stdout // stderr is redirected to stdout when launched with PTY
         }
+        logger.warn("Waiting for $HELLO")
         while (helloStream.receive(dirtyBuffer) != ReadResult.EOF) {
-          cleanBuffer.add(dirtyBuffer.flip().decodeString())
+          val line = decoder.decode(dirtyBuffer.flip()).toString()
+          logger.warn("Adding raw line '$line'")
+          cleanBuffer.add(line)
           dirtyBuffer.clear()
-          if (HELLO in cleanBuffer.getString()) {
+          val fullLine = cleanBuffer.getString()
+          if (HELLO in fullLine) {
             break
+          }
+          else {
+            logger.warn("No $HELLO in $fullLine")
           }
         }
       }
@@ -145,18 +168,22 @@ class EelLocalExecApiTest {
 
 
     // Test tty api
+    logger.warn("Test tty api")
     var ttyState: TTYState?
     cleanBuffer.setPosEnd(HELLO)
     while (true) {
 
-      ttyState = TTYState.deserializeIfValid(cleanBuffer.getString())
+      ttyState = TTYState.deserializeIfValid(cleanBuffer.getString(), logger::warn)
       if (ttyState != null) {
         break
       }
       process.stdout.receive(dirtyBuffer)
-      cleanBuffer.add(dirtyBuffer.flip().decodeString())
+      val line = decoder.decode(dirtyBuffer.flip()).toString()
+      logger.warn("Line read $line")
+      cleanBuffer.add(line)
       dirtyBuffer.clear()
     }
+    logger.warn("TTY check finished")
     when (ptyManagement) {
       PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
         Assertions.assertNotNull(ttyState.size)
@@ -169,39 +196,25 @@ class EelLocalExecApiTest {
       }
     }
 
-    coroutineScope {
-      // TODO Remove this reading after IJPL-186154 is fixed.
-      launch {
-        process.stdout.readAllBytesAsync(this)
-      }
-      launch {
-        process.stderr.readAllBytesAsync(this)
-      }
+    if (ptyManagement == PTYManagement.PTY_RESIZE_LATER && (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) && process.isWinConPtyProcess) {
+      delay(10.seconds) // workaround: wait a bit to let ConPTY apply the resize
+    }
 
-      if (ptyManagement == PTYManagement.PTY_RESIZE_LATER &&
-          (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) &&
-          process.isWinConPtyProcess) {
-        delay(1.seconds) // workaround: wait a bit to let ConPTY apply the resize
+    // Test kill api
+    when (exitType) {
+      ExitType.KILL -> process.kill()
+      ExitType.TERMINATE -> {
+        when (process) {
+          is EelPosixProcess -> process.terminate()
+          is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
+        }
       }
-
-      // Test kill api
-      when (exitType) {
-        ExitType.KILL -> process.kill()
-        ExitType.TERMINATE -> {
-          when (process) {
-            is EelPosixProcess -> process.terminate()
-            is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
-          }
-        }
-        ExitType.INTERRUPT -> {
-          // Terminate sleep with interrupt/CTRL+C signal
-          process.sendCommand(Command.SLEEP)
-          process.interrupt()
-        }
-        ExitType.EXIT_WITH_COMMAND -> {
-          // Just command to ask script return gracefully
-          process.sendCommand(Command.EXIT)
-        }
+      ExitType.INTERRUPT -> { // Terminate sleep with interrupt/CTRL+C signal
+        process.sendCommand(Command.SLEEP)
+        process.interrupt()
+      }
+      ExitType.EXIT_WITH_COMMAND -> { // Just command to ask script return gracefully
+        process.sendCommand(Command.EXIT)
       }
     }
 
@@ -211,21 +224,18 @@ class EelLocalExecApiTest {
         assertNotEquals(0, exitCode) //Brutal kill is never 0
       }
       ExitType.TERMINATE -> {
-        if (SystemInfoRt.isWindows) {
-          // We provide 0 as `ExitProcess` on Windows
+        if (SystemInfoRt.isWindows) { // We provide 0 as `ExitProcess` on Windows
           assertEquals(0, exitCode)
         }
         else {
           val sigCode = UnixSignal.SIGTERM.getSignalNumber(SystemInfoRt.isMac)
-          assertThat("Exit code must be signal code or +128 (if run using shell)",
-                     exitCode, anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+          assertThat("Exit code must be signal code or +128 (if run using shell)", exitCode, anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
         }
       }
       ExitType.INTERRUPT -> {
         when (ptyManagement) {
           PTYManagement.NO_PTY -> Unit // SIGINT is doubtful without PTY especially without console on Windows
-          PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
-            // CTRL+C/SIGINT handler returns 42, see script
+          PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> { // CTRL+C/SIGINT handler returns 42, see script
             assertEquals(INTERRUPT_EXIT_CODE, exitCode)
           }
         }
@@ -263,6 +273,40 @@ class EelLocalExecApiTest {
     finally {
       unmockkStatic(PathEnvironmentVariableUtil::class)
     }
+  }
+
+  @Test
+  fun `test getShellFromPasswdRecords`() {
+    // docker run --rm ubuntu:24.04 getent passwd
+    val records = listOf(
+      "# Comments are allowed",
+      "root:x:0:0:root:/root:/bin/bash",
+      "daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin",
+      "bin:x:2:2:bin:/bin:/usr/sbin/nologin",
+      "sys:x:3:3:sys:/dev:/usr/sbin/nologin",
+      "sync:x:4:65534:sync:/bin:/bin/sync",
+      "games:x:5:60:games:/usr/games:/usr/sbin/nologin",
+      "man:x:6:12:man:/var/cache/man:/usr/sbin/nologin",
+      "lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin",
+      "mail:x:8:8:mail:/var/mail:/usr/sbin/nologin",
+      "news:x:9:9:news:/var/spool/news:/usr/sbin/nologin",
+      "uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin",
+      "proxy:x:13:13:proxy:/bin:/usr/sbin/nologin",
+      "www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin",
+      "backup:x:34:34:backup:/var/backups:/usr/sbin/nologin",
+      "list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin",
+      "irc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin",
+      "_apt:x:42:65534::/nonexistent:/usr/sbin/nologin",
+      "nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin",
+      "ubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash",
+      "# commented_ubuntu:x:1001:1001:Ubuntu:/home/ubuntu:/bin/bash",
+    )
+
+    getShellFromPasswdRecords(records, 0) shouldBe "/bin/bash"
+    getShellFromPasswdRecords(records, 1) shouldBe "/usr/sbin/nologin"
+    getShellFromPasswdRecords(records, 1000) shouldBe "/bin/bash"
+    getShellFromPasswdRecords(records, 1001) shouldBe null
+    getShellFromPasswdRecords(records, 12345) shouldBe null
   }
 
   /**

@@ -3,7 +3,9 @@ package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -18,6 +20,12 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_21;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Registry.get("spellchecker.grazie.enabled").setValue(true, getTestRootDisposable());
   }
 
   public void testCorrectJava() { doTestInAllModes(); }
@@ -41,7 +49,8 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   public void testNonNlsField() { doTestInAllModes(); }
   public void testNonNlsField2() { doTestInAllModes(); }
   public void testNonNlsLocalVariable() { doTestInAllModes(); }
-  public void testNonNlsLocalVariableAndComment() { doTestInAllModes(); }
+  public void testNonNlsLocalVariableAndComment() { doTest(false); }
+  public void testNonNlsLocalVariableAndCommentDumb() { doTest(true); }
   public void testFieldComment() { doTestInAllModes(); }
   public void testDoNotCheckDerivedNames() { doTestInAllModes(); }
   public void testSkipDateTime() { doTestInAllModes(); }

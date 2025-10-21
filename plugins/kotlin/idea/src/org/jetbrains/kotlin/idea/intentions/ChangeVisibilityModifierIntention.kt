@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 open class ChangeVisibilityModifierIntention protected constructor(val modifier: KtModifierKeywordToken) :
-  SelfTargetingRangeIntention<KtDeclaration>(KtDeclaration::class.java, KotlinBundle.lazyMessage("make.0", modifier.value)) {
+  SelfTargetingRangeIntention<KtDeclaration>(KtDeclaration::class.java, KotlinBundle.messagePointer("make.0", modifier.value)) {
     override fun startInWriteAction(): Boolean = false
 
     override fun applicabilityRange(element: KtDeclaration): TextRange? {
@@ -48,7 +48,7 @@ open class ChangeVisibilityModifierIntention protected constructor(val modifier:
             if (element.isGetter) return null
             if (targetVisibility == DescriptorVisibilities.PUBLIC) {
                 val explicitVisibility = element.modifierList?.visibilityModifierType()?.value ?: return null
-                setTextGetter(KotlinBundle.lazyMessage("remove.0.modifier", explicitVisibility))
+                setTextGetter(KotlinBundle.messagePointer("remove.0.modifier", explicitVisibility))
             } else {
                 val propVisibility = (element.property.toDescriptor() as? DeclarationDescriptorWithVisibility)?.visibility ?: return null
                 if (propVisibility == targetVisibility) return null
@@ -59,7 +59,7 @@ open class ChangeVisibilityModifierIntention protected constructor(val modifier:
         val defaultRange = noModifierYetApplicabilityRange(element) ?: return null
 
         if (element is KtPrimaryConstructor && defaultRange.isEmpty && element.visibilityModifier() == null) {
-            setTextGetter(KotlinBundle.lazyMessage("make.primary.constructor.0", modifier.value)) // otherwise it may be confusing
+            setTextGetter(KotlinBundle.messagePointer("make.primary.constructor.0", modifier.value)) // otherwise it may be confusing
         }
 
         return if (modifierList != null)

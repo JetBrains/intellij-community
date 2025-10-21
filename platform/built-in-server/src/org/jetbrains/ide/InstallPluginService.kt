@@ -72,7 +72,7 @@ internal class InstallPluginService : RestService() {
   ): Nothing? {
     val marketplaceRequests = MarketplaceRequests.getInstance()
     val compatibleUpdatesInfo = pluginIds
-      .mapNotNull { PluginId.findId(it) }
+      .map { PluginId(it) }
       .map { id -> id.idString to (marketplaceRequests.getLastCompatiblePluginUpdate(id) != null) }
       .let { info ->
         if (info.size != 1) info
@@ -97,7 +97,7 @@ internal class InstallPluginService : RestService() {
   private fun installPlugin(request: FullHttpRequest,
                             context: ChannelHandlerContext,
                             pluginIds: List<String>): Nothing? {
-    val plugins = pluginIds.mapNotNull { PluginId.findId(it) }
+    val plugins = pluginIds.map { PluginId(it) }
     if (isAvailable) {
       isAvailable = false
       val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject

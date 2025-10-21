@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build.events;
 
+import com.intellij.build.events.BuildEventsNls.Title;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
@@ -14,15 +15,12 @@ public interface MessageEvent extends BuildEvent {
     ERROR, WARNING, INFO, STATISTICS, SIMPLE
   }
 
-  @NotNull
-  Kind getKind();
+  @NotNull Kind getKind();
 
-  @NotNull
-  @BuildEventsNls.Title
-  String getGroup();
+  @Title
+  @NotNull String getGroup();
 
-  @Nullable
-  Navigatable getNavigatable(@NotNull Project project);
+  @Nullable Navigatable getNavigatable(@NotNull Project project);
 
-  MessageEventResult getResult();
+  @NotNull MessageEventResult getResult();
 }

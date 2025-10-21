@@ -25,32 +25,33 @@
 24(25) element: PyBinaryExpression
 25(26) element: PyBinaryExpression
 26(27,28) READ ACCESS: collapse
-27(32) element: null. Condition: collapse:false
+27(33) element: null. Condition: collapse:false
 28(29) element: null. Condition: collapse:true
-29(30,31) element: PyLambdaExpression
-30(32) element: null. Condition: (lambda s: " ".join(s.split())):false
-31(35) element: null. Condition: (lambda s: " ".join(s.split())):true
-32(33,34) element: PyLambdaExpression
-33(35) element: null. Condition: (lambda s: s):false
-34(35) element: null. Condition: (lambda s: s):true
-35(36) WRITE ACCESS: processFunc
-36(37) element: PyPrintStatement
-37(38) element: PyListCompExpression
-38(39) element: PyReferenceExpression: methodList
-39(40,54) READ ACCESS: methodList
-40(41) element: PyTargetExpression: method
-41(42) WRITE ACCESS: method
-42(43) element: PyBinaryExpression
-43(44) READ ACCESS: method
-44(45) READ ACCESS: spacing
-45(46) element: PyCallExpression: method.ljust
-46(47) READ ACCESS: processFunc
-47(48) READ ACCESS: str
-48(49) READ ACCESS: getattr
-49(50) READ ACCESS: object
-50(51) READ ACCESS: method
-51(52) element: PyCallExpression: getattr
-52(53) element: PyCallExpression: str
-53(40,54) element: PyCallExpression: processFunc
-54(55) element: PyCallExpression: "\n".join
-55() element: null
+29(30) ASSERTTYPE ACCESS: collapse
+30(31,32) element: PyLambdaExpression
+31(33) element: null. Condition: (lambda s: " ".join(s.split())):false
+32(36) element: null. Condition: (lambda s: " ".join(s.split())):true
+33(34,35) element: PyLambdaExpression
+34(36) element: null. Condition: (lambda s: s):false
+35(36) element: null. Condition: (lambda s: s):true
+36(37) WRITE ACCESS: processFunc
+37(38) element: PyPrintStatement
+38(39) element: PyListCompExpression
+39(40) element: PyReferenceExpression: methodList
+40(41,55) READ ACCESS: methodList
+41(42) element: PyTargetExpression: method
+42(43) WRITE ACCESS: method
+43(44) element: PyBinaryExpression
+44(45) READ ACCESS: method
+45(46) READ ACCESS: spacing
+46(47) element: PyCallExpression: method.ljust
+47(48) READ ACCESS: processFunc
+48(49) READ ACCESS: str
+49(50) READ ACCESS: getattr
+50(51) READ ACCESS: object
+51(52) READ ACCESS: method
+52(53) element: PyCallExpression: getattr
+53(54) element: PyCallExpression: str
+54(41,55) element: PyCallExpression: processFunc
+55(56) element: PyCallExpression: "\n".join
+56() element: null

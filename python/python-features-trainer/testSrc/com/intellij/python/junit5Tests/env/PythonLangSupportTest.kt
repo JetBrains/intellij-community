@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
@@ -16,11 +16,13 @@ import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLockin
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.DEFAULT_VIRTUALENV_DIRNAME
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
@@ -62,7 +64,7 @@ class PythonLangSupportTest {
     assert(learningProjectsPath.startsWith(temporarySystemPath)) { "$learningProjectsPath must reside in $temporarySystemPath" }
 
     val sut = PythonLangSupport(ErrorSink {
-      Assertions.fail(it.message)
+      Assertions.fail(it.error.message)
     })
 
     if (venvAlreadyExists) {
@@ -84,7 +86,7 @@ class PythonLangSupportTest {
     val sdk = project.pythonSdk!!
     try {
       val pythonBinary = Path.of(sdk.homePath!!)
-      Assertions.assertTrue(VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonBinary).orThrow().languageLevel.isPy3K, "Sdk is broken")
+      Assertions.assertTrue(VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonBinary).orThrow().pythonInfo.languageLevel.isPy3K, "Sdk is broken")
     }
     finally {
       writeAction {

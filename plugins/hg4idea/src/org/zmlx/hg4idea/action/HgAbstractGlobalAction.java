@@ -76,10 +76,7 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     }
     HgVcs vcs = Objects.requireNonNull(HgVcs.getInstance(project));
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    if (roots == null || roots.length == 0) {
-      return false;
-    }
-    return true;
+    return roots.length != 0;
   }
 
   @CalledInAny

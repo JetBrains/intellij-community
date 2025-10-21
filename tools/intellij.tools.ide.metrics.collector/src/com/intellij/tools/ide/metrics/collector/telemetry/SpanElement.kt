@@ -8,7 +8,6 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonNames
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -43,7 +42,8 @@ internal fun toSpanElement(span: SpanData): SpanElement {
     isWarmup = isWarmup(tags),
     name = span.operationName,
     duration = span.durationNano ?: (span.duration.times(1000)),
-    startTimestamp = span.startTimeNano,
+    startTimestamp = span.startTimeNano ?: span.startTime?.let { Instant.ofEpochMilli(it / 1_000) }
+                     ?: throw IllegalStateException("startTime or startTimeNano should exists"),
     spanId = span.spanID,
     parentSpanId = span.getParentSpanId(),
     tags = tags,
@@ -143,8 +143,8 @@ data class SpanData(
   // see com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter.export
   @Contextual val duration: Duration,
   @Contextual val durationNano: Duration? = null,
-  @JsonNames("startTime")
-  @Contextual val startTimeNano: Instant,
+  @Contextual val startTimeNano: Instant? = null,
+  @Contextual val startTime: Long? = null,
 
   @JvmField @Serializable(with = CachedReferencesListSerializer::class) val references: List<SpanRef> = emptyList(),
   @JvmField @Serializable(with = CachedTagListSerializer::class) val tags: List<SpanTag> = emptyList(),

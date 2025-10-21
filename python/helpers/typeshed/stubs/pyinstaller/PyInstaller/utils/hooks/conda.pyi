@@ -4,12 +4,13 @@ from _typeshed import StrOrBytesPath
 from collections.abc import Iterable
 from importlib.metadata import PackagePath as _PackagePath
 from pathlib import Path
-from typing import Final, TypedDict
+from typing import Final, TypedDict, type_check_only
 
 CONDA_ROOT: Final[Path]
 CONDA_META_DIR: Final[Path]
 PYTHONPATH_PREFIXES: Final[list[Path]]
 
+@type_check_only
 class _RawDict(TypedDict):
     name: str
     version: str

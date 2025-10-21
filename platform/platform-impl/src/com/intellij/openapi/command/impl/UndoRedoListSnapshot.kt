@@ -43,17 +43,21 @@ internal class LocalCommandMergerSnapshot(
   }
 }
 
-internal class LocalUndoRedoSnapshot(
-  val clientSnapshots: Map<ClientId, PerClientLocalUndoRedoSnapshot>,
+internal class SharedUndoRedoSnapshot(
+  val actionsHolderSnapshot: UndoRedoSetSnapshot<AdjustableUndoableAction>,
   val sharedUndoStack: UndoRedoListSnapshot<ImmutableActionChangeRange>,
   val sharedRedoStack: UndoRedoListSnapshot<ImmutableActionChangeRange>,
+)
+
+internal class LocalUndoRedoSnapshot(
+  val clientSnapshots: Map<ClientId, PerClientLocalUndoRedoSnapshot>,
+  val sharedSnapshot: SharedUndoRedoSnapshot,
 )
 
 internal class PerClientLocalUndoRedoSnapshot(
   val localCommandMergerSnapshot: LocalCommandMergerSnapshot,
   val undoStackSnapshot: UndoRedoListSnapshot<UndoableGroup>,
   val redoStackSnapshot: UndoRedoListSnapshot<UndoableGroup>,
-  val actionsHolderSnapshot: UndoRedoSetSnapshot<AdjustableUndoableAction>,
 ) {
   companion object {
     @JvmStatic
@@ -61,7 +65,6 @@ internal class PerClientLocalUndoRedoSnapshot(
       LocalCommandMergerSnapshot.empty(),
       UndoRedoList<UndoableGroup>().snapshot(),
       UndoRedoList<UndoableGroup>().snapshot(),
-      UndoRedoSet<AdjustableUndoableAction>().snapshot(),
     )
   }
 }

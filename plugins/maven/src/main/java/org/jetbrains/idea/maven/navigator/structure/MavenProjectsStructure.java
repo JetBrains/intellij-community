@@ -31,7 +31,7 @@ import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
-public class MavenProjectsStructure extends SimpleTreeStructure {
+public final class MavenProjectsStructure extends SimpleTreeStructure {
   public enum MavenStructureDisplayMode {
     SHOW_ALL, SHOW_PROJECTS, SHOW_GOALS
   }
@@ -270,7 +270,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     ALWAYS, NEVER, NORMAL
   }
 
-  protected boolean showOnlyBasicPhases() {
+  boolean showOnlyBasicPhases() {
     if (getDisplayMode() == MavenStructureDisplayMode.SHOW_GOALS) {
       return false;
     }

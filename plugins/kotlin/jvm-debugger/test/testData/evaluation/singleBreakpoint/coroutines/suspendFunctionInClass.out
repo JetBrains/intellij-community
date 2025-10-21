@@ -2,9 +2,10 @@ LineBreakpoint created at suspendFunctionInClass.kt:26
 Run Java
 Connected to the target VM
 suspendFunctionInClass.kt:26
-Compile bytecode for val a = A()
-kotlinx.coroutines.runBlocking {
+Compile bytecode for kotlinx.coroutines.runBlocking {
+    val a = A()
     a.one() + a.two() + a.three()
+// RESULT: 6: I
 }
 // RESULT: 6: I
 Disconnected from the target VM

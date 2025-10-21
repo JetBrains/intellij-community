@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.BaseDataClass
 import com.intellij.workspaceModel.test.api.ChildEntity
+import com.intellij.workspaceModel.test.api.ChildEntityBuilder
 import com.intellij.workspaceModel.test.api.DerivedDataClass
 import com.intellij.workspaceModel.test.api.DerivedDerivedDataClass
 import com.intellij.workspaceModel.test.api.SimpleId
@@ -83,8 +84,8 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   }
 
 
-  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result),
-                                                     ChildEntity.Builder {
+  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(
+    result), ChildEntityBuilder {
     internal constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -151,8 +152,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
       if (this.aBaseEntityProperty != dataSource.aBaseEntityProperty) this.aBaseEntityProperty = dataSource.aBaseEntityProperty
       if (this.dBaseEntityProperty != dataSource.dBaseEntityProperty) this.dBaseEntityProperty = dataSource.dBaseEntityProperty
       if (this.bBaseEntityProperty != dataSource.bBaseEntityProperty) this.bBaseEntityProperty = dataSource.bBaseEntityProperty
-      if (this.sealedDataClassProperty != dataSource.sealedDataClassProperty) this.sealedDataClassProperty =
-        dataSource.sealedDataClassProperty
+      if (this.sealedDataClassProperty != dataSource.sealedDataClassProperty) this.sealedDataClassProperty = dataSource.sealedDataClassProperty
       if (this.cChildEntityProperty != dataSource.cChildEntityProperty) this.cChildEntityProperty = dataSource.cChildEntityProperty
       updateChildToParentReferences(parents)
     }
@@ -329,7 +329,7 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>(), SoftLinkabl
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildEntity> {
     val modifiable = ChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -355,11 +355,9 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>(), SoftLinkabl
     return ChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return ChildEntity(
-      name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty, cChildEntityProperty,
-      entitySource
-    ) {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return ChildEntity(name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty,
+                       cChildEntityProperty, entitySource) {
     }
   }
 

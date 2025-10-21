@@ -123,5 +123,11 @@ object KotlinArtifacts {
     val powerAssertPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.POWER_ASSERT_COMPILER_PLUGIN)
 
     @JvmStatic
+    val kotlinDataFrameCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_DATAFRAME_COMPILER_PLUGIN)
+
+    @JvmStatic
+    val kotlinPreloader: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_PRELOADER)
+
+    @JvmStatic
     val kotlinc: File = File(kotlincBinDirectory, KotlinArtifactNames.KOTLINC)
 }

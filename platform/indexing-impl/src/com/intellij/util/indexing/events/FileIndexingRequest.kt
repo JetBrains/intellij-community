@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events
 
 import com.intellij.openapi.diagnostic.Logger
@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.Objects
+import java.util.*
 
 @Internal
 class FileIndexingRequest private constructor(
@@ -27,13 +27,17 @@ class FileIndexingRequest private constructor(
 
     @JvmStatic
     fun updateRequest(file: VirtualFile): FileIndexingRequest {
-      LOG.assertTrue(file is VirtualFileWithId, "Not a VirtualFileWithId: $file")
+      if(file !is VirtualFileWithId){
+        LOG.error("Not a VirtualFileWithId: ${file.javaClass} [$file]")
+      }
       return FileIndexingRequest(isDeleteRequest = false, file)
     }
 
     @JvmStatic
     fun deleteRequest(file: VirtualFile): FileIndexingRequest {
-      LOG.assertTrue(file is VirtualFileWithId, "Not a VirtualFileWithId: $file")
+      if(file !is VirtualFileWithId){
+        LOG.error("Not a VirtualFileWithId: ${file.javaClass} [$file]")
+      }
       return FileIndexingRequest(isDeleteRequest = true, file)
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -151,9 +151,17 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return ArrayUtilRt.toStringArray(types);
   }
 
-  private @Nullable PsiClass getScope(){
-    if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
-      final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
+  private @Nullable PsiClass getScope() {
+    return getScope(this);
+  }
+
+  /**
+   * Returns the PsiClass targeted by the given reference element (e.g. {@code MyClass#…} or {@code MyClass##…}).
+   */
+  public static @Nullable PsiClass getScope(CompositePsiElement ref) {
+    final TreeElement firstChildNode = ref.getFirstChildNode();
+    if (firstChildNode != null && firstChildNode.getElementType() == DOC_REFERENCE_HOLDER) {
+      final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(firstChildNode.getFirstChildNode());
       if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)firstChildPsi;
         final PsiElement referencedElement = referenceElement.resolve();
@@ -164,15 +172,16 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         final PsiKeyword keyword = (PsiKeyword)firstChildPsi;
 
         if (keyword.getTokenType().equals(THIS_KEYWORD)) {
-          return JavaResolveUtil.getContextClass(this);
-        } else if (keyword.getTokenType().equals(SUPER_KEYWORD)) {
-          final PsiClass contextClass = JavaResolveUtil.getContextClass(this);
+          return JavaResolveUtil.getContextClass(ref);
+        }
+        else if (keyword.getTokenType().equals(SUPER_KEYWORD)) {
+          final PsiClass contextClass = JavaResolveUtil.getContextClass(ref);
           if (contextClass != null) return contextClass.getSuperClass();
           return null;
         }
       }
     }
-    return JavaResolveUtil.getContextClass(this);
+    return JavaResolveUtil.getContextClass(ref);
   }
 
   public static PsiMethod @NotNull [] findMethods(@Nullable MethodSignature methodSignature,

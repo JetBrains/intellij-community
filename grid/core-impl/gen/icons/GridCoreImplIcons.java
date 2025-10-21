@@ -18,6 +18,7 @@ public final class GridCoreImplIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, GridCoreImplIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon CellDownload = load("icons/cellDownload.svg", 18297100, 2);
+  /** 16x16 */ public static final @NotNull Icon ClearOutputs = load("icons/expui/clearOutputs.svg", -737519268, 2);
   /** 16x16 */ public static final @NotNull Icon ColumnFilter = load("icons/expui/columnFilter.svg", "icons/columnFilter.svg", -1426207601, 0);
   /** 16x16 */ public static final @NotNull Icon FilterHistory = load("icons/expui/filterHistory.svg", "icons/filterHistory.svg", 686246081, 0);
   /** 16x16 */ public static final @NotNull Icon SingleRecordView = load("icons/expui/singleRecordView.svg", "icons/singleRecordView.svg", 502511093, 2);

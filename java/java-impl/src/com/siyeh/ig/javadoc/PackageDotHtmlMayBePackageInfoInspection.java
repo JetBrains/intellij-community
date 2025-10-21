@@ -42,7 +42,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PackageDotHtmlMayBePackageInfoVisitor();
   }
 

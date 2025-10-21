@@ -1,4 +1,4 @@
-<idea-plugin package="<error descr="Cannot resolve package INVALID_VALUE">INVALID_VALUE</error>">
+<idea-plugin <error descr="Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`. Refer to attribute documentation for details.">package="<error descr="Cannot resolve package INVALID_VALUE">INVALID_VALUE</error>"</error>>
   <id>com.intellij.myPlugin</id>
   <vendor>JetBrains</vendor>
   <version>1.0</version>

@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.automaton
+  library: automaton
+  files:
+  - name: $MAVEN_REPOSITORY$/dk/brics/automaton/1/automaton-1.jar

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>com.intellij.java-i18n</id>
   <name>Java Internationalization</name>
   <category>JVM Tools</category>

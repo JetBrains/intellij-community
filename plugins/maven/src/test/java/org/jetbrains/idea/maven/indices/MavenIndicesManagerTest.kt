@@ -21,10 +21,6 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 
 class MavenIndicesManagerTest : MavenIndicesTestCase() {
-  public override fun runInDispatchThread(): Boolean {
-    return true
-  }
-
   private var myIndicesFixture: MavenIndicesTestFixture? = null
 
   override fun setUp() {

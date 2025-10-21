@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 @file:OptIn(ExperimentalCoroutinesApi::class, InternalCoroutinesApi::class)
 
@@ -13,6 +13,7 @@ import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -286,9 +287,28 @@ private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree
     interestingContext.joinElementsToString()
   }
   else null
-  val trace = debugInfo?.let { traceToDump(it, stripTrace) } ?: emptyList()
+  val trace =
+    getAssociatedVirtualThreadDump(job)
+    ?: debugInfo?.let { traceToDump(it, stripTrace) }
+    ?: emptyList()
   val representation = JobRepresentation(name, job.toString(), debugInfo?.state, contextString, trace)
   return JobRepresentationTree(representation, children.map { it.toRepresentation(stripTrace) })
+}
+
+private fun getAssociatedVirtualThreadDump(job: Job): List<StackTraceElement>? {
+  val virtualThread = jobToThreadMap[job] ?: return null
+  val stacktrace = virtualThread.stackTrace
+  return stacktrace.asList().subList(0, stacktrace.size - 2)
+}
+
+private val jobToThreadMap: ConcurrentHashMap<Job, Thread> = ConcurrentHashMap()
+
+@Internal
+fun recordVirtualThreadForCoroutine(job: Job, thread: Thread) {
+  jobToThreadMap[job] = thread
+  job.invokeOnCompletion {
+    jobToThreadMap.remove(job)
+  }
 }
 
 private fun JobRepresentationTree.deduplicate(): DeduplicatedJobRepresentationTree =

@@ -1,0 +1,3 @@
+// Baseline format: 1.0
+RemovedMethod: org.jetbrains.jewel.ui.component.ContextMenuItemOption#ContextMenuItemOption(org.jetbrains.jewel.ui.icon.IconKey, org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction, String, kotlin.jvm.functions.Function0<kotlin.Unit>):
+    Binary breaking change: Removed constructor org.jetbrains.jewel.ui.component.ContextMenuItemOption(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,String,kotlin.jvm.functions.Function0<kotlin.Unit>)

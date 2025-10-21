@@ -64,6 +64,15 @@ public final class FileManagerImpl implements FileManagerEx {
   public FileManagerImpl(@NotNull PsiManagerImpl manager, @NotNull NotNullLazyValue<? extends FileIndexFacade> fileIndex) {
     myManager = manager;
     myFileIndex = fileIndex;
+
+    myVFileToViewProviderMap = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
+                               ? new MultiverseFileViewProviderCache()
+                               : new ClassicFileViewProviderCache();
+
+    myTempProviders = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
+                      ? new ClassicTemporaryProviderStorage()
+                      : new MultiverseTemporaryProviderStorage();
+
     myConnection = manager.getProject().getMessageBus().connect(manager);
 
     LowMemoryWatcher.register(this::processQueue, manager);
@@ -79,12 +88,6 @@ public final class FileManagerImpl implements FileManagerEx {
         processFileTypesChanged(false);
       }
     });
-    myVFileToViewProviderMap = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
-                               ? new MultiverseFileViewProviderCache()
-                               : new ClassicFileViewProviderCache();
-    myTempProviders = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
-                      ? new ClassicTemporaryProviderStorage()
-                      : new MultiverseTemporaryProviderStorage();
   }
 
   @Override
@@ -95,6 +98,8 @@ public final class FileManagerImpl implements FileManagerEx {
   private @NotNull ConcurrentMap<VirtualFile, PsiDirectory> getVFileToPsiDirMap() {
     ConcurrentMap<VirtualFile, PsiDirectory> map = myVFileToPsiDirMap.get();
     if (map == null) {
+      //TODO RC: This map keeps many VirtualFiles from being collected by GC.
+      //         Could we use softKeys_SoftValues map instead of just softValues?
       map = ConcurrencyUtil.cacheOrGet(myVFileToPsiDirMap, ContainerUtil.createConcurrentSoftValueMap());
     }
     return map;
@@ -143,7 +148,7 @@ public final class FileManagerImpl implements FileManagerEx {
     if (viewProviders.isEmpty()) {
       return;
     }
-    if (!FileViewProviderUtil.isEventSystemEnabled(viewProviders)) {
+    if (!CodeInsightContextUtil.isEventSystemEnabled(viewProviders)) {
       setViewProvider(vFile, null);
       return;
     }
@@ -663,6 +668,17 @@ public final class FileManagerImpl implements FileManagerEx {
     if (useFind) {
       myVFileToViewProviderMap.clear();
     }
+
+    // When some file is moved to another directory, its contexts might change
+    // So, view providers associated with irrelevant contexts should be processed
+    // The best way to deal with such view providers is just to invalidate them.
+    // But PSI clients are not usually ready for that.
+    // So we try to preserve one of them, clearing the context of this lucky view provider and setting its context to `any`.
+    // It is possible to do that if there are no other relevant view providers for this file left.
+    // Also, if there's a view provider with `any` context, there can be no other view providers for this file, so we can silently accept them here.
+    Set<VirtualFile> filesHavingRelevantViewProviders = new HashSet<>();
+    Map<VirtualFile, Entry> irrelevantViewProviders = new LinkedHashMap<>();
+
     for (Iterator<Entry> iterator = fileToPsiFileMap.iterator(); iterator.hasNext();) {
       Entry entry = iterator.next();
       VirtualFile vFile = entry.getFile();
@@ -684,14 +700,37 @@ public final class FileManagerImpl implements FileManagerEx {
         if (!areViewProvidersEquivalent(viewProvider, psiFile1.getViewProvider())) {
           iterator.remove();
         }
-        else {
-          clearPsiCaches(viewProvider);
+
+        clearPsiCaches(viewProvider);
+
+        if (context != CodeInsightContexts.anyContext()) {
+          if (isContextRelevant(vFile, context)) {
+            filesHavingRelevantViewProviders.add(vFile);
+          }
+          else {
+            irrelevantViewProviders.putIfAbsent(vFile, entry);
+            iterator.remove();
+          }
         }
       }
       else if (!evaluateValidity((AbstractFileViewProvider)viewProvider)) {
         iterator.remove();
       }
     }
+
+    if (!irrelevantViewProviders.isEmpty()) {
+      CodeInsightContextManagerImpl codeInsightContextManager = CodeInsightContextManagerImpl.getInstanceImpl(myManager.getProject());
+      irrelevantViewProviders.values().stream()
+        .filter(entry -> !filesHavingRelevantViewProviders.contains(entry.getFile()))
+        .map(entry -> {
+          VirtualFile vFile = entry.getFile();
+          FileViewProvider viewProvider = entry.getProvider();
+          codeInsightContextManager.setCodeInsightContext(viewProvider, CodeInsightContexts.anyContext());
+          return new Entry(vFile, CodeInsightContexts.anyContext(), viewProvider);
+        })
+        .collect(Collectors.toCollection(() -> fileToPsiFileMap));
+    }
+
     myVFileToViewProviderMap.replaceAll(fileToPsiFileMap);
 
     markInvalidations(originalFileToPsiFileMap);
@@ -811,6 +850,11 @@ public final class FileManagerImpl implements FileManagerEx {
     }
     myTempProviders.put(file, context, null);
     try {
+      if (!isContextRelevant(file, context)) {
+        // invalid PsiFile if its context is not associated with the file anymore
+        return false;
+      }
+
       FileViewProvider recreated = createFileViewProvider(file, true);
       myTempProviders.put(file, context, recreated);
       return areViewProvidersEquivalent(viewProvider, recreated) &&
@@ -822,6 +866,24 @@ public final class FileManagerImpl implements FileManagerEx {
         DebugUtil.performPsiModification("invalidate temp view provider", ((AbstractFileViewProvider)temp)::markInvalidated);
       }
     }
+  }
+
+  /**
+   * @return true if `context` is still relevant for the `file`. It's relevant if {@link CodeInsightContextManager#getCodeInsightContexts)}
+   *         contain `context` or if `context` is `default` or `any`.
+   */
+  @RequiresReadLock
+  private boolean isContextRelevant(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    if (!CodeInsightContexts.isSharedSourceSupportEnabled(myManager.getProject())) {
+      return true;
+    }
+
+    if (context == CodeInsightContexts.anyContext() || file instanceof LightVirtualFile) {
+      return true;
+    }
+
+    List<@NotNull CodeInsightContext> contexts = CodeInsightContextManager.getInstance(myManager.getProject()).getCodeInsightContexts(file);
+    return contexts.contains(context);
   }
 
   private static boolean isValidOriginal(@NotNull PsiFile file) {

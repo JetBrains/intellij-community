@@ -7,6 +7,7 @@ package com.intellij.concurrency;
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+import com.intellij.util.containers.CounterCell;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.ThreadLocalRandom;
@@ -2389,19 +2390,6 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 
     /* ---------------- Counter support -------------- */
-
-    /**
-     * A padded cell for distributing counts.  Adapted from LongAdder
-     * and Striped64.  See their internal docs for explanation.
-     */
-    static final class CounterCell {
-        // Padding fields to avoid contention
-        volatile long p0, p1, p2, p3, p4, p5, p6;
-        volatile long value;
-        // Padding fields to avoid contention
-        volatile long q0, q1, q2, q3, q4, q5, q6;
-        CounterCell(long x) { value = x; }
-    }
 
     final long sumCount() {
         CounterCell[] cs = counterCells;

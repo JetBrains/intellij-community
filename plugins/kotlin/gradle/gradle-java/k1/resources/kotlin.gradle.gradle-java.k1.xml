@@ -3,6 +3,5 @@
   <dependencies>
     <module name="kotlin.gradle.gradle-java"/>
     <plugin id="com.intellij.modules.kotlin.k1"/>
-    <module name="kotlin.gradle.scripting.k1"/>
   </dependencies>
 </idea-plugin>

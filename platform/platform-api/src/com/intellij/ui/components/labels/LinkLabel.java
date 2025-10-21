@@ -414,6 +414,11 @@ public class LinkLabel<T> extends JLabel {
     }
 
     @Override
+    public AccessibleAction getAccessibleAction() {
+      return this;
+    }
+
+    @Override
     public int getAccessibleActionCount() {
       return 1;
     }

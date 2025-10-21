@@ -662,7 +662,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     if (JavaKeywords.RETURN.equals(jumpKeyword)) {
       if (!(parent.getParent() instanceof PsiMethod)) return null;
       if (!statements.isEmpty()) {
-        if (PsiTreeUtil.getNextSiblingOfType(statements.get(statements.size() - 1), PsiStatement.class) != null) return null;
+        if (PsiTreeUtil.getNextSiblingOfType(statements.getLast(), PsiStatement.class) != null) return null;
       }
     }
     if (JavaKeywords.CONTINUE.equals(jumpKeyword) && !(parent.getParent() instanceof PsiBlockStatement) && !(parent.getParent().getParent() instanceof PsiLoopStatement)) return null;
@@ -727,7 +727,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       if (implicitElse == null) return null;
       if (implicitElse.myImplicitElseStatements.isEmpty()) return null;
       if (implicitElse.myImplicitElseStatements.size() == 1) {
-        PsiStatement statement = implicitElse.myImplicitElseStatements.get(0);
+        PsiStatement statement = implicitElse.myImplicitElseStatements.getFirst();
         if (statement instanceof PsiReturnStatement) {
           if (((PsiReturnStatement)statement).getReturnValue() == null) return null;
         }

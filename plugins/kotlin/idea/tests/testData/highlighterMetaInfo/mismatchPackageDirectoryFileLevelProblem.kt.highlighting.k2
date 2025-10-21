@@ -1,0 +1,6 @@
+<!FILE_LEVEL_HIGHLIGHTING!><!HIGHLIGHTING("severity='ERROR'; descr='Expecting a top level declaration'")!>x<!>
+// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PackageDirectoryMismatchInspection
+// IGNORE_K1
+// IMPLICIT_PACKAGE_PREFIX: "foo"
+// HIGHLIGHT_WARNINGS
+// ALLOW_ERRORS<!>

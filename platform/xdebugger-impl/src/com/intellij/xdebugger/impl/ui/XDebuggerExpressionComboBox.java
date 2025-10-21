@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -63,6 +64,10 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     initEditor(showEditor, languageInside);
     fillComboBox();
     myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
+    var customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      customization.installEditorBackground(myComponent);
+    }
     setExpression(myExpression);
   }
 

@@ -24,7 +24,15 @@ class SearchEverywhereModelProvider {
    * we have introduced additional logic to address that issue.
    */
   private fun isTabWithExactMatchIssue(tab: SearchEverywhereTab): Boolean {
-    return (tab == SearchEverywhereTab.Classes || tab == SearchEverywhereTab.Files) || isExactMatchExperiment(tab)
+    return (tab == SearchEverywhereTab.Classes || tab == SearchEverywhereTab.Files)
+           || isExactMatchExperiment(tab)
+           || isAllCombinedExperiment(tab)
+  }
+
+  private fun isAllCombinedExperiment(tab: SearchEverywhereTab): Boolean {
+    if (tab != SearchEverywhereTab.All) return false
+    val expType = (tab as? SearchEverywhereTab.TabWithExperiments)?.currentExperimentType
+    return expType == SearchEverywhereMlExperiment.ExperimentType.CombinedExperiment
   }
 
   /**

@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaIntention
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
@@ -89,7 +88,6 @@ internal class OldJ2KPostProcessingRegistrarImpl : OldJ2KPostProcessingRegistrar
         registerInspectionBasedProcessing(AddOperatorModifierInspection())
         registerIntentionBasedProcessing(ObjectLiteralToLambdaIntention())
         registerIntentionBasedProcessing(AnonymousFunctionToLambdaIntention())
-        registerIntentionBasedProcessing(RemoveUnnecessaryParenthesesIntention())
         registerIntentionBasedProcessing(DestructureIntention())
         registerInspectionBasedProcessing(SimplifyAssertNotNullInspection())
         registerIntentionBasedProcessing(RemoveRedundantCallsOfConversionMethodsIntention())

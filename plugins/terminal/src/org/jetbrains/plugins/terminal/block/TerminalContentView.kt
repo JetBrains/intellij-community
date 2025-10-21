@@ -38,4 +38,7 @@ interface TerminalContentView : Disposable {
   @RequiresEdt(generateAssertion = false)
   fun getText(): CharSequence
 
+  fun getCurrentDirectory(): String? {
+    return null
+  }
 }

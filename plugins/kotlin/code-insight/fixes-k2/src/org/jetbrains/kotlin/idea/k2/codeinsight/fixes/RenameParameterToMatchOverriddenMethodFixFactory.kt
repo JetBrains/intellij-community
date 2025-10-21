@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.RenameParameterToMatchOverriddenMethodFix
 import org.jetbrains.kotlin.psi.KtFunction
@@ -23,7 +25,7 @@ internal object RenameParameterToMatchOverriddenMethodFixFactory {
             listOf(RenameParameterToMatchOverriddenMethodFix(parameter, parameterFromSuperclassName))
         }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtParameter.matchingParametersFromOverridenDeclarations(): Sequence<KtParameter> {
         val index = ownerFunction?.valueParameters?.indexOf(this)
         if (index == null || index == -1) return emptySequence()

@@ -1,4 +1,5 @@
 PsiJavaFileStub [junit.framework]
+  PsiPackageStatementStub[junit.framework]
   PsiClassStub[name=TestSuite fqn=junit.framework.TestSuite]
     PsiModifierListStub[mask=1]
     PsiTypeParameterListStub

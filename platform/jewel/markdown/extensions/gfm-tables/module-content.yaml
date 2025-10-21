@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.gfmTables
+    libraries:
+      commonmark.ext.gfm.tables:
+      - name: $MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-tables/0/commonmark-ext-gfm-tables-0.jar

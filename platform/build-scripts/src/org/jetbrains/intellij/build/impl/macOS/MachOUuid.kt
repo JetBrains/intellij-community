@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.macOS
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -114,7 +114,7 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
           channel.position(channel.position() + cmdBodySize)
         }
       }
-      context.messages.error("LC_UUID not found in $executable")
+      context.messages.logErrorAndThrow("LC_UUID not found in $executable")
     }
 
     if (canBeSignedLocally) {

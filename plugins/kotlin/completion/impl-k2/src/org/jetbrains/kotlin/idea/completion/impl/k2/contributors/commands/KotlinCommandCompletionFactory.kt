@@ -3,47 +3,55 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory
 import com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.name.Name.identifier
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
-class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
+internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
     override fun isApplicable(psiFile: PsiFile, offset: Int): Boolean {
+        //many fixes don't work in kotlin, wait for fixing from the kotlin side
+        if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return false
         if (offset < 1) return false
         if (psiFile !is KtFile) return false
+        if (isInsideFor(psiFile, offset)) return false
+        if (isInsideStringLiteral(psiFile, offset)) return false
+        return true
+    }
+
+    private fun isInsideStringLiteral(psiFile: KtFile, offset: Int): Boolean {
+        val element = psiFile.findElementAt(offset)
+        if (element == null) return false
+        val templateExpression = PsiTreeUtil.getParentOfType(
+            element,
+            KtStringTemplateExpression::class.java,
+            KtStringTemplateEntryWithExpression::class.java
+        )
+        return templateExpression is KtStringTemplateExpression
+    }
+
+    private fun isInsideFor(psiFile: KtFile, offset: Int): Boolean {
         var element = psiFile.findElementAt(offset - 1)
         val parent = element?.parent
-        if (parent !is KtForExpression && parent !is KtNamedFunction) return true
+        if (parent !is KtForExpression && parent !is KtNamedFunction) return false
         if (parent is KtForExpression) {
             element = element.prevSibling?.let {
                 if (it is KtContainerNode) it.firstChild else it
-            } ?: return true
-            return !parent.loopRange.isAncestor(element)
+            } ?: return false
+            return parent.loopRange.isAncestor(element)
         }
-        if (parent is KtNamedFunction && parent.nameIdentifier == element) {
-            val file = psiFile.originalFile as? KtFile ?: return false
-            val provider = KtSymbolFromIndexProvider(file)
-            val text = parent.nameIdentifier?.text ?: return false
-            analyze(parent) {
-                val name = identifier(text)
-                return !(provider.getJavaClassesByName(name, file.resolveScope).any() ||
-                        provider.getKotlinClassesByName(name, file.resolveScope).any())
-            }
-        }
-        return true
+        return false
     }
 
     override fun supportFiltersWithDoublePrefix(): Boolean = false

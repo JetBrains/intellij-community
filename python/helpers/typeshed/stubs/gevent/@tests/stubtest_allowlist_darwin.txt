@@ -17,10 +17,6 @@ gevent.libev.watcher.watcher.feed
 # undocumented argument for internal use only
 gevent.libev.watcher.watcher.__init__
 
-# ares_host_result always has the same layout, so we set the arguments on __new__
-# to reflect that fact, we don't care that the implementation accepts any number
-# of arguments
-gevent.resolver.cares.ares_host_result.__new__
 
 # we have punted on socket, the gevent version of these functions sometimes use
 # named parameters, while the base implementation only allows positional arguments

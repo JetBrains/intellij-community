@@ -222,7 +222,7 @@ final class OverwrittenFieldAnalyzer {
       if (dest instanceof DfaVariableValue var) {
         List<DfaVariableValue> varsToFlush = StreamEx.of(myFactory.getValues())
           .select(DfaVariableValue.class)
-          .filter(v -> v.getDescriptor() instanceof WriteAnchorDescriptor desc && desc.var.dependsOn(var))
+          .filter(v -> v.getDescriptor() instanceof WriteAnchorDescriptor(var written) && written.dependsOn(var))
           .toList();
         varsToFlush.forEach(state::flushVariable);
         if (var.getPsiVariable() instanceof PsiField && anchor != null) {
@@ -235,7 +235,7 @@ final class OverwrittenFieldAnalyzer {
     private void markAsRead(@NotNull DfaMemoryState state, @NotNull DfaVariableValue var) {
       List<DfaVariableValue> varsToMark = StreamEx.of(myFactory.getValues())
         .select(DfaVariableValue.class)
-        .filter(v -> v.getDescriptor() instanceof WriteAnchorDescriptor desc && desc.var.dependsOn(var))
+        .filter(v -> v.getDescriptor() instanceof WriteAnchorDescriptor(var written) && written.dependsOn(var))
         .toList();
       varsToMark.forEach(variable -> setAnchorToRead(state, variable));
     }

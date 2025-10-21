@@ -1,5 +1,6 @@
 // IS_APPLICABLE: false
 // WITH_STDLIB
+// PROBLEM: none
 import java.io.File
 
 fun main(args: Array<String>) {

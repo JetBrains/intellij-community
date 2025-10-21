@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.ijent.deploy
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -27,12 +25,6 @@ interface IjentDeployingStrategy {
    * @see com.intellij.platform.ijent.IjentExecFileProvider.getIjentBinary
    */
   suspend fun getTargetPlatform(): EelPlatform
-
-  /**
-   * Description of the target environment. This descriptor is accepted by IntelliJ Platform API that works with Eel.
-   * todo: merge it with [getTargetPlatform]
-   */
-  suspend fun getTargetDescriptor(): EelDescriptor
 
   /**
    * Defines a set of options for connecting to a running IJent

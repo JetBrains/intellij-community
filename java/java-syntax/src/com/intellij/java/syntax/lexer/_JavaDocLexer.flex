@@ -98,10 +98,11 @@ LEADING_TOKEN_MARKDOWN="///"
 <COMMENT_DATA> [\n\r]+{WHITE_DOC_SPACE_CHAR}* { return JavaDocSyntaxTokenType.DOC_SPACE; }
 
 <DOC_TAG_VALUE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_SPACE; }
-<DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> ({ALPHA}|[_0-9\."$"\[\]])+ { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN; }
+<DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> ({ALPHA}|[_0-9\."$"\[\]"-"])+ { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN; }
 <DOC_TAG_VALUE> [\(] { yybegin(DOC_TAG_VALUE_IN_PAREN); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN; }
 <DOC_TAG_VALUE_IN_PAREN> [\)] { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_RPAREN; }
 <DOC_TAG_VALUE> [/] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH; }
+<DOC_TAG_VALUE> "##" { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN; }
 <DOC_TAG_VALUE> [#] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN; }
 <DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> [,] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA; }
 <DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+ { return JavaDocSyntaxTokenType.DOC_SPACE; }
@@ -154,11 +155,19 @@ LEADING_TOKEN_MARKDOWN="///"
       }
 
       "#" {
-        yybegin(COMMENT_DATA);
-        if(myMarkdownMode) {
-          return JavaDocSyntaxTokenType.DOC_SHARP;
-        }
-        return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
+         yybegin(COMMENT_DATA);
+         if(myMarkdownMode) {
+            return JavaDocSyntaxTokenType.DOC_SHARP;
+         }
+         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
+      }
+
+      "##" {
+         yybegin(COMMENT_DATA);
+         if(myMarkdownMode) {
+           return JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP;
+         }
+         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
       }
 
       [/] {

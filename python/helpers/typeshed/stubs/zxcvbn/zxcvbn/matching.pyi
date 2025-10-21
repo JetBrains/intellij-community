@@ -1,11 +1,12 @@
 from collections.abc import Iterable, Mapping
 from decimal import Decimal
 from re import Pattern
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal, TypedDict, type_check_only
 from typing_extensions import NotRequired
 
 from .adjacency_graphs import _Graph
 
+@type_check_only
 class _Match(TypedDict):
     pattern: Literal["dictionary", "spatial", "repeat", "sequence", "regex", "date"]
     token: str
@@ -80,11 +81,12 @@ def regex_match(
     password: str, _regexen: dict[str, Pattern[str]] = ..., _ranked_dictionaries: dict[str, dict[str, int]] = ...
 ) -> list[_Match]: ...
 def date_match(password: str, _ranked_dictionaries: dict[str, dict[str, int]] = ...) -> list[_Match]: ...
-
+@type_check_only
 class _DM(TypedDict):
     month: int
     day: int
 
+@type_check_only
 class _DMY(TypedDict):
     year: int
     month: int

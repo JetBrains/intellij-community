@@ -1,0 +1,12 @@
+import lombok.Builder;
+
+@Builder
+public class SomeClass {
+    Integer someInteger;
+    Double someDouble;
+    String someString;
+
+    public static void main(String[] args) {
+        SomeClass.builder().someInteger().someString().someDouble().build();
+    }
+}

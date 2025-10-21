@@ -48,9 +48,9 @@ class KotlinPluginLayoutTest : UsefulTestCase() {
                     ProgressManager.getInstance().progressIndicator,
                     additionalMavenRepos = listOf(
                       RemoteRepositoryDescription(
-                        "kotlin.ide.plugin.dependencies",
-                        "Kotlin IDE Plugin Dependencies",
-                        "https://cache-redirector.jetbrains.com/intellij-dependencies"
+                          "intellij-dependencies",
+                          "IntelliJ Dependencies",
+                          "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
                       )
                     )
                   )

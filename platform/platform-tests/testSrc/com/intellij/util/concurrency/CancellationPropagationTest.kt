@@ -15,7 +15,10 @@ import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.ProgressResult
+import com.intellij.openapi.progress.impl.ProgressRunner
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
@@ -28,10 +31,10 @@ import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -139,7 +142,7 @@ class CancellationPropagationTest {
 
   @Test
   fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking(60.seconds) {
-    installThreadContext(coroutineContext).use {
+    installThreadContext(coroutineContext) {
       val expired = AtomicBoolean(false)
       ApplicationManager.getApplication().withModality {
         val runnable = Runnable {
@@ -734,43 +737,49 @@ class CancellationPropagationTest {
     assertFalse(job.isCancelled)
   }
 
-  @RepeatedTest(1000)
+  @Test
   fun `synchronous non-blocking read action is awaited`() = timeoutRunBlocking {
-    val dummyDisposable = Disposer.newDisposable()
-    var allowedToCompleteRA by AtomicReference(false)
-    val readActionCompletedSemaphore = Semaphore(1)
-    val job = withRootJob { job ->
-      ReadAction.nonBlocking(Callable {
-        while (!allowedToCompleteRA) {
-          assertTrue(job.isActive)
-        }
-        readActionCompletedSemaphore.up()
-      }).expireWith(dummyDisposable)
-        .executeSynchronously()
+    repeat(1000) {
+      val dummyDisposable = Disposer.newDisposable()
+      var allowedToCompleteRA by AtomicReference(false)
+      val readActionCompletedSemaphore = Semaphore(1)
+      val job = withRootJob { job ->
+        ReadAction.nonBlocking(Callable {
+          while (!allowedToCompleteRA) {
+            assertTrue(job.isActive)
+          }
+          readActionCompletedSemaphore.up()
+        }).expireWith(dummyDisposable)
+          .executeSynchronously()
+      }
+      assertTrue(job.isActive)
+      allowedToCompleteRA = true
+      readActionCompletedSemaphore.timeoutWaitUp()
+      job.join()
+      Disposer.dispose(dummyDisposable)
+      assertFalse(job.isCancelled)
     }
-    assertTrue(job.isActive)
-    allowedToCompleteRA = true
-    readActionCompletedSemaphore.timeoutWaitUp()
-    job.join()
-    Disposer.dispose(dummyDisposable)
-    assertFalse(job.isCancelled)
   }
 
-  @RepeatedTest(1000)
-  fun `non-blocking read action is externally disposed`() = timeoutRunBlocking {
-    val dummyDisposable = Disposer.newDisposable()
-    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
-    val job = withRootJob { job ->
-      ReadAction.nonBlocking(Callable {
-        while (true) {
-          ProgressManager.checkCanceled()
+  @Test
+  fun `non-blocking read action is externally disposed`() {
+    repeat(1000) {
+      timeoutRunBlocking {
+        val dummyDisposable = Disposer.newDisposable()
+        val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
+        val job = withRootJob { job ->
+          ReadAction.nonBlocking(Callable {
+            while (true) {
+              ProgressManager.checkCanceled()
+            }
+          }).expireWith(dummyDisposable)
+            .submit(executor)
         }
-      }).expireWith(dummyDisposable)
-        .submit(executor)
+        Disposer.dispose(dummyDisposable)
+        // if NBRA is not properly canceled, we would have a leaking Job, and `blockingContextScope` would never finish
+        job.join()
+      }
     }
-    Disposer.dispose(dummyDisposable)
-    // if NBRA is not properly canceled, we would have a leaking Job, and `blockingContextScope` would never finish
-    job.join()
   }
 
   @Test
@@ -874,6 +883,36 @@ class CancellationPropagationTest {
   }
 
   @Test
+  fun `invokeAndWait propagates cancellation 2`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val job1 = Job(coroutineContext.job)
+    val job2 = Job(coroutineContext.job)
+    val job3 = Job(coroutineContext.job)
+    launch {
+      readAction {
+        job1.complete()
+        job2.asCompletableFuture().join()
+      }
+    }
+    job1.join()
+    val job = launch(Dispatchers.Default) {
+      blockingContext {
+        application.invokeAndWait {
+          job3.complete()
+          runWriteAction {
+          }
+        }
+      }
+    }
+    job3.join()
+    delay(100)
+    job.cancelAndJoin()
+    job2.cancelAndJoin()
+  }
+
+
+
+
+  @Test
   fun `coroutine non-cancellable section coherence`() = timeoutRunBlocking {
     withContext(Dispatchers.Default) {
       val canProceed = Job()
@@ -902,7 +941,7 @@ class CancellationPropagationTest {
       assertTrue(Cancellation.isInNonCancelableSection())
     }
     Cancellation.executeInNonCancelableSection {
-      installThreadContext(Job(currentThreadContext().job), true).use {
+      installThreadContext(Job(currentThreadContext().job), true) {
         assertFalse(Cancellation.isInNonCancelableSection())
       }
     }
@@ -935,5 +974,30 @@ class CancellationPropagationTest {
       }
     }.join()
     assertEquals(entryCounter.get(), 2)
+  }
+
+  @Test
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
+  fun `blockingContextScope with ProgressRunner handles cancellation properly`() = timeoutRunBlocking {
+    repeat(50) {
+      var future: Future<*>? = null
+      val started = Semaphore(1)
+      // launch on Dispatchers.IO to make sure taskStarted.timeoutWaitUp() does not block it
+      val job = launch(Dispatchers.IO) {
+        blockingContextScope {
+          future = ProgressRunner { _ ->
+            started.up()
+            neverEndingStory()
+          }
+            .onThread(ProgressRunner.ThreadToUse.POOLED)
+            .submit()
+        }
+      }
+      started.timeoutWaitUp()
+      job.cancelAndJoin()
+      assertNotNull(future)
+      val progressResult = assertDoesNotThrow { future.get() as ProgressResult<*> }
+      assert(progressResult.isCanceled && progressResult.throwable is ProcessCanceledException)
+    }
   }
 }

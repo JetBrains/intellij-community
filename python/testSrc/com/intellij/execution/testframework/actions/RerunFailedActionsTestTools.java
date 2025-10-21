@@ -2,11 +2,11 @@
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction.MyRunProfile;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +34,7 @@ public final class RerunFailedActionsTestTools {
    */
   @Nullable
   public static ExecutionEnvironment getReRunEnvironment(@NotNull final AbstractRerunFailedTestsAction runAction) {
-    final MyRunProfile profile = runAction.getRunProfile(new ExecutionEnvironment());
+    final RunConfiguration profile = runAction.getRunProfileTestAccessor(new ExecutionEnvironment());
     if (profile == null) {
       return null;
     }

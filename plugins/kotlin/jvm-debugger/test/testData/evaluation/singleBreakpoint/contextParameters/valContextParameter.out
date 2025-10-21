@@ -1,0 +1,8 @@
+LineBreakpoint created at valContextParameter.kt:15
+Run Java
+Connected to the target VM
+valContextParameter.kt:15
+Compile bytecode for clazz.someVal
+Disconnected from the target VM
+
+Process finished with exit code 0

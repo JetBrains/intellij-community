@@ -345,7 +345,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         }
       }
     }
-    if (psiVariable != null && psiVariable.isValid()) {
+    if (psiVariable != null && psiVariable.isValid() && !PsiTypes.nullType().equals(psiVariable.getType())) {
       DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> createCastInVariableDeclaration(project, psiVariable));
     }
   }

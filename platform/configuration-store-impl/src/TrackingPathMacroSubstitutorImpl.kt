@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
@@ -11,7 +13,7 @@ internal fun PathMacroManager?.createTrackingSubstitutor(): TrackingPathMacroSub
 }
 
 @ApiStatus.Internal
-class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathMacroManager)
+internal class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathMacroManager)
   : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
   private val lock = Object()
 

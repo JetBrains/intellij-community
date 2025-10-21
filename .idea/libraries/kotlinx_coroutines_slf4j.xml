@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-slf4j" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-slf4j:1.10.1-intellij-4">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-slf4j:1.10.1-intellij-5">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-4/kotlinx-coroutines-slf4j-1.10.1-intellij-4.jar">
-          <sha256sum>59ad2fe94537a9463b842aeb87ade7d9c1b7007b7484d48c262677252a03c988</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-5/kotlinx-coroutines-slf4j-1.10.1-intellij-5.jar">
+          <sha256sum>1d68dfc6ba67ec96ecb5a373dbd9fb557ce2210ffc2d74d6b528e4f1f73e7003</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-4/kotlinx-coroutines-slf4j-1.10.1-intellij-4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-5/kotlinx-coroutines-slf4j-1.10.1-intellij-5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-4/kotlinx-coroutines-slf4j-1.10.1-intellij-4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-5/kotlinx-coroutines-slf4j-1.10.1-intellij-5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

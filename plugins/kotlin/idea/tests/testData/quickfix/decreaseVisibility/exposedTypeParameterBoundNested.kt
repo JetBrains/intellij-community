@@ -9,7 +9,7 @@
 // ACTION: Remove final upper bound
 // ERROR: 'private-in-file' generic exposes its 'private-in-class' parameter bound type PrivateInnerClass
 // K2_AFTER_ERROR: 'private-in-file' generic exposes its 'private-in-class' parameter bound type 'PrivateInnerClass'.
-// K2_AFTER_ERROR: Cannot access 'class PrivateInnerClass : Any': it is private in '/PrivateInFileClass'.
+// K2_AFTER_ERROR: Cannot access 'class PrivateInnerClass : Any': it is private in 'PrivateInFileClass'.
 
 private class PrivateInFileClass<T : <caret>PrivateInFileClass.PrivateInnerClass> {
     private class PrivateInnerClass

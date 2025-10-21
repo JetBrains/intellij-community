@@ -10,7 +10,10 @@ import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.serviceAsync
@@ -27,7 +30,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
@@ -38,7 +40,6 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
-import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -59,7 +60,7 @@ suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
   val context = wizard.wizardContext
   val time = System.nanoTime()
   NewProjectWizardCollector.logOpen(context)
-  if (!withContext(Dispatchers.EDT) { writeIntentReadAction { wizard.showAndGet () } }) {
+  if (!withContext(Dispatchers.EDT) { wizard.showAndGet () }) {
     NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
     return
   }
@@ -205,7 +206,6 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
         compileOutput
       }
 
-      @Suppress("UsagesOfObsoleteApi")
       backgroundWriteAction {
         javaCompilerExtension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
       }
@@ -229,7 +229,6 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
 
     val jdk = wizard.newProjectJdk
     if (jdk != null) {
-      @Suppress("UsagesOfObsoleteApi")
       backgroundWriteAction {
         JavaSdkUtil.applyJdkToProject(newProject, jdk)
       }
@@ -237,7 +236,7 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       val needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter
-      StartupManager.getInstance(newProject).runAfterOpened {
+      newProject.serviceAsync<StartupManager>().runAfterOpened {
         // ensure the dialog is shown after all startup activities are done
         ApplicationManager.getApplication().invokeLater({
             if (needToOpenProjectStructure) {
@@ -256,7 +255,8 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
       val options = OpenProjectTask {
         project = newProject
         projectName = projectFile.fileName.toString()
-        callback = ProjectOpenedCallback { openedProject, module ->
+        projectRootDir = projectDir
+        callback = ProjectOpenedCallback { openedProject, _ ->
           if (openedProject != newProject) { // project attached to workspace
             LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)?.let { dir ->
               ApplicationManager.getApplication().invokeLater {
@@ -268,14 +268,10 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
       }
 
       serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
-      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectStoreBaseDir = projectDir, options = options)
+      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectIdentityFile = projectDir, options = options)
     }
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject)
-    }
-
-    if (Registry.`is`("ide.create.project.root.entity")) {
-      registerProjectRoot(newProject, projectDir)
+      serviceAsync<SaveAndSyncHandler>().scheduleProjectSave(newProject)
     }
     return newProject
   }

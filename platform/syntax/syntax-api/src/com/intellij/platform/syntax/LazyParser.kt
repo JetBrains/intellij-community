@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 @ApiStatus.OverrideOnly
-interface LazyParser {
+fun interface LazyParser {
   /**
    * Called when the node is requested to be parsed.
    *
@@ -51,7 +51,9 @@ interface LazyParser {
   fun canBeReparsedIncrementally(parsingContext: LazyParsingContext): Boolean = false
 
   /**
-   * Creates a lexer for the given node.
+   * Creates a custom lexer for the given node.
+   *
+   * You need to implement this method only if the lexer differs from the one specified in your [LanguageSyntaxDefinition]
    */
   fun createLexer(lexingContext: LazyLexingContext): Lexer? = null
 }
@@ -74,6 +76,11 @@ fun parseLazyNode(parsingContext: LazyParsingContext): ProductionResult {
 @ApiStatus.Experimental
 fun canLazyNodeBeReparsedIncrementally(parsingContext: LazyParsingContext): Boolean {
   return parsingContext.lazyParser.canBeReparsedIncrementally(parsingContext)
+}
+
+fun createLexer(lexerContext: LazyLexingContext): Lexer? {
+  val lazyParser = lexerContext.node.type.lazyParser ?: error("Node ${lexerContext.node} is not lazy parseable")
+  return lazyParser.createLexer(lexerContext)
 }
 
 /**

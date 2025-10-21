@@ -35,8 +35,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 @ApiStatus.Internal
 public class VirtualFileManagerImpl extends VirtualFileManager implements Disposable {
@@ -57,6 +58,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> virtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<AsyncFileListener> asyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<AsyncFileListener> asyncFileListenersBackgroundable = ContainerUtil.createLockFreeCopyOnWriteList();
   private int refreshCount;
 
   public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems) {
@@ -194,6 +196,12 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   }
 
   @Override
+  public void addAsyncFileListenerBackgroundable(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
+    Disposer.register(parentDisposable, () -> asyncFileListenersBackgroundable.remove(listener));
+    asyncFileListenersBackgroundable.add(listener);
+  }
+
+  @Override
   public void addAsyncFileListener(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener) {
     asyncFileListeners.add(listener);
     HelperKt.removeOnCompletion(asyncFileListeners, listener, coroutineScope);
@@ -208,6 +216,15 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     return result;
   }
 
+  @ApiStatus.Internal
+  public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListenersBackgroundable(@NotNull @Unmodifiable List<? extends AsyncFileListener> listeners) {
+    // copy to avoid modification during iteration later
+    List<AsyncFileListener> result = new ArrayList<>(listeners.size() + asyncFileListenersBackgroundable.size());
+    result.addAll(listeners);
+    result.addAll(asyncFileListenersBackgroundable);
+    return result;
+  }
+
   @Override
   public void notifyPropertyChanged(@NotNull VirtualFile virtualFile,
                                     @VirtualFile.PropName @NotNull String property,
@@ -217,11 +234,12 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     ApplicationManager.getApplication().invokeLater(() -> {
       if (virtualFile.isValid()) {
         ApplicationManager.getApplication().runWriteAction(() -> {
-          List<VFileEvent> events =
-            Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue));
-          BulkFileListener listener = app.getMessageBus().syncPublisher(VFS_CHANGES);
-          listener.before(events);
-          listener.after(events);
+          if (virtualFile.isValid()) {//re-check isValid under WA
+            List<VFileEvent> events = singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue));
+            BulkFileListener listener = app.getMessageBus().syncPublisher(VFS_CHANGES);
+            listener.before(events);
+            listener.after(events);
+          }
         });
       }
     }, ModalityState.nonModal());

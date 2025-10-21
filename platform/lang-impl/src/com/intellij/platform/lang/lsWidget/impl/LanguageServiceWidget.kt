@@ -25,7 +25,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
-private const val maxIconsInStatusBar = 3
+private const val maxIconsInStatusBar = 4
 
 internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : EditorBasedStatusBarPopup(project, false, scope) {
   /**
@@ -76,7 +76,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   }
 
   private fun createStatusBarIcon(widgetItems: List<LanguageServiceWidgetItem>): Icon {
-    // either up to 3 icons or 2 icons and "+N" text
+    // either up to maxIconsInStatusBar icons or maxIconsInStatusBar - 1 icons and "+N" text
     val items = if (widgetItems.size <= maxIconsInStatusBar) widgetItems else widgetItems.subList(0, maxIconsInStatusBar - 1)
     if (items.size == 1) return getStatusBarFriendlyIcon(items[0])
 

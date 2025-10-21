@@ -126,7 +126,7 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
       "java:test://org.example.impl.SecondTest/test2"
     ), failedHints);
 
-    ProcessOutput rerunOutput = doStartTestsProcess(createRunPackageConfiguration("org.example.api"));
+    ProcessOutput rerunOutput = doStartTestsProcess(createRunPackageConfiguration("org.example.api"), failedHints);
     assertEmpty(rerunOutput.out);
     assertEmpty(rerunOutput.err);
 

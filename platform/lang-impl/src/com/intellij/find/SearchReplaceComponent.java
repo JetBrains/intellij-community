@@ -5,6 +5,8 @@ import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -13,6 +15,7 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
+import com.intellij.openapi.editor.impl.SearchReplaceFacade;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -24,20 +27,22 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.SwingUndoUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -52,7 +57,7 @@ import static java.awt.FlowLayout.CENTER;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
-public final class SearchReplaceComponent extends EditorHeaderComponent implements UiDataProvider {
+public final class SearchReplaceComponent extends EditorHeaderComponent implements UiDataProvider, SearchReplaceFacade {
   public static final int RIGHT_PANEL_WEST_OFFSET = 13;
   private static final float MAX_LEFT_PANEL_PROP = 0.9F;
   private static final float DEFAULT_PROP = 0.33F;
@@ -105,6 +110,16 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final @Nullable ShortcutSet replaceActionShortcutSet;
 
   private final CloseAction myCloseAction = new CloseAction();
+
+  private boolean myIslandsEnabled;
+
+  @Override
+  @ApiStatus.Internal
+  public void configureUI(boolean islandsEnabled) {
+    myIslandsEnabled = islandsEnabled;
+    updateUI();
+    updateTextComponentBorders();
+  }
 
   public static @NotNull Builder buildFor(@Nullable Project project,
                                           @NotNull JComponent component,
@@ -193,20 +208,27 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     };
     myReplaceFieldWrapper.setBorder(JBUI.Borders.emptyTop(1));
 
-    JPanel leftPanel = new JPanel(new GridBagLayout());
+    JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.setBackground(JBUI.CurrentTheme.Editor.BORDER_COLOR);
-    GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.fill = GridBagConstraints.BOTH;
-    constraints.weightx = 1;
-    constraints.weighty = 1;
-    leftPanel.add(mySearchFieldWrapper, constraints);
-    constraints.gridy++;
-    leftPanel.add(myReplaceFieldWrapper, constraints);
+    leftPanel.add(mySearchFieldWrapper, BorderLayout.NORTH);
+    leftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
 
     if (showSeparator) {
-      leftPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1));
+      leftPanel.setBorder(new AbstractBorder() {
+        final Border border = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1);
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+          if (!myIslandsEnabled) {
+            border.paintBorder(c, g, x, y, width, height);
+          }
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+          return myIslandsEnabled ? super.getBorderInsets(c) : border.getBorderInsets(c);
+        }
+      });
     }
 
     searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(actionManager));
@@ -338,14 +360,21 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     super.updateUI();
     // ALL these null checks are necessary because updateUI() is called from a superclass constructor
     if (mySearchToolbarWrapper != null) {
-      mySearchToolbarWrapper.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchToolbar.borderInsets()));
+      mySearchToolbarWrapper.setBorder(myIslandsEnabled ? null : JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchToolbar.borderInsets()));
     }
     if (myReplaceToolbarWrapper != null) {
-      myReplaceToolbarWrapper.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.ReplaceToolbar.borderInsets()));
+      myReplaceToolbarWrapper.setBorder(
+        JBUI.Borders.empty(myIslandsEnabled ? JBUI.insetsBottom(2) : JBUI.CurrentTheme.Editor.ReplaceToolbar.borderInsets()));
     }
+    updateTextComponentBorders();
     if (myModePanel != null) {
-      myModePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
-                                                  JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets())));
+      if (myIslandsEnabled) {
+        myModePanel.setBorder(JBUI.Borders.empty(5, 3, 3, 3));
+      }
+      else {
+        myModePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
+                                                    JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets())));
+      }
     }
   }
 
@@ -537,6 +566,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     setMultilineInternal(multiline);
     updateSearchComponent(findText);
     updateReplaceComponent(replaceText);
+    updateTextComponentBorders();
     myReplaceFieldWrapper.setVisible(replaceMode);
     myReplaceToolbarWrapper.setVisible(replaceMode);
     updateBindingsActionsAndFocus();
@@ -626,6 +656,24 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
           }
           return defaultSize;
         }
+
+        @Override
+        protected int getRowHeight() {
+          if (!myIslandsEnabled) {
+            return super.getRowHeight();
+          }
+          Insets insets = getInsets();
+          int parentBorders = 0;
+          Container parent = getParent();
+          if (parent instanceof JBViewport) {
+            parent = parent.getParent();
+            if (parent instanceof JBScrollPane) {
+              Insets parentInsent = parent.getInsets();
+              parentBorders = parentInsent.top + parentInsent.bottom;
+            }
+          }
+          return JBUI.scale(UISettings.getInstance().getCompactMode() ? 24 : 28) - insets.top - insets.bottom - parentBorders;
+        }
       };
       ((JBTextArea)innerTextComponent).setRows(isMultiline() ? 2 : 1);
       ((JBTextArea)innerTextComponent).setColumns(12);
@@ -683,6 +731,53 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     myCloseAction.registerOn(outerComponent);
     return true;
+  }
+
+  private void updateTextComponentBorders() {
+    if (mySearchFieldWrapper != null) {
+      updateTextComponentBorder(mySearchFieldWrapper.getTargetComponent());
+
+      Container parent = mySearchFieldWrapper.getParent();
+      if (parent != null) {
+        parent.setBackground(myIslandsEnabled ? JBColor.namedColor("Editor.SearchField.background") : JBUI.CurrentTheme.Editor.BORDER_COLOR);
+      }
+    }
+    if (myReplaceFieldWrapper != null) {
+      updateTextComponentBorder(myReplaceFieldWrapper.getTargetComponent());
+
+      myReplaceFieldWrapper.setBorder(myIslandsEnabled ? null : JBUI.Borders.emptyTop(1));
+    }
+  }
+
+  private void updateTextComponentBorder(@NotNull JComponent component) {
+    if (myIslandsEnabled) {
+      component.setBorder(new DarculaTextBorder() {
+        @Override
+        public Insets getBorderInsets(Component c) {
+          int top = 4;
+          int bottom = 2;
+          if (UISettings.getInstance().getCompactMode()) {
+            top = 2;
+            bottom = 4;
+          }
+          return new JBInsets(top, 6, bottom, 6).asUIResource();
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+          Rectangle r = new Rectangle(x, y, width, height);
+          boolean fillBackground = JBColor.isBright();
+          Color bgColor = fillBackground ? UIUtil.getTextFieldBackground() : null;
+          if (c instanceof SearchTextArea area) {
+            c = area.getTextArea();
+          }
+          paintDarculaSearchArea((Graphics2D)g, r, (JComponent)c, bgColor, fillBackground, c.isEnabled(), true);
+        }
+      });
+    }
+    else {
+      component.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()));
+    }
   }
 
   private final class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {

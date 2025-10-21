@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, Literal
@@ -116,4 +115,4 @@ def binary_crossentropy(
 def categorical_crossentropy(
     y_true: TensorCompatible, y_pred: TensorCompatible, from_logits: bool = False, label_smoothing: float = 0.0, axis: int = -1
 ) -> Tensor: ...
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

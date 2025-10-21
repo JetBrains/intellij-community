@@ -8,6 +8,7 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
@@ -47,6 +48,7 @@ data class ProcessHandlerDto(
   val processHandlerId: ProcessHandlerId,
   val detachIsDefault: Boolean,
   val processHandlerEvents: RpcFlow<ProcessHandlerEvent>,
+  @Serializable(with = DeferredSerializer::class) val nativePid: Deferred<Long?>?,
   val killableProcessInfo: KillableProcessInfo? = null,
 )
 

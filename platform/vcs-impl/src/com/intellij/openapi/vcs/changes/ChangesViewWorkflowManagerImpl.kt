@@ -42,7 +42,7 @@ internal class ChangesViewWorkflowManagerImpl(
         // ChangesViewPanel can be reused between workflow instances -> should clean up after ourselves
         val changesPanel = (ChangesViewManager.getInstance(project) as ChangesViewManager).initChangesPanel()
         val workflow = ChangesViewCommitWorkflow(project)
-        val commitPanel = ChangesViewCommitPanel(project, changesPanel)
+        val commitPanel = ChangesViewCommitPanel(project, changesPanel.changesView)
         _commitWorkflowHandler = ChangesViewCommitWorkflowHandler(workflow, commitPanel)
 
         project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()

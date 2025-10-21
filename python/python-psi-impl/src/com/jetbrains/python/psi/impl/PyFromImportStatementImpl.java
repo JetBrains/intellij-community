@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.impl.ValueHolder;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -32,6 +33,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 
 public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement, PsiListLikeElement{
+  private volatile @Nullable ValueHolder<QualifiedName> myImportSourceQName;
+
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -50,7 +53,21 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  public QualifiedName getImportSourceQName() {
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myImportSourceQName = null;
+  }
+
+  @Override
+  public @Nullable QualifiedName getImportSourceQName() {
+    ValueHolder<QualifiedName> result = myImportSourceQName;
+    if (result == null) {
+      myImportSourceQName = result = new ValueHolder<>(doGetImportSourceQName());
+    }
+    return result.value;
+  }
+
+  private @Nullable QualifiedName doGetImportSourceQName() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
       final QualifiedName qName = stub.getImportSourceQName();

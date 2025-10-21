@@ -6,6 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ResolvingConverter;
@@ -41,5 +43,13 @@ public abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlu
       .nbsp()
       .append(HtmlChunk.link(PluginXmlDomInspection.DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
       .wrapWith(HtmlChunk.html()).toString();
+  }
+
+  @Override
+  public boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass) {
+    // avoid resolving by Java-specific inspections, for example, com.intellij.codeInspection.xml.DeprecatedClassUsageInspection:
+    if (PsiModifierListOwner.class.isAssignableFrom(elementClass)) return false;
+
+    return super.canResolveTo(elementClass);
   }
 }

@@ -73,8 +73,8 @@ public interface JBAccountInfoService {
       LoginSession loginSession = startLoginSession(LoginMode.AUTO);
       loginSession.onCompleted()
         .thenAccept(result -> {
-          if (result instanceof LoginResult.LoginSuccessful successful && userIdConsumer != null) {
-            userIdConsumer.accept(successful.jbaUser().id);
+          if (result instanceof LoginResult.LoginSuccessful(JBAData user) && userIdConsumer != null) {
+            userIdConsumer.accept(user.id);
           }
           if (result instanceof LoginResult.LoginFailed && onFailure != null) {
             onFailure.run();
@@ -248,7 +248,7 @@ public interface JBAccountInfoService {
     @NotNull LicenseeType licenseeType,
     @NotNull LicensePack licensePack,
     @NlsSafe @NotNull String licensedTo,
-    @NotNull Instant expiresOn
+    @Nullable Instant expiresOn
   ) { }
 
   enum LicenseKind {

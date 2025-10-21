@@ -1,8 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 
 class Test {
-  @NotNull
-  public String noNull(@NotNull String text) {
+  public @NotNull String noNull(@NotNull String text) {
     assert text != null;
     return "";
   }

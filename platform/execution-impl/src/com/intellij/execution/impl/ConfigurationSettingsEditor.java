@@ -238,7 +238,7 @@ public final class ConfigurationSettingsEditor extends CompositeSettingsEditor<R
     private JPanel myRunnerPanel;
     private final CardLayout myLayout = new CardLayout();
     private final DefaultListModel<Executor> myListModel = new DefaultListModel<>();
-    private final JLabel myNoRunner = new JLabel(ExecutionBundle.message("run.configuration.norunner.selected.label"));
+    private final JLabel myNoRunner = new JLabel(ExecutionBundle.message("run.configuration.no.runner.selected.label"));
     private JPanel myRunnersPanel;
     private JBScrollPane myScrollPane;
 

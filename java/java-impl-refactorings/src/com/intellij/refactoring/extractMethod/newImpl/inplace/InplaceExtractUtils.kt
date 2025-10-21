@@ -7,30 +7,21 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.IdeUiService
-import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
-import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.java.codeserver.core.JavaPsiVariableUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,15 +31,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
-import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.concurrent.CompletableFuture
 
 object InplaceExtractUtils {
 
@@ -154,65 +142,6 @@ object InplaceExtractUtils {
     return Disposable {
       highlighters.forEach { highlighter -> manager.removeSegmentHighlighter(editor, highlighter) }
     }
-  }
-
-  fun createChangeBasedDisposable(editor: Editor): Disposable {
-    val disposable = Disposer.newDisposable()
-    EditorUtil.disposeWithEditor(editor, disposable)
-    val changeListener = object: DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        Disposer.dispose(disposable)
-      }
-    }
-    editor.document.addDocumentListener(changeListener, disposable)
-    return disposable
-  }
-
-  fun createNavigationGotIt(parent: Disposable): GotItTooltip? {
-    val gotoKeyboardShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
-    val gotoMouseShortcut = KeymapUtil.getFirstMouseShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
-    if (gotoKeyboardShortcut.isEmpty() || gotoMouseShortcut.isEmpty()) return null
-    val header = JavaRefactoringBundle.message("extract.method.gotit.navigation.header")
-    val message = JavaRefactoringBundle.message("extract.method.gotit.navigation.message", gotoMouseShortcut, gotoKeyboardShortcut)
-    return GotItTooltip("extract.method.gotit.navigate", message, parent).withHeader(header)
-  }
-
-  fun createChangeSignatureGotIt(parent: Disposable): GotItTooltip? {
-    val moveLeftShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_LEFT)
-    val moveRightShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_RIGHT)
-    if (moveLeftShortcut.isEmpty() || moveRightShortcut.isEmpty()) return null
-    val contextActionShortcut = KeymapUtil.getFirstKeyboardShortcutText("ShowIntentionActions")
-    val header = JavaRefactoringBundle.message("extract.method.gotit.signature.header")
-    val message = JavaRefactoringBundle.message("extract.method.gotit.signature.message", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
-    return GotItTooltip("extract.method.signature.change", message, parent)
-      .withIcon(AllIcons.Gutter.SuggestedRefactoringBulbDisabled)
-      .withHeader(header)
-  }
-
-  fun GotItTooltip.showInEditor(editor: Editor, range: TextRange): CompletableFuture<Balloon> {
-    val offset = minOf(range.startOffset + 3, range.endOffset)
-    fun getPosition(): Point = editor.offsetToXY(offset)
-    fun isVisible(): Boolean = editor.scrollingModel.visibleArea.contains(getPosition())
-    fun updateBalloon(balloon: Balloon) {
-      if (isVisible()) {
-        balloon.revalidate()
-      } else {
-        balloon.hide(true)
-        GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
-      }
-    }
-    withPosition(Balloon.Position.above)
-
-    val balloonFuture = CompletableFuture<Balloon>()
-    if (isVisible()) {
-      setOnBalloonCreated { balloon ->
-        editor.scrollingModel.addVisibleAreaListener({ updateBalloon(balloon) }, balloon)
-        balloonFuture.complete(balloon)
-      }
-      show(editor.contentComponent, pointProvider = { _, _-> getPosition() })
-    }
-
-    return balloonFuture
   }
 
   fun logStatisticsOnShow(editor: Editor, mouseEvent: MouseEvent? = null){

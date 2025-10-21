@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 class ConvertPropertyGetterToInitializerIntention : SelfTargetingIntention<KtPropertyAccessor>(
-    KtPropertyAccessor::class.java, KotlinBundle.lazyMessage("convert.property.getter.to.initializer")
+    KtPropertyAccessor::class.java, KotlinBundle.messagePointer("convert.property.getter.to.initializer")
 ) {
     private fun hasExpectModifier(element: KtPropertyAccessor): Boolean {
         val property = element.parent as? KtProperty ?: return false

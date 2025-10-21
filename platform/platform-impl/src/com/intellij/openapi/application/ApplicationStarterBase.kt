@@ -3,10 +3,10 @@ package com.intellij.openapi.application
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.CliResult
-import com.intellij.ide.commandNameFromExtension
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +17,7 @@ import kotlin.system.exitProcess
 
 @Internal
 abstract class ApplicationStarterBase protected constructor(private vararg val argsCount: Int) : ModernApplicationStarter() {
+  abstract val commandName: @NlsSafe String
   abstract val usageMessage: @NlsContexts.DialogMessage String?
 
   override val isHeadless: Boolean
@@ -35,7 +36,6 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   override fun canProcessExternalCommandLine(): Boolean = true
 
   override suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
-    val commandName = commandNameFromExtension
     if (!checkArguments(args)) {
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       withContext(Dispatchers.EDT) {
@@ -59,8 +59,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     }
   }
 
-  protected open fun checkArguments(args: List<String>): Boolean =
-    Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandNameFromExtension == args[0]
+  protected open fun checkArguments(args: List<String>): Boolean = Arrays.binarySearch(argsCount, args.size - 1) >= 0
 
   protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult
 

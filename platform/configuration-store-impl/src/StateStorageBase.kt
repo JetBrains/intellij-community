@@ -158,7 +158,7 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
         val key = SettingDescriptor(
           key = createSettingKey(componentName = componentName, binding = null),
           pluginId = pluginId,
-          tags = createTags(componentName, roamingType, extraTag = null),
+          tags = createTags(componentName, state::class.java, roamingType, extraTag = null),
           serializer = JsonElementSettingSerializerDescriptor,
         )
 
@@ -191,7 +191,7 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
             )
           }
           else if (rootBinding is KotlinxSerializationBinding) {
-            val keyTags = createTags(componentName, roamingType, extraTag = null)
+            val keyTags = createTags(componentName, state::class.java, roamingType, extraTag = null)
             val key = SettingDescriptor(
               key = createSettingKey(componentName = componentName, binding = null),
               pluginId = pluginId,
@@ -217,8 +217,8 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
   }
 }
 
-private fun createTags(componentName: String, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
-  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
+private fun createTags(componentName: String, stateClass: Class<*>, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
+  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName, stateClass)
   if (roamingType == RoamingType.DISABLED) {
     if (extraTag == null) {
       return java.util.List.of(componentPropertyTag, NonShareableTag)
@@ -246,7 +246,7 @@ private fun serializeWithController(
   controller: SettingsController,
   roamingType: RoamingType?
 ): Element? {
-  val keyTags = createTags(componentName, roamingType, extraTag = null)
+  val keyTags = createTags(componentName, state::class.java, roamingType, extraTag = null)
   var element: Element? = null
   for (binding in rootBinding.bindings!!) {
     val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = state, rootBinding = rootBinding, isFilterPropertyItself = true)
@@ -298,7 +298,7 @@ internal fun <T : Any> deserializeStateWithController(
         controller = controller,
         componentName = componentName,
         pluginId = pluginId,
-        tags = createTags(componentName, roamingType, extraTag = OldLocalValueSupplierTag(supplier = SynchronizedClearableLazy {
+        tags = createTags(componentName, stateClass, roamingType, extraTag = OldLocalValueSupplierTag(supplier = SynchronizedClearableLazy {
           stateElement?.let {
             jdomToJson(it)
           }
@@ -331,6 +331,7 @@ internal fun <T : Any> deserializeStateWithController(
             mergeInto = null,
             rootBinding = rootBinding,
             componentName = componentName,
+            stateClass = stateClass,
             pluginId = pluginId,
             controller = controller,
             roamingType = roamingType,
@@ -341,6 +342,7 @@ internal fun <T : Any> deserializeStateWithController(
             oldData = stateElement,
             rootBinding = rootBinding,
             componentName = componentName,
+            stateClass = stateClass,
             pluginId = pluginId,
             controller = controller,
             roamingType = roamingType,
@@ -362,6 +364,7 @@ internal fun <T : Any> deserializeStateWithController(
           mergeInto = mergeInto,
           rootBinding = rootBinding as BeanBinding,
           componentName = componentName,
+          stateClass = stateClass,
           pluginId = pluginId,
           controller = controller,
           roamingType = roamingType,
@@ -385,6 +388,7 @@ private fun <T : Any> getXmlSerializedState(
   mergeInto: T?,
   rootBinding: BeanBinding,
   componentName: String,
+  stateClass: Class<T>,
   pluginId: PluginId,
   controller: SettingsController,
   roamingType: RoamingType?,
@@ -407,7 +411,7 @@ private fun <T : Any> getXmlSerializedState(
     oldValueTagSupplier = OldLocalValueSupplierTag(oldDataSupplierLazyValue)
   }
 
-  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
+  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName, stateClass)
   val keyTags = if (roamingType == RoamingType.DISABLED) {
     java.util.List.of(oldValueTagSupplier, componentPropertyTag, NonShareableTag)
   }
@@ -462,6 +466,7 @@ private fun <T : Any> getKotlinxSerializedState(
   oldData: Element?,
   rootBinding: KotlinxSerializationBinding,
   componentName: String,
+  stateClass: Class<T>,
   pluginId: PluginId,
   controller: SettingsController,
   roamingType: RoamingType?,
@@ -475,7 +480,7 @@ private fun <T : Any> getKotlinxSerializedState(
     })
   }
 
-  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
+  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName, stateClass)
   val keyTags = if (roamingType == RoamingType.DISABLED) {
     java.util.List.of(oldValueTagSupplier, componentPropertyTag, NonShareableTag)
   }

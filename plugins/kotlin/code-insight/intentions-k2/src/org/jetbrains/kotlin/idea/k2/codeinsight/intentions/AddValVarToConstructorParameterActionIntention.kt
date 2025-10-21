@@ -5,7 +5,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
-class AddValVarToConstructorParameterActionIntention : KotlinApplicableModCommandAction<KtParameter, Unit>(KtParameter::class) {
+class AddValVarToConstructorParameterActionIntention : KotlinApplicableModCommandAction.Simple<KtParameter>(KtParameter::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("add.val.var.to.primary.constructor.parameter")
 
@@ -38,13 +37,12 @@ class AddValVarToConstructorParameterActionIntention : KotlinApplicableModComman
 
     override fun getApplicableRanges(element: KtParameter): List<TextRange> = ApplicabilityRanges.declarationName(element)
 
-    override fun KaSession.prepareContext(element: KtParameter) {
-    }
-
     override fun invoke(
         actionContext: ActionContext,
         element: KtParameter,
         elementContext: Unit,
         updater: ModPsiUpdater,
-    ) = addValVarToConstructorParameter(actionContext.project, element, updater)
+    ) {
+        addValVarToConstructorParameter(actionContext.project, element, updater)
+    }
 }

@@ -99,7 +99,7 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
     val knownSdks = mutableSetOf<Sdk>()
     val sdkToTypes = MultimapBuilder.treeKeys(java.lang.String.CASE_INSENSITIVE_ORDER)
       .hashSetValues()
-      .build<String, String>()
+      .build<String, String?>()
 
     checkCanceled()
 

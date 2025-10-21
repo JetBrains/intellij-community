@@ -35,7 +35,7 @@ public final class ConsoleTokenUtil {
   static final Key<Boolean> MANUAL_HYPERLINK = Key.create("MANUAL_HYPERLINK");
 
   // convert all "a\bc" sequences to "c", not crossing the line boundaries in the process
-  private static void normalizeBackspaceCharacters(@NotNull StringBuilder text) {
+  public static void normalizeBackspaceCharacters(@NotNull StringBuilder text) {
     int ind = StringUtil.indexOf(text, BACKSPACE);
     if (ind < 0) {
       return;

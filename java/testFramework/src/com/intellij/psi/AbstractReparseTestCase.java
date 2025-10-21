@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -25,6 +26,12 @@ public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtur
     myDummyFile = null;
     myFileType = null;
     super.tearDown();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    DaemonCodeAnalyzer.getInstance(getProject()).disableUpdateByTimer(getTestRootDisposable()); // disable automatic rehighlighting because it could query PSI in inconvenient moments in background, messing with hardcoded assumptions of this test
   }
 
   protected void setFileType(final FileType fileType) {

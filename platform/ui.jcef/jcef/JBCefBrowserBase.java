@@ -30,9 +30,12 @@ import org.cef.callback.CefCallback;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
+import org.cef.misc.CefLog;
+import org.cef.misc.Utils;
 import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
 import org.cef.security.CefSSLInfo;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +45,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
@@ -164,7 +165,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private final @NotNull ReentrantLock myCookieManagerLock = new ReentrantLock();
   private volatile @Nullable JBCefCookieManager myJBCefCookieManager;
   private volatile @Nullable String myCssBgColor;
-  private @Nullable JDialog myDevtoolsFrame = null;
 
   private final @NotNull CefKeyboardHandler myKeyboardHandler;
 
@@ -231,11 +231,15 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
         @Override
         public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+          if (Utils.getBoolean("ide.browser.jcef.log.extended", false)) {
+            browser.executeJavaScript("console.log('CefLoadHandler#onLoadEnd:\\n' + document.documentElement.outerHTML)", null,0);
+          }
           setPageBackgroundColor();
         }
 
         @Override
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+          CefLog.Warn("CefLoadHandler#onLoadError: " + failedUrl + " (" + errorCode + ")");
           // do not show error page if another URL has already been requested to load
           ErrorPage errorPage = myErrorPage;
           String lastRequestedUrl = getLastRequestedUrl();
@@ -845,54 +849,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   public void openDevtools() {
-    if (myDevtoolsFrame != null) {
-      myDevtoolsFrame.setVisible(true);
-      myDevtoolsFrame.toFront();
-      return;
-    }
+    myCefBrowser.openDevTools();
 
-    Component comp = getComponent();
-    Window ancestor = comp == null ?
-                      KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() :
-                      SwingUtilities.getWindowAncestor(comp);
-
-    if (ancestor == null) return;
-    Rectangle bounds = ancestor.getGraphicsConfiguration().getBounds();
-
-    myDevtoolsFrame = new JDialog(ancestor);
-    myDevtoolsFrame.setTitle("JCEF DevTools");
-    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-    myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
-    myDevtoolsFrame.setLayout(new BorderLayout());
-    JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).build();
-    final Component devToolsBrowserComponent = devTools.getCefBrowser().getUIComponent();
-    if (devToolsBrowserComponent instanceof JBCefOsrComponent)
-      ((JBCefOsrComponent)devToolsBrowserComponent).setBrowser(devTools.getCefBrowser());
-
-    myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
-
-    Disposer.register(this, devTools);
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
-        if (myDevtoolsFrame != null) {
-          myDevtoolsFrame.dispose();
-          myDevtoolsFrame = null;
-        }
+        myCefBrowser.closeDevTools();
       }
     });
-
-    myDevtoolsFrame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosed(WindowEvent e) {
-        if (myDevtoolsFrame != null) {
-          myDevtoolsFrame.dispose();
-          myDevtoolsFrame = null;
-        }
-      }
-    });
-
-    myDevtoolsFrame.setVisible(true);
   }
 
   private final class LoadDeferrer {
@@ -935,9 +899,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                               @Nullable Point inspectAt,
                                               boolean isMouseWheelEventEnabled,
                                               CefBrowserSettings settings) {
+    final String validUrl = ObjectUtils.notNull(url, "");
     if (JBCefApp.isRemoteEnabled()) {
       Supplier<CefRendering> renderingSupplier = () -> createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
-      CefBrowser browser = client.createBrowser(url, renderingSupplier, true, context, settings);
+      CefBrowser browser = client.createBrowser(validUrl, renderingSupplier, true, context, settings);
 
       if (browser.getUIComponent() instanceof JBCefOsrComponent)
         ((JBCefOsrComponent)browser.getUIComponent()).setBrowser(browser);
@@ -947,7 +912,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     final CefRendering.CefRenderingWithHandler rendering = createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
     CefBrowserOsrWithHandler browser =
-      new CefBrowserOsrWithHandler(client, ObjectUtils.notNull(url, ""), context, rendering.getRenderHandler(), rendering.getComponent(), parentBrowser, inspectAt, settings) {
+      new CefBrowserOsrWithHandler(client, validUrl, context, rendering.getRenderHandler(), rendering.getComponent(), parentBrowser, inspectAt, settings) {
         @Override
         protected CefBrowser createDevToolsBrowser(CefClient client,
                                                    String url,
@@ -963,5 +928,16 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       ((JBCefOsrComponent)rendering.getComponent()).setBrowser(browser);
 
     return browser;
+  }
+
+  public void runJavaScript(@Language("JavaScript") String code) {
+    runJavaScript(code, null, 0);
+  }
+
+  public void runJavaScript(@Language("JavaScript") String code, String url, int line) {
+    if (Utils.getBoolean("ide.browser.jcef.log.extended", false)) {
+      CefLog.Debug("%s.runJavaScript(%s)", myCefBrowser.toString(), code);
+    }
+    myCefBrowser.executeJavaScript(code, url, line);
   }
 }

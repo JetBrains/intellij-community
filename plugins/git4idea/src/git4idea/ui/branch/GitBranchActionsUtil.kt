@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
@@ -68,21 +69,20 @@ internal fun updateBranches(project: Project, repositories: Collection<GitReposi
       }
 
       if (fetchTargets.isNotEmpty()) {
-        val fetchSuccessful =
+        val fetchSuccessful = coroutineToIndicator {
           GitFetchSupport.fetchSupport(project).fetch(fetchTargets).showNotificationIfFailed(GitBundle.message("branches.update.failed"))
+        }
         if (fetchSuccessful) {
           VcsNotifier.getInstance(project).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "", GitBundle.message("branches.fetch.finished", fetchTargets.size))
         }
       }
 
       if (updateProcessTargets.isNotEmpty()) {
-        // This method is executed asynchronously, which can bring confusion with notifications and the overall update status.
-        // Should be reconsidered one day.
-        GitUpdateExecutionProcess(project,
-                                  repositories,
-                                  updateProcessTargets,
-                                  GitVcsSettings.getInstance(project).updateMethod,
-                                  false).execute()
+        GitUpdateExecutionProcess.update(project,
+                                         repositories,
+                                         updateProcessTargets,
+                                         GitVcsSettings.getInstance(project).updateMethod,
+                                         false)
       }
     }
   }

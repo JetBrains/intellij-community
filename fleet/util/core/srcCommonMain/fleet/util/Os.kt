@@ -57,6 +57,8 @@ class Os private constructor() {
 
   companion object {
     val INSTANCE: Os = Os()
+
+    val WASM_ARCH: String = "wasm"
   }
 }
 

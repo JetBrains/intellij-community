@@ -4,7 +4,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonRuntimeService;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 

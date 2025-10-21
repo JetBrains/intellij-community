@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps;
 
-import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.DataEnumerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,6 +92,8 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
    * prematurely because processor returns false
    */
   boolean forEach(@NotNull KeyValueProcessor processor) throws IOException;
+
+  void clear() throws IOException;
 
   boolean isClosed();
 

@@ -1,4 +1,4 @@
-// "Remove redundant cast(s)" "true-preview"
+// "Remove redundant cast" "true-preview"
 class Test {
   {
     int i = 1;

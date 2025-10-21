@@ -129,9 +129,11 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
 
     private fun start() {
       val app = ApplicationManager.getApplication()
-      if (app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
+      if ((app.isDispatchThread || app.isWriteAccessAllowed) && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
         LOG.debug { "async for ${file.name}" }
-        job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch {
+        job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch(
+          CoroutineName(this@CodeStyleCachedValueProvider.toString())
+        ) {
           val success = readAction {
             computeSettings()
           }
@@ -322,6 +324,10 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
 
   override fun hashCode(): Int {
     return file.hashCode()
+  }
+
+  override fun toString(): String {
+    return "CodeStyleCachedValueProvider@${Integer.toHexString(super.hashCode())}(file=$file)"
   }
 
   fun dumpState(sb: StringBuilder) {

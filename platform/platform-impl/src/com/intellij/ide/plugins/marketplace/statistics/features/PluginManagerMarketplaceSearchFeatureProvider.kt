@@ -11,9 +11,11 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@IntellijInternalApi
 object PluginManagerMarketplaceSearchFeatureProvider {
   private val IS_SUGGESTED_DATA_KEY = EventFields.Boolean("isSuggested")
   private val IS_STAFF_PICKS_DATA_KEY = EventFields.Boolean("isStaffPicks")

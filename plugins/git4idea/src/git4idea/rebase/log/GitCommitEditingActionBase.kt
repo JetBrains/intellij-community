@@ -10,6 +10,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
@@ -24,6 +26,8 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
@@ -127,11 +131,24 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract fun getFailureTitle(): String
 
-  protected abstract fun createCommitEditingData(
+  @Deprecated("Override createCommitEditingData(repository, selection, logData, selectedChanges) instead")
+  protected open fun createCommitEditingData(
     repository: GitRepository,
     selection: VcsLogCommitSelection,
-    logData: VcsLogData
-  ): CommitEditingDataCreationResult<T>
+    logData: VcsLogData,
+  ): CommitEditingDataCreationResult<T> {
+    throw UnsupportedOperationException()
+  }
+
+  protected open fun createCommitEditingData(
+    repository: GitRepository,
+    selection: VcsLogCommitSelection,
+    logData: VcsLogData,
+    logUiEx: VcsLogUiEx?,
+    selectedChanges: List<Change>,
+  ): CommitEditingDataCreationResult<T> {
+    return createCommitEditingData(repository, selection, logData)
+  }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -141,7 +158,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = true
     e.presentation.description = templatePresentation.description
-   
+
     val commitEditingDataCreationResult = createCommitEditingData(e)
     if (commitEditingDataCreationResult is Prohibited) {
       val description = commitEditingDataCreationResult.description
@@ -291,6 +308,8 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     val project = e.project
     val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
     val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
+    val logUiEx = e.getData(VcsLogInternalDataKeys.LOG_UI_EX)
+    val selectedChanges = e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS)?.toList() ?: emptyList()
 
     if (project == null || selection == null || logDataProvider == null) {
       return Prohibited()
@@ -309,12 +328,12 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
     }
 
-    return createCommitEditingData(repository, selection, logDataProvider)
+    return createCommitEditingData(repository, selection, logDataProvider, logUiEx, selectedChanges)
   }
 
   protected open fun getProhibitedStateMessage(
     commitEditingData: T,
-    @Nls operation: String
+    @Nls operation: String,
   ): @Nls String? = when (commitEditingData.repository.state) {
     Repository.State.NORMAL, Repository.State.DETACHED -> null
     Repository.State.REBASING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.rebasing", operation)
@@ -324,10 +343,11 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     else -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state", operation)
   }
 
-  open class MultipleCommitEditingData(
+  open class MultipleCommitEditingData @JvmOverloads constructor(
     val repository: GitRepository,
     val selection: VcsLogCommitSelection,
-    val logData: VcsLogData
+    val logData: VcsLogData,
+    val logUiEx: VcsLogUiEx? = null,
   ) {
     val project = repository.project
   }

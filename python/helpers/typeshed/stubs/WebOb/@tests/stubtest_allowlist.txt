@@ -47,7 +47,21 @@ webob.descriptors.SCHEME_RE
 webob.acceptparse.MIMEAccept  # Deprecated API
 
 # PY2 compat stuff that has already been removed upstream
-webob.compat
+webob.compat.PY2
+webob.compat.PY3
+webob.compat.bytes_
+webob.compat.class_types
+webob.compat.integer_types
+webob.compat.iteritems_
+webob.compat.itervalues_
+webob.compat.long
+webob.compat.native_
+webob.compat.parse_qsl_text
+webob.compat.reraise
+webob.compat.string_types
+webob.compat.text_
+webob.compat.text_type
+webob.compat.unquote
 webob.multidict.MultiDict.iteritems
 webob.multidict.MultiDict.iterkeys
 webob.multidict.MultiDict.itervalues
@@ -55,6 +69,9 @@ webob.multidict.NestedMultiDict.iteritems
 webob.multidict.NestedMultiDict.iterkeys
 webob.multidict.NestedMultiDict.itervalues
 webob.multidict.NoVars.iterkeys
+
+# The implementation details of cgi_FieldStorage shouldn't matter
+webob.compat.cgi_FieldStorage.read_multi
 
 # NoVars implements the MultiDict interface for better runtime errors
 # but it is annoying for type checking, so the methods that are not
@@ -81,40 +98,17 @@ webob.response.ResponseBodyFile.close
 webob.Response.set_cookie
 webob.response.Response.set_cookie
 
-# These methods have been moved from their subclasses to the shared hidden superclass
-# since the method signatures are the same, so this saves some copy pasta and should
-# not affect type checking or runtime behavior in any way
-webob.acceptparse._AcceptCharsetInvalidOrNoHeader.__add__
-webob.acceptparse._AcceptCharsetInvalidOrNoHeader.__radd__
-webob.acceptparse._AcceptCharsetInvalidOrNoHeader.copy
-webob.acceptparse._AcceptCharsetInvalidOrNoHeader.parsed
-webob.acceptparse._AcceptEncodingInvalidOrNoHeader.__add__
-webob.acceptparse._AcceptEncodingInvalidOrNoHeader.__radd__
-webob.acceptparse._AcceptEncodingInvalidOrNoHeader.copy
-webob.acceptparse._AcceptEncodingInvalidOrNoHeader.parsed
-webob.acceptparse._AcceptInvalidOrNoHeader.__add__
-webob.acceptparse._AcceptInvalidOrNoHeader.__radd__
-webob.acceptparse._AcceptInvalidOrNoHeader.copy
-webob.acceptparse._AcceptInvalidOrNoHeader.parsed
-webob.acceptparse._AcceptLanguageInvalidOrNoHeader.__add__
-webob.acceptparse._AcceptLanguageInvalidOrNoHeader.__radd__
-webob.acceptparse._AcceptLanguageInvalidOrNoHeader.copy
-webob.acceptparse._AcceptLanguageInvalidOrNoHeader.lookup
-webob.acceptparse._AcceptLanguageInvalidOrNoHeader.parsed
-
 # These are here due to the slightly more strict nature of the type annotation
 # of these descriptors for type checking, it does not really have any runtime
 # consequences since `_IntValueProperty` derives from `value_property` and
 # only makes `__set__` slightly more strict.
-webob.cachecontrol.CacheControl.max_age
-webob.cachecontrol.CacheControl.max_stale
-webob.cachecontrol.CacheControl.min_fresh
-webob.cachecontrol.CacheControl.s_max_age
-webob.cachecontrol.CacheControl.s_maxage
-webob.cachecontrol.CacheControl.stale_if_error
-webob.cachecontrol.CacheControl.stale_while_revalidate
-webob.cachecontrol.CacheControl.update_dict
 webob.cachecontrol.UpdateDict.setdefault
+
+# Even though at runtime the default argument has a default value of `None`
+# that will cause an exception, so we're better off pretending the argument
+# is required, and that it can't be `None`
+webob.headers.ResponseHeaders.setdefault
+webob.multidict.GetDict.setdefault
 
 # These need to be ignored due to how WebOb decided to let people know
 # that certain methods on `NestedMultiDict` should not be called since
@@ -123,8 +117,14 @@ webob.cachecontrol.UpdateDict.setdefault
 # that accept any parameters and assign them to methods which should still
 # satisfy the same interface. The type annotations enforce the correct
 # input arguments instead of the generic ones.
-webob.multidict.NestedMultiDict.popitem
+webob.multidict.NestedMultiDict.__delitem__
+webob.multidict.NestedMultiDict.__setitem__
+webob.multidict.NestedMultiDict.add
 webob.multidict.NestedMultiDict.clear
+webob.multidict.NestedMultiDict.pop
+webob.multidict.NestedMultiDict.popitem
+webob.multidict.NestedMultiDict.setdefault
+webob.multidict.NestedMultiDict.update
 
 # The `DEFAULT` parameter on these dunder methods don't really make sense as
 # part of the public API, so they have been removed from the stubs
@@ -162,3 +162,6 @@ webob.multidict.NoVars.__bool__
 # with a use-case where the distinction matters, besides inheriting from
 # the class and overwriting the __init__ and forgetting to populate `write`.
 webob.response.ResponseBodyFile.write
+
+# A couple of utility types we use in multiple modules
+webob._types

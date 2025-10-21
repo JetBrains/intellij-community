@@ -4,10 +4,10 @@ package andel.text
 import andel.editor.Caret
 import andel.editor.CaretPosition
 import andel.editor.MutableDocument
-import fleet.util.text.CodepointClass
-import fleet.util.text.Direction
-import fleet.util.text.codepointClass
-import fleet.util.text.codepoints
+import fleet.codepoints.CodepointClass
+import fleet.codepoints.Direction
+import fleet.codepoints.codepointClass
+import fleet.codepoints.codepoints
 
 private fun stopOnCodepointClass(
   before: CodepointClass,

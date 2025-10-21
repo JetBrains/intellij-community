@@ -4,14 +4,11 @@
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosCollector
-import com.intellij.configurationStore.schemeManager.createDir
-import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,7 +44,7 @@ open class DirectoryBasedStorage(
 
   private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  override suspend fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
     val newData = loadData()
     storageDataRef.set(newData)
@@ -122,7 +119,7 @@ open class DirectoryBasedStorage(
     override fun setSerializedState(componentName: String, element: Element?) {
       storage.componentName = componentName
 
-      @Suppress("removal") val stateAndFileNameList = if (JDOMUtil.isEmpty(element)) Collections.emptyList() else storage.splitter.splitState(element!!)
+      @Suppress("removal") val stateAndFileNameList = if (element == null || element.isEmpty) Collections.emptyList() else storage.splitter.splitState(element)
       if (stateAndFileNameList.isEmpty()) {
         if (copiedStorageData != null) {
           copiedStorageData!!.clear()
@@ -149,11 +146,11 @@ open class DirectoryBasedStorage(
 
     override fun setFileState(fileName: String, componentName: String, element: Element?) {
       storage.componentName = componentName
-      if (element != null) {
-        doSetState(fileName, element)
+      if (element == null) {
+        removeFileData(fileName)
       }
       else {
-        removeFileData(fileName)
+        doSetState(fileName, element)
       }
     }
 
@@ -180,83 +177,58 @@ open class DirectoryBasedStorage(
     override fun createSaveSession(): SaveSession? = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
     override suspend fun save(events: MutableList<VFileEvent>?) {
-      doSave(useVfs = false, events = events)
-    }
-
-    override fun saveBlocking() = doSave(useVfs = true, events = null)
-
-    private fun doSave(useVfs: Boolean, events: MutableList<VFileEvent>?) {
       val stateMap = StateMap.fromMap(copiedStorageData!!)
 
       if (copiedStorageData!!.isEmpty()) {
-        deleteDirectory(useVfs, events)
+        val dir = storage.getVirtualFile()
+        if (dir != null && dir.exists()) {
+          NioFiles.deleteRecursively(storage.dir)
+          events?.add(VFileDeleteEvent(/*requestor =*/ this, dir))
+        }
       }
       else {
         if (dirtyFileNames.isNotEmpty()) {
-          saveStates(stateMap, useVfs, events)
+          saveStates(stateMap, events)
         }
         if (isSomeFileRemoved) {
-          deleteFiles(useVfs, events)
+          deleteFiles(events)
         }
       }
 
-      storage.setStorageData(stateMap)
+      storage.storageDataRef.set(stateMap)
     }
 
-    private fun deleteDirectory(useVfs: Boolean, events: MutableList<VFileEvent>?) {
+    private fun saveStates(states: StateMap, events: MutableList<VFileEvent>?) {
+      val macroManager = (storage.pathMacroSubstitutor as? TrackingPathMacroSubstitutorImpl)?.macroManager
+
+      NioFiles.createDirectories(storage.dir)
       val dir = storage.getVirtualFile()
-      if (dir != null && dir.exists()) {
-        if (useVfs) {
-          dir.delete(/*requestor =*/ this)
-        }
-        else {
-          NioFiles.deleteRecursively(storage.dir)
-          if (events != null) {
-            events += VFileDeleteEvent(/*requestor =*/ this, dir)
-          }
-        }
-      }
-    }
-
-    private fun saveStates(states: StateMap, useVfs: Boolean, events: MutableList<VFileEvent>?) {
-      val macroManager =
-        if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
-
-      val dir = if (useVfs) {
-        var dir = storage.getVirtualFile()
-        if (dir == null || !dir.exists()) {
-          dir = createDir(storage.dir, requestor = this)
-          storage.cachedVirtualFile = dir
-        }
-        dir
-      }
-      else {
-        NioFiles.createDirectories(storage.dir)
-        storage.getVirtualFile()
-      }
 
       for (fileName in states.keys()) {
-        if (!dirtyFileNames.contains(fileName)) continue
+        if (!dirtyFileNames.contains(fileName)) {
+          continue
+        }
+
         val element = states.getElement(fileName) ?: continue
 
         val rootAttributes = mapOf(ComponentStorageUtil.NAME to storage.componentName!!)
         val debugString = storage.dir.toString()
-        val dataWriter = XmlDataWriter(ComponentStorageUtil.COMPONENT, listOf(element), rootAttributes, macroManager, debugString)
+        val dataWriter = XmlDataWriter(
+          rootElementName = ComponentStorageUtil.COMPONENT,
+          elements = listOf(element),
+          rootAttributes = rootAttributes,
+          macroManager = macroManager,
+          storageFilePathForDebugPurposes = debugString,
+        )
 
         try {
-          if (useVfs) {
-            val file = dir!!.getOrCreateChild(requestor = this, fileName, directory = false)
-            writeFile(cachedFile = null, requestor = this, file, dataWriter, getOrDetectLineSeparator(file), prependXmlProlog = false)
-          }
-          else {
-            val file = storage.dir.resolve(fileName)
-            writeFile(file = file, requestor = this, dataWriter = dataWriter, lineSeparator = storage.getLineSeparator(fileName), prependXmlProlog = false)
-            if (events != null) {
-              val vFile = dir?.findChild(fileName)
-              when {
-                vFile != null -> events += updatingEvent(file, vFile)
-                dir != null -> events += creationEvent(file, dir)
-              }
+          val file = storage.dir.resolve(fileName)
+          writeFile(file = file, requestor = this, dataWriter = dataWriter, lineSeparator = storage.getLineSeparator(fileName), prependXmlProlog = false)
+          if (events != null) {
+            val vFile = dir?.findChild(fileName)
+            when {
+              vFile != null -> events.add(updatingEvent(file, vFile))
+              dir != null -> events.add(creationEvent(file, dir))
             }
           }
         }
@@ -266,53 +238,19 @@ open class DirectoryBasedStorage(
       }
     }
 
-    private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator {
-      if (!file.exists()) {
-        return LineSeparator.getSystemLineSeparator()
-      }
-      file.detectedLineSeparator?.let {
-        return LineSeparator.fromString(it)
-      }
-      val lineSeparator = storage.getLineSeparator(file.name)
-      file.detectedLineSeparator = lineSeparator.separatorString
-      return lineSeparator
-    }
-
-    private fun deleteFiles(useVfs: Boolean, events: MutableList<VFileEvent>?) {
+    private fun deleteFiles(events: MutableList<VFileEvent>?) {
       val copiedStorageData = copiedStorageData!!
       val dir = storage.getVirtualFile()
-
-      if (useVfs) {
-        if (dir == null || !dir.exists()) {
-          return
-        }
-
-        for (file in dir.children) {
-          val fileName = file.name
-          if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
-            if (!file.isWritable) {
-              throw ReadOnlyModificationException(file, null)
-            }
-            file.delete(/*requestor =*/ this)
-          }
-        }
-      }
-      else {
-        for (file in NioFiles.list(storage.dir)) {
-          val fileName = file.fileName.toString()
-          if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
-            Files.deleteIfExists(file)
-            if (events != null) {
-              dir?.findChild(fileName)?.let { events.add(VFileDeleteEvent(/*requestor =*/ this, it)) }
-            }
+      for (file in NioFiles.list(storage.dir)) {
+        val fileName = file.fileName.toString()
+        if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
+          Files.deleteIfExists(file)
+          if (events != null) {
+            dir?.findChild(fileName)?.let { events.add(VFileDeleteEvent(/*requestor =*/ this, it)) }
           }
         }
       }
     }
-  }
-
-  private fun setStorageData(newStates: StateMap) {
-    storageDataRef.set(newStates)
   }
 
   override fun toString(): String = "${javaClass.simpleName}(dir=$dir, componentName=$componentName)"

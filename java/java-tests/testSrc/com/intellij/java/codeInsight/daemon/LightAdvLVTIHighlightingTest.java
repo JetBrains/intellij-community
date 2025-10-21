@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
@@ -91,6 +92,11 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
   
   public void testIntersectionTypeMethodRef() {
+    doTest();
+  }
+  
+  @TestFor(issues = "IDEA-378301")
+  public void testComplexInheritanceChain() {
     doTest();
   }
 

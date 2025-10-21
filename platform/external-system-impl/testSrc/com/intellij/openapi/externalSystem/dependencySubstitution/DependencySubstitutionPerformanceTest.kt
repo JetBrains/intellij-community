@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
+@StressTestApplication
 @TestApplication
 class DependencySubstitutionPerformanceTest : DependencySubstitutionTestCase() {
 
@@ -114,13 +116,13 @@ class DependencySubstitutionPerformanceTest : DependencySubstitutionTestCase() {
     coordinates.libraries.putAll(testData.librarySubstitutions)
 
     for (moduleName in testData.modules.keys + testData.moduleSubstitutions.keys) {
-      storage addEntity ModuleEntity.Companion(moduleName, emptyList(), NonPersistentEntitySource)
+      storage addEntity ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource)
     }
     for (libraryName in testData.libraries.keys + testData.librarySubstitutions.keys) {
-      storage addEntity LibraryEntity.Companion(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource)
+      storage addEntity LibraryEntity(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource)
     }
     for (appModuleName in testData.appModules.keys) {
-      storage addEntity ModuleEntity.Companion(appModuleName, emptyList(), NonPersistentEntitySource) {
+      storage addEntity ModuleEntity(appModuleName, emptyList(), NonPersistentEntitySource) {
         dependencies += testData.modules.keys.map { moduleName ->
           ModuleDependency(ModuleId(moduleName), false, DependencyScope.COMPILE, false)
         }

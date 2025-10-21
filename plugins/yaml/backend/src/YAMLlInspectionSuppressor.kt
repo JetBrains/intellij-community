@@ -132,7 +132,7 @@ private class YAMLSuppressFileQuickFix(ID: String) :
     if (existingComment != null) {
       val comment = createNewCommentByPattern(SUPPRESS_IN_FILE_COMMENT_PATTERN, existingComment, myID)
       existingComment.replace(comment)
-      DaemonCodeAnalyzer.getInstance(project).restart(container)
+      DaemonCodeAnalyzer.getInstance(project).restart(container, this)
     }
     else {
       var before = container.firstChild

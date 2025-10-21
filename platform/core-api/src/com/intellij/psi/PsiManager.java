@@ -9,7 +9,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -48,24 +47,14 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
 
-  /**
-   * @deprecated very-internal api, please don't use
-   * todo IJPL-339 remove this method
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
 
   public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);
 
-  /**
-   * @deprecated very-internal api, please don't use
-   * todo IJPL-339 remove this method
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
@@ -99,12 +88,13 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Reloads the contents of the specified PSI file and its associated document (if any) from the disk.
    *
-   * @param file the PSI file to reload.
+   * @param psiFile the PSI file to reload.
    */
-  public abstract void reloadFromDisk(@NotNull PsiFile file);
+  public abstract void reloadFromDisk(@NotNull PsiFile psiFile);
 
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   * This listener will be invoked on EDT.
    *
    * @param listener the listener instance
    * @deprecated Please use the overload with specified parent disposable
@@ -114,6 +104,9 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   * This listener will be invoked <b>on EDT</b>.
+   *
+   * Obsolescence notice: consider using {@link #addPsiTreeChangeListenerBackgroundable(PsiTreeChangeListener, Disposable)} instead.
    *
    * @param listener         the listener instance
    * @param parentDisposable object, after whose disposing the listener should be removed
@@ -121,10 +114,23 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable);
 
   /**
+   * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   * This listener can be invoked on any thread.
+   *
+   * @param listener         the listener instance
+   * @param parentDisposable object, after whose disposing the listener should be removed
+   */
+  @ApiStatus.Experimental
+  public abstract void addPsiTreeChangeListenerBackgroundable(@NotNull PsiTreeChangeListener listener,
+                                                              @NotNull Disposable parentDisposable);
+
+  /**
    * Removes a listener for receiving notifications about all changes in the PSI tree of the project.
    *
    * @param listener the listener instance
+   * @deprecated Consider using {@link PsiManager#addPsiTreeChangeListener(PsiTreeChangeListener, Disposable)} to avoid accidental leaks
    */
+  @Deprecated
   public abstract void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
 
   /**
@@ -177,8 +183,9 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Clears all {@link com.intellij.psi.util.CachedValue} depending on {@link PsiModificationTracker#MODIFICATION_COUNT} and resolve caches.
    * Can be used to reduce memory consumption in batch operations sequentially processing multiple files.
+   * <p>
+   * This function is allowed to be invoked either on EDT (legacy contract) or in background write action.
    */
-  @RequiresEdt
   public abstract void dropPsiCaches();
 
   /**
@@ -189,6 +196,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    */
   public abstract boolean isInProject(@NotNull PsiElement element);
 
+  // todo ijpl-339 do we need context here?
   @ApiStatus.Internal
   public abstract @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile);
 }

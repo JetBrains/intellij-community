@@ -169,27 +169,27 @@ public class NullityInferrer {
         element instanceof PsiField field && field.hasInitializer() && field.hasModifierProperty(PsiModifier.FINAL)) {
       return false;
     }
-    invoke(element, manager.getDefaultNotNull(), manager.getDefaultNullable());
+    invoke(element, manager.getDefaultAnnotation(Nullability.NOT_NULL, element), manager.getNullables());
     return true;
   }
 
   private static boolean annotateNullable(@NotNull NullableNotNullManager manager,
                                           final @Nullable PsiModifierListOwner element) {
     if (element == null) return false;
-    invoke(element, manager.getDefaultNullable(), manager.getDefaultNotNull());
+    invoke(element, manager.getDefaultAnnotation(Nullability.NULLABLE, element), manager.getNotNulls());
     return true;
   }
 
   private static void invoke(final @NotNull PsiModifierListOwner element,
-                             final @NotNull String fqn, final @NotNull String toRemove) {
-    new AddAnnotationPsiFix(fqn, element, toRemove).applyFix();
+                             final @NotNull String fqn, final @NotNull List<String> toRemove) {
+    new AddAnnotationPsiFix(fqn, element, ArrayUtil.toStringArray(toRemove)).applyFix();
   }
 
   public int getCount() {
     return myNotNullSet.size() + myNullableSet.size();
   }
 
-  public static boolean apply(@NotNull Project project, @NotNull NullableNotNullManager manager, UsageInfo info) {
+  public static boolean apply(@NotNull NullableNotNullManager manager, UsageInfo info) {
     if (info instanceof NullableUsageInfo) {
       return annotateNullable(manager, (PsiModifierListOwner)info.getElement());
     }

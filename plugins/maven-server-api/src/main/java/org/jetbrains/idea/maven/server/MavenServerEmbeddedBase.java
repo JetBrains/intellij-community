@@ -25,7 +25,8 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
       task.getTotalRequests(),
       task.getFinishedRequests(),
       task.getIndicator().pullConsoleEvents(),
-      task.getIndicator().pullDownloadEvents()
+      task.getIndicator().pullDownloadEvents(),
+      task.getIndicator().pullDownloadArtifactEvents()
     );
   }
 
@@ -106,6 +107,7 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     }
 
     @Override
+    @NotNull
     public MavenServerConsoleIndicatorImpl getIndicator() {
       return myIndicator;
     }

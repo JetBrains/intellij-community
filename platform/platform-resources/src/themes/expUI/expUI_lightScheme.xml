@@ -517,5 +517,23 @@
         <option name="FOREGROUND" value="e6" />
       </value>
     </option>
+    <option name="INLAY_BUTTON_DEFAULT">
+      <value>
+        <option name="FOREGROUND" value="494B57"/>
+        <option name="EFFECT_COLOR" value="00000033"/>
+      </value>
+    </option>
+    <option name="INLAY_BUTTON_FOCUSED">
+      <value>
+        <option name="FOREGROUND" value="494B57"/>
+        <option name="EFFECT_COLOR" value="00000047"/>
+      </value>
+    </option>
+    <option name="INLAY_BUTTON_HOVERED">
+      <value>
+        <option name="FOREGROUND" value="494B57"/>
+        <option name="EFFECT_COLOR" value="00000047"/>
+      </value>
+    </option>
   </attributes>
 </scheme>

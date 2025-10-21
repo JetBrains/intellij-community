@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
@@ -66,7 +66,7 @@ class KotlinUEnumConstant(
         get() = emptyList()
 
     override val valueArgumentCount: Int
-        get() = psi.argumentList?.expressions?.size ?: 0
+        get() = psi.argumentList?.expressionCount ?: 0
 
     override val valueArguments: List<UExpression>
         get() = valueArgumentsPart.getOrBuild {

@@ -23,14 +23,14 @@ class PyUnreachableCodeInspection : PyInspection() {
       override fun visitPyStatementList(node: PyStatementList) {
         if (node.parent.isUnreachableForInspection(myTypeEvalContext)) return
         if (node.isUnreachableForInspection(myTypeEvalContext)) {
-          registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"), ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+          registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"))
         }
       }
 
       override fun visitPyStatement(node: PyStatement) {
         if (node.parent.isUnreachableForInspection(myTypeEvalContext)) return
         if (node.isUnreachableForInspection(myTypeEvalContext)) {
-          registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"), ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+          registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"))
         }
       }
     }

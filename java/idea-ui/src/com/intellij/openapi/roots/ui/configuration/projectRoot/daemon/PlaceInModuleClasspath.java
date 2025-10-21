@@ -27,18 +27,12 @@ public class PlaceInModuleClasspath extends PlaceInProjectStructure {
     myModule = module;
     myElement = element;
     ModuleRootModel rootModel = myContext.getModulesConfigurator().getRootModel(myModule);
-    if (elementInClasspath instanceof LibraryProjectStructureElement) {
-      myOrderEntry = OrderEntryUtil.findLibraryOrderEntry(rootModel, ((LibraryProjectStructureElement)elementInClasspath).getLibrary());
-    }
-    else if (elementInClasspath instanceof ModuleProjectStructureElement) {
-      myOrderEntry = OrderEntryUtil.findModuleOrderEntry(rootModel, ((ModuleProjectStructureElement)elementInClasspath).getModule());
-    }
-    else if (elementInClasspath instanceof SdkProjectStructureElement) {
-      myOrderEntry = OrderEntryUtil.findJdkOrderEntry(rootModel, ((SdkProjectStructureElement)elementInClasspath).getSdk());
-    }
-    else {
-      myOrderEntry = null;
-    }
+    myOrderEntry = switch (elementInClasspath) {
+      case LibraryProjectStructureElement structureElement -> OrderEntryUtil.findLibraryOrderEntry(rootModel, structureElement.getLibrary());
+      case ModuleProjectStructureElement structureElement -> OrderEntryUtil.findModuleOrderEntry(rootModel, structureElement.getModule());
+      case SdkProjectStructureElement structureElement -> OrderEntryUtil.findJdkOrderEntry(rootModel, structureElement.getSdk());
+      default -> null;
+    };
   }
 
   @Override

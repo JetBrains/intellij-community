@@ -11,7 +11,6 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 
 private val LOG = fileLogger()
@@ -51,14 +50,14 @@ private enum class Group {
  * If [module] is set, v2 is displayed for the certain module.
  */
 @ApiStatus.Internal
-suspend fun sortForExistingEnvironment(
-  pythons: Collection<PythonSelectableInterpreter>,
+suspend fun <P: PathHolder> sortForExistingEnvironment(
+  pythons: Collection<PythonSelectableInterpreter<P>>,
   module: Module?,
-  venvReader: VirtualEnvReader = VirtualEnvReader.Companion.Instance,
-): List<PythonSelectableInterpreter> {
+  venvReader: VirtualEnvReader = VirtualEnvReader.Instance,
+): List<PythonSelectableInterpreter<P>> {
   val venvRoot = withContext(Dispatchers.IO) {
     venvReader.getVEnvRootDir()
-  }
+  }.toString()
   return withContext(Dispatchers.Default) {
     val groupedPythons = pythons.groupBy {
       when (it) {
@@ -66,23 +65,23 @@ suspend fun sortForExistingEnvironment(
         is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> Unit // Those are pythons, and not SDKs
         is ExistingSelectableInterpreter -> { //SDKs
           if (module != null) {
-            if (it.sdk.isAssociatedWithModule(module)) {
+            if (it.sdkWrapper.sdk.isAssociatedWithModule(module)) {
               return@groupBy Group.ASSOC_WITH_PROJ_ROOT
             }
-            else if (it.sdk.isAssociatedWithAnotherModule(module)) {
+            else if (it.sdkWrapper.sdk.isAssociatedWithAnotherModule(module)) {
               return@groupBy Group.REDUNDANT // Foreign SDK
             }
           }
-          else if (it.sdk.getOrCreateAdditionalData().associatedModulePath != null) {
+          else if (it.sdkWrapper.sdk.getOrCreateAdditionalData().associatedModulePath != null) {
             // module == null, associated path != null: associated sdk can't be used without a module
             return@groupBy Group.REDUNDANT
           }
-          if (it.sdk.associatedModulePath == null) { // Shared SDK
+          if (it.sdkWrapper.sdk.associatedModulePath == null) { // Shared SDK
             return@groupBy Group.SHARED_VENVS
           }
         }
       }
-      return@groupBy if (Path.of(it.homePath).startsWith(venvRoot)) Group.VENVS_IN_USER_HOME else Group.OTHER
+      return@groupBy if (it.homePath.toString().startsWith(venvRoot)) Group.VENVS_IN_USER_HOME else Group.OTHER
     }
     if (LOG.isDebugEnabled) {
       LOG.debug(groupedPythons.map { (group, pythons) ->

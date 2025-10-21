@@ -2,9 +2,9 @@
 package com.intellij.java.navigation;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +43,7 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     List<Module> modules = new ArrayList<>();
     for (int i = 0; i < moduleCount; i++) {
       modules.add(
-        PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod" + i, myFixture.getTempDirFixture().findOrCreateDir("mod" + i)));
+        PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod" + i, myFixture.getTempDirFixture().findOrCreateDir("mod" + i)));
     }
     ModuleRootModificationUtil.addDependency(myFixture.getModule(), modules.get(2));
 
@@ -61,8 +61,8 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void test_paths_relative_to_topmost_module() throws IOException {
-    PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "m1", myFixture.getTempDirFixture().findOrCreateDir("foo"));
-    PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "m2", myFixture.getTempDirFixture().findOrCreateDir("foo/bar"));
+    PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "m1", myFixture.getTempDirFixture().findOrCreateDir("foo"));
+    PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "m2", myFixture.getTempDirFixture().findOrCreateDir("foo/bar"));
 
     PsiFile file = myFixture.addFileToProject("foo/bar/goo/doo.txt", "");
     SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable(), file);

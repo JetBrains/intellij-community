@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -20,7 +21,7 @@ internal class ConvertReferenceToLambdaIntention :
         if (skip(element)) null
         else ConvertReferenceToLambdaUtil.prepareLambdaExpressionText(element)
 
-    context(KaSession)
+    context(_: KaSession)
     private fun skip(element: KtCallableReferenceExpression): Boolean {
         val expectedType = element.expectedType ?: return false
         val classId = (expectedType as? KaClassType)?.classId ?: return false

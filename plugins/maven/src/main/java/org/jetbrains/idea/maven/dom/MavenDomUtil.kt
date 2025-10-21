@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -29,6 +28,8 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.*
 import org.jetbrains.idea.maven.dom.model.*
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
 import org.jetbrains.idea.maven.model.MavenCoordinate
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenResource
@@ -38,6 +39,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.isPomFileName
 import java.util.regex.Pattern
 
@@ -70,6 +72,29 @@ object MavenDomUtil {
     }
 
     return isPomFileName(file.getName())
+  }
+
+  @JvmStatic
+  fun isProjectFileWithModel410(file: PsiFile?): Boolean {
+    if (file !is XmlFile) return false
+
+    val rootTag = file.getRootTag()
+    if (rootTag == null || "project" != rootTag.getName()) return false
+
+    val xmlns = rootTag.getAttributeValue("xmlns")
+    if (xmlns != "http://maven.apache.org/POM/4.1.0" && xmlns != "https://maven.apache.org/POM/4.1.0"){
+      return false
+    }
+
+    if (!isPomFileName(file.getName())) return false
+
+    val modelTag = rootTag.findSubTags("modelVersion").singleOrNull()
+    if (modelTag?.value?.text == MODEL_VERSION_4_1_0) return true
+    if (modelTag?.value?.text == MODEL_VERSION_4_0_0) return false
+    return MavenUtil.isMaven410(
+      rootTag?.getAttribute("xmlns")?.value,
+      rootTag?.getAttribute("xsi:schemaLocation")?.value)
+
   }
 
   @JvmStatic
@@ -314,7 +339,7 @@ object MavenDomUtil {
       }
     }
 
-    return Pair.create<String?, Int?>(tagName, index)
+    return tagName to index
   }
 
   private fun getIndexedTag(parent: XmlTag, index: Int?): XmlTag? {
@@ -367,7 +392,7 @@ object MavenDomUtil {
         set = mutableSetOf<VirtualFile?>()
       }
 
-      cachedValue = Pair.create<Long?, MutableSet<VirtualFile?>?>(VirtualFileManager.getInstance().getModificationCount(), set)
+      cachedValue = VirtualFileManager.getInstance().getModificationCount() to set
       mavenProject.putCachedValue<Pair<Long?, MutableSet<VirtualFile?>?>?>(FILTERED_RESOURCES_ROOTS_KEY, cachedValue)
     }
 

@@ -7,19 +7,21 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.pom.java.LanguageLevel
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
 
 open class KotlinJdkAndLibraryProjectDescriptor(
-    val libraryFiles: List<File>,
-    val librarySourceFiles: List<File> = emptyList(),
+    val libraryFiles: List<Path>,
+    val librarySourceFiles: List<Path> = emptyList(),
     val javaLanguageVersion: LanguageLevel? = null,
 ) : KotlinLightProjectDescriptor() {
 
-    constructor(libraryFile: File) : this(listOf(libraryFile))
+    constructor(libraryFile: Path) : this(listOf(libraryFile))
 
     init {
         for (libraryFile in libraryFiles + librarySourceFiles) {
-            assert(libraryFile.exists()) { "Library file doesn't exist: " + libraryFile.absolutePath }
+            assert(libraryFile.exists()) { "Library file doesn't exist: " + libraryFile.absolutePathString() }
         }
     }
 
@@ -33,7 +35,7 @@ open class KotlinJdkAndLibraryProjectDescriptor(
             }
         }
 
-        model.getModuleExtension(LanguageLevelModuleExtension::class.java).setLanguageLevel(javaLanguageVersion ?: LanguageLevel.HIGHEST);
+        model.getModuleExtension(LanguageLevelModuleExtension::class.java).setLanguageLevel(javaLanguageVersion ?: LanguageLevel.HIGHEST)
     }
 
     companion object {

@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.controlflow.PyDataFlowKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.inspections.PyInspectionExtension;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.*;
 
 import static com.jetbrains.python.PyNames.END_WILDCARD;
+import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
 public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
@@ -151,6 +153,27 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
              target == reference.getElement().getContainingFile() &&
              !isContainingFileImportAllowed(node, (PsiFile)target)) {
       registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"));
+    }
+    else if (PyUnionType.isStrictSemanticsEnabled() && node instanceof PyQualifiedExpression qualifiedExpression) {
+      String referencedName = qualifiedExpression.getReferencedName();
+      PyExpression qualifier = qualifiedExpression.getQualifier();
+      if (referencedName != null && qualifier != null) {
+        PyType qualifierType = myTypeEvalContext.getType(qualifier);
+        if (qualifierType instanceof PyUnionType unionType) {
+          PyType unionMemberMissingAttr = findStrictUnionMemberMissingAttribute(unionType, reference, referencedName);
+          if (unionMemberMissingAttr != null) {
+            String unionTypeRender = PythonDocumentationProvider.getTypeName(qualifierType, myTypeEvalContext);
+            String unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberMissingAttr, myTypeEvalContext);
+            registerProblem(
+              node,
+              PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender, referencedName),
+              ProblemHighlightType.WEAK_WARNING,
+              null,
+              reference.getRangeInElement()
+            );
+          }
+        }
+      }
     }
   }
 
@@ -286,7 +309,17 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             }
           }
           else {
-            description = PyPsiBundle.message("INSP.unresolved.refs.cannot.find.reference.in.type", refText, type.getName());
+            PyType unionMemberWithoutAttr = findStrictUnionMemberMissingAttribute(type, reference, refName);
+            if (unionMemberWithoutAttr != null) {
+              String unionTypeRender = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+              String unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberWithoutAttr, myTypeEvalContext);
+              description =
+                PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender, refName);
+              severity = HighlightSeverity.WEAK_WARNING;
+            }
+            else {
+              description = PyPsiBundle.message("INSP.unresolved.refs.cannot.find.reference.in.type", refText, type.getName());
+            }
           }
           markedQualified = true;
         }
@@ -309,6 +342,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     ProblemHighlightType hlType;
     if (severity == HighlightSeverity.WARNING) {
       hlType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    }
+    if (severity == HighlightSeverity.WEAK_WARNING) {
+      hlType = ProblemHighlightType.WEAK_WARNING;
     }
     else if (severity == HighlightSeverity.ERROR) {
       hlType = ProblemHighlightType.GENERIC_ERROR;
@@ -350,9 +386,21 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       .anyMatch(attrName::equals);
   }
 
-  private boolean ignoreUnresolvedMemberForType(@NotNull PyType type, PsiReference reference, String name) {
+  private boolean ignoreUnresolvedMemberForType(@Nullable PyType type, @NotNull PsiReference reference, @NotNull String name) {
     if (type instanceof PyTypeVarType typeVarType) {
       return typeVarType.getBound() == null && typeVarType.getDefaultType() == null && typeVarType.getConstraints().isEmpty();
+    }
+    if (type instanceof PyUnionType unionType) {
+      if (PyUnionType.isStrictSemanticsEnabled()) {
+        // If strict unions are enabled, we should report an error even if a union contains Any, e.g. in
+        // x: int | Any
+        // x.foo()  # 'foo' access should be reported despite Any
+        return findStrictUnionMemberMissingAttribute(unionType, reference, name) == null;
+      }
+      return ContainerUtil.exists(unionType.getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
+    }
+    if (type instanceof PyUnsafeUnionType weakUnionType) {
+      return ContainerUtil.exists(weakUnionType.getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
     }
     if (PyTypeChecker.isUnknown(type, myTypeEvalContext)) {
       // this almost always means that we don't know the type, so don't show an error in this case
@@ -403,9 +451,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         return true;
       }
     }
-    if (type instanceof PyUnionType) {
-      return ContainerUtil.exists(((PyUnionType)type).getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
-    }
     if (type instanceof PyModuleType) {
       final PyFile module = ((PyModuleType)type).getModule();
       if (module.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37)) {
@@ -418,6 +463,27 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
     }
     return false;
+  }
+
+  private @Nullable PyType findStrictUnionMemberMissingAttribute(@NotNull PyType type, @NotNull PsiReference ref, @NotNull String name) {
+    if (!(type instanceof PyUnionType unionType) || !PyUnionType.isStrictSemanticsEnabled()) {
+      return null;
+    }
+    // In cases like the following (see PyUnusedImportTest#testModuleAndSubmodule):
+    //
+    // import pkg.mod
+    // import pkg
+    // pkg.mod
+    //     ^
+    //
+    // The type of `pkg` is a union of PyModuleType('pkg/__init__.py') and PyImportedModuleType('import pkg').
+    // Only the last one owns the attribute `mod` directly, and the first needs a location to inspect imports
+    // of this module in the file the original reference belongs to.
+    PyExpression location = as(ref.getElement(), PyExpression.class);
+    return ContainerUtil.find(unionType.getMembers(), t -> {
+      if (t == null || ignoreUnresolvedMemberForType(t, ref, name)) return false;
+      return ContainerUtil.isEmpty(t.resolveMember(name, location, AccessDirection.READ, getResolveContext()));
+    });
   }
 
   private boolean isDecoratedAsDynamic(@NotNull PyClass cls, boolean inherited) {

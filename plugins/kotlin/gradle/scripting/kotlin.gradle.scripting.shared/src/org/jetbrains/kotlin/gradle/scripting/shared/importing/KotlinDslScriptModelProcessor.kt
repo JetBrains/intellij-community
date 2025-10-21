@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.gradle.scripting.shared.importing
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
@@ -11,6 +10,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleScriptInputsStamp
+import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.gradleTooling.BrokenKotlinDslScriptsModel
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
@@ -35,46 +35,29 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     }
 }
 
-fun processScriptModel(
-    resolverCtx: ProjectResolverContext,
-    sync: KotlinDslGradleBuildSync?,
-    model: KotlinDslScriptsModel,
-    projectName: String
-): Boolean {
-    return if (model is BrokenKotlinDslScriptsModel) {
-        LOG.error(
-            "Couldn't get KotlinDslScriptsModel for $projectName:\n${model.message}\n${model.stackTrace}"
-        )
-        false
-    } else {
-        val task = resolverCtx.externalSystemTaskId
-        val project = task.findProject() ?: return false
-        val models = model.toListOfScriptModels(project)
+fun getKotlinDslScripts(context: ProjectResolverContext): Sequence<KotlinDslScriptModel> = sequence {
+    if (!kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) return@sequence
 
-        if (sync != null) {
-            synchronized(sync) {
-                sync.models.addAll(models)
+    context.allBuilds.flatMap { it.projects }
+        .asSequence()
+        .filter { it.projectIdentifier.projectPath == ":" }
+        .mapNotNull {
+            context.getProjectModel(it, KotlinDslScriptsModel::class.java)
+        }.forEach {
+            if (it is BrokenKotlinDslScriptsModel) {
+                LOG.error("Couldn't get KotlinDslScriptsModel: \n${it.message}\n${it.stackTrace}")
+                return@sequence
             }
-        }
 
-        val errors = models.collectErrors()
-        if (errors.isNotEmpty()) {
-            sync?.let {
-                synchronized(it) {
-                    it.failed = true
-                }
-            }
-            throw ProcessCanceledException()
+            yieldAll(it.toListOfScriptModels(context.project))
         }
-        true
-    }
 }
 
-private fun Collection<KotlinDslScriptModel>.collectErrors(): List<KotlinDslScriptModel.Message> {
+fun Collection<KotlinDslScriptModel>.collectErrors(): List<KotlinDslScriptModel.Message> {
     return this.flatMap { it.messages.filter { msg -> msg.severity == KotlinDslScriptModel.Severity.ERROR } }
 }
 
-private fun KotlinDslScriptsModel.toListOfScriptModels(project: Project): List<KotlinDslScriptModel> =
+fun KotlinDslScriptsModel.toListOfScriptModels(project: Project): List<KotlinDslScriptModel> =
     scriptModels.mapNotNull { (file, model) ->
         val messages = mutableListOf<KotlinDslScriptModel.Message>()
 
@@ -130,9 +113,9 @@ class KotlinDslGradleBuildSync(val workingDir: String, val taskId: ExternalSyste
     var gradleVersion: String? = null
     var gradleHome: String? = null
     var javaHome: String? = null
-    val projectRoots = mutableSetOf<String>()
-    val models = mutableListOf<KotlinDslScriptModel>()
-    var failed = false
+    val projectRoots: MutableSet<String> = mutableSetOf()
+    val models: MutableList<KotlinDslScriptModel> = mutableListOf()
+    var failed: Boolean = false
 
     override fun toString(): String {
         return "KotlinGradleDslSync(workingDir=$workingDir, gradleVersion=$gradleVersion, gradleHome=$gradleHome, javaHome=$javaHome, projectRoots=$projectRoots, failed=$failed)"

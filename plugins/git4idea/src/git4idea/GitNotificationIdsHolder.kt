@@ -42,6 +42,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       BRANCH_CREATE_ROLLBACK_SUCCESS,
       BRANCH_CREATE_ROLLBACK_ERROR,
       DELETE_BRANCH_ON_MERGE,
+      DROP_CHANGES_FAILED,
       FETCH_ERROR,
       FETCH_SUCCESS,
       FETCH_DETAILS,
@@ -53,6 +54,9 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       INIT_ERROR,
       INIT_FAILED,
       INIT_STAGE_FAILED,
+      IN_MEMORY_OPERATION_FAILED,
+      IN_MEMORY_REBASE_MERGE_CONFLICT,
+      IN_MEMORY_REBASE_VALIDATION_FAILED,
       LOCAL_CHANGES_NOT_RESTORED,
       MERGE_ABORT_FAILED,
       MERGE_ABORT_SUCCESS,
@@ -164,6 +168,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val BRANCH_CREATE_ROLLBACK_SUCCESS = "git.create.branch.rollback.successful"
     const val BRANCH_CREATE_ROLLBACK_ERROR = "git.create.branch.rollback.error"
     const val DELETE_BRANCH_ON_MERGE = "git.delete.branch.on.merge"
+    const val DROP_CHANGES_FAILED = "git.rebase.log.changes.drop.failed"
     const val FETCH_ERROR = "git.fetch.error"
     const val FETCH_SUCCESS = "git.fetch.success"
     const val FETCH_DETAILS = "git.fetch.details"
@@ -175,6 +180,9 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val INIT_ERROR = "git.init.error"
     const val INIT_FAILED = "git.init.failed"
     const val INIT_STAGE_FAILED = "git.init.stage.failed"
+    const val IN_MEMORY_OPERATION_FAILED = "git.in.memory.operation.failed"
+    const val IN_MEMORY_REBASE_MERGE_CONFLICT = "git.in.memory.rebase.merge.conflict"
+    const val IN_MEMORY_REBASE_VALIDATION_FAILED = "git.in.memory.rebase.validation.failed"
     const val LOCAL_CHANGES_NOT_RESTORED = "git.local.changes.not.restored"
     const val MERGE_ABORT_FAILED = "git.merge.abort.failed"
     const val MERGE_ABORT_SUCCESS = "git.merge.abort.success"

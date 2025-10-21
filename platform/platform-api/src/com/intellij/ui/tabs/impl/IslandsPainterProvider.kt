@@ -16,4 +16,6 @@ open class IslandsPainterProvider {
   open fun createCommonTabPainter(): TabPainterAdapter? = null
 
   open fun useMacScrollBar(): Boolean = false
+
+  open fun isTabOccupiesWholeHeight(): Boolean = true
 }

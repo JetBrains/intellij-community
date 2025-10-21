@@ -1,10 +1,13 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.lang.Language
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.keyFMap.KeyFMap
 import java.util.*
@@ -20,9 +23,6 @@ import java.util.*
  * while UI of PyCharm DS doesn't allow to create a stem cell at all.
  */
 interface NotebookCellLines {
-  enum class CellType {
-    CODE, MARKDOWN, RAW
-  }
 
   enum class MarkersAtLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
     NO(false, false),
@@ -101,6 +101,12 @@ interface NotebookCellLines {
       return getContentText(document).toString()
     }
 
+    fun getContentText(file: VirtualFile): String {
+
+      val document = FileDocumentManager.getInstance().getDocument(file)!!
+      return getContentText(document).toString()
+    }
+
     fun getContentText(document: Document): CharSequence {
       val first = firstContentLine
       val last = lastContentLine
@@ -161,6 +167,6 @@ interface NotebookCellLines {
     fun hasSupport(editor: Editor): Boolean =
       hasSupport(editor.document)
 
-    val INTERVAL_LANGUAGE_KEY = Key.create<Language>("com.intellij.notebooks.visualization.NotebookCellLines.Interval.language")
+    val INTERVAL_LANGUAGE_KEY: Key<Language?> = Key.create<Language>("com.intellij.notebooks.visualization.NotebookCellLines.Interval.language")
   }
 }

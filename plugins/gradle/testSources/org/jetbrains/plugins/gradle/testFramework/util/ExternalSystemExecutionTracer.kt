@@ -70,4 +70,13 @@ class ExternalSystemExecutionTracer {
   }
 
   enum class PrintOutputMode { NEVER, ALWAYS, ON_EXCEPTION }
+
+  companion object {
+
+    inline fun traceExecutionOutput(execution: () -> Unit): String {
+      val tracer = ExternalSystemExecutionTracer()
+      tracer.traceExecution(action = execution)
+      return tracer.output.joinToString("")
+    }
+  }
 }

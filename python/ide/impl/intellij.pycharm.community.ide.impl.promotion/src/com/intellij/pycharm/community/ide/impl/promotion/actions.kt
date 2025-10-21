@@ -30,12 +30,11 @@ abstract class ProPromoAction(private val topic: PromoTopic): AnAction(), PromoA
 
   override fun actionPerformed(e: AnActionEvent) {
     tryUltimate(
-      null,
-      PluginAdvertiserService.pyCharmProfessional,
-      e.project,
-      null,
-      createOpenDownloadPageLambda(PromoEventSource.GO_TO_ACTION, topic)
-    ) 
+      pluginId = null,
+      suggestedIde = PluginAdvertiserService.pyCharmProfessional,
+      project = e.project,
+      fallback = createOpenDownloadPageLambda(PromoEventSource.GO_TO_ACTION, topic)
+    )
   }
 }
 

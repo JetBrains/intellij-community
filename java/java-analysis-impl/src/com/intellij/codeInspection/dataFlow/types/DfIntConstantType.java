@@ -18,7 +18,13 @@ public class DfIntConstantType extends DfConstantType<Integer> implements DfIntT
 
   @Override
   public boolean isSuperType(@NotNull DfType other) {
-    return DfIntType.super.isSuperType(other);
+    if (other == BOTTOM) return true;
+    if (!(other instanceof DfIntConstantType otherConst)) return false;
+    if (!otherConst.getValue().equals(getValue())) return false;
+    if (myWideRange == null) {
+      return otherConst.myWideRange == null || otherConst.myWideRange.equals(getRange());
+    }
+    return myWideRange.contains(otherConst.getWideRange());
   }
 
   @Override

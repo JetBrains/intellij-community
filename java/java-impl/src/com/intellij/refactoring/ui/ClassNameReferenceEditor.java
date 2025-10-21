@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -57,14 +56,9 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
   private class ChooseClassAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(myChooserTitle,
-                                                                                                                   GlobalSearchScope.projectScope(myProject),
-                                                                                                                   new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
-        }
-      }, null);
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(
+        myChooserTitle, GlobalSearchScope.projectScope(myProject),
+        aClass -> aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC), null);
       if (mySelectedClass != null) {
         chooser.selectDirectory(mySelectedClass.getContainingFile().getContainingDirectory());
       }

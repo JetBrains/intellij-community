@@ -4,12 +4,15 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * <p>This process handler supports ANSI coloring.</p>
@@ -18,6 +21,7 @@ import java.util.Set;
  */
 public class ColoredProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+  private final List<RawTextListener> myRawTextListeners = new CopyOnWriteArrayList<>(); 
 
   public ColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
@@ -55,6 +59,9 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   @Override
   public final void notifyTextAvailable(final @NotNull String text, final @NotNull Key outputType) {
     myAnsiEscapeDecoder.escapeText(text, outputType, this);
+    for (RawTextListener listener : myRawTextListeners) {
+      listener.onRawTextAvailable(text, outputType);
+    }
   }
 
   /**
@@ -67,4 +74,15 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
     super.notifyTextAvailable(text, attributes);
   }
+
+  @ApiStatus.Internal
+  public void addRawTextListener(@NotNull RawTextListener listener) {
+    myRawTextListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  public interface RawTextListener {
+    void onRawTextAvailable(@NotNull String text, @NotNull Key<?> outputType);
+  }
+
 }

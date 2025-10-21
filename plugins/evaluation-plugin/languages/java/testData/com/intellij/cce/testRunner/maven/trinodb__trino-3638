@@ -1,0 +1,70 @@
+/bin/sh ./mvnw -Didea.version=2025.3 -Dmaven.ext.class.path=/home/roman-vasiliev/ws/intellij/out/classes/production/intellij.maven.server.eventListener -Djansi.passthrough=true -Dstyle.color=always -DfailIfNoTests=false -Dsurefire.reportFormat=plain -Dtest=io.prestosql.plugin.hive.metastore.TestSemiTransactionalHiveMetastore,io.prestosql.plugin.hive.TestHiveConfig -am --projects=:presto-hive test
+[IJ]-1-ProjectDiscoveryStarted-[IJ]-id=unknown
+[INFO] Scanning for projects...
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=io.airlift:airbase:pom:103-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:pom:1.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers-git:pom:1.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers:pom:1.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm:pom:1.8.1-[IJ]-error=
+
+...
+
+[IJ]-39-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:common-java5:jar:2.19.1-[IJ]-error=
+[IJ]-37-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-grouper:jar:2.19.1-[IJ]-error=
+[IJ]-36-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-testng-utils:jar:2.19.1-[IJ]-error=
+[IJ]-40-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:2.19.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-testng-utils:jar:2.19.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-grouper:jar:2.19.1-[IJ]-error=
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running TestSuite
+2025-07-11T07:16:22.059-0600 INFO LogTestDurationListener enabled: false
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by net.sf.cglib.core.ReflectUtils$1 (file:/home/roman-vasiliev/.m2/repository/cglib/cglib-nodep/3.3.0/cglib-nodep-3.3.0.jar) to method java.lang.ClassLoader.defineClass(java.lang.String,byte[],int,int,java.security.ProtectionDomain)
+WARNING: Please consider reporting this to the maintainers of net.sf.cglib.core.ReflectUtils$1
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.552 sec - in TestSuite
+testDefaults(io.prestosql.plugin.hive.TestHiveConfig)  Time elapsed: 0.125 sec
+testExplicitPropertyMappings(io.prestosql.plugin.hive.TestHiveConfig)  Time elapsed: 0.201 sec
+testParallelPartitionDrops(io.prestosql.plugin.hive.metastore.TestSemiTransactionalHiveMetastore)  Time elapsed: 0.918 sec
+testParallelUpdateStatisticsOperations(io.prestosql.plugin.hive.metastore.TestSemiTransactionalHiveMetastore)  Time elapsed: 0.922 sec
+
+Results :
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=test-[IJ]-id=io.prestosql:presto-hive:jar:346-SNAPSHOT-[IJ]-error=
+[IJ]-1-ProjectSucceeded-[IJ]-id=io.prestosql:presto-hive:jar:346-SNAPSHOT
+[IJ]-1-SessionEnded-[IJ]-id=unknown
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for presto-root 346-SNAPSHOT:
+[INFO]
+[INFO] presto-root ........................................ SUCCESS [  0.938 s]
+[INFO] presto-spi ......................................... SUCCESS [  3.054 s]
+[INFO] presto-plugin-toolkit .............................. SUCCESS [  2.126 s]
+[INFO] presto-array ....................................... SUCCESS [  1.566 s]
+[INFO] presto-client ...................................... SUCCESS [  1.738 s]
+[INFO] presto-geospatial-toolkit .......................... SUCCESS [  1.956 s]
+[INFO] presto-matching .................................... SUCCESS [  1.617 s]
+[INFO] presto-memory-context .............................. SUCCESS [  1.550 s]
+[INFO] presto-parser ...................................... SUCCESS [  1.558 s]
+[INFO] presto-testng-services ............................. SUCCESS [  1.421 s]
+[INFO] presto-tpch ........................................ SUCCESS [  1.556 s]
+[INFO] presto-main ........................................ SUCCESS [  1.664 s]
+[INFO] presto-testing ..................................... SUCCESS [  1.587 s]
+[INFO] presto-memory ...................................... SUCCESS [  1.460 s]
+[INFO] presto-benchmark ................................... SUCCESS [  1.481 s]
+[INFO] presto-orc ......................................... SUCCESS [  1.426 s]
+[INFO] presto-parquet ..................................... SUCCESS [  1.569 s]
+[INFO] presto-rcfile ...................................... SUCCESS [  1.652 s]
+[INFO] presto-hive ........................................ SUCCESS [ 11.071 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  41.440 s
+[INFO] Finished at: 2025-07-11T15:16:23+02:00
+[INFO] ------------------------------------------------------------------------
+

@@ -7,10 +7,8 @@ import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.ServiceContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +23,6 @@ public class AnnotateMethodTest extends LightQuickFixParameterizedTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     if (getTestName(false).contains("TypeUse")) {
-      NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
       AnnotationPackageSupport mySupport = new AnnotationPackageSupport() {
         @Override
         public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
@@ -40,17 +37,10 @@ public class AnnotateMethodTest extends LightQuickFixParameterizedTestCase {
         public boolean isTypeUseAnnotationLocationRestricted() {
           return true;
         }
-      }; 
-      ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), AnnotationPackageSupport.EP_NAME, mySupport, getTestRootDisposable());
-      String prevNullable = nnnManager.getDefaultNullable();
-      String prevNotNull = nnnManager.getDefaultNotNull();
-      nnnManager.setDefaultNotNull("typeUse.NotNull");
-      nnnManager.setDefaultNullable("typeUse.Nullable");
-      Disposer.register(getTestRootDisposable(), () -> {
-        nnnManager.setDefaultNotNull(prevNotNull);
-        nnnManager.setDefaultNullable(prevNullable);
-      });
+      };
+      AnnotationPackageSupport.EP_NAME.getPoint().registerExtension(mySupport, LoadingOrder.FIRST, getTestRootDisposable());
     }
+    NullableNotNullManager.getInstance(getProject()).setNotNulls(); // to normalize defaults
   }
 
   @Override

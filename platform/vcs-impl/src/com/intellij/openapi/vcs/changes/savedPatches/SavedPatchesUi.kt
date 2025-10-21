@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
@@ -74,6 +75,7 @@ open class SavedPatchesUi(
       bottomToolbar.updateActionsImmediately()
     }
     patchesTree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { bottomToolbar.updateActionsImmediately() }
+    patchesTree.accessibleContext.accessibleName = VcsBundle.message("stash.tree.accessible.name")
 
     val treePanel = JPanel(BorderLayout())
     val scrollPane = ScrollPaneFactory.createScrollPane(patchesTree, true)

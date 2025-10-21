@@ -8,16 +8,15 @@ import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.directSupertypes
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -92,7 +91,7 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
-    context (KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KaType?, renderer: KaTypeRenderer): String? {
         return when (this) {
@@ -104,7 +103,7 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
-    context (KaSession)
+    context(_: KaSession)
     private fun KaType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KaType? {
         if (this.hasAbstractDeclaration() == isAbstract || this is KaClassType && (symbol as? KaClassSymbol)?.classKind == KaClassKind.INTERFACE) return this
         return directSupertypes.firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
@@ -130,7 +129,8 @@ object CreateKotlinCallableActionTextBuilder {
             typeRenderer: KaTypeRenderer,
             printer: PrettyPrinter
         ) {
-            printer.append(qualifiers.joinToString(separator = ".") { it.name.asString() })
+            val visibleQualifiers = K2CreateFunctionFromUsageUtil.filterOutImplementationDetailQualifiers(type, qualifiers)
+            printer.append(visibleQualifiers.joinToString(separator = ".") { it.name.asString() })
             if (!asRaw && type is KaClassType) {
                 printer.printCollectionIfNotEmpty(type.typeArguments, prefix = "<", postfix = ">", separator = ", ", renderItem = {
                     typeRenderer.typeProjectionRenderer.renderTypeProjection(analysisSession, it, typeRenderer, this)
@@ -140,14 +140,14 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
 
-    context (KaSession)
+    context(_: KaSession)
     fun renderCandidatesOfReturnType(request: CreateMethodRequest, container: KtElement): List<String> {
         return request.returnType.mapNotNull { returnType ->
             renderTypeName(returnType, container)
         }
     }
 
-    context (KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
         val ktType = if (expectedType is ExpectedKotlinType) expectedType.kaType else expectedType.toKtTypeWithNullability(container)
@@ -155,15 +155,19 @@ object CreateKotlinCallableActionTextBuilder {
         return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 
-    context (KaSession)
+    context(_: KaSession)
     fun renderCandidatesOfParameterTypes(expectedParameters: List<ExpectedParameter>, container: KtElement?): List<ParamCandidate> {
         val generator = UniqueNameGenerator()
-        return expectedParameters.map { expectedParameter ->
-            val types = if (container == null) listOf("Any")
-            else expectedParameter.expectedTypes.map {
-                renderTypeName(it, container) ?: "Any"
+        return expectedParameters.mapNotNull { expectedParameter ->
+            val types = if (container == null) {
+                listOf("Any")
+            } else {
+                expectedParameter.expectedTypes.map {
+                    renderTypeName(it, container) ?: "Any"
+                }
             }
-            ParamCandidate(expectedParameter.semanticNames.map { generator.generateUniqueName(it) }, types)
+            val semanticNames = expectedParameter.semanticNames.ifEmpty { return@mapNotNull null }
+            ParamCandidate(semanticNames.map { generator.generateUniqueName(it) }, types)
         }
     }
 }

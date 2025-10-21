@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from typing import Final
 
-from openpyxl.cell import _CellValue
+from openpyxl.cell import _CellGetValue
 from openpyxl.styles.alignment import Alignment
 from openpyxl.styles.borders import Border
 from openpyxl.styles.cell_style import StyleArray
@@ -12,6 +12,7 @@ from openpyxl.workbook.child import _WorkbookChild
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 
 class ReadOnlyCell:
+    __slots__ = ("parent", "row", "column", "_value", "data_type", "_style_id")
     parent: _WorkbookChild | ReadOnlyWorksheet
     row: Incomplete
     column: Incomplete
@@ -51,13 +52,14 @@ class ReadOnlyCell:
     @property
     def is_date(self) -> bool: ...
     @property
-    def internal_value(self) -> _CellValue | None: ...
+    def internal_value(self) -> _CellGetValue: ...
     @property
-    def value(self) -> _CellValue | None: ...
+    def value(self) -> _CellGetValue: ...
     @value.setter
     def value(self, value: None) -> None: ...
 
 class EmptyCell:
+    __slots__ = ()
     value: Incomplete
     is_date: bool
     font: Incomplete

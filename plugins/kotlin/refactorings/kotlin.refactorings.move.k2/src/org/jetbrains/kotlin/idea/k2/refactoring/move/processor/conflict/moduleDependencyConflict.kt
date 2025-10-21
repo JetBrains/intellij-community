@@ -79,7 +79,7 @@ fun checkModuleDependencyConflictsForInternalUsages(
                     val usageElement = usageInfo.element ?: return@tryFindConflict null
                     val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
                     if (referencedDeclaration.isInternal) return@tryFindConflict null
-                    if (target.resolveScope.contains(referencedDeclaration)) return@tryFindConflict null
+                    if (target.resolveScope.contains(referencedDeclaration.containingFile.virtualFile)) return@tryFindConflict null
                     val module = target.module ?: return@tryFindConflict null
                     if (ModuleType.isInternal(module)) return@tryFindConflict null
                     usageElement.createAccessibilityConflictInternal(referencedDeclaration, module)

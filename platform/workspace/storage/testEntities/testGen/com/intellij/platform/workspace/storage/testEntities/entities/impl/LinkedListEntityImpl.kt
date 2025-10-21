@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityId
 
 @GeneratedCodeApiVersion(3)
@@ -51,8 +52,8 @@ internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData
   }
 
 
-  internal class Builder(result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity, LinkedListEntityData>(result),
-                                                          LinkedListEntity.Builder {
+  internal class Builder(result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity, LinkedListEntityData>(
+    result), LinkedListEntityBuilder {
     internal constructor() : this(LinkedListEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -180,7 +181,7 @@ internal class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), S
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LinkedListEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LinkedListEntity> {
     val modifiable = LinkedListEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -200,15 +201,14 @@ internal class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), S
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return LinkedListEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return LinkedListEntity(myName, next, entitySource) {
     }
   }

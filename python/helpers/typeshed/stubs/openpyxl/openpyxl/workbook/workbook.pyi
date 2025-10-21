@@ -5,7 +5,7 @@ from typing import Any, Final, type_check_only
 from typing_extensions import TypeAlias, deprecated
 from zipfile import ZipFile
 
-from openpyxl import _Decodable, _ZipFileFileProtocol
+from openpyxl import _Decodable, _ZipFileFileWriteProtocol
 from openpyxl.chartsheet.chartsheet import Chartsheet
 from openpyxl.styles.named_styles import NamedStyle
 from openpyxl.utils.indexed_list import IndexedList
@@ -112,7 +112,7 @@ class Workbook:
     def named_styles(self) -> list[str]: ...
     @property
     def mime_type(self) -> str: ...
-    def save(self, filename: _ZipFileFileProtocol) -> None: ...
+    def save(self, filename: _ZipFileFileWriteProtocol) -> None: ...
     @property
     def style_names(self) -> list[str]: ...
     # A write_only and read_only workbooks can't use this method as it requires both reading and writing.

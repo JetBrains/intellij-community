@@ -1979,7 +1979,9 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-79861
   public void testWalrusCallable() {
-    doTest("type[Callable]",
+    // should actually be `(...) -> object` ... should actually be `Literal[42] & (...) -> object ... should actually be `Never`
+    //  but we don't support this case yet
+    doTest("int",
            """
              if callable(a := 42):
                  expr = a""");
@@ -5838,7 +5840,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformOwnKwOnlyOmittedAndTakenFromKwOnlyDefault() {
-    doTestExpressionUnderCaret("(Any, id: int, name: str) -> MyClass", """
+    doTestExpressionUnderCaret("(*, id: int, name: str) -> MyClass", """
       from typing import dataclass_transform, Callable
       
       
@@ -5858,7 +5860,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnly() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):
@@ -5878,7 +5880,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnlyDefault() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):
@@ -5898,7 +5900,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnly() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):
@@ -5918,7 +5920,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnlyDefault() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):
@@ -6598,6 +6600,140 @@ public class PyTypingTest extends PyTestCase {
           ...
       
       expr = f().m()
+      """);
+  }
+
+  // PY-82486
+  public void testBogusAncestorTypeVarScopeOwnerInference() {
+    doTest("T | str", """
+      from typing import Generic, TypeVar
+      
+      T = TypeVar("T")
+      
+      class Box(Generic[T]): ...
+      class Box2(Box[T]): ...
+      
+      def unbox(x: Box[T]) -> T: ...
+      
+      def f(x: Box2[T] | None, y: T):
+          b: Box2[str]
+          expr = y or unbox(b)
+      """);
+  }
+
+  // PY-82500
+  public void testFunctionCallCannotBeUsedAsTypeHint() {
+    doTest("Any", """
+      def func() -> type[str]: ...
+      expr: func()
+      """);
+  }
+
+  // PY-82500
+  public void testOrdinarySubscriptionExpressionCannotBeUsedAsTypeHint() {
+    doTest("Any", """
+      xs: list[type[str]]
+      expr: xs[0]
+      """);
+  }
+
+  // PY-82500
+  public void testOrdinaryBinaryExpressionCannotBeUsedAsTypeHint() {
+    doTest("Any", """
+      class B:
+          def __add__(self, item: int) -> type[str]:
+              ...
+      x: B
+      expr: x + 1
+      """);
+  }
+
+
+  // PY-82833
+  public void testGenericClassDunderNewReturnsSelf() {
+    doTest("Box[str]", """
+      from typing import Self
+      
+      class Box[T]:
+          def __new__(cls, parm: T) -> Self:
+              ...
+      
+      expr = Box("foo")
+      """);
+  }
+
+  // PY-82833
+  public void testGenericClassClassMethodReturningSelfCalledOnRawClass() {
+    doTest("Box[str]", """
+      from typing import Self
+      
+      class Box[T]:
+          @classmethod
+          def create(cls, parm: T) -> Self:
+              ...
+      
+      expr = Box.create("foo")
+      """);
+  }
+
+  public void testGenericClassClassMethodReturningSelfCalledOnInstance() {
+    // Any because `str` doesn't match `int`, alternatively `Box[int]` can be retained
+    doTest("Any", """
+      from typing import Self
+      
+      class Box[T]:
+          @classmethod
+          def create(cls, parm: T) -> Self:
+              ...
+      
+      b: Box[int]
+      expr = b.create("foo")
+      """);
+  }
+
+  public void testGenericClassMethodReturningSelfCalledOnInstance() {
+    // Any because `str` doesn't match `int`, `Box[int]` can be retained
+    doTest("Any", """
+      from typing import Self
+      
+      class Box[T]:
+          def m(self, parm: T) -> Self:
+              ...
+      
+      b: Box[int]
+      expr = b.m("foo")
+      """);
+  }
+
+  public void testGenericClassGenericMethodReturningSelfCalledOnInstance() {
+    doTest("Box[int]", """
+      from typing import Self
+      
+      class Box[T]:
+          def m[S](self, parm: S) -> Self:
+              ...
+      
+      b: Box[int]
+      expr = b.m("foo")
+      """);
+  }
+
+  // PY-82869
+  public void testEscapedMultilineTypeHint() {
+    doTest("int | str", """
+      expr: '''
+        int |
+        str
+      '''
+      """);
+  }
+
+  // PY-82871
+  public void testConcatenateWithEllipsis() {
+    doTest("(Concatenate(int, ...)) -> str", """
+      from typing import Callable, Concatenate
+      
+      expr: Callable[Concatenate[int, ...], str]
       """);
   }
 

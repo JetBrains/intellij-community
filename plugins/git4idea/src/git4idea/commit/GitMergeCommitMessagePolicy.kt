@@ -154,6 +154,6 @@ internal class GitMergeCommitMessage(text: String): CommitMessage(text, disposab
 }
 
 private fun getSingleGitRepository(project: Project): GitRepository? =
-  if (ProjectLevelVcsManager.getInstance(project).singleVCS is GitVcs)
+  if (ProjectLevelVcsManager.getInstance(project).getSingleVCS() is GitVcs)
     GitRepositoryManager.getInstance(project).repositories.singleOrNull()
   else null

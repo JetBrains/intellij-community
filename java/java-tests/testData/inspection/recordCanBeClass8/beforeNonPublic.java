@@ -1,4 +1,4 @@
 // "Convert record to class" "true-preview"
-record Point(double x, double y)<caret> {
+recor<caret>d Point(double x, double y) {
   void foo() {}
 }

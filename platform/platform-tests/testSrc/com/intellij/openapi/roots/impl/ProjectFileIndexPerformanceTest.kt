@@ -15,6 +15,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
+@StressTestApplication
 @TestApplication
 class ProjectFileIndexPerformanceTest {
   companion object {

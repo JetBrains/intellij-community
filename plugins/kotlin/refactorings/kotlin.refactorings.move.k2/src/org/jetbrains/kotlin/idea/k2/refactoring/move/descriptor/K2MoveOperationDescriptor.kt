@@ -25,6 +25,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val searchInComments: Boolean,
     val searchReferences: Boolean,
     val dirStructureMatchesPkg: Boolean,
+    val isMoveToExplicitPackage: Boolean,
     val moveCallBack: MoveCallback? = null
 ) {
     init {
@@ -42,7 +43,8 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments: Boolean,
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
-        moveCallBack: MoveCallback? = null
+        isMoveToExplicitPackage: Boolean,
+        moveCallBack: MoveCallback? = null,
     ) : K2MoveOperationDescriptor<K2MoveDescriptor.Files>(
         project,
         moveDescriptors,
@@ -50,6 +52,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments,
         searchReferences,
         dirStructureMatchesPkg,
+        isMoveToExplicitPackage,
         moveCallBack
     ) {
         override val sourceElements: List<PsiFileSystemItem> get() = moveDescriptors.flatMap { it.source.elements }
@@ -74,6 +77,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments,
         searchReferences,
         dirStructureMatchesPkg,
+        isMoveToExplicitPackage = false,
         moveCallBack
     ) {
         override val sourceElements: List<KtNamedDeclaration> get() = moveDescriptors.flatMap { it.source.elements }
@@ -96,6 +100,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
             searchInComments: Boolean,
             mppDeclarations: Boolean,
             dirStructureMatchesPkg: Boolean,
+            isMoveToExplicitPackage: Boolean,
             moveCallBack: MoveCallback? = null
         ): Declarations {
             if (mppDeclarations && declarations.any { it.isExpectDeclaration() || it.hasActualModifier() }) {
@@ -106,21 +111,21 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
                 }.mapNotNull { (baseDir, elements) ->
                     if (baseDir == null) return@mapNotNull null
                     val srcDescriptor = K2MoveSourceDescriptor.ElementSource(elements)
-                    val targetDescriptor = K2MoveTargetDescriptor.File(fileName, pkgName, baseDir)
+                    val targetDescriptor = K2MoveTargetDescriptor.File(fileName, pkgName, baseDir, isMoveToExplicitPackage)
                     K2MoveDescriptor.Declarations(project, srcDescriptor, targetDescriptor)
                 }
                 return Declarations(
                     project = project,
                     moveDescriptors = descriptors,
                     searchForText = searchForText,
-                    searchInComments = searchReferences,
-                    searchReferences = searchInComments,
+                    searchInComments = searchInComments,
+                    searchReferences = searchReferences,
                     dirStructureMatchesPkg = dirStructureMatchesPkg,
                     moveCallBack = moveCallBack
                 )
             } else {
                 val srcDescr = K2MoveSourceDescriptor.ElementSource(declarations)
-                val targetDescr = K2MoveTargetDescriptor.File(fileName, pkgName, baseDir)
+                val targetDescr = K2MoveTargetDescriptor.File(fileName, pkgName, baseDir, isMoveToExplicitPackage)
                 val moveDescriptor = K2MoveDescriptor.Declarations(project, srcDescr, targetDescr)
                 return Declarations(
                     project = project,

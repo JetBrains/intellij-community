@@ -21,6 +21,7 @@ def expression(callable: _CALLABLE_TYPE, rule_name: str, grammar: Grammar) -> Ex
 IN_PROGRESS: object
 
 class Expression(StrAndRepr):
+    __slots__ = ["name", "identity_tuple"]
     name: str
     identity_tuple: tuple[str]
     def __init__(self, name: str = "") -> None: ...
@@ -31,6 +32,7 @@ class Expression(StrAndRepr):
     def as_rule(self) -> str: ...
 
 class Literal(Expression):
+    __slots__ = ["literal"]
     literal: str
     identity_tuple: tuple[str, str]  # type: ignore[assignment]
     def __init__(self, literal: str, name: str = "") -> None: ...
@@ -38,6 +40,7 @@ class Literal(Expression):
 class TokenMatcher(Literal): ...
 
 class Regex(Expression):
+    __slots__ = ["re"]
     re: Pattern[str]
     identity_tuple: tuple[str, Pattern[str]]  # type: ignore[assignment]
     def __init__(
@@ -54,6 +57,7 @@ class Regex(Expression):
     ) -> None: ...
 
 class Compound(Expression):
+    __slots__ = ["members"]
     members: collections.abc.Sequence[Expression]
     def __init__(self, *members: Expression, **kwargs: Any) -> None: ...
 
@@ -61,12 +65,14 @@ class Sequence(Compound): ...
 class OneOf(Compound): ...
 
 class Lookahead(Compound):
+    __slots__ = ["negativity"]
     negativity: bool
     def __init__(self, member: Expression, *, negative: bool = False, **kwargs: Any) -> None: ...
 
 def Not(term: Expression) -> Lookahead: ...
 
 class Quantifier(Compound):
+    __slots__ = ["min", "max"]
     min: int
     max: float
     def __init__(self, member: Expression, *, min: int = 0, max: float = ..., name: str = "", **kwargs: Any) -> None: ...

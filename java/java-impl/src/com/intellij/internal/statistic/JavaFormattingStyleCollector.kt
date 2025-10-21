@@ -18,7 +18,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
  * PLEASE DON'T EDIT MANUALLY,
  * USE com.intellij.psi.codeStyle.GenerateJavaFormattingStyleCollector
  */
-class JavaFormattingStyleCollector : ProjectUsagesCollector() {
+public class JavaFormattingStyleCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("java.code.style", 3)
 
   override fun getGroup(): EventLogGroup {

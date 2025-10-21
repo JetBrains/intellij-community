@@ -41,8 +41,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -420,7 +420,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
         if (i != index) {
           BuildTreeConsoleView eventView = buildView.getEventView();
           if (eventView == null) return null;
-          eventView.getTree().clearSelection();
+          eventView.clearTreeSelection();
         }
         if (next) {
           if (buildView.hasNextOccurence()) return Pair.create(i, buildView::goNextOccurence);

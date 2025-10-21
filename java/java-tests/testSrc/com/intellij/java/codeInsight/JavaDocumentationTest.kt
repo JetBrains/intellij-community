@@ -14,6 +14,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThat
 import java.util.concurrent.Callable
 import kotlin.test.assertContains
 import kotlin.test.assertFails
@@ -244,7 +245,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
       val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
       val doc = JavaDocumentationProvider().generateRenderedDoc(method!!.docComment!!)
-      val expected = "<div class='content'> Returns smth. </div><table class='sections'><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p> smth</td></table>"
+      val expected = "<div class='content'> Returns smth. </div><table class='sections'><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p>smth</td></table>"
       TestCase.assertEquals(expected, doc)
     }
   }
@@ -327,8 +328,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
-      assertTrue(
-        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\" />&nbsp;&lt; java 1.7 &gt;</div>"))
+      assertThat(component.decoratedText).contains("""<div class="bottom"><icon src="AllIcons.Nodes.PpLibFolder"></icon>&nbsp;&lt; java 1.7 &gt;</div>""")
       return@getDocumentationText null
     }
   }
@@ -723,7 +723,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())
     val doc = ReadAction.nonBlocking (Callable { CtrlMouseHandler.getGoToDeclarationOrUsagesText (myFixture.editor) }).submit(AppExecutorUtil.getAppExecutorService()).get()
-    assertEquals(expectedDoc, UIUtil.getHtmlBody(doc!!))
+    assertEquals(expectedDoc, UIUtil.getHtmlBodyWithoutPreWrapper(doc!!))
   }
 
   fun configure(text: String) {

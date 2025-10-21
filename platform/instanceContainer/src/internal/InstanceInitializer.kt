@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
  */
 @OverrideOnly
 interface InstanceInitializer {
-
   val instanceClassName: String
 
   fun loadInstanceClass(keyClass: Class<*>?): Class<*>

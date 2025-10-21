@@ -16,7 +16,7 @@ import java.util.*
 
 class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
 
-  private val processedRepositoryModels = IdentityHashMap<RepositoryModels, Unit>()
+  private val processedRepositoryModels = HashMap<RepositoryModels, Unit>()
 
   override fun resolveFinished(projectDataNode: DataNode<ProjectData>) {
     processedRepositoryModels.clear()

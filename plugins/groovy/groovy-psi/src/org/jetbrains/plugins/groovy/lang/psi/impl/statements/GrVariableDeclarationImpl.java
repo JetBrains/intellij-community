@@ -186,6 +186,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
 
     for (final GrVariable variable : getVariables()) {
       if (lastParent == variable) break;
+      if (variable.isUnnamed()) continue;
       if (lastParent instanceof GrMethod && !(variable instanceof GrField)) break;
       if (!ResolveUtil.processElement(processor, variable, state)) return false;
     }

@@ -2,11 +2,17 @@
 <body>
 Reports lambda expressions with one callable reference.
 <p>It is a common error to replace a lambda with a callable reference without changing curly braces to parentheses.</p>
+
 <p><b>Example:</b></p>
-<pre><code>  listOf(1,2,3).map { it::toString }
+<pre><code>
+  val numbers = listOf(1, 2, 3)
+  val result = numbers.map { it::toString }
 </code></pre>
+
 <p>After the quick-fix is applied:</p>
-<pre><code>  listOf(1,2,3).map(Int::toString)
+<pre><code>
+  val numbers = listOf(1, 2, 3)
+  val result = numbers.map(Int::toString) // real type here
 </code></pre>
 </body>
 </html>

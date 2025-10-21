@@ -192,11 +192,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         if (basePath != null) {
           File file = new File(basePath);
           FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
-          return switch (sensitivity) {
-            case UNKNOWN -> SystemInfo.isFileSystemCaseSensitive;
-            case SENSITIVE -> true;
-            case INSENSITIVE -> false;
-          };
+          return sensitivity.toBooleanWithDefault(SystemInfo.isFileSystemCaseSensitive);
         }
       }
     }

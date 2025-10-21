@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
@@ -8,11 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SmartList;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,12 +196,16 @@ public final class VMOptions {
   /**
    * Sets or deletes multiple options in one pass. See {@link #setOption(String, String)} for details.
    */
-  public static void setOptions(@NotNull List<? extends Pair<@NotNull String, @Nullable String>> _options) throws IOException {
+  public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> options) throws IOException {
     var file = getUserOptionsFile();
     if (file == null) {
       throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ')');
     }
+    setOptions(options, file);
+  }
 
+  @ApiStatus.Internal
+  public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> _options, @NotNull Path file) throws IOException {
     var lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file, getFileCharset())) : new ArrayList<String>();
     var options = new ArrayList<Pair<String, @Nullable String>>(_options);
     var modified = false;
@@ -257,7 +261,7 @@ public final class VMOptions {
 
   @ApiStatus.Internal
   public static @NotNull Path getPlatformOptionsFile() {
-    return Path.of(PathManager.getBinPath(), getFileName());
+    return PathManager.getBinDir().resolve(getFileName());
   }
 
   @ApiStatus.Internal
@@ -285,8 +289,8 @@ public final class VMOptions {
   @ApiStatus.Internal
   public static @NotNull String getFileName() {
     var fileName = ApplicationNamesInfo.getInstance().getScriptName();
-    if (!SystemInfo.isMac) fileName += "64";
-    if (SystemInfo.isWindows) fileName += ".exe";
+    if (OS.CURRENT != OS.macOS) fileName += "64";
+    if (OS.CURRENT == OS.Windows) fileName += ".exe";
     fileName += ".vmoptions";
     return fileName;
   }
@@ -333,6 +337,5 @@ public final class VMOptions {
 
     return null;
   }
-
   //</editor-fold>
 }

@@ -54,8 +54,8 @@ class BaseNotKwOnlyDefault:
 
 
 @my_dataclass()
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'BaseNotKwOnlyDefault'">SubNotKwOnly</error>(BaseNotKwOnlyDefault):
-    not_kw_only_no_default: int
+class SubNotKwOnly(BaseNotKwOnlyDefault):
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'BaseNotKwOnlyDefault'">not_kw_only_no_default</error>: int
 
 
 @my_dataclass(kw_only=True)

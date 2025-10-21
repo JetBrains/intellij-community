@@ -5,10 +5,14 @@ import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import kotlinx.coroutines.flow.Flow
 
@@ -16,11 +20,20 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun isEnabled(): Boolean {
     val frontendType = FrontendApplicationInfo.getFrontendType()
     return XDebugSessionProxy.useFeProxy() ||
-           (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) // CWM case
+           (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
   }
+
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val valueId = (value as FrontendXValue).xValueDto.id
+    val valueId = FrontendXValue.asFrontendXValue(value).xValueDto.id
     return block(valueId)
+  }
+
+  override fun getXValueId(value: XValue): XValueId? =
+    FrontendXValue.asFrontendXValueOrNull(value)?.xValueDto?.id
+
+  override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
+    val executionStackId = (stack as FrontendXExecutionStack).id
+    return block(executionStackId)
   }
 
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
@@ -39,9 +52,11 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
     return FrontendXDebuggerManager.getInstance(project).breakpointsManager
   }
 
-  override fun canUpdateInlineDebuggerFrames(): Boolean {
-    val frontendType = FrontendApplicationInfo.getFrontendType()
-    val isCwm = (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) // CWM case
-    return !isCwm
+  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
+    return XDebuggerExecutionPointManager.getInstance(project)
+  }
+
+  override fun hasBackendCounterpart(xValue: XValue): Boolean {
+    return FrontendXValue.asFrontendXValueOrNull(xValue) != null
   }
 }

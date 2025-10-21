@@ -58,6 +58,8 @@ import kotlinx.coroutines.flow.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.TimeUnit
@@ -103,7 +105,7 @@ open class EditorComposite internal constructor(
   @JvmField internal val project: Project,
   @JvmField @Internal val coroutineScope: CoroutineScope,
 ) : FileEditorComposite, Disposable {
-  private val clientId: ClientId = ClientId.current
+  internal val clientId: ClientId = ClientId.current
 
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
   private var compositePanel: EditorCompositePanel = EditorCompositePanel(composite = this)
@@ -195,7 +197,7 @@ open class EditorComposite internal constructor(
 
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
-      withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      withContext(Dispatchers.UiWithModelAccess) {
         compositePanel.removeAll()
         setFileEditors(fileEditors = emptyList(), selectedEditor = null)
       }
@@ -223,7 +225,7 @@ open class EditorComposite internal constructor(
       beforeFileOpen(this, model)
       // cannot be before use as fileOpenedSync by contract should be called in the same EDT event
       val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
-      span("file opening in EDT and repaint", Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      span("file opening in EDT and repaint", Dispatchers.EDT) {
         span("beforeFileOpened event executing") {
           computeOrLogException(
             lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
@@ -262,7 +264,7 @@ open class EditorComposite internal constructor(
         coroutineScope = coroutineScope,
       )
 
-      span("fileOpened event executing", Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      span("fileOpened event executing", Dispatchers.UiWithModelAccess) {
         writeIntentReadAction {
           deprecatedPublisher.fileOpened(fileEditorManager, file)
         }
@@ -593,6 +595,18 @@ open class EditorComposite internal constructor(
       }
       val index = calcComponentInsertionIndex(component, container)
       container.add(wrapper, index)
+
+      // editor components can be hidden if they correspond to an inactive context
+      // when we hide the component, we need to hide its border as well which can be achieved by hiding wrapper
+      component.addComponentListener(object : ComponentAdapter() {
+        override fun componentShown(e: ComponentEvent?) {
+          wrapper.isVisible = true
+        }
+
+        override fun componentHidden(e: ComponentEvent?) {
+          wrapper.isVisible = false
+        }
+      })
       if (top) {
         dispatcher.multicaster.topComponentAdded(editor, index, component, container)
       }
@@ -876,7 +890,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        composite.coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+        composite.coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
           if (!hasFocus()) {
             return@launch
           }
@@ -1055,11 +1069,12 @@ internal fun focusEditorOnComposite(
   composite: EditorComposite,
   splitters: EditorsSplitters,
   toFront: Boolean = true,
+  forceFocus: Boolean = false,
 ): Boolean {
   val currentWindow = splitters.currentWindow
   val currentSelectedComposite = currentWindow?.selectedComposite
   // while the editor was loading, the user switched to another editor - don't steal focus
-  if (currentSelectedComposite === composite) {
+  if (currentSelectedComposite === composite || forceFocus) {
     val preferredFocusedComponent = composite.preferredFocusedComponent
     if (preferredFocusedComponent == null) {
       LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")

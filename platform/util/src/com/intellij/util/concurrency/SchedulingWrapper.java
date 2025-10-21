@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ContextAwareCallable;
 import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
@@ -362,12 +363,40 @@ public class SchedulingWrapper implements ScheduledExecutorService {
 
   @Override
   public @NotNull ScheduledFuture<?> schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
-    return schedule(Executors.callable(command), delay, unit);
+    return schedule(callableFromRunnable(command), delay, unit);
   }
 
   @Override
   public @NotNull <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit unit) {
     return delayedExecute(createTask(callable, triggerTime(delay, unit)));
+  }
+
+  private static @NotNull Callable<@Nullable Object> callableFromRunnable(@NotNull Runnable command) {
+    if (command instanceof ContextAwareRunnable) {
+      return new ContextAwareRunnableToCallableAdapter((ContextAwareRunnable)command);
+    }
+    else {
+      return Executors.callable(command);
+    }
+  }
+
+  private static class ContextAwareRunnableToCallableAdapter implements ContextAwareCallable<@Nullable Object> {
+    private final @NotNull ContextAwareRunnable myRunnable;
+
+    ContextAwareRunnableToCallableAdapter(@NotNull ContextAwareRunnable runnable) {
+      myRunnable = runnable;
+    }
+
+    @Override
+    public @Nullable Object call() {
+      myRunnable.run();
+      return null;
+    }
+
+    @Override
+    public String toString() {
+      return "ContextAwareRunnableWrapper{" + "myRunnable=" + myRunnable + '}';
+    }
   }
 
   private <V> @NotNull MyScheduledFutureTask<V> createTask(@NotNull Callable<V> callable, long ns) {

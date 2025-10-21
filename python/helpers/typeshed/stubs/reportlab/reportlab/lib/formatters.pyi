@@ -13,12 +13,7 @@ class DecimalFormatter(Formatter):
     comma: Incomplete
     prefix: Incomplete
     suffix: Incomplete
-    def __init__(
-        self,
-        places: int = 2,
-        decimalSep: str = ".",
-        thousandSep: Incomplete | None = None,
-        prefix: Incomplete | None = None,
-        suffix: Incomplete | None = None,
-    ) -> None: ...
+    def __init__(self, places: int = 2, decimalSep: str = ".", thousandSep=None, prefix=None, suffix=None) -> None: ...
     def format(self, num): ...
+
+__all__ = ("Formatter", "DecimalFormatter")

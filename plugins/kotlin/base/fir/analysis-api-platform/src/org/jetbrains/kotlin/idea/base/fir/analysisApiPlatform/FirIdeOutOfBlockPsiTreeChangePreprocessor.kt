@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
@@ -11,6 +11,7 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
@@ -21,15 +22,17 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
+@ApiStatus.Internal
+class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (project.isDefault) {
             return
         }
 
+        val eventCode = event.code
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
             event.isGenericChange ||
-            event.code == PsiEventType.BEFORE_CHILD_ADDITION
+            eventCode == PsiEventType.BEFORE_CHILD_ADDITION
         ) {
             return
         }
@@ -42,11 +45,12 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
 
         val rootElement = event.parent
 
-        if (rootElement != null) {
+        if (rootElement != null && eventCode != PsiEventType.BEFORE_CHILD_REPLACEMENT) {
+            // no reasons to invalidate injected documents before and actual replacement
             invalidateCachesInInjectedDocuments(rootElement)
         }
 
-        val child = when (event.code) {
+        val child = when (eventCode) {
             PsiEventType.CHILD_REMOVED -> rootElement
             PsiEventType.BEFORE_CHILD_REPLACEMENT -> event.oldChild
             else -> event.child
@@ -65,7 +69,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
             return
         }
 
-        val modificationType = when (event.code) {
+        val modificationType = when (eventCode) {
             PsiEventType.CHILD_ADDED -> KaElementModificationType.ElementAdded
             PsiEventType.CHILD_REMOVED -> {
                 val removedElement = event.child ?:

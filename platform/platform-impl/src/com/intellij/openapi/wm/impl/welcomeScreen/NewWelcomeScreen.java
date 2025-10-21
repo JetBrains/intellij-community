@@ -5,9 +5,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
@@ -71,7 +72,7 @@ public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     footerPanel.add(versionLabel);
     footerPanel.add(makeSmallFont(new JLabel(".  ")));
     footerPanel.add(makeSmallFont(new ActionLink(IdeBundle.message("link.check"), e -> {
-        UpdateChecker.updateAndShowResult(null);
+        ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).updateAndShowResult(null);
     })));
     footerPanel.add(makeSmallFont(new JLabel(IdeBundle.message("welcome.screen.check.for.updates.comment"))));
     return footerPanel;

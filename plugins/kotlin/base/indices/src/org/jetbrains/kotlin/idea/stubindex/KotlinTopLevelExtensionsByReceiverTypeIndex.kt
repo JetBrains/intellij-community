@@ -6,17 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
 class KotlinTopLevelExtensionsByReceiverTypeIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinExtensionsByReceiverTypeStubIndexHelper() {
-        @JvmField
-        @Suppress("DeprecatedCallableAddReplaceWith")
-        @ApiStatus.ScheduledForRemoval
-        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
-        val INSTANCE: KotlinTopLevelExtensionsByReceiverTypeIndex = KotlinTopLevelExtensionsByReceiverTypeIndex()
-
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
             StubIndexKey.createIndexKey(KotlinTopLevelExtensionsByReceiverTypeIndex::class.java.simpleName)
     }

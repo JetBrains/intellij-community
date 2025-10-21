@@ -15,6 +15,11 @@ public interface DiffUserDataKeys {
   // DiffContent
   //
 
+  /**
+   * Affects diff content highlighting and code style.
+   * Do not use it for languages that require a customized EditorHighlighter (e.g., textmate),
+   * because the base LexerEditorHighlighter will be used.
+   */
   Key<Language> LANGUAGE = Key.create("Diff.Language");
 
   //

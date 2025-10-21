@@ -1,4 +1,5 @@
 // IS_APPLICABLE: false
+// PROBLEM: none
 // WITH_STDLIB
 
 data class XY(val x: Int, val y: Int)

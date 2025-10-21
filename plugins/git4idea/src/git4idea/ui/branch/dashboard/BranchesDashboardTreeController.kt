@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.git.shared.actions.GitSingleRefActions
+import com.intellij.vcs.git.actions.GitSingleRefActions
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -89,7 +89,7 @@ internal class BranchesDashboardTreeController(
      * Note that at the moment [GitBranchActionsDataKeys] are used only for single ref actions.
      * In other actions [GIT_BRANCHES_TREE_SELECTION] is used
      *
-     * Also see [com.intellij.vcs.git.shared.branch.popup.GitDefaultBranchesPopupStep.Companion.createDataContext]
+     * Also see [com.intellij.vcs.git.branch.popup.GitDefaultBranchesPopupStep.Companion.createDataContext]
      */
     @VisibleForTesting
     internal fun snapshotSelectionActionsKeys(sink: DataSink, selectionPaths: Array<TreePath>?) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -8,10 +8,11 @@ import org.jetbrains.annotations.Nullable;
 public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doTest("class /*Class 'X' with only 'private' constructors should be declared 'final'*/X/**/ {" +
-           "  private X() {}" +
-           "  private X(int i) {}" +
-           "}");
+    doTest("""
+             class /*Class 'X' with only 'private' constructors should be declared 'final'*/X/**/ {
+               private X() {}
+               private X(int i) {}
+             }""");
   }
 
   public void testExtendingInnerClass() {
@@ -29,16 +30,19 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
   }
 
   public void testNoWarnOnFinalClass() {
-    doTest("final class X {" +
-           "  private X() {}" +
-           "}");
+    doTest("""
+             final class X {
+               private X() {}
+             }""");
   }
 
   public void testNoWarnOnAnonymInheritor() {
-    doTest("class X {" +
-           "  private X() {}" +
-           "  static {new X() {};} " +
-           "}");
+    //noinspection ResultOfObjectAllocationIgnored
+    doTest("""
+             class X {
+               private X() {}
+               static {new X() {};}
+             }""");
   }
 
   public void testEnum() {
@@ -52,18 +56,21 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
   }
 
   public void testPublicConstructor() {
-    doTest("class A {" +
-           "  public A() {}" +
-           "}");
+    //noinspection PublicConstructorInNonPublicClass
+    doTest("""
+             class A {
+               public A() {}
+             }""");
   }
 
   public void testSubclassInSameFile() {
-    doTest("class Test {" +
-           "    private static class Inner {" +
-           "        private Inner() {}" +
-           "    }" +
-           "    private static class InnerSub extends Inner {}" +
-           "}");
+    doTest("""
+             class Test {
+                 private static class Inner {
+                     private Inner() {}
+                 }
+                 private static class InnerSub extends Inner {}
+             }""");
   }
 
   @Nullable

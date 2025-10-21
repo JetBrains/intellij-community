@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
+import com.intellij.ide.projectWizard.generators.SdkPreIndexingService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.AddJdkService
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.util.NlsSafe
@@ -28,13 +31,16 @@ sealed class ProjectWizardJdkIntent {
 
   data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String, val isSymlink: Boolean) : ProjectWizardJdkIntent()
 
-  fun isAtLeast(version: Int): Boolean = when (this) {
-    is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
-    is ExistingJdk -> if (jdk.versionString == null) true
-                      else JavaVersion.tryParse(jdk.versionString)?.isAtLeast(version)
-    is DetectedJdk -> JavaVersion.tryParse(this.version)?.isAtLeast(version)
-    else -> false
-  } ?: true
+  fun isAtLeast(version: Int, strict: Boolean = false): Boolean {
+    val defaultValue = !strict
+    return when (this) {
+             is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
+             is ExistingJdk -> if (jdk.versionString == null) defaultValue
+                               else JavaVersion.tryParse(jdk.versionString)?.isAtLeast(version)
+             is DetectedJdk -> JavaVersion.tryParse(this.version)?.isAtLeast(version)
+             else -> false
+           } ?: defaultValue
+  }
 
   val versionString: String?
     get() = when (this) {
@@ -44,6 +50,9 @@ sealed class ProjectWizardJdkIntent {
       else -> null
     }
 
+  val javaVersion: JavaVersion?
+    get() = JavaVersion.tryParse(versionString)
+
   val name: String?
     get() = when (this) {
       is DownloadJdk -> task.suggestedSdkName
@@ -51,4 +60,27 @@ sealed class ProjectWizardJdkIntent {
       is DetectedJdk -> version
       else -> null
     }
+
+  val downloadTask: SdkDownloadTask?
+    get() = when (this) {
+      is DownloadJdk -> task
+      else -> null
+    }
+
+  fun prepareJdk(): Sdk? = when (this) {
+    is ExistingJdk -> jdk
+    is DetectedJdk -> {
+      val sdk = service<AddJdkService>().createIncompleteJdk(home)
+      sdk?.let { service<SdkPreIndexingService>().requestPreIndexation(it) }
+      sdk
+    }
+    else -> null
+  }
+
+  companion object {
+    fun fromJdk(jdk: Sdk?): ProjectWizardJdkIntent = when (jdk) {
+      null -> NoJdk
+      else -> ExistingJdk(jdk)
+    }
+  }
 }

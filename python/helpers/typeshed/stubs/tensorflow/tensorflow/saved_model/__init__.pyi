@@ -71,8 +71,8 @@ class SaveOptions:
         experimental_custom_gradients: bool = True,
         experimental_image_format: bool = False,
         experimental_skip_saver: bool = False,
-        experimental_sharding_callback: Incomplete | None = None,
-        extra_tags: Incomplete | None = None,
+        experimental_sharding_callback=None,
+        extra_tags=None,
     ) -> None: ...
 
 def contains_saved_model(export_dir: str | Path) -> bool: ...

@@ -18,6 +18,7 @@ import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import javax.swing.table.DefaultTableModel
 
+@Suppress("HardCodedStringLiteral")
 @Internal
 internal class ShowBundleMessagesDialogAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent): Unit = BundleMessagesDialog(e.project).show()

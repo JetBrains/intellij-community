@@ -1,23 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.ThreadScopeCheckpoint
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
@@ -132,32 +135,46 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
-    val (lockContext, cleanup) = getLockContext(ctx)
-    try {
-      if (compensateParallelism) {
-        @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + lockContext, action)
+    wrapInReadActionIfCurrentlyWriteAction {
+      val (lockContext, cleanup) = getLockContext(ctx)
+      try {
+        if (compensateParallelism) {
+          @OptIn(InternalCoroutinesApi::class)
+          IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(ctx + lockContext, action)
+        }
+        else {
+          @Suppress("RAW_RUN_BLOCKING")
+          runBlocking(ctx + lockContext, action)
+        }
       }
-      else {
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(ctx + lockContext, action)
+      catch (pce: ProcessCanceledException) {
+        throw pce
+      }
+      catch (ce: CancellationException) {
+        throw CeProcessCanceledException(ce)
+      }
+      finally {
+        cleanup.finish()
       }
     }
-    catch (pce: ProcessCanceledException) {
-      throw pce
+  }
+}
+
+// reducing service stacktraces by inlining
+private inline fun <T> wrapInReadActionIfCurrentlyWriteAction(crossinline action: () -> T): T {
+  return if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+    runReadAction {
+      action()
     }
-    catch (ce: CancellationException) {
-      throw CeProcessCanceledException(ce)
-    }
-    finally {
-      cleanup.finish()
-    }
+  }
+  else {
+    action()
   }
 }
 
 private fun getLockContext(currentThreadContext: CoroutineContext): Pair<CoroutineContext, AccessToken> {
   val parallelize = with(ApplicationManager.getApplication()) {
-    installThreadContext(currentThreadContext).use {
+    installThreadContext(currentThreadContext) {
       isReadAccessAllowed
     }
   }
@@ -300,7 +317,7 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
 fun <T> withCurrentThreadCoroutineScopeBlocking(action: () -> T): Pair<T, Job> {
   val currentContext = currentThreadContext()
   val checkpoint = getFixThreadScopeElements(currentContext)
-  return installThreadContext(currentContext + checkpoint, true).use {
+  return installThreadContext(currentContext + checkpoint, true) {
     val actionResult = try {
       action()
     }
@@ -425,7 +442,7 @@ fun CoroutineContext.prepareForInstallation(): CoroutineContext = this.minusKey(
 @Throws(ProcessCanceledException::class)
 internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
   val context = currentContext.prepareForInstallation()
-  return installThreadContext(context).use {
+  return installThreadContext(context) {
     action()
   }
 }
@@ -630,4 +647,14 @@ private fun rememberElements(job: BlockingJob, context: CoroutineContext) {
   context.fold(Unit) { _, element ->
     job.rememberElement(element)
   }
+}
+
+
+/**
+ * Assigns a title to a write action. Intended to be invoked with write lock
+ */
+@RequiresWriteLock
+@ApiStatus.Experimental
+fun withWriteActionTitle(title: @NlsContexts.ModalProgressTitle String, action: () -> Unit) {
+  service<LockingProgressSupport>().withWriteActionProgress(title, action)
 }

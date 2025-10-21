@@ -1,20 +1,23 @@
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_standalone",
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
-  ]
+  ],
+  plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "standalone_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -22,8 +25,9 @@ jvm_library(
   name = "standalone",
   module_name = "intellij.platform.jewel.samples.standalone",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":standalone_resources"],
+  kotlinc_opts = ":custom_standalone",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -44,10 +48,9 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/samples/showcase",
     "//platform/icons",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
   ],
   runtime_deps = [
-    ":standalone_resources",
     "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
     "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
     "@lib//:jna",

@@ -1,10 +1,11 @@
 import abc
-from _typeshed import Incomplete
 from decimal import Decimal
-from typing import NamedTuple
+from typing import Any, NamedTuple
+from xml.etree.ElementTree import Element, QName
 
-from qrcode.image.styles.moduledrawers.base import QRModuleDrawer
-from qrcode.image.svg import SvgFragmentImage, SvgPathImage
+from ...._types import Box
+from ...svg import SvgFragmentImage, SvgPathImage
+from .base import QRModuleDrawer
 
 ANTIALIASING_FACTOR: int
 
@@ -18,42 +19,38 @@ class Coords(NamedTuple):
 
 class BaseSvgQRModuleDrawer(QRModuleDrawer, metaclass=abc.ABCMeta):
     img: SvgFragmentImage
-    size_ratio: Incomplete
-    def __init__(self, *, size_ratio: Decimal = ..., **kwargs) -> None: ...
-    box_delta: Incomplete
-    box_size: Incomplete
-    box_half: Incomplete
-    def initialize(self, *args, **kwargs) -> None: ...
-    def coords(self, box) -> Coords: ...
+    size_ratio: Decimal
+    # kwargs are used to allow for subclasses with additional keyword arguments
+    def __init__(self, *, size_ratio: Decimal = ..., **kwargs: Any) -> None: ...
+    box_delta: float
+    box_size: Decimal
+    box_half: Decimal
+    def coords(self, box: Box) -> Coords: ...
 
 class SvgQRModuleDrawer(BaseSvgQRModuleDrawer, metaclass=abc.ABCMeta):
     tag: str
-    tag_qname: Incomplete
-    def initialize(self, *args, **kwargs) -> None: ...
-    def drawrect(self, box, is_active: bool): ...
+    tag_qname: QName
+    def drawrect(self, box: Box, is_active: bool) -> None: ...  # type: ignore[override]
     @abc.abstractmethod
-    def el(self, box): ...
+    def el(self, box: Box) -> Element: ...
 
 class SvgSquareDrawer(SvgQRModuleDrawer):
-    unit_size: Incomplete
-    def initialize(self, *args, **kwargs) -> None: ...
-    def el(self, box): ...
+    unit_size: str
+    def el(self, box: Box) -> Element: ...
 
 class SvgCircleDrawer(SvgQRModuleDrawer):
     tag: str
-    radius: Incomplete
-    def initialize(self, *args, **kwargs) -> None: ...
-    def el(self, box): ...
+    radius: str
+    def el(self, box: Box) -> Element: ...
 
 class SvgPathQRModuleDrawer(BaseSvgQRModuleDrawer, metaclass=abc.ABCMeta):
     img: SvgPathImage
-    def drawrect(self, box, is_active: bool): ...
+    def drawrect(self, box: Box, is_active: bool) -> None: ...  # type: ignore[override]
     @abc.abstractmethod
-    def subpath(self, box) -> str: ...
+    def subpath(self, box: Box) -> str: ...
 
 class SvgPathSquareDrawer(SvgPathQRModuleDrawer):
-    def subpath(self, box) -> str: ...
+    def subpath(self, box: Box) -> str: ...
 
 class SvgPathCircleDrawer(SvgPathQRModuleDrawer):
-    def initialize(self, *args, **kwargs) -> None: ...
-    def subpath(self, box) -> str: ...
+    def subpath(self, box: Box) -> str: ...

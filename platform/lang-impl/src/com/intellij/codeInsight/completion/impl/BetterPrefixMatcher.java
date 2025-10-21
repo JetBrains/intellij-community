@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionResult;
@@ -60,12 +60,12 @@ public class BetterPrefixMatcher extends PrefixMatcher {
   }
 
   @Override
-  public boolean isStartMatch(String name) {
+  public boolean isStartMatch(@NotNull String name) {
     return myOriginal.isStartMatch(name);
   }
 
   @Override
-  public int matchingDegree(String string) {
+  public int matchingDegree(@NotNull String string) {
     return myOriginal.matchingDegree(string);
   }
 

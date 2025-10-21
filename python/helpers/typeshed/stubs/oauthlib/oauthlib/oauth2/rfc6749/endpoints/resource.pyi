@@ -1,24 +1,26 @@
 from _typeshed import Incomplete
-from typing import Any
+from logging import Logger
 
-from .base import BaseEndpoint as BaseEndpoint
+from oauthlib.common import Request, _HTTPMethod
 
-log: Any
+from .base import BaseEndpoint
+
+log: Logger
 
 class ResourceEndpoint(BaseEndpoint):
-    def __init__(self, default_token, token_types) -> None: ...
+    def __init__(self, default_token: str, token_types: dict[str, Incomplete]) -> None: ...
     @property
-    def default_token(self): ...
+    def default_token(self) -> str: ...
     @property
     def default_token_type_handler(self): ...
     @property
-    def tokens(self): ...
+    def tokens(self) -> dict[str, Incomplete]: ...
     def verify_request(
         self,
-        uri,
-        http_method: str = "GET",
-        body: Incomplete | None = None,
-        headers: Incomplete | None = None,
-        scopes: Incomplete | None = None,
-    ): ...
-    def find_token_type(self, request): ...
+        uri: str,
+        http_method: _HTTPMethod = "GET",
+        body: str | None = None,
+        headers: dict[str, str] | None = None,
+        scopes=None,
+    ) -> tuple[bool, Request]: ...
+    def find_token_type(self, request: Request): ...

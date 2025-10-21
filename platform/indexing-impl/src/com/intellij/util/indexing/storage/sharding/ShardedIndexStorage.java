@@ -4,6 +4,7 @@ package com.intellij.util.indexing.storage.sharding;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
@@ -169,5 +170,10 @@ class ShardedIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
   @Override
   public boolean isClosed() {
     return closed;
+  }
+
+  @Override
+  public boolean isReadLockHeldByCurrentThread() {
+    return ContainerUtil.or(shards, IndexStorage::isReadLockHeldByCurrentThread);
   }
 }

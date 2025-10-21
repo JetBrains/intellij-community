@@ -262,8 +262,13 @@ public class OutputChecker {
       result = result.replace("-Ddebugger.agent.enable.coroutines=true ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.flows.stack.trace=true ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true ", "");
+      result = result.replace("-Ddebugger.async.stack.trace.for.all.threads=true ", "");
       result = result.replace("-Ddebugger.agent.support.throwable=false ", "");
+      result = result.replace("--enable-native-access=ALL-UNNAMED ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
+
+      // Ignore unstable lambdas ordering, IDEA-378517.
+      result = result.replaceAll("lambda\\$(.*)\\$\\d+", "lambda\\$$1\\$L");
 
       result = fixSlashes(result, JDK_HOME_STR);
       result = result.replace("!JDK_HOME!\\bin\\java.exe", "!JDK_HOME!\\bin\\java");

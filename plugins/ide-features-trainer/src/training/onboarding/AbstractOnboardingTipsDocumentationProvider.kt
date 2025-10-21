@@ -8,10 +8,10 @@ import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.tree.IElementType
 import java.util.function.Consumer
 
-
 abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTokenType: IElementType) : DocumentationProvider {
   protected open val tipPrefix: String = "//TIP"
-  protected val enabled get() = renderedOnboardingTipsEnabled
+  protected val enabled: Boolean
+    get() = renderedOnboardingTipsEnabled
 
   protected abstract fun isLanguageFile(file: PsiFile): Boolean
 
@@ -58,41 +58,45 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
 
   override fun generateRenderedDoc(comment: PsiDocCommentBase): String? {
     if (!enabled || comment !is OnboardingTipComment) return null
+
+    @Suppress("HardCodedStringLiteral")
     val result = comment.text
       .split("\n")
       .map { it.trim() }
       .map { if (it.startsWith(tipPrefix)) it.substring(tipPrefix.length, it.length) else it }
       .map { if (it.startsWith("//")) it.substring(2, it.length) else it }
-      .joinToString(separator = " ").trim()
+      .joinToString(separator = " ")
+      .trim()
+
     @Suppress("HardCodedStringLiteral")
     return "<p>$result"
   }
-}
 
-private fun createOnboardingTipComment(start: PsiComment, visitedComments: MutableSet<PsiElement>, commentTokenType: IElementType): OnboardingTipComment {
-  var current: PsiElement = start
-  while(true) {
-    var nextSibling = current.nextSibling
-    while (nextSibling is PsiWhiteSpace) nextSibling = nextSibling.nextSibling
-    if (nextSibling?.node?.elementType != commentTokenType) break
-    visitedComments.add(nextSibling)
-    current = nextSibling
+  private fun createOnboardingTipComment(start: PsiComment, visitedComments: MutableSet<PsiElement>, commentTokenType: IElementType): OnboardingTipComment {
+    var current: PsiElement = start
+    while(true) {
+      var nextSibling = current.nextSibling
+      while (nextSibling is PsiWhiteSpace) nextSibling = nextSibling.nextSibling
+      if (nextSibling?.node?.elementType != commentTokenType) break
+      visitedComments.add(nextSibling)
+      current = nextSibling
+    }
+    return OnboardingTipComment(current.parent, TextRange(start.textRange.startOffset, current.textRange.endOffset), commentTokenType)
   }
-  return OnboardingTipComment(current.parent, TextRange(start.textRange.startOffset, current.textRange.endOffset), commentTokenType)
-}
 
-private class OnboardingTipComment(
-  private val parent: PsiElement,
-  private val range: TextRange,
-  private val commentTokenType: IElementType
-): FakePsiElement(), PsiDocCommentBase {
-  override fun getParent() = parent
+  private class OnboardingTipComment(
+    private val parent: PsiElement,
+    private val range: TextRange,
+    private val commentTokenType: IElementType
+  ): FakePsiElement(), PsiDocCommentBase {
+    override fun getParent() = parent
 
-  override fun getTokenType(): IElementType = commentTokenType
+    override fun getTokenType(): IElementType = commentTokenType
 
-  override fun getTextRange() = range
+    override fun getTextRange() = range
 
-  override fun getText() = range.substring(parent.containingFile.text)
+    override fun getText() = range.substring(parent.containingFile.text)
 
-  override fun getOwner() = parent
+    override fun getOwner() = parent
+  }
 }

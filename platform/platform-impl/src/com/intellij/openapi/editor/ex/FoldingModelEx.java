@@ -16,7 +16,7 @@ public interface FoldingModelEx extends FoldingModel {
   void setFoldingEnabled(boolean isEnabled);
   boolean isFoldingEnabled();
 
-  FoldRegion getFoldingPlaceholderAt(@NotNull Point p);
+  @Nullable FoldRegion getFoldingPlaceholderAt(@NotNull Point p);
 
   boolean intersectsRegion(int startOffset, int endOffset);
 
@@ -29,7 +29,7 @@ public interface FoldingModelEx extends FoldingModel {
   @Nullable
   TextAttributes getPlaceholderAttributes();
 
-  FoldRegion[] fetchTopLevel();
+  FoldRegion @Nullable [] fetchTopLevel();
 
   /**
    * @param neverExpands If {@code true}, the created region is created in the collapsed state, and cannot be expanded

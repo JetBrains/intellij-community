@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.target
 
 import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
+import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.AnAction
@@ -13,9 +14,14 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityS
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeTargetsFilterEditor(private val scopesInfo: SearchScopesInfo?,
-                            typeVisibilityStates: List<SeTypeVisibilityStatePresentation>?) : SeFilterEditorBase<SeTargetsFilter>(
-  SeTargetsFilter(scopesInfo?.selectedScopeId, hiddenTypes(typeVisibilityStates))
+class SeTargetsFilterEditor(
+  private val scopesInfo: SearchScopesInfo?,
+  typeVisibilityStates: List<SeTypeVisibilityStatePresentation>?,
+  private val hasPreviewAction: Boolean,
+) : SeFilterEditorBase<SeTargetsFilter>(
+  SeTargetsFilter(scopesInfo?.selectedScopeId,
+                  scopesInfo?.selectedScopeId != scopesInfo?.everywhereScopeId,
+                  hiddenTypes(typeVisibilityStates))
 ) {
   private val updateFilterValueWithVisibilityStates = {
     filterValue = filterValue.cloneWith(hiddenTypes(visibilityStateHolder?.elements))
@@ -27,12 +33,14 @@ class SeTargetsFilterEditor(private val scopesInfo: SearchScopesInfo?,
     }
 
   private val scopeFilterAction: AnAction? = scopesInfo?.let {
-    SeScopeChooserActionProvider(scopesInfo) {
-      filterValue = filterValue.cloneWith(it)
+    SeScopeChooserActionProvider(scopesInfo) { scopeId, isAutoToggleEnabled ->
+      filterValue = filterValue.cloneWith(scopeId, isAutoToggleEnabled)
     }.getAction()
   }
 
-  override fun getActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(), getTypeFilterAction())
+  override fun getHeaderActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(),
+                                                                  if (hasPreviewAction) PreviewAction() else null,
+                                                                  getTypeFilterAction())
 
   private fun getScopeFilterAction(): AnAction? {
     return scopeFilterAction

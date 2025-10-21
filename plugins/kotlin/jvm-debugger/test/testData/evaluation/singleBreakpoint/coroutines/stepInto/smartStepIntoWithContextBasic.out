@@ -1,11 +1,11 @@
-LineBreakpoint created at smartStepIntoWithContextBasic.kt:10
+LineBreakpoint created at smartStepIntoWithContextBasic.kt:11
 Run Java
 Connected to the target VM
-smartStepIntoWithContextBasic.kt:10
-smartStepIntoWithContextBasic.kt:12
+smartStepIntoWithContextBasic.kt:11
 smartStepIntoWithContextBasic.kt:13
 smartStepIntoWithContextBasic.kt:14
 smartStepIntoWithContextBasic.kt:15
+smartStepIntoWithContextBasic.kt:16
 Compile bytecode for i
 Disconnected from the target VM
 

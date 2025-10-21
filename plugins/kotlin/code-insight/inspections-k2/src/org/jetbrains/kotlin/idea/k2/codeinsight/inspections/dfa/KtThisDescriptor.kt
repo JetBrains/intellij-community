@@ -10,6 +10,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
@@ -51,7 +53,7 @@ class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: Kt
     override fun isInlineClassReference(): Boolean = classDef?.inline ?: false
 
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         fun descriptorFromThis(expr: KtThisExpression): Pair<VariableDescriptor?, KaType?> {
             val exprType = expr.getKotlinType()
             val symbol = ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol()

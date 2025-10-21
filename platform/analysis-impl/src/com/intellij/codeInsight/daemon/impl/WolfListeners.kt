@@ -52,7 +52,7 @@ internal class WolfListeners(
         }
     }
 
-    PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
+    PsiManager.getInstance(project).addPsiTreeChangeListenerBackgroundable(object : PsiTreeChangeAdapter() {
       override fun childAdded(event: PsiTreeChangeEvent) {
         childrenChanged(event)
       }

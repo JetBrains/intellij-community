@@ -14,6 +14,7 @@ import javax.swing.JLayer
 import javax.swing.JPanel
 import javax.swing.JViewport
 import javax.swing.plaf.LayerUI
+import kotlin.math.abs
 
 /**
  * Performs updating of underlying components within keepScrollingPositionWhile.
@@ -125,19 +126,36 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
     editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
       JupyterBoundsChangeHandler.get(editor).postponeUpdates()
       super.validateTree()
-      JupyterBoundsChangeHandler.get(editor).schedulePerformPostponed()
+      JupyterBoundsChangeHandler.get(editor).performPostponed()
     }
   }
 
-  // Used in drawing cell frame for selected and hovered .
-  fun addOverlayLine(line: Line2D, color: Color) {
+  /** Helper function to create a Rectangle from Line2D to repaint the exact line area. */
+  private fun rectangleFromLine(line: Line2D): Rectangle = Rectangle(
+    line.x1.toInt().coerceAtMost(line.x2.toInt()),
+    line.y1.toInt().coerceAtMost(line.y2.toInt()),
+    abs(line.x2.toInt() - line.x1.toInt()) + 1,
+    abs(line.y2.toInt() - line.y1.toInt()) + 1
+  )
+
+  /** Used in drawing cell frame for selected and hovered. */
+  fun replaceOverlayLine(oldLine: Line2D?, line: Line2D, color: Color) {
+    val repaintRect = if (oldLine != null) {
+      val oldBounds = rectangleFromLine(oldLine)
+      val newBounds = rectangleFromLine(line)
+      oldBounds.union(newBounds)
+    }
+    else {
+      rectangleFromLine(line)
+    }
+    overlayLines.removeIf { it.first == oldLine }
     overlayLines.add(line to color)
-    layeredPane.repaint()
+    layeredPane.repaint(repaintRect)
   }
 
   fun removeOverlayLine(line: Line2D) {
     overlayLines.removeIf { it.first == line }
-    layeredPane.repaint()
+    layeredPane.repaint(rectangleFromLine(line))
   }
 
   companion object {

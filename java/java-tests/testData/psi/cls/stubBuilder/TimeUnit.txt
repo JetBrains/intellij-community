@@ -1,4 +1,5 @@
 PsiJavaFileStub [java.util.concurrent]
+  PsiPackageStatementStub[java.util.concurrent]
   PsiClassStub[enum name=TimeUnit fqn=java.util.concurrent.TimeUnit]
     PsiModifierListStub[mask=1025]
     PsiTypeParameterListStub

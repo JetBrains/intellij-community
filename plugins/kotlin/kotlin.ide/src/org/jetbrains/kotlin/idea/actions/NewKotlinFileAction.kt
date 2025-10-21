@@ -211,10 +211,7 @@ private fun List<String>.cutExistentPath(targetDir: PsiDirectory): List<String> 
     return takeLast(size - i)
 }
 
-const val KOTLIN_WORKSHEET_EXTENSION: String = "ws.kts"
-
 private val KOTLIN_KNOWS_SUFFIXES = arrayOf(
-    ".$KOTLIN_WORKSHEET_EXTENSION",
     ".gradle.$STD_SCRIPT_SUFFIX",
     ".main.$STD_SCRIPT_SUFFIX",
     ".$STD_SCRIPT_SUFFIX",

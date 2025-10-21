@@ -5,6 +5,7 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
@@ -184,6 +185,18 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       var ratio = partSize.toFloat() / totalSize
       ratio += (((partSize.toFloat() + direction) / totalSize) - ratio) / 2
       return ratio
+    }
+
+    @ApiStatus.Internal
+    fun applyAltColors() {
+      for (frameHelper in WindowManager.getInstance().allProjectFrames) {
+        val manager = getInstance(frameHelper.project ?: continue) as ToolWindowManagerEx
+        for (toolwindow in manager.toolWindows) {
+          if (toolwindow is ToolWindowImpl) {
+            toolwindow.updateContentBackgroundColors()
+          }
+        }
+      }
     }
   }
 
@@ -393,23 +406,26 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
       })
 
-      IdeEventQueue.getInstance().addDispatcher({ event ->
-                                                  if (event is KeyEvent) {
-                                                    process { manager ->
-                                                      manager.dispatchKeyEvent(event)
-                                                    }
-                                                  }
+      IdeEventQueue.getInstance().addDispatcher(
+        object : IdeEventQueue.NonLockedEventDispatcher {
+          override fun dispatch(e: AWTEvent): Boolean {
+            if (e is KeyEvent) {
+              process { manager ->
+                manager.dispatchKeyEvent(e)
+              }
+            }
 
-                                                  false
-                                                }, coroutineScope)
+            return false
+          }
+        }, coroutineScope)
     }
   }
 
   private fun getDefaultToolWindowPane() = toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)!!
 
-  internal fun getToolWindowPane(paneId: String): ToolWindowPane = toolWindowPanes.get(paneId) ?: getDefaultToolWindowPane()
+  @ApiStatus.Internal fun getToolWindowPane(paneId: String): ToolWindowPane = toolWindowPanes.get(paneId) ?: getDefaultToolWindowPane()
 
-  internal fun getToolWindowPane(toolWindow: ToolWindow): ToolWindowPane {
+  fun getToolWindowPane(toolWindow: ToolWindow): ToolWindowPane {
     val paneId = if (toolWindow is ToolWindowImpl) {
       toolWindow.windowInfo.safeToolWindowPaneId
     }
@@ -557,7 +573,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
   ) {
     withContext(ModalityState.any().asContextElement()) {
-      launch(Dispatchers.EDT) {
+      val defaultPaneInitialization = launch(Dispatchers.EDT) {
         this@ToolWindowManagerImpl.projectFrame = pane.frame
 
         // Make sure we haven't already created the root tool window pane.
@@ -571,11 +587,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         toolWindowPanes.put(pane.paneId, pane)
       }
       connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+      defaultPaneInitialization.join()
       toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
     }
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        if (!ClientId.isCurrentlyUnderLocalId) return
         coroutineScope.launch(Dispatchers.EDT) {
           focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
             if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
@@ -1599,7 +1617,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.nonModal().asContextElement()) {
         runnable.run()
       }
     }
@@ -1687,34 +1705,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       SwingUtilities.invokeLater(show)
     }
   }
+  
+  fun getToolWindowButton(toolWindowId: String): JComponent? {
+    val entry = idToEntry.get(toolWindowId) ?: return null
+    return findBallonAlignment(entry, toolWindowId).first
+  }
 
   private fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
     val entry = idToEntry.get(options.toolWindowId)!!
     entry.balloon?.let(Disposer::dispose)
 
+    val (button, position) = findBallonAlignment(entry, options.toolWindowId)
+    
     val anchor = entry.readOnlyWindowInfo.anchor
-    var position = when (anchor) {
-      ToolWindowAnchor.TOP -> Balloon.Position.atRight
-      ToolWindowAnchor.RIGHT -> Balloon.Position.atRight
-      ToolWindowAnchor.BOTTOM -> Balloon.Position.atLeft
-      ToolWindowAnchor.LEFT -> Balloon.Position.atLeft
-      else -> Balloon.Position.atLeft
-    }
-
     val balloon = createBalloon(options, entry)
     val toolWindowPane = getToolWindowPane(entry.readOnlyWindowInfo.safeToolWindowPaneId)
-    val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
-    var button = buttonManager.getSquareStripeFor(entry.readOnlyWindowInfo.anchor).getButtonFor(options.toolWindowId)?.getComponent()
-    if (button == null && entry.readOnlyWindowInfo.anchor == ToolWindowAnchor.BOTTOM) {
-      button = buttonManager.getSquareStripeFor(ToolWindowAnchor.RIGHT).getButtonFor(options.toolWindowId)?.getComponent()
-      if (button != null && button.isShowing) {
-        position = Balloon.Position.atRight
-      }
-    }
-    if (button == null || !button.isShowing) {
-      button = buttonManager.getMoreButton(getMoreButtonSide())
-      position = Balloon.Position.atLeft
-    }
     val show = Runnable {
       val tracker: PositionTracker<Balloon>
       if (entry.toolWindow.isVisible &&
@@ -1753,6 +1758,36 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     else {
       SwingUtilities.invokeLater(show)
     }
+  }
+
+  private fun findBallonAlignment(
+    entry: ToolWindowEntry,
+    toolWindowId: String,
+  ): Pair<JComponent, Balloon.Position> {
+    val anchor = entry.readOnlyWindowInfo.anchor
+    var position = when (anchor) {
+      ToolWindowAnchor.TOP -> Balloon.Position.atRight
+      ToolWindowAnchor.RIGHT -> Balloon.Position.atRight
+      ToolWindowAnchor.BOTTOM -> Balloon.Position.atLeft
+      ToolWindowAnchor.LEFT -> Balloon.Position.atLeft
+      else -> Balloon.Position.atLeft
+    }
+
+    val toolWindowPane = getToolWindowPane(entry.readOnlyWindowInfo.safeToolWindowPaneId)
+    val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
+    var button = buttonManager.getSquareStripeFor(anchor).getButtonFor(toolWindowId)?.getComponent()
+    if (button == null && anchor == ToolWindowAnchor.BOTTOM) {
+      button = buttonManager.getSquareStripeFor(ToolWindowAnchor.RIGHT).getButtonFor(toolWindowId)?.getComponent()
+      if (button != null && button.isShowing) {
+        position = Balloon.Position.atRight
+      }
+    }
+    if (button == null || !button.isShowing) {
+      button = buttonManager.getMoreButton(getMoreButtonSide())
+      position = Balloon.Position.atLeft
+    }
+
+    return Pair<JComponent, Balloon.Position>(button, position)
   }
 
   private fun createPositionTracker(component: Component, anchor: ToolWindowAnchor): PositionTracker<Balloon> {

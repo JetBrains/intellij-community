@@ -7,6 +7,7 @@ from antlr4.tree.Trees import Trees as Trees
 Parser: Incomplete
 
 class RuleContext(RuleNode):
+    __slots__ = ("parentCtx", "invokingState")
     EMPTY: Incomplete
     parentCtx: Incomplete
     invokingState: Incomplete

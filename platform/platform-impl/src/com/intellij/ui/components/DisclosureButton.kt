@@ -8,6 +8,8 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBValue
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.awt.event.InputEvent
+import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JButton
 
@@ -129,6 +131,18 @@ class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text)
       }
     }
 
+  /**
+   * Replaces [arrowIcon]
+   */
+  var additionalAction: ActionListener? = null
+    set(value) {
+      if (field !== value) {
+        field = value
+        revalidate()
+        repaint()
+      }
+    }
+
   init {
     horizontalAlignment = LEFT
     isRolloverEnabled = true
@@ -137,5 +151,13 @@ class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text)
 
   override fun getUIClassID(): String {
     return disclosureButtonID
+  }
+
+  internal fun invokeAdditionalAction(e: MouseEvent) {
+    additionalAction?.actionTriggered(e)
+  }
+
+  interface ActionListener {
+    fun actionTriggered(e: InputEvent?)
   }
 }

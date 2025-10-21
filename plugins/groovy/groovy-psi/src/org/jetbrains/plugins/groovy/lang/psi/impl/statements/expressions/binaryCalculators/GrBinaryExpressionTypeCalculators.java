@@ -40,6 +40,7 @@ public final class GrBinaryExpressionTypeCalculators {
 
     MAP.put(GroovyTokenTypes.mLOR, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mLAND, GrBooleanExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mIMPL, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mEQUAL, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mNOT_EQUAL, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(T_ID, GrBooleanExpressionTypeCalculator.INSTANCE);

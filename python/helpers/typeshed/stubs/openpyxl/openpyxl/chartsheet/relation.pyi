@@ -49,7 +49,7 @@ class DrawingHF(Serialisable):
     rightFooterFirstPage: Alias
     def __init__(
         self,
-        id: Incomplete | None = None,
+        id=None,
         lho: ConvertibleToInt | None = None,
         lhe: ConvertibleToInt | None = None,
         lhf: ConvertibleToInt | None = None,

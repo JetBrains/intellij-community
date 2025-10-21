@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.annotations.ApiStatus
@@ -20,11 +21,11 @@ internal class XDebugSessionProxyKeeper {
   }
 
   companion object {
-    @JvmStatic
-    fun getInstance(project: Project): XDebugSessionProxyKeeper = project.service()
+    fun getInstanceIfExists(project: Project): XDebugSessionProxyKeeper? = project.serviceIfCreated()
   }
 }
 
 @ApiStatus.Internal
-fun XDebugSession.asProxy(): XDebugSessionProxy = XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(this)
+fun XDebugSession.asProxy(): XDebugSessionProxy =
+  project.service<XDebugSessionProxyKeeper>().getOrCreateProxy(this)
 

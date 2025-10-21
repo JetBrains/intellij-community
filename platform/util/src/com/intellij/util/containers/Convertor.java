@@ -32,14 +32,4 @@ public interface Convertor<Src, Dst> extends Function<Src, Dst> {
     //noinspection unchecked
     return SELF;
   }
-
-  /**
-   * @deprecated this isn't needed since this interface extends from {@link Function}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  default @NotNull Function<Src,Dst> asFunction() {
-    return this;
-  }
-
 }

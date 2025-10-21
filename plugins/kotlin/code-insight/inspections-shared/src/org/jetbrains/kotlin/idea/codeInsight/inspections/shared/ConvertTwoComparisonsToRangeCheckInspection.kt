@@ -11,6 +11,9 @@ import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isCharType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -145,7 +148,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.renderConstantPlusOne(expressionType: KaType): String? {
         val constant = evaluate() ?: return null
 
@@ -178,7 +181,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.adjustLowerBoundForExclusive(): String? {
         val type = expressionType ?: return null
         if (!type.isIntegralType && !type.isCharType) return null
@@ -193,7 +196,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
             .text
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.asDoubleConstantExpression(): KtExpression? {
         val constantVal = evaluate()?.value as? Number ?: return null
         return KtPsiFactory(project).createExpression(constantVal.toDouble().toString())

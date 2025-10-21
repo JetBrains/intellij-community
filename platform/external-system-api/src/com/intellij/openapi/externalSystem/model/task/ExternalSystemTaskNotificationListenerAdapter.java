@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.task;
 
+import com.intellij.execution.process.ProcessOutputType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,9 +68,9 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   }
 
   @Override
-  public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+  public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
     if (myDelegate != null) {
-      myDelegate.onTaskOutput(id, text, stdOut);
+      myDelegate.onTaskOutput(id, text, processOutputType);
     }
   }
 

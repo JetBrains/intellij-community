@@ -30,8 +30,11 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
     val basePath = Path.of(dir.toString(), "testData", "local1").toString()
     val basePluginsPath = Path.of(basePath, *DEFAULT_PLUGIN_GROUP_ID.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
     try {
-      val pluginFolders = Files.list(basePluginsPath).map { obj: Path -> obj.fileName }.map { obj: Path -> obj.toString() }.collect(
-        Collectors.toSet())
+
+      val pluginFolders = Files.list(basePluginsPath).use { stream ->
+        stream.map { it.fileName.toString() }.collect(Collectors.toSet())
+      }
+
       val notDownloadedPlugins = HashSet(DEFAULT_PLUGIN_ARTIFACT_IDS)
       notDownloadedPlugins.removeAll(pluginFolders)
       assertTrue("Maven plugins are not downloaded: " + java.lang.String.join(", ", notDownloadedPlugins), notDownloadedPlugins.isEmpty())

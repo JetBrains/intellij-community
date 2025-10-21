@@ -5,10 +5,13 @@
   <description>Provides advanced features for HTML/CSS editing: inspections, quickfixes, smart navigation actions and more.</description>
 
   <category>HTML and XML</category>
-  <depends>com.intellij.modules.xml</depends>
   <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.platform.images</depends>
+  <dependencies>
+    <plugin id="com.intellij.platform.images"/>
+    <module name="intellij.xml.impl"/>
+  </dependencies>
+
 
   <extensions defaultExtensionNs="com.intellij">
     <psi.referenceContributor implementation="com.intellij.htmltools.xml.util.HtmlReferenceContributor"/>

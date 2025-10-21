@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableConsumer
 import com.intellij.util.containers.CollectionFactory
@@ -39,7 +40,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.vcs.commit.AmendCommitAware
-import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.ToggleAmendCommitOption.Companion.isAmendCommitOptionSupported
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcs.commit.isAmendCommitMode
@@ -67,7 +67,6 @@ import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.CancellablePromise
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
 import java.nio.file.Files
@@ -979,7 +978,8 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
         }.toPath()
       }
 
-      val encoding = GitConfigUtil.getCommitEncodingCharset(project, root)
+      val encoding = GitConfigUtil.getCommitEncodingCharsetCached(project, root)
+
       OutputStreamWriter(Files.newOutputStream(file), encoding).use { out ->
         out.write(message)
       }

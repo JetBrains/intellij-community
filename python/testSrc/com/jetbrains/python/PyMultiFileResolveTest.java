@@ -24,7 +24,8 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -432,7 +433,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiElement module = doResolve();
     assertNotNull(module);
     final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertFalse(PythonSdkUtil.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
+    assertFalse(PySkeletonUtil.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
   }
 
   // PY-18626
@@ -618,11 +619,25 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   // PY-38322 PY-39171
-  public void testImportOfNestedBinarySubModule() {
+  public void testImportAttributeFromNestedBinarySubModule() {
     final String testDir = getTestName(true);
     runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
       runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
-        assertResolvesTo(PyFunction.class, "func");
+        PsiFile file = myFixture.configureByFile(testDir + "/ImportAttributeFromNestedBinarySubModule.py");
+        assertResolveResult(doResolve(file), PyFunction.class, "func", "binary.py");
+      });
+    });
+  }
+
+  public void testImportNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        for (PsiFile file : myFixture.configureByFiles(testDir + "/import_binary.py",
+                                                       testDir + "/import_and_reference_binary.py",
+                                                       testDir + "/from_import_binary.py")) {
+          assertResolveResult(doResolve(file), PyFile.class, "binary.py", null);
+        }
       });
     });
   }

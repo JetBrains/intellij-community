@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * </p>
  */
 public interface ProgressIndicatorEx extends ProgressIndicator {
+  ProgressIndicatorEx[] EMPTY_ARRAY = new ProgressIndicatorEx[0];
   void addStateDelegate(@NotNull ProgressIndicatorEx delegate);
 
   void finish(@NotNull TaskInfo task);

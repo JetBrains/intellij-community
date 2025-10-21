@@ -14,7 +14,7 @@
     </ul>
   ]]></description>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.javaFX"/>
     <module name="intellij.javaFX.properties"/>
   </content>

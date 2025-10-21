@@ -100,9 +100,9 @@ public class ProjectSettingsService {
    * the second call may return a chosen SDK from the first call (only once). This is the way to
    * avoid breaking the older code scenarios.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Sdk chooseAndSetSdk() {
-    Logger.getInstance(getClass()).warn("Call to the deprecated ProjectSettingsService#chooseAndSetSdk method. Please use new API instead");
+    Logger.getInstance(getClass()).error("Call to the deprecated ProjectSettingsService#chooseAndSetSdk method. Please use new API instead");
     return null;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.components
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.impl.stores.stateStore
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import java.lang.System.identityHashCode
 
@@ -33,5 +34,8 @@ inline fun <reified T : PersistentStateComponent<R>, reified R : Any> T.reloadAp
   p.loadState(newState())
 
   //ask the storage subsystem to load it the state once again
-  store.reloadState(T::class.java)
+  @Suppress("RAW_RUN_BLOCKING")
+  runBlocking {
+    store.reloadState(T::class.java)
+  }
 }

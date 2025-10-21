@@ -63,6 +63,7 @@ public final class ViewPresenterUtils {
   private static <C> C createProxy(Class<C> clazz, InvocationHandler handler) {
     assert clazz != null;
     assert handler != null;
-    return ReflectionUtil.proxy(ViewPresenterUtils.class.getClassLoader(), clazz, handler);
+    ClassLoader classLoader = clazz.getClassLoader(); // clazz's class loader allows [java.lang.reflect.Proxy#ensureVisible]
+    return ReflectionUtil.proxy(classLoader, clazz, handler);
   }
 }

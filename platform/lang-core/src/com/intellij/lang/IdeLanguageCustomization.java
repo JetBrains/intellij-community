@@ -2,6 +2,7 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -12,6 +13,7 @@ import java.util.List;
  * Override this service in your IDE to set which languages are considered as the primary languages. It isn't supposed to be overridden in plugins.
  */
 public class IdeLanguageCustomization {
+  @RequiresBlockingContext
   public static IdeLanguageCustomization getInstance() {
     return ApplicationManager.getApplication().getService(IdeLanguageCustomization.class);
   }

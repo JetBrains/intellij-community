@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
+import com.intellij.internal.statistic.eventLog.events.AnonymizedListEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -184,17 +185,6 @@ internal class PathFusMetric(metric: String) : KotlinBuildToolFusMetric<String>(
     EventFields.AnonymizedPath as EventField<String>,
     validationStep = KotlinBuildToolStringFLowValidationStep,
     aggregationStep = OverrideValueAggregationStep()
-)
-
-/**
- * Special FUS metric for build IDs.
- * Validates that the build ID contains only alphanumeric characters, underscores, and hyphens.
- */
-internal class BuildIdFusMetric : KotlinBuildToolFusMetric<String>(
-    "BUILD_ID",
-    eventField = StringEventField.ValidatedByInlineRegexp("buildId", "^[a-zA-Z0-9_-]*$") as EventField<String>,
-    validationStep = KotlinBuildToolStringRegexFusFlowValidationStep(Regex("^[a-zA-Z0-9_-]*$")),
-    OverrideValueAggregationStep()
 )
 
 /**

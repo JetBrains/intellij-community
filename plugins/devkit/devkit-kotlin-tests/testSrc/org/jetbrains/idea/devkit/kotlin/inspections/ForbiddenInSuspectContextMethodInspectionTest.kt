@@ -5,11 +5,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.kotlin.withKotlinStdlib
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -269,6 +273,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `custom marked function`() {
+    RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
+      .setValue(true, testRootDisposable)
+
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
       
@@ -725,6 +732,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `call as parameter should be checked`() {
+    RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
+      .setValue(true, testRootDisposable)
+
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
       
@@ -747,7 +757,13 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 }
 
 @RunWith(JUnit4::class)
-abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixtureTestCase() {
+abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
+
   override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR_WITH_KOTLIN
 
   @Before

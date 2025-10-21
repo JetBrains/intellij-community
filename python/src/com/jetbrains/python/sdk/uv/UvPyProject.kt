@@ -1,17 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.module.Module
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.PyProjectToolFactory
 import com.intellij.python.pyproject.TomlTableSafeGetError
-import com.intellij.python.pyproject.findTomlHeader
-import com.intellij.python.pyproject.findTomlLiteralsContaining
-import com.intellij.python.pyproject.findTomlValueByKey
 import com.intellij.python.pyproject.getOrIssue
 import com.intellij.python.pyproject.safeGetArr
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.requirements.createNameReq
 import com.jetbrains.python.requirements.psi.NameReq

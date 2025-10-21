@@ -26,12 +26,23 @@ class ListDirectoryWithAttrsArgsBuilder(
     this.symlinkPolicy = arg
   }
 
+  /**
+   * Leaves symlinks unresolved.
+   * This option makes the operation a bit more efficient if it is not interested in symlinks.
+   */
   fun doNotResolve(): ListDirectoryWithAttrsArgsBuilder =
     symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
 
+  /**
+   * Resolves a symlink and returns the information about the target of the symlink,
+   * But does not perform anything on the target of the symlink itself.
+   */
   fun justResolve(): ListDirectoryWithAttrsArgsBuilder =
     symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
 
+  /**
+   * Resolves a symlink, follows it, and performs the required operation on target.
+   */
   fun resolveAndFollow(): ListDirectoryWithAttrsArgsBuilder =
     symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
 

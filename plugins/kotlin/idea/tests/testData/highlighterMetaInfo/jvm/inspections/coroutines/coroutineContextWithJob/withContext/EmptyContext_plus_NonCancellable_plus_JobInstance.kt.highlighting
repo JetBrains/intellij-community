@@ -1,0 +1,14 @@
+// FIR_IDENTICAL
+// HIGHLIGHT_WARNINGS
+// WITH_COROUTINES
+package test
+
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Job
+
+suspend fun test(job: Job) {
+    withContext(EmptyCoroutineContext + NonCancellable + <!HIGHLIGHTING("severity='WARNING'; descr='Passing 'CoroutineContext' with a 'Job' to 'withContext' builder can lead to structured concurrency violations'")!>job<!>) {}
+}
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection

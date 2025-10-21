@@ -41,7 +41,7 @@ public final class FinalizeNotProtectedInspection extends BaseInspection impleme
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FinalizeDeclaredProtectedVisitor();
   }
 

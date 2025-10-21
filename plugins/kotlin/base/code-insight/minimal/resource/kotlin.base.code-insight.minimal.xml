@@ -1,8 +1,0 @@
-<idea-plugin>
-  <module value="kotlin.base.code-insight.minimal"/>
-  <extensionPoints>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.smartEnterProcessorFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.SmartEnterProcessorWithFixers$Fixer"/>
-    </extensionPoint>
-  </extensionPoints>
-</idea-plugin>

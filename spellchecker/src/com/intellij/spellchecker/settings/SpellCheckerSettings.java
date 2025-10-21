@@ -33,7 +33,7 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
   private static final String DEFAULT_DICTIONARY_TO_SAVE = ProjectDictionaryLayer.Companion.getName().get();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
-  private static final boolean DEFAULT_USE_SINGLE_DICT = true;
+  private static final boolean DEFAULT_USE_SINGLE_DICT = false;
   private static final String SETTINGS_TRANSFERRED = "transferred";
 
   // Paths

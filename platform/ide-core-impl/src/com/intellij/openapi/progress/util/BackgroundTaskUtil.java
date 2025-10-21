@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -36,7 +37,7 @@ public final class BackgroundTaskUtil {
   public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
                                                              @Nullable Runnable onSlowAction) {
     return executeAndTryWait(backgroundTask, onSlowAction,
-                             ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
+                             ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS, false);
   }
 
   /**

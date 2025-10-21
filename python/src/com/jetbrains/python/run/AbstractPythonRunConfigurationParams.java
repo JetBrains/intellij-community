@@ -2,6 +2,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,4 +11,10 @@ import org.jetbrains.annotations.Nullable;
 public interface AbstractPythonRunConfigurationParams extends PythonRunParams {
   @Nullable
   Module getModule();
+
+  @ApiStatus.Internal
+  @Nullable Boolean getUseRunTool();
+
+  @ApiStatus.Internal
+  void setUseRunTool(@Nullable Boolean useRunTool);
 }

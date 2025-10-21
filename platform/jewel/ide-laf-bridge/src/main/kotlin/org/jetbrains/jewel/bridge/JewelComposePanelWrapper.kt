@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.bridge
 
+import androidx.compose.foundation.ComposeFoundationFlags
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -21,6 +22,7 @@ import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.LocalComponent as LocalComponentFoundation
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.LocalPopupRenderer
@@ -50,7 +52,7 @@ public fun compose(
  * @param config A lambda to configure the underlying [ComposePanel].
  * @param content The Composable content to display.
  */
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(focusOnClickInside = false, config, content)
 
@@ -97,7 +99,7 @@ public fun JewelComposePanel(
  * @param content The Composable content to display.
  */
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(focusOnClickInside = false, config, content)
 
@@ -134,7 +136,7 @@ public fun composeWithoutTheme(
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming") // Swing to Compose bridge API
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun composeWithoutTheme(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
@@ -188,7 +190,7 @@ public fun JewelComposeNoThemePanel(
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
@@ -204,13 +206,18 @@ private fun createJewelComposePanel(
             JewelLogger.getInstance("SkikoLoader").warn("Bundled Skiko not found/not readable, falling back to default")
         }
     }
+
+    ComposeFoundationFlags.isNewContextMenuEnabled = false
+
     val jewelPanel = JewelComposePanelWrapper(focusOnClickInside)
     jewelPanel.composePanel.config(jewelPanel)
     ComposeUiInspector(jewelPanel)
     return jewelPanel
 }
 
-internal class JewelComposePanelWrapper(private val focusOnClickInside: Boolean) : BorderLayoutPanel(), UiDataProvider {
+@ApiStatus.Internal
+@InternalJewelApi
+public class JewelComposePanelWrapper(private val focusOnClickInside: Boolean) : BorderLayoutPanel(), UiDataProvider {
     internal var targetProvider: UiDataProvider? = null
     private val listener = AWTEventListener { event ->
         if (event !is MouseEvent || event.button == MouseEvent.NOBUTTON) return@AWTEventListener
@@ -219,7 +226,7 @@ internal class JewelComposePanelWrapper(private val focusOnClickInside: Boolean)
         }
     }
 
-    val composePanel: ComposePanel = ComposePanel()
+    public val composePanel: ComposePanel = ComposePanel()
 
     init {
         super.addToCenter(composePanel)

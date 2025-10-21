@@ -10,7 +10,6 @@ import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerListener;
@@ -25,10 +24,11 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.application.WriteActionListener;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -77,6 +77,9 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -135,6 +138,7 @@ public final class DaemonListeners implements Disposable {
         if (!myProject.isDisposed() && ApplicationManager.getApplication().isDispatchThread() && worthBothering(document, project)) {
           stopDaemon(true, "Document change");
           UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
+          myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirtyDefensively(document, e);
         }
       }
 
@@ -276,7 +280,7 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
     connection.subscribe(ProfileChangeAdapter.TOPIC, new MyProfileChangeListener());
 
-    ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(), project);
+    ApplicationManagerEx.getApplicationEx().addWriteActionListener(new MyWriteActionListener(), project);
 
     connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyTodoListener());
 
@@ -353,6 +357,7 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
+    //noinspection rawtypes
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
@@ -524,7 +529,9 @@ public final class DaemonListeners implements Disposable {
    * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
    * - files in the middle of cut-n-paste operation.
    */
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent,
+  @RequiresEdt
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file,
+                                              boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
@@ -539,22 +546,16 @@ public final class DaemonListeners implements Disposable {
     return HighlightingSessionImpl.canChangeFileSilently(file, isInContent, extensionsAllowToChangeFileSilently);
   }
 
-  @Deprecated(forRemoval = true)
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
-    PluginException.reportDeprecatedUsage("this method", "");
-    return canChangeFileSilently(file, isInContent, ThreeState.UNSURE);
-  }
-
-  private final class MyApplicationListener implements ApplicationListener {
+  private final class MyWriteActionListener implements WriteActionListener {
     @Override
-    public void beforeWriteActionStart(@NotNull Object action) {
+    public void beforeWriteActionStart(@NotNull Class<?> action) {
       if (!myDaemonCodeAnalyzer.isRunning()) return; // we'll restart in writeActionFinished()
-      stopDaemon(true, "Write action start");
+      stopDaemon(true, "Write action start: "+action);
     }
 
     @Override
-    public void writeActionFinished(@NotNull Object action) {
-      stopDaemon(true, "Write action finish");
+    public void writeActionFinished(@NotNull Class<?> action) {
+      stopDaemon(true, "Write action finish: "+action);
     }
   }
 
@@ -597,7 +598,7 @@ public final class DaemonListeners implements Disposable {
         return;
       }
 
-      if (myEscPressed) {
+      if (isEscapeJustPressed()) {
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
           // todo IJPL-339 investigate this place
@@ -774,6 +775,8 @@ public final class DaemonListeners implements Disposable {
   void waitForUpdateFileStatusQueue() {
     myPsiChangeHandler.waitForUpdateFileStatusQueue();
   }
+  @RequiresBackgroundThread
+  @RequiresReadLock
   void flushUpdateFileStatusQueue() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     myPsiChangeHandler.flushUpdateFileStatusQueue();

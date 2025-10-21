@@ -6,6 +6,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.externalSystem.util.waitForProjectActivity
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.*
@@ -22,11 +23,9 @@ abstract class GradleApplicationEnvironmentProviderTestCase : GradleSettingsImpo
   }
 
   fun assertAppRunOutput(configurationSettings: RunnerAndConfigurationSettings, vararg checks: String) {
-    val tracer = ExternalSystemExecutionTracer()
-    tracer.traceExecution {
+    val output = ExternalSystemExecutionTracer.traceExecutionOutput {
       runAppAndWait(configurationSettings)
     }
-    val output = tracer.output.joinToString("")
     for (check in checks) {
       Assertions.assertThat(output)
         .contains(check)
@@ -44,12 +43,8 @@ abstract class GradleApplicationEnvironmentProviderTestCase : GradleSettingsImpo
     }
 
     withThreadDumpEvery(1.minutes) {
-      waitForGradleEventDispatcherClosing {
-        waitForAnyExecution(project) {
-          waitForAnyGradleTaskExecution {
-            ProgramRunnerUtil.executeConfiguration(environment, false, true)
-          }
-        }
+      waitForProjectActivity(myProject) {
+        ProgramRunnerUtil.executeConfiguration(environment, false, true)
       }
     }
   }

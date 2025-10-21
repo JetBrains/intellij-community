@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -1052,12 +1054,13 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
               createPointer(var);
             }
           };
-          PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
+          Disposable disposable = Disposer.newDisposable();
+          PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener, disposable);
           try {
             var.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
           }
           finally {
-            PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
+            Disposer.dispose(disposable);
           }
         });
         fail();

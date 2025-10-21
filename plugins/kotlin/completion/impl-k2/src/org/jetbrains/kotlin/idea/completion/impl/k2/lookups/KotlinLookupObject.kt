@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
+import kotlinx.serialization.Polymorphic
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
 import org.jetbrains.kotlin.name.Name
 
-internal interface KotlinLookupObject {
+@Polymorphic
+internal interface KotlinLookupObject: SerializableLookupObject {
     val shortName: Name
 }

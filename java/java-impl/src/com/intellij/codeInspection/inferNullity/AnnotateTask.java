@@ -38,7 +38,7 @@ class AnnotateTask implements SequentialTask {
       indicator.setFraction(((double)myCount) / myTotal);
     }
 
-    if (NullityInferrer.apply(myProject, myNotNullManager, myInfos[myCount++])) {
+    if (NullityInferrer.apply(myNotNullManager, myInfos[myCount++])) {
       myAdded++;
     }
 

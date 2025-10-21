@@ -48,13 +48,13 @@ object DebuggerDiagnosticsUtil {
 
   @JvmStatic
   fun checkThreadsConsistency(process: DebugProcessImpl, reportDiffWithRealCounter: Boolean) {
-    val suspendManager = process.suspendManager
+    val suspendManager = process.suspendManager as SuspendManagerImpl
     val invocationWatching = process.myThreadBlockedMonitor.myInvocationWatching
     // Anyway, model problems can be detected only for threads the engine already worked with
     @Suppress("TestOnlyProblems")
     val allThreads = process.virtualMachineProxy.evenDirtyAllThreads
 
-    val allContexts = suspendManager.eventContexts
+    val allContexts = suspendManager.eventContextsAsItIs
 
     val suspendAllContexts = allContexts.filter { it.suspendPolicy == EventRequest.SUSPEND_ALL }
 
@@ -64,7 +64,7 @@ object DebuggerDiagnosticsUtil {
       if (threadProxy.isIgnoreModelSuspendCount) {
         continue
       }
-      val suspendingContexts = SuspendManagerUtil.getSuspendingContexts(suspendManager, threadProxy)
+      val suspendingContexts = allContexts.filter { it.suspends(threadProxy) }
       val resumedByWatching = if (invocationWatching != null && suspendingContexts.contains(invocationWatching.mySuspendAllContext)) 1
       else 0
       val threadModelSuspendCount = threadProxy.wholeSuspendModelNumber

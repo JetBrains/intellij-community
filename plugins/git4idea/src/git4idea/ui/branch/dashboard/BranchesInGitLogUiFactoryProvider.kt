@@ -24,11 +24,15 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
-import com.intellij.vcs.log.ui.*
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -57,7 +61,7 @@ class BranchesInGitLogUiFactoryProvider(private val project: Project) : CustomVc
     BranchesVcsLogUiFactory(vcsLogManager, logId, filters)
 
   private fun hasGitRoots(project: Project, roots: Collection<VirtualFile>) =
-    ProjectLevelVcsManager.getInstance(project).allVcsRoots.asSequence()
+    ProjectLevelVcsManager.getInstance(project).getAllVcsRoots().asSequence()
       .filter { it.vcs?.keyInstanceMethod == GitVcs.getKey() }
       .map(VcsRoot::getPath)
       .toSet()
@@ -119,7 +123,7 @@ internal class BranchesVcsLogUi(
                                                           logData.project,
                                                           model,
                                                           selectionHandler,
-                                                          mainFrame.toolbar
+                                                          BranchesDashboardTreeComponent.SearchLook.Inline(mainFrame.toolbar)
     ).apply {
       border = createBorder(SideBorder.LEFT)
     }

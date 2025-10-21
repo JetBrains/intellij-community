@@ -16,26 +16,32 @@ import javax.swing.JList
 @ApiStatus.Internal
 class SimpleComboboxWithActionsFactory<T : Any>(
   private val mappingsState: StateFlow<Collection<T>>,
-  private val selectionState: MutableStateFlow<T?>
+  private val selectionState: MutableStateFlow<T?>,
 ) {
-
-  fun create(scope: CoroutineScope,
-             presenter: (T) -> Presentation,
-             actions: StateFlow<List<Action>> = MutableStateFlow(emptyList()),
-             sortComparator: Comparator<T> = Comparator.comparing { presenter(it).name }): ComboBox<*> {
+  fun create(
+    scope: CoroutineScope,
+    presenter: (T) -> Presentation,
+    actions: StateFlow<List<Action>> = MutableStateFlow(emptyList()),
+    sortComparator: Comparator<T> = Comparator.comparing { presenter(it).name },
+  ): ComboBox<*> {
 
     val comboModel = ComboBoxWithActionsModel<T>().apply {
       bindIn(scope, mappingsState, selectionState, actions, sortComparator)
-      selectFirst()
+
+      if (selectedItem == null) {
+        selectFirst()
+      }
     }
 
     return ComboBox(comboModel).apply {
       renderer = object : ColoredListCellRenderer<ComboBoxWithActionsModel.Item<T>>() {
-        override fun customizeCellRenderer(list: JList<out ComboBoxWithActionsModel.Item<T>>,
-                                           value: ComboBoxWithActionsModel.Item<T>?,
-                                           index: Int,
-                                           selected: Boolean,
-                                           hasFocus: Boolean) {
+        override fun customizeCellRenderer(
+          list: JList<out ComboBoxWithActionsModel.Item<T>>,
+          value: ComboBoxWithActionsModel.Item<T>?,
+          index: Int,
+          selected: Boolean,
+          hasFocus: Boolean,
+        ) {
           if (value is ComboBoxWithActionsModel.Item.Wrapper) {
             val presentations = presenter(value.wrappee)
             append(presentations.name)

@@ -51,7 +51,6 @@ internal class LcrSimpleColoredTextImpl(
   ) {
     val speedSearchField = initParams.speedSearchField
     val ranges = when {
-      initParams.speedSearchHighlighting -> SpeedSearchSupply.getSupply(speedSearchEnabledComponent)?.matchingFragments(text)
       speedSearchField != null ->
         speedSearchField.ranges ?: SpeedSearchSupply.getSupply(speedSearchEnabledComponent)?.matchingFragments(text)
       else -> null

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplaceInvokeIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
-    KotlinBundle.lazyMessage("replace.invoke.with.direct.call")
+    KotlinBundle.messagePointer("replace.invoke.with.direct.call")
 ), HighPriorityAction {
     override fun applicabilityRange(element: KtDotQualifiedExpression): TextRange? {
         return if (element.isExplicitInvokeCall()) element.callExpression?.calleeExpression?.textRange else null

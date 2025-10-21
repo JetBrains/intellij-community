@@ -25,6 +25,23 @@ KaSourceModule:
     <empty>
 
 KaSourceModule:
+  description: Sources of A1
+  targetPlatform: JVM (1.8)
+  name: A1
+  sourceModuleKind: TEST
+  stableModuleName: <A1>
+  regularDependencies:
+    KaSourceModule(A1, production)
+    KaSourceModule(B1, production)
+    KaSourceModule(B1, test)
+    KaSourceModule(C, production)
+    KaSourceModule(C, test)
+  friendDependencies:
+    KaSourceModule(A1, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
   description: Sources of A2
   targetPlatform: JVM (1.8)
   name: A2
@@ -35,6 +52,23 @@ KaSourceModule:
     KaSourceModule(C, production)
   friendDependencies:
     <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of A2
+  targetPlatform: JVM (1.8)
+  name: A2
+  sourceModuleKind: TEST
+  stableModuleName: <A2>
+  regularDependencies:
+    KaSourceModule(A2, production)
+    KaSourceModule(B2, production)
+    KaSourceModule(B2, test)
+    KaSourceModule(C, production)
+    KaSourceModule(C, test)
+  friendDependencies:
+    KaSourceModule(A2, production)
   dependsOnDependencies:
     <empty>
 
@@ -52,6 +86,21 @@ KaSourceModule:
     <empty>
 
 KaSourceModule:
+  description: Sources of B1
+  targetPlatform: JVM (1.8)
+  name: B1
+  sourceModuleKind: TEST
+  stableModuleName: <B1>
+  regularDependencies:
+    KaSourceModule(B1, production)
+    KaSourceModule(C, production)
+    KaSourceModule(C, test)
+  friendDependencies:
+    KaSourceModule(B1, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
   description: Sources of B2
   targetPlatform: JVM (1.8)
   name: B2
@@ -65,6 +114,21 @@ KaSourceModule:
     <empty>
 
 KaSourceModule:
+  description: Sources of B2
+  targetPlatform: JVM (1.8)
+  name: B2
+  sourceModuleKind: TEST
+  stableModuleName: <B2>
+  regularDependencies:
+    KaSourceModule(B2, production)
+    KaSourceModule(C, production)
+    KaSourceModule(C, test)
+  friendDependencies:
+    KaSourceModule(B2, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
   description: Sources of C
   targetPlatform: JVM (1.8)
   name: C
@@ -74,5 +138,18 @@ KaSourceModule:
     <empty>
   friendDependencies:
     <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of C
+  targetPlatform: JVM (1.8)
+  name: C
+  sourceModuleKind: TEST
+  stableModuleName: <C>
+  regularDependencies:
+    KaSourceModule(C, production)
+  friendDependencies:
+    KaSourceModule(C, production)
   dependsOnDependencies:
     <empty>

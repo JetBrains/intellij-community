@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
+import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
 import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
 import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
@@ -204,7 +205,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings, formattingMode);
     }
-    if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
+    if (child instanceof LeafElement || child instanceof PsiMarkdownCodeBlock) {
       if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
         return new CStyleCommentBlock(child, actualIndent);
       }
@@ -556,10 +557,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       else if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
         child = processParenthesisBlock(JavaTokenType.LBRACE, JavaTokenType.RBRACE,
-                                  result,
-                                  child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
+                                        result,
+                                        child,
+                                        WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                        mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION,
+                                        JavaTokenType.COMMA);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.EXPRESSION_LIST) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
@@ -567,8 +569,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
             wrap.ignoreParentWraps();
         }
         child = processParenthesisBlock(result, child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+                                        WrappingStrategy.createDoNotWrapCommaAndCommentStrategy(wrap),
+                                        mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,
+                                        JavaTokenType.COMMA, JavaTokenType.END_OF_LINE_COMMENT, JavaTokenType.C_STYLE_COMMENT);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARAMETER_LIST) {
         ASTNode parent = myNode.getTreeParent();
@@ -946,12 +949,20 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                    @NotNull ASTNode child,
                                                    @NotNull WrappingStrategy wrappingStrategy,
                                                    final boolean doAlign) {
+    return processParenthesisBlock(result, child, wrappingStrategy, doAlign, JavaTokenType.COMMA);
+  }
+
+  private @NotNull ASTNode processParenthesisBlock(@NotNull List<Block> result,
+                                                   @NotNull ASTNode child,
+                                                   @NotNull WrappingStrategy wrappingStrategy,
+                                                   final boolean doAlign,
+                                                   IElementType @NotNull ... ignoreAlignmentTypes) {
     myUseChildAttributes = true;
 
     final IElementType from = JavaTokenType.LPARENTH;
     final IElementType to = JavaTokenType.RPARENTH;
 
-    return processParenthesisBlock(from, to, result, child, wrappingStrategy, doAlign);
+    return processParenthesisBlock(from, to, result, child, wrappingStrategy, doAlign, ignoreAlignmentTypes);
   }
 
   private @NotNull ASTNode processParenthesisBlock(@NotNull IElementType from,
@@ -959,7 +970,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                    final @NotNull List<Block> result,
                                                    @NotNull ASTNode child,
                                                    final @NotNull WrappingStrategy wrappingStrategy,
-                                                   final boolean doAlign)
+                                                   final boolean doAlign,
+                                                   IElementType @NotNull ... ignoreAlignmentTypes)
   {
     Indent externalIndent = Indent.getNoneIndent();
     Indent internalIndent = Indent.getContinuationWithoutFirstIndent(false);
@@ -968,7 +980,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);
     }
 
-    AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(doAlign, null), JavaTokenType.COMMA);
+    AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(doAlign, null), ignoreAlignmentTypes);
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
     boolean methodParametersBlock = true;

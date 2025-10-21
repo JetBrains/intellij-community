@@ -8,21 +8,21 @@ import com.intellij.util.Urls
 
 class PyCharmExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val productPageUrl: Url
-    get() = Urls.newFromEncoded("https://www.jetbrains.com/pycharm/")
+    get() = baseWebSiteUrl.resolve("pycharm/")
 
   override val basePatchDownloadUrl: Url
     get() = Urls.newFromEncoded("https://download.jetbrains.com/python/")
 
   override val baseWebHelpUrl: Url
-    get() = Urls.newFromEncoded("https://www.jetbrains.com/pycharm/webhelp/")
+    get() = baseWebSiteUrl.resolve("help/pycharm/")
 
   override val gettingStartedPageUrl: Url
-    get() = Urls.newFromEncoded("https://www.jetbrains.com/pycharm/learn/")
+    get() = baseWebSiteUrl.resolve("pycharm/learn/")
 
   override val keyboardShortcutsPdfUrl: Url
     get() {
       val suffix = if (SystemInfo.isMac) "_Mac" else ""
-      return Urls.newFromEncoded("https://www.jetbrains.com/pycharm/docs/PyCharm_ReferenceCard$suffix.pdf")
+      return baseWebSiteUrl.resolve("pycharm/docs/PyCharm_ReferenceCard$suffix.pdf")
     }
 
   override val shortProductNameUsedInForms: String

@@ -4,12 +4,16 @@ package com.intellij.grazie.ide.ui.grammar.tabs.rules.component.rules
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.Rule
+import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 
 @Suppress("EqualsOrHashCode")
-internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(userObject) {
+internal class GrazieRulesTreeNode(
+  private val domain: TextStyleDomain,
+  userObject: Any? = null,
+) : CheckedTreeNode(userObject) {
   val nodeText: String
     get() = when (val meta = userObject) {
       is Rule -> meta.presentableName
@@ -26,7 +30,7 @@ internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(us
 
   private fun differsFromDefault(): Boolean {
     val meta = userObject
-    if (meta is Rule) return meta.isEnabledByDefault != isChecked
+    if (meta is Rule) return meta.isEnabledByDefault(domain) != isChecked
     return children.orEmpty().any { (it as GrazieRulesTreeNode).differsFromDefault() }
   }
 
@@ -38,7 +42,7 @@ internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(us
   fun resetMark(state: GrazieConfig.State): Boolean {
     val meta = userObject
     if (meta is Rule) {
-      isChecked = meta.isEnabledInState(state)
+      isChecked = meta.isEnabledInState(state, domain)
     }
     else {
       isChecked = false

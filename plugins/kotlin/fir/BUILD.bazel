@@ -3,28 +3,31 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_fir",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-  ]
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
 )
 
 jvm_library(
   name = "fir",
   module_name = "kotlin.fir",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_fir",
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-fir",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
@@ -46,11 +49,10 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/code-insight",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/compiler-plugins/sam-with-receiver/common",
     "//platform/analysis-impl",
     "//java/java-psi-api:psi",
@@ -61,18 +63,18 @@ jvm_library(
     "//platform/usageView",
     "//java/java-psi-impl:psi-impl",
     "//platform/core-impl",
-    "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-uast-kotlin-idea-k2",
+    "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-idea",
     "//platform/execution-impl",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//java/java-impl:impl",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/code-insight/utils",
     "//platform/lang-core",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:kotlinc-kotlin-jps-common",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
@@ -80,10 +82,10 @@ jvm_library(
   ],
   exports = ["//plugins/kotlin/frontend-independent"],
   runtime_deps = [
-    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast-uast-kotlin-k2",
+    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
     "//java/java-analysis-api:analysis",
     "@lib//:kotlinc-symbol-light-classes",
-    "//plugins/kotlin/base/fir/analysis-api-platform",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
   ]
 )
 ### auto-generated section `build kotlin.fir` end

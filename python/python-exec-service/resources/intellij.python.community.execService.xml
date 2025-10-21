@@ -1,7 +1,21 @@
-<idea-plugin package="com.intellij.python.community.execService">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
   </dependencies>
-  
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.execService.targetEnvironmentRequestHandler"
+                    interface="com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler"
+                    dynamic="true"/>
+
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <execService.targetEnvironmentRequestHandler
+      implementation="com.intellij.python.community.execService.impl.processLaunchers.DefaultTargetEnvironmentRequestHandler"
+      order="last"
+    />
+  </extensions>
+
 </idea-plugin>

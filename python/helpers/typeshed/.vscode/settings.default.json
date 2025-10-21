@@ -70,13 +70,14 @@
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.codeActionsOnSave": {
             // Let Ruff lint fixes handle imports
-            "source.organizeImports": "never"
+            "source.organizeImports": "never",
+            "source.unusedImports": "never"
         }
     },
     // python.analysis is Pylance (pyright) configurations
     "python.analysis.fixAll": [
-        "source.unusedImports"
         // Explicitly omiting "source.convertImportFormat", some stubs use relative imports
+        // Explicitly omiting "source.unusedImports", Let Ruff lint fixes handle imports
     ],
     "python.analysis.typeshedPaths": [
         "${workspaceFolder}"

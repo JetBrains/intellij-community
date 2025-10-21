@@ -41,6 +41,14 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
       .filtering(context -> !resolvesToTypeParameter(context));
   }
 
+  @Override
+  public @NotNull List<@NotNull PsiAnnotation> getConflictingContainerAnnotations(@NotNull PsiAnnotationOwner owner) {
+    PsiAnnotation marked = owner.findAnnotation(DEFAULT_NOT_NULL);
+    PsiAnnotation unmarked = owner.findAnnotation(DEFAULT_NULLNESS_UNKNOWN);
+    if (marked != null && unmarked != null) return List.of(marked, unmarked);
+    return List.of();
+  }
+
   static boolean resolvesToTypeParameter(@NotNull PsiElement context) {
     PsiType targetType = context instanceof PsiMethod method ? method.getReturnType() :
                          context instanceof PsiVariable variable ? variable.getType() :

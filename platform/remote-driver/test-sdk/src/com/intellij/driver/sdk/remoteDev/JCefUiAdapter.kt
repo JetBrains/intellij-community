@@ -23,4 +23,8 @@ class JCefUiAdapter(component: BeControlComponentBase) :
   override fun getUrl(): String {
     return fixture.getUrl()
   }
+
+  override fun isLoading(): Boolean {
+    return fixture.isLoading()
+  }
 }

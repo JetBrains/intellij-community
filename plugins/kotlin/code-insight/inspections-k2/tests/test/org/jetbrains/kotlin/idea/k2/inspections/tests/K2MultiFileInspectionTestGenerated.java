@@ -39,6 +39,25 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedPackageDirectory")
+    public static class MismatchedPackageDirectory extends AbstractK2MultiFileInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mismatchedPackageDirectory.test")
+        public void testMismatchedPackageDirectory() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileInspections/mismatchedPackageDirectory/mismatchedPackageDirectory.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectory")
     public static class MismatchedProjectAndDirectory extends AbstractK2MultiFileInspectionTest {
         @java.lang.Override
@@ -58,8 +77,8 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectoryRoot")
-    public static class MismatchedProjectAndDirectoryRoot extends AbstractK2MultiFileInspectionTest {
+    @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinSealedInJavaTest")
+    public static class KotlinSealedInJavaTest extends AbstractK2MultiFileInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -70,9 +89,9 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("mismatchedProjectAndDirectoryRoot.test")
-        public void testMismatchedProjectAndDirectoryRoot() throws Exception {
-            runTest("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectoryRoot/mismatchedProjectAndDirectoryRoot.test");
+        @TestMetadata("kotlinSealedInJavaTest.test")
+        public void testKotlinSealedInJavaTest() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileInspections/kotlinSealedInJavaTest/kotlinSealedInJavaTest.test");
         }
     }
 }

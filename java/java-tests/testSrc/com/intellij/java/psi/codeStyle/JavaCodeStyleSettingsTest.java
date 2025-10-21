@@ -9,6 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter;
 import org.jdom.Element;
@@ -144,6 +145,45 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
               <package name="" withSubpackages="true" static="false" />
               <package name="com" withSubpackages="true" static="false" />
               <package name="org.foo" withSubpackages="true" static="true" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testSkipUnknownAttributeForImportLayout() throws IOException, JDOMException {
+    Registry.get("code.style.package.entry.table.check.compatibility").setValue(true, getTestRootDisposable());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" somethingUnknown="true" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="com" withSubpackages="true" static="false" />
             </value>
           </option>
         </JavaCodeStyleSettings>

@@ -56,6 +56,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 is KtInvokeFunctionReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.INVOKE)
                 is KtArrayAccessReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.GET)
                 is KtForLoopInReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.ITERATOR)
+                is KtDestructuringDeclarationReference -> bindUnnamedReference(ktReference, element, ktReference.resolvesByNames.singleOrNull() ?: return ktReference.element)
                 else -> throw IncorrectOperationException("Unsupported reference type: $ktReference")
             }
         }

@@ -51,7 +51,8 @@
     </extensionPoint>
   </extensionPoints>
   <applicationListeners>
-    <listener class="com.intellij.copyright.CopyrightManagerDocumentListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="com.intellij.copyright.CopyrightManagerDocumentListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable"/>
   </applicationListeners>
 
   <actions>

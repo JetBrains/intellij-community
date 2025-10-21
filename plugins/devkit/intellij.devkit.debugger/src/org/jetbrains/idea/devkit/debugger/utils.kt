@@ -2,14 +2,19 @@
 package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.sun.jdi.ReferenceType
 
-internal fun findClassOrNull(evaluationContext: EvaluationContext, fqn: String): ReferenceType? {
-  val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return null
+/**
+ * Finds any loaded class by the given FQN.
+ * N.B. This method does not check the class loader.
+ * Consider using [DebugProcessImpl.findLoadedClass] instead if you need to check the class loader.
+ */
+internal fun findClassOrNull(suspendContext: SuspendContext, fqn: String): ReferenceType? {
+  val debugProcess = suspendContext.debugProcess as? DebugProcessImpl ?: return null
   return try {
-    debugProcess.findLoadedClass(evaluationContext.suspendContext, fqn, evaluationContext.classLoader)
+    debugProcess.findLoadedClasses(suspendContext, fqn).firstOrNull()
   }
   catch (_: EvaluateException) {
     null

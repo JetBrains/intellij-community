@@ -7,11 +7,13 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.ProjectExtension
 import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
@@ -19,17 +21,16 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 import javax.swing.JComponent
 
+@TestApplication
 @SkipInHeadlessEnvironment
 @RunInEdt(allMethods = false, writeIntent = true)
 class MarkdownEditorCreationTest {
   @TestDisposable
   lateinit var disposable: Disposable
 
-  private val project
-    get() = projectExtension.project
+  private val project by projectFixture()
 
   @Test
   @RunMethodInEdt
@@ -47,6 +48,7 @@ class MarkdownEditorCreationTest {
     val file = LightVirtualFile("some.md", "# Some")
     val manager = FileEditorManager.getInstance(project)
     manager.openFile(file)
+    dispatchAllEventsInIdeEventQueue()
     manager.closeFile(file)
   }
 
@@ -63,6 +65,7 @@ class MarkdownEditorCreationTest {
     file.putUserData(FileEditorProvider.KEY, provider)
     val manager = FileEditorManager.getInstance(project)
     manager.openFile(file)
+    dispatchAllEventsInIdeEventQueue()
     manager.closeFile(file)
   }
 
@@ -81,6 +84,7 @@ class MarkdownEditorCreationTest {
     file.putUserData(FileEditorProvider.KEY, provider)
     val manager = FileEditorManager.getInstance(project)
     manager.openFile(file)
+    dispatchAllEventsInIdeEventQueue()
     manager.closeFile(file)
   }
 
@@ -118,11 +122,5 @@ class MarkdownEditorCreationTest {
         StubHtmlPanelProvider::class.java.toString()
       )
     }
-  }
-
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val projectExtension = ProjectExtension()
   }
 }

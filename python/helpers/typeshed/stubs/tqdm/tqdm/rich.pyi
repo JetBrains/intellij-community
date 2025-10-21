@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, SupportsWrite
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, TypeVar, overload
+from typing import NoReturn, TypeVar, overload, type_check_only
 
 from .std import tqdm as std_tqdm
 
@@ -10,6 +10,7 @@ __all__ = ["tqdm_rich", "trrange", "tqdm", "trange"]
 _T = TypeVar("_T")
 
 # Actually rich.progress.ProgressColumn
+@type_check_only
 class _ProgressColumn(ABC):
     max_refresh: float | None
     def __init__(self, table_column: Incomplete | None = ...) -> None: ...

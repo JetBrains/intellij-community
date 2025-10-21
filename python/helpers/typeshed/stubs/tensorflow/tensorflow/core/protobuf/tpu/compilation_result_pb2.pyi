@@ -35,7 +35,9 @@ class CompilationResultProto(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorCodeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CompilationResultProto._ErrorCode.ValueType], builtins.type):
+    class _ErrorCodeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CompilationResultProto._ErrorCode.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNKNOWN: CompilationResultProto._ErrorCode.ValueType  # 0
         OUT_OF_MEMORY: CompilationResultProto._ErrorCode.ValueType  # 1
@@ -53,7 +55,9 @@ class CompilationResultProto(google.protobuf.message.Message):
     status_error_message: builtins.str
     error_code: global___CompilationResultProto.ErrorCode.ValueType
     @property
-    def hlo_protos(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.compiler.xla.service.hlo_pb2.HloProto]:
+    def hlo_protos(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.compiler.xla.service.hlo_pb2.HloProto]:
         """HLO proto."""
 
     def __init__(
@@ -64,6 +68,18 @@ class CompilationResultProto(google.protobuf.message.Message):
         hlo_protos: collections.abc.Iterable[tensorflow.compiler.xla.service.hlo_pb2.HloProto] | None = ...,
         error_code: global___CompilationResultProto.ErrorCode.ValueType | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["error_code", b"error_code", "hlo_protos", b"hlo_protos", "status_code", b"status_code", "status_error_message", b"status_error_message"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "error_code",
+            b"error_code",
+            "hlo_protos",
+            b"hlo_protos",
+            "status_code",
+            b"status_code",
+            "status_error_message",
+            b"status_error_message",
+        ],
+    ) -> None: ...
 
 global___CompilationResultProto = CompilationResultProto

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.SystemProperties;
@@ -181,9 +182,9 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           }
           writeDataValue(out, effects.returnValue);
         }
-        else if (rhs instanceof FieldAccess fieldAccess) {
+        else if (rhs instanceof FieldAccess(String name)) {
           DataInputOutputUtil.writeINT(out, maxFinal + 1);
-          out.writeUTF(fieldAccess.name());
+          out.writeUTF(name);
         }
         else {
           throw new UnsupportedOperationException("Unsupported result: " + rhs + " in " + eqs);
@@ -192,6 +193,7 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     }
 
     private static Equations readEquations(@NotNull DataInput in) throws IOException {
+      ProgressManager.checkCanceled();
       boolean stable = in.readBoolean();
       int size = DataInputOutputUtil.readINT(in);
       ArrayList<DirectionResultPair> results = new ArrayList<>(size);

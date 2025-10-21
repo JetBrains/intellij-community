@@ -43,6 +43,7 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
 
         val name = e.name ?: return@visitMembers true
         when (name) {
+          PyNames.SLOTS -> return@visitMembers true // __slots__ in a protocol definition are not considered to be a part of the protocol
           PyNames.CLASS_GETITEM -> return@visitMembers true
           PyNames.CALL -> {
             val types = subclass.getImplicitlyInvokedMethodTypes(null, resolveContext)

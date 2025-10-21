@@ -2,7 +2,7 @@
   <id>com.intellij.dev</id>
   <name>DevKit Runtime</name>
   <vendor>JetBrains</vendor>
-  <category>Plugin Development</category>
+  <category>Platform Development</category>
   <description><![CDATA[
     <p>Provides tools for IDE and plugin development,
     actions that make sense in debug IDE instance, such as <b>View PSI Structure</b>.</p>
@@ -11,7 +11,7 @@
     <a href="https://plugins.jetbrains.com/docs/intellij/welcome.html?from=com.intellij.dev&utm_source=product&utm_campaign=devkit">Learn More!</a></p>
   ]]></description>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>
     <module name="intellij.java.dev"/>

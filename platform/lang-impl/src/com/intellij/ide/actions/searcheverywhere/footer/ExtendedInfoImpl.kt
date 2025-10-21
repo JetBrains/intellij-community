@@ -145,7 +145,13 @@ fun createPsiExtendedInfo(): ExtendedInfo {
 
 fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
                           file: ((Any) -> VirtualFile?)? = null,
-                          psiElement: (Any) -> PsiElement?): ExtendedInfo {
+                          psiElement: (Any) -> PsiElement?): ExtendedInfo = createPsiExtendedInfo(project, file, psiElement, true)
+
+@ApiStatus.Internal
+fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
+                          file: ((Any) -> VirtualFile?)? = null,
+                          psiElement: (Any) -> PsiElement?,
+                          shouldShowRightAction: Boolean): ExtendedInfo {
   val projectFun = { item: Any -> project?.invoke(item) ?: psiElement.invoke(item)?.project }
 
   val fileFun = { item: Any ->
@@ -170,6 +176,8 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   }
 
   val split: (Any) -> AnAction? = fun(item: Any): ExtendedInfoOpenInRightSplitAction? {
+    if (!shouldShowRightAction) return null
+
     val originalAction = ActionManager.getInstance().getAction(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT) ?: return null
     return ExtendedInfoOpenInRightSplitAction(
       originalAction,

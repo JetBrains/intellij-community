@@ -27,7 +27,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import org.jetbrains.java.generate.GenerationUtil
 
-class GenerateLoggerHandler : CodeInsightActionHandler {
+public class GenerateLoggerHandler : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     GenerateLoggerStatisticsCollector.logActionInvoked(project)
 

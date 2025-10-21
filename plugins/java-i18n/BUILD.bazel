@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.i18n` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java-i18n_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,9 +12,11 @@ jvm_library(
   module_name = "intellij.java.i18n",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-i18n_resources"],
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -29,6 +31,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//platform/lang-impl",
+    "//platform/lang-core",
     "//xml/impl",
     "//java/java-impl:impl",
     "//platform/usageView",
@@ -37,10 +40,10 @@ jvm_library(
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//jvm/jvm-analysis-api:analysis",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/core-ui",
-    "@lib//:icu4j",
-    "@lib//:fastutil-min",
+    "//libraries/icu4j",
+    "//libraries/fastutil",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
@@ -48,8 +51,7 @@ jvm_library(
   exports = [
     "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
-  ],
-  runtime_deps = [":java-i18n_resources"]
+  ]
 )
 
 jvm_library(
@@ -60,6 +62,7 @@ jvm_library(
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
@@ -74,12 +77,15 @@ jvm_library(
     "//platform/usageView-impl",
     "//plugins/properties:properties-backend",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/lang-impl",
+    "//platform/lang-core",
     "//xml/impl",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie",
     "//java/java-impl:impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -90,21 +96,28 @@ jvm_library(
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//jvm/jvm-analysis-api:analysis",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/core-ui",
-    "@lib//:icu4j",
-    "@lib//:fastutil-min",
+    "//libraries/icu4j",
+    "//libraries/fastutil",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  runtime_deps = [":java-i18n_resources"]
+  exports = [
+    "//plugins/properties:properties-backend",
+    "//java/java-impl:impl",
+  ]
 )
+### auto-generated section `build intellij.java.i18n` end
 
-jvm_test(
+### auto-generated section `test intellij.java.i18n` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "java-i18n_test",
   runtime_deps = [":java-i18n_test_lib"]
 )
-### auto-generated section `build intellij.java.i18n` end
+### auto-generated section `test intellij.java.i18n` end

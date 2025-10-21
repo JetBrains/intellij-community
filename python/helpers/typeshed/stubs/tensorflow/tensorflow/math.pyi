@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Iterable
 from typing import TypeVar, overload
 from typing_extensions import TypeAlias
@@ -296,4 +295,4 @@ def count_nonzero(
     dtype: DTypeLike = ...,
     name: str | None = None,
 ) -> Tensor: ...
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

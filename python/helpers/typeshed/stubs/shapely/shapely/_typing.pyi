@@ -24,7 +24,7 @@ OptGeoT = TypeVar("OptGeoT", bound=Geometry | None)  # noqa: Y001
 class SupportsArray(Protocol[_DType_co]):
     def __array__(self) -> np.ndarray[Any, _DType_co]: ...
 
-# TODO revisit when mypy is happy with generic recursive type alias
+# TODO: revisit when mypy is happy with generic recursive type alias
 # NestedSequence: TypeAlias = Sequence[_T] | Sequence[NestedSequence[_T]]
 NestedSequence: TypeAlias = Sequence[_T] | Sequence[Sequence[_T]] | Sequence[Sequence[Sequence[_T]]]
 DualArrayLike: TypeAlias = SupportsArray[_DType] | NestedSequence[SupportsArray[_DType]] | NestedSequence[_T]

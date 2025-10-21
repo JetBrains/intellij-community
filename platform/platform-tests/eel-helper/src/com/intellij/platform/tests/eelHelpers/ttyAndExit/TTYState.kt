@@ -13,16 +13,17 @@ data class TTYState(val size: Size?, val termName: String?) {
     private val mapper = ObjectMapper().registerKotlinModule()
 
     @TestOnly
-    fun deserialize(str: String): TTYState = mapper.readValue(str, TTYState::class.java)
+    private fun deserialize(str: String): TTYState = mapper.readValue(str, TTYState::class.java)
 
     @TestOnly
-    fun deserializeIfValid(str: String): TTYState? = try {
-      deserialize(str)
+    fun deserializeIfValid(str: String, onError:(message:String)-> Unit): TTYState? = try {
+      deserialize(str.trim())
     }
     catch (_: JsonProcessingException) {
       null
     }
-    catch (_: JsonParseException) {
+    catch (e: JsonParseException) {
+      onError("Can't parse due to ${e.message}")
       null
     }
   }

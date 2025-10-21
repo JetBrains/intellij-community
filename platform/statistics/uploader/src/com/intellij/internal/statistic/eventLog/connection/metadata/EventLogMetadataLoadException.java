@@ -33,6 +33,6 @@ public class EventLogMetadataLoadException extends Exception implements EventLog
   }
 
   public enum EventLogMetadataLoadErrorType {
-    EMPTY_SERVICE_URL, UNREACHABLE_SERVICE, EMPTY_RESPONSE_BODY, ERROR_ON_LOAD
+    EMPTY_SERVICE_URL, UNREACHABLE_SERVICE, EMPTY_RESPONSE_BODY, ERROR_ON_LOAD, UNKNOWN_IO_ERROR
   }
 }

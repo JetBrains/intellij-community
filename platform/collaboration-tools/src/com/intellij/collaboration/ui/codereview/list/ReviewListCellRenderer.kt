@@ -24,6 +24,8 @@ import icons.DvcsImplIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
@@ -38,8 +40,7 @@ data class ReviewListCellUiOptions(
 internal class ReviewListCellRenderer<T>(
   private val presenter: (T) -> ReviewListItemPresentation,
   private val options: ReviewListCellUiOptions = ReviewListCellUiOptions(),
-)
-  : ListCellRenderer<T>, SelectablePanel(null) {
+) : ListCellRenderer<T>, SelectablePanel(null) {
 
   private val toolTipManager
     get() = IdeTooltipManager.getInstance()
@@ -118,11 +119,13 @@ internal class ReviewListCellRenderer<T>(
     }
   }
 
-  override fun getListCellRendererComponent(list: JList<out T>,
-                                            value: T?,
-                                            index: Int,
-                                            isSelected: Boolean,
-                                            cellHasFocus: Boolean): Component {
+  override fun getListCellRendererComponent(
+    list: JList<out T>,
+    value: T?,
+    index: Int,
+    isSelected: Boolean,
+    cellHasFocus: Boolean,
+  ): Component {
     isNewUI = ExperimentalUI.isNewUI()
     background = list.background
     selectionColor = ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus())
@@ -137,6 +140,7 @@ internal class ReviewListCellRenderer<T>(
     title.apply {
       text = presentation.title
       foreground = primaryTextColor
+      addTruncationListener()
     }
 
     info.apply {
@@ -259,6 +263,26 @@ internal class ReviewListCellRenderer<T>(
     }
   }
 
+  private fun isLabelTruncated(label: JLabel): Boolean {
+    val fm = label.getFontMetrics(label.font)
+    val text = label.text
+    return fm.stringWidth(text) > label.width
+  }
+
+  private fun JLabel.addTruncationListener() {
+    val label = this
+    this.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        if (isLabelTruncated(label)) {
+          label.toolTipText = label.text
+        }
+        else {
+          label.toolTipText = null
+        }
+      }
+    })
+  }
+
   companion object {
     private const val MAX_PARTICIPANT_ICONS = 2
 
@@ -360,9 +384,10 @@ internal class ReviewListCellRenderer<T>(
       }
     }
 
-    private class LazyIdeToolTip(component: JComponent,
-                                 private val tipFactory: () -> JComponent)
-      : IdeTooltip(component, Point(0, 0), null, component) {
+    private class LazyIdeToolTip(
+      component: JComponent,
+      private val tipFactory: () -> JComponent,
+    ) : IdeTooltip(component, Point(0, 0), null, component) {
 
       init {
         isToCenter = true

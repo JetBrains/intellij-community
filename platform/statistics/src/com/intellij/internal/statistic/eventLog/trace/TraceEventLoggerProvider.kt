@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.trace
 
+import com.intellij.ide.ConsentOptionsProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.util.PlatformUtils
 import java.util.concurrent.TimeUnit
 
 internal class TraceEventLoggerProvider : StatisticsEventLoggerProvider(

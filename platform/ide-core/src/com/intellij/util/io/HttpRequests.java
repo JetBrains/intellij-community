@@ -230,6 +230,7 @@ public final class HttpRequests {
     private final String myUrl;
     private int myConnectTimeout = CONNECTION_TIMEOUT;
     private int myTimeout = READ_TIMEOUT;
+    private boolean myFollowRedirects = true;
     private int myRedirectLimit = REDIRECT_LIMIT;
     private boolean myGzip = true;
     private boolean myForceHttps;
@@ -256,6 +257,12 @@ public final class HttpRequests {
     @Override
     public RequestBuilder readTimeout(int value) {
       myTimeout = value;
+      return this;
+    }
+
+    @Override
+    public RequestBuilder followRedirects(boolean value) {
+      myFollowRedirects = value;
       return this;
     }
 
@@ -306,15 +313,23 @@ public final class HttpRequests {
 
     @Override
     public RequestBuilder productNameAsUserAgent() {
+      String userAgent;
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
         String productName = ApplicationNamesInfo.getInstance().getFullProductName();
         String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
-        return userAgent(productName + '/' + version);
+        userAgent = productName + '/' + version;
       }
       else {
-        return userAgent("IntelliJ");
+        userAgent = "IntelliJ";
       }
+
+      String currentBuildUrl = System.getenv("BUILD_URL");
+      if (currentBuildUrl != null) {
+        userAgent += " (" + currentBuildUrl + ")";
+      }
+
+      return userAgent(userAgent);
     }
 
     @Override
@@ -635,6 +650,10 @@ public final class HttpRequests {
 
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
         if (ArrayUtil.indexOf(REDIRECTS, responseCode) >= 0) {
+          if (!builder.myFollowRedirects) {
+            return connection;
+          }
+
           httpURLConnection.disconnect();
           String loc = connection.getHeaderField("Location");
           if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + loc);

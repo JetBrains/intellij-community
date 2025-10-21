@@ -24,6 +24,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static com.intellij.codeInsight.multiverse.CodeInsightContexts.isSharedSourceSupportEnabled;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 
 /**
@@ -249,7 +250,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
 
     getCurrentExternalProjectSettings().setDelegatedBuild(false);
-    GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
+    GradleSettings.getInstance(getMyProject()).getPublisher().onBuildDelegationChange(false, getProjectPath());
     assertModules("project", "project.main", "project.test");
     assertModuleOutput("project.main", path("build"), "");
     assertModuleOutput("project.test", "", path("out/test/classes"));
@@ -1101,8 +1102,15 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       .sourceRoots(ExternalSystemSourceType.RESOURCE, path("shared/resources"))
     );
 
-    assertContentRoots("project.app2", path("app2"));
-    assertNoSourceRoots("project.app2");
+    if (isSharedSourceSupportEnabled(getMyProject())) {
+      assertContentRoots("project.app2", path("app2"), path("shared/resources"));
+      assertSourceRoots("project.app2", it -> it
+        .sourceRoots(ExternalSystemSourceType.RESOURCE, path("shared/resources")));
+    }
+    else {
+      assertContentRoots("project.app2", path("app2"));
+      assertNoSourceRoots("project.app2");
+    }
   }
 
   @Test
@@ -1368,7 +1376,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   protected void waitForModulesUpdate() throws Exception {
     edt(() -> {
-      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject)).consumeBulkOperationsState(future -> {
+      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(getMyProject())).consumeBulkOperationsState(future -> {
         PlatformTestUtil.waitForFuture(future, 1000);
         return null;
       });

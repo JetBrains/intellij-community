@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.openapi.vfs.newvfs.persistent.DefaultInMemoryInvertedNameIndex;
 import com.intellij.platform.util.io.storages.intmultimaps.Int2IntMultimap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -9,8 +10,12 @@ import java.util.Set;
 import java.util.function.IntPredicate;
 
 /**
- * Replacement of {@linkplain com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex}, keeps (name.hash -> fileId*)
+ * Replacement of {@linkplain DefaultInMemoryInvertedNameIndex}, keeps (name.hash -> fileId*)
  * mapping in a specialized (int->int*) hashmap.
+ *
+ * This implementation is not compatible with {@link com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex} interface,
+ * it explores alternative approach to build fileName index, with String.hash instead of
+ * nameIds
  */
 @ApiStatus.Internal
 public final class InvertedFilenameHashBasedIndex {

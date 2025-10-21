@@ -4,15 +4,15 @@ package com.intellij.psi.stubs
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageParserDefinitions
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion.dropVersion
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-open class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
+open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : CoreStubElementRegistryServiceImpl() {
   @Volatile private lateinit var factories: Map<IElementType, StubElementFactory<*, *>>
   @Volatile private lateinit var lightFactories: Map<IElementType, LightStubElementFactory<*, *>>
   @Volatile private lateinit var type2serializerMap: Map<IElementType, ObjectStubSerializer<*, *>>
@@ -20,8 +20,8 @@ open class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl()
     private set
 
   init {
-    STUB_REGISTRY_EP.addChangeListener(Runnable { init() }, this)
-    STUB_DEFINITION_EP.point?.addChangeListener(Runnable { onStubDefinitionChange() }, this)
+    STUB_REGISTRY_EP.addChangeListener(coroutineScope) { init() }
+    STUB_DEFINITION_EP.point?.addChangeListener(coroutineScope) { onStubDefinitionChange() }
     init()
   }
 

@@ -21,11 +21,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
@@ -42,23 +44,29 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
-import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.platform.ide.bootstrap.*
+import com.intellij.platform.ide.bootstrap.callAppInitialized
+import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
+import com.intellij.platform.ide.bootstrap.initConfigurationStore
 import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
+import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
+import com.intellij.platform.ide.bootstrap.preloadCriticalServices
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
+import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.WalkingState
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -73,9 +81,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
-import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.util.PlatformUtils
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -135,6 +140,7 @@ ${dumpCoroutines(stripDump = false)}
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
   PluginManagerCore.scheduleDescriptorLoading(GlobalScope)
   setupEventQueue.run()
+  injectFileSystemProviders()
   loadAppInUnitTestMode(isHeadless)
 }
 
@@ -214,8 +220,8 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
     val timeout = System.getProperty("intellij.testFramework.services.timeout.seconds", "40").toLong()
     withTimeout(Duration.ofSeconds(timeout).toMillis()) {
       val pathMacroJob = preloadCriticalServices(
-        app = app,
-        asyncScope = app.getCoroutineScope(),
+        app,
+        preloadScope = this, asyncScope = app.getCoroutineScope(),
         appRegistered = CompletableDeferred(value = null),
         initAwtToolkitAndEventQueueJob = null,
       )
@@ -226,7 +232,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
     }
 
     @Suppress("TestOnlyProblems")
-    callAppInitialized(getAppInitializedListeners(app))
+    callAppInitialized(scope = this, getAppInitializedListeners(app))
 
     LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
@@ -317,8 +323,8 @@ fun Application.checkEditorsReleased() {
 @TestOnly
 @Internal
 fun Application.clearIdCache() {
-  val managingFS = serviceIfCreated<ManagingFS>() ?: return
-  (managingFS as PersistentFS).clearIdCache()
+  //val managingFS = serviceIfCreated<ManagingFS>() ?: return
+  //(managingFS as PersistentFS).clearIdCache()
 }
 
 @TestOnly
@@ -367,17 +373,23 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
   require(!application.isDisposed)
 
   val index = application.serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl
-  index?.changedFilesCollector?.waitForVfsEventsExecuted(timeout, timeUnit)
+  index?.changedFilesCollector?.waitForVfsEventsExecuted(timeout, timeUnit) {
+    dispatchAllEventsInIdeEventQueue()
+  }
 
   val commitThread = application.serviceIfCreated<DocumentCommitProcessor>() as? DocumentCommitThread
-  commitThread?.waitForAllCommits(timeout, timeUnit)
+  TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+    commitThread?.waitForAllCommits(timeout, timeUnit)
+  }
 
   val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
   stubIndex?.waitUntilStubIndexedInitialized()
 
-  while (RefreshQueue.getInstance() != null && (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress())) {
+  while (RefreshQueue.getInstance() != null && (RefreshQueueImpl.isRefreshInProgress || RefreshQueueImpl.isEventProcessingInProgress)) {
     if (EDT.isCurrentThreadEdt()) {
-      EDT.dispatchAllInvocationEvents()
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+        EDT.dispatchAllInvocationEvents()
+      }
     }
     else {
       UIUtil.pump()

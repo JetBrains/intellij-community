@@ -1,27 +1,28 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
+import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.nio.file.Path
-import java.text.SimpleDateFormat
-import java.util.Locale
+import java.nio.file.Paths
 import java.util.logging.Handler
 import java.util.logging.LogRecord
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 class InMemoryHandler(val outputPath: Path) : Handler() {
   companion object {
-    const val FAILED_BUILD_LOG_FILE_NAME_PREFIX: String = "failed-build_";
-    const val MAX_REPORT_NUMBER: Int = 3;
+    const val FAILED_BUILD_LOG_FILE_NAME_PREFIX: String = "failed-build_"
+    const val MAX_REPORT_NUMBER: Int = 3
     const val IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME: String = "compiler.inMemoryLogger"
   }
+
   var buildFailed: Boolean = false
 
   private val messages = mutableListOf<String>()
+
   init {
-    removeOldFiles(outputPath.parent.toString())
+    removeOldFiles(outputPath.parent)
   }
 
   override fun publish(record: LogRecord?) {
@@ -30,7 +31,8 @@ class InMemoryHandler(val outputPath: Path) : Handler() {
         if (it.contains("Compiled with errors")) buildFailed = true
         messages.add(it)
       }
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       e.printStackTrace()
     }
   }
@@ -41,13 +43,14 @@ class InMemoryHandler(val outputPath: Path) : Handler() {
 
   override fun close() {
     if (buildFailed) {
-      val outputFile = File(outputPath.toString())
-      if(outputFile.exists()) {
-        outputFile.delete()
-      } else if(outputFile.parentFile.exists() == false) {
-        outputFile.parentFile.mkdirs()
+      val outputFile = Paths.get(outputPath.toString())
+      if (outputFile.exists()) {
+        outputFile.deleteExisting()
       }
-      outputFile.createNewFile()
+      else if (!outputFile.parent.exists()) {
+        outputFile.createParentDirectories()
+      }
+      outputFile.createFile()
 
       messages.joinToString("").let {
         outputFile.appendText(it)
@@ -57,24 +60,13 @@ class InMemoryHandler(val outputPath: Path) : Handler() {
     buildFailed = false
   }
 
-  private fun removeOldFiles(directoryPath: String) {
-    val directory = File(directoryPath).also {
-      if(!it.exists()) return
-    }
-    val logFiles = directory.listFiles { _, name -> name.startsWith(FAILED_BUILD_LOG_FILE_NAME_PREFIX) }
-      .takeIf { it.size > MAX_REPORT_NUMBER } ?: return
-
-    logFiles.let {
-      val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
-      it.sortBy { file ->
-        val datePart = file.name.removePrefix(FAILED_BUILD_LOG_FILE_NAME_PREFIX).removeSuffix(".log")
-        dateFormat.parse(datePart)
-      }
-
-      for (i in 0 until (it.size - MAX_REPORT_NUMBER)) it[i].delete()
+  private fun removeOldFiles(directory: Path) {
+    val logFiles = NioFiles.list(directory).filter { it.name.startsWith(FAILED_BUILD_LOG_FILE_NAME_PREFIX) }
+    if (logFiles.size >= MAX_REPORT_NUMBER) {
+      logFiles
+        .sortedBy { it.getLastModifiedTime() }
+        .take(logFiles.size - MAX_REPORT_NUMBER + 1)
+        .forEach { it.deleteIfExists() }
     }
   }
-
-  @TestOnly
-  fun removeOldFilesForTests(directoryPath: String) = removeOldFiles(directoryPath)
 }

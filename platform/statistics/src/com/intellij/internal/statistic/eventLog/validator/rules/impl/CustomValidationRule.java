@@ -113,8 +113,8 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
   }
 
   protected static boolean isPluginFromPluginRepository(@NotNull String plugin) {
-    PluginId pluginId = PluginId.findId(plugin);
-    return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isSafeToReport();
+    PluginId pluginId = PluginId.getId(plugin);
+    return PluginInfoDetectorKt.getPluginInfoById(pluginId).isSafeToReport();
   }
 
   protected @Nullable Language getLanguage(@NotNull EventContext context) {

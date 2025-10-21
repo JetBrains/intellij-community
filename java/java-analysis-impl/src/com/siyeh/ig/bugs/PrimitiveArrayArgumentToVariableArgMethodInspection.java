@@ -67,7 +67,7 @@ public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends B
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PrimitiveArrayArgumentToVariableArgVisitor();
   }
 

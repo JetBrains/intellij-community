@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.EventDispatcher
@@ -232,7 +233,7 @@ private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(pro
   lateinit var range: LocalRange
 
   init {
-    val vcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss.toSet()
+    val vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().toSet()
     updateVcses(vcses)
   }
 

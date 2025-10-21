@@ -49,14 +49,12 @@ public abstract class DelegateSslSocketFactory extends SSLSocketFactory {
   }
 
   @Override
-  @NotNull
-  public String[] getDefaultCipherSuites() {
+  public String @NotNull [] getDefaultCipherSuites() {
     return myFactory.getDefaultCipherSuites();
   }
 
   @Override
-  @NotNull
-  public String[] getSupportedCipherSuites() {
+  public String @NotNull [] getSupportedCipherSuites() {
     return myFactory.getSupportedCipherSuites();
   }
 }

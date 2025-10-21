@@ -2,6 +2,9 @@ from _typeshed import Incomplete
 
 import _win32typing
 import win32com.client
+
+# Re-export everything from win32comext/adsi/adsi.pyd
+# Not using a star export because the redefinitions below mess up mypy, pyright and stubtest
 from win32comext.adsi.adsi import (
     DBPROPSET_ADSISEARCH as DBPROPSET_ADSISEARCH,
     ADsBuildEnumerator as ADsBuildEnumerator,
@@ -50,6 +53,7 @@ from win32comext.adsi.adsi import (
     IID_IDsObjectPicker as IID_IDsObjectPicker,
     LIBID_ADs as LIBID_ADs,
     StringAsDS_SELECTION_LIST as StringAsDS_SELECTION_LIST,
+    error as error,
 )
 
 LCID: int

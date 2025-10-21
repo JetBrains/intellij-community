@@ -22,6 +22,10 @@ private class MultiplatformConcurrentHashMap<K, V>(val hashMap: JavaConcurrentHa
     return hashMap.computeIfAbsent(key, f)
   }
 
+  override fun computeIfPresent(key: K, f: (K, V) -> V): V? {
+    return hashMap.computeIfPresent(key, f)
+  }
+
   override fun compute(key: K, f: (K, V?) -> V?): V? {
     return hashMap.compute(key, f)
   }

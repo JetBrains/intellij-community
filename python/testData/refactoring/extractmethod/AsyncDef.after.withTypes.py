@@ -1,3 +1,6 @@
+from typing import Any
+
+
 async def foo(x):
     y = await bar(x)
     return await y

@@ -1,0 +1,14 @@
+LineBreakpoint created at captureProperty.kt:13
+LineBreakpoint created at captureProperty.kt:20
+LineBreakpoint created at captureProperty.kt:27
+Run Java
+Connected to the target VM
+captureProperty.kt:13
+Compile bytecode for block()
+captureProperty.kt:20
+Compile bytecode for block()
+captureProperty.kt:27
+Compile bytecode for block()
+Disconnected from the target VM
+
+Process finished with exit code 0

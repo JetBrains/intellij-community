@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,12 +66,9 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
 
   public void testX() {
     configureByFile(getBasePath()+"/X.java");
-    List<IntentionAction> emptyActions = getAvailableActions();
-    for (int i = emptyActions.size()-1; i>=0; i--) {
-      IntentionAction action = emptyActions.get(i);
-      action = IntentionActionDelegate.unwrap(action);
-      if (!(action instanceof EmptyIntentionAction)) emptyActions.remove(i);
-    }
+    List<IntentionAction> emptyActions = ContainerUtil.filter(getAvailableActions(),
+      action ->
+        IntentionActionDelegate.unwrap(action) instanceof EmptyIntentionAction);
     assertEquals(emptyActions.toString(), 1, emptyActions.size());
   }
 

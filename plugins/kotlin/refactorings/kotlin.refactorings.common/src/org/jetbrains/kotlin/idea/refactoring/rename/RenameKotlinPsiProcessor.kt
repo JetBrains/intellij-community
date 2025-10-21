@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchPar
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
 
 abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
@@ -66,14 +67,20 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         searchParameters: KotlinReferencesSearchParameters
     ): Collection<PsiReference> {
         val references = ReferencesSearch.search(searchParameters).asIterable().toMutableSet()
-        if (element is KtNamedFunction || (element is KtProperty && !element.isLocal) || (element is KtParameter && element.hasValOrVar())) {
+        if (element is KtNamedFunction || (element is KtProperty && !element.isLocal)) {
+            // property accessors for parameters should be covered by KotlinReferencesSearcher.QueryProcessor.searchMethodAware
             element.toLightMethods().flatMapTo(references) { method ->
                 MethodReferencesSearch.search(
+                    // ReferenceSearch, called MethodUsagesSearcher#processQuery would still start operator conventions search
+                    // because kotlinOptions are lost during the call
                     KotlinMethodReferencesSearchParameters(
                         method,
                         kotlinOptions = KotlinReferencesSearchOptions(
-                            acceptImportAlias = false
-                        )
+                            acceptImportAlias = false,
+                            searchForComponentConventions = false,
+                            searchForOperatorConventions = false,
+                        ),
+                        scope = searchParameters.effectiveSearchScope,
                     )
                 ).asIterable()
             }

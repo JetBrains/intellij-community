@@ -81,7 +81,7 @@ public final class SslUtil {
   }
 
   @NotNull
-  public static Pair<PrivateKey, List<X509Certificate>> readPrivateKeyAndCertificate(@NotNull String filePath, @Nullable char[] password) throws IOException {
+  public static Pair<PrivateKey, List<X509Certificate>> readPrivateKeyAndCertificate(@NotNull String filePath, char @Nullable [] password) throws IOException {
     return loadPrivateKeyAndCerts(readWithCache(filePath), filePath, password);
   }
 
@@ -109,7 +109,7 @@ public final class SslUtil {
   }
 
   @NotNull
-  public static PrivateKey readPrivateKey(@NotNull String filePath, @Nullable char[] password) throws IOException {
+  public static PrivateKey readPrivateKey(@NotNull String filePath, char @Nullable [] password) throws IOException {
     return readPrivateKeyAndCertificate(filePath, password).first;
   }
 
@@ -123,8 +123,7 @@ public final class SslUtil {
     }
 
     @Override
-    @NotNull
-    public X509Certificate[] getAcceptedIssuers() {
+    public X509Certificate @NotNull [] getAcceptedIssuers() {
       return new X509Certificate[0];
     }
   }

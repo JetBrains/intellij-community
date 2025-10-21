@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="PROVIDED" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
+  </component>
+</module>

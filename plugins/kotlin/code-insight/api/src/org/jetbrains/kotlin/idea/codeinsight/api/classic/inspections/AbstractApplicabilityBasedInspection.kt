@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
@@ -10,6 +11,7 @@ import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -20,6 +22,17 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 ) : AbstractKotlinInspection() {
 
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
+        object : KtVisitorVoid() {
+            override fun visitKtElement(element: KtElement) {
+                super.visitKtElement(element)
+
+                if (!elementType.isInstance(element) || element.textLength == 0) return
+                @Suppress("UNCHECKED_CAST")
+                visitTargetElement(element as TElement, holder, isOnTheFly)
+            }
+        }
+
+    final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : KtVisitorVoid() {
             override fun visitKtElement(element: KtElement) {
                 super.visitKtElement(element)
@@ -52,7 +65,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
             isOnTheFly,
             inspectionHighlightType(element),
             range,
-            createQuickFix(element),
+            LocalFix(this, fixText(element)),
         )
     }
 
@@ -74,9 +87,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 
     open val startFixInWriteAction: Boolean = true
 
-    open fun createQuickFix(element: TElement): LocalQuickFix {
-        return LocalFix(this, fixText(element))
-    }
+    open fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo? = null
 
     private class LocalFix<TElement : KtElement>(
       @FileModifier.SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,
@@ -95,5 +106,9 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
         override fun getName() = text
 
         override fun getSubstitutedClass(): Class<*> = inspection.javaClass
+
+        override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+            return inspection.generatePreview(project, previewDescriptor) ?: super.generatePreview(project, previewDescriptor)
+        }
     }
 }

@@ -9,6 +9,14 @@ com.intellij.openapi.observable.operation.core.MutableOperationTrace
 - bs:traceSchedule$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,I,java.lang.Object):V
 - a:traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
 - bs:traceStart$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,I,java.lang.Object):V
+f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
+- com.intellij.openapi.observable.properties.ObservableClearableProperty
+Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
+- com.intellij.openapi.observable.properties.AbstractObservableProperty
+- com.intellij.openapi.observable.properties.ObservableClearableProperty
+f:com.intellij.openapi.observable.properties.AtomicProperty
+- com.intellij.openapi.observable.properties.AbstractObservableProperty
+- com.intellij.openapi.observable.properties.ObservableClearableProperty
 com.intellij.openapi.observable.properties.GraphProperty
 - com.intellij.openapi.observable.properties.ObservableClearableProperty
 - afterPropagation(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V

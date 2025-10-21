@@ -116,7 +116,11 @@ class TensorProto(google.protobuf.message.Message):
         """
 
     @property
-    def resource_handle_val(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto]:
+    def resource_handle_val(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto
+    ]:
         """DT_RESOURCE"""
 
     @property
@@ -147,14 +151,56 @@ class TensorProto(google.protobuf.message.Message):
         int64_val: collections.abc.Iterable[builtins.int] | None = ...,
         bool_val: collections.abc.Iterable[builtins.bool] | None = ...,
         dcomplex_val: collections.abc.Iterable[builtins.float] | None = ...,
-        resource_handle_val: collections.abc.Iterable[tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto] | None = ...,
+        resource_handle_val: (
+            collections.abc.Iterable[tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto] | None
+        ) = ...,
         variant_val: collections.abc.Iterable[global___VariantTensorDataProto] | None = ...,
         uint32_val: collections.abc.Iterable[builtins.int] | None = ...,
         uint64_val: collections.abc.Iterable[builtins.int] | None = ...,
         float8_val: builtins.bytes | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["tensor_shape", b"tensor_shape"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["bool_val", b"bool_val", "dcomplex_val", b"dcomplex_val", "double_val", b"double_val", "dtype", b"dtype", "float8_val", b"float8_val", "float_val", b"float_val", "half_val", b"half_val", "int64_val", b"int64_val", "int_val", b"int_val", "resource_handle_val", b"resource_handle_val", "scomplex_val", b"scomplex_val", "string_val", b"string_val", "tensor_content", b"tensor_content", "tensor_shape", b"tensor_shape", "uint32_val", b"uint32_val", "uint64_val", b"uint64_val", "variant_val", b"variant_val", "version_number", b"version_number"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "bool_val",
+            b"bool_val",
+            "dcomplex_val",
+            b"dcomplex_val",
+            "double_val",
+            b"double_val",
+            "dtype",
+            b"dtype",
+            "float8_val",
+            b"float8_val",
+            "float_val",
+            b"float_val",
+            "half_val",
+            b"half_val",
+            "int64_val",
+            b"int64_val",
+            "int_val",
+            b"int_val",
+            "resource_handle_val",
+            b"resource_handle_val",
+            "scomplex_val",
+            b"scomplex_val",
+            "string_val",
+            b"string_val",
+            "tensor_content",
+            b"tensor_content",
+            "tensor_shape",
+            b"tensor_shape",
+            "uint32_val",
+            b"uint32_val",
+            "uint64_val",
+            b"uint64_val",
+            "variant_val",
+            b"variant_val",
+            "version_number",
+            b"version_number",
+        ],
+    ) -> None: ...
 
 global___TensorProto = TensorProto
 
@@ -182,6 +228,8 @@ class VariantTensorDataProto(google.protobuf.message.Message):
         metadata: builtins.bytes | None = ...,
         tensors: collections.abc.Iterable[global___TensorProto] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["metadata", b"metadata", "tensors", b"tensors", "type_name", b"type_name"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["metadata", b"metadata", "tensors", b"tensors", "type_name", b"type_name"]
+    ) -> None: ...
 
 global___VariantTensorDataProto = VariantTensorDataProto

@@ -4,9 +4,8 @@ package com.intellij.ui.scale;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleExtension;
@@ -17,11 +16,9 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +37,6 @@ import static com.intellij.ui.scale.ScaleType.*;
 import static com.intellij.ui.scale.TestScaleHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests that {@link com.intellij.openapi.util.ScalableIcon#scale(float)} works correctly for custom JB icons.
@@ -48,37 +44,58 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  *
  * @author tav
  */
-public class IconScaleTest extends BareTestFixtureTestCase {
+@RunWith(JUnit4.class)
+public class IconScaleTest extends BasePlatformTestCase {
   private static final int ICON_BASE_SIZE = 16;
   private static final float ICON_OBJ_SCALE = 1.75f;
 
-  @RegisterExtension
   public static final RestoreScaleExtension manageState = new RestoreScaleExtension();
 
-  @AfterEach
-  void tearDown() {
-    // we don't want subsequent tests to be affected by whatever the previous tests set
-    JBUIScale.setUserScaleFactorForTest(1.0f);
-    JBUIScale.setSystemScaleFactor(1.0f);
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    // This thing is designed for JUnit 5, so we call it explicitly.
+    // Even though it implements BeforeAllCallback, we call it before every test.
+    // This is actually a good thing: this way the tests don't interfere with each other.
+    manageState.beforeAll(null);
   }
 
-  @ParameterizedTest
-  @ValueSource(floats = {0.75f, 1, 2, 2.5f})
-  public void jreHiDpi(float scale) throws MalformedURLException {
-    assumeTrue(!SystemInfoRt.isLinux);
-
-    overrideJreHiDPIEnabled(true);
+  @Override
+  protected void tearDown() throws Exception {
     try {
-      test(1, scale);
+      manageState.afterAll(null);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
-      overrideJreHiDPIEnabled(false);
+      super.tearDown();
     }
   }
 
-  @ParameterizedTest
-  @ValueSource(floats = {0.75f, 1, 2, 2.5f})
+  @Test
+  public void jreHiDpi() throws Exception {
+    jreHiDpi(0.75f);
+    jreHiDpi(1);
+    jreHiDpi(2);
+    jreHiDpi(2.5f);
+  }
+
+  private void jreHiDpi(float scale) throws MalformedURLException {
+    overrideJreHiDPIEnabled(true);
+    test(1, scale);
+  }
+
+  @Test
+  public void ideHiDpi() throws Exception {
+    ideHiDpi(0.75f);
+    ideHiDpi(1);
+    ideHiDpi(2);
+    ideHiDpi(2.5f);
+  }
+
   public void ideHiDpi(float scale) throws MalformedURLException {
+    overrideJreHiDPIEnabled(false); // it'll be restored in tearDown
     // the system scale repeats the default user scale in IDE-HiDPI
     test(scale, scale);
   }
@@ -205,12 +222,12 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  void scaleIconOrLoadCustomVersionOnCachedImageIcon() {
+  public void scaleIconOrLoadCustomVersionOnCachedImageIcon() {
     scaleIconOrLoadCustomVersionTest(() -> createIcon());
   }
 
   @Test
-  void scaleIconOrLoadCustomVersionOnNonCachedImageIcon() {
+  public void scaleIconOrLoadCustomVersionOnNonCachedImageIcon() {
     scaleIconOrLoadCustomVersionTest(() -> new TextIcon("test", new JLabel(), 12.0f));
   }
 
@@ -227,12 +244,12 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  void loadIconCustomVersionOrScaleOnCachedImageIcon() {
+  public void loadIconCustomVersionOrScaleOnCachedImageIcon() {
     loadIconCustomVersionOrScaleTest(() -> createIcon());
   }
 
   @Test
-  void loadIconCustomVersionOrScaleOnNonCachedImageIcon() {
+  public void loadIconCustomVersionOrScaleOnNonCachedImageIcon() {
     loadIconCustomVersionOrScaleTest(() -> new TextIcon("test", new JLabel(), 12.0f));
   }
 

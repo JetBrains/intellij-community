@@ -57,9 +57,9 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
     val isAltClick = isFromGutterClick && inputEvent != null && inputEvent.isAltDown
     val isShiftClick = isFromGutterClick && inputEvent != null && inputEvent.isShiftDown
     val canRemove = !isFromGutterClick || (!isShiftClick && !`is`("debugger.click.disable.breakpoints"))
-    val isConditionalBreakpoint = isFromGutterClick && editor != null && inputEvent is MouseEvent
-                                  && !isAltClick && isShiftClick
-    val selection = if (isConditionalBreakpoint) editor.getSelectionModel().selectedText else null
+    val isLoggingBreakpoint = isFromGutterClick && editor != null && inputEvent is MouseEvent
+                              && !isAltClick && isShiftClick
+    val selection = if (isLoggingBreakpoint) editor.getSelectionModel().selectedText else null
 
 
     // do not toggle more than once on the same line
@@ -69,9 +69,9 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
       if (processedLines.add(position.getLine())) {
         val future = XBreakpointUtil.toggleLineBreakpointProxy(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
-          !isFromGutterClick, canRemove, isConditionalBreakpoint, selection
+          !isFromGutterClick, canRemove, isLoggingBreakpoint, selection
         ).thenAccept { breakpoint ->
-          if (breakpoint != null && isConditionalBreakpoint) {
+          if (breakpoint != null && isLoggingBreakpoint) {
             runInEdt {
               // edit breakpoint
               val position = LogicalPosition(breakpoint.getLine() + 1, 0)

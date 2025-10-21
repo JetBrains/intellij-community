@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
@@ -14,16 +13,10 @@ public abstract class LombokInspectionTest extends LightJavaInspectionTestCase {
     return "/plugins/lombok/";
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
-  }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   protected void configureAndTest(String text) {

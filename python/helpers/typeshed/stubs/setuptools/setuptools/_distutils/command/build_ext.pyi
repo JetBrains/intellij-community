@@ -6,7 +6,7 @@ from ..cmd import Command
 from ..extension import Extension
 
 class build_ext(Command):
-    description: str
+    description: ClassVar[str]
     sep_by: Incomplete
     user_options: ClassVar[list[tuple[str, str | None, str]]]
     boolean_options: ClassVar[list[str]]
@@ -15,7 +15,7 @@ class build_ext(Command):
     build_lib: Incomplete
     plat_name: Incomplete
     build_temp: Incomplete
-    inplace: int
+    inplace: bool
     package: Incomplete
     include_dirs: Incomplete
     define: Incomplete

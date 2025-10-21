@@ -10,6 +10,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -50,6 +52,16 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myWaitSemaphore.down();
     myAfterStartNotifiedRunner = new TasksRunner();
     myListeners.add(myAfterStartNotifiedRunner);
+  }
+
+  /**
+   * Returns the native process identifier (PID) if available, otherwise null.
+   *
+   * @see java.lang.ProcessHandle#pid()
+   */
+  @ApiStatus.Experimental
+  public @Nullable CompletableFuture<@Nullable Long> getNativePid() {
+    return null;
   }
 
   public void startNotify() {

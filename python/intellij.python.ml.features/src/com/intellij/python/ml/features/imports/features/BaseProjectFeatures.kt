@@ -5,12 +5,16 @@ package com.intellij.python.ml.features.imports.features
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.platform.ml.logs.IJFeatureDeclarations
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.ml.api.feature.*
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureContainer
+import com.jetbrains.mlapi.feature.FeatureDeclaration
+import com.jetbrains.mlapi.feature.FeatureSet
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.*
 
@@ -31,18 +35,14 @@ enum class FileExtensionType {
   PXI     // .pxi files
 }
 
-object BaseProjectFeatures : ImportRankingContextFeatures() {
-  object Features {
+object BaseProjectFeatures : ImportRankingContextFeatures(Features) {
+  object Features : FeatureContainer {
     val NUM_PYTHON_FILES_IN_PROJECT: FeatureDeclaration<Int?> = FeatureDeclaration.int("num_python_files_in_project") {
       "The estimated amount of files in the project (by a power of 2)"
     }.nullable()
-    val PSI_PARENT_OF_ORIG: List<FeatureDeclaration<Class<*>?>> = (1..5).map { i -> FeatureDeclaration.aClass("psi_parent_of_orig_$i") { "PSI parent of original element #$i" }.nullable() }
-    val FILE_EXTENSION_TYPE: FeatureDeclaration<Enum<*>?> = FeatureDeclaration.enum<FileExtensionType>("file_extension_type") { "extension of the original python file" }.nullable()
+    val PSI_PARENT_OF_ORIG: List<FeatureDeclaration<Class<*>?>> = (1..5).map { i -> IJFeatureDeclarations.aClass("psi_parent_of_orig_$i") { "PSI parent of original element #$i" }.nullable() }
+    val FILE_EXTENSION_TYPE: FeatureDeclaration<FileExtensionType?> = IJFeatureDeclarations.enum<FileExtensionType>("file_extension_type", lazyDescription = { "extension of the original python file" }).nullable()
   }
-
-  override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(true, true)
-
-  override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
   override suspend fun computeNamespaceFeatures(instance: ImportRankingContext, filter: FeatureSet): List<Feature> = buildList {
     val candidates = instance.candidates

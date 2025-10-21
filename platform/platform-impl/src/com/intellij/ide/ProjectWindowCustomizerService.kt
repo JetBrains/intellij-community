@@ -10,13 +10,14 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectNameListener
@@ -50,14 +51,17 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.Window
+import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.math.abs
 
 @Service(Service.Level.PROJECT)
+@Internal
 private class ProjectWindowCustomizerIconCache(private val project: Project, coroutineScope: CoroutineScope) {
-  val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
+  @JvmField val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
 
   init {
     val projectConnection = project.messageBus.connect(coroutineScope)
@@ -76,7 +80,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project, cor
   }
 
   private fun getIconRaw(): Icon {
-    val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
+    val path = ProjectWindowCustomizerService.projectPath(project)?.invariantSeparatorsPathString ?: ""
     val size = JBUI.CurrentTheme.Toolbar.recentProjectAvatarIconSize()
     return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)
   }
@@ -94,13 +98,42 @@ private data class ProjectColors(val gradient: Color,
                                  val iconColorEnd: Color,
                                  val index: Int? = null)
 
+internal class ProjectGradients(val index: Int) {
+  val diagonalColor1 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color1")
+  val diagonalColor2 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color2")
+  val diagonalColor3 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color3")
+  val diagonalColor4 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color4")
+
+  private val fraction1Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction1"
+  private val fraction2Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction2"
+  private val fraction3Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction3"
+  private val fraction4Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction4"
+
+  fun getDiagonalFraction1(value: Float): Float = JBUI.getFloat(fraction1Key, value)
+
+  fun getDiagonalFraction2(value: Float): Float = JBUI.getFloat(fraction2Key, value)
+
+  fun getDiagonalFraction3(value: Float): Float = JBUI.getFloat(fraction3Key, value)
+
+  fun getDiagonalFraction4(value: Float): Float = JBUI.getFloat(fraction4Key, value)
+
+  val radialColor1 = JBColor.namedColor("ProjectGradients.Group${index}.RadialGradient.Color1")
+  val radialColor2 = JBColor.namedColor("ProjectGradients.Group${index}.RadialGradient.Color2")
+
+  val horizontalColor1 = JBColor.namedColor("ProjectGradients.Group${index}.HorizontalGradient.Color1")
+  val horizontalColor2 = JBColor.namedColor("ProjectGradients.Group${index}.HorizontalGradient.Color2")
+
+  val verticalColor1 = JBColor.namedColor("ProjectGradients.Group${index}.VerticalGradient.Color1")
+  val verticalColor2 = JBColor.namedColor("ProjectGradients.Group${index}.VerticalGradient.Color2")
+}
+
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
     private var instance: ProjectWindowCustomizerService? = null
     private var leftGradientCache: GradientTextureCache = GradientTextureCache()
     private var rightGradientCache: GradientTextureCache = GradientTextureCache()
-    private val LOG = Logger.getInstance(ProjectWindowCustomizerService::class.java)
+    private val LOG = logger<ProjectWindowCustomizerService>()
 
     init {
       ApplicationManager.registerCleaner { instance = null }
@@ -116,13 +149,13 @@ class ProjectWindowCustomizerService : Disposable {
     }
 
     @Internal
-    fun projectPath(project: Project): String? = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project)
+    fun projectPath(project: Project): Path? = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project)
   }
 
   private var wasGradientPainted = isForceColorfulToolbar()
 
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
-  private val colorCache = mutableMapOf<String, ProjectColors>()
+  private val colorCache = HashMap<Path, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
   private val defaultColors = ProjectColors(gradient = gradientColors[0],
                                             iconColorStart = ProjectIconPalette.gradients[0].first,
@@ -144,6 +177,8 @@ class ProjectWindowCustomizerService : Disposable {
     )
 
   private val gradientRepaintRoots = HashSet<JComponent>()
+
+  private val allGradients = mutableMapOf<Int, ProjectGradients>()
 
   internal fun addGradientRepaintRoot(component: JComponent) {
     gradientRepaintRoots.add(component)
@@ -173,7 +208,8 @@ class ProjectWindowCustomizerService : Disposable {
            ?: defaultColors.iconColorStart
   }
 
-  fun getRecentProjectIconColor(projectPath: String): Pair<Color, Color> {
+  @Internal
+  fun getRecentProjectIconColor(projectPath: Path): Pair<Color, Color> {
     val projectColors = getProjectColor(storageFor(projectPath))
     return Pair(projectColors.iconColorStart, projectColors.iconColorEnd)
   }
@@ -186,6 +222,14 @@ class ProjectWindowCustomizerService : Disposable {
   @Internal
   fun getCurrentProjectColorIndex(project: Project): Int? =  storageFor(project)?.let { getProjectColor(it).index }
 
+  internal fun getProjectGradients(project: Project): ProjectGradients {
+    val index = getCurrentProjectColorIndex(project) ?: 0
+
+    return allGradients.getOrPut(index) {
+      ProjectGradients(index + 1)
+    }
+  }
+
   private fun getProjectColor(colorStorage: ProjectColorStorage): ProjectColors {
     ThreadingAssertions.assertEventDispatchThread()
     val projectPath = colorStorage.projectPath ?: return defaultColors
@@ -196,7 +240,7 @@ class ProjectWindowCustomizerService : Disposable {
         setupWorkspaceStorage(colorStorage.project)
       }
 
-      // Get custom project color and transform it for toolbar
+      // get the custom project color and transform it for the toolbar
       val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
         val color = ColorHexUtil.fromHex(it)
         val toolbarColor = ColorUtil.toAlpha(color, 90)
@@ -329,7 +373,8 @@ class ProjectWindowCustomizerService : Disposable {
     return result
   }
 
-  private fun storageFor(projectPath: String) = RecentProjectColorStorage(projectPath)
+  private fun storageFor(projectPath: Path) = RecentProjectColorStorage(projectPath)
+
   private fun storageFor(project: Project) = if (project.isDisposed) null else WorkspaceProjectColorStorage(project)
 
   internal fun update(newValue: Boolean) {
@@ -463,10 +508,7 @@ internal class ProjectWidgetGradientLocationService(private val project: Project
   private val updateFlow = MutableStateFlow<Float?>(null)
 
   init {
-    coroutineScope.launch(
-      Dispatchers.EDT +
-      CoroutineName("ProjectWidgetGradientLocationService.updateFlow")
-    ) {
+    coroutineScope.launch(CoroutineName("ProjectWidgetGradientLocationService.updateFlow")) {
       // This unusual debouncing is needed because the project widget (that determines the location of the gradient)
       // is sometimes removed and immediately re-added to the toolbar by the toolbar's action update mechanism.
       // This causes the gradient to jump to its default position and then back to the project widget,
@@ -477,18 +519,23 @@ internal class ProjectWidgetGradientLocationService(private val project: Project
       // Either it's an action update, and then we hope that it'll be back within 100 milliseconds;
       // or the user actually removed the project widget (an uncommon case),
       // and then it's not the end of the world if the gradient reacts 100 milliseconds later.
-      updateFlow.debounce { if (it == null) 100L else 0L }
+      updateFlow
+        .debounce { if (it == null) 100L else 0L }
         .collectLatest {
-          setValueNow(it)
+          withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+            setValueNow(it)
+          }
         }
     }
   }
 
   private fun setValueNow(value: Float?) {
-    ThreadingAssertions.assertEventDispatchThread()
     val newValue = value ?: DEFAULT_GRADIENT_OFFSET
     // the usual thing: don't compare floating point values with ==
-    if (abs(gradientOffsetRelativeToRootPane - newValue) < 0.1) return
+    if (abs(gradientOffsetRelativeToRootPane - newValue) < 0.1) {
+      return
+    }
+
     gradientOffsetRelativeToRootPane = newValue
     for (repaintRoot in ProjectWindowCustomizerService.getInstance().getGradientRepaintRoots()) {
       if (ProjectUtil.getProjectForComponent(repaintRoot) == project) {
@@ -513,7 +560,7 @@ private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListe
 
   override suspend fun execute(project: Project) {
     val service = serviceAsync<ProjectWindowCustomizerService>()
-    MainScope().async {
+    withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
       service.enableIfNeeded()
       service.setupWorkspaceStorage(project)
     }
@@ -528,9 +575,10 @@ private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListe
 private interface ProjectColorStorage {
   var customColor: String?
   var associatedIndex: Int?
-  val projectPath: String?
+  val projectPath: Path?
 
-  val isEmpty: Boolean get() = (customColor?.isNotEmpty() != true) && (associatedIndex?.let { it >= 0 } != true)
+  val isEmpty: Boolean
+    get() = (customColor?.isNotEmpty() != true) && (associatedIndex?.let { it >= 0 } != true)
 }
 
 private class WorkspaceProjectColorStorage(val project: Project): ProjectColorStorage {
@@ -550,7 +598,9 @@ private class WorkspaceProjectColorStorage(val project: Project): ProjectColorSt
 
   private var isMigrating = false
 
-  override val projectPath: String? get() = ProjectWindowCustomizerService.projectPath(project)
+  override val projectPath: Path?
+    get() = ProjectWindowCustomizerService.projectPath(project)
+
   private val manager: ProjectColorInfoManager get() = ProjectColorInfoManager.getInstance(project)
 
   fun getDataFrom(storage: ProjectColorStorage) {
@@ -561,26 +611,27 @@ private class WorkspaceProjectColorStorage(val project: Project): ProjectColorSt
   }
 }
 
-private class RecentProjectColorStorage(override val projectPath: String): ProjectColorStorage {
+private class RecentProjectColorStorage(override val projectPath: Path): ProjectColorStorage {
   override var customColor: String?
-    get() = info?.customColor
+    get() = getInfo(RecentProjectsManagerBase.getInstanceEx())?.customColor
     set(value) {
       update { info -> info.customColor = value }
     }
 
   override var associatedIndex: Int?
-    get() = info?.associatedIndex
+    get() = getInfo(RecentProjectsManagerBase.getInstanceEx())?.associatedIndex
     set(value) {
       update { info -> info.associatedIndex = value ?: -1 }
     }
 
   private fun update(block: (RecentProjectColorInfo) -> Unit) {
-    var info = info
-    if (info == null) info = RecentProjectColorInfo()
+    val projectsManager = RecentProjectsManagerBase.getInstanceEx()
+    val info = getInfo(projectsManager) ?: RecentProjectColorInfo()
     block(info)
-    RecentProjectsManagerBase.getInstanceEx().updateProjectColor(projectPath, info)
+    projectsManager.updateProjectColor(projectPath.invariantSeparatorsPathString, info)
   }
 
-  private val info: RecentProjectColorInfo? get() =
-    RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectPath)?.colorInfo
+  private fun getInfo(recentProjectManager: RecentProjectsManagerBase): RecentProjectColorInfo? {
+    return recentProjectManager.getProjectMetaInfo(projectPath)?.colorInfo
+  }
 }

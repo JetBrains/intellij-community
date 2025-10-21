@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Mapping
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, type_check_only
 from typing_extensions import Self
 
 from requests import Response, Session
@@ -50,6 +50,7 @@ class Adapter(Generic[_R], metaclass=ABCMeta):
         self, method, url: str, headers: Mapping[str, str] | None = None, raise_exception: bool = True, **kwargs: Any
     ) -> _R: ...
 
+@type_check_only
 class _GenericRawAdapter(Adapter[_R]):
     def get_login_token(self, response: _R) -> str: ...
     def request(

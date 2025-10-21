@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +13,7 @@ import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +34,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Function;
 
-/**
- * @author Anton Makeev
- * @author Konstantin Bulenkov
- */
 public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
   public static final String IGNORE_LIST_ROW_HEIGHT = "IgnoreListRowHeight";
+
+  /**
+   * Allows performance optimizations if the model and the renderer for all elements are immutable:
+   * the same item is rendered with exactly the same content
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> IMMUTABLE_MODEL_AND_RENDERER = Key.create("ImmutableModelAndRenderer");
+
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -184,16 +188,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public void setOffsetFromElementTopForDnD(@NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD) {
     this.offsetFromElementTopForDnD = offsetFromElementTopForDnD;
-  }
-
-  /** @deprecated use {@link #setOffsetFromElementTopForDnD(Function)} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UsagesOfObsoleteApi"})
-  public void setOffsetFromElementTopForDnD(@NotNull com.intellij.util.Function<? super Integer, Integer> offsetFromElementTopForDnD) {
-    setOffsetFromElementTopForDnD((Function<? super Integer, Integer>)offsetFromElementTopForDnD);
   }
 
   @Override
@@ -358,13 +354,12 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   @Override
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
     int increment = super.getScrollableBlockIncrement(visibleRect, orientation, direction);
-    // in the case of scrolling list up using a single-wheel rotation,
+    // in the case of scrolling a list up using a single-wheel rotation,
     // the block increment is used to calculate min scroll as `currScroll - blockIncrement`
     // the resulting y-position of visible rect never exceeds min scroll
     // see `javax.swing.plaf.basic.BasicScrollPaneUI.Handler.mouseWheelMoved` -> vertical handling part -> limitScroll
     return adjustIncrement(visibleRect, orientation, direction, increment);
   }
-
 
   private static int adjustIncrement(Rectangle visibleRect, int orientation, int direction, int increment) {
     if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
@@ -383,13 +378,6 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UnnecessaryFullyQualifiedName", "UsagesOfObsoleteApi"})
   public void installCellRenderer(@NotNull com.intellij.util.NotNullFunction<? super E, ? extends JComponent> fun) {
     installCellRenderer((Function<? super E, ? extends @NotNull JComponent>)fun);
-  }
-
-  /** @deprecated Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("UsagesOfObsoleteApi")
-  public void setDataProvider(@NotNull DataProvider provider) {
-    DataManager.registerDataProvider(this, provider);
   }
 
   public void disableEmptyText() {
@@ -470,7 +458,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
     if (supply == null) {
       return null;
-    } else {
+    }
+    else {
       return supply.getInputMethodRequests();
     }
   }

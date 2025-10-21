@@ -10,9 +10,8 @@ import java.util.Collection;
 
 @ApiStatus.Experimental
 public interface SyntheticConfigurationTypeProvider {
-
   ExtensionPointName<SyntheticConfigurationTypeProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.execution.syntheticConfigurationTypeProvider");
+    new ExtensionPointName<>("com.intellij.execution.syntheticConfigurationTypeProvider");
 
   @NotNull @Unmodifiable
   Collection<? extends ConfigurationType> getConfigurationTypes();

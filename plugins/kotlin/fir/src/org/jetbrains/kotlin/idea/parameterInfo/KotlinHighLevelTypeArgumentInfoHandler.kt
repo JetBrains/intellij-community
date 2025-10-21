@@ -6,6 +6,13 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -26,7 +33,7 @@ import org.jetbrains.kotlin.types.Variance
  * Presents type argument info for class type references (e.g., property type in declaration, base class in super types list).
  */
 class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentInfoHandlerBase() {
-    context(KaSession)
+    context(_: KaSession)
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>? {
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         return when (val ktType = typeReference.type) {
@@ -51,7 +58,7 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
  * Presents type argument info for function calls (including constructor calls).
  */
 class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentInfoHandlerBase() {
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>? {
         val callElement = argumentList.parentOfType<KtCallElement>() ?: return null
@@ -94,7 +101,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
 }
 
 abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeArgumentInfoHandler() {
-    context(KaSession)
+    context(_: KaSession)
     protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>?
 
     override fun fetchCandidateInfos(argumentList: KtTypeArgumentList): List<CandidateInfo>? {
@@ -104,13 +111,13 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun fetchCandidateInfo(parameterOwner: KaDeclarationSymbol): CandidateInfo {
         @OptIn(KaExperimentalApi::class)
         return CandidateInfo(parameterOwner.typeParameters.map { fetchTypeParameterInfo(it) })
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun fetchTypeParameterInfo(parameter: KaTypeParameterSymbol): TypeParameterInfo {
         val upperBounds = parameter.upperBounds.map {

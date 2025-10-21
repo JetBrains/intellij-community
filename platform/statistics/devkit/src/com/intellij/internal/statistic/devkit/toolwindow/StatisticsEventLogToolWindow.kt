@@ -115,7 +115,9 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
                                         UNREACHABLE_METADATA,
                                         UNREACHABLE_METADATA_OBSOLETE,
                                         PERFORMANCE_ISSUE,
-                                        REQUIRED_FIELD_MISSED)
+                                        REQUIRED_FIELD_MISSED,
+                                        DICTIONARY_NOT_FOUND,
+                                        GENERAL_DICTIONARY_ERROR)
     val alertEvents = setOf(EventLogSystemEvents.TOO_MANY_EVENTS_ALERT, EventLogSystemEvents.TOO_MANY_EVENTS)
   }
 }

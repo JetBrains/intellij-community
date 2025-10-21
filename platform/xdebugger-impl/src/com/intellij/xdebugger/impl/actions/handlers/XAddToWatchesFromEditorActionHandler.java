@@ -6,10 +6,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.ApiStatus;
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 @ApiStatus.Internal
 public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     Promise<String> textPromise = getTextToEvaluate(dataContext, session);
     // in the case of async expression evaluation just enable the action
     if (textPromise.getState() == Promise.State.PENDING) {
@@ -42,7 +41,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
     }
   }
 
-  protected static @NotNull Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSession session) {
+  protected static @NotNull Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSessionProxy session) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return Promises.resolvedPromise(null);
@@ -52,7 +51,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
     if (text != null) {
       return Promises.resolvedPromise(StringUtil.nullize(text, true));
     }
-    XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+    XDebuggerEvaluator evaluator = session.getCurrentEvaluator();
     if (evaluator != null) {
       return XDebuggerEvaluateActionHandler.getExpressionText(evaluator, editor.getProject(), editor).then(s -> StringUtil.nullize(s, true));
     }
@@ -60,12 +59,12 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
         if (text == null) return;
         UIUtil.invokeLaterIfNeeded(() -> {
-          XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+          XDebugSessionTab tab = session.getSessionTab();
           if (tab != null) {
             ((XWatchesViewImpl)tab.getWatchesView()).addWatchExpression(XExpressionImpl.fromText(text), -1, true, true);
           }

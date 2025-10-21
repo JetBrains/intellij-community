@@ -85,14 +85,23 @@ public final class IdeaModifiableModelsProvider implements ModifiableModelsProvi
       if (!project.isInitialized()) {
         continue;
       }
-      StructureConfigurableContext context = getProjectStructureContext(project);
-      LibraryTableModifiableModelProvider provider = context != null ? context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL) : null;
-      final LibraryTable.ModifiableModel modifiableModel = provider != null ? provider.getModifiableModel() : null;
+      final LibraryTable.ModifiableModel modifiableModel = getGlobalModifiableModel(project);
       if (modifiableModel != null) {
         return modifiableModel;
       }
     }
     return LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
+  }
+
+  @Override
+  public @NotNull LibraryTable.ModifiableModel getGlobalLibraryTableModifiableModel(@NotNull Project project) {
+    if (project.isInitialized()) {
+      final LibraryTable.ModifiableModel modifiableModel = getGlobalModifiableModel(project);
+      if (modifiableModel != null) {
+        return modifiableModel;
+      }
+    }
+    return LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project).getModifiableModel();
   }
 
   @Override
@@ -111,6 +120,12 @@ public final class IdeaModifiableModelsProvider implements ModifiableModelsProvi
     if (!(model instanceof LibrariesModifiableModel)) {
       Disposer.dispose(model);
     }
+  }
+
+  private static @Nullable LibraryTable.ModifiableModel getGlobalModifiableModel(@NotNull Project project) {
+    var context = getProjectStructureContext(project);
+    var provider = context != null ? context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL) : null;
+    return provider != null ? provider.getModifiableModel() : null;
   }
 
   private static @Nullable StructureConfigurableContext getProjectStructureContext(@NotNull Project project) {

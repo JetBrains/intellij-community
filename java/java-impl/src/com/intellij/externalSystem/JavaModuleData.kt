@@ -6,19 +6,21 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.serialization.PropertyMapping
+import org.jetbrains.annotations.ApiStatus
 
-class JavaModuleData : AbstractExternalEntityData {
+public class JavaModuleData : AbstractExternalEntityData {
 
-  var languageLevel: LanguageLevel?
-  var targetBytecodeVersion: String?
-  var compilerArguments: List<String>
+  public var languageLevel: LanguageLevel?
+  public var targetBytecodeVersion: String?
+  public var compilerArguments: List<String>
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use #JavaModuleData(ProjectSystemId, LanguageLevel, String, Collection<String>) instead")
-  constructor(owner: ProjectSystemId, languageLevel: LanguageLevel?, targetBytecodeVersion: String?) :
+  public constructor(owner: ProjectSystemId, languageLevel: LanguageLevel?, targetBytecodeVersion: String?) :
     this(owner, languageLevel, targetBytecodeVersion, emptyList())
 
   @PropertyMapping("owner", "languageLevel", "targetBytecodeVersion", "compilerArguments")
-  constructor(owner: ProjectSystemId, languageLevel: LanguageLevel?, targetBytecodeVersion: String?, compilerArguments: List<String>) : super(owner) {
+  public constructor(owner: ProjectSystemId, languageLevel: LanguageLevel?, targetBytecodeVersion: String?, compilerArguments: List<String>) : super(owner) {
     this.languageLevel = languageLevel
     this.targetBytecodeVersion = targetBytecodeVersion
     this.compilerArguments = compilerArguments
@@ -46,8 +48,8 @@ class JavaModuleData : AbstractExternalEntityData {
 
   override fun toString(): String = "java module"
 
-  companion object {
+  public companion object {
     @JvmField
-    val KEY: Key<JavaModuleData> = Key.create(JavaModuleData::class.java, JavaProjectData.KEY.processingWeight + 1)
+    public val KEY: Key<JavaModuleData> = Key.create(JavaModuleData::class.java, JavaProjectData.KEY.processingWeight + 1)
   }
 }

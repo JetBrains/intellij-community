@@ -1,20 +1,17 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <!-- Used by IDEs built on top of IntelliJ Platform to customize the IDE;
      By using this customization, IDEs also get most of the behaviors of IntelliJ IDEA by default.
-     Other IDEs may differ still! -->
+     Used only by IntelliJ IDEA and Android Studio.
+     Other IDEs differ still! -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
-    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
-
     <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"
                          id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle"
                          nonDefaultProject="true"/>
-
-    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
 
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
     <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
@@ -23,6 +20,8 @@
     <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
 
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
+
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">
@@ -53,5 +52,13 @@
     <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis">
       <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
     </action>
+
+    <group id="MarkContentRootGroup">
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
+
+      <add-to-group group-id="MarkRootGroup" anchor="last"/>
+    </group>
   </actions>
 </idea-plugin>

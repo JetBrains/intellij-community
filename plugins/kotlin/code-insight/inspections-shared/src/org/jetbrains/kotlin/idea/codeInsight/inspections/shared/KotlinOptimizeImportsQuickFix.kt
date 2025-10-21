@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.psi.KtFile
  * Simple quickfix for running import optimizer on Kotlin file.
  */
 class KotlinOptimizeImportsQuickFix(file: KtFile) : LocalQuickFixOnPsiElement(file) {
-    override fun getText() = KotlinBundle.message("optimize.imports")
+    override fun getText(): String = KotlinBundle.message("optimize.imports")
 
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = name
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         OptimizeImportsProcessor(project, file).run()

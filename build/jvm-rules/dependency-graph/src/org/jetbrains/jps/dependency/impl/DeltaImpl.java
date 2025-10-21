@@ -3,8 +3,6 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.java.SubclassesIndex;
-import org.jetbrains.jps.dependency.kotlin.TypealiasesIndex;
 import org.jetbrains.jps.util.Iterators;
 
 import java.util.Collections;
@@ -26,10 +24,8 @@ public final class DeltaImpl extends GraphImpl implements Delta {
   private final Set<NodeSource> myBaseSources;
   private final Set<NodeSource> myDeletedSources;
   
-  public DeltaImpl(Iterable<NodeSource> baseSources, Iterable<NodeSource> deletedSources) {
-    super(Containers.MEMORY_CONTAINER_FACTORY);
-    addIndex(new SubclassesIndex(Containers.MEMORY_CONTAINER_FACTORY));
-    addIndex(new TypealiasesIndex(Containers.MEMORY_CONTAINER_FACTORY)); // todo: make registration 'pluggable', e.g. via DifferentiateStrategy
+  public DeltaImpl(Iterable<NodeSource> baseSources, Iterable<NodeSource> deletedSources, IndexFactory indexFactory) {
+    super(Containers.MEMORY_CONTAINER_FACTORY, indexFactory);
     myBaseSources = Collections.unmodifiableSet(baseSources instanceof Set? (Set<? extends NodeSource>)baseSources : Iterators.collect(baseSources, new HashSet<>()));
     myDeletedSources = Collections.unmodifiableSet(deletedSources instanceof Set? (Set<? extends NodeSource>)deletedSources : Iterators.collect(deletedSources, new HashSet<>()));
   }

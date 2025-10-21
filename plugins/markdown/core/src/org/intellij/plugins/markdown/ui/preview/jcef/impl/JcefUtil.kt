@@ -11,13 +11,8 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.handler.CefRequestHandler
-import org.intellij.lang.annotations.Language
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-
-internal fun JBCefBrowser.executeJavaScript(@Language("JavaScript") code: String) {
-  cefBrowser.executeJavaScript(code, null, 0)
-}
 
 internal fun JBCefClient.addRequestHandler(handler: CefRequestHandler, browser: CefBrowser, parentDisposable: Disposable) {
   Disposer.register(parentDisposable) { removeRequestHandler(handler, browser) }

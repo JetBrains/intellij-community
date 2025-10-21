@@ -3,9 +3,9 @@
 
 package test
 
-private var i: kotlin.Int /* compiled code */ /* hasBackingField: true */
+private var i: kotlin.Int /* compiled code */
 
-public val p: kotlin.Int /* compiled code */ /* hasBackingField: true */
+public val p: kotlin.Int /* compiled code */
 
 public fun f(): kotlin.Unit { /* compiled code */ }
 

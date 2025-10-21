@@ -1,11 +1,12 @@
-from typing import Any
+import re
 
 from . import base
 
-SPACES_REGEX: Any
+spaceCharacters: str
+SPACES_REGEX: re.Pattern[str]
 
 class Filter(base.Filter):
-    spacePreserveElements: Any
+    spacePreserveElements: frozenset[str]
     def __iter__(self): ...
 
-def collapse_spaces(text): ...
+def collapse_spaces(text: str) -> str: ...

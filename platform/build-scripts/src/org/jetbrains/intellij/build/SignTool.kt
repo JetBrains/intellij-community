@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentMap
@@ -11,6 +11,12 @@ interface SignTool {
   companion object {
     const val LIB_VERSION_OPTION_NAME: String = "libVersion"
   }
+
+  /**
+   * Describes address and credentials of the macOS machine which should be used to sign and build DMG images.
+   * When `null`, only SIT archives will be built.
+   */
+  val macOsCodesignIdentity: MacOsCodesignIdentity?
 
   val signNativeFileMode: SignNativeFileMode
 

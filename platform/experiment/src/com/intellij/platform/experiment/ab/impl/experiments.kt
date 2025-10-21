@@ -6,9 +6,12 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.platform.experiment.ab.impl.ABExperimentOption.*
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption.TYPESCRIPT_SERVICE_TYPES
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
 import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.*
 import kotlin.math.absoluteValue
 
 /**
@@ -21,6 +24,7 @@ enum class ABExperimentOption {
   FUZZY_FILE_SEARCH,
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
+  TYPESCRIPT_SERVICE_TYPES,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -56,6 +60,13 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
   //  controlBuckets = (128 until 256).toSet(),
   //  majorVersion = "2025.2"
   //),
+  ExperimentAssignment(
+    experiment = TYPESCRIPT_SERVICE_TYPES,
+    experimentBuckets = (0 until 200).toSet(),
+    controlBuckets = (200 until 400).toSet(),
+    majorVersion = "2025.3",
+    products = EnumSet.of(IntelliJPlatformProduct.WEBSTORM),
+  ),
   // the rest belongs to the "unassigned" experiment
 )
 
@@ -77,18 +88,22 @@ internal fun ABExperimentOption.reportableName(): String {
 private val thisUserDecision: ABExperimentDecision by lazy {
   val currentBucket = getUserBucketNumber()
   val currentVersion = ApplicationInfo.getInstance().fullVersion
+  val currentProduct = IntelliJPlatformProduct.get()
   val option = experimentsPartition.find {
     (it.majorVersion == null || currentVersion.startsWith(it.majorVersion)) &&
-    (it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket))
+    (it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket)) &&
+    it.products.contains(currentProduct)
   } ?: return@lazy ABExperimentDecision(option = UNASSIGNED, isControlGroup = true, bucketNumber = currentBucket)
   ABExperimentDecision(option = option.experiment, isControlGroup = option.controlBuckets.contains(currentBucket), bucketNumber = currentBucket)
 }
 
-data class ExperimentAssignment(
+internal data class ExperimentAssignment(
   val experiment: ABExperimentOption,
   val experimentBuckets: Set<Int>,
   val controlBuckets: Set<Int>,
-  val majorVersion: String? = null)
+  val majorVersion: String? = null,
+  val products: Set<IntelliJPlatformProduct> = EnumSet.allOf(IntelliJPlatformProduct::class.java)
+)
 
 internal fun getUserBucketNumber(): Int {
   val overridingBucket = Integer.getInteger("ide.ab.test.overriding.bucket")
@@ -110,3 +125,20 @@ private fun getDeviceIdPurpose(): String {
 }
 
 private val LOG = logger<ABExperimentOption>()
+
+/**
+ * There is no need to list all available products. Add if a product-specific experiment is needed.
+ */
+internal enum class IntelliJPlatformProduct {
+  WEBSTORM,
+  OTHER,
+  ;
+
+  companion object {
+    fun get(): IntelliJPlatformProduct =
+      when {
+        PlatformUtils.isWebStorm() -> WEBSTORM
+        else -> OTHER
+      }
+  }
+}

@@ -46,8 +46,10 @@ class SuvorovProgressTest {
     val edtActionCompleted = Job(coroutineContext.job)
     launch {
       backgroundWriteAction {
-        launch(Dispatchers.EDT) {
-          edtActionCompleted.complete()
+        launch(Dispatchers.UiWithModelAccess) {
+          WriteIntentReadAction.run {
+            edtActionCompleted.complete()
+          }
         }
         writeActionMayFinish.asCompletableFuture().join()
       }

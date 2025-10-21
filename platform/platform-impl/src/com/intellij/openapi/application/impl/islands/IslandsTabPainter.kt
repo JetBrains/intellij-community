@@ -24,7 +24,7 @@ import kotlin.math.floor
 
 internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
   private val editorAdapter = if (isDefault) DefaultTabPainterAdapter(if (debugger) JBTabPainter.DEBUGGER else JBTabPainter.DEFAULT) else EditorTabPainterAdapter()
-  private val islandsAdapter = IslandsTabPainter(isDefault)
+  private val islandsAdapter = IslandsTabPainter(isDefault, debugger)
 
   override val tabPainter: JBTabPainter
     get() {
@@ -43,7 +43,8 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     val active = tabs.isActiveTabs(info)
     val hovered = tabs.isHoveredTab(label)
 
-    val rect = Rectangle(label.size)
+    val tabLabelWidth = calcTabLabelWidth(label)
+    val rect = Rectangle(tabLabelWidth, label.height)
     val g2 = g.create() as Graphics2D
 
     try {
@@ -55,6 +56,24 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     finally {
       g2.dispose()
     }
+  }
+
+  /**
+   * label.preferredSize doesn't work for squeeze mode
+   */
+  private fun calcTabLabelWidth(label: TabLabel): Int {
+    var rect : Rectangle? = null
+
+    for (component in label.components) {
+      if (rect == null) {
+        rect = component.bounds
+      } else {
+        rect = rect.union(component.bounds)
+      }
+    }
+
+    val contentWidth = if (rect == null) 0 else  rect.x + rect.width
+    return contentWidth + label.insets.right
   }
 }
 
@@ -88,8 +107,17 @@ private class IslandsTabTheme : TabTheme {
     get() = JBColor.namedColor("EditorTabs.underlinedTabInactiveForeground", JBColor(0x000000, 0xFFFFFF))
 }
 
-internal open class IslandsTabPainter(isDefault: Boolean) : JBTabPainter {
-  private val myTheme = if (isDefault) DefaultTabTheme() else IslandsTabTheme()
+internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean) : JBTabPainter {
+  private val myTheme = when {
+    isToolWindow -> object : DefaultTabTheme() {
+      override val background: Color
+        get() = JBUI.CurrentTheme.ToolWindow.background()
+    }
+
+    isDefault -> DefaultTabTheme()
+
+    else -> IslandsTabTheme()
+  }
 
   override fun getTabTheme(): TabTheme = myTheme
 

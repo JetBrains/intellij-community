@@ -13,7 +13,10 @@ import org.jetbrains.annotations.NotNull;
  * </pre>
  * 
  * The implementation must have a no-arg constructor. The {@link com.intellij.openapi.module.Module} instance can be taken from 
- * {@code state} parameter of {@link #createEditors} ({@code state.getCurrentRootModel().getModule()}). 
+ * {@code state} parameter of {@link #createEditors} ({@code state.getCurrentRootModel().getModule()}).
+ * <br>
+ * Please note that although this interface is located in the platform, the extension point is used in Java plugin where 'Project Structure' 
+ * dialog is available. So the implementations will be ignored if the Java plugin isn't installed in the IDE.  
  */
 public interface ModuleConfigurationEditorProvider {
   @NotNull ModuleConfigurationEditor @NotNull [] createEditors(@NotNull ModuleConfigurationState state);

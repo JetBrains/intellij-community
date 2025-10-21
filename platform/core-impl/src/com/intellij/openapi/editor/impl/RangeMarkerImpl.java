@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.*;
 
@@ -28,7 +27,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   private final @NotNull Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   @ApiStatus.Internal
-  public RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
+  protected volatile RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private volatile long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
@@ -480,16 +479,5 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
     // piggyback myId to store offsets, to conserve memory
     myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
-  }
-
-  @TestOnly
-  public static void runAssertingInternalInvariants(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    RedBlackTree.VERIFY = true;
-    try {
-      runnable.run();
-    }
-    finally {
-      RedBlackTree.VERIFY = false;
-    }
   }
 }

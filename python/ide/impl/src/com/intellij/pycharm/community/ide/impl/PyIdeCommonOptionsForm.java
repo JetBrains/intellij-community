@@ -18,7 +18,8 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,6 +163,18 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     return null;
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @Nullable Boolean getUseRunTool() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setUseRunTool(@Nullable Boolean useRunTool) {
+
+  }
+
   @Override
   public void setModule(Module module) {
     content.moduleCombo.setSelectedModule(module);
@@ -178,7 +191,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void updateSdkList(boolean preserveSelection, PyConfigurableInterpreterList myInterpreterList) {
-    myPythonSdks = myInterpreterList.getAllPythonSdks(myProject, null);
+    myPythonSdks = myInterpreterList.getAllPythonSdks(myProject, null, false);
     Sdk selection = preserveSelection ? (Sdk)content.interpreterComboBox.getSelectedItem() : null;
     if (!myPythonSdks.contains(selection)) {
       selection = null;

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.core
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginProperty
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginPropertyReference
@@ -184,6 +185,7 @@ class Context private constructor(
     open inner class Writer : Reader() {
         @Deprecated("Allows to get SettingsWriter where it is not supposed to be")
         val unsafeSettingWriter: SettingsWriter
+            @ApiStatus.Internal
             get() = settingWritingContext
 
         val eventManager: EventManager

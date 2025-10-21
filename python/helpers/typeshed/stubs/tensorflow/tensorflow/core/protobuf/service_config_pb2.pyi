@@ -110,7 +110,35 @@ class DispatcherConfig(google.protobuf.message.Message):
         worker_timeout_ms: builtins.int | None = ...,
         worker_max_concurrent_snapshots: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["client_timeout_ms", b"client_timeout_ms", "deployment_mode", b"deployment_mode", "fault_tolerant_mode", b"fault_tolerant_mode", "gc_dynamic_sharding_jobs", b"gc_dynamic_sharding_jobs", "job_gc_check_interval_ms", b"job_gc_check_interval_ms", "job_gc_timeout_ms", b"job_gc_timeout_ms", "port", b"port", "protocol", b"protocol", "work_dir", b"work_dir", "worker_addresses", b"worker_addresses", "worker_max_concurrent_snapshots", b"worker_max_concurrent_snapshots", "worker_timeout_ms", b"worker_timeout_ms"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "client_timeout_ms",
+            b"client_timeout_ms",
+            "deployment_mode",
+            b"deployment_mode",
+            "fault_tolerant_mode",
+            b"fault_tolerant_mode",
+            "gc_dynamic_sharding_jobs",
+            b"gc_dynamic_sharding_jobs",
+            "job_gc_check_interval_ms",
+            b"job_gc_check_interval_ms",
+            "job_gc_timeout_ms",
+            b"job_gc_timeout_ms",
+            "port",
+            b"port",
+            "protocol",
+            b"protocol",
+            "work_dir",
+            b"work_dir",
+            "worker_addresses",
+            b"worker_addresses",
+            "worker_max_concurrent_snapshots",
+            b"worker_max_concurrent_snapshots",
+            "worker_timeout_ms",
+            b"worker_timeout_ms",
+        ],
+    ) -> None: ...
 
 global___DispatcherConfig = DispatcherConfig
 
@@ -212,6 +240,36 @@ class WorkerConfig(google.protobuf.message.Message):
         snapshot_max_chunk_size_bytes: builtins.int | None = ...,
         shutdown_quiet_period_ms: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["cross_trainer_cache_size_bytes", b"cross_trainer_cache_size_bytes", "data_transfer_address", b"data_transfer_address", "data_transfer_port", b"data_transfer_port", "data_transfer_protocol", b"data_transfer_protocol", "dispatcher_address", b"dispatcher_address", "dispatcher_timeout_ms", b"dispatcher_timeout_ms", "heartbeat_interval_ms", b"heartbeat_interval_ms", "port", b"port", "protocol", b"protocol", "shutdown_quiet_period_ms", b"shutdown_quiet_period_ms", "snapshot_max_chunk_size_bytes", b"snapshot_max_chunk_size_bytes", "worker_address", b"worker_address", "worker_tags", b"worker_tags"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "cross_trainer_cache_size_bytes",
+            b"cross_trainer_cache_size_bytes",
+            "data_transfer_address",
+            b"data_transfer_address",
+            "data_transfer_port",
+            b"data_transfer_port",
+            "data_transfer_protocol",
+            b"data_transfer_protocol",
+            "dispatcher_address",
+            b"dispatcher_address",
+            "dispatcher_timeout_ms",
+            b"dispatcher_timeout_ms",
+            "heartbeat_interval_ms",
+            b"heartbeat_interval_ms",
+            "port",
+            b"port",
+            "protocol",
+            b"protocol",
+            "shutdown_quiet_period_ms",
+            b"shutdown_quiet_period_ms",
+            "snapshot_max_chunk_size_bytes",
+            b"snapshot_max_chunk_size_bytes",
+            "worker_address",
+            b"worker_address",
+            "worker_tags",
+            b"worker_tags",
+        ],
+    ) -> None: ...
 
 global___WorkerConfig = WorkerConfig

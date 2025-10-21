@@ -168,21 +168,21 @@ public class PyParameterInfoBehaviourTest extends PyTestCase {
     configurePython("max(<caret>)");
     showParameterInfo();
     checkParameterInfos("""
-                          <html><b>__arg1: SupportsRichComparisonT,</b> __arg2, _args, key</html>
+                          <html><b>arg1: SupportsRichComparisonT,</b> arg2, /, _args, key</html>
                           -""");
     showParameterInfo();
     checkParameterInfos("""
-                          <html><b>__arg1: SupportsRichComparisonT,</b> __arg2, _args, key</html>
+                          <html><b>arg1: SupportsRichComparisonT,</b> arg2, /, _args, key</html>
                           -
-                          <html><b>__arg1: _T,</b> __arg2, _args, key</html>
+                          <html><b>arg1: _T,</b> arg2, /, _args, key</html>
                           -
-                          <html><b>__iterable: Iterable[SupportsRichComparisonT],</b> *, key</html>
+                          <html><b>iterable: Iterable[SupportsRichComparisonT],</b> /, *, key</html>
                           -
-                          <html><b>__iterable: Iterable[_T],</b> *, key</html>
+                          <html><b>iterable: Iterable[_T],</b> /, *, key</html>
                           -
-                          <html><b>__iterable: Iterable[SupportsRichComparisonT],</b> *, key, default</html>
+                          <html><b>iterable: Iterable[SupportsRichComparisonT],</b> /, *, key, default</html>
                           -
-                          <html><b>__iterable: Iterable[_T1],</b> *, key, default</html>
+                          <html><b>iterable: Iterable[_T1],</b> /, *, key, default</html>
                           """);
   }
 

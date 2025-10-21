@@ -5,12 +5,22 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.psi.KtElement
+import java.util.function.Supplier
 
 abstract class SelfTargetingOffsetIndependentIntention<TElement : KtElement>(
-  elementType: Class<TElement>,
-  textGetter: () -> @IntentionName String,
-  familyNameGetter: () -> @IntentionFamilyName String = textGetter,
+    elementType: Class<TElement>,
+    textGetter: Supplier<@IntentionName String>,
+    familyNameGetter: Supplier<@IntentionFamilyName String> = textGetter,
 ) : SelfTargetingRangeIntention<TElement>(elementType, textGetter, familyNameGetter) {
+
+    @Suppress("HardCodedStringLiteral")
+    @Deprecated("Use primary constructor")
+    constructor(
+        elementType: Class<TElement>,
+        textGetter: () -> @IntentionName String,
+        familyNameGetter: () -> @IntentionFamilyName String = textGetter
+    ) : this(elementType, Supplier { textGetter() }, Supplier { familyNameGetter() })
+
     abstract fun isApplicableTo(element: TElement): Boolean
 
     final override fun applicabilityRange(element: TElement): TextRange? {

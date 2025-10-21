@@ -54,7 +54,7 @@ public final class ClassInheritanceDepthInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ClassNestingLevel();
   }
 

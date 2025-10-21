@@ -1,25 +1,26 @@
-### auto-generated section `build kotlin.code-insight.api` start
+### auto-generated section `build intellij.kotlin.codeInsight.api` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_api",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
-  ]
+  ],
+  x_context_parameters = True
 )
 
 jvm_library(
   name = "api",
-  module_name = "kotlin.code-insight.api",
+  module_name = "intellij.kotlin.codeInsight.api",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_api",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "//platform/analysis-api:analysis",
@@ -38,4 +39,4 @@ jvm_library(
     "//platform/statistics",
   ]
 )
-### auto-generated section `build kotlin.code-insight.api` end
+### auto-generated section `build intellij.kotlin.codeInsight.api` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.qodana
 
 import org.jetbrains.intellij.build.BuildContext
@@ -22,10 +22,10 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dide.region.url.mapping.expiration.timeout=7200",
   "-Dexternal.system.auto.import.headless.async=true",
   "-Dmaven.default.headless.import=true",
-  "-Didea.background.write.action.enabled=false"
+  "-Dide.do.not.check.ls.on.startup=true",
   )
 
-private const val IS_EAP = false
+private const val IS_EAP = true
 
 /**
  * Represents a set of properties specific to the Qodana product.

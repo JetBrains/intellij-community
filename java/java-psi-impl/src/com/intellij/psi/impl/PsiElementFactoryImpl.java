@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -381,7 +382,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
         return cachedObjectType;
       }
     }
-    return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null);
+    return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null, TypeAnnotationProvider.EMPTY);
   }
 
   @Override
@@ -592,11 +593,15 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
       throw new IncorrectOperationException("Cannot create variable with type \"null\".");
     }
 
-    String text = "X " + name + (initializer != null ? " = x" : "") + ";";
+    String text = "var " + name + (initializer != null ? " = x" : "") + ";";
     PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, context);
 
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
-    replace(variable.getTypeElement(), createTypeElement(GenericsUtil.getVariableTypeByExpressionType(type)), text);
+    boolean generateVar = !PsiTypesUtil.isDenotableType(type, variable) && initializer != null &&
+                PsiUtil.isAvailable(JavaFeature.LVTI, initializer);
+    if (!generateVar) {
+      replace(variable.getTypeElement(), createTypeElement(GenericsUtil.getVariableTypeByExpressionType(type)), text);
+    }
 
     boolean generateFinalLocals =
       context != null && JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isGenerateFinalLocals();

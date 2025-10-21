@@ -1,13 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines
 
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findTopLevelCallables
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.equalsOrEqualsByPsi
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -89,3 +94,22 @@ private fun KaSession.isIterableMapFunction(symbol: KaFunctionSymbol): Boolean {
 // Common collection-related CallableIds
 internal val KOTLIN_COLLECTIONS_FOR_EACH_ID: CallableId = CallableId(FqName("kotlin.collections"), Name.identifier("forEach"))
 internal val KOTLIN_COLLECTIONS_MAP_ID: CallableId = CallableId(FqName("kotlin.collections"), Name.identifier("map"))
+
+context(_: KaSession)
+internal fun KtFunction.findRelatedLabelReferences(): List<KtLabelReferenceExpression> {
+    val functionSymbol = symbol
+    
+    return descendantsOfType<KtLabelReferenceExpression>()
+        .filter { labelRef ->
+            labelRef.resolveExpression().equalsOrEqualsByPsi(functionSymbol)
+        }
+        .toList()
+}
+
+context(_: KaSession)
+internal fun CallableId.canBeResolved(): Boolean {
+    // does not support non-top-level callables for now
+    if (this.classId != null) return false
+    
+    return findTopLevelCallables(packageName, callableName).any()
+}

@@ -426,7 +426,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
         myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
       }
 
-      Color foreground = selected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
+      Color foreground = selected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground();
       myLabel.setForeground(foreground);
 
       return myLabel;

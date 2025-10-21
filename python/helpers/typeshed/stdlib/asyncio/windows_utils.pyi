@@ -9,8 +9,8 @@ if sys.platform == "win32":
     __all__ = ("pipe", "Popen", "PIPE", "PipeHandle")
 
     BUFSIZE: Final = 8192
-    PIPE = subprocess.PIPE
-    STDOUT = subprocess.STDOUT
+    PIPE: Final = subprocess.PIPE
+    STDOUT: Final = subprocess.STDOUT
     def pipe(*, duplex: bool = False, overlapped: tuple[bool, bool] = (True, True), bufsize: int = 8192) -> tuple[int, int]: ...
 
     class PipeHandle:

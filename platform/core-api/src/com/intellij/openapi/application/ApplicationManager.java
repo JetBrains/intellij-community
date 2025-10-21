@@ -33,9 +33,11 @@ public class ApplicationManager {
   public static void setApplication(@NotNull Application instance, @NotNull Disposable parent) {
     Application old = ourApplication;
     Disposer.register(parent, () -> {
-      if (old != null) { // to prevent NPEs in threads still running
-        setApplication(old);
+      Application current = ourApplication;
+      if (current != instance) {
+        throw new IllegalStateException("Application was changes unexpectedly. Expected:" + instance + " actual:" + current);
       }
+      setApplication(old);
     });
     setApplication(instance);
   }

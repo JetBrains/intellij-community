@@ -43,8 +43,7 @@ internal class InconsistentCommentForJavaParameterInspection: LocalInspectionToo
     }
 
     private class CorrectNamesInCommentsToJavaCallArgumentsFix(private val commentedParameterName: String) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("intention.name.use.correct.parameter.name")
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = KotlinBundle.message("intention.name.use.correct.parameter.name")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val comment = descriptor.psiElement as? PsiComment ?: return

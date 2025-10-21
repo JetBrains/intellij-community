@@ -1,0 +1,41 @@
+<html>
+<body>
+<p>Reports calls that add or remove a <code>java.nio.file.Path</code> to/from a Kotlin collection or sequence using
+    <code>plus</code>/<code>minus</code>, either in operator form (<code>a + b</code>, <code>a - b</code>) or regular call form
+    (<code>a.plus(b)</code>, <code>a.minus(b)</code>).</p>
+<p>Since <code>java.nio.file.Path</code> implements <code>Iterable&lt;Path&gt;</code>, such calls resolve to the unexpected overload of
+    the <code>plus</code> or <code>minus</code> function that takes a collection of elements (in this case, the individual elements
+    of the <code>Path</code>). But the intent of the code is probably to add or remove the <code>Path</code> itself, not the
+    individual elements.</p>
+<p><b>Examples:</b></p>
+<pre><code>
+// Operator form
+val paths = listOf(path) + somePath
+val paths2 = setOf(path) - somePath
+
+// Regular call form
+val paths = listOf(path).plus(somePath)
+val paths2 = setOf(path).minus(somePath)
+</code></pre>
+
+<p><b>Quick-fixes:</b></p>
+<ul>
+    <li>Convert to <code>plusElement</code>/<code>minusElement</code> (changes the semantics to what was originally intended):
+        <pre><code>
+val paths = listOf(path).plusElement(somePath)
+val paths2 = setOf(path).minusElement(somePath)
+    </code></pre>
+    </li>
+    <li>Convert the <code>Path</code> argument to a collection to clarify intent without changing semantics:
+        <ul>
+            <li>For <code>plus</code>: wrap the argument with <code>toList()</code> to preserve order.</li>
+            <li>For <code>minus</code>: wrap the argument with <code>toSet()</code> for efficient removal.</li>
+        </ul>
+        <pre><code>
+val paths = listOf(path).plus(somePath.toList())
+val paths2 = setOf(path).minus(somePath.toSet())
+    </code></pre>
+    </li>
+</ul>
+</body>
+</html>

@@ -10,7 +10,8 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.models.AbstractHighlightingCodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.FileLevelHighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
 import org.jetbrains.kotlin.idea.test.Directives
@@ -24,7 +25,6 @@ const val ALLOW_ERRORS = "ALLOW_ERRORS"
 private const val HIGHLIGHT_WARNINGS = "HIGHLIGHT_WARNINGS"
 private const val HIGHLIGHTER_ATTRIBUTES_KEY = "HIGHLIGHTER_ATTRIBUTES_KEY"
 private const val DUMB_MODE = "DUMB_MODE"
-
 
 fun checkHighlighting(
     file: PsiFile,
@@ -46,7 +46,7 @@ fun checkHighlighting(
     )
 
     val codeMetaInfoTestCase = CodeMetaInfoTestCase(
-        codeMetaInfoTypes = listOf(highlightingRenderConfiguration),
+        codeMetaInfoTypes = listOf(highlightingRenderConfiguration, FileLevelHighlightingConfiguration(severityLevel = highlightSeverity)),
         filterMetaInfo = createMetaInfoFilter(
             allowErrorHighlighting = ALLOW_ERRORS in globalDirectives,
             highlightWarnings = highlightWarnings == true || HIGHLIGHT_WARNINGS in globalDirectives,
@@ -89,8 +89,8 @@ private fun createMetaInfoFilter(allowErrorHighlighting: Boolean, highlightWarni
 
     val ignoredSeverities = setOf(HighlightSeverity.WARNING, HighlightSeverity.WEAK_WARNING)
 
-    val seenMetaInfos = ObjectOpenCustomHashSet(object : Hash.Strategy<HighlightingCodeMetaInfo> {
-        override fun equals(left: HighlightingCodeMetaInfo?, right: HighlightingCodeMetaInfo?): Boolean {
+    val seenMetaInfos = ObjectOpenCustomHashSet(object : Hash.Strategy<AbstractHighlightingCodeMetaInfo> {
+        override fun equals(left: AbstractHighlightingCodeMetaInfo?, right: AbstractHighlightingCodeMetaInfo?): Boolean {
             if (left === right) {
                 return true
             }
@@ -104,7 +104,7 @@ private fun createMetaInfoFilter(allowErrorHighlighting: Boolean, highlightWarni
                     left.highlightingInfo == right.highlightingInfo
         }
 
-        override fun hashCode(metaInfo: HighlightingCodeMetaInfo?): Int {
+        override fun hashCode(metaInfo: AbstractHighlightingCodeMetaInfo?): Int {
             if (metaInfo == null) {
                 return 0
             }
@@ -113,7 +113,7 @@ private fun createMetaInfoFilter(allowErrorHighlighting: Boolean, highlightWarni
     })
 
     return filter@{ metaInfo ->
-        require(metaInfo is HighlightingCodeMetaInfo)
+        require(metaInfo is AbstractHighlightingCodeMetaInfo)
         val highlightingInfo = metaInfo.highlightingInfo
 
         require(highlightingInfo.severity !in forbiddenSeverities || allowErrorHighlighting) {

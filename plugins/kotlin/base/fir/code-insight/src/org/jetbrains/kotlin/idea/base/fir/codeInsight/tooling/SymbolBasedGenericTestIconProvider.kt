@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -26,7 +28,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isTestDeclaration(symbol: KaAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
@@ -37,7 +39,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private tailrec fun isIgnored(symbol: KaAnnotatedSymbol): Boolean {
         if (KotlinTestAvailabilityChecker.IGNORE_FQ_NAME in symbol.annotations) {
             return true

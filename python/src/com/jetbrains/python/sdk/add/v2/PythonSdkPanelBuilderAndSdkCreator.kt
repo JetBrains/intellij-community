@@ -5,16 +5,18 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
-import com.intellij.openapi.observable.util.notEqualsTo
+import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -22,6 +24,9 @@ import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
+import com.jetbrains.python.sdk.add.v2.conda.selectCondaEnvironment
+import com.jetbrains.python.sdk.add.v2.uv.UvInterpreterSection
+import com.jetbrains.python.sdk.add.v2.venv.setupVirtualenv
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -56,41 +61,42 @@ interface PySdkPanelBuilder {
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
 internal class PythonSdkPanelBuilderAndSdkCreator(
-  onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val errorSink: ErrorSink,
   private val module: Module? = null,
   private val limitExistingEnvironments: Boolean = true,
 ) : PySdkPanelBuilder, PySdkCreator {
   private val propertyGraph = PropertyGraph()
-  private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
-    assert(it.isNotEmpty()) {
-      "When provided, onlyAllowedInterpreterTypes shouldn't be empty"
-    }
-  }
 
   private val initMutex = Mutex()
 
-  private var selectedMode = propertyGraph.property(this.allowedInterpreterTypes.first())
+  private var selectedMode = propertyGraph.property(PythonInterpreterSelectionMode.entries.first())
   private var _projectVenv = propertyGraph.booleanProperty(selectedMode, PROJECT_VENV)
   private var _baseConda = propertyGraph.booleanProperty(selectedMode, BASE_CONDA)
   private var _custom = propertyGraph.booleanProperty(selectedMode, CUSTOM)
   private var venvHint = propertyGraph.property("")
 
-  private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox
+  private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox<PathHolder.Eel>
+  private lateinit var executablePath: ValidatedPathField<Version, PathHolder.Eel, ValidatedPath.Executable<PathHolder.Eel>>
+  private lateinit var uvSection: UvInterpreterSection
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
     val projectPath = model.projectPathFlows.projectPathWithDefault.first().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME).toString()
-    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath))
-    else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
+    when (get) {
+      PROJECT_VENV -> venvHint.set(message("sdk.create.simple.venv.hint", projectPath))
+      BASE_CONDA -> venvHint.set(message("sdk.create.simple.conda.hint"))
+      PROJECT_UV -> venvHint.set(message("sdk.create.simple.uv.hint", projectPath))
+      CUSTOM -> venvHint.set("")
+    }
   }
 
-  private lateinit var custom: PythonAddCustomInterpreter
-  private lateinit var model: PythonMutableTargetAddInterpreterModel
+  private lateinit var custom: PythonAddCustomInterpreter<PathHolder.Eel>
+  private lateinit var model: PythonMutableTargetAddInterpreterModel<PathHolder.Eel>
 
   override fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows) {
-    model = PythonLocalAddInterpreterModel(projectPathFlows)
+    model = PythonLocalAddInterpreterModel(projectPathFlows, FileSystem.Eel(localEel))
     model.navigator.selectionMode = selectedMode
+    uvSection = UvInterpreterSection(model, module, selectedMode, propertyGraph)
 
     custom = PythonAddCustomInterpreter(
       model = model,
@@ -102,44 +108,50 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
 
     with(outerPanel) {
-      if (allowedInterpreterTypes.size > 1) { // No need to show control with only one selection
+      if (PythonInterpreterSelectionMode.entries.size > 1) { // No need to show control with only one selection
         row(message("sdk.create.interpreter.type")) {
-          segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
+          segmentedButton(PythonInterpreterSelectionMode.entries) { text = message(it.nameKey) }
             .bind(selectedMode)
         }
       }
 
       pythonBaseVersionComboBox = pythonInterpreterComboBox(
+        model.fileSystem,
         title = message("sdk.create.python.version"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addInterpreter
+        onPathSelected = model::addManuallyAddedSystemPython
       ) {
         visibleIf(_projectVenv)
       }
 
       rowsRange {
-        executableSelector(model.state.condaExecutable,
-                           validationRequestor,
-                           message("sdk.create.custom.venv.executable.path", "conda"),
-                           message("sdk.create.custom.venv.missing.text", "conda"),
-                           createInstallCondaFix(model, errorSink))
+        executablePath = validatablePathField(
+          fileSystem = model.fileSystem,
+          pathValidator = model.condaViewModel.toolValidator,
+          validationRequestor = validationRequestor,
+          labelText = message("sdk.create.custom.venv.executable.path", "conda"),
+          missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
+          installAction = createInstallCondaFix(model),
+        )
       }.visibleIf(_baseConda)
+
+      uvSection.setupUI(this, validationRequestor)
 
       row("") {
         comment("").bindText(venvHint)
-      }.visibleIf(_projectVenv or (_baseConda and model.state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE)))
+      }.visibleIf(_projectVenv or (_baseConda and model.condaViewModel.condaExecutable.isNotNull()) or uvSection.hintVisiblePredicate() or _custom)
 
       rowsRange {
         custom.setupUI(this, validationRequestor)
       }.visibleIf(_custom)
     }
 
-    model.navigator.restoreLastState(allowedInterpreterTypes) // restore the last UI state before init to prevent visual loading lags
+    model.navigator.restoreLastState(PythonInterpreterSelectionMode.entries) // restore the last UI state before init to prevent visual loading lags
   }
 
   override fun onShownInitialization(scopingComponent: Component) {
-    scopingComponent.launchOnShow("${this::class.java} onShown initialization") {
+    scopingComponent.launchOnShow("${this::class.java} onShown initialization", TraceContext(message("tracecontext.new.project.wizard"), null)) {
       initMutex.withLock {
         supervisorScope {
           initialize(this@supervisorScope)
@@ -148,14 +160,16 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     }
   }
 
-  private fun initialize(scope: CoroutineScope) {
+  private suspend fun initialize(scope: CoroutineScope) {
     model.initialize(scope)
 
     pythonBaseVersionComboBox.initialize(scope, model.baseInterpreters)
+    executablePath.initialize(scope)
 
     model.projectPathFlows.projectPathWithDefault.onEach { updateVenvLocationHint() }.launchIn(scope)
     selectedMode.afterChange(scope.asDisposable()) { scope.launch { updateVenvLocationHint() } }
 
+    uvSection.onShown(scope)
     custom.onShown(scope)
   }
 
@@ -173,10 +187,12 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
       PROJECT_VENV -> {
         val projectPath = model.projectPathFlows.projectPathWithDefault.first()
         // todo just keep venv path, all the rest is in the model
-        model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), moduleOrProject)
+        val venvFolder = PathHolder.Eel(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+        model.setupVirtualenv(venvFolder, moduleOrProject)
       }
-      BASE_CONDA -> model.selectCondaEnvironment(base = true)
-      CUSTOM -> custom.currentSdkManager.setupSdk(moduleOrProject)
+      BASE_CONDA -> model.selectCondaEnvironment(moduleOrProject, base = true)
+      PROJECT_UV -> uvSection.getUvCreator().getOrCreateSdkWithBackground(moduleOrProject)
+      CUSTOM -> custom.currentSdkManager.getOrCreateSdkWithBackground(moduleOrProject)
     }.getOr { return it }
 
     val statistics = withContext(Dispatchers.EDT) { createStatisticsInfo() }
@@ -187,6 +203,15 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   private fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {
     PROJECT_VENV -> InterpreterStatisticsInfo(
       type = InterpreterType.VIRTUALENV,
+      target = InterpreterTarget.LOCAL,
+      globalSitePackage = false,
+      makeAvailableToAllProjects = false,
+      previouslyConfigured = false,
+      isWSLContext = false,
+      creationMode = InterpreterCreationMode.SIMPLE
+    )
+    PROJECT_UV -> InterpreterStatisticsInfo(
+      type = InterpreterType.UV,
       target = InterpreterTarget.LOCAL,
       globalSitePackage = false,
       makeAvailableToAllProjects = false,

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -219,6 +219,7 @@ class ModuleItem(
   // for one module, maybe several JARs - that's why `relativeOutputPath` is included in hash code
   @JvmField val relativeOutputFile: String,
   @JvmField val reason: String?,
+  @JvmField val moduleSet: String? = null,
 ) {
   init {
     require(!moduleName.isEmpty()) {
@@ -226,11 +227,13 @@ class ModuleItem(
     }
   }
 
+  internal fun isProductModule(): Boolean = ModuleIncludeReasons.isProductModule(reason)
+
   override fun equals(other: Any?): Boolean {
     return this === other || other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
   }
 
   override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason)"
+  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason, moduleSet=$moduleSet)"
 }

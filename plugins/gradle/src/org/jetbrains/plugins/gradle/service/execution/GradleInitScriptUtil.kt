@@ -3,6 +3,8 @@
 
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.amazon.ion.IonType
+import com.google.common.collect.Multimap
 import com.google.gson.GsonBuilder
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
@@ -15,7 +17,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
+import gnu.trove.TObjectHash
 import groovy.lang.MissingMethodException
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.ImplicitContextKeyed
+import org.apache.commons.lang3.StringUtils
 import org.gradle.api.invocation.Gradle
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -36,8 +42,8 @@ import kotlin.io.path.*
 private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil")
 private val EXCLUDED_JAR_SUFFIXES = setOf(
   "lib/app.jar",
-  "lib/app-client.jar",
-  "lib/lib-client.jar"
+  "lib/app-backend.jar",
+  "lib/lib.jar"
 )
 
 @ApiStatus.Internal
@@ -67,7 +73,16 @@ val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   ExternalSystemRtClass::class.java, // intellij.platform.externalSystem.rt
   GradleToolingExtensionClass::class.java, // intellij.gradle.toolingExtension
   GradleToolingExtensionImplClass::class.java, // intellij.gradle.toolingExtension.impl
-  Unit::class.java // kotlin-stdlib
+
+  // the set of dependencies required for the modules above
+  Unit::class.java, // kotlin-stdlib
+  GsonBuilder::class.java, // gson
+  IonType::class.java,  // ion serialisation
+  Multimap::class.java, // guava
+  StringUtils::class.java, // apache commons
+  TObjectHash::class.java, // trove hashing
+  Span::class.java, // opentelemetry
+  ImplicitContextKeyed::class.java // opentelemetry-context
 )
 
 @JvmField
@@ -316,6 +331,7 @@ fun loadApplicationInitScript(
   useManifestJar: Boolean,
   useArgsFile: Boolean,
   useClasspathFile: Boolean,
+  javaModuleName: String?,
 ): String {
   return joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
@@ -332,7 +348,8 @@ fun loadApplicationInitScript(
       "DEFS" to if (definitions.isNullOrEmpty()) "// NO DEFS" else definitions,
       "USE_MANIFEST_JAR" to useManifestJar.toString(),
       "USE_ARGS_FILE" to useArgsFile.toString(),
-      "USE_CLASSPATH_FILE" to useClasspathFile.toString()
+      "USE_CLASSPATH_FILE" to useClasspathFile.toString(),
+      "JAVA_MODULE_NAME" to if (javaModuleName.isNullOrEmpty()) "null" else javaModuleName.toGroovyStringLiteral()
     ))
   )
 }

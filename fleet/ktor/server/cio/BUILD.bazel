@@ -1,0 +1,44 @@
+### auto-generated section `build fleet.ktor.server.cio` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "cio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  exports = [
+    "@lib//:fleet-io-ktor-server-cio",
+    "@lib//:fleet-io-ktor-server-host-common",
+    "@lib//:fleet-io-ktor-server-core",
+    "@lib//:fleet-io-ktor-utils",
+    "@lib//:fleet-io-ktor-http",
+    "@lib//:fleet-io-ktor-http-cio",
+    "@lib//:fleet-io-ktor-io",
+    "@lib//:fleet-io-ktor-serialization",
+    "@lib//:fleet-io-ktor-events",
+    "@lib//:fleet-io-ktor-websockets",
+    "@lib//:fleet-io-ktor-network",
+  ],
+  runtime_deps = [
+    "@lib//:fleet-io-ktor-server-cio",
+    "@lib//:fleet-io-ktor-server-host-common",
+    "@lib//:fleet-io-ktor-server-core",
+    "@lib//:fleet-io-ktor-utils",
+    "@lib//:fleet-io-ktor-http",
+    "@lib//:fleet-io-ktor-http-cio",
+    "@lib//:fleet-io-ktor-io",
+    "@lib//:fleet-io-ktor-serialization",
+    "@lib//:fleet-io-ktor-events",
+    "@lib//:fleet-io-ktor-websockets",
+    "@lib//:fleet-io-ktor-network",
+    "@lib//:com-typesafe-config",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-io-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:fleet-org-fusesource-jansi",
+    "@lib//:slf4j-api",
+  ]
+)
+### auto-generated section `build fleet.ktor.server.cio` end

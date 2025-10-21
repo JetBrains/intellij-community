@@ -21,8 +21,6 @@
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
       headlessImplementation="com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver"
     />
-    <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
-                        serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
     <!-- no preload="await" - requested by DaemonListeners -->
@@ -114,6 +112,11 @@
       description="If enabled, any action will cause auto-hide tool windows to be hidden"
       defaultValue="true"
     />
+    <registryKey
+      key="build.toolwindow.split.tree"
+      description="Use split implementation (frontend/backend) of Build tool window"
+      defaultValue="true"
+    />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
                     serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>
@@ -121,7 +124,7 @@
     <projectService serviceInterface="com.intellij.openapi.wm.impl.ToolWindowManagerState"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
 
-    <ideEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
+    <nonLockedIdeEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService"
                         serviceImplementation="com.intellij.openapi.project.configuration.EmptyLoggingService"
@@ -152,8 +155,6 @@
     <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
-
-    <postStartupActivity implementation="com.intellij.openapi.application.impl.islands.IslandsFeedback"/>
 
     <applicationService
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
@@ -276,6 +277,9 @@
 
     <listener class="com.intellij.refactoring.suggested.SuggestedRefactoringEditorHintAdvSettingListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+
+    <listener class="com.intellij.codeInsight.completion.command.commands.ActionsAdjustLastListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.command.impl.UndoCommandListener"

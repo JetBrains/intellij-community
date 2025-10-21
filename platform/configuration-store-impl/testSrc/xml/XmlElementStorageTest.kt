@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.Test
@@ -46,12 +47,12 @@ class XmlElementStorageTest {
   }
 
   @Test
-  fun `set state overrides old state`() {
+  fun `set state overrides old state`() = runBlocking {
     val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
     val newState = Element("component").setAttribute("name", "test").addContent(Element("bar"))
     val externalizationSession = storage.createSaveSessionProducer()!!
     externalizationSession.setState(component = null, componentName = "test", pluginId = PluginManagerCore.CORE_ID, state = newState)
-    externalizationSession.createSaveSession()!!.saveBlocking()
+    externalizationSession.createSaveSession()!!.save(events = null)
     assertThat(storage.savedElement).isNotNull
     assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull
     assertThat(storage.savedElement!!.getChild("component").getChild("foo")).isNull()
@@ -66,12 +67,13 @@ class XmlElementStorageTest {
 
     override fun loadLocalData() = element
 
-    override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<MyXmlElementStorage>(states, this) {
-      override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
-        if (dataWriter == null) {
+    override fun createSaveSession(states: StateMap): XmlElementStorageSaveSessionProducer<MyXmlElementStorage> {
+      return object : XmlElementStorageSaveSessionProducer<MyXmlElementStorage>(states, this) {
+        override fun remove(events: MutableList<VFileEvent>?) {
           savedElement = null
         }
-        else {
+
+        override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
           savedElement = JDOMUtil.load(dataWriter.toBufferExposingByteArray(LineSeparator.LF).toByteArray().inputStream())
         }
       }

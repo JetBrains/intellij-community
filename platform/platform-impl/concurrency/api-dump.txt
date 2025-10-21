@@ -1,0 +1,27 @@
+a:com.intellij.util.concurrency.Invoker
+- com.intellij.openapi.Disposable
+- f:compute(java.util.function.Supplier):org.jetbrains.concurrency.CancellablePromise
+- f:computeAsync(java.util.function.Supplier):org.jetbrains.concurrency.CancellablePromise
+- f:computeLater(java.util.function.Supplier):org.jetbrains.concurrency.CancellablePromise
+- dispose():V
+- s:forBackgroundPoolWithReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
+- s:forBackgroundPoolWithoutReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
+- s:forBackgroundThreadWithReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
+- s:forBackgroundThreadWithoutReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
+- s:forEventDispatchThread(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
+- f:getTaskCount():I
+- f:invoke(java.lang.Runnable):org.jetbrains.concurrency.CancellablePromise
+- f:invokeLater(java.lang.Runnable):org.jetbrains.concurrency.CancellablePromise
+- f:invokeLater(java.lang.Runnable,I):org.jetbrains.concurrency.CancellablePromise
+- isValidThread():Z
+- f:runOrInvokeLater(java.lang.Runnable):org.jetbrains.concurrency.CancellablePromise
+f:com.intellij.util.concurrency.Invoker$Background
+- com.intellij.util.concurrency.Invoker
+- <init>(com.intellij.openapi.Disposable,I):V
+- isValidThread():Z
+f:com.intellij.util.concurrency.Invoker$EDT
+- com.intellij.util.concurrency.Invoker
+- <init>(com.intellij.openapi.Disposable):V
+- isValidThread():Z
+com.intellij.util.concurrency.InvokerSupplier
+- a:getInvoker():com.intellij.util.concurrency.Invoker

@@ -107,11 +107,11 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     });
   }
 
-  protected Library createAsmLibrary() {
-    return createLibrary("asm", getAsmJar(), null);
+  protected Library createSampleLibrary() {
+    return createLibrary("caffeine", getSampleLibJar(), null);
   }
 
-  protected VirtualFile getAsmJar() {
-    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
+  protected VirtualFile getSampleLibJar() {
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("caffeine");
   }
 }

@@ -1,5 +1,6 @@
 from collections.abc import Callable, Mapping
 from hashlib import _Hash
+from typing import Final
 
 from .backends.base import Key
 
@@ -70,3 +71,5 @@ class Zips:
     SUPPORTED: set[str | None]
 
 ZIPS: Zips
+
+JWE_SIZE_LIMIT: Final[int]

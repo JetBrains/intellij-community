@@ -65,20 +65,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   private final @Nullable SmartPsiFileRange myNavigationRange;
   private volatile UsageType myUsageType;
 
-  private static class ComputedData {
-    public final int offset;
-    public final int lineNumber;
-    public final VirtualFile virtualFile;
-    public final @Nullable SmartPsiFileRange navigationRange;
-    public final long modificationStamp;
-
-    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable SmartPsiFileRange navigationRange, long stamp) {
-      this.offset = offset;
-      this.lineNumber = lineNumber;
-      this.virtualFile = virtualFile;
-      this.navigationRange = navigationRange;
-      this.modificationStamp = stamp;
-    }
+  private record ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable SmartPsiFileRange navigationRange,
+                              long modificationStamp) {
   }
 
   private static @Nullable SmartPsiFileRange possiblySmart(@Nullable PsiFile psiFile, @Nullable Segment segment) {

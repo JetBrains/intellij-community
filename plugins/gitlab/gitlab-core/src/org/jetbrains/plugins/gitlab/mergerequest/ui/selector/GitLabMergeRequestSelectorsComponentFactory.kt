@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.asSafely
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
@@ -33,8 +35,8 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 object GitLabMergeRequestSelectorsComponentFactory {
-  fun createSelectorsComponent(cs: CoroutineScope, selectorVm: GitLabRepositoryAndAccountSelectorViewModel, loginSource: GitLabLoginSource): JComponent {
-
+  fun createSelectorsComponent(cs: CoroutineScope, project: Project, selectorVm: GitLabRepositoryAndAccountSelectorViewModel, loginSource: GitLabLoginSource): JComponent {
+    val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, selectorVm.accountManager) { account ->
       // TODO: separate loader
       selectorVm.accountManager.findCredentials(account)?.let { token ->
@@ -44,6 +46,7 @@ object GitLabMergeRequestSelectorsComponentFactory {
 
     val selectors = RepositoryAndAccountSelectorComponentFactory(selectorVm).create(
       scope = cs,
+      defaultAccountHolder = defaultAccountHolder,
       repoNamer = { mapping ->
         val allProjects = selectorVm.repositoriesState.value.map { it.repository }
         getProjectDisplayName(allProjects, mapping.repository)

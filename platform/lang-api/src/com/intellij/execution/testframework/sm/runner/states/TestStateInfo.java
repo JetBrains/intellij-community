@@ -70,7 +70,7 @@ public interface TestStateInfo {
     TRIGGERING_ERROR_INDEX(4, 6, "Triggering error"),  // Android Studio: used in com.google.gct.testing.results
     IGNORED_INDEX(5, 2, ExecutionBundle.message("sm.test.runner.magnitude.ignored.failed.title")),
     FAILED_INDEX(6, 4, ExecutionBundle.message("sm.test.runner.magnitude.assertion.failed.title")),
-    ERROR_INDEX(8, 5, ExecutionBundle.message("sm.test.runner.magnitude.testerror.title")),
+    ERROR_INDEX(8, 5, ExecutionBundle.message("sm.test.runner.magnitude.test.error.title")),
     PASSED_INDEX(COMPLETE_INDEX.getValue(), COMPLETE_INDEX.getSortWeight(), ExecutionBundle.message("sm.test.runner.magnitude.passed.title"));
 
     private final int myValue;

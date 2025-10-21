@@ -6,22 +6,28 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.DefaultFieldEntity
+import com.intellij.workspaceModel.test.api.DefaultFieldEntityBuilder
 import com.intellij.workspaceModel.test.api.TestData
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity,
-                                                                                        WorkspaceEntityBase(dataSource) {
+internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -46,6 +52,12 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
 
   override var description: String = dataSource.description
 
+  override var defaultSet: Set<String> = dataSource.defaultSet
+
+  override var defaultList: List<String> = dataSource.defaultList
+
+  override var defaultMap: Map<String, String> = dataSource.defaultMap
+
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -57,8 +69,8 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
   }
 
 
-  internal class Builder(result: DefaultFieldEntityData?) :
-    ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result), DefaultFieldEntity.Builder {
+  internal class Builder(result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(
+    result), DefaultFieldEntityBuilder {
     internal constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -98,6 +110,17 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
       return connections
     }
 
+    override fun afterModification() {
+      val collection_defaultSet = getEntityData().defaultSet
+      if (collection_defaultSet is MutableWorkspaceSet<*>) {
+        collection_defaultSet.cleanModificationUpdateAction()
+      }
+      val collection_defaultList = getEntityData().defaultList
+      if (collection_defaultList is MutableWorkspaceList<*>) {
+        collection_defaultList.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultFieldEntity
@@ -106,6 +129,9 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
       if (this.data != dataSource.data) this.data = dataSource.data
       if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
       if (this.description != dataSource.description) this.description = dataSource.description
+      if (this.defaultSet != dataSource.defaultSet) this.defaultSet = dataSource.defaultSet.toMutableSet()
+      if (this.defaultList != dataSource.defaultList) this.defaultList = dataSource.defaultList.toMutableList()
+      if (this.defaultMap != dataSource.defaultMap) this.defaultMap = dataSource.defaultMap.toMutableMap()
       updateChildToParentReferences(parents)
     }
 
@@ -152,6 +178,58 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
         changedProperty.add("description")
       }
 
+    private val defaultSetUpdater: (value: Set<String>) -> Unit = { value ->
+
+      changedProperty.add("defaultSet")
+    }
+    override var defaultSet: MutableSet<String>
+      get() {
+        val collection_defaultSet = getEntityData().defaultSet
+        if (collection_defaultSet !is MutableWorkspaceSet) return collection_defaultSet
+        if (diff == null || modifiable.get()) {
+          collection_defaultSet.setModificationUpdateAction(defaultSetUpdater)
+        }
+        else {
+          collection_defaultSet.cleanModificationUpdateAction()
+        }
+        return collection_defaultSet
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).defaultSet = value
+        defaultSetUpdater.invoke(value)
+      }
+
+    private val defaultListUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("defaultList")
+    }
+    override var defaultList: MutableList<String>
+      get() {
+        val collection_defaultList = getEntityData().defaultList
+        if (collection_defaultList !is MutableWorkspaceList) return collection_defaultList
+        if (diff == null || modifiable.get()) {
+          collection_defaultList.setModificationUpdateAction(defaultListUpdater)
+        }
+        else {
+          collection_defaultList.cleanModificationUpdateAction()
+        }
+        return collection_defaultList
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).defaultList = value
+        defaultListUpdater.invoke(value)
+      }
+
+    override var defaultMap: Map<String, String>
+      get() = getEntityData().defaultMap
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).defaultMap = value
+        changedProperty.add("defaultMap")
+      }
+
     override fun getEntityClass(): Class<DefaultFieldEntity> = DefaultFieldEntity::class.java
   }
 }
@@ -162,11 +240,14 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
   lateinit var data: TestData
   var anotherVersion: Int = 0
   var description: String = "Default description"
+  var defaultSet: MutableSet<String> = emptySet<String>().toMutableWorkspaceSet()
+  var defaultList: MutableList<String> = emptyList<String>().toMutableWorkspaceList()
+  var defaultMap: Map<String, String> = emptyMap<String, String>()
 
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DefaultFieldEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<DefaultFieldEntity> {
     val modifiable = DefaultFieldEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -188,14 +269,25 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.DefaultFieldEntity") as EntityMetadata
   }
 
+  override fun clone(): DefaultFieldEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as DefaultFieldEntityData
+    clonedEntity.defaultSet = clonedEntity.defaultSet.toMutableWorkspaceSet()
+    clonedEntity.defaultList = clonedEntity.defaultList.toMutableWorkspaceList()
+    return clonedEntity
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return DefaultFieldEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return DefaultFieldEntity(version, data, entitySource) {
       this.anotherVersion = this@DefaultFieldEntityData.anotherVersion
       this.description = this@DefaultFieldEntityData.description
+      this.defaultSet = this@DefaultFieldEntityData.defaultSet.toMutableWorkspaceSet()
+      this.defaultList = this@DefaultFieldEntityData.defaultList.toMutableWorkspaceList()
+      this.defaultMap = this@DefaultFieldEntityData.defaultMap
     }
   }
 
@@ -215,6 +307,9 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
     if (this.data != other.data) return false
     if (this.anotherVersion != other.anotherVersion) return false
     if (this.description != other.description) return false
+    if (this.defaultSet != other.defaultSet) return false
+    if (this.defaultList != other.defaultList) return false
+    if (this.defaultMap != other.defaultMap) return false
     return true
   }
 
@@ -228,6 +323,9 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
     if (this.data != other.data) return false
     if (this.anotherVersion != other.anotherVersion) return false
     if (this.description != other.description) return false
+    if (this.defaultSet != other.defaultSet) return false
+    if (this.defaultList != other.defaultList) return false
+    if (this.defaultMap != other.defaultMap) return false
     return true
   }
 
@@ -237,6 +335,9 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
     result = 31 * result + data.hashCode()
     result = 31 * result + anotherVersion.hashCode()
     result = 31 * result + description.hashCode()
+    result = 31 * result + defaultSet.hashCode()
+    result = 31 * result + defaultList.hashCode()
+    result = 31 * result + defaultMap.hashCode()
     return result
   }
 
@@ -246,6 +347,9 @@ internal class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>(
     result = 31 * result + data.hashCode()
     result = 31 * result + anotherVersion.hashCode()
     result = 31 * result + description.hashCode()
+    result = 31 * result + defaultSet.hashCode()
+    result = 31 * result + defaultList.hashCode()
+    result = 31 * result + defaultMap.hashCode()
     return result
   }
 }

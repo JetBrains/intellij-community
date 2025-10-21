@@ -64,7 +64,7 @@ public final class StringBufferReplaceableByStringInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new StringBufferReplaceableByStringVisitor();
   }
 
@@ -242,10 +242,10 @@ public final class StringBufferReplaceableByStringInspection extends BaseInspect
           toDelete.add(expressions.get(i).getParent());
         }
 
-        final PsiExpression lastExpression = expressions.get(expressions.size() - 1);
+        final PsiExpression lastExpression = expressions.getLast();
         final boolean useVariable = myPossibleSideEffect || expressionText.contains("\n") && !isVariableInitializer(lastExpression);
         if (useVariable) {
-          final PsiElement last = toDelete.remove(toDelete.size() - 1);
+          final PsiElement last = toDelete.removeLast();
           final PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(last, PsiStatement.class);
           if (statement == null) {
             return;

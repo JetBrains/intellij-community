@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.actions.ForceOnDemandRenderersAction;
+import com.intellij.debugger.actions.MuteRendererUtils;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -102,6 +102,6 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
 
   static boolean isOnDemandForced(DebugProcessImpl debugProcess) {
     JavaDebugProcess process = debugProcess.getXdebugProcess();
-    return process != null && ForceOnDemandRenderersAction.isForcedOnDemand((XDebugSessionImpl)process.getSession());
+    return process != null && MuteRendererUtils.isMuted(((XDebugSessionImpl)process.getSession()).getSessionData());
   }
 }

@@ -19,13 +19,11 @@ public interface GradleTargetEnvironmentAware {
    * Modify request before target environment is created
    */
   void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
-                                       @NotNull GradleServerEnvironmentSetup environmentSetup,
-                                       @NotNull TargetProgressIndicator progressIndicator);
+                                       @NotNull GradleServerEnvironmentSetup environmentSetup);
 
   /**
    * Modify created target environment
    */
   void handleCreatedTargetEnvironment(@NotNull TargetEnvironment targetEnvironment,
-                                      @NotNull GradleServerEnvironmentSetup environmentSetup,
-                                      @NotNull TargetProgressIndicator progressIndicator);
+                                      @NotNull GradleServerEnvironmentSetup environmentSetup);
 }

@@ -9,12 +9,10 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
-import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
-
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
 
 internal fun Project.getAllKaModules(): List<KaModule> = buildSet {
     addAll(getAllKaModules(modules.toList()))
@@ -36,27 +34,8 @@ internal val kaModulesComparatorForStableRendering =
         .thenBy { it.getOneLineModuleDescriptionForRendering() }
         .thenBy { it.targetPlatform.getTargetPlatformDescriptionForRendering() }
 
-internal fun Collection<KaModule>.computeDependenciesClosure(): List<KaModule> {
-    val result = mutableSetOf<KaModule>()
-
-    fun visit(module: KaModule) {
-        if (module in result) return
-        result += module
-        module.allDirectDependencies().forEach(::visit)
-    }
-
-    forEach(::visit)
-
-    return result.toList()
-}
-
 internal fun getAllKaModules(modules: Collection<Module>): List<KaModule> =
-    modules.flatMap {
-        listOfNotNull(
-            it.toKaSourceModule(KaSourceModuleKind.PRODUCTION),
-            it.toKaSourceModule(KaSourceModuleKind.TEST),
-        )
-    }
+    modules.flatMap { it.toKaSourceModules() }
 
 internal fun Project.getAllKaModules(libraries: Collection<Library>): List<KaModule> =
     libraries.flatMap { it.toKaLibraryModules(this) }

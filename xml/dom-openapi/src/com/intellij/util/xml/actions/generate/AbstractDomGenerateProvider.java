@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
   /**
    * @deprecated Provide both action description and text, as they have different capitalization rules.
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public AbstractDomGenerateProvider(final @Nls String description, final Class<T> aClass) {
     this(description, aClass, null);
@@ -36,6 +38,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
   /**
    * @deprecated Provide both action description and text, as they have different capitalization rules.
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public AbstractDomGenerateProvider(final @Nls String description, final Class<T> aClass, @Nullable String mappingId) {
     this(description, description, aClass, mappingId);

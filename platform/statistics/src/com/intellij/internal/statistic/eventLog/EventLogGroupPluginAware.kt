@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NonNls
  * @param id Unique identifier for the event group.
  * @param version Version of the event group.
  * @param recorder Name of the event recorder.
- * @param description Optional description of the event group.
+ * @param description Mandatory description of the event group.
  * @param pluginLoadedClass The class used to get the plugin classloader. This is required to get the PluginInfo.
  */
 @ApiStatus.Internal
@@ -27,7 +27,7 @@ class EventLogGroupPluginAware<T>(
   @NonNls @EventIdName id: String,
   version: Int,
   recorder: String,
-  description: String?,
+  description: String,
   pluginLoadedClass: Class<T>,
 ) : EventLogGroup(id, version, recorder, description, listOf(createPluginVersionField(pluginLoadedClass))) {
   companion object {
@@ -35,7 +35,7 @@ class EventLogGroupPluginAware<T>(
       id: String,
       version: Int,
       recorder: String,
-      description: String? = null
+      description: String
     ): EventLogGroupPluginAware<T> = EventLogGroupPluginAware(id, version, recorder, description, T::class.java)
 
     private fun <T> createPluginVersionField(

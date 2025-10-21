@@ -24,7 +24,6 @@ public final class AppMode {
   public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
   public static final String REMOTE_DEV_MODE_COMMAND = "serverMode";
 
-  static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   public static final String HELP_OPTION = "--help";
   public static final String VERSION_OPTION = "--version";
 
@@ -57,32 +56,52 @@ public final class AppMode {
     return isHeadless;
   }
 
+  /**
+   * Returns {@code true} if the IDE is running as a remote development host.
+   * This is an internal method supposed to be used only from code running during early startup phases.
+   * If the instance container is initialized (in particular, in any plugin code), its equivalent
+   * {@link com.intellij.platform.ide.productMode.IdeProductMode#isBackend()} should be used instead.
+   */
   public static boolean isRemoteDevHost() {
     return isRemoteDevHost;
   }
 
-  public static boolean isDevServer() {
+  /**
+   * Returns {@code true} if the IDE is running from a development build, not a regular installation.
+   * The IDE can be started with the development build by running '* (dev build)' configuration from source code, also some tests use this
+   * mode.
+   * In this mode modules and plugins are loaded by different classloaders, the same as in production mode. However, the layout of
+   * class-files and resources may differ from the real production layout.
+   * @see com.intellij.ide.plugins.PluginManagerCore#isRunningFromSources
+   */
+  public static boolean isRunningFromDevBuild() {
     return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
+  /** @deprecated use {@link #isRunningFromDevBuild()} instead; this name may be confusing */
+  @Deprecated
+  public static boolean isDevServer() {
+    return isRunningFromDevBuild();
   }
 
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
-    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && !isKnownNonLightEditCommand(args) && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    if (args.isEmpty()) {
-      return;
+    if (!args.isEmpty()) {
+      isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
+                        CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
+                        REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
+                        REMOTE_DEV_MODE_COMMAND.equals(args.get(0)) ||
+                        SPLIT_MODE_COMMAND.equals(args.get(0));
     }
 
-    isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
-                      CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
-                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
-                      REMOTE_DEV_MODE_COMMAND.equals(args.get(0)) ||
-                      SPLIT_MODE_COMMAND.equals(args.get(0));
+    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) ||
+                  (!isCommandLine && !isRemoteDevHost && !isKnownNonLightEditCommand(args) && isFileAfterOptions(args));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -99,8 +118,7 @@ public final class AppMode {
    * This is a temporary workaround for IJPL-161632.
    */
   private static boolean isKnownNonLightEditCommand(@NotNull List<String> args) {
-    return !args.isEmpty() &&
-           Arrays.asList("cwmHost", "cwmHostNoLobby", "remoteDevHost", "serverMode", "splitMode", "thinClient").contains(args.get(0));
+    return !args.isEmpty() && "thinClient".equals(args.get(0));
   }
 
   private static boolean isGuiCommand(String arg) {

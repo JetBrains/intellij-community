@@ -75,7 +75,7 @@ open class RepositoryChangesBrowserNode(repository: Repository,
       val colorManager = VcsProjectLog.getInstance(project).logManager?.colorManager
       if (colorManager != null) return colorManager
 
-      val roots = VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys
+      val roots = VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots().asList(), project).keys
       return VcsLogColorManagerFactory.create(roots)
     }
 

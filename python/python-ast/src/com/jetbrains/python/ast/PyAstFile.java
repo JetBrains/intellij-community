@@ -18,6 +18,7 @@ package com.jetbrains.python.ast;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
@@ -43,7 +44,9 @@ public interface PyAstFile extends PyAstElement, PsiFile, PyAstDocStringOwner, A
     return stmts;
   }
 
-  LanguageLevel getLanguageLevel();
+  default LanguageLevel getLanguageLevel() {
+    return PyLanguageFacadeKt.getEffectiveLanguageLevel(this);
+  }
 
   /**
    * Return true if the file contains a 'from __future__ import ...' statement with given feature.

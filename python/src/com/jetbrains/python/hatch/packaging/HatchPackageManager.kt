@@ -33,7 +33,7 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
 }
 
 internal class HatchPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? = when {
+  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? = when {
     sdk.isHatch -> HatchPackageManager(project, sdk)
     else -> null
   }

@@ -1,11 +1,13 @@
 from _typeshed import FileDescriptorOrPath, ReadableBuffer, WriteableBuffer
 from collections.abc import Iterable
 from io import FileIO
+from typing import type_check_only
 
 from ..base import AsyncBase, AsyncIndirectBase
 
 # This class does not exist at runtime and instead these methods are
 # all dynamically patched in.
+@type_check_only
 class _UnknownAsyncBinaryIO(AsyncBase[bytes]):
     async def close(self) -> None: ...
     async def flush(self) -> None: ...

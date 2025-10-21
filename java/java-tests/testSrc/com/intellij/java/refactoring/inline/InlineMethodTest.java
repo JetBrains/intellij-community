@@ -104,8 +104,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testChainingConstructor() { doTest(); }
 
   public void testChainingConstructor1() {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTest());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
   }
+  
+  public void testChainingVarargConstructor() { doTest(); }
 
   public void testNestedCall() { doTest(); }
 
@@ -654,6 +656,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
   
+  public void testInlineNullInForEach() {
+    doTest();
+  }
+  
   public void testAutomaticGetterSetterUse() {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
@@ -713,7 +719,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   private void performAction(final boolean inlineThisOnly, final boolean nonCode) {
     final PsiReference ref = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
-    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
+    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression expression ? expression : null;
     PsiMethod method = findMethod();
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);

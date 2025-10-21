@@ -14,10 +14,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -106,7 +106,7 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   public static @NotNull Module createTempModule(@NotNull TemporaryDirectory tempDir, Project project) {
     Path tempPath = tempDir.newPath(".iml");
     ModuleManager moduleManager = ModuleManager.getInstance(project);
-    Module result = WriteAction.compute(() -> moduleManager.newModule(tempPath, StdModuleTypes.JAVA.getId()));
+    Module result = WriteAction.compute(() -> moduleManager.newModule(tempPath, JavaModuleType.getModuleType().getId()));
     PlatformTestUtil.saveProject(project);
     IndexingTestUtil.waitUntilIndexesAreReady(project);
     return result;

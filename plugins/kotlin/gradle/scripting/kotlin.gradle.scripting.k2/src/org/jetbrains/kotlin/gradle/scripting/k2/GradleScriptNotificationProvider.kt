@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocato
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
-import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -159,10 +159,8 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         }
     }
 
-    private fun isImported(virtualFile: VirtualFile, project: Project): Boolean {
-        return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)
-            ?.getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull() != null
-    }
+    private fun isImported(virtualFile: VirtualFile, project: Project): Boolean =
+        GradleScriptRefinedConfigurationProvider.getInstance(project).get(virtualFile) != null
 
     private fun linkProject(
         project: Project,

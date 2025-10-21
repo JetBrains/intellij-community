@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jackson.jr.objects` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-jackson-jr-objects_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-jackson-jr-objects",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-jackson-jr-objects_resources"],
+  exports = ["@lib//:libraries-jackson-jr-objects-jackson-jr-objects"],
+  runtime_deps = ["@lib//:libraries-jackson-jr-objects-jackson-jr-objects"]
+)
+### auto-generated section `build intellij.libraries.jackson.jr.objects` end

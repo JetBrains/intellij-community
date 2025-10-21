@@ -51,7 +51,7 @@ public final class GrInspectionUtil {
 
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(infotype).range(refNameElement);
       builder.descriptionAndTooltip(message);
-      return builder.needsUpdateOnTyping(false).textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS);
+      return builder.textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS);
     }
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());

@@ -163,7 +163,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myContext = context;
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   protected @NotNull CodeInsightContext getContext() {
     if (myContext == null) {
       // todo IJPL-339 report an error here once all the highlighting passes are ready
@@ -183,7 +183,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   @Override
   public @NonNls String toString() {
-    return (getClass().isAnonymousClass() ? getClass().getSuperclass() : getClass()).getSimpleName() + "; id=" + getId();
+    return (getClass().isAnonymousClass() ? getClass().getSuperclass() : getClass()).getSimpleName() + ": id=" + getId();
   }
 
   public boolean isRunIntentionPassAfter() {

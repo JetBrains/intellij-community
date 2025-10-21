@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -15,14 +15,19 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 import java.util.function.Function;
 
+/**
+ * A container that associates {@link OffsetKey} instances with document offsets, tracked via {@link RangeMarker}.
+ * Offsets are automatically updated as the underlying {@link Document} changes.
+ */
 public final class OffsetMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(OffsetMap.class);
+
   private final Document myDocument;
   private final Map<OffsetKey, RangeMarker> myMap = new HashMap<>();
   private final Set<OffsetKey> myModified = new HashSet<>();
   private volatile boolean myDisposed;
 
-  public OffsetMap(final Document document) {
+  public OffsetMap(@NotNull Document document) {
     myDocument = document;
   }
 
@@ -31,7 +36,7 @@ public final class OffsetMap implements Disposable {
    * @return offset An offset registered earlier with this key.
    * @throws IllegalArgumentException if offset wasn't registered or became invalidated due to document changes
    */
-  public int getOffset(OffsetKey key) {
+  public int getOffset(@NotNull OffsetKey key) {
     synchronized (myMap) {
       final RangeMarker marker = myMap.get(key);
       if (marker == null) throw new IllegalArgumentException("Offset " + key + " is not registered");
@@ -51,18 +56,18 @@ public final class OffsetMap implements Disposable {
     }
   }
 
-  public boolean containsOffset(OffsetKey key) {
+  public boolean containsOffset(@NotNull OffsetKey key) {
     final RangeMarker marker = myMap.get(key);
     return marker != null && marker.isValid();
   }
 
   /**
    * Register key-offset binding. Offset will change together with {@link Document} editing operations
-   * unless an operation replaces completely the offset vicinity.
+   * unless an operation completely replaces the offset vicinity.
    * @param key offset key
    * @param offset offset in the document
    */
-  public void addOffset(OffsetKey key, int offset) {
+  public void addOffset(@NotNull OffsetKey key, int offset) {
     synchronized (myMap) {
       if (offset < 0) {
         removeOffset(key);
@@ -73,7 +78,7 @@ public final class OffsetMap implements Disposable {
     }
   }
 
-  private void saveOffset(OffsetKey key, int offset, boolean externally) {
+  private void saveOffset(@NotNull OffsetKey key, int offset, boolean externally) {
     LOG.assertTrue(!myDisposed);
     if (externally && myMap.containsKey(key)) {
       myModified.add(key);
@@ -86,7 +91,7 @@ public final class OffsetMap implements Disposable {
     myMap.put(key, marker);
   }
 
-  public void removeOffset(OffsetKey key) {
+  public void removeOffset(@NotNull OffsetKey key) {
     synchronized (myMap) {
       ProgressManager.checkCanceled();
       LOG.assertTrue(!myDisposed);
@@ -117,7 +122,7 @@ public final class OffsetMap implements Disposable {
     }
   }
 
-  public boolean wasModified(OffsetKey key) {
+  public boolean wasModified(@NotNull OffsetKey key) {
     synchronized (myMap) {
       return myModified.contains(key);
     }

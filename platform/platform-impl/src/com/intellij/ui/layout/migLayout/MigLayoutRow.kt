@@ -118,7 +118,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var visible: Boolean = true
+  private var visible: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -364,11 +364,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     gapAfter = "${spacing.largeVerticalGap}px!"
   }
 
-  override fun onGlobalApply(callback: () -> Unit): Row {
-    builder.applyCallbacks.getOrPut(null, { SmartList() }).add(callback)
-    return this
-  }
-
   private val labeledComponents = listOf(JTextComponent::class, JComboBox::class, JSpinner::class, JSlider::class)
 
   /**
@@ -414,21 +409,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
     builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
-    return this
-  }
-
-  override fun onApply(callback: () -> Unit): CellBuilder<T> {
-    builder.applyCallbacks.getOrPut(component, { SmartList() }).add(callback)
-    return this
-  }
-
-  override fun onReset(callback: () -> Unit): CellBuilder<T> {
-    builder.resetCallbacks.getOrPut(component, { SmartList() }).add(callback)
-    return this
-  }
-
-  override fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
-    builder.isModifiedCallbacks.getOrPut(component, { SmartList() }).add(callback)
     return this
   }
 

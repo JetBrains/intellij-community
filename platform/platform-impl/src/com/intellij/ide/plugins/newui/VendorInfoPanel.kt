@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.LinkPanel
-import com.intellij.ide.plugins.PluginNode
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.ListLayout
@@ -16,6 +16,7 @@ import javax.swing.JPanel
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
+@IntellijInternalApi
 class VendorInfoPanel : JPanel(ListLayout.horizontal(JBUI.scale(5))) {
   private val name = LinkPanel(this, false, false, null, null)
   private val verifiedIcon = ContextHelpLabel.create(IdeBundle.message("plugin.verified.organization"))

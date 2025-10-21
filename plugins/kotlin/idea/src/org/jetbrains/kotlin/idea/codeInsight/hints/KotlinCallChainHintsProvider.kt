@@ -61,7 +61,7 @@ open class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQuali
 
     override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
-    override fun getProperty(key: String): String = KotlinBundle.getMessage(key)
+    override fun getProperty(key: String): String = KotlinBundle.message(key)
 
     override fun getCaseDescription(case: ImmediateConfigurable.Case): String? = case.extendedDescription
 

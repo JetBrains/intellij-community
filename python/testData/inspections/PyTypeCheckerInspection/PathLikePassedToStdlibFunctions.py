@@ -36,7 +36,7 @@ os.fsdecode(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLik
 Path(<warning descr="Expected type 'str | PathLike[str]', got 'B' instead">b</warning>)
 PurePath(<warning descr="Expected type 'str | PathLike[str]', got 'B' instead">b</warning>)
 
-os.path.abspath(<warning descr="Expected type 'PathLike[AnyStr ≤: str | bytes] | AnyStr ≤: str | bytes', got 'B' instead">b</warning>)
+os.path.abspath(<warning descr="Unexpected type(s):(B)Possible type(s):(PathLike[AnyStr])(AnyStr)">b</warning>)
 
 
 # pathlib.PurePath

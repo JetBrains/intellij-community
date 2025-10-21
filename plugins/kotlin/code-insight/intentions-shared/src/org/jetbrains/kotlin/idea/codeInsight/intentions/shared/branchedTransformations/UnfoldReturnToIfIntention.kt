@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -18,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
-internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtReturnExpression, Unit>(KtReturnExpression::class) {
+internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction.Simple<KtReturnExpression>(KtReturnExpression::class) {
 
     override fun invoke(
         actionContext: ActionContext,
@@ -43,12 +42,12 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
         element.replace(newIfExpression)
     }
 
-    override fun getApplicableRanges(returnExpression: KtReturnExpression): List<TextRange> {
-        val ifExpression = returnExpression.returnedExpression as? KtIfExpression ?: return emptyList()
+    override fun getApplicableRanges(element: KtReturnExpression): List<TextRange> {
+        val ifExpression = element.returnedExpression as? KtIfExpression ?: return emptyList()
         if (ifExpression.then == null) return emptyList()
 
-        val returnKeywordRange = returnExpression.returnKeyword.textRangeIn(returnExpression)
-        val ifKeywordRange = ifExpression.ifKeyword.textRangeIn(returnExpression)
+        val returnKeywordRange = element.returnKeyword.textRangeIn(element)
+        val ifKeywordRange = ifExpression.ifKeyword.textRangeIn(element)
 
         return listOf(
             returnKeywordRange.union(ifKeywordRange)
@@ -61,7 +60,4 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
 
     override fun getPresentation(context: ActionContext, element: KtReturnExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
-
-    override fun KaSession.prepareContext(element: KtReturnExpression) {
-    }
 }

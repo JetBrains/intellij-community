@@ -45,7 +45,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
   suspend fun openPlatformProjectAsync(projectDirectory: VirtualFile): Project {
     return closeOpenedProjectsIfFailAsync {
       ProjectManagerEx.getInstanceEx().openProjectAsync(
-        projectStoreBaseDir = projectDirectory.toNioPath(),
+        projectIdentityFile = projectDirectory.toNioPath(),
         options = OpenProjectTask {
           forceOpenInNewFrame = true
           useDefaultProjectAsTemplate = false

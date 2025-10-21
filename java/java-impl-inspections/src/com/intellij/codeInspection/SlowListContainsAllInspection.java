@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -28,14 +28,13 @@ public final class SlowListContainsAllInspection extends AbstractBaseJavaLocalIn
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        if (TestUtils.isInTestCode(call)) return;
         super.visitMethodCallExpression(call);
         if (!LIST_CONTAINS_ALL.test(call)) return;
         PsiReferenceExpression expression = call.getMethodExpression();
         final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression);
         if (qualifier == null) return;
         final LongRangeSet listSizeRange = SlowAbstractSetRemoveAllInspection.getSizeRangeOfCollection(qualifier);
-        if (listSizeRange.isEmpty() || listSizeRange.max() <= 5) return;
+        if (listSizeRange.isEmpty() || listSizeRange.max() <= 5 || TestUtils.isInTestCode(call)) return;
         holder.registerProblem(call,
                                JavaBundle.message("inspection.slow.list.contains.all.description"),
                                ProblemHighlightType.WARNING,

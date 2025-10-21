@@ -41,21 +41,21 @@ public abstract class GradleDependencyUpdaterTestBase extends GradleImportingTes
     super.setUp();
     myTestDataDir = PathManagerEx.findFileUnderCommunityHome("platform/external-system-api/dependency-updater/testData/gradle");
     assertTrue(myTestDataDir.isDirectory());
-    myModifierService = DependencyModifierService.getInstance(myProject);
+    myModifierService = DependencyModifierService.getInstance(getMyProject());
     Assume.assumeTrue(myLanguageName.equals(GROOVY_LANGUAGE));
   }
 
   protected void assertScriptChanged() throws IOException {
     File expected = new File(myTestDataDir, "expected/" + getTestName(true) + myTestDataExtension);
     String expectedData = FileUtil.loadFile(expected, "UTF-8");
-    String actualData = new String(myProjectRoot.findChild("build" + myTestDataExtension).contentsToByteArray(), StandardCharsets.UTF_8);
+    String actualData = new String(getMyProjectRoot().findChild("build" + myTestDataExtension).contentsToByteArray(), StandardCharsets.UTF_8);
     assertSameLines(expectedData, actualData);
   }
 
   protected void assertScriptNotChanged() throws IOException {
     File expected = new File(myTestDataDir, "projects/" + getTestName(true) + myTestDataExtension);
     String expectedData = FileUtil.loadFile(expected, "UTF-8");
-    String actualData = new String(myProjectRoot.findChild("build" + myTestDataExtension).contentsToByteArray(), StandardCharsets.UTF_8);
+    String actualData = new String(getMyProjectRoot().findChild("build" + myTestDataExtension).contentsToByteArray(), StandardCharsets.UTF_8);
     assertSameLines(expectedData, actualData);
   }
 

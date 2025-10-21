@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,9 +16,8 @@ public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChoos
   }
 
   @Override
-  protected SimpleTextAttributes getTextAttributes(final JTree tree) {
-    return new SimpleTextAttributes(myIsValid ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
-      RenderingUtil.getForeground(tree));
+  public int getTextStyle() {
+    return myIsValid ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN;
   }
 
   @Override

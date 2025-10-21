@@ -1,0 +1,128 @@
+// class version 67.0 (67)
+// access flags 0x21
+public class simple3/Main {
+
+  // compiled from: Main.java
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 3 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lsimple3/Main; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x0
+  method1(Z)Ljava/lang/String;
+   L0
+    LINENUMBER 5 L0
+    ILOAD 1
+    ICONST_1
+    IF_ICMPNE L1
+   L2
+    LINENUMBER 6 L2
+    LDC "baz"
+    ARETURN
+   L1
+    LINENUMBER 8 L1
+    LDC "baz"
+    ARETURN
+   L3
+    LOCALVARIABLE this Lsimple3/Main; L0 L3 0
+    LOCALVARIABLE value Z L0 L3 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x0
+  method2(Z)Ljava/lang/String;
+   L0
+    LINENUMBER 12 L0
+    ILOAD 1
+    GETSTATIC java/lang/Boolean.TRUE : Ljava/lang/Boolean;
+    INVOKEVIRTUAL java/lang/Boolean.booleanValue ()Z
+    IF_ICMPNE L1
+   L2
+    LINENUMBER 13 L2
+    LDC "bar"
+    ARETURN
+   L1
+    LINENUMBER 15 L1
+    LDC "baz"
+    ARETURN
+   L3
+    LOCALVARIABLE this Lsimple3/Main; L0 L3 0
+    LOCALVARIABLE value Z L0 L3 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x0
+  method3(Z)Ljava/lang/String;
+   L0
+    LINENUMBER 19 L0
+    ILOAD 1
+    GETSTATIC java/lang/Boolean.FALSE : Ljava/lang/Boolean;
+    INVOKEVIRTUAL java/lang/Boolean.booleanValue ()Z
+    IF_ICMPNE L1
+   L2
+    LINENUMBER 20 L2
+    LDC "bar"
+    ARETURN
+   L1
+    LINENUMBER 22 L1
+    LDC "baz"
+    ARETURN
+   L3
+    LOCALVARIABLE this Lsimple3/Main; L0 L3 0
+    LOCALVARIABLE value Z L0 L3 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x0
+  method(Z)Ljava/lang/String;
+   L0
+    LINENUMBER 26 L0
+    GETSTATIC java/lang/Boolean.TRUE : Ljava/lang/Boolean;
+    ALOAD 0
+    ILOAD 1
+    INVOKEVIRTUAL simple3/Main.returnsBool (Z)Ljava/lang/Boolean;
+    INVOKEVIRTUAL java/lang/Boolean.equals (Ljava/lang/Object;)Z
+    IFEQ L1
+   L2
+    LINENUMBER 27 L2
+    LDC "foo"
+    ARETURN
+   L1
+    LINENUMBER 29 L1
+    LDC "baz"
+    ARETURN
+   L3
+    LOCALVARIABLE this Lsimple3/Main; L0 L3 0
+    LOCALVARIABLE value Z L0 L3 1
+    MAXSTACK = 3
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public returnsBool(Z)Ljava/lang/Boolean;
+   L0
+    LINENUMBER 33 L0
+    INVOKESTATIC java/lang/Math.random ()D
+    LDC 0.5
+    DCMPL
+    IFLE L1
+    ICONST_1
+    GOTO L2
+   L1
+    ICONST_0
+   L2
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    ARETURN
+   L3
+    LOCALVARIABLE this Lsimple3/Main; L0 L3 0
+    LOCALVARIABLE value Z L0 L3 1
+    MAXSTACK = 4
+    MAXLOCALS = 2
+}

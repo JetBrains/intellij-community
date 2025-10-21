@@ -1,6 +1,7 @@
 from antlr4.Token import Token as Token
 
 class IntervalSet:
+    __slots__ = ("intervals", "readonly")
     intervals: list[range] | None
     readonly: bool
     def __init__(self) -> None: ...

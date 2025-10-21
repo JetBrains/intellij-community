@@ -19,6 +19,7 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lexer;
 
+import com.intellij.xml.syntax.lexer.HtmlLexerConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class _XmlLexer extends FlexAdapter {

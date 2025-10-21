@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -138,16 +136,6 @@ public abstract class BaseSplitter implements Splitter {
         }
       }
     };
-  }
-
-  /**
-   * @deprecated Use {@link ProgressManager#checkCanceled()}.
-   */
-  @Deprecated(forRemoval = true)
-  public static void checkCancelled() {
-    if (ApplicationManager.getApplication() != null) {
-      ProgressIndicatorProvider.checkCanceled();
-    }
   }
 
   public static class TooLongBombedMatchingException extends ProcessCanceledException {

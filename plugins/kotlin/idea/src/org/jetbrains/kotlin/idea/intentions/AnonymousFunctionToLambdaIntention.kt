@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFunction>(
     KtNamedFunction::class.java,
-    KotlinBundle.lazyMessage("convert.to.lambda.expression"),
-    KotlinBundle.lazyMessage("convert.anonymous.function.to.lambda.expression")
+    KotlinBundle.messagePointer("convert.to.lambda.expression"),
+    KotlinBundle.messagePointer("convert.anonymous.function.to.lambda.expression")
 ) {
     override fun applicabilityRange(element: KtNamedFunction): TextRange? {
         if (element.name != null || !element.hasBody()) return null

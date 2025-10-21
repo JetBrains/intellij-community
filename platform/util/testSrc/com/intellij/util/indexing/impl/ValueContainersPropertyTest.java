@@ -82,7 +82,7 @@ class ValueContainersPropertyTest {
 
   @Test
   void changeTrackingContainer_accumulatesAllChanges_AppliedToSnapshot_AndItself() {
-    ValueContainerImpl<String> snapshot = new ValueContainerImpl<>();
+    ValueContainerImpl<String> snapshot = ValueContainerImpl.createValueContainerForTests();
     UpdatableValueContainer<String> changeTrackingContainer = new ChangeTrackingValueContainer<>(() -> snapshot);
 
     IdealValueContainer<String> etalon = new IdealValueContainer<>();
@@ -113,7 +113,7 @@ class ValueContainersPropertyTest {
 
   @Test
   void regression_ChangeTrackingContainer_correctlyTracks_DuplicatedEntryAddAndRemove() {
-    ValueContainerImpl<String> snapshot = new ValueContainerImpl<>();
+    ValueContainerImpl<String> snapshot = ValueContainerImpl.createValueContainerForTests();
     UpdatableValueContainer<String> changeTrackingContainer = new ChangeTrackingValueContainer<>(() -> snapshot);
 
     IdealValueContainer<String> etalon = new IdealValueContainer<>();
@@ -153,7 +153,7 @@ class ValueContainersPropertyTest {
 
   @Test
   void changeTrackingContainer_serializedAndDeserializedFully_IsEquivalentToTheEtalon() throws IOException {
-    ValueContainerImpl<String> snapshot = new ValueContainerImpl<>();
+    ValueContainerImpl<String> snapshot = ValueContainerImpl.createValueContainerForTests();
     UpdatableValueContainer<String> changeTrackingContainer = new ChangeTrackingValueContainer<>(() -> snapshot);
 
     IdealValueContainer<String> etalon = new IdealValueContainer<>();
@@ -187,7 +187,7 @@ class ValueContainersPropertyTest {
 
   @Test
   void changeTrackingContainer_serializedAndDeserializedWithDiff_IsEquivalentToTheEtalon() throws IOException {
-    ValueContainerImpl<String> snapshot = new ValueContainerImpl<>();
+    ValueContainerImpl<String> snapshot = ValueContainerImpl.createValueContainerForTests();
     ChangeTrackingValueContainer<String> changeTrackingContainer = new ChangeTrackingValueContainer<>(() -> snapshot);
 
     IdealValueContainer<String> etalon = new IdealValueContainer<>();
@@ -224,7 +224,7 @@ class ValueContainersPropertyTest {
 
     IdealValueContainer<String> etalon = new IdealValueContainer<>();
     List<Command<String>> totalCommands = new ArrayList<>();
-    ValueContainerImpl<String> snapshot = new ValueContainerImpl<>();
+    ValueContainerImpl<String> snapshot = ValueContainerImpl.createValueContainerForTests();
 
     int turns = 8;
 
@@ -263,8 +263,8 @@ class ValueContainersPropertyTest {
   /* ======================================= infrastructure ==================================================== */
   private static Stream<Arguments> valueContainerImplementationsToTest() {
     return Stream.of(
-      Arguments.of(new ValueContainerImpl<>()),
-      Arguments.of(new ChangeTrackingValueContainer<>(ValueContainerImpl::new))
+      Arguments.of(ValueContainerImpl.createValueContainerForTests()),
+      Arguments.of(new ChangeTrackingValueContainer<>(ValueContainerImpl::createValueContainerForTests))
       //Arguments.of(new TransientChangeTrackingValueContainer<>(ValueContainerImpl::new) ),
     );
   }

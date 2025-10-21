@@ -1,5 +1,7 @@
-ERROR_KIND: str
-ERROR_OBJECT: str
-EVENT: str
-MESSAGE: str
-STACK: str
+from typing import Final
+
+ERROR_KIND: Final = "error.kind"
+ERROR_OBJECT: Final = "error.object"
+EVENT: Final = "event"
+MESSAGE: Final = "message"
+STACK: Final = "stack"

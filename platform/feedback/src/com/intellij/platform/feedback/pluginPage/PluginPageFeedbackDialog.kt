@@ -38,12 +38,14 @@ internal abstract class PluginPageFeedbackDialog(private val pluginId: String,
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
   override val zendeskTicketTitle: String = PluginPageFeedbackBundle.message("dialog.zendesk.ticket.title", pluginNameCapitalized)
   override val myTitle: String = PluginPageFeedbackBundle.message("dialog.top.title")
-  override val mySystemInfoData: PluginPageFeedbackSystemData by lazy {
+
+  override suspend fun computeSystemInfoData(): PluginPageFeedbackSystemData {
     val commonFeedbackSystemData = CommonFeedbackSystemData.getCurrentData()
-    PluginPageFeedbackSystemData(pluginId, pluginNameCapitalized, commonFeedbackSystemData)
+    return PluginPageFeedbackSystemData(pluginId, pluginNameCapitalized, commonFeedbackSystemData)
   }
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showPluginPageFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+
+  override fun showFeedbackSystemInfoDialog(systemInfoData: PluginPageFeedbackSystemData) {
+    showPluginPageFeedbackSystemInfoDialog(myProject, systemInfoData)
   }
 
   private val reasonsItems: List<CheckBoxItemData> = listOf(

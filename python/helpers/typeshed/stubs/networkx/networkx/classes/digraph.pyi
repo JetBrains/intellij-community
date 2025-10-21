@@ -1,9 +1,12 @@
-from _typeshed import Incomplete
 from collections.abc import Iterator
+from functools import cached_property
+from typing import Any
+from typing_extensions import Self
 
 from networkx.classes.coreviews import AdjacencyView
 from networkx.classes.graph import Graph, _Node
 from networkx.classes.reportviews import (
+    DiDegreeView,
     InDegreeView,
     InEdgeView,
     InMultiDegreeView,
@@ -12,17 +15,32 @@ from networkx.classes.reportviews import (
     OutMultiDegreeView,
 )
 
+__all__ = ["DiGraph"]
+
 class DiGraph(Graph[_Node]):
-    succ: AdjacencyView[_Node, _Node, dict[str, Incomplete]]
-    pred: AdjacencyView[_Node, _Node, dict[str, Incomplete]]
+    @cached_property
+    def succ(self) -> AdjacencyView[_Node, _Node, dict[str, Any]]: ...
+    @cached_property
+    def pred(self) -> AdjacencyView[_Node, _Node, dict[str, Any]]: ...
     def has_successor(self, u: _Node, v: _Node) -> bool: ...
     def has_predecessor(self, u: _Node, v: _Node) -> bool: ...
     def successors(self, n: _Node) -> Iterator[_Node]: ...
+
+    neighbors = successors
+
     def predecessors(self, n: _Node) -> Iterator[_Node]: ...
-    in_edges: InEdgeView[_Node]
-    in_degree: InDegreeView[_Node] | InMultiDegreeView[_Node]  # ugly hack to make MultiDiGraph work
-    out_edges: OutEdgeView[_Node]
-    out_degree: OutDegreeView[_Node] | OutMultiDegreeView[_Node]  # ugly hack to make MultiDiGraph work
-    def to_undirected(self, reciprocal: bool = False, as_view: bool = False): ...  # type: ignore[override]  # Has an additional `reciprocal` keyword argument
-    def reverse(self, copy: bool = True) -> DiGraph[_Node]: ...
-    def copy(self, as_view: bool = False) -> DiGraph[_Node]: ...
+    @cached_property
+    def out_edges(self) -> OutEdgeView[_Node]: ...
+    @cached_property
+    def in_edges(self) -> InEdgeView[_Node]: ...
+    @cached_property
+    def in_degree(self) -> InDegreeView[_Node] | InMultiDegreeView[_Node]: ...
+    @cached_property
+    def out_degree(self) -> OutDegreeView[_Node] | OutMultiDegreeView[_Node]: ...
+    def to_undirected(self, reciprocal: bool = False, as_view: bool = False) -> Graph[_Node]: ...  # type: ignore[override]
+    # reciprocal : If True, only edges that appear in both directions ... will be kept in the undirected graph.
+    def reverse(self, copy: bool = True) -> Self: ...
+    @cached_property
+    def edges(self) -> OutEdgeView[_Node]: ...  # type: ignore[override] # An OutEdgeView of the DiGraph as G.edges or G.edges().
+    @cached_property
+    def degree(self) -> int | DiDegreeView[_Node]: ...  # type: ignore[override] # Returns DiDegreeView or int

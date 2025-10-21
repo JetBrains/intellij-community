@@ -10,7 +10,7 @@ class NullFormatter(Formatter[_T]):
     filenames: Any
     def format(self, tokensource, outfile) -> None: ...
 
-class RawTokenFormatter(Formatter[_T]):
+class RawTokenFormatter(Formatter[bytes]):
     name: str
     aliases: Any
     filenames: Any

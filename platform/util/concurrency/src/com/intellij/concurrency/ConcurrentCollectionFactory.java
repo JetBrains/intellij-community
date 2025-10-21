@@ -4,6 +4,7 @@ package com.intellij.concurrency;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.Java11Shim;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ public final class ConcurrentCollectionFactory {
 
   @Contract(pure = true)
   public static @NotNull <T, V> ConcurrentMap<@NotNull T, @NotNull V> createConcurrentMap() {
-    return new ConcurrentHashMap<>(HashingStrategy.canonical());
+    return new java.util.concurrent.ConcurrentHashMap<>();
   }
 
   @Contract(pure = true)
@@ -73,29 +74,24 @@ public final class ConcurrentCollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap() {
-    return new ConcurrentLongObjectHashMap<>();
-  }
-
-  @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap(int initialCapacity) {
-    return new ConcurrentLongObjectHashMap<>(initialCapacity);
+    return Java11Shim.Companion.createConcurrentLongObjectMap();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap() {
-    return new ConcurrentIntObjectHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectMap();
   }
 
   @Contract(value = "_,_,_ -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    return new ConcurrentIntObjectHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
+    return Java11Shim.Companion.createConcurrentIntObjectMap(initialCapacity, loadFactor, concurrencyLevel);
   }
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectSoftValueMap() {
-    return new ConcurrentIntKeySoftValueHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectSoftValueMap();
   }
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectWeakValueMap() {
-    return new ConcurrentIntKeyWeakValueHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectWeakValueMap();
   }
 }

@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def f():
     a = do_smth()
     b1 = foo(a)

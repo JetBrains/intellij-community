@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.pty4j` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "pty4j_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pty4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":pty4j_resources"],
+  exports = ["@lib//:libraries-pty4j-pty4j"],
+  runtime_deps = ["@lib//:libraries-pty4j-pty4j"]
+)
+### auto-generated section `build intellij.libraries.pty4j` end

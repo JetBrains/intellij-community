@@ -1,4 +1,9 @@
-from networkx.utils.backends import _dispatch
+from _typeshed import Incomplete
 
-@_dispatch
-def junction_tree(G): ...
+from networkx.classes.graph import Graph
+from networkx.utils.backends import _dispatchable
+
+__all__ = ["junction_tree"]
+
+@_dispatchable
+def junction_tree(G) -> Graph[Incomplete]: ...

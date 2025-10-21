@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.jetbrains.python.PyBundle.message
@@ -19,7 +18,7 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class InstallWithOptionsPackageAction : DumbAwareAction() {
+internal class InstallWithOptionsPackageAction : ModifyPackagesActionBase() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val pkg = e.selectedPackage as? InstallablePackage ?: return
@@ -34,7 +33,8 @@ internal class InstallWithOptionsPackageAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.selectedPackage as? InstallablePackage != null && e.selectedPackages.size == 1
+    super.update(e)
+    e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && e.selectedPackage as? InstallablePackage != null && e.selectedPackages.size == 1
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

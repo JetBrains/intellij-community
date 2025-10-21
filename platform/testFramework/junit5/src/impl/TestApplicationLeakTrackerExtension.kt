@@ -6,6 +6,8 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.SdkLeakTracker
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -15,15 +17,15 @@ import org.junit.jupiter.api.extension.ExtensionContext
 internal class TestApplicationLeakTrackerExtension : BeforeEachCallback, AfterEachCallback {
 
   companion object {
-    private const val leakTrackersKey = "application-level leak trackers"
+    private val leakTrackersKey = TypedStoreKey.createKey<LeakTrackers>()
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    context.getStore(ExtensionContext.Namespace.GLOBAL).put(leakTrackersKey, LeakTrackers())
+    context[leakTrackersKey] = LeakTrackers()
   }
 
   override fun afterEach(context: ExtensionContext) {
-    context.getStore(ExtensionContext.Namespace.GLOBAL).typedGet<LeakTrackers>(leakTrackersKey).checkNothingLeaked()
+    context[leakTrackersKey]?.checkNothingLeaked()
   }
 
   @TestOnly

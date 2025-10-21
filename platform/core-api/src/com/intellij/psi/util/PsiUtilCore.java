@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -433,12 +433,12 @@ public class PsiUtilCore {
     return false;
   }
 
-  public static @NotNull PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
-    PsiElement elt = file.findElementAt(offset);
+  public static @NotNull PsiElement getElementAtOffset(@NotNull PsiFile psiFile, int offset) {
+    PsiElement elt = psiFile.findElementAt(offset);
     if (elt == null && offset > 0) {
-      elt = file.findElementAt(offset - 1);
+      elt = psiFile.findElementAt(offset - 1);
     }
-    return elt == null ? file : elt;
+    return elt == null ? psiFile : elt;
   }
 
   public static PsiFile getTemplateLanguageFile(@Nullable PsiElement element) {
@@ -505,7 +505,8 @@ public class PsiUtilCore {
           return;
         }
       }
-      throw PluginException.createByClass(new PsiInvalidElementAccessException(element), element.getClass());
+      PsiInvalidElementAccessException exception = new PsiInvalidElementAccessException(element);
+      throw PluginException.createByClass(exception, element.getClass());
     }
   }
 
@@ -600,17 +601,17 @@ public class PsiUtilCore {
     return elt.getLanguage();
   }
 
-  public static @NotNull Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
-    PsiElement elt = file.findElementAt(offset);
-    if (elt == null) return file.getLanguage();
+  public static @NotNull Language getLanguageAtOffset (@NotNull PsiFile psiFile, int offset) {
+    PsiElement elt = psiFile.findElementAt(offset);
+    if (elt == null) return psiFile.getLanguage();
     if (elt instanceof PsiWhiteSpace) {
       TextRange textRange = elt.getTextRange();
       if (!textRange.contains(offset)) {
-        LOG.error("PSI corrupted: in file "+file+" ("+file.getViewProvider().getVirtualFile()+") offset="+offset+" returned element "+elt+" with text range "+textRange);
+        LOG.error("PSI corrupted: in file "+psiFile+" ("+psiFile.getViewProvider().getVirtualFile()+") offset="+offset+" returned element "+elt+" with text range "+textRange);
       }
       int decremented = textRange.getStartOffset() - 1;
       if (decremented >= 0) {
-        return getLanguageAtOffset(file, decremented);
+        return getLanguageAtOffset(psiFile, decremented);
       }
     }
     return findLanguageFromElement(elt);

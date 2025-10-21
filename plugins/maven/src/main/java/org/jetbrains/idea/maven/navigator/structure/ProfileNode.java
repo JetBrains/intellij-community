@@ -30,7 +30,7 @@ import java.util.List;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-class ProfileNode extends MavenSimpleNode {
+final class ProfileNode extends MavenSimpleNode {
   private final String myProfileName;
   private MavenProfileKind myState;
 

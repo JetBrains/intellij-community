@@ -7,13 +7,13 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 
 
-context(KaSession)
+context(_: KaSession)
 val KaValueParameterSymbol.defaultValue: KtExpression?
     get() = KtValueParameterSymbolDefaultValueProvider.getDefaultParameterValue(this)
 
 private object KtValueParameterSymbolDefaultValueProvider {
 
-    context(KaSession)
+    context(_: KaSession)
     fun getDefaultParameterValue(parameterSymbol: KaValueParameterSymbol): KtExpression? {
         if (!parameterSymbol.hasDefaultValue) return null
         return parameterSymbol.allOverriddenSymbolsWithSelf

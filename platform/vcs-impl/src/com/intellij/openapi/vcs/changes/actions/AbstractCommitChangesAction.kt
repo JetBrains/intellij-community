@@ -15,7 +15,7 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 @Deprecated("Use [com.intellij.openapi.vcs.actions.commit.AbstractCommitChangesAction] instead")
 abstract class AbstractCommitChangesAction : AbstractCommonCheckinAction() {
   override fun getRoots(dataContext: VcsContext): Array<FilePath> =
-    ProjectLevelVcsManager.getInstance(dataContext.project!!).allVersionedRoots.map { getFilePath(it) }.toTypedArray()
+    ProjectLevelVcsManager.getInstance(dataContext.project!!).getAllVersionedRoots().map { getFilePath(it) }.toTypedArray()
 
   override fun approximatelyHasRoots(dataContext: VcsContext): Boolean =
     ProjectLevelVcsManager.getInstance(dataContext.project!!).hasActiveVcss()

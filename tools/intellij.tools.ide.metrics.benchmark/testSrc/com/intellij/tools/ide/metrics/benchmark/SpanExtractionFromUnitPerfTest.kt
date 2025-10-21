@@ -149,7 +149,7 @@ class SpanExtractionFromUnitPerfTest {
     fun runSubTest(subtestName: String) {
       Benchmark.newBenchmark(testInfo.testMethod.get().name) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
-      }.startAsSubtest(subtestName)
+      }.runAsStressTest().startAsSubtest(subtestName)
     }
 
     runSubTest("subtest1")
@@ -161,7 +161,7 @@ class SpanExtractionFromUnitPerfTest {
     val spanName = "simple perf test"
     val uniqueTestName = Benchmark.newBenchmark(spanName) {
       runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
-    }.run {
+    }.runAsStressTest().run {
       start()
       uniqueTestName
     }
@@ -177,7 +177,7 @@ class SpanExtractionFromUnitPerfTest {
       perfTest = Benchmark.newBenchmark(spanName) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
         throw RuntimeException("Exception text")
-      }
+      }.runAsStressTest()
       perfTest.apply {
         warmupIterations(0)
         start()

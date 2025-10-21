@@ -15,6 +15,22 @@ from antlr4.Token import Token as Token
 class TokenSource: ...
 
 class Lexer(Recognizer, TokenSource):
+    __slots__ = (
+        "_input",
+        "_output",
+        "_factory",
+        "_tokenFactorySourcePair",
+        "_token",
+        "_tokenStartCharIndex",
+        "_tokenStartLine",
+        "_tokenStartColumn",
+        "_hitEOF",
+        "_channel",
+        "_type",
+        "_modeStack",
+        "_mode",
+        "_text",
+    )
     DEFAULT_MODE: int
     MORE: int
     SKIP: int

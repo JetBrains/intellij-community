@@ -30,6 +30,11 @@ class ModuleSourcesScope(
 
     override val roots: Object2IntMap<VirtualFile> = calculateRootsSet(module, sourceRootKind).toObject2IndexMap()
 
+    /**
+     * Checks if this scope is empty (has no source roots).
+     */
+    fun isEmpty(): Boolean = roots.isEmpty()
+
     override val modules: Set<Module> get() = setOf(module)
 
     override val includesLibraryClassRoots: Boolean get() = false

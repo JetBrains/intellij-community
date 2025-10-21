@@ -10,14 +10,9 @@ Reports function calls with the <code>Deferred</code> result type if the return 
       calcEverythingAsync()
   }
 </code></pre>
-<p>The quick-fix provides a variable with the <code>Deferred</code> initializer:</p>
-<pre><code>
-  fun calcEverythingAsync() = CompletableDeferred(42)
 
-  fun usage() {
-      val answer = calcEverythingAsync()
-  }
-</code></pre>
+<code>calcEverythingAsync()</code> call here is never used 
+and not awaited for with <code>await()</code>, which is suspicious.
 <!-- tooltip end -->
 </body>
 </html>

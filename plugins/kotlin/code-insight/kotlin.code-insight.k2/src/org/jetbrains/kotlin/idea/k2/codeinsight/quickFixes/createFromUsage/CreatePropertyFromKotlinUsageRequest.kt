@@ -13,7 +13,6 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToJvmType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
@@ -36,7 +35,7 @@ internal class CreatePropertyFromKotlinUsageRequest (
     val receiverTypeString: String? = getReceiverTypeString(referenceExpression, receiverType, K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS)
 
     @OptIn(KaExperimentalApi::class)
-    val receiverTypeNameString: String? = getReceiverTypeString(referenceExpression, receiverType, KaTypeRendererForSource.WITH_SHORT_NAMES)
+    val receiverTypeNameString: String? = getReceiverTypeString(referenceExpression, receiverType, K2CreateFunctionFromUsageUtil.WITH_SHORT_NAMES_FOR_CREATE_ELEMENTS)
 
     private fun initializeReturnType(referenceExpression: KtNameReferenceExpression): List<ExpectedType> {
         return analyze(referenceExpression) {

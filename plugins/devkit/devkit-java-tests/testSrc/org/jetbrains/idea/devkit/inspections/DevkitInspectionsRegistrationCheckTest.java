@@ -12,12 +12,15 @@ import java.util.stream.Stream;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
+  private static final int EXPECTED_INSPECTIONS_NUMBER = 86;
+
   /**
    * Inspections that are finished and intentionally disabled.
    */
   private static final List<String> DISABLED_INSPECTIONS =
-    Stream.of("SerializableCtor",
-              "StatisticsCollectorNotRegistered"
+    Stream.of(
+      "SerializableCtor",
+      "StatisticsCollectorNotRegistered"
     ).sorted().toList();
 
   /**
@@ -42,8 +45,10 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
       return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
     });
-    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)", 81,
-                 devkitInspections.size());
+    assertEquals(
+      "Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)",
+      EXPECTED_INSPECTIONS_NUMBER, devkitInspections.size()
+    );
 
     List<LocalInspectionEP> disabledInspections = ContainerUtil.filter(devkitInspections, ep -> !ep.enabledByDefault);
     List<String> disabledInspectionShortNames = new ArrayList<>(ContainerUtil.map(disabledInspections, ep -> ep.getShortName()));
@@ -54,7 +59,6 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<String> allKnownDisabledInspections = new ArrayList<>(ContainerUtil.concat(DISABLED_INSPECTIONS, WIP_INSPECTIONS));
     Collections.sort(allKnownDisabledInspections);
 
-    assertSameElements("Mismatch in known WIP inspections", disabledInspectionShortNames,
-                       allKnownDisabledInspections);
+    assertSameElements("Mismatch in known WIP inspections", disabledInspectionShortNames, allKnownDisabledInspections);
   }
 }

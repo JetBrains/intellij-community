@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def f(x, y):
     yield 'foo'
     return x, y

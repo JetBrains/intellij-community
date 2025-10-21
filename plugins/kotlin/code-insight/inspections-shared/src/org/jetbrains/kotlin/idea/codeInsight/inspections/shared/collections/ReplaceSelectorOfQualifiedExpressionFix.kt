@@ -11,9 +11,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 class ReplaceSelectorOfQualifiedExpressionFix(private val newSelector: String) : PsiUpdateModCommandQuickFix() {
-    override fun getName() = KotlinBundle.message("replace.with.0", newSelector)
-
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", newSelector)
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         (element as? KtQualifiedExpression)?.let {

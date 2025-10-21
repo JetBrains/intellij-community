@@ -2,6 +2,8 @@
 package com.intellij.platform.instanceContainer.internal
 
 import com.intellij.util.NotNullizer
+import com.intellij.util.containers.with
+import com.intellij.util.containers.without
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import java.lang.invoke.MethodHandles
@@ -53,10 +55,10 @@ internal class InstanceContainerState private constructor(
      * Since this is called when container is being initialized or disposed, it's okay to not waste time on maintaining cache.
      */
     val newHolders = if (holder == null) {
-      holders.remove(keyClassName)
+      holders.without(keyClassName)
     }
     else {
-      holders.put(keyClassName, holder)
+      holders.with(keyClassName, holder)
     }
     return InstanceContainerState(newHolders)
   }
@@ -74,7 +76,7 @@ internal class InstanceContainerState private constructor(
      * At worst, we might lose some published cached key, but it will be re-cached in the next published [InstanceContainerState] instance.
      */
     return InstanceContainerState(
-      holders = holders.put(keyClass.name, holder),
+      holders = holders.with(keyClass.name, holder),
       cache = cache.put(keyClass, holder),
     )
   }

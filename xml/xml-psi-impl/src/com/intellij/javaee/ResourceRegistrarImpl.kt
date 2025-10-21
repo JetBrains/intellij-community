@@ -38,18 +38,6 @@ class ResourceRegistrarImpl : ResourceRegistrar {
     ignored.add(url)
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Pass class loader explicitly", level = DeprecationLevel.ERROR)
-  fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?) {
-    addStdResource(
-      resource = resource,
-      version = null,
-      fileName = ExternalResourceManagerEx.STANDARD_SCHEMAS.trimStart('/') + fileName,
-      aClass = null,
-      classLoader = javaClass.classLoader,
-    )
-  }
-
   fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?, classLoader: ClassLoader) {
     addInternalResource(resource = resource, version = null, fileName = fileName, classLoader = classLoader)
   }

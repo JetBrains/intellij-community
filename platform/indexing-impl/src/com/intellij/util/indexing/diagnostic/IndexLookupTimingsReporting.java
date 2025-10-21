@@ -267,8 +267,9 @@ public final class IndexLookupTimingsReporting {
     }
 
     //========================== CLASSES:
-
-    protected abstract static class LookupTraceBase<T extends LookupTraceBase<T>> implements AutoCloseable,
+    @VisibleForTesting
+    @Internal
+    public abstract static class LookupTraceBase<T extends LookupTraceBase<T>> implements AutoCloseable,
                                                                                              Cloneable {
       /**
        * In case of re-entrant lookup (i.e. lookup invoked inside another lookup's callback) this field
@@ -480,7 +481,9 @@ public final class IndexLookupTimingsReporting {
         return wasStarted;
       }
 
-      protected boolean traceWasStarted() {
+      @VisibleForTesting
+      @Internal
+      public boolean traceWasStarted() {
         return depth >= 0;
       }
     }

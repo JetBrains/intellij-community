@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.compiler.Utils;
@@ -46,7 +46,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       beanInfo = Introspector.getBeanInfo(aClass);
     }
     catch (Throwable e) {
-      return null;
+      throw new RuntimeException("Error loading BeanInfo for component " + className + ": " + e.getMessage(), e);
     }
 
     final HashMap<String, LwIntrospectedProperty> result = new HashMap<>();

@@ -1,2 +1,4 @@
-DOCKERFILE_FILENAME: str
-COMMENT_INSTRUCTION: str
+from typing import Final
+
+DOCKERFILE_FILENAME: Final = "Dockerfile"
+COMMENT_INSTRUCTION: Final = "COMMENT"

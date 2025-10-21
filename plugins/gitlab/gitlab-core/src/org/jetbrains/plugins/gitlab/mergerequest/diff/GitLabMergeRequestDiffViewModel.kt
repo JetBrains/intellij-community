@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
 import com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
@@ -54,8 +55,10 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Diff Review VM"),
-  currentUser, mergeRequest
+  currentUser, mergeRequest,
+  project.service<GitLabMergeRequestsPreferences>().diffReviewViewOption
 ) {
+  private val preferences = project.service<GitLabMergeRequestsPreferences>()
   private val changesFetchFlow = computationStateFlow(mergeRequest.changes, GitLabMergeRequestChanges::loadRevisionsAndParseChanges)
   private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
     .map {
@@ -78,6 +81,11 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   override fun showChange(changeIdx: Int, scrollRequest: DiffViewerScrollRequest?) {
     val changeVm = changes.value?.result?.getOrNull()?.selectedChanges?.list?.getOrNull(changeIdx) ?: return
     showChange(changeVm, scrollRequest)
+  }
+
+  override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
+    super.setDiscussionsViewOption(viewOption)
+    preferences.diffReviewViewOption = viewOption
   }
 
   fun showChanges(changes: ListSelection<RefComparisonChange>, scrollLocation: DiffLineLocation? = null) =

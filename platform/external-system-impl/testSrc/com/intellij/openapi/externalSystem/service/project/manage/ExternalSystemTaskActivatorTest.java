@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSys
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemOperationTestUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,7 +38,6 @@ import java.util.Collections;
 
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemOperationTestUtil.DEFAULT_SYNC_TIMEOUT_MS;
 import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
 
 public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
@@ -59,11 +59,9 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     String projectPath = "/project/path";
     TestExternalProjectSettings projectSettings = new TestExternalProjectSettings();
     projectSettings.setExternalProjectPath(projectPath);
-    ExternalSystemUtil.linkExternalProject(projectSettings, new ImportSpecBuilder(myProject, TEST_EXTERNAL_SYSTEM_ID));
-
-    // Wait for the external system initialisation and scheduled project sync
-    TestObservation.waitForConfiguration(myProject, DEFAULT_SYNC_TIMEOUT_MS);
-    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+    ExternalSystemOperationTestUtil.waitForProjectActivity(myProject, () ->
+      ExternalSystemUtil.linkExternalProject(projectSettings, new ImportSpecBuilder(myProject, TEST_EXTERNAL_SYSTEM_ID))
+    );
   }
 
   @Override

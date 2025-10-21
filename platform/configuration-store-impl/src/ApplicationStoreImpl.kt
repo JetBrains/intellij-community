@@ -1,17 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.StateStorageOperation
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.application.PathManager.getSystemDir
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -20,25 +15,23 @@ import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJp
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.util.LineSeparator
-import com.intellij.util.asSafely
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 
-@ApiStatus.Internal
-const val APP_CONFIG: String = "\$APP_CONFIG\$"
+@Internal
+const val APP_CONFIG: String = $$"$APP_CONFIG$"
 
-@ApiStatus.Internal
+@Internal
 @VisibleForTesting
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
   override val storageManager: StateStorageManagerImpl = ApplicationStateStorageManager(
-    pathMacroManager = PathMacroManager.getInstance(app),
+    pathMacroManager = app.service<PathMacroManager>(),
     controller = app.getService(SettingsController::class.java),
   )
 
@@ -63,16 +56,13 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
       // at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
       Macro(APP_CONFIG, path.resolve(PathManager.OPTIONS_DIRECTORY)),
       Macro(ROOT_CONFIG, path),
-      Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("app-cache.xml"))
+      Macro(StoragePathMacros.CACHE_FILE, getSystemDir().resolve("app-cache.xml"))
     ))
     isStoreInitialized = true
   }
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
-    app.asSafely<ApplicationImpl>()
-      ?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)
-      ?.asSafely<JpsGlobalModelSynchronizerImpl>()
-      ?.saveGlobalEntities()
+    (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)?.saveGlobalEntities()
 
     coroutineScope {
       launch {
@@ -96,10 +86,10 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   final override fun toString(): String = "app"
 }
 
-@ApiStatus.Internal
+@Internal
 @VisibleForTesting
 class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
-  : StateStorageManagerImpl(rootTagName = "application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller)
+  : StateStorageManagerImpl(rootTagName = "application", macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller = controller)
 {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.NON_ROAMABLE_FILE
 
@@ -114,7 +104,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
           Files.deleteIfExists(storage.file)
         }
         else {
-          writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+          writer.writeTo(file = storage.file, requestor = null, lineSeparator = LineSeparator.LF, useXmlProlog = isUseXmlProlog)
         }
       }.getOrLogException(LOG)
     }
@@ -135,5 +125,5 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
 
-@ApiStatus.Internal
+@Internal
 fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")

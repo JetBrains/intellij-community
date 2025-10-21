@@ -52,9 +52,32 @@ class ObservationUI(google.protobuf.message.Message):
         cargo: global___CargoPanel | None = ...,
         production: global___ProductionPanel | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["cargo", b"cargo", "multi", b"multi", "panel", b"panel", "production", b"production", "single", b"single"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["cargo", b"cargo", "groups", b"groups", "multi", b"multi", "panel", b"panel", "production", b"production", "single", b"single"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["panel", b"panel"]) -> typing.Literal["single", "multi", "cargo", "production"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "cargo", b"cargo", "multi", b"multi", "panel", b"panel", "production", b"production", "single", b"single"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "cargo",
+            b"cargo",
+            "groups",
+            b"groups",
+            "multi",
+            b"multi",
+            "panel",
+            b"panel",
+            "production",
+            b"production",
+            "single",
+            b"single",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["panel", b"panel"]
+    ) -> typing.Literal["single", "multi", "cargo", "production"] | None: ...
 
 global___ObservationUI = ObservationUI
 
@@ -75,8 +98,18 @@ class ControlGroup(google.protobuf.message.Message):
         leader_unit_type: builtins.int | None = ...,
         count: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["control_group_index", b"control_group_index", "count", b"count", "leader_unit_type", b"leader_unit_type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["control_group_index", b"control_group_index", "count", b"count", "leader_unit_type", b"leader_unit_type"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "control_group_index", b"control_group_index", "count", b"count", "leader_unit_type", b"leader_unit_type"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "control_group_index", b"control_group_index", "count", b"count", "leader_unit_type", b"leader_unit_type"
+        ],
+    ) -> None: ...
 
 global___ControlGroup = ControlGroup
 
@@ -123,8 +156,60 @@ class UnitInfo(google.protobuf.message.Message):
         max_shields: builtins.int | None = ...,
         max_energy: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["add_on", b"add_on", "build_progress", b"build_progress", "energy", b"energy", "health", b"health", "max_energy", b"max_energy", "max_health", b"max_health", "max_shields", b"max_shields", "player_relative", b"player_relative", "shields", b"shields", "transport_slots_taken", b"transport_slots_taken", "unit_type", b"unit_type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["add_on", b"add_on", "build_progress", b"build_progress", "energy", b"energy", "health", b"health", "max_energy", b"max_energy", "max_health", b"max_health", "max_shields", b"max_shields", "player_relative", b"player_relative", "shields", b"shields", "transport_slots_taken", b"transport_slots_taken", "unit_type", b"unit_type"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "add_on",
+            b"add_on",
+            "build_progress",
+            b"build_progress",
+            "energy",
+            b"energy",
+            "health",
+            b"health",
+            "max_energy",
+            b"max_energy",
+            "max_health",
+            b"max_health",
+            "max_shields",
+            b"max_shields",
+            "player_relative",
+            b"player_relative",
+            "shields",
+            b"shields",
+            "transport_slots_taken",
+            b"transport_slots_taken",
+            "unit_type",
+            b"unit_type",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "add_on",
+            b"add_on",
+            "build_progress",
+            b"build_progress",
+            "energy",
+            b"energy",
+            "health",
+            b"health",
+            "max_energy",
+            b"max_energy",
+            "max_health",
+            b"max_health",
+            "max_shields",
+            b"max_shields",
+            "player_relative",
+            b"player_relative",
+            "shields",
+            b"shields",
+            "transport_slots_taken",
+            b"transport_slots_taken",
+            "unit_type",
+            b"unit_type",
+        ],
+    ) -> None: ...
 
 global___UnitInfo = UnitInfo
 
@@ -153,8 +238,34 @@ class SinglePanel(google.protobuf.message.Message):
         shield_upgrade_level: builtins.int | None = ...,
         buffs: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["armor_upgrade_level", b"armor_upgrade_level", "attack_upgrade_level", b"attack_upgrade_level", "shield_upgrade_level", b"shield_upgrade_level", "unit", b"unit"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["armor_upgrade_level", b"armor_upgrade_level", "attack_upgrade_level", b"attack_upgrade_level", "buffs", b"buffs", "shield_upgrade_level", b"shield_upgrade_level", "unit", b"unit"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "armor_upgrade_level",
+            b"armor_upgrade_level",
+            "attack_upgrade_level",
+            b"attack_upgrade_level",
+            "shield_upgrade_level",
+            b"shield_upgrade_level",
+            "unit",
+            b"unit",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "armor_upgrade_level",
+            b"armor_upgrade_level",
+            "attack_upgrade_level",
+            b"attack_upgrade_level",
+            "buffs",
+            b"buffs",
+            "shield_upgrade_level",
+            b"shield_upgrade_level",
+            "unit",
+            b"unit",
+        ],
+    ) -> None: ...
 
 global___SinglePanel = SinglePanel
 
@@ -165,11 +276,7 @@ class MultiPanel(google.protobuf.message.Message):
     UNITS_FIELD_NUMBER: builtins.int
     @property
     def units(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___UnitInfo]: ...
-    def __init__(
-        self,
-        *,
-        units: collections.abc.Iterable[global___UnitInfo] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, units: collections.abc.Iterable[global___UnitInfo] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["units", b"units"]) -> None: ...
 
 global___MultiPanel = MultiPanel
@@ -195,7 +302,9 @@ class CargoPanel(google.protobuf.message.Message):
         slots_available: builtins.int | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["slots_available", b"slots_available", "unit", b"unit"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["passengers", b"passengers", "slots_available", b"slots_available", "unit", b"unit"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["passengers", b"passengers", "slots_available", b"slots_available", "unit", b"unit"]
+    ) -> None: ...
 
 global___CargoPanel = CargoPanel
 
@@ -208,14 +317,13 @@ class BuildItem(google.protobuf.message.Message):
     ability_id: builtins.int
     build_progress: builtins.float
     """Range: [0.0, 1.0]"""
-    def __init__(
-        self,
-        *,
-        ability_id: builtins.int | None = ...,
-        build_progress: builtins.float | None = ...,
+    def __init__(self, *, ability_id: builtins.int | None = ..., build_progress: builtins.float | None = ...) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["ability_id", b"ability_id", "build_progress", b"build_progress"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["ability_id", b"ability_id", "build_progress", b"build_progress"]
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "build_progress", b"build_progress"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "build_progress", b"build_progress"]) -> None: ...
 
 global___BuildItem = BuildItem
 
@@ -244,7 +352,9 @@ class ProductionPanel(google.protobuf.message.Message):
         production_queue: collections.abc.Iterable[global___BuildItem] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["unit", b"unit"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["build_queue", b"build_queue", "production_queue", b"production_queue", "unit", b"unit"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["build_queue", b"build_queue", "production_queue", b"production_queue", "unit", b"unit"]
+    ) -> None: ...
 
 global___ProductionPanel = ProductionPanel
 
@@ -296,9 +406,72 @@ class ActionUI(google.protobuf.message.Message):
         production_panel: global___ActionProductionPanelRemoveFromQueue | None = ...,
         toggle_autocast: global___ActionToggleAutocast | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action", b"action", "cargo_panel", b"cargo_panel", "control_group", b"control_group", "multi_panel", b"multi_panel", "production_panel", b"production_panel", "select_army", b"select_army", "select_idle_worker", b"select_idle_worker", "select_larva", b"select_larva", "select_warp_gates", b"select_warp_gates", "toggle_autocast", b"toggle_autocast"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action", b"action", "cargo_panel", b"cargo_panel", "control_group", b"control_group", "multi_panel", b"multi_panel", "production_panel", b"production_panel", "select_army", b"select_army", "select_idle_worker", b"select_idle_worker", "select_larva", b"select_larva", "select_warp_gates", b"select_warp_gates", "toggle_autocast", b"toggle_autocast"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["action", b"action"]) -> typing.Literal["control_group", "select_army", "select_warp_gates", "select_larva", "select_idle_worker", "multi_panel", "cargo_panel", "production_panel", "toggle_autocast"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "cargo_panel",
+            b"cargo_panel",
+            "control_group",
+            b"control_group",
+            "multi_panel",
+            b"multi_panel",
+            "production_panel",
+            b"production_panel",
+            "select_army",
+            b"select_army",
+            "select_idle_worker",
+            b"select_idle_worker",
+            "select_larva",
+            b"select_larva",
+            "select_warp_gates",
+            b"select_warp_gates",
+            "toggle_autocast",
+            b"toggle_autocast",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "cargo_panel",
+            b"cargo_panel",
+            "control_group",
+            b"control_group",
+            "multi_panel",
+            b"multi_panel",
+            "production_panel",
+            b"production_panel",
+            "select_army",
+            b"select_army",
+            "select_idle_worker",
+            b"select_idle_worker",
+            "select_larva",
+            b"select_larva",
+            "select_warp_gates",
+            b"select_warp_gates",
+            "toggle_autocast",
+            b"toggle_autocast",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["action", b"action"]
+    ) -> (
+        typing.Literal[
+            "control_group",
+            "select_army",
+            "select_warp_gates",
+            "select_larva",
+            "select_idle_worker",
+            "multi_panel",
+            "cargo_panel",
+            "production_panel",
+            "toggle_autocast",
+        ]
+        | None
+    ): ...
 
 global___ActionUI = ActionUI
 
@@ -310,7 +483,10 @@ class ActionControlGroup(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ControlGroupActionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionControlGroup._ControlGroupAction.ValueType], builtins.type):
+    class _ControlGroupActionEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionControlGroup._ControlGroupAction.ValueType],
+        builtins.type,
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Recall: ActionControlGroup._ControlGroupAction.ValueType  # 1
         """Equivalent to number hotkey. Replaces current selection with control group."""
@@ -345,8 +521,12 @@ class ActionControlGroup(google.protobuf.message.Message):
         action: global___ActionControlGroup.ControlGroupAction.ValueType | None = ...,
         control_group_index: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action", b"action", "control_group_index", b"control_group_index"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action", b"action", "control_group_index", b"control_group_index"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["action", b"action", "control_group_index", b"control_group_index"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["action", b"action", "control_group_index", b"control_group_index"]
+    ) -> None: ...
 
 global___ActionControlGroup = ActionControlGroup
 
@@ -356,11 +536,7 @@ class ActionSelectArmy(google.protobuf.message.Message):
 
     SELECTION_ADD_FIELD_NUMBER: builtins.int
     selection_add: builtins.bool
-    def __init__(
-        self,
-        *,
-        selection_add: builtins.bool | None = ...,
-    ) -> None: ...
+    def __init__(self, *, selection_add: builtins.bool | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["selection_add", b"selection_add"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["selection_add", b"selection_add"]) -> None: ...
 
@@ -372,11 +548,7 @@ class ActionSelectWarpGates(google.protobuf.message.Message):
 
     SELECTION_ADD_FIELD_NUMBER: builtins.int
     selection_add: builtins.bool
-    def __init__(
-        self,
-        *,
-        selection_add: builtins.bool | None = ...,
-    ) -> None: ...
+    def __init__(self, *, selection_add: builtins.bool | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["selection_add", b"selection_add"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["selection_add", b"selection_add"]) -> None: ...
 
@@ -386,9 +558,7 @@ global___ActionSelectWarpGates = ActionSelectWarpGates
 class ActionSelectLarva(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ActionSelectLarva = ActionSelectLarva
 
@@ -400,7 +570,9 @@ class ActionSelectIdleWorker(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionSelectIdleWorker._Type.ValueType], builtins.type):
+    class _TypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionSelectIdleWorker._Type.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Set: ActionSelectIdleWorker._Type.ValueType  # 1
         """Equivalent to click with no modifiers. Replaces selection with single idle worker."""
@@ -423,11 +595,7 @@ class ActionSelectIdleWorker(google.protobuf.message.Message):
 
     TYPE_FIELD_NUMBER: builtins.int
     type: global___ActionSelectIdleWorker.Type.ValueType
-    def __init__(
-        self,
-        *,
-        type: global___ActionSelectIdleWorker.Type.ValueType | None = ...,
-    ) -> None: ...
+    def __init__(self, *, type: global___ActionSelectIdleWorker.Type.ValueType | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["type", b"type"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["type", b"type"]) -> None: ...
 
@@ -441,7 +609,9 @@ class ActionMultiPanel(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionMultiPanel._Type.ValueType], builtins.type):
+    class _TypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionMultiPanel._Type.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         SingleSelect: ActionMultiPanel._Type.ValueType  # 1
         """Click on icon"""
@@ -467,10 +637,7 @@ class ActionMultiPanel(google.protobuf.message.Message):
     type: global___ActionMultiPanel.Type.ValueType
     unit_index: builtins.int
     def __init__(
-        self,
-        *,
-        type: global___ActionMultiPanel.Type.ValueType | None = ...,
-        unit_index: builtins.int | None = ...,
+        self, *, type: global___ActionMultiPanel.Type.ValueType | None = ..., unit_index: builtins.int | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["type", b"type", "unit_index", b"unit_index"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["type", b"type", "unit_index", b"unit_index"]) -> None: ...
@@ -483,11 +650,7 @@ class ActionCargoPanelUnload(google.protobuf.message.Message):
 
     UNIT_INDEX_FIELD_NUMBER: builtins.int
     unit_index: builtins.int
-    def __init__(
-        self,
-        *,
-        unit_index: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, unit_index: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["unit_index", b"unit_index"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["unit_index", b"unit_index"]) -> None: ...
 
@@ -499,11 +662,7 @@ class ActionProductionPanelRemoveFromQueue(google.protobuf.message.Message):
 
     UNIT_INDEX_FIELD_NUMBER: builtins.int
     unit_index: builtins.int
-    def __init__(
-        self,
-        *,
-        unit_index: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, unit_index: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["unit_index", b"unit_index"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["unit_index", b"unit_index"]) -> None: ...
 
@@ -515,11 +674,7 @@ class ActionToggleAutocast(google.protobuf.message.Message):
 
     ABILITY_ID_FIELD_NUMBER: builtins.int
     ability_id: builtins.int
-    def __init__(
-        self,
-        *,
-        ability_id: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, ability_id: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["ability_id", b"ability_id"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id"]) -> None: ...
 

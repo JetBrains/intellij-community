@@ -1,8 +1,8 @@
 // WITH_STDLIB
 // PROBLEM: Ambiguous non-local 'break' ('while' vs 'ifTrue'). Use clarifying label or add 'callsInPlace' contract to 'ifTrue'.
 // COMPILER_ARGUMENTS: -XXLanguage:+BreakContinueInInlineLambdas
-// ERROR: The feature "break continue in inline lambdas" is only available since language version 2.2
-// AFTER_ERROR: The feature "break continue in inline lambdas" is only available since language version 2.2
+// ERROR: The feature "break continue in inline lambdas" is disabled
+// AFTER_ERROR: The feature "break continue in inline lambdas" is disabled
 // K2_ERROR:
 // K2_AFTER_ERROR:
 import kotlin.contracts.ExperimentalContracts

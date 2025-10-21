@@ -58,17 +58,19 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
-    var sortGroup = !isNewLayout ? actionGroup : DefaultActionGroup.createPopupGroup(() -> ExecutionBundle.message("junit.runing.info.sort.group.name"));
+    var sortGroup = !isNewLayout ? actionGroup : DefaultActionGroup.createPopupGroup(() -> ExecutionBundle.message(
+      "junit.running.info.sort.group.name"));
     DumbAwareToggleBooleanProperty suitesAlwaysOnTop =
-      new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.folders.on.top.action.name"),
-                                         ExecutionBundle.message("junit.runing.info.folders.on.top.action.description"),
+      new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.folders.on.top.action.name"),
+                                         ExecutionBundle.message("junit.running.info.folders.on.top.action.description"),
                                          null,
                                          properties, TestConsoleProperties.SUITES_ALWAYS_ON_TOP);
     if (isNewLayout) {
       sortGroup.addAction(suitesAlwaysOnTop);
     }
-    sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
-                                                            ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
+    sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.sort.alphabetically.action.name"),
+                                                            ExecutionBundle.message(
+                                                              "junit.running.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
                                                              properties, TestConsoleProperties.SORT_ALPHABETICALLY) {
       @Override
@@ -81,8 +83,10 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       }
     });
 
-    sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.name"),
-                                                            ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.description"),
+    sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message(
+      "junit.running.info.sort.by.declaration.order.action.name"),
+                                                            ExecutionBundle.message(
+                                                              "junit.running.info.sort.by.declaration.order.action.description"),
                                                             AllIcons.ObjectBrowser.SortByType,
                                                             properties, TestConsoleProperties.SORT_BY_DECLARATION_ORDER) {
       @Override
@@ -108,11 +112,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     DefaultActionGroup moreGroup = isNewLayout ? new MoreActionGroup() : actionGroup;
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, parent);
-    action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.runing.info.expand.test.action.name"));
+    action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.running.info.expand.test.action.name"));
     moreGroup.add(action);
 
     action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
-    action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.runing.info.collapse.test.action.name"));
+    action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.running.info.collapse.test.action.name"));
     moreGroup.add(action);
 
     moreGroup.addSeparator();
@@ -140,10 +144,10 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     final DefaultActionGroup secondaryGroup = new DefaultActionGroup();
     secondaryGroup.setPopup(true);
-    secondaryGroup.getTemplatePresentation().setText(ExecutionBundle.message("junit.runing.info.test.runner.options.group.name"));
+    secondaryGroup.getTemplatePresentation().setText(ExecutionBundle.message("junit.running.info.test.runner.options.group.name"));
     secondaryGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
-    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
-                                                 ExecutionBundle.message("junit.runing.info.track.test.action.description"),
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.track.test.action.name"),
+                                                 ExecutionBundle.message("junit.running.info.track.test.action.description"),
                                                  null, properties, TestConsoleProperties.TRACK_RUNNING_TEST));
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(TestRunnerBundle.message("action.show.inline.statistics.text"), TestRunnerBundle
       .message("action.toggle.visibility.test.duration.in.tree.description"),
@@ -153,11 +157,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     }
 
     secondaryGroup.addSeparator();
-    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
-                                                 ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.scroll.to.stacktrace.action.name"),
+                                                 ExecutionBundle.message("junit.running.info.scroll.to.stacktrace.action.description"),
                                                  null, properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE));
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
-                                                 ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
+    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.running.info.open.source.at.exception.action.name"),
+                                                 ExecutionBundle.message("junit.running.info.open.source.at.exception.action.description"),
                                                  null, properties, TestConsoleProperties.OPEN_FAILURE_LINE));
     myScrollToSource = new ScrollToTestSourceAction(properties);
     secondaryGroup.add(myScrollToSource);
@@ -167,7 +171,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                  ExecutionBundle.message("junit.running.info.show.auto.test.status.description"),
                                                  null, properties, TestConsoleProperties.SHOW_AUTO_TEST_TOOLBAR));
     secondaryGroup.addSeparator();
-    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.select.first.failed.action.name"),
                                                  null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
     properties.appendAdditionalActions(secondaryGroup, parent, properties);
     moreGroup.addSeparator();
@@ -278,8 +282,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     private TestFrameworkRunningModel myModel;
 
     SortByDurationAction(TestConsoleProperties properties) {
-      super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
-            ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.description"),
+      super(ExecutionBundle.message("junit.running.info.sort.by.statistics.action.name"),
+            ExecutionBundle.message("junit.running.info.sort.by.statistics.action.description"),
             AllIcons.RunConfigurations.SortbyDuration, properties,
             TestConsoleProperties.SORT_BY_DURATION);
     }

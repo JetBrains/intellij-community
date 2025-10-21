@@ -39,7 +39,6 @@ internal class TerminalOutputContentUpdatesScheduler(
   fun startUpdating() = textBuffer.withLock {
     val tracker = TerminalOutputChangesTracker(
       textBuffer,
-      shellIntegration,
       trackerDisposable,
       onUpdateStart = { metricTextInBufferToTextVisible.started(Unit, TimeSource.Monotonic.markNow()) }
     )

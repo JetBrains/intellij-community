@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="dokka">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-core/1.4.10.2-dev-52-SNAPSHOT/dokka-core-1.4.10.2-dev-52-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-core/1.4.10.2-dev-52-SNAPSHOT/dokka-core-1.4.10.2-dev-52-SNAPSHOT-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

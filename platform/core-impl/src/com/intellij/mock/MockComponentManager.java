@@ -231,14 +231,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Internal
   @Override
-  public <T> void replaceServiceInstance(@NotNull Class<@NotNull T> serviceInterface,
-                                         @NotNull T instance,
-                                         @NotNull Disposable parentDisposable) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Internal
-  @Override
   public @NotNull Sequence<@NotNull Object> instances(boolean createIfNeeded,
                                                       @Nullable Function1<? super @NotNull Class<?>, @NotNull Boolean> filter) {
     throw new UnsupportedOperationException("unsupported");
@@ -319,20 +311,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Internal
   @Override
   public @Nullable Class<?> getServiceImplementation(@NotNull Class<?> key) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Internal
-  @Override
-  public <T> void replaceComponentInstance(@NotNull Class<@NotNull T> componentKey,
-                                           @NotNull T componentImplementation,
-                                           @Nullable Disposable parentDisposable) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Internal
-  @Override
-  public void registerComponentInstance(@NotNull Class<?> key, @NotNull Object instance) {
     throw new UnsupportedOperationException("unsupported");
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
@@ -29,9 +30,11 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NonNls String ELEMENT_TYPE = "type";
 
   /**
-   * @deprecated Module level message bus is deprecated. Please use application- or project- level.
+   * @deprecated Module level message bus is deprecated. Use application-level ({@link Application#getMessageBus()} or project-level
+   * ({@link Project#getMessageBus()}) message bus instead.
    */
   @Override
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @NotNull MessageBus getMessageBus();
 

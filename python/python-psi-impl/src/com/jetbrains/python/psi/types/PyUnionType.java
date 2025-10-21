@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,11 @@ import java.util.function.Function;
 
 
 public class PyUnionType implements PyType {
+
+  @ApiStatus.Internal
+  public static boolean isStrictSemanticsEnabled() {
+    return Registry.is("python.typing.strict.unions", true);
+  }
 
   private final @NotNull LinkedHashSet<@Nullable PyType> myMembers;
 
@@ -59,7 +65,7 @@ public class PyUnionType implements PyType {
 
   @Override
   public String getName() {
-    return StringUtil.join(myMembers, (NullableFunction<PyType, String>)type -> type != null ? type.getName() : null, " | ");
+    return StringUtil.join(myMembers, t -> t == null ? "Any" : t.getName(), " | ");
   }
 
   /**
@@ -116,8 +122,8 @@ public class PyUnionType implements PyType {
         defaultResult = PyNeverType.NEVER;
         continue;
       }
-      if (member instanceof PyUnionType) {
-        newMembers.addAll(((PyUnionType)member).getMembers());
+      if (member instanceof PyUnionType unionType) {
+        newMembers.addAll(unionType.getMembers());
       }
       else {
         newMembers.add(member);
@@ -126,6 +132,17 @@ public class PyUnionType implements PyType {
     return newMembers.size() < 2 ? ContainerUtil.getFirstItem(newMembers, defaultResult) : new PyUnionType(newMembers);
   }
 
+  /**
+   * A "weak" type is an unsafe union of some type with {@code Any}.
+   * <p>
+   * Such a type can be passed anywhere where any other type is expected, not triggering type errors, but it still provides
+   * completion and navigation of the original type. It allows keeping the gradual guarantee in cases where we are not able
+   * to infer the exact type and still provide IDE assistance, such as code completion, navigation and documentation.
+   *
+   * @param type a type to "weaken"
+   * @return a weak type for the type with the described behavior
+   * @see PyUnsafeUnionType
+   */
   public static @Nullable PyType createWeakType(@Nullable PyType type) {
     if (type == null) {
       return null;
@@ -135,15 +152,40 @@ public class PyUnionType implements PyType {
         return unionType;
       }
     }
+    if (isStrictSemanticsEnabled()) {
+      return PyUnsafeUnionType.unsafeUnion(type, null);
+    }
     return union(type, null);
   }
 
+  /**
+   * Unwrap a "weak" type to its original type. Otherwise, return the {@code type} unchanged.
+   *
+   * @param type a potentially "weak" type to unwrap
+   * @return the original material type combined with {@code Any} if {@code type} is a "weak" type, or {@code type} itself otherwise
+   * @see #createWeakType(PyType)
+   */
   public static @Nullable PyType toNonWeakType(@Nullable PyType type) {
-    return type instanceof PyUnionType ? ((PyUnionType)type).excludeNull() : type;
+    if (isStrictSemanticsEnabled()) {
+      if (type instanceof PyUnsafeUnionType unsafeUnionType) {
+        return PyUnsafeUnionType.unsafeUnion(ContainerUtil.skipNulls(unsafeUnionType.getMembers()));
+      }
+    }
+    else if (type instanceof PyUnionType unionType) {
+      return unionType.excludeNull();
+    }
+    return type;
   }
 
+  /**
+   * @see #isStrictSemanticsEnabled()
+   * @deprecated When the strict union semantics of union types is enabled, a regular union type cannot be "weak",
+   * (e.g. {@code int | Any} is not considered compatible with {@code str}), only {@link PyUnsafeUnionType} can exhibit this behavior.
+   * Use {@link PyTypeChecker#isUnknown(PyType, boolean, TypeEvalContext)} instead.
+   */
+  @Deprecated
   public boolean isWeak() {
-    return myMembers.contains(null);
+    return !isStrictSemanticsEnabled() && myMembers.contains(null);
   }
 
   /**
@@ -183,7 +225,10 @@ public class PyUnionType implements PyType {
    * @see PyUnionType#toNonWeakType(PyType)
    */
   public @Nullable PyType excludeNull() {
-    return !isWeak() ? this : union(ContainerUtil.skipNulls(getMembers()));
+    if (!isStrictSemanticsEnabled()) {
+      return !isWeak() ? this : union(ContainerUtil.skipNulls(getMembers()));
+    }
+    return union(ContainerUtil.skipNulls(getMembers()));
   }
 
   @Override

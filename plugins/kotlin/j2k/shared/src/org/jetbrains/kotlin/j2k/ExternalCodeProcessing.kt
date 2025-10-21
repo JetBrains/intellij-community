@@ -9,6 +9,6 @@ import org.jetbrains.kotlin.psi.KtFile
 interface ExternalCodeProcessing {
     fun prepareWriteOperation(progress: ProgressIndicator?): () -> Unit
 
-    context(KaSession)
+    context(_: KaSession)
     fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>)
 }

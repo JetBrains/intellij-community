@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
@@ -17,6 +18,7 @@ import java.util.Set;
 public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInstantiableType<PyClassLikeType> {
 
   @Nullable
+  @NlsSafe
   String getClassQName();
 
   @NotNull

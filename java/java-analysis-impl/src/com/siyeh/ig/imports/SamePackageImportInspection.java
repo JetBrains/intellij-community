@@ -44,7 +44,7 @@ public final class SamePackageImportInspection extends BaseInspection implements
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SamePackageImportVisitor();
   }
 

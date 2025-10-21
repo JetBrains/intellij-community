@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Agreements")
 @file:ApiStatus.Internal
-
 package com.intellij.ide.gdpr
 
 import com.intellij.DynamicBundle
@@ -38,8 +37,10 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       text = bundle.getString("userAgreement.dialog.exit"),
       action = {
         if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
-          ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.EXIT_CONFIRMED or ApplicationEx.FORCE_EXIT,
-                                                       AppExitCodes.PRIVACY_POLICY_REJECTION)
+          ApplicationManagerEx.getApplicationEx().exit(
+            ApplicationEx.EXIT_CONFIRMED or ApplicationEx.FORCE_EXIT,
+            AppExitCodes.PRIVACY_POLICY_REJECTION
+          )
         }
         else {
           exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
@@ -84,13 +85,13 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
 @ApiStatus.Internal
 fun showDataSharingAgreement() {
   showAgreementUi {
-    configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", Locale.getDefault()))
+    configureDataSharing(DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", Locale.getDefault()))
   }
 }
 
 private fun AgreementUiBuilder.configureDataSharing(bundle: ResourceBundle) {
   val dataSharingConsent = ConsentOptions.getInstance().getConsents(ConsentOptions.condUsageStatsConsent()).first[0]
-  htmlText = prepareConsentsHtml(consent = dataSharingConsent, bundle = bundle).toString()
+  htmlText = prepareConsentsHtml(dataSharingConsent, bundle).toString()
   title = bundle.getString("dataSharing.dialog.title")
   clearBottomPanel()
   focusToText()
@@ -115,9 +116,11 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
     HtmlChunk.empty()
   }
   else {
+    @Suppress("HardCodedStringLiteral")
     val hint = bundle.getString("dataSharing.applyToAll.hint").replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     HtmlChunk.text(hint).wrapWith("hint").wrapWith("p")
   }
+  @Suppress("HardCodedStringLiteral")
   val preferenceHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
   val preferenceChunk = HtmlChunk.text(preferenceHint).wrapWith("hint").wrapWith("p")
   val title = HtmlChunk.text(bundle.getString("dataSharing.consents.title")).wrapWith("h1")

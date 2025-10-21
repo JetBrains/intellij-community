@@ -3,10 +3,11 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_analysis",
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "com.intellij.openapi.util.IntellijInternalApi",
   ]
 )
 
@@ -14,8 +15,8 @@ jvm_library(
   name = "analysis",
   module_name = "kotlin.base.fe10.analysis",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_analysis",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -25,7 +26,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-fe10",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:vavr",
     "@lib//:javax-inject",
     "//java/java-indexing-api:indexing",
@@ -40,7 +41,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
@@ -52,7 +52,8 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "//plugins/kotlin/base/plugin",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
 ### auto-generated section `build kotlin.base.fe10.analysis` end

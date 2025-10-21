@@ -98,6 +98,7 @@ public final class ControlFlowUtil {
     final IntArrayList stack = new IntArrayList(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 
+    visited[startInstruction] = true;
     stack.push(startInstruction);
     while (!stack.isEmpty()) {
       ProgressManager.checkCanceled();

@@ -33,7 +33,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   private boolean onTheFly = false;
   private ProblemsHolder holder = null;
 
-  final void setInspection(BaseInspection inspection) {
+  final void setInspection(@NotNull BaseInspection inspection) {
     this.inspection = inspection;
   }
 
@@ -234,7 +234,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     visitExpression(expression);
   }
 
-  public final void setProblemsHolder(ProblemsHolder holder) {
+  public final void setProblemsHolder(@NotNull ProblemsHolder holder) {
     this.holder = holder;
   }
 

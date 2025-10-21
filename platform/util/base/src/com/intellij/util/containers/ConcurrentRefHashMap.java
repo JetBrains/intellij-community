@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -68,21 +69,11 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     }
     return processed;
   }
-  private static final HashingStrategy<?> THIS = new HashingStrategy<Object>() {
-    @Override
-    public int hashCode(Object object) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean equals(Object o1, Object o2) {
-      throw new UnsupportedOperationException();
-    }
-  };
 
   @Override
   public int size() {
-    return entrySet().size();
+    // approx value, this method is unreliable anyway because some key could gc any moment
+    return myMap.size();
   }
 
   @Override
@@ -110,24 +101,32 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     throw RefValueHashMapUtil.pointlessContainsValue();
   }
 
-  private static class HardKey<K> implements KeyReference<K> {
-    private K myKey;
+  private static class HardKey<K> extends SoftReference<K> implements KeyReference<K> {
+    private HardKey() {
+      super(null, null);
+    }
+
+    private K referent;
     private int myHash;
 
     void setKey(K key, int hash) {
-      myKey = key;
+      referent = key;
       myHash = hash;
     }
 
     @Override
     public K get() {
-      return myKey;
+      return referent;
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    /**
+     * @see ConcurrentSoftHashMap.SoftKey#equals(Object)
+     * @see ConcurrentWeakHashMap.WeakKey#equals(Object)
+     */
+    @SuppressWarnings("EqualsDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-      return o.equals(this); // see com.intellij.util.containers.ConcurrentSoftHashMap.SoftKey or com.intellij.util.containers.ConcurrentWeakHashMap.WeakKey
+      return o.equals(this);
     }
 
     @Override
@@ -135,7 +134,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return myHash;
     }
 
-    private void clear() {
+    @Override
+    public void clear() {
       setKey(null, 0);
     }
   }

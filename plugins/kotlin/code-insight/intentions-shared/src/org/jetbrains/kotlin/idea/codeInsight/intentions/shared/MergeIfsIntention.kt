@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class MergeIfsIntention : SelfTargetingIntention<KtExpression>(KtExpression::class.java, KotlinBundle.lazyMessage("merge.if.s")) {
+class MergeIfsIntention : SelfTargetingIntention<KtExpression>(KtExpression::class.java, KotlinBundle.messagePointer("merge.if.s")) {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean =
         element.ifExpression()?.isApplicable(caretOffset) == true
 

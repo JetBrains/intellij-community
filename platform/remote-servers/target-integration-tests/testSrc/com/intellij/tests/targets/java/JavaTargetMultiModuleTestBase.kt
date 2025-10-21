@@ -3,8 +3,11 @@ package com.intellij.tests.targets.java
 
 import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.testframework.TestSearchScope
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import org.junit.Test
 
@@ -15,6 +18,10 @@ abstract class JavaTargetMultiModuleTestBase(executionMode: ExecutionMode) : Com
     super.setUpModule()
 
     val secondModule = createModule("secondModule")
+
+    ApplicationManager.getApplication().runWriteAction(Runnable {
+      IdeaTestUtil.setModuleLanguageLevel(secondModule, LanguageLevel.JDK_1_8)
+    })
 
     val contentRoot = LocalFileSystem.getInstance().findFileByPath(testAppPath)!!
     initializeSampleModule(module, contentRoot)

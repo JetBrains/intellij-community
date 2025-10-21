@@ -2,8 +2,14 @@ inputs:
   os:
     description: 'linux, windows or mac'
     required: true
+  arch:
+    description: 'x64 or aarch64'
+    required: true
   extension:
     description: 'tar.gz, exe or sit'
+    required: true
+  product:
+    description: 'a product, available options: intellij_idea, pycharm'
     required: true
 runs:
   using: composite
@@ -13,14 +19,12 @@ runs:
       with:
         repository: JetBrains/android
         path: android
-        # It isn't possible to push release tags to both Community and Android repositories atomically.
-        # Therefore, a checkout may fail with the `couldn't find remote ref` error - the next attempt will succeed.
         ref: ${{github.ref}}
     - name: Build environment
       shell: bash
       # language=bash
-      run: docker build . --target intellij_idea --tag intellij_idea
-    - name: Build .${{inputs.extension}}
+      run: docker build . --target ${{inputs.product}} --tag ${{inputs.product}}
+    - name: Build ${{inputs.arch}}.${{inputs.extension}}
       shell: bash
       # language=bash
-      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" intellij_idea -Dintellij.build.target.os=${{inputs.os}}
+      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} -Dintellij.build.target.os=${{inputs.os}} -Dintellij.build.target.arch=${{inputs.arch}}

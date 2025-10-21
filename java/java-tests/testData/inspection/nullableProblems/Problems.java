@@ -1,5 +1,8 @@
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import java.io.File;
+import java.io.FilenameFilter;
 
 class B {
     public void f(@NotNull String p){}
@@ -23,4 +26,32 @@ class Y extends B {
     <warning descr="Primitive type members cannot be annotated">@Nullable</warning> int f;
     <warning descr="Primitive type members cannot be annotated">@NotNull</warning> void vf(){}
     void t(<warning descr="Primitive type members cannot be annotated">@NotNull</warning> double d){}
+}
+
+@NotNullByDefault
+class UnionTypeArgumentWithUseSite {
+  interface Super<T extends @Nullable Object> {
+    void t(T t);
+    
+    void t2(@Nullable T t);
+  }
+
+  interface Sub extends Super<Object> {
+    @Override
+    void t(Object t);
+
+    @Override
+    void t2(Object <warning descr="Parameter annotated @NotNullByDefault must not override @Nullable parameter">t</warning>);
+  }
+}
+class MyFile extends File {
+  public MyFile(@NotNull String pathname) {
+    super(pathname);
+  }
+
+  // Test external annotations
+  @Override
+  public String @NotNull [] list(<warning descr="Parameter annotated @NotNull must not override @Nullable parameter">@NotNull</warning> FilenameFilter filter) {
+    return super.list(filter);
+  }
 }

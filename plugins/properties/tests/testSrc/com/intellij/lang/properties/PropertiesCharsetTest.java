@@ -84,7 +84,7 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.ISO_8859_1);
 
-    PlatformTestUtil.withEncoding("UTF-8", () -> {
+    PlatformTestUtil.withEncoding(StandardCharsets.UTF_8, () -> {
       configureByText("\\u1234\\uxxxx\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y");
       List<IProperty> properties = ((PropertiesFile)myFile).getProperties();
       assertEquals(1, properties.size());
@@ -110,7 +110,7 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, null);
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
 
-    PlatformTestUtil.withEncoding("UTF-8", () -> {
+    PlatformTestUtil.withEncoding(StandardCharsets.UTF_8, () -> {
       configureByText("\\u1234\\uxxxx\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y");
       List<IProperty> properties = ((PropertiesFile)myFile).getProperties();
       assertEquals(1, properties.size());

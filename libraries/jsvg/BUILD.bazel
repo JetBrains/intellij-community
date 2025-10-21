@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jsvg` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jsvg_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jsvg",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jsvg_resources"],
+  exports = ["@lib//:libraries-jsvg-jsvg"],
+  runtime_deps = ["@lib//:libraries-jsvg-jsvg"]
+)
+### auto-generated section `build intellij.libraries.jsvg` end

@@ -72,11 +72,27 @@ class ProductInfoData private constructor(
       fileExtensions: List<String>,
       flavors: List<ProductFlavorData>,
       layout: List<ProductInfoLayoutItem>,
-    ): ProductInfoData = ProductInfoData(
-      name, version, versionSuffix, buildNumber, productCode, envVarBaseName, dataDirectoryName, svgIconPath, productVendor,
-      majorVersionReleaseDate, launch,
-      customProperties, bundledPlugins, modules, fileExtensions, flavors, layout
-    )
+    ): ProductInfoData {
+      return ProductInfoData(
+        name = name,
+        version = version,
+        versionSuffix = versionSuffix,
+        buildNumber = buildNumber,
+        productCode = productCode,
+        envVarBaseName = envVarBaseName,
+        dataDirectoryName = dataDirectoryName,
+        svgIconPath = svgIconPath,
+        productVendor = productVendor,
+        majorVersionReleaseDate = majorVersionReleaseDate,
+        launch = launch,
+        customProperties = customProperties,
+        bundledPlugins = bundledPlugins,
+        modules = modules,
+        fileExtensions = fileExtensions,
+        flavors = flavors,
+        layout = layout
+      )
+    }
   }
 }
 
@@ -118,10 +134,20 @@ class ProductInfoLaunchData private constructor(
       mainClass: String,
       startupWmClass: String? = null,
       customCommands: List<CustomCommandLaunchData> = emptyList(),
-    ): ProductInfoLaunchData = ProductInfoLaunchData(
-      os, arch, launcherPath, javaExecutablePath, vmOptionsFilePath, startupWmClass, bootClassPathJarNames, additionalJvmArguments,
-      mainClass, customCommands
-    )
+    ): ProductInfoLaunchData {
+      return ProductInfoLaunchData(
+        os = os,
+        arch = arch,
+        launcherPath = launcherPath,
+        javaExecutablePath = javaExecutablePath,
+        vmOptionsFilePath = vmOptionsFilePath,
+        startupWmClass = startupWmClass,
+        bootClassPathJarNames = bootClassPathJarNames,
+        additionalJvmArguments = additionalJvmArguments,
+        mainClass = mainClass,
+        customCommands = customCommands
+      )
+    }
   }
 }
 

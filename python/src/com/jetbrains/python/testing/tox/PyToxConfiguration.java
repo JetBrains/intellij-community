@@ -21,6 +21,7 @@ import com.jetbrains.python.serialization.AnnotationSerializationFilter;
 import com.jetbrains.python.serialization.CompoundFilter;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -52,7 +53,8 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     return true;
   }
 
-  String @NotNull [] getRunOnlyEnvs() {
+  @ApiStatus.Internal
+  public String @NotNull [] getRunOnlyEnvs() {
     return (myRunOnlyEnvs == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
   }
 

@@ -1,9 +1,13 @@
-from typing import Any
+from logging import Logger
+from typing import Final
 
-log: Any
-DEFAULT_INTERVAL: Any
+from .connector import ServiceConnector
+from .rule_cache import RuleCache
+
+log: Logger
+DEFAULT_INTERVAL: Final = 300
 
 class RulePoller:
-    def __init__(self, cache, connector) -> None: ...
+    def __init__(self, cache: RuleCache, connector: ServiceConnector) -> None: ...
     def start(self) -> None: ...
     def wake_up(self) -> None: ...

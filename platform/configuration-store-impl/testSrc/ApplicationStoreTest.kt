@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
+import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.PluginManagerCore
@@ -20,6 +23,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
 import org.junit.Assert.*
@@ -32,6 +36,8 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CancellationException
+import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.*
 import kotlin.properties.Delegates
 
@@ -147,9 +153,7 @@ class ApplicationStoreTest {
 
     component.options.foo = "new"
 
-    runBlocking {
-      componentStore.save()
-    }
+    componentStore.save()
 
     val storageManager = componentStore.storageManager
 
@@ -285,7 +289,9 @@ class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = A()
-    component.isThrowErrorOnLoadState = true
+    component.loadStateCallback = {
+      throw ProcessCanceledException()
+    }
     try {
       componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     }
@@ -294,9 +300,41 @@ class ApplicationStoreTest {
     }
     assertThat(component.options).isEqualTo(TestState())
 
-    component.isThrowErrorOnLoadState = false
+    component.loadStateCallback = null
     componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.options).isEqualTo(TestState("old"))
+  }
+
+  private class MyElement(val id: String) : CoroutineContext.Element {
+    object Key : CoroutineContext.Key<MyElement>
+
+    override val key: CoroutineContext.Key<*>
+      get() = Key
+  }
+
+  @Test
+  fun `parent scope is used if passed`() = runBlocking<Unit>(Dispatchers.Default) {    // 2. Define the element
+    writeConfig("a.xml", """<application><component name="A" foo="old" deprecated="old"/></application>""")
+    testAppConfig.refreshVfs()
+
+    val component = A()
+    try {
+      withContext(MyElement("p")) {
+        val parentScope = this@withContext
+        withContext(MyElement("child")) {
+          component.loadStateCallback = {
+            val currentTemporaryThreadContextOrNull = currentTemporaryThreadContextOrNull()
+            assertThat(currentTemporaryThreadContextOrNull).isNotNull()
+            assertThat(currentTemporaryThreadContextOrNull!![MyElement.Key]?.id).isNull()
+          }
+          componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID, parentScope = parentScope)
+        }
+      }
+    }
+    catch (_: CancellationException) {
+    }
+    assertThat(component.options).isEqualTo(TestState(foo="old"))
+    component.loadStateCallback = null
   }
 
   @Test
@@ -518,7 +556,7 @@ class ApplicationStoreTest {
   }
 
   @Test
-  fun `reload components`() = runBlocking<Unit>(Dispatchers.Default) {
+  fun `reload components`() = runBlocking(Dispatchers.Default) {
     @State(name = "A", storages = [Storage(value = "a.xml")])
     class Component : FooComponent()
 
@@ -697,16 +735,16 @@ internal data class TestState(@JvmField @Attribute var foo: String = "", @JvmFie
 
 @State(name = "A", storages = [(Storage("a.xml"))], additionalExportDirectory = "foo")
 internal open class A : PersistentStateComponent<TestState> {
+  @JvmField
   var options = TestState()
 
-  var isThrowErrorOnLoadState = false
+  @JvmField
+  var loadStateCallback: ((TestState) -> Unit)? = null
 
   override fun getState() = options
 
   override fun loadState(state: TestState) {
-    if (isThrowErrorOnLoadState) {
-      throw ProcessCanceledException()
-    }
+    loadStateCallback?.invoke(state)
     this.options = state
   }
 }

@@ -93,7 +93,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
   }
 
   private void registerInjectorFor(DomElement element, PsiElement targetElement) {
-    DomUtil.getFileElement(element).getFileDescription().registerReferenceInjector(new MyInjector(targetElement));
+    DomUtil.getFileElement(element).getFileDescription().registerReferenceInjectorTestAccessor(new MyInjector(targetElement));
   }
 
   public interface MyElement extends DomElement {

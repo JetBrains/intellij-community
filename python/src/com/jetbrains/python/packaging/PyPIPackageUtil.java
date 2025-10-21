@@ -29,6 +29,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -41,8 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import static com.jetbrains.python.packaging.PyPackageNameNormalizeUtilKt.normalizePackageName;
 
 
 @ApiStatus.Internal
@@ -229,12 +228,11 @@ public final class PyPIPackageUtil {
   /**
    * Fetches available package versions using JSON API of PyPI.
    */
-  private @NotNull List<String> getPackageVersionsFromPyPI(@NotNull String packageName,
-                                                           boolean force) throws IOException {
+  private @NotNull @Unmodifiable List<String> getPackageVersionsFromPyPI(@NotNull String packageName,
+                                                                         boolean force) throws IOException {
     final PackageDetails details = refreshAndGetPackageDetailsFromPyPI(packageName, force);
-    final List<String> result = details.getReleases();
-    result.sort(PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
-    return Collections.unmodifiableList(result);
+    return ContainerUtil.sorted(details.getReleases(),
+                                PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
   }
 
   private @Nullable String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
@@ -310,7 +308,7 @@ public final class PyPIPackageUtil {
     @NotNull String repositoryUrl,
     @NotNull String packageName
   ) throws NotSimpleRepositoryApiUrlException {
-    final String normalizedPackageName = normalizePackageName(packageName);
+    final String normalizedPackageName = PyPackageName.Companion.normalizePackageName(packageName);
     final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
     final String packageUrl = normalizedRepositoryUrl + normalizedPackageName + "/";
     return packageUrl;
@@ -330,7 +328,7 @@ public final class PyPIPackageUtil {
   public static @NotNull String buildDetailsUrl(@NotNull String repositoryUrl,
                                                 @NotNull String packageName) throws NotSimpleRepositoryApiUrlException {
     final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
-    final String normalizedPackageName = normalizePackageName(packageName);
+    final String normalizedPackageName = PyPackageName.Companion.normalizePackageName(packageName);
 
     final String baseUrl = StringUtil.trimEnd(normalizedRepositoryUrl, PYPI_SIMPLE_REPOSITORY_API);
     final String detailsUrl = baseUrl + PYPI_DETAILS_API + normalizedPackageName + "/json";

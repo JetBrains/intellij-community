@@ -3,20 +3,25 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ApplicableRangesProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalInspectionTool(),
                                                                         ApplicableRangesProvider<E>,
                                                                         ContextProvider<E, C> {
+
+    override fun isAvailableForFile(file: PsiFile): Boolean =
+        file is KtFile
 
     protected abstract fun InspectionManager.createProblemDescriptor(
         element: E,
@@ -43,7 +48,7 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalIns
         val context = try {
             getElementContext(element)
         } catch (e: Exception) {
-            if (e is ControlFlowException) throw e
+            if (Logger.shouldRethrow(e)) throw e
             throw KotlinExceptionWithAttachments("Unable to get element context", e)
                 .withPsiAttachment("element.kt", element)
                 .withPsiAttachment("file.kt", element.containingFile)

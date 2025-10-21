@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.commons.logging
+  library: commons-logging
+  files:
+  - name: $MAVEN_REPOSITORY$/commons-logging/commons-logging/1/commons-logging-1.jar

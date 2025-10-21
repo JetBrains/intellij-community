@@ -2,23 +2,28 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.terminal.completion.spec.ShellCommandExecutor
-import com.intellij.terminal.completion.spec.ShellCommandResult
-import com.intellij.terminal.completion.spec.ShellName
-import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.*
+import org.jetbrains.annotations.ApiStatus
 
-internal class ShellRuntimeContextImpl(
+@ApiStatus.Internal
+class ShellRuntimeContextImpl(
   override val currentDirectory: String,
   override val typedPrefix: String,
   override val shellName: ShellName,
-  private val generatorCommandsRunner: ShellCommandExecutor
+  private val generatorCommandsRunner: ShellCommandExecutor,
+  private val fileSystemSupport: ShellFileSystemSupport? = null,
 ) : ShellRuntimeContext, UserDataHolderBase() {
 
   override suspend fun runShellCommand(command: String): ShellCommandResult {
-    return generatorCommandsRunner.runShellCommand(command)
+    return generatorCommandsRunner.runShellCommand(currentDirectory, command)
+  }
+
+  override suspend fun listDirectoryFiles(path: String): List<ShellFileInfo> {
+    return fileSystemSupport?.listDirectoryFiles(path)
+           ?: error("Supported only in Reworked Terminal")
   }
 
   override fun toString(): String {
-    return "IJShellRuntimeContext(currentDirectory='$currentDirectory', typedPrefix='$typedPrefix')"
+    return "ShellRuntimeContextImpl(currentDirectory='$currentDirectory', typedPrefix='$typedPrefix')"
   }
 }

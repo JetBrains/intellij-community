@@ -31,6 +31,11 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
             if (result == null) parseNativeStackTraceLine(line, entireLength) else patchResult(result, line)
         }.executeSynchronously()
 
+    fun applyFilter(line: Int, file: String, fqClass: String, methodName: String): Filter.Result? {
+        val stackLine = "at $fqClass.$methodName($file:$line)"
+        return applyFilter(stackLine, stackLine.length)
+    }
+
     private fun patchResult(result: Filter.Result, line: String): Filter.Result {
         val newHyperlinkInfo = createHyperlinkInfo(line, result) ?: return result
 

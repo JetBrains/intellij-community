@@ -3,20 +3,26 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
+import com.intellij.ide.ui.laf.darcula.ui.DarculaDisclosureButtonUI.Companion.intersectsWithAdditionalActionsButton
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtilities
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Rectangle
+import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.AbstractButton
+import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
+import javax.swing.plaf.basic.BasicButtonListener
 import javax.swing.plaf.basic.BasicButtonUI
 import kotlin.math.max
 import kotlin.math.min
@@ -24,17 +30,76 @@ import kotlin.math.min
 private const val DRAW_DEBUG_LINES = false
 
 @ApiStatus.Internal
-class DarculaDisclosureButtonUI : BasicButtonUI() {
+class DarculaDisclosureButtonUI(val uiComponent: JComponent) : BasicButtonUI() {
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
-    fun createUI(c: JComponent): DarculaDisclosureButtonUI = DarculaDisclosureButtonUI()
+    fun createUI(c: JComponent): DarculaDisclosureButtonUI = DarculaDisclosureButtonUI(c)
+
+    internal fun getAdditionalButtonArc(): Int = JBUI.scale(6)
+    internal fun getAdditionalButtonBorder(): Int = JBUI.scale(2)
+    internal fun additionalActionsIcon(isHover: Boolean): Icon {
+      return if (isHover) AllIcons.Ide.Notification.GearHover else AllIcons.Ide.Notification.Gear
+    }
+
+    internal fun intersectsWithAdditionalActionsButton(c: DisclosureButton, e: MouseEvent): Boolean {
+      val actionBounds = getAdditionalActionsButtonBounds(c) ?: return false
+      return actionBounds.contains(e.point)
+    }
+
+    @ApiStatus.Internal
+    internal fun getAdditionalActionsButtonBounds(c: DisclosureButton): Rectangle? {
+      if (c.additionalAction == null) return null
+      val gearIcon = additionalActionsIcon(false)
+
+      val borderSize = getAdditionalButtonBorder()
+      val actionBounds = Rectangle()
+      actionBounds.width = gearIcon.iconWidth + borderSize * 2
+      actionBounds.height = gearIcon.iconHeight + borderSize * 2
+
+      actionBounds.x = c.width - c.insets.right - c.rightMargin - actionBounds.width
+      actionBounds.y = (c.height - actionBounds.height) / 2
+
+      return actionBounds
+    }
   }
+
+  private val mouseHoverListener = MouseHoverListener()
+  private val componentHoverListener = ComponentHoverListener()
+
+  @ApiStatus.Internal
+  private var isAdditionalActionsButtonHovered: Boolean = false
+    private set(value) {
+      if (field != value) {
+        field = value
+        uiComponent.repaint()
+      }
+    }
 
   override fun installDefaults(b: AbstractButton) {
     super.installDefaults(b)
 
     b.border = DarculaDisclosureButtonBorder()
+  }
+
+  override fun installListeners(b: AbstractButton?) {
+    super.installListeners(b)
+
+    uiComponent.addComponentListener(componentHoverListener)
+    uiComponent.addMouseListener(mouseHoverListener)
+    uiComponent.addMouseMotionListener(mouseHoverListener)
+  }
+
+  override fun uninstallListeners(b: AbstractButton?) {
+    super.uninstallListeners(b)
+
+    uiComponent.removeComponentListener(componentHoverListener)
+    uiComponent.removeMouseListener(mouseHoverListener)
+    uiComponent.removeMouseMotionListener(mouseHoverListener)
+  }
+
+  override fun createButtonListener(b: AbstractButton): BasicButtonListener {
+    return DarculaDisclosureButtonListener(b)
   }
 
   override fun paint(g: Graphics?, c: JComponent?) {
@@ -47,19 +112,37 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
 
     super.paint(g, c)
 
-    val arrowIconRect = Rectangle()
-    c.arrowIcon?.let {
-      val insets = c.getInsets()
-      arrowIconRect.x = c.width - insets.right - c.rightMargin - it.iconWidth
-      arrowIconRect.y = (c.height - it.iconHeight) / 2
-      arrowIconRect.width = it.iconWidth
-      arrowIconRect.height = it.iconHeight
-      it.paintIcon(c, g, arrowIconRect.x, arrowIconRect.y)
-    }
+    val insets = c.getInsets()
 
-    if (DRAW_DEBUG_LINES) {
-      g.color = JBColor.RED
-      g.drawRect(arrowIconRect.x, arrowIconRect.y, arrowIconRect.width, arrowIconRect.height)
+    val actionBounds = getAdditionalActionsButtonBounds(c)
+    if (actionBounds != null) {
+      if (isAdditionalActionsButtonHovered) {
+        g as Graphics2D
+
+        val arc = getAdditionalButtonArc()
+        g.color = JBUI.CurrentTheme.List.buttonHoverBackground()
+        g.fillRoundRect(actionBounds.x, actionBounds.y, actionBounds.width, actionBounds.height, arc, arc)
+      }
+
+      val icon = additionalActionsIcon(isAdditionalActionsButtonHovered)
+      val iconX = actionBounds.x + (actionBounds.width - icon.iconWidth) / 2
+      val iconY = actionBounds.y + (actionBounds.height - icon.iconHeight) / 2
+      icon.paintIcon(c, g, iconX, iconY)
+    }
+    else {
+      val arrowIconRect = Rectangle()
+      c.arrowIcon?.let {
+        arrowIconRect.x = c.width - insets.right - c.rightMargin - it.iconWidth
+        arrowIconRect.y = (c.height - it.iconHeight) / 2
+        arrowIconRect.width = it.iconWidth
+        arrowIconRect.height = it.iconHeight
+        it.paintIcon(c, g, arrowIconRect.x, arrowIconRect.y)
+      }
+
+      if (DRAW_DEBUG_LINES) {
+        g.color = JBColor.RED
+        g.drawRect(arrowIconRect.x, arrowIconRect.y, arrowIconRect.width, arrowIconRect.height)
+      }
     }
   }
 
@@ -157,10 +240,65 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
       result.width += b.textRightIconGap + it.iconWidth
       result.height = max(result.height, it.iconHeight)
     }
-    b.arrowIcon?.let {
-      result.width += b.iconTextGap + it.iconWidth
-      result.height = max(result.height, it.iconHeight)
+    val actionBounds = getAdditionalActionsButtonBounds(b)
+    if (actionBounds != null) {
+      result.width += b.iconTextGap + actionBounds.width
+      result.height = max(result.height, actionBounds.height)
+    }
+    else {
+      b.arrowIcon?.let {
+        result.width += b.iconTextGap + it.iconWidth
+        result.height = max(result.height, it.iconHeight)
+      }
     }
     return result
+  }
+
+  private inner class MouseHoverListener : MouseAdapter() {
+    override fun mouseEntered(e: MouseEvent) {
+      val button = uiComponent as? DisclosureButton ?: return
+      isAdditionalActionsButtonHovered = intersectsWithAdditionalActionsButton(button, e)
+    }
+
+    override fun mouseExited(e: MouseEvent) {
+      isAdditionalActionsButtonHovered = false
+    }
+
+    override fun mouseMoved(e: MouseEvent) {
+      val button = uiComponent as? DisclosureButton ?: return
+      isAdditionalActionsButtonHovered = intersectsWithAdditionalActionsButton(button, e)
+    }
+  }
+
+  private inner class ComponentHoverListener : ComponentAdapter() {
+    override fun componentHidden(e: ComponentEvent?) {
+      isAdditionalActionsButtonHovered = false
+    }
+  }
+}
+
+private class DarculaDisclosureButtonListener(private val b: AbstractButton) : BasicButtonListener(b) {
+  override fun mousePressed(e: MouseEvent) {
+    if (SwingUtilities.isLeftMouseButton(e)) {
+      val c = b as? DisclosureButton
+      if (c != null && intersectsWithAdditionalActionsButton(c, e)) {
+        return // suppress default click handler
+      }
+    }
+
+    super.mousePressed(e)
+  }
+
+  override fun mouseReleased(e: MouseEvent) {
+    if (SwingUtilities.isLeftMouseButton(e)) {
+      val c = b as? DisclosureButton
+      if (c != null && intersectsWithAdditionalActionsButton(c, e)) {
+        c.invokeAdditionalAction(e)
+        e.consume()
+        return
+      }
+    }
+
+    super.mouseReleased(e)
   }
 }

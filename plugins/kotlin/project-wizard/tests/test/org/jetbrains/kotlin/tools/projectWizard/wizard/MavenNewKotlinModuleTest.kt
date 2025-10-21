@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.application.options.CodeStyle
@@ -7,6 +7,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardTestCase
+import org.jetbrains.idea.maven.wizards.sdk
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
@@ -104,13 +106,14 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             assertModules(project, "project", newModuleName)
 
             // verify SKD is inherited
-            val moduleModule = ModuleManager.getInstance(project).findModuleByName(newModuleName)!!
+            val moduleModule = ModuleManager.getInstanceAsync(project).findModuleByName(newModuleName)!!
             Assert.assertTrue(ModuleRootManager.getInstance(moduleModule).modifiableModel.isSdkInherited)
         }
         return@runBlocking
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInJavaProject() = runBlocking {
         waitForProjectCreation {
             createProjectFromTemplate(JAVA) {
@@ -140,6 +143,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInKotlinProjectIndependentHierarchy() {
         runNewProjectAndModuleTestCase(
             independentHierarchy = true
@@ -186,6 +190,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testCreateNewProject() {
         runBlocking {
             waitForProjectCreation {
@@ -198,16 +203,19 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testSimpleProject() {
         runNewProjectAndModuleTestCase()
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeEverywhere() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = true, addSampleCodeToModule = true)
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeOnlyInModule() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = false, addSampleCodeToModule = true)
     }

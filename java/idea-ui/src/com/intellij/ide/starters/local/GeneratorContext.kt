@@ -28,6 +28,10 @@ internal class GeneratorContext(
     return libraryIds.contains(libraryId)
   }
 
+  fun hasLibraries(): Boolean {
+    return libraryIds.isNotEmpty()
+  }
+
   fun hasAnyLibrary(vararg ids: String): Boolean {
     return ids.any { libraryIds.contains(it) }
   }

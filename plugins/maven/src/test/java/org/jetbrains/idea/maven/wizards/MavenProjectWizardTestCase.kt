@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -11,6 +11,7 @@ import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
 
@@ -37,7 +38,8 @@ abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjec
   }
 
   protected fun createPom(pomName: String): Path {
-    return createTempFile(pomName, MavenTestCaseLegacy.createPomXml(
+    return createTempFile(pomName, MavenTestCase.createPomXml(
+      MavenConstants.MODEL_VERSION_4_0_0,
       """
       <groupId>test</groupId>
       <artifactId>project</artifactId>

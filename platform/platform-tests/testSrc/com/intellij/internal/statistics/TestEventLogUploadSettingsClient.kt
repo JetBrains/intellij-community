@@ -3,10 +3,15 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClient
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
-import com.jetbrains.fus.reporting.model.http.StatsBasicConnectionSettings
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings
+import com.jetbrains.fus.reporting.connection.JavaHttpClientBuilder
+import com.jetbrains.fus.reporting.connection.JavaHttpRequestBuilder
+import com.jetbrains.fus.reporting.connection.ProxyInfo
+import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
 import java.security.SecureRandom
+import java.time.Duration
 import javax.net.ssl.SSLContext
 
 const val DEFAULT_RECORDER_ID = "FUS"
@@ -16,8 +21,17 @@ internal class TestEventLogUploadSettingsClient(configurationUrl: String) : Even
   override val configurationClient = ConfigurationClientFactory.Companion.createTest(
     applicationInfo.productCode,
     applicationInfo.productVersion,
-    applicationInfo.connectionSettings,
-    configurationUrl = configurationUrl
+    httpClientBuilder = JavaHttpClientBuilder()
+      .setProxyProvider { configurationUrl ->
+        ProxyInfo(
+        applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
+      }.setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
+    httpRequestBuilder = JavaHttpRequestBuilder()
+      .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
+      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent())
+      .setTimeout(Duration.ofSeconds(1)),
+    configurationUrl = configurationUrl,
+    serializer = FusKotlinSerializer()
   )
   override val recorderId: String = DEFAULT_RECORDER_ID
 }

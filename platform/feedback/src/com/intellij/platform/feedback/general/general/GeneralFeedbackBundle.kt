@@ -2,13 +2,13 @@
 package com.intellij.platform.feedback.general.general
 
 import com.intellij.DynamicBundle
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
-@NonNls
 private const val BUNDLE = "messages.GeneralFeedbackMessagesBundle"
 
-internal object GeneralFeedbackBundle : DynamicBundle(BUNDLE) {
+internal object GeneralFeedbackBundle {
+  private val instance = DynamicBundle(GeneralFeedbackBundle::class.java, BUNDLE)
+
   @Suppress("SpreadOperator")
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = getMessage(key, *params)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = instance.getMessage(key, *params)
 }

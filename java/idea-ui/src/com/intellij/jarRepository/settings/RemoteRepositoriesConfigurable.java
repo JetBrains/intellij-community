@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -329,7 +330,7 @@ public final class RemoteRepositoriesConfigurable implements SearchableConfigura
         myWorkspaceModel.updateProjectModel(
           "Update libraries bindings to remote repositories on repository remove", it -> {
             it.applyChangesFrom(myMutableEntityStorage);
-            return null;
+            return Unit.INSTANCE;
           });
       });
     }

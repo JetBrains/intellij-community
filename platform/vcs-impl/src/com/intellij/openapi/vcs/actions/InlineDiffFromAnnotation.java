@@ -49,7 +49,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
   private final @NotNull TextAnnotationPresentation myTextPresentation;
   private final @NotNull FileAnnotation.LineModificationDetailsProvider myProvider;
 
-  private final @NotNull Alarm myAlarm = new Alarm();
+  private final @NotNull Alarm myAlarm;
 
   private int myCurrentLine = -1;
   private @Nullable ProgressIndicator myIndicator;
@@ -65,6 +65,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     myFileAnnotation = fileAnnotation;
     myTextPresentation = textPresentation;
     myProvider = provider;
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable);
     Disposer.register(disposable, this);
   }
 

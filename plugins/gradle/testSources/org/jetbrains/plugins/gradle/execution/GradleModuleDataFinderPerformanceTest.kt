@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.openapi.project.modules
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.useProjectAsync
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -55,7 +55,9 @@ class GradleModuleDataFinderPerformanceTest : GradleTestCase() {
           runBlocking {
             reloadProject(project, "project")
           }
-        }.start()
+        }
+          .runAsStressTest()
+          .start()
       }
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.util.gotoByName.GOTO_FILE_SEARCH_IN_NON_INDEXABLE
 import com.intellij.ide.util.gotoByName.NonIndexableFileNavigationContributor
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.Disposable
@@ -37,6 +38,7 @@ import java.nio.file.Files
 
 @TestApplication
 @RegistryKey("search.in.non.indexable", "true")
+@RegistryKey("se.enable.non.indexable.files.contributor", "false")
 class NonIndexableFileNavigationContributorTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
@@ -55,6 +57,7 @@ class NonIndexableFileNavigationContributorTest {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
+    project.putUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE, true)
   }
 
 
@@ -104,6 +107,23 @@ class NonIndexableFileNavigationContributorTest {
 
     val names = processNames()
     assertThat(names).containsExactlyInAnyOrder("u1", "u2", "f")
+  }
+
+  @Test
+  fun `2 non-indexable roots on one directory`(): Unit = runBlocking {
+    val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
+    val unindexed2 = unindexed
+    baseDir.newVirtualFile("u1/d1/f1")
+    baseDir.newVirtualFile("u1/d1/f2")
+
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(unindexed, NonPersistentEntitySource))
+      storage.addEntity(NonIndexableTestEntity(unindexed2, NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+
+    val names = processNames()
+    assertThat(names).containsExactlyInAnyOrder("u1", "d1", "f1", "f2")
   }
 
   @Test

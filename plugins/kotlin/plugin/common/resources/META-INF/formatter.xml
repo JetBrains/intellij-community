@@ -2,8 +2,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <lang.formatter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.formatter.KotlinFormattingModelBuilder"/>
 
-    <lineIndentProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider"/>
-
     <preFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.KotlinPreFormatProcessor"/>
 
     <postFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.TrailingCommaPostFormatProcessor"/>

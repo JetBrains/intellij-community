@@ -1,13 +1,15 @@
 from collections.abc import Sequence
-from typing import TypedDict
+from typing import TypedDict, type_check_only
 from typing_extensions import NotRequired
 
+@type_check_only
 class _ProxyConfigDict(TypedDict):
     http: NotRequired[str]
     https: NotRequired[str]
     ftpProxy: NotRequired[str]
     noProxy: NotRequired[str]
 
+@type_check_only
 class _Environment(TypedDict):
     http_proxy: NotRequired[str]
     HTTP_PROXY: NotRequired[str]

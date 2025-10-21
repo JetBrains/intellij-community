@@ -18,7 +18,7 @@ PsiJavaFile:Symbols02Markdown.java
         PsiWhiteSpace(' ')
         PsiDocToken:DOC_COMMENT_DATA('~')
         PsiDocToken:DOC_INLINE_CODE_FENCE('`')
-        PsiDocToken:DOC_COMMENT_DATA('!@#$%^&*')
+        PsiDocToken:DOC_COMMENT_DATA('!@#$%^&*##')
         PsiDocToken:DOC_LPAREN('(')
         PsiDocToken:DOC_RPAREN(')')
         PsiDocToken:DOC_COMMENT_DATA('_+|\=-')

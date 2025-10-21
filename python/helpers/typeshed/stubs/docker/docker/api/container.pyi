@@ -1,6 +1,6 @@
 import datetime
 from _typeshed import Incomplete
-from typing import Literal, TypedDict, overload, type_check_only
+from typing import Any, Literal, TypedDict, overload, type_check_only
 from typing_extensions import TypeAlias
 
 from docker._types import WaitContainerResponse
@@ -28,17 +28,17 @@ class ContainerApiMixin:
         logs: bool = False,
         demux: bool = False,
     ): ...
-    def attach_socket(self, container: _Container, params: Incomplete | None = None, ws: bool = False): ...
+    def attach_socket(self, container: _Container, params=None, ws: bool = False): ...
     def commit(
         self,
         container: _Container,
         repository: str | None = None,
         tag: str | None = None,
-        message: Incomplete | None = None,
-        author: Incomplete | None = None,
+        message=None,
+        author=None,
         pause: bool = True,
-        changes: Incomplete | None = None,
-        conf: Incomplete | None = None,
+        changes=None,
+        conf=None,
     ): ...
     def containers(
         self,
@@ -50,7 +50,7 @@ class ContainerApiMixin:
         before: str | None = None,
         limit: int = -1,
         size: bool = False,
-        filters: Incomplete | None = None,
+        filters=None,
     ): ...
     def create_container(
         self,
@@ -61,7 +61,9 @@ class ContainerApiMixin:
         detach: bool = False,
         stdin_open: bool = False,
         tty: bool = False,
-        ports: list[int] | None = None,
+        # list is invariant, enumerating all possible union combination would be too complex for:
+        # list[str | int | tuple[int | str, str] | tuple[int | str, ...]]
+        ports: dict[str, dict[Incomplete, Incomplete]] | list[Any] | None = None,
         environment: dict[str, str] | list[str] | None = None,
         volumes: str | list[str] | None = None,
         network_disabled: bool = False,
@@ -69,19 +71,19 @@ class ContainerApiMixin:
         entrypoint: str | list[str] | None = None,
         working_dir: str | None = None,
         domainname: str | None = None,
-        host_config: Incomplete | None = None,
+        host_config=None,
         mac_address: str | None = None,
         labels: dict[str, str] | list[str] | None = None,
         stop_signal: str | None = None,
-        networking_config: Incomplete | None = None,
-        healthcheck: Incomplete | None = None,
+        networking_config=None,
+        healthcheck=None,
         stop_timeout: int | None = None,
         runtime: str | None = None,
         use_config_proxy: bool = True,
         platform: str | None = None,
     ): ...
     def create_container_config(self, *args, **kwargs) -> ContainerConfig: ...
-    def create_container_from_config(self, config, name: Incomplete | None = None, platform: Incomplete | None = None): ...
+    def create_container_from_config(self, config, name=None, platform=None): ...
     def create_host_config(self, *args, **kwargs) -> HostConfig: ...
     def create_networking_config(self, *args, **kwargs) -> NetworkingConfig: ...
     def create_endpoint_config(self, *args, **kwargs) -> EndpointConfig: ...
@@ -135,7 +137,7 @@ class ContainerApiMixin:
     def pause(self, container: _Container) -> None: ...
     def port(self, container: _Container, private_port: int): ...
     def put_archive(self, container: _Container, path: str, data) -> bool: ...
-    def prune_containers(self, filters: Incomplete | None = None): ...
+    def prune_containers(self, filters=None): ...
     def remove_container(self, container: _Container, v: bool = False, link: bool = False, force: bool = False) -> None: ...
     def rename(self, container: _Container, name: str) -> None: ...
     def resize(self, container: _Container, height: int, width: int) -> None: ...
@@ -158,7 +160,7 @@ class ContainerApiMixin:
         mem_reservation: float | str | None = None,
         memswap_limit: int | str | None = None,
         kernel_memory: int | str | None = None,
-        restart_policy: Incomplete | None = None,
+        restart_policy=None,
     ): ...
     def wait(
         self,

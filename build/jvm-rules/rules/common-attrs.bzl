@@ -8,13 +8,14 @@ load(
     _TOOLCHAIN_TYPE = "TOOLCHAIN_TYPE",
 )
 load(
-    "@rules_kotlin//kotlin/internal:opts.bzl",
-    _JavacOptions = "JavacOptions",
+    "//:rules/impl/javac-options.bzl",
+    "JavacOptions",
 )
 load(
     "//:rules/impl/kotlinc-options.bzl",
     "KotlincOptions",
 )
+load("//:rules/impl/transitions.bzl", "scrubbed_host_platform_transition")
 
 visibility("private")
 
@@ -33,20 +34,15 @@ _implicit_deps = {
     "_java_toolchain": attr.label(
         default = Label("@bazel_tools//tools/jdk:current_java_toolchain"),
     ),
+    "_tool_java_runtime": attr.label(
+        default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
+        cfg = "exec",
+    ),
 }
 
-common_attr = add_dicts(
+kmp_attr = add_dicts(
     _implicit_deps,
     {
-        "deps": attr.label_list(
-            doc = """A list of dependencies of this rule.See general comments about `deps` at
-        [Attributes common to all build rules](https://docs.bazel.build/versions/master/be/common-definitions.html#common-attributes).""",
-            providers = [
-                [JavaInfo],
-                [_KtJvmInfo],
-            ],
-            allow_files = False,
-        ),
         "runtime_deps": attr.label_list(
             doc = """Libraries to make available to the final binary or test at runtime only. Like ordinary deps, these will
         appear on the runtime classpath, but unlike them, not on the compile-time classpath.""",
@@ -57,13 +53,6 @@ common_attr = add_dicts(
             doc = """The list of files needed by this rule at runtime. See general comments about `data` at
         [Attributes common to all build rules](https://docs.bazel.build/versions/master/be/common-definitions.html#common-attributes).""",
             allow_files = True,
-        ),
-        "associates": attr.label_list(
-            doc = """Kotlin deps who should be considered part of the same module/compilation-unit
-            for the purposes of "internal" access. Such deps must all share the same module space
-            and so a target cannot associate to two deps from two different modules.""",
-            default = [],
-            providers = [JavaInfo, _KtJvmInfo],
         ),
         "plugins": attr.label_list(
             default = [],
@@ -83,19 +72,47 @@ common_attr = add_dicts(
             default = "//:default-kotlinc-opts",
             providers = [KotlincOptions],
         ),
+    },
+)
+
+common_attr = add_dicts(
+    kmp_attr,
+    {
+        "deps": attr.label_list(
+            doc = """A list of dependencies of this rule.See general comments about `deps` at
+        [Attributes common to all build rules](https://docs.bazel.build/versions/master/be/common-definitions.html#common-attributes).""",
+            providers = [
+                [JavaInfo],
+                [_KtJvmInfo],
+            ],
+            allow_files = False,
+        ),
+        "associates": attr.label_list(
+            doc = """Kotlin deps who should be considered part of the same module/compilation-unit
+            for the purposes of "internal" access. Such deps must all share the same module space
+            and so a target cannot associate to two deps from two different modules.""",
+            default = [],
+            providers = [JavaInfo, _KtJvmInfo],
+        ),
         "javac_opts": attr.label(
             doc = """Javac options to be used when compiling this target. These opts if provided will
             be used instead of the ones provided to the toolchain.
             Use --@rules_jvm:default-kotlinc-opts=//:my-custom-settings to point to a custom global default options in .bazelrc
             """,
-            default = None,
-            providers = [_JavacOptions],
+            default = "//:default-javac-opts",
+            providers = [JavacOptions],
         ),
         "_jvm_builder": attr.label(
             default = "//:jvm-builder",
-            executable = True,
-            allow_files = True,
-            cfg = "exec",
+            allow_single_file = True,
+            cfg = scrubbed_host_platform_transition,
+        ),
+        "_jvm_builder_jvm_flags": attr.label(
+            default = "//:jvm-builder-jvm_flags",
+        ),
+        "_jvm_builder_launcher": attr.label(
+            default = "//:rules/impl/MemoryLauncher.java",
+            allow_single_file = True,
         ),
         "_reduced_classpath": attr.bool(default = False),
         "_trace": attr.label(default = "//:trace"),

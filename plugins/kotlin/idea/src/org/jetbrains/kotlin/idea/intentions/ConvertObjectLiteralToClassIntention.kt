@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 
 class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjectLiteralExpression>(
     KtObjectLiteralExpression::class.java,
-    KotlinBundle.lazyMessage("convert.object.literal.to.class")
+    KotlinBundle.messagePointer("convert.object.literal.to.class")
 ) {
     override fun applicabilityRange(element: KtObjectLiteralExpression): TextRange? = element.objectDeclaration.getObjectKeyword()?.textRange
 

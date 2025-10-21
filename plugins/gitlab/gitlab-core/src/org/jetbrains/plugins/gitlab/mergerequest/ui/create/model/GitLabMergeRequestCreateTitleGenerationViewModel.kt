@@ -11,18 +11,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension.GenerationError
-import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension.GenerationStep
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleAndDescriptionGeneratorExtension.GenerationError
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleAndDescriptionGeneratorExtension.GenerationStep
 
 @ApiStatus.Internal
-interface GitLabTitleGeneratorExtension {
+interface GitLabTitleAndDescriptionGeneratorExtension {
   companion object {
-    val EP_NAME = ExtensionPointName<GitLabTitleGeneratorExtension>("intellij.vcs.gitlab.titleGenerator")
+    val EP_NAME = ExtensionPointName<GitLabTitleAndDescriptionGeneratorExtension>("intellij.vcs.gitlab.titleGenerator")
   }
 
   sealed interface GenerationState
   data class GenerationError(val e: Exception) : GenerationState
-  data class GenerationStep(val title: String) : GenerationState
+  data class GenerationStep(val title: String, val description: String?) : GenerationState
 
   fun generate(project: Project, commits: List<VcsCommitMetadata>): Flow<GenerationState>
 }
@@ -42,9 +42,10 @@ interface GitLabMergeRequestCreateTitleGenerationViewModel {
 internal class GitLabMergeRequestCreateTitleGenerationViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val extension: GitLabTitleGeneratorExtension,
+  private val extension: GitLabTitleAndDescriptionGeneratorExtension,
   private val commits: List<VcsCommitMetadata>,
   private val setTitle: (String) -> Unit,
+  private val setDescription: (String) -> Unit,
 ) : GitLabMergeRequestCreateTitleGenerationViewModel {
   private val taskLauncher = SingleCoroutineLauncher(parentCs.childScope("Generate Title"))
   override val isGenerating: StateFlow<Boolean> = taskLauncher.busy
@@ -60,6 +61,7 @@ internal class GitLabMergeRequestCreateTitleGenerationViewModelImpl(
           is GenerationError -> throw it.e
           is GenerationStep -> {
             setTitle(it.title)
+            if (it.description != null) setDescription(it.description)
           }
         }
       }

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -40,7 +41,7 @@ internal class RuntimeChooserModel {
   }
 
   fun getInstallPathFromText(item: JdkItem, text: String?) : Path {
-    val path = text?.trim()?.takeIf { it.isNotBlank() }?.let { FileUtil.expandUserHome(it) }
+    val path = text?.trim()?.takeIf { it.isNotBlank() }?.let { OSAgnosticPathUtil.expandUserHome(it) }
     if (path != null) {
       var file = Paths.get(path)
       repeat(1000) {

@@ -61,11 +61,9 @@ interface DiffLangSpecificProvider {
     val EP_NAME: ExtensionPointName<DiffLangSpecificProvider> = ExtensionPointName.create<DiffLangSpecificProvider>("com.intellij.diff.lang.DiffLangSpecificAdjuster")
 
     @JvmStatic
-    fun findApplicable(project: Project?, leftContent: DiffContent, rightContent: DiffContent): DiffLangSpecificProvider? {
-      if (project == null) return null
-
-      val leftLanguage = LangDiffIgnoredRangeProvider.getLanguage(project, leftContent)
-      val rightLanguage = LangDiffIgnoredRangeProvider.getLanguage(project, rightContent)
+    fun findApplicable(leftContent: DiffContent, rightContent: DiffContent): DiffLangSpecificProvider? {
+      val leftLanguage = DiffLanguage.getLanguage(leftContent)
+      val rightLanguage = DiffLanguage.getLanguage(rightContent)
 
       if (leftLanguage == null || rightLanguage == null || leftLanguage != rightLanguage) return null
 

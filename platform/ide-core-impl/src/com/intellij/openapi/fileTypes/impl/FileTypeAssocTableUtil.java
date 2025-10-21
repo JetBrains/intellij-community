@@ -12,7 +12,7 @@ import java.util.Map;
 @ApiStatus.Internal
 public final class FileTypeAssocTableUtil {
   public static @NotNull <T> FileTypeAssocTable<T> newScalableFileTypeAssocTable() {
-    return new FileTypeAssocTable<>(FileTypeAssocTableUtil::createScalableCharSequenceConcurrentMap);
+    return new FileTypeAssocTable<>((source, caseSensitive) -> createScalableCharSequenceConcurrentMap(source, caseSensitive));
   }
 
   private static @NotNull <T> Map<CharSequence, T> createScalableCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensitive) {

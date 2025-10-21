@@ -1,21 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
 import com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity
 import com.intellij.java.workspace.entities.PackagingElementEntity
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyParent
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
@@ -23,20 +19,17 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ModuleOutputPackagingElementEntityImpl(private val dataSource: ModuleOutputPackagingElementEntityData) :
-  ModuleOutputPackagingElementEntity, WorkspaceEntityBase(dataSource) {
+internal class ModuleOutputPackagingElementEntityImpl(private val dataSource: ModuleOutputPackagingElementEntityData) : ModuleOutputPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
-      true
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                                PackagingElementEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -64,9 +57,8 @@ internal class ModuleOutputPackagingElementEntityImpl(private val dataSource: Mo
   }
 
 
-  internal class Builder(result: ModuleOutputPackagingElementEntityData?) :
-    ModifiableWorkspaceEntityBase<ModuleOutputPackagingElementEntity, ModuleOutputPackagingElementEntityData>(result),
-    ModuleOutputPackagingElementEntity.Builder {
+  internal class Builder(result: ModuleOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleOutputPackagingElementEntity, ModuleOutputPackagingElementEntityData>(
+    result), ModuleOutputPackagingElementEntity.Builder {
     internal constructor() : this(ModuleOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -121,22 +113,19 @@ internal class ModuleOutputPackagingElementEntityImpl(private val dataSource: Mo
 
       }
 
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
-          ?: (this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(false,
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+          this.entityLinks[EntityLink(false,
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -237,7 +226,7 @@ internal class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<Modu
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ModuleOutputPackagingElementEntity> {
     val modifiable = ModuleOutputPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -257,19 +246,17 @@ internal class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<Modu
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity"
-    ) as EntityMetadata
+      "com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ModuleOutputPackagingElementEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ModuleOutputPackagingElementEntity(entitySource) {
       this.module = this@ModuleOutputPackagingElementEntityData.module
-      this.parentEntity =
-        parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 

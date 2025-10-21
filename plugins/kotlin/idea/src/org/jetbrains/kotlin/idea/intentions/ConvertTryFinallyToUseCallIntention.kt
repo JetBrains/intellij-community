@@ -30,7 +30,7 @@ class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpre
 }
 
 class ConvertTryFinallyToUseCallIntention : SelfTargetingRangeIntention<KtTryExpression>(
-    KtTryExpression::class.java, KotlinBundle.lazyMessage("convert.try.finally.to.use")
+    KtTryExpression::class.java, KotlinBundle.messagePointer("convert.try.finally.to.use")
 ) {
     override fun applyTo(element: KtTryExpression, editor: Editor?) {
         val finallySection = element.finallyBlock ?: return

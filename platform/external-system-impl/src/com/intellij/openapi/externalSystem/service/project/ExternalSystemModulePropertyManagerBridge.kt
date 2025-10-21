@@ -165,6 +165,12 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     updateSource()
   }
 
+  override fun setLinkedProjectId(id: String?) {
+    editEntity {
+      linkedProjectId = id
+    }
+  }
+
   override fun setLinkedProjectPath(path: String?) {
     editEntity {
       linkedProjectPath = path
@@ -188,6 +194,6 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
 
   private fun getModuleDiff(): MutableEntityStorage? {
     val modelsProvider = module.getUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY)
-    return if (modelsProvider != null) modelsProvider.actualStorageBuilder else (module as ModuleBridge).diff as? MutableEntityStorage
+    return modelsProvider?.actualStorageBuilder ?: (module as ModuleBridge).diff
   }
 }

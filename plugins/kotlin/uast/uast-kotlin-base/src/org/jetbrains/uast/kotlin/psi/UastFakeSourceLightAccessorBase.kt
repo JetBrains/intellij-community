@@ -37,6 +37,8 @@ internal open class UastFakeSourceLightAccessorBase<T: KtDeclaration>(
         val useSiteTarget = if (isSetter) AnnotationUseSiteTarget.PROPERTY_SETTER else AnnotationUseSiteTarget.PROPERTY_GETTER
         property.annotationEntries
             .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget }
-            .mapTo(annotations) { it.toPsiAnnotation() }
+            .mapNotNullTo(annotations) { entry ->
+                baseResolveProviderService.convertToPsiAnnotation(entry)
+            }
     }
 }

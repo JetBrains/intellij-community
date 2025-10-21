@@ -1,12 +1,12 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.platform.compose" />
     <module name="intellij.platform.jewel.markdown.core" />
     <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
     <module name="intellij.platform.jewel.markdown.extensions.autolink" />
+    <module name="intellij.platform.jewel.markdown.extensions.images" />
     <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts" />
     <module name="intellij.platform.jewel.markdown.extensions.gfmTables" />
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" />
-    <module name="intellij.platform.jewel.markdown.extensions.images" />
   </dependencies>
 </idea-plugin>

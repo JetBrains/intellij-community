@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class OutputWrapper extends OutputStream {
     if (myBuffer == null || myBuffer.isEmpty()) {
       return;
     }
-    myListener.onTaskOutput(myTaskId, myBuffer.toString(), myStdOut);
+    myListener.onTaskOutput(myTaskId, myBuffer.toString(), myStdOut ? ProcessOutputType.STDOUT : ProcessOutputType.STDERR);
     myBuffer.setLength(0);
   }
 }

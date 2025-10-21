@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.conda
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.packaging.conda.environmentYml.format.EnvironmentYmlModifier
@@ -11,6 +12,33 @@ import org.junit.jupiter.api.Assertions
 import java.io.File
 
 class EnvironmentYmlHelperTest : PyTestCase() {
+  fun testAddRequirementEmpty() {
+    val virtualFile = getVirtualFileByName("$testDataPath/requirement/environmentYmlEmpty/environment.yml")!!
+
+    // Create a temporary copy of the file
+    val tempDir = FileUtil.createTempDirectory(getTestName(false), null)
+    val tempFile = File(tempDir.path, "environment.yml")
+    virtualFile.inputStream.use { input ->
+      tempFile.outputStream().use { output ->
+        input.copyTo(output)
+      }
+    }
+    val tempVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl("file://${tempFile.absolutePath}")!!
+
+    // Parse the updated file and check if the package was added
+    val requirements = CondaEnvironmentYmlParser.fromFile(tempVirtualFile)!!
+    Assertions.assertEquals(emptyList<PyRequirement>(), requirements)
+
+    // Add a new package that doesn't exist in the file
+    val newPackageName = "new-test-package"
+    EnvironmentYmlModifier.addRequirement(myFixture.project, tempVirtualFile, newPackageName)
+    val newPackageRequirement = PyRequirementParser.fromLine(newPackageName)!!
+
+    // Parse the file again and check that the package appears only once
+    val updatedRequirements = CondaEnvironmentYmlParser.fromFile(tempVirtualFile)!!
+    Assertions.assertEquals(listOf(newPackageRequirement), updatedRequirements)
+  }
+
   fun testAddRequirement() {
     val virtualFile = getVirtualFileByName("$testDataPath/requirement/environmentYml/environment.yml")!!
 

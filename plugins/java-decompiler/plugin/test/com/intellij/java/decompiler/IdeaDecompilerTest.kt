@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.decompiler
 
 import com.intellij.JavaTestUtil
@@ -11,6 +11,7 @@ import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
+import com.intellij.ide.structureView.impl.java.KindSorter
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.PluginPathManager
@@ -321,6 +322,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val builder = StructureViewBuilder.getProvider().getStructureViewBuilder(JavaClassFileType.INSTANCE, file, project)!!
     val svc = builder.createStructureView(editor, project) as StructureViewComponent
     Disposer.register(myFixture.testRootDisposable, svc)
+    svc.setActionActive(KindSorter.ID, true)
     svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
     PlatformTestUtil.expandAll(svc.tree)
     PlatformTestUtil.assertTreeEqual(svc.tree, s.trimIndent())

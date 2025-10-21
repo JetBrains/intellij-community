@@ -1,5 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -108,6 +106,7 @@ public interface GroovyElementTypes {
   GroovyElementType GSTRING = new GroovyElementType("GSTRING");
   GroovyElementType IF_STATEMENT = new GroovyElementType("IF_STATEMENT");
   GrImplementsClauseElementType IMPLEMENTS_CLAUSE = new GrImplementsClauseElementType("IMPLEMENTS_CLAUSE");
+  GroovyElementType IMPL_EXPRESSION = new GroovyElementType("IMPL_EXPRESSION");
   GrImportStatementElementType IMPORT = new GrImportStatementElementType("IMPORT");
   GroovyElementType IMPORT_ALIAS = new GroovyElementType("IMPORT_ALIAS");
   GroovyElementType INDEX_EXPRESSION = new GroovyElementType("INDEX_EXPRESSION");
@@ -134,6 +133,7 @@ public interface GroovyElementTypes {
   GrParameterElementType PARAMETER = new GrParameterElementType("PARAMETER");
   GrParameterListElementType PARAMETER_LIST = new GrParameterListElementType("PARAMETER_LIST");
   GroovyElementType PARENTHESIZED_EXPRESSION = new GroovyElementType("PARENTHESIZED_EXPRESSION");
+  GroovyElementType PATTERN_VARIABLE = new GroovyElementType("PATTERN_VARIABLE");
   GrPermitsClauseElementType PERMITS_CLAUSE = new GrPermitsClauseElementType("PERMITS_CLAUSE");
   GroovyElementType POWER_EXPRESSION = new GroovyElementType("POWER_EXPRESSION");
   GroovyElementType PRIMITIVE_TYPE_ELEMENT = new GroovyElementType("PRIMITIVE_TYPE_ELEMENT");
@@ -286,6 +286,7 @@ public interface GroovyElementTypes {
   IElementType T_GE = new GroovyElementType(">=");
   IElementType T_GT = new GroovyElementType(">");
   IElementType T_ID = new GroovyElementType("===");
+  IElementType T_IMPL = new GroovyElementType("==>");
   IElementType T_INC = new GroovyElementType("++");
   IElementType T_LAND = new GroovyElementType("&&");
   IElementType T_LBRACE = new GroovyElementType("{");

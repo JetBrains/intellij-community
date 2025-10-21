@@ -17,6 +17,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
@@ -163,7 +164,7 @@ class TestApplicationManager private constructor() {
 
     /**
      * Call this method after the test to check whether project instances leak.
-     * This is done automatically on CI inside {@code _LastInSuiteTest.testProjectLeak}.
+     * This is done automatically on CI inside [_LastInSuiteTest.testProjectLeak].
      * However, you may want to add this check to a particular test to make sure 
      * whether it causes the leak or not.
      */
@@ -195,7 +196,7 @@ class TestApplicationManager private constructor() {
       val edtThrowable = runInEdtAndGet {
         runAllCatching(
           { PlatformTestUtil.cleanupAllProjects() },
-          { EDT.dispatchAllInvocationEvents() },
+          { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() },
           {
             println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
             println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
@@ -211,7 +212,11 @@ class TestApplicationManager private constructor() {
             }
           },
           { getInstanceIfCreated()?.dispose() },
-          { EDT.dispatchAllInvocationEvents() },
+          {
+            TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+              EDT.dispatchAllInvocationEvents()
+            }
+          },
         )
       }
 

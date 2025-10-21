@@ -14,6 +14,11 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildByType;
 
 @ApiStatus.Experimental
 public interface PyAstImportElement extends PyAstElement, PyAstImportedNameDefiner {
+  @Override
+  default @Nullable String getName() {
+    return getVisibleName();
+  }
+
   default @Nullable PyAstReferenceExpression getImportReferenceExpression() {
     final ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens());
     return node == null ? null : (PyAstReferenceExpression) node.getPsi();

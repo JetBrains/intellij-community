@@ -10,22 +10,18 @@ import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
 import org.jetbrains.kotlin.findUsages.KotlinFindUsageConfigurator
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import java.io.File
-import kotlin.io.path.Path
-import kotlin.io.path.readText
 
 abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompilerReferenceTestBase() {
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
-        moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
+        moduleBuilder.setLanguageLevel(LanguageLevel.JDK_17)
         moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
     }
 
     protected open val ignoreLog: Boolean get() = false
-    override val withK2Compiler: Boolean get() = false
 
     override fun getTestDataPath(): String = File(TestMetadataUtil.getTestDataPath(javaClass)).path
 
@@ -48,20 +44,12 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
                 testType = criType,
             )
         }.fold(
-            onSuccess = {
-                if (isFir && shouldIgnore(path)) {
-                    error("FIR_CRI_IGNORE directive is redundant")
-                }
-            },
+            onSuccess = {},
             onFailure = {
-                if (!isFir || !shouldIgnore(path)) {
+                if (isCompatibleVersions) {
                     throw it
                 }
             },
         )
-    }
-
-    private fun shouldIgnore(path: String): Boolean {
-        return InTextDirectivesUtils.findStringWithPrefixes(Path(path).readText(), "// FIR_CRI_IGNORE:") != null
     }
 }

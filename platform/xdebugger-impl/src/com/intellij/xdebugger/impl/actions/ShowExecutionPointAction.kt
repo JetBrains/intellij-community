@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
+import com.intellij.xdebugger.impl.updateExecutionPosition
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,7 +25,15 @@ class ShowExecutionPointAction : XDebuggerActionBase(), ActionRemoteBehaviorSpec
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     performDebuggerActionAsync(session.project, dataContext) {
-      XDebugSessionApi.getInstance().switchToTopFrame(session.id)
+      session.switchToTopFrame()
+      // TODO that's a temporary solution to make the action working in 253.
+      //  This method shouldn't be called anywhere but `ExecutionPointManagerChangeListener`.
+      //  Instead, here we should make sure `switchToTopFrame` actually makes the backend
+      //  send a `FRAME_CHANGED` event back to the frontend,
+      //  and the frontend should make an exception for this particular case
+      //  and run the `stackFrameChanged` even if the stack frame wasn't changed.
+      //  See IJPL-214299 for details.
+      updateExecutionPosition(session.project)
     }
   }
 }

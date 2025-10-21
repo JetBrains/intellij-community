@@ -72,6 +72,9 @@ object ApplicabilityRanges {
     fun declarationName(element: KtNamedDeclaration): List<TextRange> =
         ApplicabilityRange.single(element) { it.nameIdentifier }
 
+    fun typeReference(element: KtCallableDeclaration): List<TextRange> =
+        ApplicabilityRange.single(element) { it.typeReference }
+
     fun ifExpressionExcludingBranches(element: KtIfExpression): List<TextRange> {
         val rightOffset = element.rightParenthesis?.endOffset
 

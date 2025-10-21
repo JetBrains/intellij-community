@@ -1223,7 +1223,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
     while (current != null) {
       if ((current instanceof PsiComment || current instanceof PsiWhiteSpace)) {
         if (branch.myUsedElements.isEmpty() ||
-            !PsiTreeUtil.isAncestor(branch.myUsedElements.get(branch.myUsedElements.size() - 1), current, false)) {
+            !PsiTreeUtil.isAncestor(branch.myUsedElements.getLast(), current, false)) {
           comments.add(ct.text(current));
         }
       }
@@ -1300,7 +1300,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       sb.append("->");
       sb.append(myRuleResult.generate(ct, this));
       if (!myUsedElements.isEmpty()) {
-        PsiElement element = PsiTreeUtil.nextCodeLeaf(myUsedElements.get(myUsedElements.size() - 1));
+        PsiElement element = PsiTreeUtil.nextCodeLeaf(myUsedElements.getLast());
         if (element instanceof PsiJavaToken javaToken && javaToken.textMatches("}") &&
             element.getParent() instanceof PsiCodeBlock codeBlock &&
             codeBlock.getParent() instanceof PsiSwitchBlock) {

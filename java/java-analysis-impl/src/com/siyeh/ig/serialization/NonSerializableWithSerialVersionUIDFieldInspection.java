@@ -72,7 +72,7 @@ public final class NonSerializableWithSerialVersionUIDFieldInspection extends Ba
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonSerializableWithSerialVersionUIDVisitor();
   }
 

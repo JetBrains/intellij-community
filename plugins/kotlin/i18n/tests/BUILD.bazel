@@ -1,16 +1,17 @@
-### auto-generated section `build kotlin.i18n.tests` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+### auto-generated section `build intellij.kotlin.i18n.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.kotlin.i18n.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -27,11 +28,18 @@ jvm_library(
     "//plugins/java-i18n:java-i18n_test_lib",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ]
 )
+### auto-generated section `build intellij.kotlin.i18n.tests` end
 
-jvm_test(
+### auto-generated section `test intellij.kotlin.i18n.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.i18n.tests` end
+### auto-generated section `test intellij.kotlin.i18n.tests` end

@@ -11,7 +11,7 @@ object FindKey {
   @JvmStatic
   val isCwmClient: Boolean get() {
     val frontendType = FrontendApplicationInfo.getFrontendType()
-    return (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported)
+    return (frontendType is FrontendType.Remote && frontendType.isGuest())
   }
 
   val isEnabled: Boolean
@@ -20,4 +20,7 @@ object FindKey {
       if (isCwmClient) return Registry.`is`("find.in.files.split.cwm")
       return Registry.`is`("find.in.files.split")
     }
+
+  @JvmStatic
+  val isLazyPreviewEnabled: Boolean = Registry.`is`("find.in.files.split.lazy.preview")
 }

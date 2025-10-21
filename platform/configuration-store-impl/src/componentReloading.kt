@@ -4,21 +4,23 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>,
-                                        deletedFileSpecs: Collection<String>,
-                                        componentNames2reload: Set<String>? = null,
-                                        forceReloadNonReloadable: Boolean = false
+suspend fun ComponentStoreImpl.reloadComponents(
+  changedFileSpecs: Collection<String>,
+  deletedFileSpecs: Collection<String>,
+  componentNames2reload: Set<String>? = null,
+  forceReloadNonReloadable: Boolean = false,
 ) {
   LOG.debug { "reloadComponents: changed=$changedFileSpecs, deleted=$deletedFileSpecs, componentNames2=$componentNames2reload" }
-  val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
+  val schemeManagerFactory = serviceAsync<SchemeManagerFactory>() as SchemeManagerFactoryBase
   val storageManager = storageManager as StateStorageManagerImpl
-  val (changed, deleted) = storageManager.getCachedFileStorages(changedFileSpecs, deletedFileSpecs, null)
+  val (changed, deleted) = storageManager.getCachedFileStorages(changed = changedFileSpecs, deleted = deletedFileSpecs, pathNormalizer = null)
 
   val changedComponentNames = componentNames2reload ?: LinkedHashSet<String>().also {
     // just take component names from files
@@ -27,7 +29,7 @@ fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>,
     LOG.debug { "calculated changed component names: $it" }
   }
 
-  val schemeManagersToReload = calcSchemeManagersToReload(changedFileSpecs + deletedFileSpecs, schemeManagerFactory)
+  val schemeManagersToReload = calcSchemeManagersToReload(pathsToCheck = changedFileSpecs + deletedFileSpecs, schemeManagerFactory = schemeManagerFactory)
   for (schemeManager in schemeManagersToReload) {
     if (schemeManager.fileSpec == "colors") {
       EditorColorsManager.getInstance().reloadKeepingActiveScheme()
@@ -43,7 +45,7 @@ fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>,
     getNotReloadableComponents(changedComponentNames)
   }
   LOG.debug { "non-reloadable components: $notReloadableComponents" }
-  reinitComponents(changedComponentNames, (changed + deleted).toSet(), notReloadableComponents)
+  reinitComponents(componentNames = changedComponentNames, changedStorages = (changed + deleted).toSet(), notReloadableComponents = notReloadableComponents)
 }
 
 private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
@@ -58,8 +60,10 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
   }
 }
 
-private fun calcSchemeManagersToReload(pathsToCheck: List<String>,
-                                       schemeManagerFactory: SchemeManagerFactoryBase): List<SchemeManagerImpl<*, *>> {
+private fun calcSchemeManagersToReload(
+  pathsToCheck: List<String>,
+  schemeManagerFactory: SchemeManagerFactoryBase,
+): List<SchemeManagerImpl<*, *>> {
   val schemeManagersToReload = mutableListOf<SchemeManagerImpl<*, *>>()
   schemeManagerFactory.process {
     if (shouldReloadSchemeManager(it, pathsToCheck)) {

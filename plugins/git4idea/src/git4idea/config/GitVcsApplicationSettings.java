@@ -3,7 +3,6 @@ package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,16 +42,6 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-  }
-
-  /**
-   * @deprecated use {@link #getSavedPathToGit()} to get the path from settings if there's any
-   * or use {@link GitExecutableManager#getPathToGit()}/{@link GitExecutableManager#getPathToGit(Project)} to get git executable with
-   * auto-detection
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull String getPathToGit() {
-    return GitExecutableManager.getInstance().getPathToGit();
   }
 
   public @Nullable String getSavedPathToGit() {

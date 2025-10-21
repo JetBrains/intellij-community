@@ -31,6 +31,7 @@ private val inspections
     PyCallingNonCallableInspection(),
     PyClassVarInspection(),
     PyDataclassInspection(),
+    PyDunderSlotsInspection(),
     PyEnumInspection(),
     PyFinalInspection(),
     //PyInitNewSignatureInspection(), // False negative constructors_consistency.py
@@ -43,6 +44,7 @@ private val inspections
     PyTypeCheckerInspection(),
     PyTypeHintsInspection(),
     PyUnresolvedReferencesInspection(),
+    PyTypeAliasRedeclarationInspection(),
   )
 
 @RunWith(Parameterized::class)

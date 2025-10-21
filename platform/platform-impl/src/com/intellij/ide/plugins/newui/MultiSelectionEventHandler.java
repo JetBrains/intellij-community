@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,7 @@ import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class MultiSelectionEventHandler extends EventHandler {
+  private static final Logger LOG = Logger.getInstance(MultiSelectionEventHandler.class);
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;
   private List<ListPluginComponent> myComponents;
@@ -90,12 +92,17 @@ public final class MultiSelectionEventHandler extends EventHandler {
           }
 
           DefaultActionGroup group = new DefaultActionGroup();
-          component.createPopupMenu(group, getSelectionWithoutEssential());
+          component.createPopupMenu(group, getSelection());
           if (group.getChildrenCount() == 0) {
             return;
           }
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelectionWithoutEssential());
+          try {
+            PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelection());
+          }
+          catch (Exception e) {
+            LOG.error("Error while customizing popup menu", e);
+          }
 
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
@@ -186,9 +193,14 @@ public final class MultiSelectionEventHandler extends EventHandler {
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
-          component.handleKeyAction(event, getSelectionWithoutEssential());
+          component.handleKeyAction(event, getSelection());
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelectionWithoutEssential());
+          try {
+            PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelection());
+          }
+          catch (Exception e) {
+            LOG.error("Error while customizing handle key action", e);
+          }
         }
       }
 
@@ -286,13 +298,7 @@ public final class MultiSelectionEventHandler extends EventHandler {
 
   @Override
   public @NotNull List<ListPluginComponent> getSelection() {
-    return myComponents.stream()
-      .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
-  }
-
-  private @NotNull List<ListPluginComponent> getSelectionWithoutEssential() {
-    return getSelection().stream()
-      .filter(pluginComponent -> !pluginComponent.isEssential()).toList();
+    return myComponents.stream().filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
   }
 
   @Override

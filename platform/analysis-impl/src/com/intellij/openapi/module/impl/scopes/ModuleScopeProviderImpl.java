@@ -20,7 +20,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
     this.module = module;
   }
 
-  private @NotNull GlobalSearchScope getCachedScope(@ModuleWithDependenciesScope.ScopeConstant int options) {
+  private @NotNull GlobalSearchScope getCachedScope(@ScopeConstant int options) {
     GlobalSearchScope scope = scopeCache.get(options);
     if (scope == null) {
       scope = new ModuleWithDependenciesScope(module, options);
@@ -31,22 +31,22 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
 
   @Override
   public final @NotNull GlobalSearchScope getModuleScope() {
-    return getCachedScope(ModuleWithDependenciesScope.COMPILE_ONLY | ModuleWithDependenciesScope.TESTS);
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | ModuleScopeUtil.TESTS);
   }
 
   @Override
   public final @NotNull GlobalSearchScope getModuleScope(boolean includeTests) {
-    return getCachedScope(ModuleWithDependenciesScope.COMPILE_ONLY | (includeTests ? ModuleWithDependenciesScope.TESTS : 0));
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | (includeTests ? ModuleScopeUtil.TESTS : 0));
   }
 
   @Override
   public final @NotNull GlobalSearchScope getModuleWithLibrariesScope() {
-    return getCachedScope(ModuleWithDependenciesScope.COMPILE_ONLY | ModuleWithDependenciesScope.TESTS | ModuleWithDependenciesScope.LIBRARIES);
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | ModuleScopeUtil.TESTS | ModuleScopeUtil.LIBRARIES);
   }
 
   @Override
   public final @NotNull GlobalSearchScope getModuleWithDependenciesScope() {
-    return getCachedScope(ModuleWithDependenciesScope.COMPILE_ONLY | ModuleWithDependenciesScope.TESTS | ModuleWithDependenciesScope.MODULES);
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY | ModuleScopeUtil.TESTS | ModuleScopeUtil.MODULES);
   }
 
   @Override
@@ -66,9 +66,9 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
 
   @Override
   public final @NotNull GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
-    return getCachedScope(ModuleWithDependenciesScope.COMPILE_ONLY |
-                          ModuleWithDependenciesScope.MODULES |
-                          ModuleWithDependenciesScope.LIBRARIES | (includeTests ? ModuleWithDependenciesScope.TESTS : 0));
+    return getCachedScope(ModuleScopeUtil.COMPILE_ONLY |
+                          ModuleScopeUtil.MODULES |
+                          ModuleScopeUtil.LIBRARIES | (includeTests ? ModuleScopeUtil.TESTS : 0));
   }
 
   @Override
@@ -89,7 +89,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @Override
   public final @NotNull GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return getCachedScope(
-      ModuleWithDependenciesScope.MODULES | ModuleWithDependenciesScope.LIBRARIES | (includeTests ? ModuleWithDependenciesScope.TESTS : 0));
+      ModuleScopeUtil.MODULES | ModuleScopeUtil.LIBRARIES | (includeTests ? ModuleScopeUtil.TESTS : 0));
   }
 
   @Override
@@ -99,7 +99,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
 
   @Override
   public final @NotNull GlobalSearchScope getModuleTestSourceScope() {
-    return getCachedScope(ModuleWithDependenciesScope.TESTS);
+    return getCachedScope(ModuleScopeUtil.TESTS);
   }
 
   @Override

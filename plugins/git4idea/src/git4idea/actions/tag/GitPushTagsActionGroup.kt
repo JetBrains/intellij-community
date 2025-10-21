@@ -2,7 +2,7 @@
 package git4idea.actions.tag
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.vcs.git.shared.actions.GitSingleRefActions
+import com.intellij.vcs.git.actions.GitSingleRefActions
 import git4idea.GitTag
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
@@ -24,7 +24,7 @@ internal class GitPushTagsActionGroup : ActionGroup(GitBundle.messagePointer("ac
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val repositories = e?.getData(GitBranchActionsDataKeys.AFFECTED_REPOSITORIES) ?: return emptyArray()
 
     val action = ActionManager.getInstance().getAction(GitPushTagAction.ACTION_ID)

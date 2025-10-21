@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.numeric;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -8,7 +8,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,8 +23,8 @@ final class ConvertNumericLiteralQuickFix extends PsiUpdateModCommandQuickFix {
   private final @NotNull @IntentionName String myName;
   private final @NotNull @IntentionFamilyName String myFamilyName;
 
-  ConvertNumericLiteralQuickFix(final @NotNull String convertedValue,
-                                final @NotNull @IntentionName String name,
+  ConvertNumericLiteralQuickFix(@NotNull String convertedValue,
+                                @NotNull @IntentionName String name,
                                 @NotNull @IntentionFamilyName String familyName) {
     myConvertedValue = convertedValue;
     myName = name;
@@ -44,7 +43,6 @@ final class ConvertNumericLiteralQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    final PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myConvertedValue, null);
-    element.replace(replacement);
+    element.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(myConvertedValue, null));
   }
 }

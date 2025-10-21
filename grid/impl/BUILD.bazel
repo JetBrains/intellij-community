@@ -1,17 +1,26 @@
 ### auto-generated section `build intellij.grid.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_impl",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ]
+)
 
 kt_javac_options(
   name = "custom-javac-options",
   x_ep_disable_all_checks = True,
   warn = "off",
-  add_exports = ["java.desktop/sun.swing=ALL-UNNAMED"]
+  add_exports = ["java.desktop/sun.swing=ALL-UNNAMED"],
+  no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -20,20 +29,25 @@ jvm_library(
   module_name = "intellij.grid.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   javac_opts = ":custom-javac-options",
+  kotlinc_opts = ":custom_impl",
   deps = [
+    "//libraries/kotlinx/serialization/core",
     "//grid/core-impl",
     "//grid/csv:csv-core-impl",
     "//grid/types",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/indexing-api:indexing",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diff-api:diff",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
@@ -50,8 +64,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//libraries/microba",
     "//platform/platform-impl/ui",
-    "@lib//:kotlinx-html-jvm",
-  ],
-  runtime_deps = [":impl_resources"]
+    "//libraries/kotlinx/html",
+  ]
 )
 ### auto-generated section `build intellij.grid.impl` end

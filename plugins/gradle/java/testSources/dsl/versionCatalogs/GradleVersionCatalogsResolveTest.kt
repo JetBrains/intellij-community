@@ -5,6 +5,7 @@ import com.intellij.idea.IJIgnore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -187,6 +188,17 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
       }
     }
 
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationFromDynamicallyAddedSubprojectToCustomToml(gradleVersion: GradleVersion) =
+    test(gradleVersion, DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE) {
+      testGotoDefinition("subprojectsDir/subproject1/build.gradle", "customLibs.apache.gro<caret>ovy") { psiElement ->
+        verifyNavigationToToml(psiElement,
+                               expectedTomlKey = "apache-groovy",
+                               endOfTomlPath = "customPath/custom.toml")
+      }
+    }
+
   companion object {
     private fun verifyNavigationToToml(element: PsiElement, expectedTomlKey: String, endOfTomlPath: String) {
       val tomlKeyValue = assertInstanceOf(TomlKeyValue::class.java, element)
@@ -268,6 +280,8 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         for_included-build-custom = { module = "org.junit.jupiter:junit-jupiter" }
         """.trimIndent()
       )
+      // Project configuration without an existing directory is not allowed
+      withDirectory("subproject")
     }
   }
 

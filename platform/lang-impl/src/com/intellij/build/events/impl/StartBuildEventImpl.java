@@ -4,11 +4,15 @@ package com.intellij.build.events.impl;
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.DefaultBuildDescriptor;
-import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.BuildEvents;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.actionSystem.AnAction;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,21 +21,46 @@ import java.util.Arrays;
 /**
  * @author Vladislav.Soroka
  */
+@Internal
 public final class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
 
   private final @NotNull DefaultBuildDescriptor myBuildDescriptor;
-  private @Nullable BuildViewSettingsProvider myBuildViewSettingsProvider;
+  private @Nullable BuildViewSettingsProvider myBuildViewSettings;
 
-  public StartBuildEventImpl(@NotNull BuildDescriptor descriptor, @NotNull @BuildEventsNls.Message  String message) {
-    super(descriptor.getId(), null, descriptor.getStartTime(), message);
-    myBuildDescriptor =
-      descriptor instanceof DefaultBuildDescriptor ? (DefaultBuildDescriptor)descriptor : new DefaultBuildDescriptor(descriptor);
+  @Internal
+  public StartBuildEventImpl(
+    @Nullable Object parentId,
+    @NotNull @Message String message,
+    @Nullable @Hint String hint,
+    @Nullable @Description String description,
+    @NotNull BuildDescriptor buildDescriptor,
+    @Nullable BuildViewSettingsProvider buildViewSettings
+  ) {
+    super(buildDescriptor.getId(), parentId, buildDescriptor.getStartTime(), message, hint, description);
+    myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor defaultBuildDescriptor
+                        ? defaultBuildDescriptor : new DefaultBuildDescriptor(buildDescriptor);
+    myBuildViewSettings = buildViewSettings;
   }
 
-  @ApiStatus.Experimental
+  /**
+   * @deprecated Use {@link BuildEvents#startBuild()} event builder instead.
+   */
+  @Deprecated
+  public StartBuildEventImpl(
+    @NotNull BuildDescriptor descriptor,
+    @NotNull @Message String message
+  ) {
+    this(null, message, null, null, descriptor, null);
+  }
+
   @Override
   public @NotNull DefaultBuildDescriptor getBuildDescriptor() {
     return myBuildDescriptor;
+  }
+
+  @Override
+  public @Nullable BuildViewSettingsProvider getBuildViewSettings() {
+    return myBuildViewSettings;
   }
 
   /**
@@ -52,14 +81,22 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
     return this;
   }
 
-  @ApiStatus.Experimental
+  /**
+   * @deprecated Use {@link #getBuildViewSettings()} instead.
+   */
+  @Deprecated
+  @Experimental
   public @Nullable BuildViewSettingsProvider getBuildViewSettingsProvider() {
-    return myBuildViewSettingsProvider;
+    return myBuildViewSettings;
   }
 
-  @ApiStatus.Experimental
+  /**
+   * @deprecated Use {@link BuildEvents#startBuild} event builder instead.
+   */
+  @Deprecated
+  @Experimental
   public StartBuildEventImpl withBuildViewSettingsProvider(@Nullable BuildViewSettingsProvider viewSettingsProvider) {
-    myBuildViewSettingsProvider = viewSettingsProvider;
+    myBuildViewSettings = viewSettingsProvider;
     return this;
   }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator
 
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.test.TestMetadata
@@ -16,6 +16,7 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.util.*
 import javax.lang.model.element.Modifier
+import kotlin.io.path.name
 
 fun File.toRelativeStringSystemIndependent(base: File): String = toRelativeString(base).toStringSystemIndependent()
 

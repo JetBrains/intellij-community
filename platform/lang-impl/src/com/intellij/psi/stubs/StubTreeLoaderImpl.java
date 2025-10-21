@@ -17,7 +17,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.events.VfsEventsMerger;
+import com.intellij.util.indexing.events.IndexingEventsLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +185,6 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
         if (project.equals(cachedPsi.getProject())) {
           message += " (this)";
         }
-        message += " use.workspace.file.index.to.generate.iterators=" + Registry.is("use.workspace.file.index.to.generate.iterators");
         message += " shouldBeIndexed=" + IndexingIteratorsProvider.getInstance(project).shouldBeIndexed(vFile);
         // Should return the same as above. Why do we need two different API?
         message += " shouldBeIndexed2=" + ((FileBasedIndexImpl)FileBasedIndex.getInstance()).belongsToProjectIndexableFiles(vFile, project);
@@ -281,7 +280,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
-    VfsEventsMerger.tryLog(() -> {
+    IndexingEventsLogger.tryLog(() -> {
       return "event=SAVE_STUB_INDEXING_STAMP_INFO" +
              ",id=" + fileId +
              "," + indexingStampInfo;

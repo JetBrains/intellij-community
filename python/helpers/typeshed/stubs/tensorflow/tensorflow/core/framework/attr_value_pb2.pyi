@@ -41,35 +41,47 @@ class AttrValue(google.protobuf.message.Message):
         FUNC_FIELD_NUMBER: builtins.int
         @property
         def s(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.bytes]:
-            """"list(string)" """
+            """ "list(string)" """
 
         @property
         def i(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
-            """"list(int)" """
+            """ "list(int)" """
 
         @property
         def f(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.float]:
-            """"list(float)" """
+            """ "list(float)" """
 
         @property
         def b(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.bool]:
-            """"list(bool)" """
+            """ "list(bool)" """
 
         @property
-        def type(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[tensorflow.core.framework.types_pb2.DataType.ValueType]:
-            """"list(type)" """
+        def type(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[
+            tensorflow.core.framework.types_pb2.DataType.ValueType
+        ]:
+            """ "list(type)" """
 
         @property
-        def shape(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.tensor_shape_pb2.TensorShapeProto]:
-            """"list(shape)" """
+        def shape(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            tensorflow.core.framework.tensor_shape_pb2.TensorShapeProto
+        ]:
+            """ "list(shape)" """
 
         @property
-        def tensor(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.tensor_pb2.TensorProto]:
-            """"list(tensor)" """
+        def tensor(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            tensorflow.core.framework.tensor_pb2.TensorProto
+        ]:
+            """ "list(tensor)" """
 
         @property
         def func(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___NameAttrList]:
-            """"list(attr)" """
+            """ "list(attr)" """
 
         def __init__(
             self,
@@ -83,7 +95,27 @@ class AttrValue(google.protobuf.message.Message):
             tensor: collections.abc.Iterable[tensorflow.core.framework.tensor_pb2.TensorProto] | None = ...,
             func: collections.abc.Iterable[global___NameAttrList] | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["b", b"b", "f", b"f", "func", b"func", "i", b"i", "s", b"s", "shape", b"shape", "tensor", b"tensor", "type", b"type"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "b",
+                b"b",
+                "f",
+                b"f",
+                "func",
+                b"func",
+                "i",
+                b"i",
+                "s",
+                b"s",
+                "shape",
+                b"shape",
+                "tensor",
+                b"tensor",
+                "type",
+                b"type",
+            ],
+        ) -> None: ...
 
     S_FIELD_NUMBER: builtins.int
     I_FIELD_NUMBER: builtins.int
@@ -116,11 +148,11 @@ class AttrValue(google.protobuf.message.Message):
     """
     @property
     def shape(self) -> tensorflow.core.framework.tensor_shape_pb2.TensorShapeProto:
-        """"shape" """
+        """ "shape" """
 
     @property
     def tensor(self) -> tensorflow.core.framework.tensor_pb2.TensorProto:
-        """"tensor" """
+        """ "tensor" """
 
     @property
     def list(self) -> global___AttrValue.ListValue:
@@ -128,7 +160,7 @@ class AttrValue(google.protobuf.message.Message):
 
     @property
     def func(self) -> global___NameAttrList:
-        """"func" represents a function. func.name is a function's name or
+        """ "func" represents a function. func.name is a function's name or
         a primitive op's name. func.attr.first is the name of an attr
         defined for that function. func.attr.second is the value for
         that attr in the instantiation.
@@ -148,9 +180,63 @@ class AttrValue(google.protobuf.message.Message):
         func: global___NameAttrList | None = ...,
         placeholder: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["b", b"b", "f", b"f", "func", b"func", "i", b"i", "list", b"list", "placeholder", b"placeholder", "s", b"s", "shape", b"shape", "tensor", b"tensor", "type", b"type", "value", b"value"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["b", b"b", "f", b"f", "func", b"func", "i", b"i", "list", b"list", "placeholder", b"placeholder", "s", b"s", "shape", b"shape", "tensor", b"tensor", "type", b"type", "value", b"value"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["value", b"value"]) -> typing.Literal["s", "i", "f", "b", "type", "shape", "tensor", "list", "func", "placeholder"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "b",
+            b"b",
+            "f",
+            b"f",
+            "func",
+            b"func",
+            "i",
+            b"i",
+            "list",
+            b"list",
+            "placeholder",
+            b"placeholder",
+            "s",
+            b"s",
+            "shape",
+            b"shape",
+            "tensor",
+            b"tensor",
+            "type",
+            b"type",
+            "value",
+            b"value",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "b",
+            b"b",
+            "f",
+            b"f",
+            "func",
+            b"func",
+            "i",
+            b"i",
+            "list",
+            b"list",
+            "placeholder",
+            b"placeholder",
+            "s",
+            b"s",
+            "shape",
+            b"shape",
+            "tensor",
+            b"tensor",
+            "type",
+            b"type",
+            "value",
+            b"value",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["value", b"value"]
+    ) -> typing.Literal["s", "i", "f", "b", "type", "shape", "tensor", "list", "func", "placeholder"] | None: ...
 
 global___AttrValue = AttrValue
 
@@ -171,12 +257,7 @@ class NameAttrList(google.protobuf.message.Message):
         key: builtins.str
         @property
         def value(self) -> global___AttrValue: ...
-        def __init__(
-            self,
-            *,
-            key: builtins.str | None = ...,
-            value: global___AttrValue | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.str | None = ..., value: global___AttrValue | None = ...) -> None: ...
         def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
@@ -186,10 +267,7 @@ class NameAttrList(google.protobuf.message.Message):
     @property
     def attr(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, global___AttrValue]: ...
     def __init__(
-        self,
-        *,
-        name: builtins.str | None = ...,
-        attr: collections.abc.Mapping[builtins.str, global___AttrValue] | None = ...,
+        self, *, name: builtins.str | None = ..., attr: collections.abc.Mapping[builtins.str, global___AttrValue] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["attr", b"attr", "name", b"name"]) -> None: ...
 

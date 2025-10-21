@@ -6,12 +6,10 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.getPythonSdk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 internal class InstallRequirementQuickFix(val requirement: PyRequirement) : LocalQuickFix {
   override fun getFamilyName(): String {
@@ -21,9 +19,8 @@ internal class InstallRequirementQuickFix(val requirement: PyRequirement) : Loca
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val pythonSdk = getPythonSdk(descriptor.psiElement.containingFile) ?: return
 
-    PyPackageCoroutine.getScope(project).launch(Dispatchers.Default) {
-      PyPackageInstallUtils.confirmAndInstall(project, pythonSdk, requirement.name,
-                                              requirement.versionSpecs.firstOrNull())
+    PyPackageCoroutine.launch(project) {
+      PythonPackageManagerUI.forSdk(project, pythonSdk).installPyRequirementsWithConfirmation(listOf(requirement))
     }
   }
 

@@ -494,7 +494,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
         }
         row {
           link("Change color") {
-            ColorChooserService.instance.showPopup(null, options.color, { color, _ -> color?.let { options.color = it }})
+            ColorChooserService.getInstance().showPopup(null, options.color, { color, _ -> color?.let { options.color = it }})
           }
         }
         row {

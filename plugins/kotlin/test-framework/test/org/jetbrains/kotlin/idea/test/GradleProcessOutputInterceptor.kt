@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -41,7 +42,7 @@ interface GradleProcessOutputInterceptor {
 private class GradleProcessOutputInterceptorImpl : GradleProcessOutputInterceptor, ExternalSystemTaskNotificationListener {
     private val buffer = StringBuilder()
 
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
         if (id.projectSystemId == GRADLE_SYSTEM_ID && text.isNotEmpty()) {
             buffer.append(text)
         }

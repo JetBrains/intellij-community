@@ -19,6 +19,7 @@ import java.util.List;
 
 public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
   private static final int IS_METHOD_REFERENCE_MASK = 0b1_00000000_00000000; // 17th bit
+  private static final int IS_BODY_EMPTY_MASK       = 0b10_00000000_00000000; // 18th bit
 
   RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
     super(expr, psi, manager);
@@ -103,7 +104,7 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
   @Override
   public synchronized boolean hasEmptyBody() {
     LOG.assertTrue(isInitialized());
-    return checkFlag(RefMethodImpl.IS_BODY_EMPTY_MASK);
+    return checkFlag(IS_BODY_EMPTY_MASK);
   }
 
   @Override
@@ -155,7 +156,7 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
         && (body.getExpressions().isEmpty() || checkIfOnlyCallsSuper(body, lambda.getFunctionalInterfaceType()))) {
       isEmptyBody = true;
     }
-    setFlag(isEmptyBody, RefMethodImpl.IS_BODY_EMPTY_MASK);
+    setFlag(isEmptyBody, IS_BODY_EMPTY_MASK);
   }
 
   private static boolean checkIfOnlyCallsSuper(@NotNull UBlockExpression body, @Nullable PsiType type) {

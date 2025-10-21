@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.selector
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
@@ -14,6 +15,7 @@ import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -28,26 +30,30 @@ class GHRepositoryAndAccountSelectorComponentFactory(
   private val project: Project,
   private val vm: GHRepositoryAndAccountSelectorViewModel,
   private val accountManager: GHAccountManager,
-  private val loginSource: GHLoginSource
+  private val loginSource: GHLoginSource,
 ) {
 
   fun create(scope: CoroutineScope): JComponent {
+    val defaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()
     val accountDetailsProvider = GHAccountsDetailsProvider(scope, accountManager)
     val errorPresenter = GHSelectorErrorStatusPresenter(project, loginSource) {
       vm.submitSelection()
     }
 
     return RepositoryAndAccountSelectorComponentFactory(vm)
-      .create(scope = scope,
-              repoNamer = { mapping ->
-                val allRepositories = vm.repositoriesState.value.map { it.repository }
-                GHUIUtil.getRepositoryDisplayName(allRepositories, mapping.repository, true)
-              },
-              detailsProvider = accountDetailsProvider,
-              accountsPopupActionsSupplier = { createPopupLoginActions(it) },
-              submitActionText = GithubBundle.message("pull.request.view.list"),
-              loginButtons = createLoginButtons(scope),
-              errorPresenter = errorPresenter)
+      .create(
+        scope = scope,
+        defaultAccountHolder = defaultAccountHolder,
+        repoNamer = { mapping ->
+          val allRepositories = vm.repositoriesState.value.map { it.repository }
+          GHUIUtil.getRepositoryDisplayName(allRepositories, mapping.repository, true)
+        },
+        detailsProvider = accountDetailsProvider,
+        accountsPopupActionsSupplier = { createPopupLoginActions(it) },
+        submitActionText = GithubBundle.message("pull.request.view.list"),
+        loginButtons = createLoginButtons(scope),
+        errorPresenter = errorPresenter
+      )
   }
 
   private fun createLoginButtons(scope: CoroutineScope): List<JButton> {

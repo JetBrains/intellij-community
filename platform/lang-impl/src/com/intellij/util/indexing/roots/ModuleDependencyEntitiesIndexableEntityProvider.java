@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
@@ -51,6 +52,7 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
   }
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
+    if (Registry.is("use.workspace.file.index.for.partial.scanning")) return Collections.emptyList();
     if (dependency instanceof SdkDependency) {
       return Collections.singletonList(IndexableIteratorBuilders.INSTANCE.forSdk(((SdkDependency)dependency).getSdk().getName(),
                                                                                  ((SdkDependency)dependency).getSdk().getType()));

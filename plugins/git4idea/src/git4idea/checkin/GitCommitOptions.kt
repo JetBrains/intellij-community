@@ -163,8 +163,11 @@ class GitCommitOptionsUi(
     if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
     val author = getAuthor()
 
-    commitContext.freshRoots = commitPanel.roots
-      .filter { getRepositoryManager(project).getRepositoryForRootQuick(it)?.isFresh == true }
+    commitContext.freshUnhostedRoots = commitPanel.roots
+      .filter {
+        val repository = getRepositoryManager(project).getRepositoryForRootQuick(it)
+        repository?.isFresh == true && repository.remotes.isEmpty()
+      }
       .nullize()?.toSet()
     commitContext.commitAuthor = author
     commitContext.commitAuthorDate = authorDate

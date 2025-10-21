@@ -12,6 +12,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -72,7 +73,8 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
     }
 }
 
-internal fun markMembersInfo(file: PsiFile) {
+@ApiStatus.Internal
+fun markMembersInfo(file: PsiFile) {
     for ((element, info) in file.findElementsByCommentPrefix("// INFO: ")) {
         val parsedInfo = JsonParser.parseString(info).asJsonObject
         element.elementInfo = ElementInfo(
@@ -86,7 +88,8 @@ internal data class ElementInfo(val checked: Boolean, val toAbstract: Boolean)
 
 internal var PsiElement.elementInfo: ElementInfo by NotNullableUserDataProperty(Key.create("ELEMENT_INFO"), ElementInfo(false, false))
 
-internal fun <T : MemberInfoBase<*>> chooseMembers(members: List<T>): List<T> {
+@ApiStatus.Internal
+fun <T : MemberInfoBase<*>> chooseMembers(members: List<T>): List<T> {
     members.forEach {
         val memberPsi = it.member.let { if (it is KtPsiClassWrapper) it.psiClass else it }
         val info = memberPsi.elementInfo

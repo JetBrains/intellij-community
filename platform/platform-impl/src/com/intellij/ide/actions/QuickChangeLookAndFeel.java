@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.TargetUIType;
 import com.intellij.ide.ui.ThemeListProvider;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
@@ -44,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
@@ -74,13 +72,9 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @Override
   protected @NotNull ListPopup createPopup(AnActionEvent e, DefaultActionGroup group, JBPopupFactory.ActionSelectionAid aid) {
-    UiThemeProviderListManager themeManager = UiThemeProviderListManager.Companion.getInstance();
-    List<UIThemeLookAndFeelInfo> islandThemes = themeManager.getBundledThemeListForTargetUI(TargetUIType.ISLANDS);
-
     if (WelcomeFrame.getInstance() == null &&
         ContainerUtil.exists(group.getChildren(e), action -> action instanceof LafChangeAction lafAction &&
-                                                             (lafAction.myLookAndFeelInfo.isRestartRequired() ||
-                                                              islandThemes.contains(lafAction.myLookAndFeelInfo)))) {
+                                                             (lafAction.myLookAndFeelInfo.isRestartRequired()))) {
       return new PopupFactoryImpl.ActionGroupPopup(null, getPopupTitle(e), group, e.getDataContext(),
                                                    myActionPlace == null ? ActionPlaces.POPUP : myActionPlace, new PresentationFactory(),
                                                    ActionPopupOptions.forAid(aid, true, -1, preselectAction()), null) {
@@ -119,7 +113,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
               if (value instanceof PopupFactoryImpl.ActionItem item) {
                 AnAction action = item.getAction();
                 if (action instanceof LafChangeAction lafAction) {
-                  checkRestartRequired(lafAction, infos, islandThemes, isSelected, icon1, icon2);
+                  checkRestartRequired(lafAction, infos, isSelected, icon1, icon2);
                 }
               }
             }
@@ -132,7 +126,6 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   private static boolean checkRestartRequired(@NotNull LafChangeAction lafAction,
                                               @NotNull List<Groups.GroupInfo<UIThemeLookAndFeelInfo>> infos,
-                                              @NotNull List<UIThemeLookAndFeelInfo> islandThemes,
                                               boolean isSelected,
                                               @Nullable JLabel icon1,
                                               @Nullable JLabel icon2) {
@@ -160,9 +153,6 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
         icon2.setIcon(IconUtilKt.getDisabledIcon(AllIcons.Actions.Restart, null));
       }
       return true;
-    }
-    if (icon1 != null && islandThemes.contains(lafAction.myLookAndFeelInfo)) {
-      icon1.setIcon(AllIcons.General.Beta);
     }
     return false;
   }
@@ -243,7 +233,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
           if (item instanceof AnActionHolder) {
             AnAction anAction = ((AnActionHolder)item).getAction();
             if (anAction instanceof LafChangeAction action &&
-                !checkRestartRequired(action, infos, Collections.emptyList(), false, null, null)) {
+                !checkRestartRequired(action, infos, false, null, null)) {
               switchAlarm.cancelAllRequests();
               switchAlarm.addRequest(() -> {
                 switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo);

@@ -1,8 +1,5 @@
 package com.intellij.terminal.backend
 
-import com.intellij.terminal.session.TerminalInputEvent
-import com.intellij.terminal.session.TerminalOutputEvent
-import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +10,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 
 internal class BackendTerminalSessionImpl(
   private val inputChannel: SendChannel<TerminalInputEvent>,

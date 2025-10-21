@@ -2,18 +2,14 @@
 package git4idea
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.vcs.git.shared.ref.GitRefUtil
+import com.intellij.vcs.git.ref.GitRefUtil
 import git4idea.repo.GitRemote
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.CompositeDecoder
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.encoding.encodeStructure
+import kotlinx.serialization.encoding.*
 
 @Serializable(with = GitStandardRemoteBranchSerializer::class)
 class GitStandardRemoteBranch(remote: GitRemote, nameAtRemote: String) :

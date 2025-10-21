@@ -35,8 +35,8 @@ public final class ProcessProxyFactoryImpl extends ProcessProxyFactory {
           ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
           String port = String.valueOf(proxy.getPortNumber());
           JavaSdkVersion jdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(javaParameters.getJdk());
-          if (jdkVersion != null && !jdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
-            throw new ExecutionException(JavaBundle.message("error.message.ide.does.not.support.starting.processes.using.old.java", 
+          if (jdkVersion != null && !jdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) {
+            throw new ExecutionException(JavaBundle.message("error.message.ide.does.not.support.starting.processes.using.old.java.app",
                                                             jdkVersion.getDescription()));
           }
 

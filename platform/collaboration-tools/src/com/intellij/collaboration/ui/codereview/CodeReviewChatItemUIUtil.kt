@@ -35,6 +35,7 @@ object CodeReviewChatItemUIUtil {
    */
   val TEXT_CONTENT_WIDTH: Int
     get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * 42).roundToInt()
+  const val THREAD_TOP_MARGIN: Int = 8
 
   // we use unscaled insets, bc they will be scaled when we create the border
   @Suppress("UseDPIAwareInsets")

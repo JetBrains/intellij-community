@@ -7,7 +7,9 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The class doesn't provide real value. Consider implementing [org.jetbrains.ide.HttpRequestHandler] instead.", level = DeprecationLevel.ERROR)
 abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
   override fun messageReceived(context: ChannelHandlerContext, message: FullHttpRequest) {

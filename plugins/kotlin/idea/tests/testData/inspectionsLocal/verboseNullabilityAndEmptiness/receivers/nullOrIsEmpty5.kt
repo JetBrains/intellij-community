@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // PROBLEM: none
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'List<Int>?'.
 
 // ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type List<Int>?
 

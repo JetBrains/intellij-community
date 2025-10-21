@@ -3,10 +3,8 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -17,8 +15,8 @@ import java.nio.file.Path
 object JEelUtils {
 
   @JvmStatic
-  fun getEelApi(eelPath: EelPath): EelApi? {
-    return EelNioBridgeService.getInstanceSync().tryGetEelDescriptor(eelPath.asNioPath())?.upgradeBlocking()
+  fun getEelApi(eelPath: EelPath): EelApi {
+    return eelPath.descriptor.toEelApiBlocking()
   }
 
   @JvmStatic

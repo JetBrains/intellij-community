@@ -14,7 +14,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,7 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinScratch
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorProvider
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
 
 internal class K2ScratchFileEditorProvider : KtScratchFileEditorProvider() {
     override fun accept(project: Project, file: VirtualFile): Boolean = file.isValid && file.isKotlinScratch
@@ -34,12 +33,13 @@ internal class K2ScratchFileEditorProvider : KtScratchFileEditorProvider() {
     ): FileEditor {
         val textEditorProvider = TextEditorProvider.getInstance()
 
-        val scratchFile = K2KotlinScratchFile(project, file, editorCoroutineScope.childScope(K2KotlinScratchFile::class.java.simpleName))
+        val scratchFile =
+            K2KotlinScratchFile(project, file, editorCoroutineScope.childScope(K2KotlinScratchFile::class.java.simpleName))
 
         val mainEditor = textEditorProvider.createFileEditor(
             project = project,
-            file = scratchFile.file,
-            document = readAction { FileDocumentManager.getInstance().getDocument(scratchFile.file) },
+            file = scratchFile.virtualFile,
+            document = readAction { FileDocumentManager.getInstance().getDocument(scratchFile.virtualFile) },
             editorCoroutineScope = editorCoroutineScope,
         )
 
@@ -53,17 +53,17 @@ internal class K2ScratchFileEditorProvider : KtScratchFileEditorProvider() {
         }
     }
 
-    override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-        val scratchFile = runBlockingCancellable {
-            K2KotlinScratchFile(project, file, this)
-        }
-        return K2ScratchFileEditorWithPreview.create(scratchFile)
+    override fun createEditor(
+        project: Project,
+        file: VirtualFile
+    ): FileEditor {
+        TODO("suspend createFileEditor should be used")
     }
 }
 
 private class K2ScratchFileEditorWithPreview(
     val kotlinScratchFile: K2KotlinScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
-) : KtScratchFileEditorWithPreview(kotlinScratchFile, sourceTextEditor, previewTextEditor) {
+) : ScratchFileEditorWithPreview(kotlinScratchFile, sourceTextEditor, previewTextEditor) {
 
     init {
         kotlinScratchFile.executor.addOutputHandler(previewEditorScratchOutputHandler)
@@ -75,20 +75,4 @@ private class K2ScratchFileEditorWithPreview(
     }
 
     override fun createToolbar(): ActionToolbar = ScratchTopPanelK2(kotlinScratchFile).actionsToolbar
-
-    companion object {
-        fun create(scratchFile: K2KotlinScratchFile): KtScratchFileEditorWithPreview {
-            val textEditorProvider = TextEditorProvider.getInstance()
-
-            val mainEditor = textEditorProvider.createEditor(scratchFile.project, scratchFile.file) as TextEditor
-            val editorFactory = EditorFactory.getInstance()
-
-            val viewer = editorFactory.createViewer(editorFactory.createDocument(""), scratchFile.project, EditorKind.PREVIEW)
-            Disposer.register(mainEditor, Disposable { editorFactory.releaseEditor(viewer) })
-
-            val previewEditor = textEditorProvider.getTextEditor(viewer)
-
-            return K2ScratchFileEditorWithPreview(scratchFile, mainEditor, previewEditor)
-        }
-    }
 }

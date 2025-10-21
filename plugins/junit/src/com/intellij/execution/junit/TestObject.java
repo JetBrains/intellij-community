@@ -14,10 +14,11 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -29,6 +30,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -244,6 +247,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException {
     final String path = System.getProperty(DEBUG_RT_PATH);
+    Sdk jdk = javaParameters.getJdk();
+    JavaSdkVersion jdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+    if (jdkVersion != null && !JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
+      throw new CantRunException(JavaBundle.message("error.message.ide.does.not.support.starting.processes.using.old.java",
+                                                      jdkVersion.getDescription()));
+    }
     javaParameters.getClassPath().addFirst(path != null ? path : getJUnitRtPath().getAbsolutePath());
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
@@ -281,8 +290,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       junitCurrentName = junit4Name.replace("junit", "junit.v" + version);
     }
     else {
-      var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-      Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+      var relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
+      Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && junit4Rt.toPath().startsWith(relevantJarsRoot) && mapping != null) {
         return new File(mapping.get("production/intellij.junit.v" + version + ".rt"));
       }
@@ -291,7 +300,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
     }
     return new File(junit4Rt.getParent(), junitCurrentName);
-
   }
 
   public static File getJUnitRtPath() {
@@ -321,6 +329,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
+
     if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
       javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     }
@@ -780,6 +789,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT)) {
       return getRunner(globalSearchScope, project);
     }
+
     boolean isMethodConfiguration = JUnitConfiguration.TEST_METHOD.equals(data.TEST_OBJECT);
     boolean isClassConfiguration = JUnitConfiguration.TEST_CLASS.equals(data.TEST_OBJECT);
     final PsiClass psiClass = isMethodConfiguration || isClassConfiguration
@@ -805,6 +815,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         return JUnitStarter.JUNIT4_PARAMETER;
       }
     }
+
     return getRunner(globalSearchScope, project);
   }
 

@@ -17,7 +17,6 @@ import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
-import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
@@ -485,13 +484,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @Nullable String evaluateEffectivePom(@NotNull File file,
-                                               @NotNull ArrayList<String> activeProfiles,
-                                               @NotNull ArrayList<String> inactiveProfiles,
-                                               MavenToken token) {
+  public @NotNull MavenServerResponse<@NotNull String> evaluateEffectivePom(@NotNull LongRunningTaskInput longRunningTaskInput,
+                                                                            @NotNull File file,
+                                                                            @NotNull ArrayList<String> activeProfiles,
+                                                                            @NotNull ArrayList<String> inactiveProfiles,
+                                                                            MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+      String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
+      try (LongRunningTask task = newLongRunningTask(longRunningTaskId, 1, myConsoleWrapper)) {
+        String result = Maven3EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+        task.incrementFinishedRequests();
+        return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
+      }
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -675,11 +680,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenGoalExecutionResult(false, file, folders, problems);
 
-    folders.setSources(mavenProject.getCompileSourceRoots());
-    folders.setTestSources(mavenProject.getTestCompileSourceRoots());
-    folders.setResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
-    folders.setTestResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
-
+    folders.set(mavenProject.getCompileSourceRoots(),
+                mavenProject.getTestCompileSourceRoots(),
+                Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()),
+                Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources())
+    );
     return new MavenGoalExecutionResult(true, file, folders, problems);
   }
 

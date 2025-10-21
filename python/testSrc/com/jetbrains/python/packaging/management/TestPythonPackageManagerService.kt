@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.replaceService
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -14,16 +15,18 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
 
-  override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
+  override suspend fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     installedPackages.ifEmpty {
-      return TestPythonPackageManager(project, sdk)
+      return TestPythonPackageManager(project, sdk).also { Disposer.register(project, it) }
     }
 
     return TestPythonPackageManager(project, sdk)
       .withPackageInstalled(installedPackages)
       .withPackageNames(installedPackages.map { it.name })
       .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version),
-                                                     TestPackageRepository(installedPackages.map { it.name }.toSet())))
+                                                     TestPackageRepository(installedPackages.map { it.name }.toSet()))).also {
+        Disposer.register(project, it)
+      }
   }
 
   override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {

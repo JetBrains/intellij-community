@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -110,7 +110,7 @@ public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<Ja
                                      GlobalSearchScope.allScope(project), throwableClass, true, true, null);
     chooser.showDialog();
     final PsiClass selectedClass = chooser.getSelected();
-    final String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
+    final String qName = selectedClass == null ? null : JVMNameUtil.getClassVMName(selectedClass);
 
     if (qName != null && !qName.isEmpty()) {
       return XDebuggerManager.getInstance(project).getBreakpointManager()

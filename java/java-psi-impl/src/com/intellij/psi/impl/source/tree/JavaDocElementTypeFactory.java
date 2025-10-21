@@ -5,6 +5,12 @@ import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated This class is planned to be removed.
+ *             Use {@link JavaDocElementType} directly.
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 @ApiStatus.Experimental
 public class JavaDocElementTypeFactory extends AbstractBasicJavaDocElementTypeFactory {
   private JavaDocElementTypeFactory() {

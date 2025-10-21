@@ -1,9 +1,24 @@
 # Command line app
-icalendar\.cli
+icalendar.cli
 
 # Tests
 icalendar\.tests(\..*)?
 
 # Methods that use `int` to mean `bool`.
-icalendar\.cal\.Component\.get_inline
-icalendar\.cal\.Component\.set_inline
+icalendar.Component.get_inline
+icalendar.Component.set_inline
+icalendar.cal.Component.get_inline
+icalendar.cal.Component.set_inline
+
+# Stubtest gets confused by multiple inheritance.
+icalendar.prop.vSkip.__new__
+icalendar.vSkip.__new__
+
+# Stubtest incorrectly reports that stub argument "cls" should be
+# positional or keyword.
+icalendar.vBoolean.__new__
+icalendar.vFloat.__new__
+icalendar.vInt.__new__
+icalendar.prop.vBoolean.__new__
+icalendar.prop.vFloat.__new__
+icalendar.prop.vInt.__new__

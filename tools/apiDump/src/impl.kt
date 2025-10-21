@@ -10,9 +10,6 @@ import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
-import java.net.URI
-import java.nio.file.FileSystemAlreadyExistsException
-import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.metadata.jvm.JvmFieldSignature
@@ -184,10 +181,7 @@ private fun companionAnnotations(
     return null
   }
   // this is a `static final ContainingClassType Companion` field
-  return ApiAnnotations(
-    isInternal = companionSignature.annotations.isInternal(),
-    isExperimental = companionSignature.annotations.isExperimental(),
-  )
+  return companionSignature.annotations.apiAnnotations()
 }
 
 /**
@@ -311,22 +305,11 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 
 @OptIn(ExperimentalPathApi::class)
 private fun classFilePaths(classRoot: Path): Sequence<Path> {
-  var root = classRoot
-  if (root.isRegularFile() && root.extension == "jar") {
-    val uri = URI("jar:${classRoot.toUri()}!/")
-    val fs = try {
-      FileSystems.newFileSystem(uri, emptyMap<String, Any>())
-    }
-    catch (ignored: FileSystemAlreadyExistsException) {
-      FileSystems.getFileSystem(uri)
-    }
-    root = fs.rootDirectories.single()
-  }
-  return root
+  return classRoot
     .walk()
     .filter { path ->
       path.extension == "class" &&
-      !root.relativize(path).startsWith("META-INF/")
+      !classRoot.relativize(path).startsWith("META-INF/")
     }
 }
 
@@ -355,10 +338,7 @@ private fun Sequence<Path>.packages(): Map<String, ApiAnnotations> {
       continue
     }
     val node = readClass(path)
-    packages[node.name.packageName()] = ApiAnnotations(
-      isInternal = node.invisibleAnnotations.isInternal(),
-      isExperimental = node.invisibleAnnotations.isExperimental(),
-    )
+    packages[node.name.packageName()] = node.invisibleAnnotations.apiAnnotations()
   }
   return packages
 }
@@ -367,7 +347,8 @@ private const val API_STATUS_INTERNAL_DESCRIPTOR = "Lorg/jetbrains/annotations/A
 private const val API_STATUS_EXPERIMENTAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Experimental;"
 private const val API_STATUS_NON_EXTENDABLE = "Lorg/jetbrains/annotations/ApiStatus\$NonExtendable;"
 
-private fun List<AnnotationNode>.apiAnnotations(): ApiAnnotations {
+private fun List<AnnotationNode>?.apiAnnotations(): ApiAnnotations {
+  if (this == null) return unannotated
   var isInternal = false
   var isExperimental = false
   for (node in this) {

@@ -165,7 +165,10 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     if (function.isAsync()) {
       inferredType = Ref.deref(PyTypingTypeProvider.unwrapCoroutineReturnType(inferredType));
     }
-    return new AnnotationInfo(PythonDocumentationProvider.getTypeHint(inferredType, context), inferredType);
+    return new AnnotationInfo(
+      PythonDocumentationProvider.getTypeHint(inferredType, context),
+      PythonDocumentationProvider.getFullyQualifiedTypeHint(inferredType, context)
+    );
   }
 
   public static PyExpression annotateReturnType(Project project, PyFunction function, boolean createTemplate) {
@@ -174,9 +177,7 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     final String returnTypeText = returnTypeAnnotation.getAnnotationText();
     final String annotationText = "-> " + returnTypeText;
 
-    final PsiFile file = function.getContainingFile();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(project, file);
-    PyTypeHintGenerationUtil.addImportsForTypeAnnotations(returnTypeAnnotation.getTypes(), context, file);
+    PyTypeHintGenerationUtil.addImportsForTypeAnnotations(returnTypeAnnotation.getFullyQualifiedTypeHints(), function);
 
     PyFunction annotatedFunction = PyUtil.updateDocumentUnblockedAndCommitted(function, document -> {
       final PyAnnotation oldAnnotation = function.getAnnotation();

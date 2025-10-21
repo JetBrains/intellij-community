@@ -89,8 +89,9 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
     return toolbar.getComponent();
   }
 
+  @VisibleForTesting
   @Override
-  protected void doOKAction() {
+  public void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
     ExternalReportImportManager.getInstance(myProject).openSuites(suites, true, ExternalReportImportManager.Source.DIALOG);
     super.doOKAction();
@@ -225,8 +226,9 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
       super(CoverageBundle.message("coverage.data.no.coverage.button"));
     }
 
+    @VisibleForTesting
     @Override
-    protected void doAction(ActionEvent e) {
+    public void doAction(ActionEvent e) {
       for (CoverageSuitesBundle suitesBundle : myCoverageManager.activeSuites()) {
         myCoverageManager.closeSuitesBundle(suitesBundle);
       }

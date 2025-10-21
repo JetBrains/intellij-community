@@ -61,7 +61,7 @@ public final class SharedThreadLocalRandomInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SharedThreadLocalRandomVisitor();
   }
 

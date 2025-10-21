@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.hasStandardExceptionPrefix
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
 import java.util.concurrent.ExecutionException

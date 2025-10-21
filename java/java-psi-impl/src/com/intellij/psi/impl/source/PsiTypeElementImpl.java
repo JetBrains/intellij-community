@@ -405,6 +405,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @Override
+  public boolean hasAnnotations() {
+    return getType().hasAnnotations();
+  }
+
+  @Override
   public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getAnnotations();
   }

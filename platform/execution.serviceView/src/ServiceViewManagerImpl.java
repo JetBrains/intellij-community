@@ -98,7 +98,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     myProject.getMessageBus().connect(myModel).subscribe(ServiceEventListener.TOPIC, e -> {
       myModel.handle(e).onSuccess(o -> eventHandled(e));
     });
-    CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ServiceViewExtensionPointListener(), myProject);
+    CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ServiceViewExtensionPointListener(), myModel);
   }
 
   private void eventHandled(@NotNull ServiceEvent e) {
@@ -549,8 +549,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return result;
   }
 
-  @NotNull
-  Promise<Void> select(@NotNull VirtualFile virtualFile) {
+  void select(@NotNull VirtualFile virtualFile) {
     List<ServiceViewItem> selectedItems = new SmartList<>();
     for (ServiceViewContentHolder contentHolder : myContentHolders) {
       Content content = contentHolder.contentManager.getSelectedContent();
@@ -563,34 +562,30 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       ContainerUtil.addIfNotNull(selectedItems, ContainerUtil.getOnlyItem(items));
     }
 
-    AsyncPromise<Void> result = new AsyncPromise<>();
-    myModel.getInvoker().invoke(() -> {
-      Condition<? super ServiceViewItem> fileCondition = item -> {
-        ServiceViewDescriptor descriptor = item.getViewDescriptor();
-        return descriptor instanceof ServiceViewLocatableDescriptor &&
-               virtualFile.equals(((ServiceViewLocatableDescriptor)descriptor).getVirtualFile());
-      };
+    ServiceViewHelper.getInstance(myProject).findServices(virtualFile, fileServices -> {
+      myModel.getInvoker().invoke(() -> {
+        Condition<? super ServiceViewItem> fileCondition = item -> {
+          ServiceViewDescriptor descriptor = item.getViewDescriptor();
+          return fileServices.contains(descriptor.getId());
+        };
 
-      // Multiple services may target to one virtual file.
-      // Do nothing if service, targeting to the given virtual file, is selected,
-      // otherwise it may lead to jumping selection,
-      // if editor have just been selected due to some service selection.
-      if (ContainerUtil.find(selectedItems, fileCondition) != null) {
-        result.setResult(null);
-        return;
-      }
+        // Multiple services may target to one virtual file.
+        // Do nothing if service, targeting to the given virtual file, is selected,
+        // otherwise it may lead to jumping selection,
+        // if editor have just been selected due to some service selection.
+        if (ContainerUtil.find(selectedItems, fileCondition) != null) {
+          return;
+        }
 
-      ServiceViewItem fileItem = myModel.findItem(
-        item -> !(item instanceof ServiceModel.ServiceNode) ||
-                item.getViewDescriptor() instanceof ServiceViewLocatableDescriptor,
-        fileCondition
-      );
-      if (fileItem != null) {
-        Promise<Void> promise = doSelect(fileItem.getValue(), fileItem.getRootContributor().getClass(), false, false);
-        promise.processed(result);
-      }
+        ServiceViewItem fileItem = myModel.findItem(
+          item -> !(item instanceof ServiceModel.ServiceNode),
+          fileCondition
+        );
+        if (fileItem != null) {
+          doSelect(fileItem.getValue(), fileItem.getRootContributor().getClass(), false, false);
+        }
+      });
     });
-    return result;
   }
 
   void extract(@NotNull ServiceViewDragBean dragBean) {

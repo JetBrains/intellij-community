@@ -101,7 +101,8 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
       if (expression instanceof GrBinaryExpression binaryExpression) {
         final IElementType sign = binaryExpression.getOperationTokenType();
         return GroovyTokenTypes.mLAND.equals(sign) ||
-            GroovyTokenTypes.mLOR.equals(sign);
+            GroovyTokenTypes.mLOR.equals(sign) ||
+               GroovyTokenTypes.mIMPL.equals(sign);
       } else if (expression instanceof GrUnaryExpression prefixExpression) {
         final IElementType sign = prefixExpression.getOperationTokenType();
         return GroovyTokenTypes.mLNOT.equals(sign);

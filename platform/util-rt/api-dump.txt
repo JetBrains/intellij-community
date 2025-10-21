@@ -148,7 +148,6 @@ f:com.intellij.openapi.util.SystemInfoRt
 - sf:OS_VERSION:java.lang.String
 - sf:isFileSystemCaseSensitive:Z
 - sf:isFreeBSD:Z
-- sf:isJBSystemMenu:Z
 - sf:isLinux:Z
 - sf:isMac:Z
 - sf:isSolaris:Z

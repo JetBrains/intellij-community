@@ -354,7 +354,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       if (project.isDisposed) return
       if (hasUndoInCommand) return
       if (undoManager.isUndoOrRedoInProgress) return
-      if (CommandProcessor.getInstance().currentCommand == null) return
+      if (!CommandProcessor.getInstance().isCommandInProgress) return
       hasUndoInCommand = true
 
       registerUndoAction(true)
@@ -375,13 +375,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
     override fun undoTransparentActionStarted() {
-      if (CommandProcessor.getInstance().currentCommand == null) {
+      if (!CommandProcessor.getInstance().isCommandInProgress) {
         hasUndoInCommand = false
       }
     }
 
     override fun undoTransparentActionFinished() {
-      if (CommandProcessor.getInstance().currentCommand == null) {
+      if (!CommandProcessor.getInstance().isCommandInProgress) {
         hasUndoInCommand = false
       }
     }
@@ -761,6 +761,25 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   }
 
   @RequiresEdt
+  @ApiStatus.Internal
+  fun recreateBlocks(map: Map<Range, LocalChangeList>) {
+    changeListManager.executeUnderDataLock {
+      val rangesToBlockData = map.entries.associate { (range, changelist) ->
+        if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
+        val newMarker = ChangeListMarker(changelist)
+        com.intellij.diff.util.Range(range.vcsLine1, range.vcsLine2, range.line1, range.line2) to ChangeListBlockData(marker = newMarker) as DocumentTracker.BlockData
+      }
+
+      documentTracker.writeLock {
+        documentTracker.recreateBlocks(rangesToBlockData)
+        dropExistingUndoActions()
+        updateHighlighters()
+        updateAffectedChangeLists()
+      }
+    }
+  }
+
+  @RequiresEdt
   private fun moveToChangelist(condition: (Block) -> Boolean, changelist: LocalChangeList) {
     changeListManager.executeUnderDataLock {
       if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
@@ -1073,8 +1092,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   companion object {
     private val LOG: Logger = Logger.getInstance(ChangelistsLocalLineStatusTracker::class.java)
 
+    @ApiStatus.Internal
     @JvmStatic
-    internal fun createTracker(project: Project,
+    fun createTracker(project: Project,
                                document: Document,
                                virtualFile: VirtualFile): ChangelistsLocalLineStatusTracker {
       return ChangelistsLocalLineStatusTracker(project, document, virtualFile)

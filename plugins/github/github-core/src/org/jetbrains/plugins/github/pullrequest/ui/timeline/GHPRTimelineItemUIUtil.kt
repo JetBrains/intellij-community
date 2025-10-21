@@ -11,7 +11,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.setHtmlBody
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import java.util.*
 import javax.swing.JComponent

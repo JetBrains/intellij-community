@@ -17,12 +17,11 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.util.MonolithUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// TODO Implement com.intellij.xdebugger.frame.XValue.getReferrersProvider
-// TODO Implement com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction.ReferrersTreeCustomizer.getDialog
 public class ShowReferringObjectsAction extends XDebuggerTreeActionBase
   implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
@@ -70,10 +69,10 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase
     if (referrersProvider != null) {
       XValue referringObjectsRoot = referrersProvider.getReferringObjectsValue();
       DialogWrapper dialog;
-      if (referringObjectsRoot instanceof ReferrersTreeCustomizer referrersTreeCustomizer
-          // TODO PathsToClosestGcRootsDialog will not be available in split
-          && session instanceof XDebugSessionProxy.Monolith monolithSession) {
-        dialog = referrersTreeCustomizer.getDialog(monolithSession.getSession(), nodeName, position, markers);
+      // TODO ReferrersTreeCustomizer is supported only in monolith
+      XDebugSession xDebugSession = MonolithUtils.findSessionById(session.getId());
+      if (xDebugSession != null && referringObjectsRoot instanceof ReferrersTreeCustomizer referrersTreeCustomizer) {
+        dialog = referrersTreeCustomizer.getDialog(xDebugSession, nodeName, position, markers);
       }
       else {
         dialog = new XInspectDialog(session.getProject(),

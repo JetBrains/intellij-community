@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.exists

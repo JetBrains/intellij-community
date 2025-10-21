@@ -68,12 +68,6 @@ class ProjectRefreshAction : DumbAwareAction() {
     templatePresentation.description = ExternalSystemBundle.message("external.system.reload.notification.action.reload.description.empty", productName)
   }
 
-  companion object {
-    @Deprecated("Use ProjectRefreshAction.Manager explicitly")
-    @ApiStatus.ScheduledForRemoval
-    fun refreshProject(project: Project) = Manager.refreshProject(project)
-  }
-
   object Manager {
     fun refreshProject(project: Project) {
       val projectNotificationAware = ExternalSystemProjectNotificationAware.getInstance(project)

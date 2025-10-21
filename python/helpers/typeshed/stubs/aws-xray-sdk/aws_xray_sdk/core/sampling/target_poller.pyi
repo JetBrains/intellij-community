@@ -1,6 +1,6 @@
-from typing import Any
+from logging import Logger
 
-log: Any
+log: Logger
 
 class TargetPoller:
     def __init__(self, cache, rule_poller, connector) -> None: ...

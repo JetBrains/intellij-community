@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
+import com.intellij.openapi.application.ThreadingSupport
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.event.InvocationEvent
@@ -9,7 +10,7 @@ class PotemkinProgressTest {
 
   @Test
   fun `forced runnable is urgent`() {
-    val event = InvocationEvent(Any(), object: SuvorovProgress.ForcedWriteActionRunnable() {
+    val event = InvocationEvent(Any(), object: ThreadingSupport.RunnableWithTransferredWriteAction() {
       override fun run() {
       }
     })

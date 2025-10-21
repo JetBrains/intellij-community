@@ -66,12 +66,20 @@ public final class TypeNullability {
     return inherited.equals(mySource) ? this : new TypeNullability(myNullability, inherited);
   }
 
+  /**
+   * @param nullability instantiation nullability
+   * @return the nullability of the instantiated type parameter,
+   * assuming that this object is the declared nullability of the type parameter.
+   */
   public @NotNull TypeNullability instantiatedWith(@NotNull TypeNullability nullability) {
     if (this.nullability() == nullability.nullability()) {
-      return intersect(Arrays.asList(this, nullability));
+      return nullability;
     }
     if (this.nullability() == Nullability.NOT_NULL) {
       return this;
+    }
+    if (this.nullability() == Nullability.NULLABLE && this.source() instanceof NullabilitySource.ExtendsBound) {
+      return nullability;
     }
     if (nullability.nullability() == Nullability.NOT_NULL && this.source() instanceof NullabilitySource.ExtendsBound) {
       return nullability;

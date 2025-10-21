@@ -3,22 +3,13 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import org.jetbrains.annotations.ApiStatus
 
 interface IntelliJNewProjectWizardData {
 
-  val sdkProperty: ObservableMutableProperty<Sdk?>
+  val jdkIntentProperty: ObservableMutableProperty<ProjectWizardJdkIntent>
 
-  var sdk: Sdk?
-
-  val jdkIntentProperty: ObservableMutableProperty<ProjectWizardJdkIntent?>
-
-  var jdkIntent: ProjectWizardJdkIntent?
-
-  val sdkDownloadTaskProperty: ObservableMutableProperty<SdkDownloadTask?>
-
-  var sdkDownloadTask: SdkDownloadTask?
+  var jdkIntent: ProjectWizardJdkIntent
 
   val moduleNameProperty: ObservableMutableProperty<String>
 
@@ -38,9 +29,13 @@ interface IntelliJNewProjectWizardData {
 
   @Deprecated("Use addSampleCodeProperty instead")
   val generateOnboardingTipsProperty: ObservableMutableProperty<Boolean>
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use addSampleCodeProperty instead")
     get() = addSampleCodeProperty
 
   @Deprecated("Use addSampleCode instead")
   val generateOnboardingTips: Boolean
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use addSampleCode instead")
     get() = addSampleCode
 }

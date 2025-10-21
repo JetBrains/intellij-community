@@ -4,6 +4,8 @@ package com.intellij.ui;
 import com.intellij.util.ui.JBInsets;
 import sun.awt.AWTAccessor;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 
@@ -173,4 +175,17 @@ public class CellRendererPanel extends JPanel {
   }
 
   // END no validation methods --------------
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJPanel() {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.LABEL;
+        }
+      };
+    }
+    return accessibleContext;
+  }
 }

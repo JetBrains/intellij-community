@@ -16,7 +16,6 @@ class GitRebaseParams internal constructor(
   newBase: String?,
   val upstream: RebaseUpstream,
   private val selectedOptions: Set<GitRebaseOption>,
-  private val autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
   val editorHandler: GitRebaseEditorHandler? = null,
 ) {
   companion object {
@@ -27,18 +26,16 @@ class GitRebaseParams internal constructor(
       base: String,
       editorHandler: GitRebaseEditorHandler?,
       preserveMerges: Boolean,
-      autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
-    ) = editCommits(version, RebaseUpstream.Reference(base), editorHandler, preserveMerges, autoSquash)
+    ): GitRebaseParams = editCommits(version, RebaseUpstream.Reference(base), editorHandler, preserveMerges)
 
     fun editCommits(
       version: GitVersion,
       base: RebaseUpstream,
       editorHandler: GitRebaseEditorHandler?,
       preserveMerges: Boolean,
-      autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
-    ) = GitRebaseParams(version, null, null, base,
-                        collectOptions(true, preserveMerges),
-                        autoSquash, editorHandler)
+    ): GitRebaseParams = GitRebaseParams(version, null, null, base,
+                                                         collectOptions(true, preserveMerges),
+                                                         editorHandler)
 
     private fun collectOptions(interactive: Boolean, rebaseMerges: Boolean) = mutableSetOf<GitRebaseOption>().apply {
       if (interactive) {
@@ -80,12 +77,6 @@ class GitRebaseParams internal constructor(
     }
   }
 
-  enum class AutoSquashOption {
-    DEFAULT,
-    ENABLE,
-    DISABLE
-  }
-
   val branch: String? = branch?.takeIf { it.isNotBlank() }
   val newBase: String? = newBase?.takeIf { it.isNotBlank() }
 
@@ -95,9 +86,8 @@ class GitRebaseParams internal constructor(
     newBase: String?,
     upstream: String?,
     selectedOptions: Set<GitRebaseOption>,
-    autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
     editorHandler: GitRebaseEditorHandler? = null,
-  ) : this(version, branch, newBase, RebaseUpstream.fromNullableString(upstream), selectedOptions, autoSquash, editorHandler)
+  ) : this(version, branch, newBase, RebaseUpstream.fromNullableString(upstream), selectedOptions, editorHandler)
 
   constructor(version: GitVersion, upstream: String) : this(version, null, null, upstream, false, false)
 
@@ -109,23 +99,22 @@ class GitRebaseParams internal constructor(
     interactive: Boolean,
     preserveMerges: Boolean,
   ) : this(version, branch, newBase, RebaseUpstream.Reference(upstream),
-           collectOptions(interactive, preserveMerges), AutoSquashOption.DEFAULT)
+           collectOptions(interactive, preserveMerges))
 
   fun asCommandLineArguments(): List<String> = mutableListOf<String>().apply {
     selectedOptions.mapNotNull { option ->
       when (option) {
         GitRebaseOption.REBASE_MERGES -> handleRebaseMergesOption()
         GitRebaseOption.ROOT -> null // this option is converted to RebaseUpstream.Root
-        else -> option.getOption(version)
+        GitRebaseOption.SWITCH_BRANCH,
+        GitRebaseOption.ONTO,
+        GitRebaseOption.KEEP_EMPTY,
+        GitRebaseOption.INTERACTIVE,
+        GitRebaseOption.UPDATE_REFS,
+        GitRebaseOption.AUTOSQUASH -> option.getOption(version)
       }
-    }.forEach { option -> add(option) }
+    }.also { addAll(it) }
 
-    when (autoSquash) {
-      AutoSquashOption.DEFAULT -> {
-      }
-      AutoSquashOption.ENABLE -> add("--autosquash")
-      AutoSquashOption.DISABLE -> add("--no-autosquash")
-    }
     if (newBase != null) {
       addAll(listOf("--onto", newBase))
     }
@@ -140,7 +129,7 @@ class GitRebaseParams internal constructor(
     }
   }
 
-  fun isInteractive() = GitRebaseOption.INTERACTIVE in selectedOptions
+  fun isInteractive(): Boolean = GitRebaseOption.INTERACTIVE in selectedOptions
 
   override fun toString(): String = asCommandLineArguments().joinToString(" ")
 

@@ -35,11 +35,11 @@ object RiderIconsJsonGenerator {
     // Assertion part
     for (item in expuiItems) {
       require(item.expuiFile.name == item.originFile.name) { "Unexpected items (names are not equal):\n" +
-                                                             "expui: ${item.expuiFile}\n" +
-                                                             "origin: ${item.originFile}"}
-      require(item.expuiFile.exists()) { "Can't find file ${item.expuiFile}" }
-      require(item.originFile.parent.let { it.exists() && it.isDirectory() }) { "Parent directory of origin file '${item.originFile}' does not exists" }
-      require(!item.originFile.toString().contains("expui")) { "Unexpected file with expui part: ${item.originFile}" }
+                                                             "expui: '${item.expuiFile}'\n" +
+                                                             "origin: '${item.originFile}'"}
+      require(item.expuiFile.exists()) { "Can't find file '${item.expuiFile}'" }
+      require(item.originFile.parent.let { it.exists() && it.isDirectory() }) { "Parent directory of origin file '${item.originFile}' does not exists; check if the directory is marked as excluded in the file 'icon-robots.txt'" }
+      require(!item.originFile.toString().contains("expui")) { "Unexpected file with expui part: '${item.originFile}'" }
     }
 
     // Create json structure

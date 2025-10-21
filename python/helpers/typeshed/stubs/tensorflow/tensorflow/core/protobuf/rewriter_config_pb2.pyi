@@ -30,12 +30,7 @@ class AutoParallelOptions(google.protobuf.message.Message):
     NUM_REPLICAS_FIELD_NUMBER: builtins.int
     enable: builtins.bool
     num_replicas: builtins.int
-    def __init__(
-        self,
-        *,
-        enable: builtins.bool | None = ...,
-        num_replicas: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, enable: builtins.bool | None = ..., num_replicas: builtins.int | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["enable", b"enable", "num_replicas", b"num_replicas"]) -> None: ...
 
 global___AutoParallelOptions = AutoParallelOptions
@@ -49,11 +44,7 @@ class ScopedAllocatorOptions(google.protobuf.message.Message):
     def enable_op(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]:
         """If present, only perform optimization for these ops."""
 
-    def __init__(
-        self,
-        *,
-        enable_op: collections.abc.Iterable[builtins.str] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, enable_op: collections.abc.Iterable[builtins.str] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["enable_op", b"enable_op"]) -> None: ...
 
 global___ScopedAllocatorOptions = ScopedAllocatorOptions
@@ -70,7 +61,9 @@ class RewriterConfig(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ToggleEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._Toggle.ValueType], builtins.type):
+    class _ToggleEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._Toggle.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DEFAULT: RewriterConfig._Toggle.ValueType  # 0
         ON: RewriterConfig._Toggle.ValueType  # 1
@@ -118,7 +111,9 @@ class RewriterConfig(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _CpuLayoutEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._CpuLayout.ValueType], builtins.type):
+    class _CpuLayoutEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._CpuLayout.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         NO_CONVERSION_ON_CPU: RewriterConfig._CpuLayout.ValueType  # 0
         NCHW_TO_NHWC: RewriterConfig._CpuLayout.ValueType  # 1
@@ -135,7 +130,9 @@ class RewriterConfig(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _NumIterationsTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._NumIterationsType.ValueType], builtins.type):
+    class _NumIterationsTypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._NumIterationsType.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DEFAULT_NUM_ITERS: RewriterConfig._NumIterationsType.ValueType  # 0
         ONE: RewriterConfig._NumIterationsType.ValueType  # 1
@@ -154,7 +151,9 @@ class RewriterConfig(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _MemOptTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._MemOptType.ValueType], builtins.type):
+    class _MemOptTypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[RewriterConfig._MemOptType.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DEFAULT_MEM_OPT: RewriterConfig._MemOptType.ValueType  # 0
         """The default setting (SCHEDULING and SWAPPING HEURISTICS only)"""
@@ -225,10 +224,7 @@ class RewriterConfig(google.protobuf.message.Message):
             @property
             def value(self) -> tensorflow.core.framework.attr_value_pb2.AttrValue: ...
             def __init__(
-                self,
-                *,
-                key: builtins.str | None = ...,
-                value: tensorflow.core.framework.attr_value_pb2.AttrValue | None = ...,
+                self, *, key: builtins.str | None = ..., value: tensorflow.core.framework.attr_value_pb2.AttrValue | None = ...
             ) -> None: ...
             def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
             def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
@@ -237,7 +233,9 @@ class RewriterConfig(google.protobuf.message.Message):
         PARAMETER_MAP_FIELD_NUMBER: builtins.int
         name: builtins.str
         @property
-        def parameter_map(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, tensorflow.core.framework.attr_value_pb2.AttrValue]: ...
+        def parameter_map(
+            self,
+        ) -> google.protobuf.internal.containers.MessageMap[builtins.str, tensorflow.core.framework.attr_value_pb2.AttrValue]: ...
         def __init__(
             self,
             *,
@@ -438,7 +436,9 @@ class RewriterConfig(google.protobuf.message.Message):
         """
 
     @property
-    def custom_optimizers(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___RewriterConfig.CustomGraphOptimizer]:
+    def custom_optimizers(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___RewriterConfig.CustomGraphOptimizer]:
         """list of CustomGraphOptimizers to apply."""
 
     @property
@@ -492,7 +492,97 @@ class RewriterConfig(google.protobuf.message.Message):
         inter_optimizer_verifier_config: tensorflow.core.protobuf.verifier_config_pb2.VerifierConfig | None = ...,
         post_optimization_verifier_config: tensorflow.core.protobuf.verifier_config_pb2.VerifierConfig | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["auto_parallel", b"auto_parallel", "inter_optimizer_verifier_config", b"inter_optimizer_verifier_config", "post_optimization_verifier_config", b"post_optimization_verifier_config", "scoped_allocator_opts", b"scoped_allocator_opts"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["arithmetic_optimization", b"arithmetic_optimization", "auto_mixed_precision", b"auto_mixed_precision", "auto_mixed_precision_cpu", b"auto_mixed_precision_cpu", "auto_mixed_precision_mkl", b"auto_mixed_precision_mkl", "auto_mixed_precision_onednn_bfloat16", b"auto_mixed_precision_onednn_bfloat16", "auto_parallel", b"auto_parallel", "common_subgraph_elimination", b"common_subgraph_elimination", "constant_folding", b"constant_folding", "cpu_layout_conversion", b"cpu_layout_conversion", "custom_optimizers", b"custom_optimizers", "debug_stripper", b"debug_stripper", "dependency_optimization", b"dependency_optimization", "disable_meta_optimizer", b"disable_meta_optimizer", "disable_model_pruning", b"disable_model_pruning", "disable_tfg_optimizer", b"disable_tfg_optimizer", "experimental_conditional_code_motion", b"experimental_conditional_code_motion", "experimental_disable_compressed_tensor_optimization", b"experimental_disable_compressed_tensor_optimization", "experimental_disable_folding_quantization_emulation", b"experimental_disable_folding_quantization_emulation", "fail_on_optimizer_errors", b"fail_on_optimizer_errors", "function_optimization", b"function_optimization", "implementation_selector", b"implementation_selector", "inter_optimizer_verifier_config", b"inter_optimizer_verifier_config", "layout_optimizer", b"layout_optimizer", "loop_optimization", b"loop_optimization", "memory_optimization", b"memory_optimization", "memory_optimizer_target_node_name_scope", b"memory_optimizer_target_node_name_scope", "meta_optimizer_iterations", b"meta_optimizer_iterations", "meta_optimizer_timeout_ms", b"meta_optimizer_timeout_ms", "min_graph_nodes", b"min_graph_nodes", "optimizers", b"optimizers", "pin_to_host_optimization", b"pin_to_host_optimization", "post_optimization_verifier_config", b"post_optimization_verifier_config", "remapping", b"remapping", "scoped_allocator_optimization", b"scoped_allocator_optimization", "scoped_allocator_opts", b"scoped_allocator_opts", "shape_optimization", b"shape_optimization", "use_plugin_optimizers", b"use_plugin_optimizers"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "auto_parallel",
+            b"auto_parallel",
+            "inter_optimizer_verifier_config",
+            b"inter_optimizer_verifier_config",
+            "post_optimization_verifier_config",
+            b"post_optimization_verifier_config",
+            "scoped_allocator_opts",
+            b"scoped_allocator_opts",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "arithmetic_optimization",
+            b"arithmetic_optimization",
+            "auto_mixed_precision",
+            b"auto_mixed_precision",
+            "auto_mixed_precision_cpu",
+            b"auto_mixed_precision_cpu",
+            "auto_mixed_precision_mkl",
+            b"auto_mixed_precision_mkl",
+            "auto_mixed_precision_onednn_bfloat16",
+            b"auto_mixed_precision_onednn_bfloat16",
+            "auto_parallel",
+            b"auto_parallel",
+            "common_subgraph_elimination",
+            b"common_subgraph_elimination",
+            "constant_folding",
+            b"constant_folding",
+            "cpu_layout_conversion",
+            b"cpu_layout_conversion",
+            "custom_optimizers",
+            b"custom_optimizers",
+            "debug_stripper",
+            b"debug_stripper",
+            "dependency_optimization",
+            b"dependency_optimization",
+            "disable_meta_optimizer",
+            b"disable_meta_optimizer",
+            "disable_model_pruning",
+            b"disable_model_pruning",
+            "disable_tfg_optimizer",
+            b"disable_tfg_optimizer",
+            "experimental_conditional_code_motion",
+            b"experimental_conditional_code_motion",
+            "experimental_disable_compressed_tensor_optimization",
+            b"experimental_disable_compressed_tensor_optimization",
+            "experimental_disable_folding_quantization_emulation",
+            b"experimental_disable_folding_quantization_emulation",
+            "fail_on_optimizer_errors",
+            b"fail_on_optimizer_errors",
+            "function_optimization",
+            b"function_optimization",
+            "implementation_selector",
+            b"implementation_selector",
+            "inter_optimizer_verifier_config",
+            b"inter_optimizer_verifier_config",
+            "layout_optimizer",
+            b"layout_optimizer",
+            "loop_optimization",
+            b"loop_optimization",
+            "memory_optimization",
+            b"memory_optimization",
+            "memory_optimizer_target_node_name_scope",
+            b"memory_optimizer_target_node_name_scope",
+            "meta_optimizer_iterations",
+            b"meta_optimizer_iterations",
+            "meta_optimizer_timeout_ms",
+            b"meta_optimizer_timeout_ms",
+            "min_graph_nodes",
+            b"min_graph_nodes",
+            "optimizers",
+            b"optimizers",
+            "pin_to_host_optimization",
+            b"pin_to_host_optimization",
+            "post_optimization_verifier_config",
+            b"post_optimization_verifier_config",
+            "remapping",
+            b"remapping",
+            "scoped_allocator_optimization",
+            b"scoped_allocator_optimization",
+            "scoped_allocator_opts",
+            b"scoped_allocator_opts",
+            "shape_optimization",
+            b"shape_optimization",
+            "use_plugin_optimizers",
+            b"use_plugin_optimizers",
+        ],
+    ) -> None: ...
 
 global___RewriterConfig = RewriterConfig

@@ -12,8 +12,18 @@
 *f:com.intellij.concurrency.ThreadContext
 - sf:currentThreadContext():kotlin.coroutines.CoroutineContext
 - sf:installThreadContext(kotlin.coroutines.CoroutineContext,Z):com.intellij.openapi.application.AccessToken
+- sf:installThreadContext(kotlin.coroutines.CoroutineContext,Z,kotlin.jvm.functions.Function0):java.lang.Object
 - bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,I,java.lang.Object):com.intellij.openapi.application.AccessToken
+- bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Object
 - sf:resetThreadContext():com.intellij.openapi.application.AccessToken
+- sf:resetThreadContext(kotlin.jvm.functions.Function0):java.lang.Object
+a:com.intellij.execution.process.BaseProcessHandler
+- com.intellij.execution.process.ProcessHandler
+- com.intellij.execution.TaskExecutor
+- *:getNativePid():java.util.concurrent.CompletableFuture
+a:com.intellij.execution.process.ProcessHandler
+- com.intellij.openapi.util.UserDataHolderBase
+- *:getNativePid():java.util.concurrent.CompletableFuture
 *:com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 - s:getClassToReport(java.lang.Object):java.lang.Class
 - a:getSubstitutedClass():java.lang.Class
@@ -21,12 +31,19 @@ f:com.intellij.openapi.util.UserDataAccessorsKt
 - *sf:createUserDataProperty(java.lang.Class):kotlin.properties.ReadWriteProperty
 - *sf:createUserDataProperty(java.lang.Class,kotlin.jvm.functions.Function1):kotlin.properties.ReadWriteProperty
 c:com.intellij.openapi.util.UserDataHolderBase
-- java.util.concurrent.atomic.AtomicReference
 - com.intellij.openapi.util.UserDataHolderEx
+- java.io.Serializable
 - *:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
+e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
+- java.lang.Enum
+- *:isInsensitive():Z
+- *:isKnown():Z
+- *:isSensitive():Z
+- *:isUnknown():Z
+- *:toBooleanOrFail():Z
+- *:toBooleanWithDefault(Z):Z
 f:com.intellij.openapi.util.io.NioFiles
-- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
-- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Consumer):V
+- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Predicate):V
 - *s:deleteQuietly(java.nio.file.Path):V
 - *s:deleteQuietly(java.nio.file.Path,java.util.function.Consumer):V
 c:com.intellij.openapi.util.registry.RegistryValue
@@ -48,10 +65,45 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:buildHtml(kotlin.jvm.functions.Function1):java.lang.String
 - *sf:buildHtmlChunk(kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk
 - *sf:plus(com.intellij.openapi.util.text.HtmlChunk,com.intellij.openapi.util.text.HtmlChunk):com.intellij.openapi.util.text.HtmlChunk
+*f:com.intellij.openapi.util.text.MarkupText
+- s:builder():com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- concat(com.intellij.openapi.util.text.MarkupText):com.intellij.openapi.util.text.MarkupText
+- concat(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
+- equals(java.lang.Object):Z
+- fragments():java.util.List
+- hashCode():I
+- highlightRange(I,I,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
+- isEmpty():Z
+- length():I
+- s:plainText(java.lang.String):com.intellij.openapi.util.text.MarkupText
+- toHtmlChunk():com.intellij.openapi.util.text.HtmlChunk
+- toText():java.lang.String
+*f:com.intellij.openapi.util.text.MarkupText$Fragment
+- <init>(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- kind():com.intellij.openapi.util.text.MarkupText$Kind
+- text():java.lang.String
+- toHtmlChunk():com.intellij.openapi.util.text.HtmlChunk
+*e:com.intellij.openapi.util.text.MarkupText$Kind
+- java.lang.Enum
+- sf:EMPHASIZED:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:ERROR:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:GRAYED:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:NORMAL:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:STRIKEOUT:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:STRONG:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:UNDERLINED:com.intellij.openapi.util.text.MarkupText$Kind
+- s:valueOf(java.lang.String):com.intellij.openapi.util.text.MarkupText$Kind
+- s:values():com.intellij.openapi.util.text.MarkupText$Kind[]
+*f:com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(com.intellij.openapi.util.text.MarkupText$Fragment):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(com.intellij.openapi.util.text.MarkupText):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(java.lang.String):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- build():com.intellij.openapi.util.text.MarkupText
 com.intellij.ui.IconManager
 - *:colorizedIcon(javax.swing.Icon,kotlin.jvm.functions.Function0):javax.swing.Icon
-f:com.intellij.util.EnvironmentUtil
-- *s:buildShellProcessCommand(java.lang.String,Z,Z,Z):java.util.List
 *f:com.intellij.util.JavaCoroutines
 - sf:suspendJava(java.util.function.Consumer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.TimeoutUtil

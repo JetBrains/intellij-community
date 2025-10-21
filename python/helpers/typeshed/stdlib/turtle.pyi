@@ -1,8 +1,10 @@
 import sys
-from collections.abc import Callable, Sequence
+from _typeshed import StrPath
+from collections.abc import Callable, Generator, Sequence
+from contextlib import contextmanager
 from tkinter import Canvas, Frame, Misc, PhotoImage, Scrollbar
-from typing import Any, ClassVar, overload
-from typing_extensions import Self, TypeAlias
+from typing import Any, ClassVar, Literal, TypedDict, overload, type_check_only
+from typing_extensions import Self, TypeAlias, deprecated
 
 __all__ = [
     "ScrolledCanvas",
@@ -128,6 +130,9 @@ __all__ = [
     "Terminator",
 ]
 
+if sys.version_info >= (3, 14):
+    __all__ += ["fill", "no_animation", "poly", "save"]
+
 if sys.version_info >= (3, 12):
     __all__ += ["teleport"]
 
@@ -141,8 +146,19 @@ if sys.version_info < (3, 13):
 _Color: TypeAlias = str | tuple[float, float, float]
 _AnyColor: TypeAlias = Any
 
-# TODO: Replace this with a TypedDict once it becomes standardized.
-_PenState: TypeAlias = dict[str, Any]
+@type_check_only
+class _PenState(TypedDict):
+    shown: bool
+    pendown: bool
+    pencolor: _Color
+    fillcolor: _Color
+    pensize: int
+    speed: int
+    resizemode: Literal["auto", "user", "noresize"]
+    stretchfactor: tuple[float, float]
+    shearfactor: float
+    outline: int
+    tilt: float
 
 _Speed: TypeAlias = str | float
 _PolygonCoords: TypeAlias = Sequence[tuple[float, float]]
@@ -221,6 +237,10 @@ class TurtleScreen(TurtleScreenBase):
     def delay(self, delay: None = None) -> int: ...
     @overload
     def delay(self, delay: int) -> None: ...
+    if sys.version_info >= (3, 14):
+        @contextmanager
+        def no_animation(self) -> Generator[None]: ...
+
     def update(self) -> None: ...
     def window_width(self) -> int: ...
     def window_height(self) -> int: ...
@@ -239,6 +259,8 @@ class TurtleScreen(TurtleScreenBase):
     # Looks like if self.cv is not a ScrolledCanvas, this could return a tuple as well
     @overload
     def screensize(self, canvwidth: int, canvheight: int, bg: _Color | None = None) -> None: ...
+    if sys.version_info >= (3, 14):
+        def save(self, filename: StrPath, *, overwrite: bool = False) -> None: ...
     onscreenclick = onclick
     resetscreen = reset
     clearscreen = clear
@@ -283,6 +305,7 @@ class TNavigator:
     def heading(self) -> float: ...
     def setheading(self, to_angle: float) -> None: ...
     def circle(self, radius: float, extent: float | None = None, steps: int | None = None) -> None: ...
+    def speed(self, s: int | None = 0) -> int | None: ...
     fd = forward
     bk = back
     backward = back
@@ -338,7 +361,7 @@ class TPen:
     def isvisible(self) -> bool: ...
     # Note: signatures 1 and 2 overlap unsafely when no arguments are provided
     @overload
-    def pen(self) -> _PenState: ...  # type: ignore[overload-overlap]
+    def pen(self) -> _PenState: ...
     @overload
     def pen(
         self,
@@ -363,7 +386,7 @@ class TPen:
     st = showturtle
     ht = hideturtle
 
-class RawTurtle(TPen, TNavigator):
+class RawTurtle(TPen, TNavigator):  # type: ignore[misc]  # Conflicting methods in base classes
     screen: TurtleScreen
     screens: ClassVar[list[TurtleScreen]]
     def __init__(
@@ -384,7 +407,7 @@ class RawTurtle(TPen, TNavigator):
     def shape(self, name: str) -> None: ...
     # Unsafely overlaps when no arguments are provided
     @overload
-    def shapesize(self) -> tuple[float, float, float]: ...  # type: ignore[overload-overlap]
+    def shapesize(self) -> tuple[float, float, float]: ...
     @overload
     def shapesize(
         self, stretch_wid: float | None = None, stretch_len: float | None = None, outline: float | None = None
@@ -395,7 +418,7 @@ class RawTurtle(TPen, TNavigator):
     def shearfactor(self, shear: float) -> None: ...
     # Unsafely overlaps when no arguments are provided
     @overload
-    def shapetransform(self) -> tuple[float, float, float, float]: ...  # type: ignore[overload-overlap]
+    def shapetransform(self) -> tuple[float, float, float, float]: ...
     @overload
     def shapetransform(
         self, t11: float | None = None, t12: float | None = None, t21: float | None = None, t22: float | None = None
@@ -403,6 +426,7 @@ class RawTurtle(TPen, TNavigator):
     def get_shapepoly(self) -> _PolygonCoords | None: ...
 
     if sys.version_info < (3, 13):
+        @deprecated("Deprecated since Python 3.1; removed in Python 3.13. Use `tiltangle()` instead.")
         def settiltangle(self, angle: float) -> None: ...
 
     @overload
@@ -417,12 +441,20 @@ class RawTurtle(TPen, TNavigator):
     def clearstamp(self, stampid: int | tuple[int, ...]) -> None: ...
     def clearstamps(self, n: int | None = None) -> None: ...
     def filling(self) -> bool: ...
+    if sys.version_info >= (3, 14):
+        @contextmanager
+        def fill(self) -> Generator[None]: ...
+
     def begin_fill(self) -> None: ...
     def end_fill(self) -> None: ...
     def dot(self, size: int | None = None, *color: _Color) -> None: ...
     def write(
         self, arg: object, move: bool = False, align: str = "left", font: tuple[str, int, str] = ("Arial", 8, "normal")
     ) -> None: ...
+    if sys.version_info >= (3, 14):
+        @contextmanager
+        def poly(self) -> Generator[None]: ...
+
     def begin_poly(self) -> None: ...
     def end_poly(self) -> None: ...
     def get_poly(self) -> _PolygonCoords | None: ...
@@ -457,19 +489,8 @@ Pen = Turtle
 
 def write_docstringdict(filename: str = "turtle_docstringdict") -> None: ...
 
-# Note: it's somewhat unfortunate that we have to copy the function signatures.
-# It would be nice if we could partially reduce the redundancy by doing something
-# like the following:
-#
-#     _screen: Screen
-#     clear = _screen.clear
-#
-# However, it seems pytype does not support this type of syntax in pyi files.
-
 # Functions copied from TurtleScreenBase:
 
-# Note: mainloop() was always present in the global scope, but was added to
-# TurtleScreenBase in Python 3.0
 def mainloop() -> None: ...
 def textinput(title: str, prompt: str) -> str | None: ...
 def numinput(
@@ -505,6 +526,11 @@ def tracer(n: int, delay: int | None = None) -> None: ...
 def delay(delay: None = None) -> int: ...
 @overload
 def delay(delay: int) -> None: ...
+
+if sys.version_info >= (3, 14):
+    @contextmanager
+    def no_animation() -> Generator[None]: ...
+
 def update() -> None: ...
 def window_width() -> int: ...
 def window_height() -> int: ...
@@ -522,6 +548,9 @@ def bgpic(picname: str) -> None: ...
 def screensize(canvwidth: None = None, canvheight: None = None, bg: None = None) -> tuple[int, int]: ...
 @overload
 def screensize(canvwidth: int, canvheight: int, bg: _Color | None = None) -> None: ...
+
+if sys.version_info >= (3, 14):
+    def save(filename: StrPath, *, overwrite: bool = False) -> None: ...
 
 onscreenclick = onclick
 resetscreen = reset
@@ -622,7 +651,7 @@ def isvisible() -> bool: ...
 
 # Note: signatures 1 and 2 overlap unsafely when no arguments are provided
 @overload
-def pen() -> _PenState: ...  # type: ignore[overload-overlap]
+def pen() -> _PenState: ...
 @overload
 def pen(
     pen: _PenState | None = None,
@@ -661,7 +690,7 @@ if sys.version_info >= (3, 12):
 
 # Unsafely overlaps when no arguments are provided
 @overload
-def shapesize() -> tuple[float, float, float]: ...  # type: ignore[overload-overlap]
+def shapesize() -> tuple[float, float, float]: ...
 @overload
 def shapesize(stretch_wid: float | None = None, stretch_len: float | None = None, outline: float | None = None) -> None: ...
 @overload
@@ -671,7 +700,7 @@ def shearfactor(shear: float) -> None: ...
 
 # Unsafely overlaps when no arguments are provided
 @overload
-def shapetransform() -> tuple[float, float, float, float]: ...  # type: ignore[overload-overlap]
+def shapetransform() -> tuple[float, float, float, float]: ...
 @overload
 def shapetransform(
     t11: float | None = None, t12: float | None = None, t21: float | None = None, t22: float | None = None
@@ -679,6 +708,7 @@ def shapetransform(
 def get_shapepoly() -> _PolygonCoords | None: ...
 
 if sys.version_info < (3, 13):
+    @deprecated("Deprecated since Python 3.1; removed in Python 3.13. Use `tiltangle()` instead.")
     def settiltangle(angle: float) -> None: ...
 
 @overload
@@ -694,10 +724,20 @@ def stamp() -> Any: ...
 def clearstamp(stampid: int | tuple[int, ...]) -> None: ...
 def clearstamps(n: int | None = None) -> None: ...
 def filling() -> bool: ...
+
+if sys.version_info >= (3, 14):
+    @contextmanager
+    def fill() -> Generator[None]: ...
+
 def begin_fill() -> None: ...
 def end_fill() -> None: ...
 def dot(size: int | None = None, *color: _Color) -> None: ...
 def write(arg: object, move: bool = False, align: str = "left", font: tuple[str, int, str] = ("Arial", 8, "normal")) -> None: ...
+
+if sys.version_info >= (3, 14):
+    @contextmanager
+    def poly() -> Generator[None]: ...
+
 def begin_poly() -> None: ...
 def end_poly() -> None: ...
 def get_poly() -> _PolygonCoords | None: ...

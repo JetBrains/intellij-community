@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 /**
@@ -44,7 +44,7 @@ public interface MutableExternalEntityMapping<T> : ExternalEntityMapping<T> {
    * Associates [data] with the given [entity]. 
    * If the mapping already contains an association with this [entity], the new one replaces the previous association.
    */
-  public fun addMapping(entity: WorkspaceEntity, data: T)
+  public fun  addMapping(entity: WorkspaceEntity, data: T)
 
   /**
    * Associates [data] with the given [entity] and returns `true` if no data is associated with it yet. 

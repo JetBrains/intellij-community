@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddWhenRemainingBranchesFix
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 class AddWhenRemainingBranchesIntention : SelfTargetingIntention<KtWhenExpression>(
-    KtWhenExpression::class.java, KotlinBundle.lazyMessage("add.remaining.branches")
+    KtWhenExpression::class.java, KotlinBundle.messagePointer("add.remaining.branches")
 ) {
     override fun isApplicableTo(element: KtWhenExpression, caretOffset: Int): Boolean {
         return AddWhenRemainingBranchesFix.isAvailable(element)

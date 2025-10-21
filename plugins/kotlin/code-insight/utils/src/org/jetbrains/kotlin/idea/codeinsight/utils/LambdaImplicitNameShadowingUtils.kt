@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -9,12 +10,13 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 
-val scopeFunctionsList: List<FqName> = listOf(
-    "kotlin.also",
-    "kotlin.let",
-    "kotlin.takeIf",
-    "kotlin.takeUnless",
-).map { FqName(it) }
+@ApiStatus.Internal
+val scopeFunctionsList: Array<FqName> = arrayOf(
+    StandardKotlinNames.also,
+    StandardKotlinNames.let,
+    StandardKotlinNames.takeIf,
+    StandardKotlinNames.takeUnless,
+)
 
 fun KtLambdaExpression.addExplicitItParameter(): KtParameter {
     return functionLiteral

@@ -22,27 +22,33 @@ import kotlinx.coroutines.async
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.APP)
 internal class GitEelExecutableDetectionHelper private constructor(private val scope: CoroutineScope) {
   private val myCache = mutableMapOf<String, Deferred<String?>>()
   private val myLock = Any()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  fun getExecutablePathIfReady(eelApi: EelApi, rootDir: String): String? {
-    return getExecutablePathPromise(eelApi, rootDir).takeIf { it.isCompleted }?.getCompleted()
+  fun getExecutablePathIfReady(eelDescriptor: EelDescriptor, rootDir: String): String? {
+    return getExecutablePathPromise(eelDescriptor, rootDir).takeIf { it.isCompleted }?.getCompleted()
   }
 
-  fun getExecutablePathBlocking(eelApi: EelApi, rootDir: String): String? {
+  fun getExecutablePathBlocking(eelDescriptor: EelDescriptor, rootDir: String): String? {
     return runBlockingMaybeCancellable {
-      getExecutablePathPromise(eelApi, rootDir).await();
+      getExecutablePathPromise(eelDescriptor, rootDir).await();
     }
   }
 
-  fun getExecutablePathPromise(eelApi: EelApi, rootDir: String): Deferred<String?> {
+  fun getExecutablePathPromise(eelDescriptor: EelDescriptor, rootDir: String): Deferred<String?> {
     return synchronized(myLock) {
-      myCache.computeIfAbsent(rootDir) {
+      val existing = myCache[rootDir]
+      if (existing != null && (!existing.isCompleted || existing.getCompleted() != null)) {
+        existing
+      }
+      else {
         scope.async {
-          eelApi.exec.where("git")?.asNioPath()?.pathString
+          eelDescriptor.toEelApi().exec.where("git")?.asNioPath()?.pathString
+        }.also {
+          myCache[rootDir] = it
         }
       }
     }
@@ -65,9 +71,13 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
     @JvmStatic
     fun useEelForLocalProjects(): Boolean = Registry.`is`("git.use.eel.for.local.projects")
 
-    @RequiresBackgroundThread
     @JvmStatic
     fun tryGetEel(project: Project?, gitDirectory: Path?): EelApi? {
+      return tryGetEelDescriptor(project, gitDirectory)?.toEelApiBlocking()
+    }
+
+    @JvmStatic
+    fun tryGetEelDescriptor(project: Project?, gitDirectory: Path?): EelDescriptor? {
       val canUseEelForNonLocal = canUseEel()
       val canUseEelForLocal = useEelForLocalProjects()
       return if (!canUseEelForLocal && !canUseEelForNonLocal) {
@@ -78,7 +88,7 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
         if (!shouldUse) {
           null
         } else {
-          descriptor?.toEelApiBlocking()
+          descriptor
         }
       }
     }

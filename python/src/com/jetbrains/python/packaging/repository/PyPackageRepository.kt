@@ -14,13 +14,11 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageVersionComparator
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -109,24 +107,21 @@ open class PyPackageRepository() {
   }
 
   @ApiStatus.Internal
-  fun findPackageSpecificationWithSpec(packageName: String, versionSpecs: PyRequirementVersionSpec? = null): PythonRepositoryPackageSpecification? =
-    if (hasPackage(packageName, versionSpecs))
-      PythonRepositoryPackageSpecification(this, packageName, versionSpecs)
+  fun findPackageSpecificationWithSpec(pyRequirement: PyRequirement): PythonRepositoryPackageSpecification? =
+    if (hasPackage(pyRequirement))
+      PythonRepositoryPackageSpecification(this, pyRequirement)
     else
       null
 
   @ApiStatus.Internal
   fun findPackageSpecification(
-    packageName: String,
-    version: String? = null,
-    relation: PyRequirementRelation = PyRequirementRelation.EQ,
+    pyRequirement: PyRequirement,
   ): PythonRepositoryPackageSpecification? {
-    val versionSpec = version?.let { pyRequirementVersionSpec(relation, version) }
-    return findPackageSpecificationWithSpec(packageName, versionSpec)
+    return findPackageSpecificationWithSpec(pyRequirement)
   }
 
 
-  protected open fun hasPackage(packageName: String, versionSpecs: PyRequirementVersionSpec?): Boolean = packageName in getPackages()
+  protected open fun hasPackage(pyPackage: PyRequirement): Boolean = pyPackage.name in getPackages()
 
   open fun getPackages(): Set<String> = service<PythonSimpleRepositoryCache>()[this] ?: emptySet()
 

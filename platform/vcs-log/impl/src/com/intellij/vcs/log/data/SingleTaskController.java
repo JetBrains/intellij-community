@@ -52,7 +52,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   /**
    * @deprecated use {@link SingleTaskController#SingleTaskController(String, Disposable, Consumer)} constructor.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SingleTaskController(@NotNull @NonNls String name,
                               @NotNull com.intellij.util.Consumer<? super Result> handler,
                               @NotNull Disposable parent) {

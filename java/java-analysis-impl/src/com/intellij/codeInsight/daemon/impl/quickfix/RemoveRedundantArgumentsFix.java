@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -15,7 +15,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction<PsiExpressionList> {
@@ -39,31 +40,118 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
     if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return null;
     if (!mySubstitutor.isValid()) return null;
-    if (findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor) == null) {
+    PsiExpression[] redundant =
+      findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor);
+    if (redundant == null) {
       return null;
     }
-    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod)));
+    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod), 
+                                                  redundant.length));
   }
 
+  /**
+   * @return array of redundant arguments or null if it is not possible to remove some elements from arguments list to make call compilable
+   */
   private static PsiExpression @Nullable [] findRedundantArgument(PsiExpression @NotNull [] arguments,
                                                                   PsiParameter @NotNull [] parameters,
                                                                   @NotNull PsiSubstitutor substitutor) {
-    if (arguments.length <= parameters.length) return null;
+    /*
+     * Greedy algorithm with linear complexity to find redundant arguments.
+     * Iterate through argument and parameter lists using separate indexes.
+     * Advance both indexes when argument type is assignable to parameter type,
+     * otherwise add current argument to redundant list and advance parameter index.
+     */
+    List<PsiExpression> reduntantArguments = new ArrayList<>();
+    PsiType varargsComponentType = varargsComponentType(parameters);
+    int argumentCount = arguments.length;
+    int parameterCount = parameters.length - (varargsComponentType == null ? 0 : 1);
+    if (argumentCount <= parameterCount) {
+      return null;
+    }
 
-    for (int i = 0; i < parameters.length; i++) {
-      final PsiExpression argument = arguments[i];
-      final PsiParameter parameter = parameters[i];
-
-      final PsiType argumentType = argument.getType();
-      if (argumentType == null) return null;
-      final PsiType parameterType = substitutor.substitute(parameter.getType());
-
-      if (!TypeConversionUtil.isAssignable(parameterType, argumentType)) {
+    int argumentIndex = 0;
+    int parameterIndex = 0;
+    while (argumentIndex < argumentCount && parameterIndex < parameterCount) {
+      PsiExpression argument = arguments[argumentIndex];
+      PsiType argumentType = argument.getType();
+      if (argumentType == null) {
         return null;
+      }
+      PsiType parameterType = substitutor.substitute(parameters[parameterIndex].getType());
+
+      if (TypeConversionUtil.isAssignable(parameterType, argumentType)) {
+        argumentIndex++;
+        parameterIndex++;
+      }
+      else {
+        reduntantArguments.add(argument);
+        argumentIndex++;
       }
     }
 
-    return Arrays.copyOfRange(arguments, parameters.length, arguments.length);
+    if (varargsComponentType != null) {
+      boolean matchedVarargsElement = false; // have we found argument which type is assignable to varargs component type
+      boolean matchedVarargsArray = false; // have we found argument which type is an array assignable to varrargs array
+      PsiType parameterType = substitutor.substitute(varargsComponentType);
+      while (argumentIndex < argumentCount) {
+        PsiExpression argument = arguments[argumentIndex];
+        PsiType argumentType = argument.getType();
+        if (argumentType == null) {
+          return null;
+        }
+        if (matchedVarargsArray) {
+          reduntantArguments.add(argument);
+        } else {
+          if (!matchedVarargsElement && isArgumentTypeAssignableToVarargsArrayType(parameters, substitutor, argumentType)) {
+            matchedVarargsArray = true;
+          } else {
+            if (!TypeConversionUtil.isAssignable(parameterType, argumentType)) {
+              reduntantArguments.add(argument);
+            } else {
+              matchedVarargsElement = true;
+            }
+          }
+        }
+        argumentIndex++;
+      }
+    }
+
+    if (parameterIndex < parameterCount) {
+      return null;
+    }
+
+    while (argumentIndex < argumentCount) {
+      reduntantArguments.add(arguments[argumentIndex++]);
+    }
+
+    return reduntantArguments.toArray(PsiExpression.EMPTY_ARRAY);
+  }
+
+  private static boolean isArgumentTypeAssignableToVarargsArrayType(PsiParameter @NotNull [] parameters,
+                                                                    @NotNull PsiSubstitutor substitutor,
+                                                                    PsiType argumentType) {
+    PsiType varargsArrayType = substitutor.substitute(varargsArrayType(parameters));
+    return varargsArrayType != null && TypeConversionUtil.isAssignable(varargsArrayType, argumentType);
+  }
+
+  private static @Nullable PsiType varargsComponentType(PsiParameter @NotNull [] parameters) {
+    int length = parameters.length;
+    if (length == 0) return null;
+    PsiType type = parameters[length - 1].getType();
+    if (type instanceof PsiEllipsisType ellipsisType) {
+      return ellipsisType.getComponentType();
+    }
+    return null;
+  }
+
+  private static @Nullable PsiType varargsArrayType(PsiParameter @NotNull [] parameters) {
+    int length = parameters.length;
+    if (length == 0) return null;
+    PsiType type = parameters[length - 1].getType();
+    if (type instanceof PsiEllipsisType ellipsisType) {
+      return ellipsisType.toArrayType();
+    }
+    return null;
   }
 
   @Override
@@ -85,13 +173,6 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
     }
   }
 
-  public static void registerIntentions(@NotNull PsiExpressionList arguments,
-                                        @NotNull Consumer<? super CommonIntentionAction> info) {
-    if (!arguments.isEmpty()) {
-      info.accept(new ForImplicitConstructorAction(arguments));
-    }
-  }
-
   private static void registerIntention(@NotNull PsiExpressionList arguments,
                                         @NotNull Consumer<? super CommonIntentionAction> info,
                                         @NotNull JavaResolveResult candidate) {
@@ -106,28 +187,5 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
       return;
     }
     info.accept(new RemoveRedundantArgumentsFix(method, arguments, substitutor));
-  }
-
-  private static class ForImplicitConstructorAction extends PsiUpdateModCommandAction<PsiExpressionList> {
-    ForImplicitConstructorAction(@NotNull PsiExpressionList list) { 
-      super(list);
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return QuickFixBundle.message("remove.redundant.arguments.family");
-    }
-
-    @Override
-    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
-      return args.isEmpty() ? null : Presentation.of(getFamilyName());
-    }
-
-    @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList args, @NotNull ModPsiUpdater updater) {
-      PsiExpression[] expressions = args.getExpressions();
-      if (expressions.length == 0) return;
-      args.deleteChildRange(expressions[0], expressions[expressions.length - 1]);
-    }
   }
 }

@@ -44,12 +44,12 @@ class SpecifyAllRemainingArgumentsByNameFix(
     element: KtValueArgumentList,
     remainingArguments: List<Name>,
 ) : SpecifyRemainingArgumentsByNameFix(element, remainingArguments) {
-    override fun getFamilyName(): String = KotlinBundle.getMessage("specify.all.remaining.arguments.by.name")
+    override fun getFamilyName(): String = KotlinBundle.message("specify.all.remaining.arguments.by.name")
 }
 
 class SpecifyRemainingRequiredArgumentsByNameFix(
     element: KtValueArgumentList,
     remainingArguments: List<Name>,
 ) : SpecifyRemainingArgumentsByNameFix(element, remainingArguments) {
-    override fun getFamilyName(): String = KotlinBundle.getMessage("specify.remaining.required.arguments.by.name")
+    override fun getFamilyName(): String = KotlinBundle.message("specify.remaining.required.arguments.by.name")
 }

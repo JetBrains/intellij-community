@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -75,6 +76,19 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.INSERT_INNER_CLASS_IMPORTS = true;
     doTest(introducer -> type("constants"));
+  }
+
+  public void testUnresolvedVariable() {
+    JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
+    Boolean oldValue = instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE;
+    instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
+    try {
+      doTest(introducer -> type("o"));
+    }
+    finally {
+      instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = oldValue;
+    }
+
   }
 
   public void testInsideInjectedString() {

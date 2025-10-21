@@ -33,7 +33,7 @@ class ActionsInterpretationHandler(
     logsSaverIf(config.interpret.saveFusLogs) { workspace.fusLogsSaver }
   ).asCompositeLogsSaver()
 
-  fun invoke(environment: EvaluationEnvironment, workspace: EvaluationWorkspace, indicator: Progress) {
+  suspend fun invoke(environment: EvaluationEnvironment, workspace: EvaluationWorkspace, indicator: Progress) {
     var sessionsCount: Int
     val computingTime = measureTimeMillis {
       sessionsCount = environment.sessionCount(datasetContext)

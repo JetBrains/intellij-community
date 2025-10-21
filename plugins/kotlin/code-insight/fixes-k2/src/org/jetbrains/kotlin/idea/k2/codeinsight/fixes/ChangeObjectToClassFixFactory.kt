@@ -14,6 +14,8 @@ internal object ChangeObjectToClassFixFactory {
         val element = diagnostic.psi as? KtConstructor<*> ?: return@ModCommandBased emptyList()
         val containingObject = element.containingClassOrObject as? KtObjectDeclaration ?: return@ModCommandBased emptyList()
 
+        if (containingObject.isCompanion()) return@ModCommandBased emptyList()
+
         listOf(
             ChangeObjectToClassFix(containingObject)
         )

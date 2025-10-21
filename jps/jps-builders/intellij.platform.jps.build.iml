@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil.java8" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="library" name="javax.annotation-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="module-library">
       <library name="qdox-java-parser" type="repository">
         <properties include-transitive-deps="false" maven-id="com.thoughtworks.qdox:qdox:2.2.0">
@@ -59,21 +59,21 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
-    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mvstore" />
+    <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
     <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
-    <orderEntry type="library" exported="" name="http-client" level="project" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
   </component>

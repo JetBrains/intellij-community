@@ -70,7 +70,6 @@ public class HighlightInfoTest extends TestCase {
       }
     }));
     checkThrowsWhenCalledTwiceOrAfterCreate(builder -> builder.navigationShift(2));
-    checkThrowsWhenCalledTwiceOrAfterCreate(builder -> builder.needsUpdateOnTyping(true));
     checkThrowsWhenCalledTwiceOrAfterCreate(builder -> builder.problemGroup(new ProblemGroup() {
       @Override
       public String getProblemName() {
@@ -146,7 +145,6 @@ public class HighlightInfoTest extends TestCase {
       }
     });
     builder.navigationShift(3);
-    builder.needsUpdateOnTyping(true);
     builder.problemGroup(new ProblemGroup() {
       @Override
       public String getProblemName() {

@@ -14,7 +14,6 @@ f:com.intellij.concurrency.ConcurrentCollectionFactory
 - s:createConcurrentIntObjectSoftValueMap():com.intellij.util.containers.ConcurrentIntObjectMap
 - s:createConcurrentIntObjectWeakValueMap():com.intellij.util.containers.ConcurrentIntObjectMap
 - s:createConcurrentLongObjectMap():com.intellij.util.containers.ConcurrentLongObjectMap
-- s:createConcurrentLongObjectMap(I):com.intellij.util.containers.ConcurrentLongObjectMap
 - s:createConcurrentMap():java.util.concurrent.ConcurrentMap
 - s:createConcurrentMap(I,F,I,com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
 - s:createConcurrentMap(com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap

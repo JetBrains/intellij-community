@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.download.impl;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -209,7 +209,7 @@ final class FileDownloaderImpl implements FileDownloader {
           final String url = description.getDownloadUrl();
           if (url.startsWith(LIB_SCHEMA)) {
             final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
-            final File file = PathManager.findFileInLibDirectory(path);
+            final File file = new File(PathManager.getLibPath(), path);
             existingFiles.add(Pair.create(file, description));
           }
           else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {

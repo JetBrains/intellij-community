@@ -91,6 +91,7 @@ public class GitRebaseProcess {
   private final @NotNull GitChangesSaver mySaver;
   private final @NotNull ProgressManager myProgressManager;
   private final @NotNull VcsDirtyScopeManager myDirtyScopeManager;
+  private boolean isSuccessful = false;
 
   public GitRebaseProcess(@NotNull Project project, @NotNull GitRebaseSpec rebaseSpec, @Nullable GitRebaseResumeMode customMode) {
     myProject = project;
@@ -174,6 +175,7 @@ public class GitRebaseProcess {
         mySaver.load();
       }
       if (latestStatus == GitRebaseStatus.Type.SUCCESS) {
+        isSuccessful = true;
         notifySuccess();
       }
 
@@ -244,6 +246,7 @@ public class GitRebaseProcess {
           return new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED);
         }
         LOG.debug("Successfully rebased " + repoName);
+        hideStoppedForEditingMessage();
         return new GitSuccessfulRebase();
       }
       else if (rebaseDetector.isDirtyTree() && customMode == null && !retryWhenDirty) {
@@ -394,6 +397,10 @@ public class GitRebaseProcess {
     myNotifier.notifyMinorInfo(REBASE_SUCCESSFUL, GitBundle.message("rebase.notification.successful.title"), message);
   }
 
+  public boolean isSuccessful() {
+    return isSuccessful;
+  }
+
   private static @Nullable String getCommonCurrentBranchNameIfAllTheSame(@NotNull Collection<? extends GitRepository> repositories) {
     return getItemIfAllTheSame(map(repositories, Repository::getCurrentBranchName), null);
   }
@@ -433,7 +440,11 @@ public class GitRebaseProcess {
       .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING)
       .addAction(CONTINUE_ACTION)
       .addAction(ABORT_ACTION);
-    myNotifier.notify(notification);
+    myNotifier.showNotificationAndHideExisting(notification);
+  }
+
+  private void hideStoppedForEditingMessage() {
+    myNotifier.hideAllNotificationsById(GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING);
   }
 
   private void showRebaseContinueHasUnstagedChangesError(@NotNull GitRepository repository,

@@ -16,6 +16,8 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindResult
 import com.intellij.find.impl.livePreview.LivePreviewController
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -32,8 +34,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -164,6 +164,12 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     connection.subscribe(EditorOptionsListener.OPTIONS_PANEL_TOPIC, EditorOptionsListener {
       clearAllIdentifierHighlighters()
     })
+    connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      clearAllIdentifierHighlighters()
+    })
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      clearAllIdentifierHighlighters()
+    })
     DocumentAfterCommitListener.listen(project, parentDisposable) { document ->
       editorFactory.editors(document, project).forEach {
         updateHighlighted(project, it, coroutineScope)
@@ -176,8 +182,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     for (project in ProjectManager.getInstance().openProjects) {
       for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
         if (fileEditor is TextEditor) {
-          val document = fileEditor.editor.document
-          IdentifierHighlighterUpdater.clearMyHighlights(document, project)
+          IdentifierHighlighterUpdater.clearMyHighlights(fileEditor.editor)
         }
       }
     }
@@ -258,7 +263,8 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         }
         launch(Dispatchers.EDT + modalityState) {
           if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
-            UpdateHighlightersUtil.setHighlightersToSingleEditor(project, hostEditor, 0, hostDocument.textLength, infos, hostEditor.colorsScheme, IdentifierHighlighterUpdater.id)
+            val group = (IdentifierHighlightingManager.getInstance(project) as IdentifierHighlightingManagerImpl).getPassId()
+            UpdateHighlightersUtil.setHighlightersToSingleEditor(project, hostEditor, 0, hostDocument.textLength, infos, hostEditor.colorsScheme, group)
             identPass.doAdditionalCodeBlockHighlighting(result)
           }
         }

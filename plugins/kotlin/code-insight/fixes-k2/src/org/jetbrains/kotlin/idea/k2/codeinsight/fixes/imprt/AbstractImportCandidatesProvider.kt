@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -22,7 +23,7 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
     private val file: KtFile get() = importContext.position.containingKtFile
     private val fileImports: List<ImportPath> by lazy { file.importDirectives.mapNotNull { it.importPath } }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     protected fun ImportCandidate.isVisible(visibilityChecker: KaUseSiteVisibilityChecker): Boolean = 
         when (this) {
@@ -30,7 +31,7 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
             is ClassLikeImportCandidate -> symbol.isVisible(visibilityChecker)
         }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KaSymbol.isVisible(visibilityChecker: KaUseSiteVisibilityChecker): Boolean =
         this is KaDeclarationSymbol && visibilityChecker.isVisible(this)
@@ -59,7 +60,7 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun getFileSymbol(): KaFileSymbol = file.symbol
 
     private val KtClassLikeDeclaration.isInner: Boolean get() = hasModifier(KtTokens.INNER_KEYWORD)

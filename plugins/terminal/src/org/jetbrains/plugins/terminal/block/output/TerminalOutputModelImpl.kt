@@ -31,7 +31,8 @@ import kotlin.math.min
  * @see TerminalOutputView
  * @see TerminalOutputController
  */
-internal class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputModel {
+@ApiStatus.Internal
+class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputModel {
   override val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
@@ -257,10 +258,12 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
 
   companion object {
     @VisibleForTesting
-    internal fun createCommandAndRightPromptText(command: String?,
-                                                 prompt: TerminalPromptRenderingInfo?,
-                                                 commandAttributes: TextAttributesProvider,
-                                                 terminalWidth: Int): TextWithHighlightings {
+    fun createCommandAndRightPromptText(
+      command: String?,
+      prompt: TerminalPromptRenderingInfo?,
+      commandAttributes: TextAttributesProvider,
+      terminalWidth: Int,
+    ): TextWithHighlightings {
       val commandText = command ?: ""
       val rightPromptText = prompt?.rightText ?: ""
       if (rightPromptText.isEmpty()) {

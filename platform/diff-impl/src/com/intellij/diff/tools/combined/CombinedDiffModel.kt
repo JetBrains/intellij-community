@@ -69,6 +69,10 @@ class CombinedDiffModel(val project: Project) {
     modelListeners.multicaster.onModelReset()
   }
 
+  fun getBlock(blockId: CombinedBlockId): CombinedBlockProducer? {
+    return _requests[blockId]
+  }
+
   fun getLoadedRequest(blockId: CombinedBlockId): DiffRequest? {
     return loadedRequests[blockId]
   }

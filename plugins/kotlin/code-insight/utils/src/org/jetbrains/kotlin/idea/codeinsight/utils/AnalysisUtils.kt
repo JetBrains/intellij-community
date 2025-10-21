@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -32,7 +34,8 @@ fun KtDotQualifiedExpression.isToString(): Boolean {
     }
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtDeclaration.isFinalizeMethod(): Boolean {
     if (containingClass() == null) return false
     val function = this as? KtNamedFunction ?: return false
@@ -41,7 +44,7 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
             && function.returnType.isUnitType
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KaSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     is KaPackageSymbol -> fqName
     is KaCallableSymbol -> callableId?.asSingleFqName()
@@ -49,7 +52,8 @@ fun KaSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     else -> null
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtCallExpression.isArrayOfFunction(): Boolean {
     val functionNames = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
             ArrayFqNames.ARRAY_OF_FUNCTION +
@@ -67,7 +71,8 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
  * @return `true` if the expression is an implicit `invoke` call, `false` if it is not,
  * and `null` if the function resolve was unsuccessful.
  */
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
     val functionCall = this.resolveToCall()?.singleFunctionCallOrNull() ?: return null
 
@@ -88,16 +93,18 @@ fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
  *      A.foo() // symbol for `A`, and not for `A.Companion`, is returned
  * }
  * ```
+ * 
+ * For typealiased companion object references, returns `null`. 
+ * In this case, [KaSession.resolveToSymbol] already returns the symbol for the typealias, not for the companion object.
  */
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassSymbol? {
     if (this !is KtSimpleNameReference) return null
+    if (!isImplicitReferenceToCompanion()) return null
 
     val symbol = this.resolveToSymbol()
     if (symbol !is KaClassSymbol || symbol.classKind != KaClassKind.COMPANION_OBJECT) return null
-
-    // class name reference resolves to companion
-    if (expression.name == symbol.name?.asString()) return null
 
     val containingSymbol = symbol.containingDeclaration as? KaNamedClassSymbol
     return containingSymbol?.takeIf { it.companionObject == symbol }
@@ -108,11 +115,12 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
  * * extension
  * * variable having a return type with a receiver
  */
-context(KaSession)
+context(_: KaSession)
 fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
     isExtension || this is KaVariableSymbol && (returnType as? KaFunctionType)?.hasReceiver == true
 
-context (KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtExpression.resolveExpression(): KaSymbol? {
     val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference
     reference?.resolveToSymbol()?.let { return it }
@@ -130,7 +138,8 @@ fun KtExpression.resolveExpression(): KaSymbol? {
  * 
  * N.B. This function should NOT be used everywhere - only in cases where exceptions are too frequent.
  */
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 @get:ApiStatus.Internal
 val KtTypeReference.typeIfSafeToResolve: KaType?
     get() {
@@ -139,7 +148,17 @@ val KtTypeReference.typeIfSafeToResolve: KaType?
         return this.type
     }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
+fun KaNamedFunctionSymbol.isEqualsMethodSymbol(): Boolean {
+    if (name != OperatorNameConventions.EQUALS) return false
+    if (!isOverride) return false
+    val parameterType = valueParameters.singleOrNull()?.returnType ?: return false
+    return parameterType.isNullableAnyType() && returnType.isNonNullableBooleanType()
+}
+
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private val KtTypeReference.isSafeToResolve: Boolean
     get() {
         val typeElement = this.typeElement?.unwrapNullability() ?: return false

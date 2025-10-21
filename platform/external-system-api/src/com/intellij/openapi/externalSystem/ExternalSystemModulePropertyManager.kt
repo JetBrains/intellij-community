@@ -26,6 +26,7 @@ abstract class ExternalSystemModulePropertyManager {
   abstract fun unlinkExternalOptions()
   abstract fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?)
   abstract fun setExternalId(id: ProjectSystemId)
+  abstract fun setLinkedProjectId(id: String?)
   abstract fun setLinkedProjectPath(path: String?)
   abstract fun setRootProjectPath(path: String?)
   abstract fun setExternalModuleType(type: String?)

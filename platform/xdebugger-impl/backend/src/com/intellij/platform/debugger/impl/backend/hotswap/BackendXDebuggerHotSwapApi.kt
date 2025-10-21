@@ -11,6 +11,7 @@ import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.impl.hotswap.HotSwapSessionImpl
 import com.intellij.xdebugger.impl.hotswap.HotSwapSessionManagerImpl
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics
+import com.intellij.xdebugger.impl.rpc.HotSwapSource
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerHotSwapApi
@@ -41,7 +42,7 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
     }
   }
 
-  override suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapStatistics.HotSwapSource) {
+  override suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapSource) {
     val session = findValueById(sessionId, type = HowSwapSessionValueIdType) ?: return
     HotSwapStatistics.logHotSwapCalled(session.project, source)
     session.performHotSwap()

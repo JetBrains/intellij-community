@@ -7,8 +7,3 @@ open class A(x: Int) {
         xprintln(<caret>)
     }
 }
-/*
-Text: (<highlight>x: Boolean</highlight>), Disabled: false, Strikeout: false, Green: false
-Text: (<highlight>x: String</highlight>), Disabled: false, Strikeout: false, Green: false
-Text: (<no parameters>), Disabled: false, Strikeout: false, Green: true
-*/

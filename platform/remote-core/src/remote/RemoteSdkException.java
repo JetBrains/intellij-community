@@ -2,6 +2,7 @@
 package com.intellij.remote;
 
 import com.intellij.execution.ExecutionExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import java.net.NoRouteToHostException;
 
 public class RemoteSdkException extends ExecutionExceptionWithAttachments {
   private final Throwable myCause;
+  private static final Logger LOG = Logger.getInstance(RemoteSdkException.class);
 
   public RemoteSdkException(@DialogMessage String s, Throwable throwable) {
     this(s, throwable, null, null);
@@ -35,6 +37,7 @@ public class RemoteSdkException extends ExecutionExceptionWithAttachments {
 
   public RemoteSdkException(@DialogMessage String s, @Nullable String stdout, @Nullable String stderr) {
     super(s, stdout, stderr);
+    LOG.warn(String.format("message %s, out: %s, err: %s", s, stdout, stderr));
     myCause = null;
   }
 

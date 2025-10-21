@@ -7,6 +7,7 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public final class FilteringTreeModel extends StructureTreeModel<FilteringTreeSt
     return new FilteringTreeModel(filteringTreeStructure, invoker, parent);
   }
 
+  @ApiStatus.Internal
   public static FilteringTreeModel createModel(AbstractTreeStructure structure, @NotNull ElementFilter<?> filter, @NotNull Disposable parent) {
     FilteringTreeStructure filteringTreeStructure = new FilteringTreeStructure(filter, structure);
     return new FilteringTreeModel(filteringTreeStructure, Invoker.forBackgroundThreadWithReadAction(parent), parent);

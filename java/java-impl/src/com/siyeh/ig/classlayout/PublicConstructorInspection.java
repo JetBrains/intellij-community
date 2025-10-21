@@ -1,19 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.intention.ReplaceConstructorWithFactoryAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -21,18 +16,16 @@ import org.jetbrains.annotations.Nullable;
 public final class PublicConstructorInspection extends BaseInspection {
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return LocalQuickFix.from(new ReplaceConstructorWithFactoryAction());
   }
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    if (((Boolean)infos[0]).booleanValue()) {
-      return InspectionGadgetsBundle.message("public.default.constructor.problem.descriptor");
-    }
-    else {
-      return InspectionGadgetsBundle.message("public.constructor.problem.descriptor");
-    }
+    boolean defaultConstructor = ((Boolean)infos[0]).booleanValue();
+    return defaultConstructor
+           ? InspectionGadgetsBundle.message("public.default.constructor.problem.descriptor")
+           : InspectionGadgetsBundle.message("public.constructor.problem.descriptor");
   }
 
   @Override
@@ -41,33 +34,11 @@ public final class PublicConstructorInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PublicConstructorVisitor();
   }
 
   private static class PublicConstructorVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      if (!method.isConstructor()) {
-        return;
-      }
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.isRecord()) {
-        return;
-      }
-      if (SerializationUtils.isExternalizable(aClass)) {
-        final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.isEmpty()) {
-          return;
-        }
-      }
-      registerMethodError(method, Boolean.FALSE);
-    }
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -75,17 +46,22 @@ public final class PublicConstructorInspection extends BaseInspection {
       if (aClass.isInterface() || aClass.isEnum() || aClass.isRecord()) {
         return;
       }
-      if (!aClass.hasModifierProperty(PsiModifier.PUBLIC) || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length > 0) {
-        return;
+      PsiMethod[] constructors = aClass.getConstructors();
+      for (PsiMethod constructor : constructors) {
+        if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+          continue;
+        }
+        if (SerializationUtils.isExternalizable(aClass) && constructor.getParameterList().isEmpty()) {
+          continue;
+        }
+        registerMethodError(constructor, Boolean.FALSE);
       }
-      if (SerializationUtils.isExternalizable(aClass)) {
-        return;
+      if (constructors.length == 0 && aClass.hasModifierProperty(PsiModifier.PUBLIC) && !SerializationUtils.isExternalizable(aClass)) {
+        registerClassError(aClass, Boolean.TRUE);
       }
-      registerClassError(aClass, Boolean.TRUE);
     }
   }
 }

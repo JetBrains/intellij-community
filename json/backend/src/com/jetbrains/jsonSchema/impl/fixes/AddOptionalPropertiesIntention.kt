@@ -1,87 +1,70 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.fixes
 
-import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.json.JsonBundle
 import com.intellij.json.psi.JsonObject
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter
 import com.jetbrains.jsonSchema.extension.JsonSchemaQuickFixSuppressor
 import com.jetbrains.jsonSchema.impl.JsonCachedValues
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 
-open class AddOptionalPropertiesIntention : IntentionAction {
-  override fun startInWriteAction(): Boolean {
-    return false
-  }
+open class AddOptionalPropertiesIntention : PsiUpdateModCommandAction<PsiElement>(PsiElement::class.java) {
+  override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
+    JsonBundle.message("intention.add.not.required.properties.family.name")
 
-  override fun getFamilyName(): String {
-    return JsonBundle.message("intention.add.not.required.properties.family.name")
-  }
+  // For tests and UI text lookup compatibility
+  @TestOnly
+  fun getText(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
+    JsonBundle.message("intention.add.not.required.properties.text")
 
-  override fun getText(): String {
-    return JsonBundle.message("intention.add.not.required.properties.text")
-  }
-
-  override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
-    val containingObject = findContainingObjectNode(editor, psiFile) ?: return false
+  override fun getPresentation(context: ActionContext, element: PsiElement): Presentation? {
+    val obj = findContainingObjectNode(context, element) ?: return null
     if (JsonSchemaQuickFixSuppressor.EXTENSION_POINT_NAME.extensionList.any {
-      it.shouldSuppressFix(psiFile, AddOptionalPropertiesIntention::class.java)
-    }) return false
-    return JsonCachedValues.hasComputedSchemaObjectForFile(containingObject.containingFile)
+        it.shouldSuppressFix(context.file(), AddOptionalPropertiesIntention::class.java)
+      }) return null
+    if (!JsonCachedValues.hasComputedSchemaObjectForFile(obj.containingFile)) return null
+
+    val missing = collectMissingPropertiesFromSchema(obj.createSmartPointer(), context.project())?.missingKnownProperties
+    if (missing == null || missing.myMissingPropertyIssues.isEmpty()) return null
+
+    return Presentation.of(JsonBundle.message("intention.add.not.required.properties.text"))
   }
 
-  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
-    runWithModalProgressBlocking(project, JsonBundle.message("intention.add.not.required.properties.text")) {
-      val (objectPointer, missingProperties) = readAction {
-        val containingObject = findContainingObjectNode(editor, psiFile)?.createSmartPointer() ?: return@readAction null
-        val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
-                                  ?.missingKnownProperties ?: return@readAction null
-        containingObject to missingProperties
-      } ?: return@runWithModalProgressBlocking
+  override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater) {
+    val objCopy = findContainingObjectNode(context, element) ?: return
+    val physObj = findPhysicalObjectNode(context, element) ?: return
 
-      edtWriteAction {
-        executeCommand {
-          AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project)).performFix(objectPointer.dereference())
-        }
-      }
-      withContext(Dispatchers.EDT) {
-        objectPointer.containingFile?.let { ReformatCodeProcessor(it, false).run() }
-      }
-    }
+    val missing = collectMissingPropertiesFromSchema(physObj.createSmartPointer(), context.project())?.missingKnownProperties
+                  ?: return
+
+    AddMissingPropertyFix(missing, getSyntaxAdapter(context.project()))
+      .performFixInner(objCopy, Ref.create())
+
+    CodeStyleManager.getInstance(context.project()).reformatText(objCopy.containingFile, setOf(objCopy.textRange))
   }
 
-  protected open fun findContainingObjectNode(editor: Editor, file: PsiFile): PsiElement? {
-    val offset = editor.caretModel.offset
-    return file.findElementAt(offset)?.parentOfType<JsonObject>(false)
+  protected open fun getSyntaxAdapter(project: Project): JsonLikeSyntaxAdapter =
+    JsonOriginalPsiWalker.INSTANCE.getSyntaxAdapter(project)
+
+  protected open fun findPhysicalObjectNode(context: ActionContext, element: PsiElement): PsiElement? {
+    val physLeaf = context.findLeaf() ?: return null
+    return PsiTreeUtil.getParentOfType(physLeaf, JsonObject::class.java)
   }
 
-  protected open fun getSyntaxAdapter(project: Project): JsonLikeSyntaxAdapter {
-    return JsonOriginalPsiWalker.INSTANCE.getSyntaxAdapter(project)
-  }
-
-  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
-    val containingObject = findContainingObjectNode(editor, psiFile) ?: return IntentionPreviewInfo.EMPTY
-    val missingProperties = collectMissingPropertiesFromSchema(containingObject.createSmartPointer(), containingObject.project)
-                              ?.missingKnownProperties ?: return IntentionPreviewInfo.EMPTY
-    AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project))
-      .performFixInner(containingObject, Ref.create())
-    ReformatCodeProcessor(containingObject.containingFile, false).run()
-    return IntentionPreviewInfo.DIFF
+  protected open fun findContainingObjectNode(context: ActionContext, element: PsiElement): PsiElement? {
+    return PsiTreeUtil.getParentOfType(element, JsonObject::class.java)
+           ?: PsiTreeUtil.getParentOfType(context.findLeaf(), JsonObject::class.java)
   }
 }

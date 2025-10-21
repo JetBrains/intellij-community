@@ -6,7 +6,13 @@ import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
@@ -58,4 +64,12 @@ internal fun getCommandLineArgumentsForOpenPackages(context: CompilationContext,
     null -> OS.CURRENT
   }
   return JavaModuleOptions.readOptions(file, os)
+}
+
+/**
+ * [GlobalScope] is required not to hang a caller, see [CoroutineStart.LAZY]
+ */
+@OptIn(DelicateCoroutinesApi::class)
+internal fun <T> asyncLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): Deferred<T> {
+  return GlobalScope.async(Dispatchers.Unconfined + CoroutineName(coroutineName), CoroutineStart.LAZY, initializer)
 }

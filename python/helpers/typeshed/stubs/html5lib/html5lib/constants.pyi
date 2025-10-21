@@ -1,37 +1,37 @@
-from typing import Any
+from _typeshed import Incomplete
 
-EOF: Any
-E: Any
-namespaces: Any
-scopingElements: Any
-formattingElements: Any
-specialElements: Any
-htmlIntegrationPointElements: Any
-mathmlTextIntegrationPointElements: Any
-adjustSVGAttributes: Any
-adjustMathMLAttributes: Any
-adjustForeignAttributes: Any
-unadjustForeignAttributes: Any
-spaceCharacters: Any
-tableInsertModeElements: Any
-asciiLowercase: Any
-asciiUppercase: Any
-asciiLetters: Any
-digits: Any
-hexDigits: Any
-asciiUpper2Lower: Any
-headingElements: Any
-voidElements: Any
-cdataElements: Any
-rcdataElements: Any
-booleanAttributes: Any
-entitiesWindows1252: Any
-xmlEntities: Any
-entities: Any
-replacementCharacters: Any
-tokenTypes: Any
-tagTokenTypes: Any
-prefixes: Any
+EOF: Incomplete
+E: dict[str, str]
+namespaces: dict[str, str]
+scopingElements: frozenset[tuple[str, str]]
+formattingElements: frozenset[tuple[str, str]]
+specialElements: frozenset[tuple[str, str]]
+htmlIntegrationPointElements: frozenset[tuple[str, str]]
+mathmlTextIntegrationPointElements: frozenset[tuple[str, str]]
+adjustSVGAttributes: dict[str, str]
+adjustMathMLAttributes: dict[str, str]
+adjustForeignAttributes: dict[str, tuple[str, str, str] | tuple[None, str, str]]
+unadjustForeignAttributes: dict[tuple[str, str], str]
+spaceCharacters: frozenset[str]
+tableInsertModeElements: frozenset[str]
+asciiLowercase: frozenset[str]
+asciiUppercase: frozenset[str]
+asciiLetters: frozenset[str]
+digits: frozenset[str]
+hexDigits: frozenset[str]
+asciiUpper2Lower: dict[int, int]
+headingElements: tuple[str, ...]
+voidElements: frozenset[str]
+cdataElements: frozenset[str]
+rcdataElements: frozenset[str]
+booleanAttributes: dict[str, frozenset[str]]
+entitiesWindows1252: tuple[int, ...]
+xmlEntities: frozenset[str]
+entities: dict[str, str]
+replacementCharacters: dict[int, str]
+tokenTypes: dict[str, int]
+tagTokenTypes: frozenset[int]
+prefixes: dict[str, str]
 
 class DataLossWarning(UserWarning): ...
 class _ReparseException(Exception): ...

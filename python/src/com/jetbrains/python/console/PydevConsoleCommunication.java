@@ -46,6 +46,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
 import org.apache.thrift.TException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -366,6 +367,30 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
+  @ApiStatus.Internal
+  public String execRaw(String command) throws PyDebuggerException {
+    if (!isCommunicationClosed()) {
+      return executeBackgroundTask(
+        () -> {
+          try {
+            return getPythonConsoleBackendClient().execRaw(command);
+          }
+          catch (PythonUnhandledException e) {
+            throw new PyDebuggerException(e.traceback);
+          }
+          finally {
+            notifyCommandExecuted(false);
+          }
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.table.data")),
+        PyBundle.message("console.table.failed.to.load")
+      );
+    }
+    else {
+      return null;
+    }
+  }
   @Override
   public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     if (!isCommunicationClosed()) {

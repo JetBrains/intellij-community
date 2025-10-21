@@ -18,6 +18,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * The fragmented settings editor built of reusable fragments ({@link SettingsEditorFragment}).
+ * <p>
+ * Only essential fragments are displayed when a new run configuration is created from a template.
+ * This reduces visual clutter for the user.
+ * <p>
+ * Individual fragments can be shared between different run configuration editors.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html#fragmented-settings-editor">Fragmented Settings Editor (IntelliJ Platform Docs)</a>
+ */
 public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettings> extends CompositeSettingsEditor<Settings> {
 
   private final NotNullLazyValue<Collection<SettingsEditorFragment<Settings, ?>>> myFragments =
@@ -39,7 +49,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
 
   protected abstract Collection<SettingsEditorFragment<Settings, ?>> createFragments();
 
-  protected final Collection<SettingsEditorFragment<Settings, ?>> getFragments() {
+  protected final @NotNull Collection<SettingsEditorFragment<Settings, ?>> getFragments() {
     return myFragments.getValue();
   }
 
@@ -117,7 +127,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
     }
   }
 
-  private static void installFragmentsAligner(SettingsEditor<?> fragment) {
+  private static void installFragmentsAligner(@NotNull SettingsEditor<?> fragment) {
     JComponent component = fragment.getComponent();
     for (Component childComponent : component.getComponents()) {
       if (childComponent instanceof PanelWithAnchor) {
@@ -128,7 +138,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
     }
   }
 
-  private static void alignPanels(JComponent container) {
+  private static void alignPanels(@NotNull JComponent container) {
     List<PanelWithAnchor> panels =
       Arrays.stream(container.getComponents())
         .filter(component -> component.isVisible())

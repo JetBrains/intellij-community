@@ -1,0 +1,28 @@
+# Extractors will not be stubbed at this time.
+yt_dlp.extractor.*
+# Postprocessors will not be stubbed at this time.
+yt_dlp.postprocessor.*
+# Won't be covered.
+yt_dlp.__main__
+yt_dlp.__pyinstaller.*
+yt_dlp.compat.(shutil|types|urllib).*
+yt_dlp.dependencies.*
+yt_dlp.jsinterp.Debugger.sys
+yt_dlp.networking.impersonate.ImpersonateTarget._DT
+yt_dlp.utils.xattr
+# Deprecated
+yt_dlp.YoutubeDL.(YoutubeDL.)?parse_outtmpl
+yt_dlp.downloader.(common.)?FileDownloader.parse_bytes
+yt_dlp.networking.(common.)?Response.(code|info|get(code|url|header))
+yt_dlp.utils._legacy.decode_png
+# ``except IndexError`` is sufficient.
+yt_dlp.utils.(_utils.)?(PlaylistEntries|(Lazy|Paged)List).IndexError
+# Reports 'not a function'.
+yt_dlp.networking.(common.)?(HEAD|PATCH|PUT)Request
+# This is partially typed.
+yt_dlp.utils.(_utils.)?is_iterable_like
+# Generated with functools.partial.
+yt_dlp.utils.(_utils.)?prepend_extension
+yt_dlp.utils.(_utils.)?replace_extension
+# Unsure why this is here.
+yt_dlp.utils.jslib.devalue.TYPE_CHECKING

@@ -2,7 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ModuleAttachProcessor.Companion.getMultiProjectDisplayName
+import com.intellij.platform.getMultiProjectDisplayName
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
  */
 private class AttachedModuleAwareRecentProjectsManager(coroutineScope: CoroutineScope) : RecentProjectsManagerBase(coroutineScope) {
   override fun getProjectDisplayName(project: Project): String? {
-    val name = getMultiProjectDisplayName(project)
-    return name ?: super.getProjectDisplayName(project)
+    return getMultiProjectDisplayName(project) ?: super.getProjectDisplayName(project)
   }
 }

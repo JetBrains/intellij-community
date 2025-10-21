@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Literal
 
 from tensorflow import Operation, Tensor
@@ -42,4 +41,4 @@ def ResourceApplyAdam(
     use_nesterov: bool = False,
     name: str | None = None,
 ) -> Operation: ...
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

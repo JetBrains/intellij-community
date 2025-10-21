@@ -20,8 +20,8 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.vcs.git.shared.GitDisplayName
-import com.intellij.vcs.git.shared.branch.calcTooltip
+import com.intellij.vcs.git.GitDisplayName
+import com.intellij.vcs.git.branch.calcTooltip
 import git4idea.GitBranchesUsageCollector.branchWidgetClicked
 import git4idea.GitUtil
 import git4idea.branch.GitBranchIncomingOutgoingManager

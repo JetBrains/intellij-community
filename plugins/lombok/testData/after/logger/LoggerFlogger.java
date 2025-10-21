@@ -4,3 +4,31 @@ class LoggerFlogger {
   @java.lang.SuppressWarnings("all")
   private static final com.google.common.flogger.FluentLogger log = com.google.common.flogger.FluentLogger.forEnclosingClass();
 }
+
+class LoggerFloggerAccessPublic {
+	@java.lang.SuppressWarnings("all")
+	public static final com.google.common.flogger.FluentLogger log = com.google.common.flogger.FluentLogger.forEnclosingClass();
+}
+
+class LoggerFloggerAccessModule {
+	@java.lang.SuppressWarnings("all")
+	static final com.google.common.flogger.FluentLogger log = com.google.common.flogger.FluentLogger.forEnclosingClass();
+}
+
+class LoggerFloggerAccessProtected {
+	@java.lang.SuppressWarnings("all")
+	protected static final com.google.common.flogger.FluentLogger log = com.google.common.flogger.FluentLogger.forEnclosingClass();
+}
+
+class LoggerFloggerAccessPackage {
+	@java.lang.SuppressWarnings("all")
+	static final com.google.common.flogger.FluentLogger log = com.google.common.flogger.FluentLogger.forEnclosingClass();
+}
+
+class LoggerFloggerAccessPrivate {
+	@java.lang.SuppressWarnings("all")
+	private static final com.google.common.flogger.FluentLogger log = com.google.common.flogger.FluentLogger.forEnclosingClass();
+}
+
+class LoggerFloggerAccessNone {
+}

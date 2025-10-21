@@ -11,8 +11,7 @@ import com.intellij.ui.tree.LeafState
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-// todo IJPL-339 mark experimental
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class ProblemsContextNode(
   val parent: FileNode,
   val contextGroup: CodeInsightContext,

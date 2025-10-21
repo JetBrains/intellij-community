@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -41,7 +40,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.openapi.vfs.projectFilesWrite
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.platform.ide.core.permissions.Permission
+import com.intellij.platform.ide.core.permissions.RequiresPermissions
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
@@ -86,7 +88,7 @@ internal val RUN_CONFIGURATION_ID: Key<String> = Key.create("sub.popup.run.confi
 
 private const val TAG_PINNED = "pinned"
 private const val TAG_RECENT = "recent"
-private const val TAG_REGULAR_HIDE = "regular-hide" // hidden behind "All configurations" toggle
+private const val TAG_REGULAR_HIDE = "regular-hide" // hidden behind the "All configurations" toggle
 private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
@@ -217,9 +219,8 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
 
 @ApiStatus.Internal
 @Topic.ProjectLevel
-val VOID_EXECUTION_TOPIC = Topic("any execution event", Runnable::class.java)
+val VOID_EXECUTION_TOPIC: Topic<Runnable> = Topic("any execution event", Runnable::class.java)
 
-@ApiStatus.Internal
 private class RunPopupVoidExecutionListener(project: Project) : MyExecutionListener(
   { _, _, _ -> project.messageBus.syncPublisher(VOID_EXECUTION_TOPIC).run() })
 
@@ -424,7 +425,7 @@ private fun createRunConfigurationWithInlines(project: Project,
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
   val resumeAction = InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)
 
-  val inlineActions = listOf(
+  val inlineActions = listOfNotNull(
     RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
     StopConfigurationInlineAction(runExecutor, conf),
     resumeAction,
@@ -435,8 +436,8 @@ private fun createRunConfigurationWithInlines(project: Project,
          activeExecutor != debugExecutor)
       StopConfigurationInlineAction(activeExecutor, conf)
     else null))
-    .filterNotNull()
-  inlineActions.forEach {
+
+  for (it in inlineActions) {
     it.templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
   }
 
@@ -458,7 +459,7 @@ private fun createRunConfigurationWithInlines(project: Project,
       }
     }
 
-    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       var prefix = listOf<AnAction>(extraGroup)
       if (showRerunAndStopButtons) {
         val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor
@@ -483,13 +484,14 @@ private fun createCurrentFileWithInlineActions(project: Project,
   val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
   val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
 
-  val inlineActions = listOf(
+  val inlineActions = listOfNotNull(
     RunCurrentFileExecutorAction(runExecutor),
     runRunningConfig?.let { StopConfigurationInlineAction(runExecutor, it) },
     RunCurrentFileExecutorAction(debugExecutor),
     debugRunningConfig?.let { StopConfigurationInlineAction(runExecutor, it) },
-  ).filterNotNull()
-  inlineActions.forEach {
+  )
+
+  for (it in inlineActions) {
     it.templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
   }
 
@@ -561,7 +563,7 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
   }
 
 private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
-  : ActionRemotePermissionRequirements.ActionWithWriteAccess() {
+  : DumbAwareAction(), RequiresPermissions {
   init {
     templatePresentation.text = getText(isPinned)
   }
@@ -582,10 +584,14 @@ private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, i
     val project = e.project ?: return
     RunConfigurationStartHistory.getInstance(project).togglePin(conf)
   }
+
+  override fun getRequiredPermissions(): Collection<Permission> {
+    return listOf(projectFilesWrite)
+  }
 }
 
 private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
-  : AnAction(), ActionRemotePermissionRequirements.RunAccess {
+  : DumbAwareAction(), RequiresPermissions {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -618,6 +624,10 @@ private class StopConfigurationInlineAction(val executor: Executor, val settings
 
     return null
   }
+
+  override fun getRequiredPermissions(): Collection<Permission> {
+    return listOf(fullRunAccess)
+  }
 }
 
 @Service(Service.Level.PROJECT)
@@ -632,8 +642,7 @@ class RunStatusHistory {
 
   private val lock = ReentrantReadWriteLock()
 
-
-  fun changeState(setting: RunnerAndConfigurationSettings, executorId: String, state: RunState) = lock.write {
+  fun changeState(setting: RunnerAndConfigurationSettings, executorId: String, state: RunState): Unit = lock.write {
     val runElements = history.computeIfAbsent(setting) {
       ArrayList(5)
     }
@@ -755,7 +764,7 @@ private class ExecutionReasonableHistoryManager : ProjectActivity {
       getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
         RunStatusHistory.getInstance(env.project).changeState(conf, executorId, state)
       }
-      ActivityTracker.getInstance().inc() // needed to update run toolbar
+      ActivityTracker.getInstance().inc() // needed to update the run toolbar
     })
   }
 }

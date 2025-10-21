@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.config
 
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.CollectableSerializablePersistentStateComponent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
@@ -27,7 +28,8 @@ internal class GithubPullRequestsProjectUISettings(private val project: Project)
     val reviewCommentPreferred: Boolean = true,
     val editorReviewEnabled: Boolean = true,
     val highlightDiffLinesInEditor: Boolean = false,
-    val changesGrouping: Set<String> = setOf(ChangesGroupingSupport.DIRECTORY_GROUPING, ChangesGroupingSupport.MODULE_GROUPING)
+    val changesGrouping: Set<String> = setOf(ChangesGroupingSupport.DIRECTORY_GROUPING, ChangesGroupingSupport.MODULE_GROUPING),
+    val editorReviewViewOption: DiscussionsViewOption = DiscussionsViewOption.UNRESOLVED_ONLY
   )
 
   var selectedUrlAndAccount: Pair<String, GithubAccount>?
@@ -58,6 +60,12 @@ internal class GithubPullRequestsProjectUISettings(private val project: Project)
     get() = state.editorReviewEnabled
     set(value) = updateStateAndEmit {
       it.copy(editorReviewEnabled = value)
+    }
+
+  var editorReviewViewOption: DiscussionsViewOption
+    get() = state.editorReviewViewOption
+    set(value) = updateStateAndEmit {
+      it.copy(editorReviewViewOption = value)
     }
 
   var highlightDiffLinesInEditor: Boolean

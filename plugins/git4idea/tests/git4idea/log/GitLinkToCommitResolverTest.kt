@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.LinkDescriptor
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.VcsLogRefresherTest.LogRefresherTestHelper
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.impl.HashImpl
@@ -20,10 +19,7 @@ import git4idea.test.GitSingleRepoTest
 import git4idea.test.commit
 
 class GitLinkToCommitResolverTest : GitSingleRepoTest() {
-
   private lateinit var logData: VcsLogData
-
-  private lateinit var logRefresherHelper: LogRefresherTestHelper
   private lateinit var visiblePack: VisiblePack
 
   override fun setUp() {
@@ -32,19 +28,6 @@ class GitLinkToCommitResolverTest : GitSingleRepoTest() {
     if (VcsProjectLog.ensureLogCreated(project)) {
       val projectLog = VcsProjectLog.getInstance(project)
       logData = projectLog.dataManager!!
-      logRefresherHelper = LogRefresherTestHelper(logData, VcsLogData.getRecentCommitsCount())
-    }
-  }
-
-  override fun tearDown() {
-    try {
-      logRefresherHelper.tearDown()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
     }
   }
 
@@ -118,8 +101,8 @@ class GitLinkToCommitResolverTest : GitSingleRepoTest() {
   }
 
   private fun refreshVisibleGraph() {
-    logRefresherHelper.initAndWaitForFirstRefresh()
-    val dataPack = logRefresherHelper.dataPack
+    logData.refreshAndWait(repo, false)
+    val dataPack = logData.dataPack
 
     val visibleGraph = dataPack.permanentGraph.createVisibleGraph(PermanentGraph.Options.Default, null, null)
     visiblePack = VisiblePack(dataPack, visibleGraph, false, VcsLogFilterObject.collection())

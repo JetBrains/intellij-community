@@ -8,6 +8,7 @@ import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -1205,4 +1206,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceErrorAttribution() {doTest();}
   public void testLocalClassParameters() {doTest();}
   public void testRawAtFBoundAtNew() { doTest(); }
+  
+  @TestFor(issues = "IDEA-378878")
+  public void testWildcardAfterMethodRef() { doTest(); }
 }

@@ -210,7 +210,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
-    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
+    PlatformTestUtil.waitForAllDocumentsCommitted(100, TimeUnit.SECONDS);
 
     assertFalse(count1 == getJavaTracker().getModificationCount());
     assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
@@ -234,7 +234,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertFalse(count1 == count0);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(0, document.getTextLength()));
-    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
+    PlatformTestUtil.waitForAllDocumentsCommitted(100, TimeUnit.SECONDS);
     gcPsi(file);
 
     assertFalse(count1 == getJavaTracker().getModificationCount());

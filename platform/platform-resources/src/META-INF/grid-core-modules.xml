@@ -1,9 +1,0 @@
-<idea-plugin>
-  <content>
-    <module name="intellij.grid"/>
-    <module name="intellij.grid.types"/>
-    <module name="intellij.grid.csv.core.impl"/>
-    <module name="intellij.grid.core.impl"/>
-    <module name="intellij.grid.impl"/>
-  </content>
-</idea-plugin>

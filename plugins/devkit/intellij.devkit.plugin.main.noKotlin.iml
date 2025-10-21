@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="intellij.devkit.git" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.i18n" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.devkit.images" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.intelliLang" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.themes" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.uiDesigner" scope="RUNTIME" />

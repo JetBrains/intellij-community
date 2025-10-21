@@ -43,7 +43,7 @@ public final class LossyConversionCompoundAssignmentInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
 
       @Override

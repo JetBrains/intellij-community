@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.gradle` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "gradle_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,15 +11,18 @@ jvm_library(
   name = "gradle",
   module_name = "intellij.devkit.gradle",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":gradle_resources"],
   deps = [
     "//java/idea-ui:ui",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core",
+    "//platform/lang-core",
     "//platform/ide-core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
@@ -34,23 +37,24 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//java/openapi:java",
-  ],
-  runtime_deps = [":gradle_resources"]
+  ]
 )
 
 jvm_library(
   name = "gradle_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":gradle"],
   deps = [
     "//java/idea-ui:ui",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core",
+    "//platform/lang-core",
     "//platform/ide-core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
@@ -64,18 +68,20 @@ jvm_library(
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//java/openapi:java",
-  ],
-  runtime_deps = [":gradle_resources"]
+  ]
 )
+### auto-generated section `build intellij.devkit.gradle` end
 
-jvm_test(
+### auto-generated section `test intellij.devkit.gradle` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "gradle_test",
   runtime_deps = [":gradle_test_lib"]
 )
-### auto-generated section `build intellij.devkit.gradle` end
+### auto-generated section `test intellij.devkit.gradle` end

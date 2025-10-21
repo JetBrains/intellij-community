@@ -43,6 +43,7 @@ import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -148,7 +149,8 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun getSessionOptions(token: String?): McpSessionOptions {
-    return token?.let { activeAuthorizedSessions[token] } ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
+    return token?.let { activeAuthorizedSessions[token] }
+           ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
   }
 
   val port: Int
@@ -222,9 +224,9 @@ class McpServerService(val cs: CoroutineScope) {
             finish()
           }
         }
-      }) {
-        // this is added because now Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
-        val projectPath = call.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
+      }) { applicationCall, transport ->
+        // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
+        val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
         val mcpServer = Server(
           Implementation(
             name = "${ApplicationNamesInfo.getInstance().fullProductName} MCP Server",
@@ -235,24 +237,30 @@ class McpServerService(val cs: CoroutineScope) {
               //prompts = ServerCapabilities.Prompts(listChanged = true),
               //resources = ServerCapabilities.Resources(subscribe = true, listChanged = true),
               tools = ServerCapabilities.Tools(listChanged = true),
+              logging = null,
+              experimental = null,
+              sampling = null,
+              prompts = null,
+              resources = null,
             )
           )
         )
-        mcpServer.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
-          // Workaround inspector failure
-          return@setRequestHandler EmptyRequestResult()
-        }
+        val session = mcpServer.createSession(transport)
+        //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
+        //  // Workaround inspector failure
+        //  return@setRequestHandler EmptyRequestResult()
+        //}
         launch {
           var previousTools: List<McpTool>? = null
           mcpTools.collectLatest { updatedTools ->
             previousTools?.forEach { previousTool ->
               mcpServer.removeTool(previousTool.descriptor.name)
             }
-            mcpServer.addTools(updatedTools.map { it.mcpToolToRegisteredTool(mcpServer, projectPath) })
+            mcpServer.addTools(updatedTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
             previousTools = updatedTools
           }
         }
-        return@mcpPatched mcpServer
+        return@mcpPatched session
       }
     }.start(wait = false)
   }
@@ -267,57 +275,43 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromInitialRequest: String?): RegisteredTool {
-  val outputSchema = if (structuredToolOutputEnabled)  {
-    descriptor.outputSchema?.let {
-      Tool.Output(
-        it.propertiesSchema,
-        it.requiredProperties.toList())
-    }
-  }
-  else null
-  val tool = Tool(name = descriptor.name,
-                  description = descriptor.description,
-                  inputSchema = Tool.Input(
-                    properties = descriptor.inputSchema.propertiesSchema,
-                    required = descriptor.inputSchema.requiredProperties.toList()),
-                  outputSchema = outputSchema,
-                  annotations = null)
-  return RegisteredTool(tool) { request ->
-    val httpRequest = currentCoroutineContext().httpRequestOrNull
-    val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
-    val projectPathFromMcpRequest = (request.arguments[projectPathParameterName] as? JsonPrimitive)?.content
-    val project = try {
-      if (!projectPathFromMcpRequest.isNullOrBlank()) {
-        logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
-        // prefer a project from mcp argument first
-        findMostRelevantProject(Path(projectPathFromMcpRequest)) ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
+  private fun McpTool.mcpToolToRegisteredTool(server: Server, session: ServerSession, projectPathFromInitialRequest: String?): RegisteredTool {
+    val tool = toSdkTool()
+    return RegisteredTool(tool) { request ->
+      val httpRequest = currentCoroutineContext().httpRequestOrNull
+      val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
+      val projectPathFromMcpRequest = (request.arguments[projectPathParameterName] as? JsonPrimitive)?.content
+      val project = try {
+        if (!projectPathFromMcpRequest.isNullOrBlank()) {
+          logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
+          // prefer a project from mcp argument first
+          findMostRelevantProject(Path(projectPathFromMcpRequest)) ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
+        }
+        else if (!projectPathFromHeaders.isNullOrBlank()) {
+          logger.trace { "Project path specified in MCP request headers: $projectPathFromHeaders" }
+          // then from headers
+          findMostRelevantProject(Path(projectPathFromHeaders)) ?: throw noSuitableProjectError("Project path specified via header variable `$IJ_MCP_SERVER_PROJECT_PATH`=`$projectPathFromHeaders` doesn't correspond to any open project.")
+        }
+        else {
+          null
+        }
       }
-      else if (!projectPathFromHeaders.isNullOrBlank()) {
-        logger.trace { "Project path specified in MCP request headers: $projectPathFromHeaders" }
-        // then from headers
-        findMostRelevantProject(Path(projectPathFromHeaders)) ?: throw noSuitableProjectError("Project path specified via header variable `$IJ_MCP_SERVER_PROJECT_PATH`=`$projectPathFromHeaders` doesn't correspond to any open project.")
+      catch (mcpError: McpExpectedError) {
+        return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText, structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
       }
-      else {
-        null
+      catch (e: Throwable) {
+        logger.error("Failed to determine project for MCP tool call by provided arguments", e)
+        return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null).toSdkToolCallResult()
       }
-    }
-    catch (mcpError: McpExpectedError) {
-      return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText, structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
-    }
-    catch (e: Throwable) {
-      logger.error("Failed to determine project for MCP tool call by provided arguments", e)
-      return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null).toSdkToolCallResult()
-    }
 
-    val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
-    val headersWithoutAuthToken = httpRequest?.headers?.toMap()?.let { it - IJ_MCP_AUTH_TOKEN }
+      val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
+      val headersWithoutAuthToken = httpRequest?.headers?.toMap()?.let { it - IJ_MCP_AUTH_TOKEN }
 
-    val sessionOptions = getSessionOptions(authToken)
+      val sessionOptions = getSessionOptions(authToken)
 
-    val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
+      val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
       val initialDocumentContents = ConcurrentHashMap<Document, String>()
-      val clientVersion = server.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
+      val clientVersion = session.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
 
       val additionalData = McpCallInfo(
         callId = callId.getAndAdd(1),
@@ -461,11 +455,11 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
             McpServerCounterUsagesCollector.reportMcpCall(descriptor)
           }
         }
-    }
+      }
 
-    val callToolResult = callResult.toSdkToolCallResult()
-    return@RegisteredTool callToolResult
-  }
+      val callToolResult = callResult.toSdkToolCallResult()
+      return@RegisteredTool callToolResult
+    }
   }
 }
 
@@ -478,4 +472,24 @@ private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {
   val structuredContent = if (structuredToolOutputEnabled) structuredContent else null
   val callToolResult = CallToolResult(content = contents, structuredContent = structuredContent, isError)
   return callToolResult
+}
+
+private fun McpTool.toSdkTool(): Tool {
+  val outputSchema = if (structuredToolOutputEnabled) {
+    descriptor.outputSchema?.let {
+      Tool.Output(
+        it.propertiesSchema,
+        it.requiredProperties.toList())
+    }
+  }
+  else null
+  val tool = Tool(name = descriptor.name,
+                  title = null,
+                  description = descriptor.description,
+                  inputSchema = Tool.Input(
+                    properties = descriptor.inputSchema.propertiesSchema,
+                    required = descriptor.inputSchema.requiredProperties.toList()),
+                  outputSchema = outputSchema,
+                  annotations = null)
+  return tool
 }

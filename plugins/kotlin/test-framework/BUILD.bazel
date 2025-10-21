@@ -1,31 +1,34 @@
 ### auto-generated section `build kotlin.test-framework` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "test-framework",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "test-framework_test_lib",
+  module_name = "kotlin.test-framework",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlin-test",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/idea-ui:ui",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "@lib//:test_n_g",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",
@@ -57,18 +60,23 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/gradle/gradle",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/base/external-build-system",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:junit5Pioneer",
     "//platform/statistics/testFramework",
-  ]
+  ],
+  exports = ["//java/testFramework"]
 )
+### auto-generated section `build kotlin.test-framework` end
 
-jvm_test(
+### auto-generated section `test kotlin.test-framework` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "test-framework_test",
   runtime_deps = [":test-framework_test_lib"]
 )
-### auto-generated section `build kotlin.test-framework` end
+### auto-generated section `test kotlin.test-framework` end

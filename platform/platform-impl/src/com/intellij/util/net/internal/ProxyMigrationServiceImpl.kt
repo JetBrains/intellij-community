@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.internal
 
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.util.net.DisabledProxyAuthPromptsManager
 import com.intellij.util.net.ProxyCredentialStore
@@ -13,7 +13,7 @@ import com.intellij.util.net.ProxySettingsUi
  * It will be removed once HttpConfigurable is deprecated and migration to a new API for proxy settings is made.
  */
 private class ProxyMigrationServiceImpl : ProxyMigrationService {
-  override fun isNewUser(): Boolean = ConfigImportHelper.isNewUser()
+  override fun isNewUser(): Boolean = InitialConfigImportState.isNewUser()
 
   override fun createProxySettingsUi(
     proxySettings: ProxySettings,

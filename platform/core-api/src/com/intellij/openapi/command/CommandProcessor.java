@@ -105,6 +105,11 @@ public abstract class CommandProcessor {
   @ApiStatus.Experimental
   public abstract void allowMergeGlobalCommands(@NotNull Runnable action);
 
+  @ApiStatus.Experimental
+  public boolean isCommandInProgress() {
+    return getCurrentCommand() != null;
+  }
+
   /**
    * @deprecated use {@link CommandListener#TOPIC}
    */

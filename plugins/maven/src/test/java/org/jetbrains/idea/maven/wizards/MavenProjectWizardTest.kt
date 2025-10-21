@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.ProjectTypeStep
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -11,16 +12,21 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.useProjectAsync
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
+
+var MavenNewProjectWizardData.sdk: Sdk?
+  get() = if (jdkIntent is ProjectWizardJdkIntent.ExistingJdk) (jdkIntent as ProjectWizardJdkIntent.ExistingJdk).jdk else null
+  set(value) { jdkIntent = ProjectWizardJdkIntent.fromJdk(value) }
 
 class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   override fun runInDispatchThread() = false

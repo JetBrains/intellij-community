@@ -24,16 +24,16 @@ class NestedTablesSortingModel<T : GridSortingModel<GridRow, GridColumn>>(
   private val activeSortingModel: T
     get() = sortingModelStack.last()
 
-  override fun enterNestedTable(coordinate: NestedTableCellCoordinate, nestedTable: NestedTable): T {
+  override suspend fun enterNestedTable(coordinate: NestedTableCellCoordinate, nestedTable: NestedTable): T {
     sortingModelStack.push(getModel())
     return sortingModelStack.last()
   }
 
-  override fun exitNestedTable(steps: Int): T = sortingModelStack.pop(steps)
+  override suspend fun exitNestedTable(steps: Int): T = sortingModelStack.pop(steps)
 
   override fun isSortingEnabled(): Boolean = activeSortingModel.isSortingEnabled
 
-  override fun setSortingEnabled(enabled: Boolean) = activeSortingModel.setSortingEnabled(enabled)
+  override fun setSortingEnabled(enabled: Boolean): Unit = activeSortingModel.setSortingEnabled(enabled)
 
   override fun getOrdering(): MutableList<RowSortOrder<ModelIndex<GridColumn>>> = activeSortingModel.ordering
 
@@ -41,17 +41,17 @@ class NestedTablesSortingModel<T : GridSortingModel<GridRow, GridColumn>>(
 
   override fun getAppliedSortingText(): String = activeSortingModel.appliedSortingText
 
-  override fun apply() = activeSortingModel.apply()
+  override fun apply(): Unit = activeSortingModel.apply()
 
   override fun getDocument(): Document? = activeSortingModel.document
 
   override fun getHistory(): MutableList<String> = activeSortingModel.history
 
-  override fun setHistory(history: MutableList<String>) = activeSortingModel.setHistory(history)
+  override fun setHistory(history: MutableList<String>): Unit = activeSortingModel.setHistory(history)
 
-  override fun addListener(l: GridSortingModel.Listener, disposable: Disposable) = activeSortingModel.addListener(l, disposable)
+  override fun addListener(l: GridSortingModel.Listener, disposable: Disposable): Unit = activeSortingModel.addListener(l, disposable)
 
   override fun supportsAdditiveSorting(): Boolean = activeSortingModel.supportsAdditiveSorting()
 
-  override fun setOrdering(ordering: MutableList<RowSortOrder<ModelIndex<GridColumn>>>) = activeSortingModel.setOrdering(ordering)
+  override fun setOrdering(ordering: MutableList<RowSortOrder<ModelIndex<GridColumn>>>): Unit = activeSortingModel.setOrdering(ordering)
 }

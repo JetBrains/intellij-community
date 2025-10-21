@@ -12,5 +12,6 @@ class T {
     fun t(a: java.util.ArrayList)
 }
 
+// INVOCATION_COUNT: 2
 // ELEMENT: ArrayList
 // TAIL_TEXT: "<E> (java.util)"

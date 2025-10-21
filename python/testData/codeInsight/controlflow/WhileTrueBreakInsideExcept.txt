@@ -3,16 +3,17 @@
 2(3,4) READ ACCESS: True
 3() element: null. Condition: True:false
 4(5) element: null. Condition: True:true
-5(6) element: PyStatementList
-6(7) element: PyTryExceptStatement
-7(8,12) element: PyTryPart
-8(9,12) element: PyAssignmentStatement
-9(10,12) READ ACCESS: could_raise
-10(11,12) element: PyCallExpression: could_raise
-11(12,15) WRITE ACCESS: foo
-12(13) element: PyExceptPart
-13(14) READ ACCESS: IndexError
-14(17) element: PyBreakStatement
-15(16) element: PyPrintStatement
-16(1) READ ACCESS: foo
-17() element: null
+5(6) ASSERTTYPE ACCESS: True
+6(7) element: PyStatementList
+7(8) element: PyTryExceptStatement
+8(9,13) element: PyTryPart
+9(10,13) element: PyAssignmentStatement
+10(11,13) READ ACCESS: could_raise
+11(12,13) element: PyCallExpression: could_raise
+12(13,16) WRITE ACCESS: foo
+13(14) element: PyExceptPart
+14(15) READ ACCESS: IndexError
+15(18) element: PyBreakStatement
+16(17) element: PyPrintStatement
+17(1) READ ACCESS: foo
+18() element: null

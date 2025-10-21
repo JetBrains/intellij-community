@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.ui.AbstractFontCombo;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FontComboBox;
-import com.intellij.ui.FontInfoRenderer;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -36,14 +33,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static com.intellij.ui.render.RenderersKt.fontInfoRenderer;
+
 public abstract class AbstractFontOptionsPanel extends JPanel implements OptionsPanel {
 
-  private static final FontInfoRenderer DEFAULT_FONT_COMBO_RENDERER = new FontInfoRenderer() {
-    @Override
-    protected boolean isEditorFont() {
-      return true;
-    }
-  };
+  private static final ListCellRenderer<Object> DEFAULT_FONT_COMBO_RENDERER = fontInfoRenderer(true);
+
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   private final JLabel myPrimaryLabel = new JLabel(ApplicationBundle.message("primary.font"));

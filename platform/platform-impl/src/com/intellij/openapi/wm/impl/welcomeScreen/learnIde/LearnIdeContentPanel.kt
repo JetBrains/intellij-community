@@ -30,7 +30,10 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
   private val myScrollPane: JBScrollPane = JBScrollPane(contentPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply { border = JBUI.Borders.empty() }
   private val interactiveCoursesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.interactive.courses.text"),
-                                                                      5, HeaderColor, true)
+                                                                      5, HeaderColor, true
+  ).apply {
+    isFocusable = false
+  }
 
   init {
     layout = BorderLayout()

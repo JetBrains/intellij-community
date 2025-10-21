@@ -4,6 +4,7 @@ from typing import Any, Final, TypeVar, overload
 from typing_extensions import TypeAlias
 
 from pyasn1.codec.ber.encoder import AbstractItemEncoder
+from pyasn1.type.tag import TagSet
 
 # Use _typeshed._SupportsGetItemBuffer after PEP 688
 _SupportsGetItemBuffer: TypeAlias = SliceableBuffer | IndexableBuffer
@@ -18,6 +19,9 @@ class LDAPBooleanEncoder(AbstractItemEncoder):
     supportIndefLenMode: bool
     # Requires pyasn1 > 0.3.7
     def encodeValue(self, value: bool | int, asn1Spec: Unused, encodeFun: Unused, **options: Unused): ...
+
+customTagMap: dict[TagSet, AbstractItemEncoder]
+customTypeMap: dict[int, AbstractItemEncoder]
 
 def compute_ber_size(data): ...
 def decode_message_fast(message): ...

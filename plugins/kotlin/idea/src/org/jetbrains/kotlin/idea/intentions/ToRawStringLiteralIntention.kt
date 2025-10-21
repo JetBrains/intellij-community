@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.raw.string.literal")
+    KotlinBundle.messagePointer("convert.to.raw.string.literal")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
         if (PsiTreeUtil.nextLeaf(element) is PsiErrorElement) {

@@ -2,8 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -47,19 +45,6 @@ class ModuleRootComponentBridge(
 
   fun getModuleLibraryTable(): ModuleLibraryTableBridge {
     return moduleLibraryTable
-  }
-
-  init {
-    @Suppress("DEPRECATION")
-    MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension> {
-      override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
-        dropRootModelCache()
-      }
-
-      override fun extensionRemoved(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
-        dropRootModelCache()
-      }
-    }, false, null)
   }
 
   private val model: RootModelBridgeImpl

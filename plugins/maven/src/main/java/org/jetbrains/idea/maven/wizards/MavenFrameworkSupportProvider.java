@@ -5,9 +5,9 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -110,7 +110,7 @@ public final class MavenFrameworkSupportProvider extends FrameworkSupportProvide
 
   @Override
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
-    return moduleType.equals(StdModuleTypes.JAVA);
+    return moduleType.equals(JavaModuleType.getModuleType());
   }
 
   @Override

@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.PsiJavaFile
@@ -42,6 +43,11 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testNoDuplicateRequires(): Unit = doRequiresTest(
     "module M { requires M2; }",
     "module M { requires M2; }")
+
+  fun testNoCircularDependency() {
+    addFile("module-info.java", "module M2 { requires M; }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2)
+    doRequiresTest("module M { }", "module M { }")
+  }
 
   fun testRequiresInIncompleteModule(): Unit = doRequiresTest(
     "module M {",

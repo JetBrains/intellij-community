@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -13,11 +15,13 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
 internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol) {
-    fun KaSession.computeImportableName(): FqName? {
+    context(_: KaSession)
+    fun computeImportableName(): FqName? {
         return toSymbolInfo().importableName
     }
 
-    fun KaSession.isResolvedWithImport(): Boolean {
+    context(_: KaSession)
+    fun isResolvedWithImport(): Boolean {
         if (definitelyNotImported) return false
 
         val isNotAliased = symbol.name in reference.resolvesByNames
@@ -28,7 +32,12 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
         return canBeResolvedViaImport(reference, symbol)
     }
 
-    private val KaSession.definitelyNotImported: Boolean get() = when {
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private val definitelyNotImported: Boolean get() = when {
+        // context sensitive resolve does not require imports
+        reference.usesContextSensitiveResolution -> true
+
         symbol.isLocal -> true
 
         // symbols from <dynamic> scope cannot be imported,
@@ -42,18 +51,19 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
         else -> false
     }
 
-    fun KaSession.toSymbolInfo(): SymbolInfo {
+    context(_: KaSession)
+    fun toSymbolInfo(): SymbolInfo {
         return when (symbol) {
             is KaCallableSymbol -> {
                 val dispatcherReceiver = resolveDispatchReceiver(reference.element) as? KaImplicitReceiverValue
                 val containingClassSymbol = dispatcherReceiver?.symbol as? KaClassLikeSymbol
 
-                SymbolInfo.run { create(symbol, containingClassSymbol) }
+                SymbolInfo.create(symbol, containingClassSymbol)
             }
 
-            is KaClassLikeSymbol -> SymbolInfo.run { create(symbol) }
+            is KaClassLikeSymbol -> SymbolInfo.create(symbol)
 
-            else -> SymbolInfo.run { create(symbol) }
+            else -> SymbolInfo.create(symbol)
         }
     }
 }
@@ -61,7 +71,8 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
 /**
  * We want to skipp the calls which require implicit receiver to be dispatched.
  */
-private fun KaSession.isDispatchedCall(
+context(_: KaSession)
+private fun isDispatchedCall(
     element: KtElement,
     symbol: KaCallableSymbol,
     dispatchReceiver: KaReceiverValue,
@@ -75,7 +86,8 @@ private fun KaSession.isDispatchedCall(
     }
 }
 
-private fun KaSession.isAccessibleAsMemberCallable(
+context(_: KaSession)
+private fun isAccessibleAsMemberCallable(
     symbol: KaSymbol,
     element: KtElement,
 ): Boolean {
@@ -100,7 +112,8 @@ private fun KaSession.isAccessibleAsMemberCallable(
  * Checks if [implicitDispatchReceiver] is introduced via static import
  * from Kotlin object or Java class.
  */
-private fun KaSession.isStaticallyImportedReceiver(
+context(_: KaSession)
+private fun isStaticallyImportedReceiver(
     element: KtElement,
     symbol: KaCallableSymbol,
     implicitDispatchReceiver: KaImplicitReceiverValue,
@@ -118,14 +131,16 @@ private fun KaSession.isStaticallyImportedReceiver(
     }
 }
 
-private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
+context(_: KaSession)
+private fun resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
     val adjustedElement = element.callableReferenceExpressionForCallableReference() ?: element
     val dispatchReceiver = adjustedElement.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver
 
     return dispatchReceiver
 }
 
-private fun KaSession.canBeResolvedViaImport(reference: KtReference, target: KaSymbol): Boolean {
+context(_: KaSession)
+private fun canBeResolvedViaImport(reference: KtReference, target: KaSymbol): Boolean {
     if (reference is KDocReference) {
         return canBeResolvedViaImport(reference, target)
     }
@@ -171,13 +186,15 @@ private fun KaSession.canBeResolvedViaImport(reference: KtReference, target: KaS
  * Determines whether the given [reference] resolves to a constructor call or callable reference 
  * of a type-aliased inner class.
  */
-private fun KaSession.isTypeAliasedInnerClassConstructorCall(target: KaSymbol, reference: KtReference): Boolean {
+context(_: KaSession)
+private fun isTypeAliasedInnerClassConstructorCall(target: KaSymbol, reference: KtReference): Boolean {
     return target is KaTypeAliasSymbol &&
             (target.expandedType.symbol as? KaNamedClassSymbol)?.isInner == true &&
             reference.resolveToSymbols().any { it is KaConstructorSymbol && it.containingDeclaration == target }
 }
 
-private fun KaSession.resolveExtensionReceiverForFunctionalTypeVariable(
+context(_: KaSession)
+private fun resolveExtensionReceiverForFunctionalTypeVariable(
     referenceExpression: KtNameReferenceExpression?,
     target: KaSymbol,
 ): KaExplicitReceiverValue? {
@@ -194,11 +211,12 @@ private fun KaSession.resolveExtensionReceiverForFunctionalTypeVariable(
     return parentCallInfo.partiallyAppliedSymbol.extensionReceiver as? KaExplicitReceiverValue
 }
 
-private fun KaSession.canBeResolvedViaImport(reference: KDocReference, target: KaSymbol): Boolean {
+context(_: KaSession)
+private fun canBeResolvedViaImport(reference: KDocReference, target: KaSymbol): Boolean {
     val qualifier = reference.element.getQualifier() ?: return true
 
     return if (target is KaCallableSymbol && target.isExtension) {
-        val elementHasFunctionDescriptor = reference.element.mainReference.resolveToSymbols().any { it is KaFunctionSymbol }
+        val elementHasFunctionDescriptor = reference.element.mainReference.resolveToSymbols().any { it is KaCallableSymbol }
         val qualifierHasClassDescriptor = qualifier.mainReference.resolveToSymbols().any { it is KaClassLikeSymbol }
         elementHasFunctionDescriptor && qualifierHasClassDescriptor
     } else {

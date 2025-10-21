@@ -12,6 +12,7 @@ import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
@@ -20,7 +21,6 @@ import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -31,15 +31,16 @@ import org.jetbrains.annotations.Nls
 @Internal
 class SeTabDelegate(
   val project: Project?,
-  private val sessionRef: DurableRef<SeSessionEntity>,
+  private val session: SeSession,
   private val logLabel: String,
   private val providerIds: List<SeProviderId>,
   private val initEvent: AnActionEvent,
   val scope: CoroutineScope,
 ) : Disposable {
   private val providers = initAsync(scope) {
-    initializeProviders(project, providerIds, initEvent, sessionRef, logLabel)
+    initializeProviders(project, providerIds, initEvent, session, logLabel)
   }
+
   suspend fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = providers.getValue().getProvidersIdToName()
 
   fun getItems(params: SeParams, disabledProviders: List<SeProviderId>? = null): Flow<SeResultEvent> {
@@ -118,12 +119,16 @@ class SeTabDelegate(
     return providers.getValue().canBeShownInFindResults()
   }
 
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return providers.getValue().getUpdatedPresentation(item)
+  }
+
   suspend fun openInFindToolWindow(
-    sessionRef: DurableRef<SeSessionEntity>,
+    session: SeSession,
     params: SeParams,
     initEvent: AnActionEvent,
     isAllTab: Boolean,
-    disabledProviders: List<SeProviderId>? = null
+    disabledProviders: List<SeProviderId>? = null,
   ): Boolean {
     if (project == null) return false
 
@@ -131,11 +136,35 @@ class SeTabDelegate(
       initEvent.dataContext.rpcId()
     }
     return SeRemoteApi.getInstance().openInFindToolWindow(project.projectId(),
-                                                          sessionRef,
+                                                          session,
                                                           dataContextId,
                                                           providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
                                                           params,
                                                           isAllTab)
+  }
+
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return providers.getValue().performExtendedAction(item)
+  }
+
+  suspend fun getPreviewInfo(itemData: SeItemData, isAllTab: Boolean): SePreviewInfo? {
+    if (project == null) return null
+
+    return SeRemoteApi.getInstance().getPreviewInfo(project.projectId(),
+                                                    session,
+                                                    itemData,
+                                                    isAllTab)
+  }
+
+  suspend fun isPreviewEnabled(): Boolean {
+    return providers.getValue().isPreviewEnabled()
+  }
+
+  suspend fun isExtendedInfoEnabled(): Boolean {
+    return providers.getValue().isExtendedInfoEnabled()
   }
 
   override fun dispose() {}
@@ -221,6 +250,30 @@ class SeTabDelegate(
                              ?: emptyList()
       return localProviders.toList() + frontedProviders
     }
+
+    suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+      val localItem = item.fetchItemIfExists()
+      return if (localItem != null) {
+        localItem.presentation()
+      }
+      else {
+        frontendProvidersFacade?.getUpdatedPresentation(item)
+      }
+    }
+
+    suspend fun performExtendedAction(item: SeItemData): Boolean {
+      return localProviders[item.providerId]?.performExtendedAction(item) ?: run {
+        frontendProvidersFacade?.performExtendedAction(item) ?: false
+      }
+    }
+
+    suspend fun isPreviewEnabled(): Boolean {
+      return localProviders.values.any { it.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
+    }
+
+    suspend fun isExtendedInfoEnabled(): Boolean {
+      return localProviders.values.any { it.isExtendedInfoEnabled() } || frontendProvidersFacade?.isExtendedInfoEnabled() == true
+    }
   }
 
   // Workaround for: IJPL-188383 Search Everywhere, All tab: 'Top Hit' filter is duplicated
@@ -242,20 +295,20 @@ class SeTabDelegate(
       project: Project,
       providerId: SeProviderId,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
     ): Boolean {
       val dataContextId = readAction {
         initEvent.dataContext.rpcId()
       }
       return SeFrontendService.getInstance(project).localProvidersHolder?.getLegacyContributor(providerId, false)?.isShownInSeparateTab == true ||
-             SeRemoteApi.getInstance().isShownInSeparateTab(project.projectId(), sessionRef, dataContextId, providerId)
+             SeRemoteApi.getInstance().isShownInSeparateTab(project.projectId(), session, dataContextId, providerId)
     }
 
     private suspend fun initializeProviders(
       project: Project?,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       logLabel: String,
     ): Providers {
       val projectId = project?.projectId()
@@ -264,13 +317,33 @@ class SeTabDelegate(
       }
 
       val hasWildcard = providerIds.any { it.isWildcard }
-
-      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, sessionRef, dataContextId) else emptyMap()
-      val essentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.ESSENTIAL_KEY]?.toSet() ?: emptySet()
-      val nonEssentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.NON_ESSENTIAL_KEY]?.toSet() ?: emptySet()
-      val remoteProviderIds = essentialRemoteProviderIds.union(nonEssentialRemoteProviderIds).filter { hasWildcard || providerIds.contains(it) }
+      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
+                                 ?: error("Local providers holder is not initialized")
 
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
+      val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()
+
+      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId) else null
+      val adaptedRemoteProviderItemsAreFetchable = availableRemoteProviders?.isFetchable == true
+
+      val essentialRemoteProviderIds = availableRemoteProviders?.essential?.filter {
+        !frontendOnlyIds.contains(it)
+      }?.toSet() ?: emptySet()
+
+      val nonEssentialNonAdaptedRemoteProviderIds = availableRemoteProviders?.nonEssentialNonAdapted?.filter {
+        !frontendOnlyIds.contains(it)
+      }?.toSet() ?: emptySet()
+
+      val adaptedAndAvailableToRenderRemoteProviderIds = if (adaptedRemoteProviderItemsAreFetchable) {
+        availableRemoteProviders.adapted.filter {
+          !frontendOnlyIds.contains(it) && localProvidersHolder.legacyAllTabContributors.containsKey(it)
+        }
+      }
+      else emptySet()
+
+      val nonEssentialRemoteProviderIds = nonEssentialNonAdaptedRemoteProviderIds + adaptedAndAvailableToRenderRemoteProviderIds
+
+      val remoteProviderIds = essentialRemoteProviderIds.union(nonEssentialRemoteProviderIds).filter { hasWildcard || providerIds.contains(it) }.toSet()
 
       // If we have it on BE, we use the BE provider.
       // This is needed because extensions are available on both sides in the monolith (BE and FE)
@@ -279,8 +352,6 @@ class SeTabDelegate(
       val localProviderIds =
         (if (hasWildcard) localFactories.keys else providerIds) - remoteProviderIds
 
-      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
-                                 ?: error("Local providers holder is not initialized")
       val localProviders = localProviderIds.mapNotNull { providerId ->
         localProvidersHolder.get(providerId, hasWildcard)?.let {
           providerId to it
@@ -289,12 +360,12 @@ class SeTabDelegate(
 
       val frontendProvidersFacade = if (project != null) {
         val remoteProviderIdToName =
-          SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
+          SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), session, dataContextId, remoteProviderIds.toList())
 
         if (remoteProviderIdToName.isEmpty()) null
         else SeFrontendItemDataProvidersFacade(project.projectId(),
                                                remoteProviderIdToName,
-                                               sessionRef,
+                                               session,
                                                dataContextId,
                                                hasWildcard,
                                                essentialRemoteProviderIds.filter { remoteProviderIdToName.containsKey(it) }.toSet())

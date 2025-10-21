@@ -113,7 +113,7 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
     }
 
     @Override
-    public Set<String> getAllLookupStrings() {
+    public @NotNull Set<String> getAllLookupStrings() {
       return Collections.singleton(getLookupString());
     }
 

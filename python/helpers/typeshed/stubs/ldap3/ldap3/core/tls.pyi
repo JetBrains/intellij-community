@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any
 
 use_ssl_context: bool
@@ -18,18 +17,18 @@ class Tls:
     sni: Any
     def __init__(
         self,
-        local_private_key_file: Incomplete | None = None,
-        local_certificate_file: Incomplete | None = None,
+        local_private_key_file=None,
+        local_certificate_file=None,
         validate=...,
-        version: Incomplete | None = None,
-        ssl_options: Incomplete | None = None,
-        ca_certs_file: Incomplete | None = None,
-        valid_names: Incomplete | None = None,
-        ca_certs_path: Incomplete | None = None,
-        ca_certs_data: Incomplete | None = None,
-        local_private_key_password: Incomplete | None = None,
-        ciphers: Incomplete | None = None,
-        sni: Incomplete | None = None,
+        version=None,
+        ssl_options=None,
+        ca_certs_file=None,
+        valid_names=None,
+        ca_certs_path=None,
+        ca_certs_data=None,
+        local_private_key_password=None,
+        ciphers=None,
+        sni=None,
     ) -> None: ...
     def wrap_socket(self, connection, do_handshake: bool = False) -> None: ...
     def start_tls(self, connection): ...

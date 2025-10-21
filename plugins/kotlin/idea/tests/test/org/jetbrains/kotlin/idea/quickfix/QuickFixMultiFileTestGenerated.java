@@ -269,6 +269,26 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             public void testNoImportOfPartiallyPrivateCallables() throws Exception {
                 runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportOfPartiallyPrivateCallables.test");
             }
+
+            @TestMetadata("objectExtendsJavaClassWithField.test")
+            public void testObjectExtendsJavaClassWithField() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaClassWithField.test");
+            }
+
+            @TestMetadata("objectExtendsJavaClassWithGetter_explicitGetterCall.test")
+            public void testObjectExtendsJavaClassWithGetter_explicitGetterCall() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaClassWithGetter_explicitGetterCall.test");
+            }
+
+            @TestMetadata("objectExtendsJavaClassWithGetter_syntheticPropertyAccess.test")
+            public void testObjectExtendsJavaClassWithGetter_syntheticPropertyAccess() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaClassWithGetter_syntheticPropertyAccess.test");
+            }
+
+            @TestMetadata("objectExtendsJavaInterfaceWithDefaultImplementation.test")
+            public void testObjectExtendsJavaInterfaceWithDefaultImplementation() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaInterfaceWithDefaultImplementation.test");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -852,6 +872,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/functionPreferNotDeprecated.test");
             }
 
+            @TestMetadata("hasNextOperator.test")
+            public void testHasNextOperator() throws Exception {
+                runTest("testData/quickfix/autoImports/hasNextOperator.test");
+            }
+
+            @TestMetadata("hasNextOperator_NoneApplicable.test")
+            public void testHasNextOperator_NoneApplicable() throws Exception {
+                runTest("testData/quickfix/autoImports/hasNextOperator_NoneApplicable.test");
+            }
+
             @TestMetadata("importAliasClassAlreadyExists.before.Main.kt")
             public void testImportAliasClassAlreadyExists() throws Exception {
                 runTest("testData/quickfix/autoImports/importAliasClassAlreadyExists.before.Main.kt");
@@ -1185,6 +1215,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("nestedClass.before.Main.kt")
             public void testNestedClass() throws Exception {
                 runTest("testData/quickfix/autoImports/nestedClass.before.Main.kt");
+            }
+
+            @TestMetadata("nextOperator.test")
+            public void testNextOperator() throws Exception {
+                runTest("testData/quickfix/autoImports/nextOperator.test");
+            }
+
+            @TestMetadata("nextOperator_NoneApplicable.test")
+            public void testNextOperator_NoneApplicable() throws Exception {
+                runTest("testData/quickfix/autoImports/nextOperator_NoneApplicable.test");
             }
 
             @TestMetadata("noFunctionImportOnSimpleName.test")

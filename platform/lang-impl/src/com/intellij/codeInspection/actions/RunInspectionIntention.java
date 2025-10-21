@@ -117,7 +117,7 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
     LinkedHashSet<InspectionToolWrapper<?, ?>> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);
     rootProfile.collectDependentInspections(toolWrapper, allWrappers, project);
-    List<InspectionToolWrapper<?, ?>> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
+    List<InspectionToolWrapper<?, ?>> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.getFirst()) : new ArrayList<>(allWrappers);
     InspectionProfileImpl model = new InspectionProfileImpl(toolWrapper.getDisplayName(), new InspectionToolsSupplier.Simple(toolWrappers), rootProfile);
     for (InspectionToolWrapper wrapper : toolWrappers) {
       model.enableTool(wrapper.getShortName(), project);

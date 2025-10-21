@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit
 
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -27,7 +27,7 @@ internal class DevKitMnemonicsSpellingTest : LightJavaCodeInsightFixtureTestCase
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(SpellCheckingInspection::class.java)
+    myFixture.enableInspections(GrazieSpellCheckingInspection::class.java)
   }
 
   fun testMnemonics() {

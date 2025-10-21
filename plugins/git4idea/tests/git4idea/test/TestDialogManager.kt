@@ -18,6 +18,7 @@ package git4idea.test
 import com.intellij.idea.AppMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import git4idea.DialogManager
 import javax.swing.Icon
 import kotlin.test.assertNull
@@ -89,7 +90,7 @@ class TestDialogManager : DialogManager() {
   }
 
   override fun showMessageDialog(description: String, title: String, options: Array<String>, defaultButtonIndex: Int,
-                                 focusedButtonIndex: Int, icon: Icon?, dontAskOption: DialogWrapper.DoNotAskOption?): Int {
+                                 focusedButtonIndex: Int, icon: Icon?, dontAskOption: DoNotAskOption?): Int {
 
     return when {
       isRemoteDevHost -> super.showMessageDialog(description, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption)

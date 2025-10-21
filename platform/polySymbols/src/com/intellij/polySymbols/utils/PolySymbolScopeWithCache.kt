@@ -63,7 +63,22 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
 
   abstract override fun createPointer(): Pointer<out PolySymbolScopeWithCache<T, K>>
 
-  private val requiresResolve: Boolean get() = true
+  protected open val requiresResolve: Boolean get() = true
+
+  /**
+   * This property should be used if it is cheaper to search for a symbol without building the whole cache.
+   * One of use cases is when the scope directly maps to indices. When true, it requires that [getMatchingSymbols]
+   * with `nameVariant` parameter is implemented.
+   */
+  protected open val supportsSymbolsMatchingWithoutFullCacheInitialization: Boolean get() = false
+
+  protected open fun getMatchingSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    nameVariant: String,
+    cacheDependencies: MutableSet<Any>,
+  ): List<PolySymbol> =
+    throw NotImplementedError("Subclasses must implement getMatchingSymbols with single name variant if supportsSymbolsMatchingWithoutFullCacheInitialization property returns true")
+
 
   override fun getModificationCount(): Long =
     PsiModificationTracker.getInstance(project).modificationCount
@@ -127,7 +142,11 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {
-      getMap(params.queryExecutor).getMatchingSymbols(qualifiedName, params, stack.copy()).toList()
+      if (supportsSymbolsMatchingWithoutFullCacheInitialization)
+        tryGetMap(params.queryExecutor)?.getMatchingSymbols(qualifiedName, params, stack.copy())?.toList()
+        ?: getMatchingSymbolsWithoutFullCacheInit(qualifiedName, params)
+      else
+        getMap(params.queryExecutor).getMatchingSymbols(qualifiedName, params, stack.copy()).toList()
     }
     else emptyList()
 
@@ -158,6 +177,36 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   private fun getMap(queryExecutor: PolySymbolQueryExecutor): PolySymbolSearchMap =
     getNamesProviderToMapCache().getOrCreateMap(queryExecutor.namesProvider, this::createCachedSearchMap)
 
+  private fun tryGetMap(queryExecutor: PolySymbolQueryExecutor): PolySymbolSearchMap? =
+    getNamesProviderToMapCache().getMap(queryExecutor.namesProvider)
+
+  private fun getMatchingSymbolsWithoutFullCacheInit(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolNameMatchQueryParams,
+  ): List<PolySymbol> {
+    val manager = CachedValuesManager.getManager(project)
+    val nameCache = manager.getCachedValue(dataHolder) {
+      CachedValueProvider.Result(ConcurrentHashMap<String, CachedValue<List<PolySymbol>>>(), PsiModificationTracker.NEVER_CHANGED)
+    }
+    return params.queryExecutor.namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY).flatMap { name ->
+      nameCache.computeIfAbsent(name) { name ->
+        manager.createCachedValue {
+          val dependencies = mutableSetOf<Any>()
+          val symbols = getMatchingSymbols(qualifiedName.qualifiedKind, name, dependencies)
+          symbols.forEach {
+            if (!provides(it.qualifiedKind))
+              throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.qualifiedKind} provided. $it")
+          }
+          if (dependencies.isEmpty()) {
+            throw IllegalArgumentException(
+              "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
+          }
+          CachedValueProvider.Result.create(symbols, dependencies)
+        }
+      }.value
+    }
+  }
+
   private class NamesProviderToMapCache(private val project: Project) {
     private val cache: ConcurrentMap<List<Any?>, CachedValue<PolySymbolSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
     private var cacheMisses = 0
@@ -176,6 +225,11 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
         createCachedSearchMap(namesProvider)
       }.value
     }
+
+    fun getMap(
+      namesProvider: PolySymbolNamesProvider,
+    ): PolySymbolSearchMap? =
+      cache[PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)]?.value
   }
 
   private class PolySymbolSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)

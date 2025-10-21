@@ -2,7 +2,7 @@
 import java.io.*;
 
 class a {
-    int k;
+    boolean k = new File("1.tmp").delete();
     private int run() {
         Object <caret>oo = (Object) new a();
 

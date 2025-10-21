@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.evaluate
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -211,7 +212,7 @@ private fun getCallExpressionIfAny(element: PsiElement?): KtCallExpression? = wh
 
 // Check if a call expression is an immediate call to `listOf`/`arrayOf`/`sequenceOf` etc.,
 // that it has a relatively small number of arguments, and that all its arguments are constant expressions.
-context(KaSession) private fun KtCallExpression.isLikeConstantExpressionListOf(): Boolean {
+context(_: KaSession) private fun KtCallExpression.isLikeConstantExpressionListOf(): Boolean {
     val callee = calleeExpression.safeAs<KtNameReferenceExpression>() ?: return false
     val candidate = callee.mainReference.resolve()
     return candidate is KtNamedFunction &&

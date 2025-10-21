@@ -28,4 +28,8 @@ abstract class KotlinSameParameterValueGlobalInspectionTest : SameParameterValue
   fun testNegativeDouble() {
     doHighlightTest()
   }
+
+  fun testReceiver() {
+    doHighlightTest()
+  }
 }

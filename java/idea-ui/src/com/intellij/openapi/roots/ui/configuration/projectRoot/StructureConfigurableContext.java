@@ -74,7 +74,7 @@ public final class StructureConfigurableContext implements Disposable, LibraryEd
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
 
     myLevel2Providers.clear();
-    myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(), myProject, this));
+    myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getGlobalLibraryTable(myProject), myProject, this));
     myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject), myProject, this));
     for (final LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
       myLevel2Providers.put(table.getTableLevel(), new LibrariesModifiableModel(table, myProject, this));

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.system.CpuArch;
+import com.intellij.util.system.OS;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import one.util.streamex.IntStreamEx;
@@ -46,13 +47,13 @@ public final class MemoryAgentUtil {
 
   static AgentExtractor.@NotNull AgentLibraryType detectAgentKindByArch(CpuArch arch) {
     LOG.assertTrue(isPlatformSupported());
-    if (SystemInfo.isLinux && arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.LINUX_X64;
-    if (SystemInfo.isLinux && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.LINUX_AARCH64;
-    if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
-    if (SystemInfo.isWindows && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.WINDOWS_ARM64;
-    if (SystemInfo.isWindows && arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.WINDOWS64;
-    if (SystemInfo.isWindows && arch == CpuArch.X86) return AgentExtractor.AgentLibraryType.WINDOWS32;
-    throw new IllegalStateException("Unsupported OS and arch: " + SystemInfo.getOsNameAndVersion() + " " + arch);
+    if (OS.CURRENT == OS.Linux &&arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.LINUX_X64;
+    if (OS.CURRENT == OS.Linux && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.LINUX_AARCH64;
+    if (OS.CURRENT == OS.macOS) return AgentExtractor.AgentLibraryType.MACOS;
+    if (OS.CURRENT == OS.Windows && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.WINDOWS_ARM64;
+    if (OS.CURRENT == OS.Windows && arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.WINDOWS64;
+    if (OS.CURRENT == OS.Windows && arch == CpuArch.X86) return AgentExtractor.AgentLibraryType.WINDOWS32;
+    throw new IllegalStateException("Unsupported OS and arch: " + OS.CURRENT + " " + arch);
   }
 
   public static @NotNull List<JavaReferenceInfo> calculateSizes(@NotNull EvaluationContextImpl context,

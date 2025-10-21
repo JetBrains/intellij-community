@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from .sql.base import SchemaVisitor as SchemaVisitor
 from .sql.ddl import (
     DDL as DDL,

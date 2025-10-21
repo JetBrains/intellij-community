@@ -117,7 +117,7 @@ public class SslEntityReaderImpl extends SslEntityReader {
   }
 
   public static class PKCS8PrivateKey extends UnencryptedPrivateKeyImpl {
-    private PKCS8PrivateKey(@NotNull byte[] bytes) {
+    private PKCS8PrivateKey(byte @NotNull [] bytes) {
       super(bytes);
     }
 
@@ -133,7 +133,7 @@ public class SslEntityReaderImpl extends SslEntityReader {
   }
 
   public static class RSAPrivateKey extends UnencryptedPrivateKeyImpl {
-    private RSAPrivateKey(@NotNull byte[] bytes) {
+    private RSAPrivateKey(byte @NotNull [] bytes) {
       super(bytes);
     }
 
@@ -152,7 +152,7 @@ public class SslEntityReaderImpl extends SslEntityReader {
     protected final byte[] myBytes;
     private PrivateKey myKey;
 
-    private UnencryptedPrivateKeyImpl(@NotNull byte[] bytes) {
+    private UnencryptedPrivateKeyImpl(byte @NotNull [] bytes) {
       myBytes = bytes;
     }
 
@@ -176,7 +176,7 @@ public class SslEntityReaderImpl extends SslEntityReader {
   private static class EncryptedPrivateKeyImpl implements EncryptedPrivateKeyEntity {
     protected final byte[] myBytes;
 
-    private EncryptedPrivateKeyImpl(@NotNull byte[] bytes) {
+    private EncryptedPrivateKeyImpl(byte @NotNull [] bytes) {
       myBytes = bytes;
     }
 

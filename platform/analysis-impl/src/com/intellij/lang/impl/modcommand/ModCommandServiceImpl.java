@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -42,6 +43,11 @@ public final class ModCommandServiceImpl implements ModCommandService {
   @Override
   public @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action) {
     return new ModCommandActionQuickFixWrapper(action);
+  }
+
+  @Override
+  public @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action, boolean availableInBatchMode) {
+    return new ModCommandActionQuickFixWrapper(action, availableInBatchMode);
   }
 
   @Override

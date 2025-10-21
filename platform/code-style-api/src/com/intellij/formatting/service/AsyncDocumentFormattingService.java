@@ -125,6 +125,12 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    */
   protected abstract @NotNull String getNotificationGroupId();
 
+  /**
+   * @return A notification display ID to use when timeout error messages are shown to an end user.
+   */
+  protected @Nullable String getTimeoutNotificationDisplayId() {
+    return null;
+  }
 
   protected boolean needToUpdate() {
     return true;
@@ -278,8 +284,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
           }
           if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
             FormattingNotificationService.getInstance(myContext.getProject()).reportError(
-              getNotificationGroupId(), getName(),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())), getTimeoutActions(myContext));
+              getNotificationGroupId(), getTimeoutNotificationDisplayId(),
+              getName(), CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())),
+              getTimeoutActions(myContext));
           }
           else if (myResult != null) {
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -333,21 +340,35 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     @Override
-    public void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
-      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        myTaskSemaphore.release();
-        FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
-      }
+    public void onError(@NotNull String title, @NotNull String message) {
+      onError(title, message, null);
     }
 
     @Override
     public void onError(@NotNull @NlsContexts.NotificationTitle String title,
                         @NotNull @NlsContexts.NotificationContent String message,
+                        @Nullable String displayId) {
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        FormattingNotificationService.getInstance(myContext.getProject())
+          .reportError(getNotificationGroupId(), displayId, title, message);
+      }
+    }
+
+    @Override
+    public void onError(@NotNull String title, @NotNull String message, int offset) {
+      onError(title, message, null, offset);
+    }
+
+    @Override
+    public void onError(@NotNull @NlsContexts.NotificationTitle String title,
+                        @NotNull @NlsContexts.NotificationContent String message,
+                        @Nullable String displayId,
                         int offset) {
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         myTaskSemaphore.release();
         FormattingNotificationService.getInstance(myContext.getProject())
-                                     .reportErrorAndNavigate(getNotificationGroupId(), title, message, myContext, offset);
+          .reportErrorAndNavigate(getNotificationGroupId(), displayId, title, message, myContext, offset);
       }
     }
   }

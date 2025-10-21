@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.jcip
+  library: jcip
+  files:
+  - name: $MAVEN_REPOSITORY$/net/jcip/jcip-annotations/1/jcip-annotations-1.jar

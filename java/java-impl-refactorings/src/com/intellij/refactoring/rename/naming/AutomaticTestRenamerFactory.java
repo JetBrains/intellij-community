@@ -5,8 +5,10 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -14,6 +16,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.regex.Pattern;
@@ -44,18 +47,18 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
 
   @Override
   public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
-    return new TestsRenamer((PsiClass)element, newName);
+    return new TestsRenamer((PsiNamedElement)element, newName, ((PsiNamedElement)element).getName());
   }
 
-  private static class TestsRenamer extends AutomaticRenamer {
-    TestsRenamer(PsiClass aClass, String newClassName) {
+  public static class TestsRenamer extends AutomaticRenamer {
+    public TestsRenamer(PsiNamedElement aClass, String newClassName, @Nullable @NlsSafe String className) {
       Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
       if (module != null) {
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependentsScope(module);
 
         PsiShortNamesCache cache = PsiShortNamesCache.getInstance(aClass.getProject());
 
-        Pattern pattern = Pattern.compile(".*" + aClass.getName() + ".*");
+        Pattern pattern = Pattern.compile(".*" + className + ".*");
 
         int count = 0;
         for (String eachName : ContainerUtil.newHashSet(cache.getAllClassNames())) {
@@ -69,7 +72,7 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
           }
         }
 
-        suggestAllNames(aClass.getName(), newClassName);
+        suggestAllNames(className, newClassName);
       }
     }
 

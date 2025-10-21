@@ -25,6 +25,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -37,7 +38,6 @@ import java.util.regex.Pattern
 import java.util.stream.Stream
 import javax.swing.event.DocumentEvent
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<SearchableOptionsRegistrarImpl>()
 private val EP_NAME = ExtensionPointName<SearchableOptionContributor>("com.intellij.search.optionContributor")
@@ -66,7 +66,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
       stopWords = loadStopWords()
       startLoading()
 
-      app.getMessageBus().simpleConnect().subscribe<DynamicPluginListener>(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
           dropStorage()
         }
@@ -78,34 +78,6 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     }
   }
 
-  companion object {
-    /**
-     * @return XYZT:64 bits where
-     * X:16 bits - id of the interned groupName
-     * Y:16 bits - id of the interned id
-     * Z:16 bits - id of the interned hit
-     * T:16 bits - id of the interned path
-     */
-    @Suppress("SpellCheckingInspection", "LocalVariableName")
-    internal fun pack(
-      id: String,
-      hit: String?,
-      path: String?,
-      groupName: String?,
-      identifierTable: IndexedCharsInterner,
-    ): Long {
-      val _id = identifierTable.toId(id.trim()).toLong()
-      val _hit = if (hit == null) Short.MAX_VALUE.toLong() else identifierTable.toId(hit.trim()).toLong()
-      val _path = if (path == null) Short.MAX_VALUE.toLong() else identifierTable.toId(path.trim()).toLong()
-      val _groupName = if (groupName == null) Short.MAX_VALUE.toLong() else identifierTable.toId(groupName.trim()).toLong()
-      assert(_id >= 0 && _id < Short.MAX_VALUE)
-      assert(_hit >= 0 && _hit <= Short.MAX_VALUE)
-      assert(_path >= 0 && _path <= Short.MAX_VALUE)
-      assert(_groupName >= 0 && _groupName <= Short.MAX_VALUE)
-      return _groupName shl 48 or (_id shl 32) or (_hit shl 16) or _path /* << 0*/
-    }
-  }
-
   @Synchronized
   private fun dropStorage() {
     storage?.cancel()
@@ -114,7 +86,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     highlightOptionToSynonym = emptyMap()
   }
 
-  fun isInitialized(): Boolean = storage?.isCompleted == true
+  override fun isInitialized(): Boolean = storage?.isCompleted == true
 
   @TestOnly
   fun initializeBlocking() {
@@ -146,7 +118,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     val processor = MySearchableOptionProcessor(stopWords)
     try {
       for (extension in EP_NAME.filterableLazySequence()) {
-        coroutineContext.ensureActive()
+        currentCoroutineContext().ensureActive()
 
         try {
           extension.instance?.contribute(processor)
@@ -159,7 +131,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
         }
       }
 
-      coroutineContext.ensureActive()
+      currentCoroutineContext().ensureActive()
 
       highlightOptionToSynonym = processor.computeHighlightOptionToSynonym()
       identifierTable = processor.identifierTable
@@ -190,10 +162,10 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     val _id = (data shr 32 and 0xffffL).toInt()
     val _hit = (data shr 16 and 0xffffL).toInt()
     val _path = (data and 0xffffL).toInt()
-    assert( /*_id >= 0 && */_id < Short.Companion.MAX_VALUE)
-    assert( /*_hit >= 0 && */_hit <= Short.Companion.MAX_VALUE)
-    assert( /*_path >= 0 && */_path <= Short.Companion.MAX_VALUE)
-    assert( /*_groupName >= 0 && */_groupName <= Short.Companion.MAX_VALUE)
+    assert( /*_id >= 0 && */_id < Short.MAX_VALUE)
+    assert( /*_hit >= 0 && */_hit <= Short.MAX_VALUE)
+    assert( /*_path >= 0 && */_path <= Short.MAX_VALUE)
+    assert( /*_groupName >= 0 && */_groupName <= Short.MAX_VALUE)
 
     val identifierTable = identifierTable!!
     val groupName = if (_groupName == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_groupName)
@@ -207,7 +179,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
   @Suppress("LocalVariableName")
   private fun unpackConfigurableId(data: Long): String {
     val _id = (data shr 32 and 0xffffL).toInt()
-    assert(_id < Short.Companion.MAX_VALUE)
+    assert(_id < Short.MAX_VALUE)
     return identifierTable!!.fromId(_id)
   }
 
@@ -219,7 +191,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     project: Project?,
   ): ConfigurableHit {
     var previouslyFiltered = previouslyFiltered
-    if (previouslyFiltered == null || previouslyFiltered.isEmpty()) {
+    if (previouslyFiltered.isNullOrEmpty()) {
       previouslyFiltered = null
     }
 
@@ -339,7 +311,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     }
 
     val stemmedPrefix = PorterStemmerUtil.stem(prefix)
-    if (stemmedPrefix == null || stemmedPrefix.isBlank()) {
+    if (stemmedPrefix.isNullOrBlank()) {
       return null
     }
 
@@ -379,12 +351,12 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     return path
   }
 
-  override fun getInnerPaths(configurable: SearchableConfigurable, option: String): MutableSet<String> {
+  override fun getInnerPaths(configurable: SearchableConfigurable, option: String): Set<String> {
     val words = getProcessedWordsWithoutStemming(option)
     val path = getOptionDescriptionsByWords(configurable, words)
 
-    if (path == null || path.isEmpty()) {
-      return mutableSetOf<String>()
+    if (path.isNullOrEmpty()) {
+      return emptySet()
     }
 
     val resultSet = HashSet<String>()
@@ -438,7 +410,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
       return options
     }
 
-    val result = HashSet<String>(options)
+    val result = HashSet(options)
     for (option in options) {
       val synonyms = highlightOptionToSynonym.get(option to configurable.getId())
       if (synonyms == null) {
@@ -593,4 +565,30 @@ internal fun collectProcessedWords(text: String, result: MutableSet<String>, sto
       result.add(PorterStemmerUtil.stem(opt) ?: continue)
     }
   }
+}
+
+/**
+ * @return XYZT:64 bits where
+ * X:16 bits - id of the interned groupName
+ * Y:16 bits - id of the interned id
+ * Z:16 bits - id of the interned hit
+ * T:16 bits - id of the interned path
+ */
+@Suppress("SpellCheckingInspection", "LocalVariableName")
+internal fun packSearchableOptions(
+  id: String,
+  hit: String?,
+  path: String?,
+  groupName: String?,
+  identifierTable: IndexedCharsInterner,
+): Long {
+  val _id = identifierTable.toId(id.trim()).toLong()
+  val _hit = if (hit == null) Short.MAX_VALUE.toLong() else identifierTable.toId(hit.trim()).toLong()
+  val _path = if (path == null) Short.MAX_VALUE.toLong() else identifierTable.toId(path.trim()).toLong()
+  val _groupName = if (groupName == null) Short.MAX_VALUE.toLong() else identifierTable.toId(groupName.trim()).toLong()
+  assert(_id >= 0 && _id < Short.MAX_VALUE)
+  assert(_hit >= 0 && _hit <= Short.MAX_VALUE)
+  assert(_path >= 0 && _path <= Short.MAX_VALUE)
+  assert(_groupName >= 0 && _groupName <= Short.MAX_VALUE)
+  return _groupName shl 48 or (_id shl 32) or (_hit shl 16) or _path /* << 0*/
 }

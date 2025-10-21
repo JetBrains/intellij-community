@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
@@ -79,6 +80,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // it's required to clear caches manually,
             // otherwise opening file which referred the old builtins would let to PIEAE exceptions
             val jarPath = URLUtil.splitJarUrl(file.path)?.first
+            //MAYBE RC: try (file.fileSystem as ArchiveFileSystem).getLocalByEntry(file) instead of expensive
+            //          file.path building and splitting
             if (jarPath != null && jarPath in builtinsFiles) {
                 runWriteAction {
                     PsiManager.getInstance(project).dropPsiCaches()
@@ -203,6 +206,12 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             runWriteAction {
                 project.publishGlobalModuleStateModificationEvent()
             }
+        }
+    }
+
+    internal class GeneralWorkspaceModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: VersionedStorageChange) {
+            getInstance(project).beforeWorkspaceModelChanged(event)
         }
     }
 

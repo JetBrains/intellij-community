@@ -100,17 +100,17 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testQualifiedNotImportedType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), "collections.Iterable");
+    final PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), "collections.abc.Iterable");
     final PyType type = result.getType();
     assertClassType(type, "Iterable");
-    assertEquals(2, result.getTypes().size());
+    assertEquals(3, result.getTypes().size());
   }
 
   public void testTypeSubparts() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final String s = "list of (MyObject, collections.Iterable of MyObject, int) or None";
+    final String s = "list of (MyObject, collections.abc.Iterable of MyObject, int) or None";
     PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), s);
-    assertEquals(7, result.getTypes().size());
+    assertEquals(8, result.getTypes().size());
   }
 
   public void testGenericType() {
@@ -262,7 +262,7 @@ public class PyTypeParserTest extends PyTestCase {
   }
 
   public void testQualifiedUserSkeletonsClass() {
-    doTest("Iterator[int]", "collections.Iterator[int]");
+    doTest("Iterator[int]", "collections.abc.Iterator[int]");
   }
 
   private void doTest(final String expectedType, final String text) {

@@ -1,4 +1,5 @@
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class Test {
   void bar(@Nullable String str) {

@@ -26,12 +26,13 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import java.util.function.Supplier
 
 private const val IMPL_SUFFIX = "Impl"
 
 abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<KtClass>(
   KtClass::class.java,
-  KotlinBundle.lazyMessage("create.kotlin.subclass")
+  KotlinBundle.messagePointer("create.kotlin.subclass")
 ) {
 
     abstract fun chooseAndImplementMethods(project: Project, targetClass: KtClass, editor: Editor)
@@ -61,11 +62,13 @@ abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<K
         return TextRange(element.startOffset, element.body?.lBrace?.startOffset ?: element.endOffset)
     }
 
-    private fun getImplementTitle(baseClass: KtClass) = when {
-        baseClass.isInterface() -> KotlinBundle.lazyMessage("implement.interface")
-        baseClass.isAbstract() -> KotlinBundle.lazyMessage("implement.abstract.class")
-        baseClass.isSealed() -> KotlinBundle.lazyMessage("implement.sealed.class")
-        else /* open class */ -> KotlinBundle.lazyMessage("create.subclass")
+    private fun getImplementTitle(baseClass: KtClass): Supplier<String> {
+        return when {
+            baseClass.isInterface() -> KotlinBundle.messagePointer("implement.interface")
+            baseClass.isAbstract() -> KotlinBundle.messagePointer("implement.abstract.class")
+            baseClass.isSealed() -> KotlinBundle.messagePointer("implement.sealed.class")
+            else /* open class */ -> KotlinBundle.messagePointer("create.subclass")
+        }
     }
 
     override fun startInWriteAction() = false

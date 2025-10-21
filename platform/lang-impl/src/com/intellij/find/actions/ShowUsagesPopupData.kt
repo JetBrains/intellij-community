@@ -3,6 +3,7 @@ package com.intellij.find.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.popup.AbstractPopup
@@ -25,7 +26,7 @@ internal class ShowUsagesPopupData(
 
   @JvmField
   val header: ShowUsagesHeader = ShowUsagesHeader(createPinButton(parameters.project, popupRef, pinGroup, table, actionHandler::findUsages),
-                                                  actionHandler.presentation.searchTargetString)
+                     actionHandler.presentation.searchTargetString).apply { if (DumbService.isDumb(parameters.project)) this.showAnalyzingIcon() }
 
   private fun createPinButton(
     project: Project,

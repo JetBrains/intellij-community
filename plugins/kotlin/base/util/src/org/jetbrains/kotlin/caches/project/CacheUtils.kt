@@ -16,6 +16,7 @@ fun <T> Module.cacheByClass(classForKey: Class<*>, vararg dependencies: Any, pro
     return CachedValuesManager.getManager(project).cache(this, dependencies, classForKey, provider)
 }
 
+@ApiStatus.Internal
 @Deprecated("consider to use WorkspaceModelChangeListener")
 fun <T> Module.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*>, provider: () -> T): T {
     return cacheByClass(classForKey, ProjectRootModificationTracker.getInstance(project), provider = provider)
@@ -26,6 +27,7 @@ fun <T> Module.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*>
  * by the one and the same key.
  * It is encouraged to use explicit class, just for the sake of readability.
  */
+@ApiStatus.Internal
 @Deprecated("consider to use WorkspaceModelChangeListener")
 fun <T> Module.cacheInvalidatingOnRootModifications(provider: () -> T): T {
     return cacheByClassInvalidatingOnRootModifications(provider::class.java, provider)
@@ -35,6 +37,7 @@ fun <T> Project.cacheByClass(classForKey: Class<*>, vararg dependencies: Any, pr
     return CachedValuesManager.getManager(this).cache(this, dependencies, classForKey, provider)
 }
 
+@ApiStatus.Internal
 @Deprecated("consider to use WorkspaceModelChangeListener")
 @ApiStatus.ScheduledForRemoval
 fun <T> Project.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*>, provider: () -> T): T {
@@ -47,6 +50,7 @@ fun <T> Project.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*
  * It is encouraged to use explicit class, just for the sake of readability.
  */
 @Suppress("DEPRECATION")
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated("consider to use WorkspaceModelChangeListener")
 fun <T> Project.cacheInvalidatingOnRootModifications(provider: () -> T): T {

@@ -10,12 +10,11 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 sealed interface GraphCommitCell {
-  val text: @NlsSafe String
   val printElements: Collection<PrintElement>
 
   class RealCommit(
     val commitId: CommitId?,
-    override val text: @NlsSafe String,
+    val text: @NlsSafe String,
     val refsToThisCommit: Collection<VcsRef>,
     val bookmarksToThisCommit: Collection<VcsBookmarkRef>,
     override val printElements: Collection<PrintElement>,
@@ -25,8 +24,6 @@ sealed interface GraphCommitCell {
   }
 
   class NewCommit(
-    override val text: @NlsSafe String,
-    val message: @NlsSafe String,
     override val printElements: Collection<PrintElement>,
   ) : GraphCommitCell
 }

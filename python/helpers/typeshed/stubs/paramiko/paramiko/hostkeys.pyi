@@ -1,11 +1,13 @@
 from _typeshed import FileDescriptorOrPath
 from collections.abc import Iterator, Mapping, MutableMapping
+from typing import type_check_only
 from typing_extensions import Self
 
 from paramiko.pkey import PKey
 
+# Internal to HostKeys.lookup(). Calls itself "SubDict".
+@type_check_only
 class _SubDict(MutableMapping[str, PKey]):
-    # Internal to HostKeys.lookup()
     def __init__(self, hostname: str, entries: list[HostKeyEntry], hostkeys: HostKeys) -> None: ...
     def __iter__(self) -> Iterator[str]: ...
     def __len__(self) -> int: ...

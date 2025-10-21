@@ -21,6 +21,15 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
 
   data class Fragment(val type: HighlightingType, val start: Int, val end: Int)
 
+  /**
+   * Preview texts with specified fragment highlighting.
+   *
+   * @param fileType type of file from which fileText is taken
+   * @param fileText preview text
+   * @param startLine line in the file where fileText starts
+   * @param length fileText's line count
+   * @param fragments list fragments to be highlighted in preview
+   */
   data class DiffInfo(
     val fileType: FileType,
     val fileText: String,
@@ -177,6 +186,12 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
       val diffInfos = diffs.flatMap { diff -> diff.diffs }
       val text = diffs.joinToString("\n----------\n") { diff -> diff.newText }
       return IntentionPreviewDiffResult(diffInfos, text)
+    }
+
+    @JvmStatic
+    fun fromSnippet(info: IntentionPreviewInfo.Snippet): IntentionPreviewDiffResult {
+      val diffInfo = DiffInfo(info.fileType, info.text, info.startLine, info.text.lines().size, listOf())
+      return IntentionPreviewDiffResult(listOf(diffInfo), info.text)
     }
   }
 }

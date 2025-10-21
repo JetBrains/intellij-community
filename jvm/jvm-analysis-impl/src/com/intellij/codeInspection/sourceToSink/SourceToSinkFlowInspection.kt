@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -69,7 +69,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   private val myUntaintedMethodMatcher: MethodMatcher = MethodMatcher().finishDefault()
 
   @TestOnly
-  fun getUntaintedMethodMatcher() = myUntaintedMethodMatcher
+  fun getUntaintedMethodMatcher(): MethodMatcher = myUntaintedMethodMatcher
 
   private val myTaintedMethodMatcher: MethodMatcher = MethodMatcher(false, "myTaintedMethodMatcher").finishDefault()
 
@@ -377,7 +377,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       var taintValue = try {
         taintAnalyzer.analyzeExpression(expression, false)
       }
-      catch (e: DeepTaintAnalyzerException) {
+      catch (_: DeepTaintAnalyzerException) {
         if (warnIfComplex) {
           val errorMessage: String = JvmAnalysisBundle.message("jvm.inspections.source.to.sink.flow.too.complex")
           holder.registerUProblem(expression, errorMessage, *arrayOf(), highlightType = ProblemHighlightType.WEAK_WARNING)

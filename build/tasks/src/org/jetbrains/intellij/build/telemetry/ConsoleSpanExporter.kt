@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.telemetry
@@ -11,6 +11,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.jetbrains.annotations.Contract
+import org.jetbrains.intellij.build.getMavenRepositoryPath
 import java.io.File
 import java.nio.file.Path
 import java.time.Instant
@@ -59,7 +60,7 @@ private val ISO_LOCAL_TIME = DateTimeFormatterBuilder()
   .toFormatter()
 
 private var rootPathsWithEndSlash = emptyList<String>()
-private var m2PathsWithEndSlash = createPathList(Path.of(System.getProperty("user.home"), ".m2/repository"))
+private var m2PathsWithEndSlash = createPathList(Path.of(getMavenRepositoryPath()))
 
 private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpochNanos: Long) {
   sb.append(span.name)

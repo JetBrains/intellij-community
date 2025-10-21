@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.PsiEnumConstant
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -25,7 +26,7 @@ internal class EnumEntryImportCandidatesProvider(override val importContext: Imp
         return !enumEntry.isImported() && enumEntry.canBeImported()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(name: Name, indexProvider: KtSymbolFromIndexProvider): List<CallableImportCandidate> {
         val kotlinEnumEntries = indexProvider.getKotlinEnumEntriesByName(

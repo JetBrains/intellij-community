@@ -1,25 +1,29 @@
-### auto-generated section `build kotlin.code-insight.line-markers.k2` start
+### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  name = "custom_line-markers",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
 )
 
-jvm_resources(
-  name = "kotlin-code-insight-line-markers-k2_resources",
-  files = glob(["resources/**/*"]),
+resourcegroup(
+  name = "line-markers_resources",
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-code-insight-line-markers-k2",
-  module_name = "kotlin.code-insight.line-markers.k2",
+  name = "line-markers",
+  module_name = "intellij.kotlin.codeInsight.lineMarkers",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":line-markers_resources"],
+  kotlinc_opts = ":custom_line-markers",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -36,26 +40,25 @@ jvm_library(
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
-    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
     "//platform/core-ui",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
     "//java/java-indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
-  ],
-  runtime_deps = [":kotlin-code-insight-line-markers-k2_resources"]
+  ]
 )
 
 jvm_library(
-  name = "kotlin-code-insight-line-markers-k2_test_lib",
+  name = "line-markers_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
-  associates = [":kotlin-code-insight-line-markers-k2"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_line-markers",
+  associates = [":line-markers"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -82,32 +85,34 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
-    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
-    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
     "//platform/core-ui",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
-    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
     "//platform/analysis-impl",
     "//java/java-indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-  ],
-  runtime_deps = [":kotlin-code-insight-line-markers-k2_resources"]
+  ]
 )
+### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` end
 
-jvm_test(
-  name = "kotlin-code-insight-line-markers-k2_test",
-  runtime_deps = [":kotlin-code-insight-line-markers-k2_test_lib"]
+### auto-generated section `test intellij.kotlin.codeInsight.lineMarkers` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "line-markers_test",
+  runtime_deps = [":line-markers_test_lib"]
 )
-### auto-generated section `build kotlin.code-insight.line-markers.k2` end
+### auto-generated section `test intellij.kotlin.codeInsight.lineMarkers` end

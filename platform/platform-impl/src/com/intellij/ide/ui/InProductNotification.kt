@@ -210,7 +210,7 @@ private fun getDiscount() {
 
 @Internal
 class InProductNotificationDialog(project: Project?, val days: Int, val time: Long) :
-  LicenseExpirationDialog(project, "/images/Expiration.png", 377, 242) {
+  LicenseExpirationDialog(project, "/images/Expiration.png") {
 
   companion object {
     @JvmStatic

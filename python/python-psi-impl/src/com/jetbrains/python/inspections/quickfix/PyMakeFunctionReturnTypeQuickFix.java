@@ -20,7 +20,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -36,13 +35,16 @@ import java.util.List;
 
 public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<PyFunction> {
   private final String myReturnTypeName;
+  private final String myReturnTypeFqName;
 
   public PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     super(function);
-    myReturnTypeName = getReturnTypeName(function, context);
+    PyType type = getReturnType(function, context);
+    myReturnTypeName = PythonDocumentationProvider.getTypeHint(type, context);
+    myReturnTypeFqName = PythonDocumentationProvider.getFullyQualifiedTypeHint(type, context);
   }
 
-  private static @NotNull String getReturnTypeName(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  private static @Nullable PyType getReturnType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     PyType type = function.getInferredReturnType(context);
     if (function.isAsync()) {
       var unwrappedType = PyTypingTypeProvider.unwrapCoroutineReturnType(type);
@@ -50,7 +52,7 @@ public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<
         type = unwrappedType.get();
       }
     }
-    return PythonDocumentationProvider.getTypeHint(type, context);
+    return type;
   }
 
   @Override
@@ -67,14 +69,12 @@ public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<
   protected void invoke(@NotNull ActionContext context, @NotNull PyFunction function, @NotNull ModPsiUpdater updater) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(function.getProject());
 
-    boolean shouldAddImports = false;
-
     PyAnnotation annotation = function.getAnnotation();
     if (annotation != null) {
       PyExpression annotationExpr = annotation.getValue();
       if (annotationExpr != null) {
         annotationExpr.replace(elementGenerator.createExpressionFromText(LanguageLevel.PYTHON34, myReturnTypeName));
-        shouldAddImports = true;
+        PyTypeHintGenerationUtil.addImportsForTypeAnnotations(List.of(myReturnTypeFqName), function);
       }
     }
     
@@ -85,22 +85,7 @@ public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<
       typeCommentAnnotation.append("-> ").append(myReturnTypeName);
       typeComment.replace(
         elementGenerator.createFromText(LanguageLevel.PYTHON27, PsiComment.class, typeCommentAnnotation.toString()));
-      shouldAddImports = true;
-    }
-    
-    if (shouldAddImports) {
-      addImportsForTypeAnnotations(function);
-    }
-  }
-
-  private static void addImportsForTypeAnnotations(@NotNull PyFunction function) {
-    PsiFile file = function.getContainingFile();
-    if (file == null) return;
-    TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), file);
-    
-    PyType typeForImports = function.getInferredReturnType(context);
-    if (typeForImports != null) {
-      PyTypeHintGenerationUtil.addImportsForTypeAnnotations(List.of(typeForImports), context, file);
+      PyTypeHintGenerationUtil.addImportsForTypeAnnotations(List.of(myReturnTypeFqName), function);
     }
   }
 }

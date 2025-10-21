@@ -1,4 +1,4 @@
-// "Remove useless elvis operator" "true"
+// "Remove redundant elvis operator" "true"
 fun test() {
     ((({ "" } <caret>?: null)))
 }

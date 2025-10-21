@@ -14,7 +14,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +51,7 @@ public final class PreviewHandler<T> {
   public PreviewHandler(@NotNull Project project,
                         @NotNull ListPopup listPopup,
                         @NotNull Class<T> allowedClass,
-                        @NotNull Function<? super T, ? extends @NotNull IntentionPreviewInfo> previewGenerator) {
+                        @NotNull @RequiresBackgroundThread @RequiresReadLock Function<? super T, ? extends @NotNull IntentionPreviewInfo> previewGenerator) {
     myListPopup = listPopup;
     myClass = allowedClass;
     myProcessor = new IntentionPreviewPopupUpdateProcessor(project, obj -> previewGenerator.apply(myClass.cast(obj)));

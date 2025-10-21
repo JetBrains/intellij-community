@@ -10,6 +10,3 @@ fun main(args: Array<String>) {
     a(<caret>)
 }
 
-/*
-Text: (<highlight>i: Int</highlight>), Disabled: false, Strikeout: false, Green: true
-*/

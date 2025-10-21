@@ -40,7 +40,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     myNls = nls;
   }
   
-  public static NlsInfoFactory factory() {
+  public static RestrictionInfoFactory<NlsInfo> factory() {
     return NlsInfoFactory.INSTANCE;
   }
   
@@ -50,14 +50,14 @@ public abstract class NlsInfo implements RestrictionInfo {
    * {@link ThreeState#NO} if the string must not be localized (see {@link NonLocalized});<br>
    * {@link ThreeState#UNSURE} if it's not explicitly specified (see {@link NlsUnspecified});
    */
-  public @NotNull ThreeState getNlsStatus() {
+  @NotNull ThreeState getNlsStatus() {
     return myNls;
   }
 
   /**
    * @return true if the element with given localization status can be used in localized context.
    */
-  public boolean canBeUsedInLocalizedContext() {
+  boolean canBeUsedInLocalizedContext() {
     return this instanceof Localized || this instanceof NlsSafe;
   }
 
@@ -71,7 +71,7 @@ public abstract class NlsInfo implements RestrictionInfo {
   /**
    * @return "non-localized" info object
    */
-  public static @NotNull NonLocalized nonLocalized() {
+  static @NotNull NonLocalized nonLocalized() {
     return NonLocalized.INSTANCE;
   }
 
@@ -79,7 +79,7 @@ public abstract class NlsInfo implements RestrictionInfo {
    * @param expression expression to determine the localization status for
    * @return localization status
    */
-  public static @NotNull NlsInfo forExpression(@NotNull UExpression expression) {
+  static @NotNull NlsInfo forExpression(@NotNull UExpression expression) {
     return forExpression(expression, true);
   }
 
@@ -396,7 +396,7 @@ public abstract class NlsInfo implements RestrictionInfo {
       return myCapitalization;
     }
 
-    public @NotNull String suggestAnnotation(PsiElement context) {
+    @NotNull String suggestAnnotation(PsiElement context) {
       if (myAnnotationName != null &&
           JavaPsiFacade.getInstance(context.getProject()).findClass(myAnnotationName, context.getResolveScope()) != null) {
         return myAnnotationName;
@@ -487,7 +487,7 @@ public abstract class NlsInfo implements RestrictionInfo {
      * @return a place where it's desired to put an explicit {@link Nls} or {@link NonNls} annotation.
      * May return null if such kind of place cannot be determined.
      */
-    public @Nullable PsiModifierListOwner getAnnotationCandidate() {
+    @Nullable PsiModifierListOwner getAnnotationCandidate() {
       return myCandidate;
     }
 

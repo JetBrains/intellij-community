@@ -13,8 +13,8 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
       """
         from typing import cast
 
-        <warning descr="Cast of type 'str' to type 'int' may be a mistake because no possible value of one is assignable with the other. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
-        <warning descr="Cast of type 'list[str]' to type 'list[int]' may be a mistake because no possible value of one is assignable with the other. If this was intentional, cast the expression to 'object' first.">cast(list[int], ["a"])</warning>
+        <warning descr="Cast of type 'str' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
+        <warning descr="Cast of type 'list[str]' to type 'list[int]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[int], ["a"])</warning>
 
         cast(int, object())  # ok
         cast(object, 1)  # ok
@@ -50,7 +50,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         class B1(A): pass
         class B2(A): pass
         
-        <warning descr="Cast of type 'B1' to type 'B2' may be a mistake because no possible value of one is assignable with the other. If this was intentional, cast the expression to 'A' first.">cast(B2, B1())</warning>
+        <warning descr="Cast of type 'B1' to type 'B2' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'A' first.">cast(B2, B1())</warning>
       """.trimIndent()
     )
   }
@@ -81,7 +81,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         class B1(A): pass
         class B2(A): pass
         
-        <warning descr="Cast of type 'B1' to type 'B2' may be a mistake because no possible value of one is assignable with the other. If this was intentional, cast the expression to 'A' first."><caret>cast(B2, B1())</warning>
+        <warning descr="Cast of type 'B1' to type 'B2' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'A' first."><caret>cast(B2, B1())</warning>
       """.trimIndent()
     myFixture.configureByText(PythonFileType.INSTANCE, text)
     configureInspection()
@@ -119,7 +119,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         cast(A2 | None, a1)  # ok
         cast(A1 | None, a2)  # ok
         
-        <warning descr="Cast of type 'A1 | None' to type 'int | str' may be a mistake because no possible value of one is assignable with the other. If this was intentional, cast the expression to 'object' first.">cast(int | str, a1)</warning>
+        <warning descr="Cast of type 'A1 | None' to type 'int | str' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int | str, a1)</warning>
     """.trimIndent())
   }
 }

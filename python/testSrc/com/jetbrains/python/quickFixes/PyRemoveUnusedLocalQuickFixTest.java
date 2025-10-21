@@ -103,4 +103,16 @@ public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   public void testComprehensionIterator() {
     doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
   }
+
+  // PY-85080
+  public void testRemoveUnusedTypeParameterInFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.type.parameter")));
+  }
+
+  // PY-85080
+  public void testRemoveUnusedTypeParameterInTypeAlias() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.type.parameter")));
+  }
 }

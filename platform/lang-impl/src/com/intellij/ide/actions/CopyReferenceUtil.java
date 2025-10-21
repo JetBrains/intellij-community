@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -50,7 +51,8 @@ public final class CopyReferenceUtil {
     }
   }
 
-  static @Unmodifiable @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
+  @ApiStatus.Internal
+  public static @Unmodifiable @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
     List<PsiElement> elements = new ArrayList<>();
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);

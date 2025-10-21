@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -60,7 +60,7 @@ class FacetWorkspaceModelTest {
       projectModel.project.workspaceModel.updateProjectModel { builder ->
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
         builder.modifyModuleEntity(moduleEntity) {
-         this.facets += FacetEntity.invoke(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource)
+         this.facets += FacetEntity(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource)
         }
       }
     }
@@ -89,7 +89,7 @@ class FacetWorkspaceModelTest {
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
         Assert.assertTrue(moduleEntity.facets.isEmpty())
         builder.modifyModuleEntity(moduleEntity) {
-          this.facets = listOf(FacetEntity.invoke(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource))
+          this.facets = listOf(FacetEntity(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource))
         }
       }
     }

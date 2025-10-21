@@ -15,7 +15,6 @@ import static com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.ex
 import static java.lang.Math.min;
 import static java.lang.String.format;
 
-
 public class DynamicNestedTable implements NestedTable {
   public static final int UNKNOWN_TOTAL_ROWS_NUM = -1;
 

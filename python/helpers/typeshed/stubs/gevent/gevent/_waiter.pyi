@@ -21,6 +21,7 @@ _ThrowArgs: TypeAlias = (
 )
 
 class Waiter(Generic[_T]):
+    __slots__ = ["hub", "greenlet", "value", "_exception"]
     @property
     def hub(self) -> Hub: ...  # readonly in Cython
     @property
@@ -42,4 +43,5 @@ class Waiter(Generic[_T]):
     def __call__(self, source: _ValueSource[_T]) -> None: ...
 
 @final
-class MultipleWaiter(Waiter[_T]): ...
+class MultipleWaiter(Waiter[_T]):
+    __slots__ = ["_values"]

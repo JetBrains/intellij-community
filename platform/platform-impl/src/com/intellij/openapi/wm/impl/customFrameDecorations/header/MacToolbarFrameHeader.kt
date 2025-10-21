@@ -8,9 +8,10 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
@@ -24,6 +25,7 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.jetbrains.JBR
@@ -40,9 +42,10 @@ import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JRootPane
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
-// Fullscreen controls have fixed 52 points width, and scalable 13 points left and right gaps
+// Fullscreen controls have fixed 52 points width and scalable 13 points left and right gaps
 private val GAP_FOR_BUTTONS: Int get() = 26 +  JBValue.Float(52f, true).unscaled.roundToInt()
 
 internal class MacToolbarFrameHeader(
@@ -50,7 +53,7 @@ internal class MacToolbarFrameHeader(
   private val frame: JFrame,
   private val rootPane: JRootPane,
   private val isAlwaysCompact: Boolean = false,
-) : JPanel(), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
+) : JPanel(), MainFrameCustomHeader, ToolbarHolder, UISettingsListener, BorderPainterHolder {
   private var view: HeaderView
 
   private val updateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -71,10 +74,10 @@ internal class MacToolbarFrameHeader(
 
   val customTitleBar: WindowDecorations.CustomTitleBar?
 
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
-    // color full toolbar
+    // a colorful toolbar
     isOpaque = false
     updateBackground(true)
 
@@ -101,7 +104,7 @@ internal class MacToolbarFrameHeader(
 
     coroutineScope.launch(ModalityState.any().asContextElement()) {
       if (!updateView(isCompactHeader = isCompactHeader())) {
-        // view is not updated - init the view that was created in our constructor
+        // view is not updated - init the view created in our constructor
         view.init(customTitleBar)
       }
 
@@ -131,9 +134,8 @@ internal class MacToolbarFrameHeader(
     repaintWhenProjectGradientOffsetChanged(this)
   }
 
-  override fun getComponentGraphics(graphics: Graphics?): Graphics? {
-    val componentGraphics = super.getComponentGraphics(graphics)
-    return InternalUICustomization.getInstance()?.transformGraphics(this, componentGraphics) ?: componentGraphics
+  override fun getComponentGraphics(graphics: Graphics): Graphics {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
   }
 
   private fun isCompactHeaderFast(): Boolean {
@@ -168,7 +170,7 @@ internal class MacToolbarFrameHeader(
       return
     }
 
-    // isOpaque is false to paint colorful toolbar gradient, so, we have to draw background on our own
+    // isOpaque is false to paint a colorful toolbar gradient, so we have to draw background on our own
     g.color = background
     g.fillRect(0, 0, width, height)
   }
@@ -195,7 +197,7 @@ internal class MacToolbarFrameHeader(
   override fun isColorfulToolbar(): Boolean = view is ToolbarHeaderView
 
   private suspend fun updateView(isCompactHeader: Boolean): Boolean {
-    val view = withContext(Dispatchers.EDT) {
+    val view = withContext(Dispatchers.UI) {
       if (isCompactHeader == (view is CompactHeaderView)) {
         // IDEA-324521 Colored toolbar rendering is broken when enabling/disabling colored toolbar via main toolbar context menu
         repaint()
@@ -231,12 +233,13 @@ internal class MacToolbarFrameHeader(
   override fun doLayout() {
     super.doLayout()
 
-    // during opening project JBR loses some events and _deliverMoveResizeEvent is not happened
-    // so we have swing frame with not empty bounds but with empty frame peer bounds and as result we have blank window
-    // if native bounds is empty we push custom header height that leads to sets native bounds
+    // During project opening, JBR misses some events and _deliverMoveResizeEvent doesn't occur.
+    // As a result, we have a Swing frame with non-empty bounds, but its frame peer has empty bounds,
+    // which leads to a blank window.
+    // If the native bounds are empty, we push a custom header height to trigger setting native bounds.
     val height = height
     if (height != 0 && customTitleBar != null &&
-        (Math.abs(customTitleBar.height - height) > 0.1 || MacUtil.isNativeBoundsEmpty(frame))) {
+        (abs(customTitleBar.height - height) > 0.1 || MacUtil.isNativeBoundsEmpty(frame))) {
       customTitleBar.height = height.toFloat()
     }
   }
@@ -268,6 +271,7 @@ internal class MacToolbarFrameHeader(
     return accessibleContext
   }
 
+  @Suppress("RedundantInnerClassModifier")
   private inner class AccessibleCustomHeader : AccessibleJPanel() {
     override fun getAccessibleRole() = AccessibilityUtils.GROUPED_ELEMENTS
   }
@@ -290,7 +294,7 @@ private sealed interface HeaderView {
 }
 
 private class ToolbarHeaderView(private val container: JPanel, parentCoroutineScope: CoroutineScope, frame: JFrame, isFullScreen: Boolean) : HeaderView {
-  private val toolbar: MainToolbar = MainToolbar(parentCoroutineScope.childScope(), frame) { isFullScreen }
+  private val toolbar = MainToolbar(parentCoroutineScope.childScope("MainToolbar"), frame) { isFullScreen }
 
   init {
     toolbar.border = JBUI.Borders.empty()

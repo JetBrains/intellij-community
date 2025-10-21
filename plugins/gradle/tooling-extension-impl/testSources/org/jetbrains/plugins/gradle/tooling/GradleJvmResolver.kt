@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.tooling
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleOlderThan
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -36,50 +35,46 @@ class GradleJvmResolver(
            && !javaVersionRestriction.isRestricted(gradleVersion, javaVersion)
   }
 
-  private fun throwSdkNotFoundException(): Nothing {
-    val supportedJavaVersions = GradleJvmSupportMatrix.getSupportedJavaVersions(gradleVersion)
-    val restrictedJavaVersions = supportedJavaVersions.filter { isSdkSupported(it) }
-    val suggestedJavaHomePaths = sdkType.suggestHomePaths().sortedWith(NaturalComparator.INSTANCE)
-    throw AssertionError("""
-      |Cannot find JDK for $gradleVersion.
-      |Please, research JDK restrictions or discuss it with test author, and install JDK manually.
-      |Supported JDKs for current Gradle version: $supportedJavaVersions
-      |Supported JDKs for current restrictions: $restrictedJavaVersions
-      |Checked paths: [
-        ${suggestedJavaHomePaths.joinToString("\n") { "|  $it" }}
-      |]
-      |
-    """.trimMargin())
-  }
-
   private fun resolveGradleJvmImpl(parentDisposable: Disposable): Sdk {
-    val sdk = findSdkInTable()
-              ?: findSdkHomePathOnDisk()
-                ?.let { createAndAddSdk(it, parentDisposable) }
-              ?: throwSdkNotFoundException()
-    println("""
-      |
-      |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
-      |Gradle JVM name: ${sdk.name}
-      |Gradle JVM version: ${sdk.versionString}
-      |Gradle JVM path: ${sdk.homePath}
-      |
-    """.trimMargin())
-    return sdk
+    val homePath = resolveGradleJvmHomePathImpl()
+    return requireNotNull(createAndAddSdk(homePath, parentDisposable)) {
+      """
+        |
+        |Cannot create JDK for the Gradle ${gradleVersion.version}
+        |Gradle JVM version: ${sdkType.getVersionString(homePath)}
+        |Gradle JVM path: $homePath
+        |
+      """.trimMargin()
+    }
   }
 
   private fun resolveGradleJvmHomePathImpl(): String {
-    val homePath = findSdkInTable()?.homePath
-                   ?: findSdkHomePathOnDisk()
-                   ?: throwSdkNotFoundException()
-    println("""
-      |
-      |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
-      |Gradle JVM version: ${sdkType.getVersionString(homePath)}
-      |Gradle JVM path: $homePath
-      |
-    """.trimMargin())
-    return homePath
+    return requireNotNull(findSdkHomePathOnDisk()) {
+      val supportedJavaVersions = GradleJvmSupportMatrix.getSupportedJavaVersions(gradleVersion)
+      val restrictedJavaVersions = supportedJavaVersions.filter { isSdkSupported(it) }
+      val suggestedJavaHomePaths = sdkType.suggestHomePaths().sortedWith(NaturalComparator.INSTANCE)
+      """
+        |
+        |Cannot find JDK for the Gradle ${gradleVersion.version}.
+        |Please, research JDK restrictions or discuss it with test author, and install JDK manually.
+        |Supported JDKs for current Gradle version:
+        |  $supportedJavaVersions
+        |Supported JDKs for current restrictions:
+        |  $restrictedJavaVersions
+        |Checked paths: [
+           ${suggestedJavaHomePaths.joinToString("\n") { "|  $it" }}
+        |]
+        |
+      """.trimMargin()
+    }.also { homePath ->
+      println("""
+        |
+        |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
+        |Gradle JVM version: ${sdkType.getVersionString(homePath)}
+        |Gradle JVM path: $homePath
+        |
+      """.trimMargin())
+    }
   }
 
   private fun isJavaSupportedByGradleToolingApi(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
@@ -90,15 +85,6 @@ class GradleJvmResolver(
       }
     }
     return true
-  }
-
-  private fun findSdkInTable(): Sdk? {
-    val table = ProjectJdkTable.getInstance()
-    return ReadAction.compute(ThrowableComputable { table.allJdks })
-      .asSequence()
-      .filter { it.versionString != null && isSdkSupported(it.versionString!!) }
-      .sortedBy { it.versionString }
-      .firstOrNull()
   }
 
   private fun findSdkHomePathOnDisk(): String? {

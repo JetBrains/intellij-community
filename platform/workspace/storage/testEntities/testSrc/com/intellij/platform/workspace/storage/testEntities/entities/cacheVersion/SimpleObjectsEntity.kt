@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -10,41 +10,7 @@ import com.intellij.platform.workspace.storage.annotations.Open
 
 interface SimpleObjectsEntity: WorkspaceEntity {
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleObjectsSealedClass
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<SimpleObjectsEntity> {
-    override var entitySource: EntitySource
-    var someData: SimpleObjectsSealedClass
-  }
-
-  companion object : EntityType<SimpleObjectsEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      someData: SimpleObjectsSealedClass,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.someData = someData
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifySimpleObjectsEntity(
-  entity: SimpleObjectsEntity,
-  modification: SimpleObjectsEntity.Builder.() -> Unit,
-): SimpleObjectsEntity {
-  return modifyEntity(SimpleObjectsEntity.Builder::class.java, entity, modification)
-}
-//endregion
 
 @Open
 sealed class SimpleObjectsSealedClass {

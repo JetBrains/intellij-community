@@ -5,9 +5,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.util.system.OS
 
 internal class DefaultHostIdeInfoService : HostIdeInfoService {
-  override fun getHostInfo(): HostInfo {
-    return HostInfo(productCode = ApplicationInfo.getInstance().build.productCode,
-                    osName = OS.CURRENT.name,
-                    osVersion = OS.CURRENT.version)
-  }
+  override fun getHostInfo(): HostInfo =
+    HostInfo(ApplicationInfo.getInstance().build.productCode, OS.CURRENT.name, OS.CURRENT.version())
 }

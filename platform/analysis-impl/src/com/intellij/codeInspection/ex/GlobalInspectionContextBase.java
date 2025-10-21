@@ -298,10 +298,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
           runTools(scope, runGlobalToolsOnly, isOfflineInspections);
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (IndexNotReadyException e) {
           throw e;
         }
         catch (Throwable e) {
+          if (Logger.shouldRethrow(e)) throw e;
           LOG.error(e);
         }
         return  null;

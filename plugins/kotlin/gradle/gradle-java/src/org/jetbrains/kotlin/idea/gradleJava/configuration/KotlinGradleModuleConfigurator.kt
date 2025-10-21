@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.projectStructure.allModules
@@ -36,13 +37,15 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
         if (forKotlinDsl) "kotlin(\"jvm\")" else "id 'org.jetbrains.kotlin.jvm'"
 
-    override fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion) = getDefaultJvmTarget(sdk, version)?.description
+    override fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion): String? = getDefaultJvmTarget(sdk, version)?.description
 
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !module.isAndroidModule()
     }
 
     override fun canRunAutoConfig(): Boolean = isAutoConfigurationEnabled()
+
+    override fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
 
     override fun configureModule(
         module: Module,
@@ -68,9 +71,9 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
 
     companion object {
         @NonNls
-        const val NAME = "gradle"
+        const val NAME: String = "gradle"
 
         @NonNls
-        const val KOTLIN = "kotlin"
+        const val KOTLIN: String = "kotlin"
     }
 }

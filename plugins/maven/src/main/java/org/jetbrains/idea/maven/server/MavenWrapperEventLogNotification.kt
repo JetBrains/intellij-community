@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle.message
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperProperties
 import org.jetbrains.idea.maven.statistics.MavenNotificationDisplayIds
+import java.nio.file.Path
 
 class MavenWrapperEventLogNotification {
   companion object {
@@ -23,7 +24,7 @@ class MavenWrapperEventLogNotification {
     fun noDistributionUrlEvent(project: Project, multiModuleDir: String) {
       val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
       ApplicationManager.getApplication().invokeLater {
-        val wrapperPropertyFile = LocalFileSystem.getInstance().findFileByPath(multiModuleDir)?.let { getWrapperProperties(it) }
+        val wrapperPropertyFile = LocalFileSystem.getInstance().findFileByPath(multiModuleDir)?.let { getWrapperProperties(it.toNioPath()) }
         if (wrapperPropertyFile == null) {
           wrapperPropertyFileNotFound(notificationGroup, project)
         }
@@ -84,7 +85,8 @@ class MavenWrapperEventLogNotification {
 
     private fun distributionUrlEmpty(notificationGroup: NotificationGroup,
                                      project: Project,
-                                     wrapperPropertyFile: VirtualFile) {
+                                     wrapperPropertyFile: Path
+    ) {
       notificationGroup
         .createNotification(
           message("maven.wrapper.notification.title"),
@@ -93,7 +95,7 @@ class MavenWrapperEventLogNotification {
         )
         .setDisplayId(MavenNotificationDisplayIds.WRAPPER_EMPTY_URL)
         .addAction(NotificationAction.createSimple(message("maven.wrapper.notification.empty.url.action.check")) {
-          showFile(project, wrapperPropertyFile.toNioPath(), null)
+          showFile(project, wrapperPropertyFile, null)
         })
         .addAction(NotificationAction.createSimple(message("maven.wrapper.notification.empty.url.action.disable")) {
           ShowSettingsUtil.getInstance().showSettingsDialog(project,

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import java.nio.file.Path
 
@@ -52,6 +53,10 @@ data class CustomAssetEntry(
     get() = "custom-asset"
 }
 
+internal interface ModuleOwnedFileEntry {
+  val owner: ModuleItem?
+}
+
 /**
  * Represents a file in a module-level library
  */
@@ -63,7 +68,8 @@ internal data class ModuleLibraryFileEntry(
   override val size: Int,
   override val hash: Long,
   override val relativeOutputFile: String?,
-) : DistributionFileEntry, LibraryFileEntry {
+  override val owner: ModuleItem?,
+) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "module-library-file"
 }
@@ -92,21 +98,25 @@ internal data class ProjectLibraryEntry(
   override val hash: Long,
   override val size: Int,
   override val relativeOutputFile: String?,
-) : DistributionFileEntry, LibraryFileEntry {
+) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
   override val type: String
-    get() = "project-library" }
+    get() = "project-library"
+
+  override val owner: ModuleItem?
+    get() = data.owner
+}
 
 /**
  * Represents production classes of a module
  */
 data class ModuleOutputEntry(
   override val path: Path,
-  @JvmField val moduleName: String,
+  override val owner: ModuleItem,
   @JvmField val size: Int,
   override val hash: Long,
   override val relativeOutputFile: String,
   @JvmField val reason: String? = null,
-) : DistributionFileEntry {
+) : DistributionFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "module-output"
 }

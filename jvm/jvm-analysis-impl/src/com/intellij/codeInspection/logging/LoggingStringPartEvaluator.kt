@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.openapi.progress.ProgressManager
@@ -109,7 +109,7 @@ internal class LoggingStringPartEvaluator {
       if (holders == null) return null
       val result = mutableListOf<PartHolder>()
       for (holder in holders) {
-        if (holder.isConstant && holder.text != null && result.size > 0 && result.last().isConstant && result.last().text != null) {
+        if (holder.isConstant && holder.text != null && result.isNotEmpty() && result.last().isConstant && result.last().text != null) {
           val newPart = PartHolder(result.last().text + holder.text, true)
           result.removeLast()
           result.add(newPart)

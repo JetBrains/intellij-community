@@ -10,6 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -265,7 +266,7 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
     return false
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KaType? =
     calculateAllTypes<KaType>(element) { declarationType, allTypes, cannotBeNull ->
         if (declarationType is KaErrorType) return@calculateAllTypes null
@@ -292,20 +293,21 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
             else -> declarationType
         }
 
-        if (ktType?.isAnyType == false && isUnclearType(ktType, element)) {
+        if (ktType != null && isUnclearType(ktType, element)) {
             ktType
         } else {
             null
         }
     }
 
-context(KaSession)
+context(_: KaSession)
 private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean {
     if (element !is KtProperty) return true
 
     val initializer = element.initializer ?: return true
     if (initializer is KtConstantExpression || initializer is KtStringTemplateExpression) return false
     if (initializer is KtUnaryExpression && initializer.baseExpression is KtConstantExpression) return false
+    if (initializer.smartCastInfo != null) return true
 
     if (isConstructorCall(initializer)) {
         return false
@@ -326,7 +328,7 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
         }
     }
 
-    return true
+    return !type.isAnyType
 }
 
 internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTreeSink) {
@@ -342,7 +344,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
     val resolveCall = initializer.resolveToCall() ?: return false
@@ -355,7 +357,7 @@ private fun isConstructorCall(initializer: KtExpression?): Boolean {
     return constructorCall != null && (constructorCall.symbol.typeParameters.isEmpty() || callExpression.typeArgumentList != null)
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtExpression.isClassOrPackageReference(): Boolean =
     when (this) {
         is KtNameReferenceExpression ->

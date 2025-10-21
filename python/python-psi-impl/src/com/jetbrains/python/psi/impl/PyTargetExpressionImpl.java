@@ -182,6 +182,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
       List<PyType> collect = StreamEx.of(getReference(resolveContext).multiResolve(false))
         .map(ResolveResult::getElement)
+        .filter(e -> e != this)
         .select(PyTypedElement.class)
         .map(context::getType)
         .toList();
@@ -246,7 +247,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       .toStream(withType)
       .select(PyClassType.class)
       .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
-      .collect(PyTypeUtil.toUnion());
+      .collect(PyTypeUtil.toUnion(withType));
   }
 
   private static @Nullable PyType getEnterTypeFromPyClass(@NotNull PyExpression withExpression,

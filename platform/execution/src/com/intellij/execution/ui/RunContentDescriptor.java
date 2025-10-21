@@ -4,17 +4,22 @@ package com.intellij.execution.ui;
 import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.RunContentDescriptorId;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +36,12 @@ public class RunContentDescriptor implements Disposable {
   // Should be used in com.intellij.ui.content.Content
   public static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
   public static final Key<String> CONTENT_TOOL_WINDOW_ID_KEY = Key.create("ContentToolWindowId");
+  private static final Logger LOG = Logger.getInstance(RunContentDescriptor.class);
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final MutableReactiveProperty<@TabTitle @Nullable String> myDisplayNameView = new MutableReactiveProperty<>(null);
-  private final MutableReactiveProperty<@Nullable Icon> myIconView = new MutableReactiveProperty<>(null);
+  private final MutableStateFlow<@TabTitle @Nullable String> myDisplayNameView = StateFlowKt.MutableStateFlow(null);
+  private final MutableStateFlow<@Nullable Icon> myIconView = StateFlowKt.MutableStateFlow(null);
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
@@ -50,9 +56,13 @@ public class RunContentDescriptor implements Disposable {
 
   private Content myContent;
   private String myContentToolWindowId;
+  private RunContentDescriptorId myId = null;
   private final AnAction @NotNull [] myRestartActions;
 
   private final @Nullable Runnable myActivationCallback;
+
+  private String myRunConfigurationName;
+  private String myRunConfigurationTypeId;
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
@@ -169,7 +179,7 @@ public class RunContentDescriptor implements Disposable {
    * @return the icon property that can be observed for the most recent icon value.
    */
   @ApiStatus.Experimental
-  public ReactiveProperty<Icon> getIconProperty() {
+  public StateFlow<Icon> getIconProperty() {
     return myIconView;
   }
 
@@ -211,7 +221,7 @@ public class RunContentDescriptor implements Disposable {
    * @return the title property that can be observed for the most recent title value.
    */
   @ApiStatus.Experimental
-  public ReactiveProperty<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
+  public StateFlow<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
     return myDisplayNameView;
   }
 
@@ -230,6 +240,37 @@ public class RunContentDescriptor implements Disposable {
 
   public void setAttachedContent(@NotNull Content content) {
     myContent = content;
+  }
+
+  @ApiStatus.Internal
+  public RunContentDescriptorId getId() {
+    return myId;
+  }
+
+  @ApiStatus.Internal
+  public void setId(RunContentDescriptorId id) {
+    LOG.debug("Id " + id + " is set for " + this + "(old id=" + myId + ")");
+    myId = id;
+  }
+
+  @ApiStatus.Internal
+  public String getRunConfigurationName() {
+    return myRunConfigurationName;
+  }
+
+  @ApiStatus.Internal
+  public void setRunConfigurationName(String runConfigurationName) {
+    myRunConfigurationName = runConfigurationName;
+  }
+
+  @ApiStatus.Internal
+  public String getRunConfigurationTypeId() {
+    return myRunConfigurationTypeId;
+  }
+
+  @ApiStatus.Internal
+  public void setRunConfigurationTypeId(String runConfigurationTypeId) {
+    myRunConfigurationTypeId = runConfigurationTypeId;
   }
 
   /**

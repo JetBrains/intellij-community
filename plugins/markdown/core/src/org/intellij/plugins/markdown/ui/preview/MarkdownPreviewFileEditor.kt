@@ -214,8 +214,19 @@ class MarkdownPreviewFileEditor(
 
   @RequiresEdt
   private suspend fun updateHtml() {
-    val panel = this.panel ?: return
-    if (!file.isValid || isDisposed) {
+    logger.info("MarkdownPreviewFileEditor: updateHtml")
+    val panel = this.panel ?: run {
+      logger.warn("MarkdownPreviewFileEditor: panel is null, cannot update preview")
+      return
+    }
+
+    if (isDisposed) {
+      logger.warn("MarkdownPreviewFileEditor: cannot update preview for disposed file ${file.path}")
+      return
+    }
+
+    if (!file.isValid) {
+      logger.warn("MarkdownPreviewFileEditor: Cannot update preview for invalid file ${file.path}")
       return
     }
 
@@ -246,6 +257,7 @@ class MarkdownPreviewFileEditor(
 
   @RequiresEdt
   private suspend fun attachHtmlPanel() {
+    logger.info("MarkdownPreviewFileEditor: attachHtmlPanel")
     val settings = MarkdownSettings.getInstance(project)
     val panelProvider = retrievePanelProvider(settings)
     val panel = panelProvider.createHtmlPanel(project, file)

@@ -35,7 +35,8 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         context: ActionContext,
         element: E,
     ): ModCommand = try {
-        ModCommand.psiUpdate(element) { e, updater ->
+        ModCommand.psiUpdate(context) { updater ->
+            val e = updater.getWritable(element)
             val elementContext = getElementContext(context, e)
                                  ?: throw NoContextException()
             invoke(context, e, elementContext, updater)
@@ -98,5 +99,11 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         ): C? = allowAnalysisOnEdt { // TODO: remove this workaround when IJPL-193738 is fixed.
             getElementContext(element)
         }
+    }
+
+    abstract class Contextless<E : KtElement>(
+        elementClass: KClass<E>,
+    ) : KotlinPsiUpdateModCommandAction<E, Unit>(null, elementClass) {
+        final override fun getElementContext(actionContext: ActionContext, element: E) {}
     }
 }

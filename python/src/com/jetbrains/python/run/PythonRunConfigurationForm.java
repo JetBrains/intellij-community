@@ -19,7 +19,7 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,11 +31,11 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 
-public class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
+@ApiStatus.Internal
+public final class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
   private final PythonRunConfigurationPanel content;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
-  private final Project myProject;
   private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
@@ -44,7 +44,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     content = new PythonRunConfigurationPanel(configuration, myCommonOptionsForm, new MyComboBox());
 
-    myProject = configuration.getProject();
+    Project project = configuration.getProject();
 
     var chooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
       .withExtensionFilter(PyBundle.message("python.scripts"), "py", "")
@@ -69,7 +69,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     //myTargetComboBox.addActionListener(e -> updateRunModuleMode());
 
-    content.inputFileTextFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor(), myProject));
+    content.inputFileTextFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor(),
+                                                                                                    project));
     CommonProgramParametersPanel.addMacroSupport(content.scriptParametersTextField.getEditorField());
   }
 
@@ -149,13 +150,6 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public JComponent getAnchor() {
     return anchor;
-  }
-
-  public boolean isMultiprocessMode() {
-    return PyDebuggerOptionsProvider.getInstance(myProject).isAttachToSubprocess();
-  }
-
-  public void setMultiprocessMode(boolean multiprocess) {
   }
 
   public static @Nls String getScriptPathText() {

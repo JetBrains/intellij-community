@@ -721,18 +721,18 @@ public class SnippetMarkup {
       Replace replace = (Replace)markupNode;
       Selector selector = replace.selector();
       String replacement = replace.replacement();
-      if (selector instanceof Regex regex) {
+      if (selector instanceof Regex(Pattern pattern)) {
         boolean addLineBreak = false;
         if (content.endsWith("\n")) {
           content = content.substring(0, content.length() - 1);
           addLineBreak = true;
         }
         try {
-          content = regex.pattern().matcher(StringUtil.newBombedCharSequence(content, 1000)).replaceAll(replacement);
+          content = pattern.matcher(StringUtil.newBombedCharSequence(content, 1000)).replaceAll(replacement);
         }
         catch (StackOverflowError | ProcessCanceledException e) {
           ErrorMarkup replacementError = new ErrorMarkup(
-            replace.range(), JavaBundle.message("javadoc.snippet.error.regex.too.complex", "replace", regex.pattern().pattern()));
+            replace.range(), JavaBundle.message("javadoc.snippet.error.regex.too.complex", "replace", pattern.pattern()));
           visitor.visitError(replacementError);
         }
         catch (IllegalArgumentException | IndexOutOfBoundsException e) {
@@ -744,8 +744,8 @@ public class SnippetMarkup {
           content += "\n";
         }
       }
-      else if (selector instanceof Substring substring) {
-        content = content.replace(substring.substring(), replacement);
+      else if (selector instanceof Substring(String substring)) {
+        content = content.replace(substring, replacement);
       }
       else {
         content = replacement;

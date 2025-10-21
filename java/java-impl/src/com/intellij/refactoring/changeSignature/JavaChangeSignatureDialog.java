@@ -268,6 +268,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
+  public JComponent getPreferredFocusedComponent() {
+    return getTableComponent();
+  }
+
+  @Override
   protected ParametersListTable createParametersListTable() {
     return new ParametersListTable() {
       @Override

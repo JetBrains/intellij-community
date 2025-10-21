@@ -1,18 +1,17 @@
 from logging import Logger
+from typing import Final
 
-from aws_xray_sdk.core.daemon_config import DaemonConfig as DaemonConfig
-
-from ..exceptions.exceptions import InvalidDaemonAddressException as InvalidDaemonAddressException
+from aws_xray_sdk.core.models.entity import Entity
 
 log: Logger
-PROTOCOL_HEADER: str
-PROTOCOL_DELIMITER: str
-DEFAULT_DAEMON_ADDRESS: str
+PROTOCOL_HEADER: Final[str]
+PROTOCOL_DELIMITER: Final[str]
+DEFAULT_DAEMON_ADDRESS: Final[str]
 
 class UDPEmitter:
-    def __init__(self, daemon_address="127.0.0.1:2000") -> None: ...
-    def send_entity(self, entity) -> None: ...
-    def set_daemon_address(self, address) -> None: ...
+    def __init__(self, daemon_address: str = "127.0.0.1:2000") -> None: ...
+    def send_entity(self, entity: Entity) -> None: ...
+    def set_daemon_address(self, address: str | None) -> None: ...
     @property
     def ip(self): ...
     @property

@@ -1,7 +1,8 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.xml.structureView"/>
     <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.xml.parser"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

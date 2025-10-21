@@ -12,7 +12,7 @@ public class BooleanRenderer extends JCheckBox implements PropertyRenderer<Boole
   public JComponent getComponent(final RadRootContainer rootContainer, final Boolean value, final boolean selected, final boolean hasFocus){
     // Background and foreground
     if(selected){
-      setForeground(UIUtil.getTableSelectionForeground());
+      setForeground(UIUtil.getTableSelectionForeground(true));
       setBackground(UIUtil.getTableSelectionBackground(true));
     }else{
       setForeground(UIUtil.getTableForeground());

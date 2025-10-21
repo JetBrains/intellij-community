@@ -5,7 +5,8 @@
   "revision": "5a5062bd89090487e8e00321562f63bacc4d8833",
   "outputDir": "bin/ml-eval-insight-python-output",
   "strategy": {
-    "collectContextOnly": false
+    "collectContextOnly": false,
+    "insightsFilePath": "../mockInsights/Query Results.csv"
   },
   "actions": {
     "evaluationRoots": [

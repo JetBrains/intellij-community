@@ -428,6 +428,7 @@ class YAMLObjectMetaclass(type):
     def __init__(cls, name, bases, kwds) -> None: ...
 
 class YAMLObject(metaclass=YAMLObjectMetaclass):
+    __slots__ = ()
     yaml_loader: Any
     yaml_dumper: Any
     yaml_tag: Any

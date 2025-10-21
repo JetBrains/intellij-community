@@ -5,6 +5,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +21,8 @@ public interface UsageViewElementsListener {
     return false;
   }
 
+  @RequiresReadLock
+  @RequiresBackgroundThread
   default void beforeUsageAdded(@NotNull UsageView view, @NotNull Usage usage) {}
 
   default boolean isExcludedByDefault(@NotNull UsageView view, @NotNull Usage usage) {

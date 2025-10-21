@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -9,8 +10,9 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import java.util.function.Supplier
 
-abstract class ReplaceSizeCheckIntention(textGetter: () -> String) : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
+internal abstract class ReplaceSizeCheckIntention(textGetter: Supplier<@IntentionName String>) : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java, textGetter
 ) {
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
@@ -40,7 +42,7 @@ abstract class ReplaceSizeCheckIntention(textGetter: () -> String) : SelfTargeti
         private val targetExpression: KtExpression,
         private val newFunctionCall: String,
         private val negate: Boolean = false,
-        val intentionTextGetter: (() -> String)? = null
+        val intentionTextGetter: Supplier<@IntentionName String>? = null
     ) {
         fun newExpression(): KtExpression {
             val excl = if (negate) "!" else ""

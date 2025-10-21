@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *  * allows to [push messages][syncPublisher];
  *  * allows to [create connections][connect] for further [subscriptions][MessageBusConnection.subscribe];
  *
- * Use [com.intellij.openapi.components.ComponentManager.getMessageBus] to obtain one.
+ * Use [com.intellij.openapi.application.Application.getMessageBus] or [com.intellij.openapi.project.Project.getMessageBus] to obtain one.
  *
  * Please see [Messaging Infrastructure](https://plugins.jetbrains.com/docs/intellij/messaging-infrastructure.html) and
  * [Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html).

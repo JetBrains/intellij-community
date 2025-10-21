@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
-import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;

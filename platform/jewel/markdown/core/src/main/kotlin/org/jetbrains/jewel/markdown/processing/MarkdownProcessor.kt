@@ -31,7 +31,11 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
+import org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
+import org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlConverter
+import org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlNode
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 
@@ -59,6 +63,7 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  * @param languageRecognizer A lambda that can recognize code language names (e.g., when used for fenced code blocks)
  *   and convert them into a [MimeType]. By default, this uses [MimeType.Known.fromMarkdownLanguageName], but you can
  *   provide your own implementation to, for example, support languages that Jewel doesn't recognize yet.
+ * @param parseEmbeddedHtml If `true`, a subset of native HTML elements will be parsed as Markdown blocks.
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -68,7 +73,32 @@ public class MarkdownProcessor(
     private val commonMarkParser: Parser =
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
     private val languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
+    private val parseEmbeddedHtml: Boolean = false,
 ) {
+    public constructor(
+        extensions: List<MarkdownProcessorExtension> = emptyList(),
+        markdownMode: MarkdownMode = MarkdownMode.Standalone,
+        commonMarkParser: Parser =
+            MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
+        parseEmbeddedHtml: Boolean = false,
+    ) : this(
+        extensions,
+        markdownMode,
+        commonMarkParser,
+        { MimeType.Known.fromMarkdownLanguageName(it) },
+        parseEmbeddedHtml,
+    )
+
+    @Deprecated("Use a version with a `parseEmbeddedHtml` parameter", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        extensions: List<MarkdownProcessorExtension> = emptyList(),
+        markdownMode: MarkdownMode = MarkdownMode.Standalone,
+        commonMarkParser: Parser =
+            MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
+        languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
+    ) : this(extensions, markdownMode, commonMarkParser, languageRecognizer, false)
+
+    @Deprecated("Use a version with a `parseEmbeddedHtml` parameter", level = DeprecationLevel.HIDDEN)
     public constructor(
         extensions: List<MarkdownProcessorExtension> = emptyList(),
         markdownMode: MarkdownMode = MarkdownMode.Standalone,
@@ -89,15 +119,20 @@ public class MarkdownProcessor(
 
     private var currentState = State("", emptyList())
 
-    @TestOnly
-    internal fun getCurrentIndexesInTest() = buildList {
-        for (block in currentState.blocks) {
-            block.traverseAll { node -> add(node.sourceSpans) }
+    private val htmlConverter = if (parseEmbeddedHtml) MarkdownHtmlConverter() else null
+
+    internal val htmlConverterExtensions: List<MarkdownHtmlConverterExtension> =
+        if (parseEmbeddedHtml) {
+            extensions.mapNotNull { it.htmlConverterExtension }
+        } else {
+            emptyList()
         }
-    }
 
     private val scrollingSynchronizer: ScrollingSynchronizer? =
         (markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
+
+    internal val isScrollSyncEnabled: Boolean
+        get() = scrollingSynchronizer != null
 
     /**
      * Parses a Markdown document, translating from CommonMark 0.31.2 to a list of [MarkdownBlock]. Inline Markdown in
@@ -109,12 +144,12 @@ public class MarkdownProcessor(
      */
     public fun processMarkdownDocument(@Language("Markdown") rawMarkdown: String): List<MarkdownBlock> {
         if (scrollingSynchronizer == null) {
-            return doProcess(rawMarkdown)
+            return processRawMarkdown(rawMarkdown)
         }
-        return scrollingSynchronizer.process { doProcess(rawMarkdown) }
+        return scrollingSynchronizer.process { processRawMarkdown(rawMarkdown) }
     }
 
-    private fun doProcess(rawMarkdown: String): List<MarkdownBlock> {
+    internal fun processRawMarkdown(rawMarkdown: String): List<MarkdownBlock> {
         val blocks =
             if (markdownMode is MarkdownMode.EditorPreview) {
                 processWithQuickEdits(rawMarkdown)
@@ -122,7 +157,7 @@ public class MarkdownProcessor(
                 parseRawMarkdown(rawMarkdown)
             }
 
-        return blocks.mapNotNull { child -> child.tryProcessMarkdownBlock() }
+        return blocks.flatMap { child -> child.tryProcessMarkdownBlock() }
     }
 
     @VisibleForTesting
@@ -238,7 +273,14 @@ public class MarkdownProcessor(
         return buildList { document.forEachChild { child -> if (child is Block) add(child) } }
     }
 
-    private fun Node.tryProcessMarkdownBlock(): MarkdownBlock? =
+    @TestOnly
+    internal fun getCurrentIndexesInTest() = buildList {
+        for (block in currentState.blocks) {
+            block.traverseAll { node -> add(node.sourceSpans) }
+        }
+    }
+
+    private fun Node.tryProcessMarkdownBlock(): List<MarkdownBlock> =
         // Non-Block children are ignored
         when (this) {
             is Paragraph -> toMarkdownParagraph()
@@ -256,20 +298,45 @@ public class MarkdownProcessor(
 
             else -> null
         }.let { block ->
-            if (scrollingSynchronizer != null && this is Block && block != null) {
-                postProcess(scrollingSynchronizer, this, block)
+            if (this is Block && block != null) {
+                postProcess(this, block)
             } else {
-                block
+                emptyList()
             }
         }
 
-    private fun postProcess(
-        scrollingSynchronizer: ScrollingSynchronizer,
-        block: Block,
-        mdBlock: MarkdownBlock,
-    ): MarkdownBlock {
-        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return mdBlock
-        return scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
+    internal fun convertHtmlInlines(inlines: List<InlineMarkdown>): List<InlineMarkdown> =
+        htmlConverter?.convert(this, inlines) ?: inlines
+
+    internal fun provideExtensionHtmlElementConverterFor(tagName: String): HtmlElementConverter? =
+        htmlConverterExtensions.firstOrNull { tagName in it.supportedTags }?.provideConverter(tagName)
+
+    private fun postProcess(block: Block, mdBlock: MarkdownBlock): List<MarkdownBlock> {
+        if (block is HtmlBlock && htmlConverter != null) {
+            return convertHtmlBlock(block, htmlConverter)
+        }
+        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return listOf(mdBlock)
+        val newMdBlock =
+            scrollingSynchronizer?.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex) ?: mdBlock
+        return listOf(newMdBlock)
+    }
+
+    private fun convertHtmlBlock(block: HtmlBlock, htmlConverter: MarkdownHtmlConverter): List<MarkdownBlock> {
+        val intermediateHtmlBlocks = MarkdownHtmlNode.convertHtmlBlock(this@MarkdownProcessor, block)
+        val convertedBlocks =
+            intermediateHtmlBlocks.mapNotNull { htmlElement ->
+                htmlConverter.convert(this@MarkdownProcessor, htmlElement) { newMdBlock, lines ->
+                    when (newMdBlock) {
+                        is MarkdownBlock.HtmlBlock -> return@convert newMdBlock
+                        is MarkdownBlock.ListItem ->
+                            return@convert newMdBlock // we convert the list item's inner block instead
+                        else -> {
+                            scrollingSynchronizer?.acceptBlockSpans(newMdBlock, lines) ?: newMdBlock
+                        }
+                    }
+                }
+            }
+        return convertedBlocks
     }
 
     private fun Paragraph.toMarkdownParagraph(): MarkdownBlock.Paragraph =
@@ -335,12 +402,7 @@ public class MarkdownProcessor(
     @ApiStatus.Internal
     @InternalJewelApi
     public fun processChildren(node: Node): List<MarkdownBlock> = buildList {
-        node.forEachChild { child ->
-            val parsedBlock = child.tryProcessMarkdownBlock()
-            if (parsedBlock != null) {
-                add(parsedBlock)
-            }
-        }
+        node.forEachChild { child -> addAll(child.tryProcessMarkdownBlock()) }
     }
 
     private fun Node.forEachChild(action: (Node) -> Unit) {

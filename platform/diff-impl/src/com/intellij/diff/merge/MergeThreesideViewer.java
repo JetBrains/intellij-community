@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -14,6 +14,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.statistics.MergeAction;
 import com.intellij.diff.statistics.MergeResultSource;
 import com.intellij.diff.statistics.MergeStatisticsCollector;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
@@ -51,7 +52,6 @@ import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -70,6 +70,7 @@ import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.psi.*;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -278,31 +279,48 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return new AbstractAction(caption) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) &&
-            !MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
-                                                       result == MergeResult.LEFT
-                                                       ? DiffBundle.message("button.merge.resolve.accept.left")
-                                                       : DiffBundle.message("button.merge.resolve.accept.right"),
-                                                       myContentModified)) {
+        boolean confirmationShown = false;
+        boolean discardChanges = true;
+
+        switch (result) {
+          case LEFT, RIGHT -> {
+            confirmationShown = myContentModified;
+            discardChanges = MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
+                                                                         result == MergeResult.LEFT
+                                                                         ? DiffBundle.message("button.merge.resolve.accept.left")
+                                                                         : DiffBundle.message("button.merge.resolve.accept.right"),
+                                                                         myContentModified);
+          }
+
+          case RESOLVED -> {
+            if (getChangesCount() > 0 || getConflictsCount() > 0) {
+              confirmationShown = true;
+
+              discardChanges = MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle
+                  .message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
+                .yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
+                .noText(DiffBundle.message("continue.merge"))
+                .ask(myPanel.getRootPane());
+            }
+          }
+
+          case CANCEL -> {
+            confirmationShown = myContentModified;
+            discardChanges = MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified);
+          }
+        }
+
+        logDialogButton(result, confirmationShown, discardChanges, false);
+
+        if (!discardChanges) {
           return;
         }
-        if (result == MergeResult.RESOLVED &&
-            (getChangesCount() > 0 || getConflictsCount() > 0) &&
-            !MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle
-                .message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
-              .yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
-              .noText(DiffBundle.message("continue.merge"))
-              .ask(myPanel.getRootPane())) {
-          return;
-        }
-        if (result == MergeResult.CANCEL &&
-            !MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified)) {
-          return;
-        }
+
         doFinishMerge(result, MergeResultSource.DIALOG_BUTTON);
       }
     };
   }
+
 
   protected void doFinishMerge(final @NotNull MergeResult result, @NotNull MergeResultSource source) {
     logMergeResult(result, source);
@@ -394,7 +412,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                                              LOG.error(e);
                                              return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
                                            }
-                                         }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS,
+                                         }), null, ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS,
                                          ApplicationManager.getApplication().isUnitTestMode());
   }
 
@@ -721,7 +739,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       if (myScheduled.isEmpty()) return;
 
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(() -> launchRediff(false), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      myAlarm.addRequest(() -> launchRediff(false), ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
     }
 
     @RequiresEdt
@@ -734,7 +752,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
       final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
-      int waitMillis = trySync ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+      long waitMillis = trySync ? ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS : 0;
       ProgressIndicator progress =
         BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
 
@@ -1369,8 +1387,27 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   @ApiStatus.Internal
-  void logMergeCancelled() {
-    logMergeResult(MergeResult.CANCEL, MergeResultSource.DIALOG_CLOSING);
+  void logMergeCancelled(boolean withConfirmation, boolean discardChanges) {
+    logDialogButton(MergeResult.CANCEL, withConfirmation, discardChanges, true);
+
+    if (discardChanges) {
+      logMergeResult(MergeResult.CANCEL, MergeResultSource.DIALOG_CLOSING);
+    }
+  }
+
+  private void logDialogButton(@NotNull MergeResult result,
+                               boolean confirmationShown,
+                               boolean discardChanges,
+                               boolean byEsc
+  ) {
+    MergeAction action = switch (result) {
+      case CANCEL -> MergeAction.CANCEL;
+      case LEFT -> MergeAction.LEFT;
+      case RIGHT -> MergeAction.RIGHT;
+      case RESOLVED -> MergeAction.APPLY;
+    };
+
+    MergeStatisticsCollector.logMergeDialogEvent(myProject, action, confirmationShown, discardChanges, byEsc);
   }
 
   private void logMergeResult(MergeResult mergeResult, MergeResultSource source) {
@@ -1381,7 +1418,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     };
     if (statsResult == null) return;
     myAggregator.setUnresolved(getChanges().size());
-    MergeStatisticsCollector.INSTANCE.logMergeFinished(myProject, statsResult, source, myAggregator);
+    MergeStatisticsCollector.logMergeFinished(myProject, statsResult, source, myAggregator);
   }
 
   private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {

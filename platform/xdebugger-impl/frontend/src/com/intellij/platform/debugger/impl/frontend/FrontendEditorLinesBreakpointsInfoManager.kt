@@ -14,12 +14,12 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.FrontendViewportDataCache.ViewportInfo
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest

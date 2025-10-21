@@ -4,9 +4,7 @@ package com.jetbrains.python.console
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.ParsingTestCase
-import com.jetbrains.python.PythonDialectsTokenSetContributor
-import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.PythonTokenSetContributor
+import com.jetbrains.python.*
 import com.jetbrains.python.psi.impl.PythonASTFactory
 
 /**
@@ -24,6 +22,7 @@ class IPythonConsoleParsingTest : ParsingTestCase(
 
   override fun setUp() {
     super.setUp()
+    application.registerService(PyLanguageFacade::class.java, PyLanguageFacadeImpl())
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor::class.java)
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PythonTokenSetContributor())
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())

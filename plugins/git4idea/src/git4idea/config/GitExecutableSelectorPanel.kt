@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.application
 import com.intellij.util.ui.VcsExecutablePathSelector
-import com.intellij.vcs.git.shared.GitDisplayName
+import com.intellij.vcs.git.GitDisplayName
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 

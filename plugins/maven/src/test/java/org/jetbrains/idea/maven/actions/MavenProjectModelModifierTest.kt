@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.actions
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
@@ -11,13 +9,12 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.JavaProjectModelModifier
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier
 import org.junit.Test
@@ -51,6 +48,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
     addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
+
     assertHasDependency(projectPom, "commons-io", "commons-io")
   }
 
@@ -70,6 +68,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
     addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
+
     assertHasManagedDependency(projectPom, "commons-io", "commons-io")
   }
 
@@ -103,8 +102,8 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
     addExternalLibraryDependency(
       listOf(getModule("project")), ExternalLibraryDescriptor("commons-io", "commons-io", "999.999", "999.999"),
       DependencyScope.COMPILE)
+
     assertHasDependency(projectPom, "commons-io", "commons-io", "RELEASE")
-    return@runBlocking
   }
 
   @Test
@@ -123,6 +122,8 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
     importProjectAsync()
 
     addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE, false)
+
+    LocalFileSystem.getInstance().refreshFiles(listOf(m1))
     assertHasDependency(m1, "test", "m2")
   }
 
@@ -155,6 +156,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
     assertNotNull(library)
     addLibraryDependency(getModule("m1"), library!!, DependencyScope.COMPILE, false)
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(m1))
     assertHasDependency(m1, "junit", "junit")
   }
 
@@ -207,7 +209,8 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 <artifactId>project</artifactId>
 <packaging>pom</packaging>
 <version>1</version>
-<modules>  <module>$m1</module>
+<modules>  
+  <module>$m1</module>
   <module>$m2</module>
 </modules>
 """)
@@ -246,50 +249,26 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
     assertTrue(matcher.matches())
   }
 
-  private suspend fun addExternalLibraryDependency(modules: Collection<Module?>,
+  private suspend fun addExternalLibraryDependency(modules: Collection<Module>,
                                                    descriptor: ExternalLibraryDescriptor,
                                                    scope: DependencyScope) {
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          extension.addExternalLibraryDependency(modules, descriptor, scope)
-        }
-      }
-    }
-    return
+    extension.addExternalLibraryDependency(modules, descriptor, scope)
+    awaitConfiguration()
   }
 
   private suspend fun addLibraryDependency(from: Module, library: Library, scope: DependencyScope, exported: Boolean) {
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          extension.addLibraryDependency(from, library, scope, exported)
-        }
-      }
-    }
-    return
+    extension.addLibraryDependency(from, library, scope, exported)
+    awaitConfiguration()
   }
 
   private suspend fun addModuleDependency(from: Module, to: Module, scope: DependencyScope, exported: Boolean) {
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          extension.addModuleDependency(from, to, scope, exported)
-        }
-      }
-    }
-    return
+    extension.addModuleDependency(from, to, scope, exported)
+    awaitConfiguration()
   }
 
   private suspend fun changeLanguageLevel(module: Module, level: LanguageLevel) {
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          extension.changeLanguageLevel(module, level)
-        }
-      }
-    }
-    return
+    extension.changeLanguageLevel(module, level)
+    awaitConfiguration()
   }
 
   private val extension: MavenProjectModelModifier

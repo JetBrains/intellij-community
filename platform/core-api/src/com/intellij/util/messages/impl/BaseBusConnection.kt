@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl
 
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl.MessageHandlerHolder
@@ -20,6 +21,7 @@ internal sealed class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHol
     get() = bus == null
 
   fun <L : Any> subscribe(topic: Topic<L>, handler: L) {
+    val liveBus = bus ?: throw AlreadyDisposedException("Message bus connection is closed: $this")
     var list: Array<Any>
     var newList: Array<Any>
     do {
@@ -36,7 +38,7 @@ internal sealed class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHol
       }
     }
     while (!subscriptions.compareAndSet(list, newList))
-    bus!!.notifyOnSubscription(topic)
+    liveBus.notifyOnSubscription(topic)
   }
 
   override fun collectHandlers(topic: Topic<*>, result: MutableList<in Any>) {

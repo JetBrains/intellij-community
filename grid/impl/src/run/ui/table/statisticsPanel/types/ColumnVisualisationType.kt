@@ -1,5 +1,8 @@
 package com.intellij.database.run.ui.table.statisticsPanel.types
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class ColumnVisualisationType {
   HISTOGRAM,
   UNIQUE,

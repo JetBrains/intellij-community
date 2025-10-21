@@ -5,14 +5,14 @@ package com.intellij.java.analysis.bytecode
  * Pass an instance of this interface to [JvmBytecodeAnalysis.createDeclarationAnalyzer] or
  * [JvmBytecodeAnalysis.createDeclarationAndReferencesAnalyzer] to process declarations in *.class files.
  */
-interface JvmBytecodeDeclarationProcessor {
-  fun processClass(jvmClass: JvmClassBytecodeDeclaration) {
+public interface JvmBytecodeDeclarationProcessor {
+  public fun processClass(jvmClass: JvmClassBytecodeDeclaration) {
   }
 
-  fun processMethod(jvmMethod: JvmMethodBytecodeDeclaration) {
+  public fun processMethod(jvmMethod: JvmMethodBytecodeDeclaration) {
   }
 
-  fun processField(jvmField: JvmFieldBytecodeDeclaration) {
+  public fun processField(jvmField: JvmFieldBytecodeDeclaration) {
   }
 }  
 

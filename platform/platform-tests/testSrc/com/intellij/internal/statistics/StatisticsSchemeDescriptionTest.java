@@ -203,6 +203,22 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     );
   }
 
+  public void testDictionaryField() {
+    doTestField(
+      EventFields.StringValidatedByDictionary("dictionary_event", "test_dictionary.ndjson"),
+      "foo",
+      "foo"
+    );
+  }
+
+  public void testDictionaryListField() {
+    doTestListField(
+      EventFields.StringListValidatedByDictionary("dictionary_event", "test_dictionary.ndjson"),
+      List.of("foo", "bar"),
+      List.of("foo", "bar")
+    );
+  }
+
   private static class TestEventScheme {}
 
   private enum TestEnumEvent { OPENED, CLOSED }

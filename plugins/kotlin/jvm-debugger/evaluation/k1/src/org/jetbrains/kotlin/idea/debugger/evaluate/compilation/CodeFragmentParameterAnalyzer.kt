@@ -182,7 +182,7 @@ internal class CodeFragmentParameterAnalyzer(
 
                 parameters.getOrPut(descriptor) {
                     val name = descriptor.name.asString()
-                    SmartCodeFragmentParameter(Dumb(Kind.DISPATCH_RECEIVER, "", "super@$name"), type, descriptor)
+                    SmartCodeFragmentParameter(Dumb(Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame = 0, "super@$name"), type, descriptor)
                 }
 
                 return null
@@ -229,7 +229,7 @@ internal class CodeFragmentParameterAnalyzer(
         return parameters.getOrPut(descriptor) {
             val name = descriptor.name
             val debugLabel = if (name.isSpecial) "" else "@" + name.asString()
-            SmartCodeFragmentParameter(Dumb(Kind.DISPATCH_RECEIVER, "", AsmUtil.THIS + debugLabel), type, descriptor)
+            SmartCodeFragmentParameter(Dumb(Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame = 0, AsmUtil.THIS + debugLabel), type, descriptor)
         }
     }
 
@@ -242,7 +242,11 @@ internal class CodeFragmentParameterAnalyzer(
         val receiverParameter = descriptor.extensionReceiverParameter ?: return null
 
         return parameters.getOrPut(descriptor) {
-            SmartCodeFragmentParameter(Dumb(Kind.EXTENSION_RECEIVER, actualLabel, AsmUtil.THIS + "@" + actualLabel), receiverType, receiverParameter)
+            SmartCodeFragmentParameter(
+                Dumb(Kind.EXTENSION_RECEIVER, actualLabel, depthRelativeToCurrentFrame = 0, AsmUtil.THIS + "@" + actualLabel),
+                receiverType,
+                receiverParameter
+            )
         }
     }
 
@@ -273,7 +277,7 @@ internal class CodeFragmentParameterAnalyzer(
         return parameters.getOrPut(receiverParameter) {
             val name = receiverParameter.name.asString()
             val label = getThisName("${receiverType.fqName?.shortName()}")
-            SmartCodeFragmentParameter(Dumb(Kind.CONTEXT_RECEIVER, name, label), receiverType, receiverParameter)
+            SmartCodeFragmentParameter(Dumb(Kind.CONTEXT_RECEIVER, name, depthRelativeToCurrentFrame = 0, label), receiverType, receiverParameter)
         }
     }
 
@@ -286,7 +290,7 @@ internal class CodeFragmentParameterAnalyzer(
         val label = FAKE_JAVA_CONTEXT_FUNCTION_NAME
         val type = receiverParameter.type
         return parameters.getOrPut(descriptor) {
-            SmartCodeFragmentParameter(Dumb(Kind.FAKE_JAVA_OUTER_CLASS, label, AsmUtil.THIS), type, receiverParameter)
+            SmartCodeFragmentParameter(Dumb(Kind.FAKE_JAVA_OUTER_CLASS, label, depthRelativeToCurrentFrame = 0, AsmUtil.THIS), type, receiverParameter)
         }
     }
 
@@ -295,7 +299,7 @@ internal class CodeFragmentParameterAnalyzer(
         val fieldName = propertyDescriptor.name.asString()
         val type = propertyDescriptor.type
         return parameters.getOrPut(descriptor) {
-            SmartCodeFragmentParameter(Dumb(Kind.FIELD_VAR, fieldName, "field"), type, descriptor)
+            SmartCodeFragmentParameter(Dumb(Kind.FIELD_VAR, fieldName, depthRelativeToCurrentFrame = 0, "field"), type, descriptor)
         }
     }
 
@@ -314,7 +318,7 @@ internal class CodeFragmentParameterAnalyzer(
             is SimpleFunctionDescriptor -> {
                 val type = target.createFunctionType(target.builtIns, target.isSuspend) ?: return null
                 parameters.getOrPut(target) {
-                    SmartCodeFragmentParameter(Dumb(Kind.LOCAL_FUNCTION, target.name.asString()), type, target.original)
+                    SmartCodeFragmentParameter(Dumb(Kind.LOCAL_FUNCTION, target.name.asString(), depthRelativeToCurrentFrame = 0), type, target.original)
                 }
             }
             is ValueDescriptor -> {
@@ -323,7 +327,7 @@ internal class CodeFragmentParameterAnalyzer(
 
                 parameters.getOrPut(target) {
                     val kind = if (target is LocalVariableDescriptor && target.isDelegated) Kind.DELEGATED else Kind.ORDINARY
-                    SmartCodeFragmentParameter(Dumb(kind, target.name.asString()), target.type, target, isLValue)
+                    SmartCodeFragmentParameter(Dumb(kind, target.name.asString(), depthRelativeToCurrentFrame = 0), target.type, target, isLValue)
                 }
             }
             else -> null
@@ -360,7 +364,7 @@ internal class CodeFragmentParameterAnalyzer(
     private fun processCoroutineContextCall(target: DeclarationDescriptor): SmartCodeFragmentParameter? {
         if (target is PropertyDescriptor && target.fqNameSafe == COROUTINE_CONTEXT_FQ_NAME) {
             return parameters.getOrPut(target) {
-                SmartCodeFragmentParameter(Dumb(Kind.COROUTINE_CONTEXT, ""), target.type, target)
+                SmartCodeFragmentParameter(Dumb(Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame = 0), target.type, target)
             }
         }
 
@@ -371,7 +375,7 @@ internal class CodeFragmentParameterAnalyzer(
         val descriptor = target as? ForeignPropertyDescriptor ?: return null
 
         return parameters.getOrPut(target) {
-            SmartCodeFragmentParameter(Dumb(Kind.FOREIGN_VALUE, descriptor.propertyName), descriptor.type, descriptor)
+            SmartCodeFragmentParameter(Dumb(Kind.FOREIGN_VALUE, descriptor.propertyName, depthRelativeToCurrentFrame = 0), descriptor.type, descriptor)
         }
     }
 

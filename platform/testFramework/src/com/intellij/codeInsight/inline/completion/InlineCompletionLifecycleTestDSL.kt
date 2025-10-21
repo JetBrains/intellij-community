@@ -321,24 +321,34 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   inner class Caret {
 
     @ICUtil
-    suspend fun moveUp() {
-      callAction("EditorUp")
+    suspend fun moveUp(times: Int = 1) {
+      repeat(times) {
+        callAction("EditorUp")
+      }
+    }
+
+
+    @ICUtil
+    suspend fun moveDown(times: Int = 1) {
+      repeat(times) {
+        callAction("EditorDown")
+      }
     }
 
     @ICUtil
-    suspend fun moveDown() {
-      callAction("EditorDown")
+    suspend fun moveRight(times: Int = 1) {
+      repeat(times) {
+        callAction("EditorRight")
+      }
     }
 
     @ICUtil
-    suspend fun moveRight() {
-      callAction("EditorRight")
+    suspend fun moveLeft(times: Int = 1) {
+      repeat(times) {
+        callAction("EditorLeft")
+      }
     }
 
-    @ICUtil
-    suspend fun moveLeft() {
-      callAction("EditorLeft")
-    }
   }
 
   @ICUtil

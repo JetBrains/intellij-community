@@ -24,6 +24,10 @@ class UiText(private val component: UiComponent, private val textData: TextData)
     component.click(textData.point)
   }
 
+  fun strictClick() {
+    component.strictClick(textData.point)
+  }
+
   fun doubleClick() {
     component.doubleClick(textData.point)
   }

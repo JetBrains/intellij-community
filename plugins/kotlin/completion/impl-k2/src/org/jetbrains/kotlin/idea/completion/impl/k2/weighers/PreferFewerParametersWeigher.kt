@@ -15,7 +15,7 @@ internal object PreferFewerParametersWeigher {
     private var LookupElement.parametersCount: Int
             by NotNullableUserDataProperty(Key("KOTLIN_PREFER_FEWER_PARAMETERS_WEIGHER"), 0)
 
-    context(KaSession)
+    context(_: KaSession)
     fun addWeight(lookupElement: LookupElement, symbol: KaCallableSymbol) {
         lookupElement.parametersCount = (symbol as? KaFunctionSymbol)?.valueParameters?.size ?: 0
     }

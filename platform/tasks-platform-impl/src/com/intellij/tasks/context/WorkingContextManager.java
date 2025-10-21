@@ -63,7 +63,7 @@ public final class WorkingContextManager {
   }
 
   public void loadContext(@NotNull Element fromElement) {
-    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensionList()) {
+    for (WorkingContextProvider provider : getWorkingContextProviderList()) {
       try {
         Element child = fromElement.getChild(provider.getId());
         if (child != null) {
@@ -77,7 +77,7 @@ public final class WorkingContextManager {
   }
 
   public void saveContext(Element toElement) {
-    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensionList()) {
+    for (WorkingContextProvider provider : getWorkingContextProviderList()) {
       try {
         Element child = new Element(provider.getId());
         provider.saveContext(myProject, child);
@@ -90,7 +90,7 @@ public final class WorkingContextManager {
   }
 
   public void clearContext() {
-    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensionList()) {
+    for (WorkingContextProvider provider : getWorkingContextProviderList()) {
       provider.clearContext(myProject);
     }
   }
@@ -265,5 +265,9 @@ public final class WorkingContextManager {
   @TestOnly
   public File getTaskFile() {
     return getArchiveFile(TASKS_ZIP_POSTFIX);
+  }
+
+  private static @NotNull List<@NotNull WorkingContextProvider> getWorkingContextProviderList() {
+    return WorkingContextProvider.EP_NAME.getExtensionList().stream().filter(provider -> provider.isEnabled()).toList();
   }
 }

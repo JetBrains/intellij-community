@@ -1,0 +1,2 @@
+Text: (<highlight>Consumer<in Int!>!</highlight>), Disabled: false, Strikeout: false, Green: false
+Text: (<highlight>action: (Int) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true

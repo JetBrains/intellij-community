@@ -1,4 +1,5 @@
 PsiJavaFileStub [org.jetbrains.annotations]
+  PsiPackageStatementStub[org.jetbrains.annotations]
   PsiClassStub[interface annotation name=Nullable fqn=org.jetbrains.annotations.Nullable]
     PsiModifierListStub[mask=1025]
       PsiAnnotationStub[@java.lang.annotation.Documented]

@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScopeImpl
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -167,7 +168,7 @@ private fun createAndCacheBuilders(
 
   val requiredFileName = getName(requiredFile)
   for (file in openFiles.asSequence() + (if (skipNonOpenedFiles) emptyList() else recentFiles)) {
-    if (requiredFileName == getName(file)) {
+    if (requiredFileName == getName(file) && (scope is ProjectScopeImpl || scope.contains(file))) {
       multiMap.putValue(requiredFileName, file)
     }
   }

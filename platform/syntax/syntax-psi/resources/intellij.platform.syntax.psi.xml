@@ -1,3 +1,4 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="syntax.elementTypeConverter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -18,5 +19,7 @@
     <syntax.elementTypeConverter language="any" implementationClass="com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory"/>
     <syntax.cancellationProviderExtension implementation="com.intellij.platform.syntax.psi.IntelliJCancellationProvider"/>
     <syntax.logProvider implementation="com.intellij.platform.syntax.psi.IntelliJLogProvider"/>
+    <applicationService serviceInterface="com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory"
+                        serviceImplementation="com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactoryImpl"/>
   </extensions>
 </idea-plugin>

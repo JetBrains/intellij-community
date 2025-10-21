@@ -14,7 +14,7 @@ internal class VcsGroupsActionGroup : DefaultActionGroup(), DumbAware {
     val presentation = e.presentation
     val project = e.project
     if (project != null) {
-      presentation.text = ProjectLevelVcsManager.getInstance(project).consolidatedVcsName
+      presentation.text = ProjectLevelVcsManager.getInstance(project).getConsolidatedVcsName()
     }
     presentation.isEnabledAndVisible = project != null && TrustedProjects.isProjectTrusted(project)
   }

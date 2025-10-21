@@ -10,6 +10,7 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -107,19 +108,21 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
 
   @Override
   public void enableConsole(boolean primary) {
-    super.enableConsole(primary);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      super.enableConsole(primary);
 
-    if (!primary && !isPrimaryConsoleEnabled()) {
-      PythonConsoleView console = getPydevConsoleView();
-      if (!myDebugConsoleInitialized && console.getExecuteActionHandler() != null) {
-        if (!console.getExecuteActionHandler().getConsoleCommunication().isWaitingForInput()) {
-          showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
+      if (!primary && !isPrimaryConsoleEnabled()) {
+        PythonConsoleView console = getPydevConsoleView();
+        if (!myDebugConsoleInitialized && console.getExecuteActionHandler() != null) {
+          if (!console.getExecuteActionHandler().getConsoleCommunication().isWaitingForInput()) {
+            showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
+          }
+          myDebugConsoleInitialized = true;
+          console.initialized();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> console.requestFocus());
         }
-        myDebugConsoleInitialized = true;
-        console.initialized();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> console.requestFocus());
       }
-    }
+    });
   }
 
   public void initialized() {

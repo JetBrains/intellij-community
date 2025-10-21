@@ -7,7 +7,7 @@ infix fun String.nonInjected(content: String){}
 
 infix fun String.injected(@Language("kotlin") content: String){}
 
-infix @Language("kotlin") fun String.injectedWithReceiver(@Language("kotlin") content: String){}
+infix fun @receiver:Language("kotlin") String.injectedWithReceiver(@Language("kotlin") content: String){}
 
 fun main() {
     "fun f0() {}" nonInjected "fun f1() {}"

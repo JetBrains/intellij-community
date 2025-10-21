@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 
 class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
     KtIfExpression::class.java,
-    KotlinBundle.lazyMessage("replace.if.with.when")
+    KotlinBundle.messagePointer("replace.if.with.when")
 ) {
     override fun applicabilityRange(element: KtIfExpression): TextRange? {
         if (element.then == null) return null

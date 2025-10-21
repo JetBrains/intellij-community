@@ -11,22 +11,27 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.util.currentJavaVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
+import kotlin.io.path.pathString
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
                                                  ExpectedPluginModeProvider {
 
+    // it is known that Kotlin 1.9.25 is incompatible with JDK25
+    val isCompatibleVersions: Boolean = (pluginMode == KotlinPluginMode.K2 || currentJavaVersion().feature < 25)
+
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
         if (withK2Compiler) {
-            moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
+            moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.pathString)
         } else {
             // For the K1 tests we want to use a Kotlin 1.x library because Kotlin 2 libraries might not be able to
             // be consumed by the K1 compiler.

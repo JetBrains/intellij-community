@@ -9,7 +9,6 @@ com.intellij.dvcs.hosting.RepositoryHostingService
 - getRepositoryListLoader(com.intellij.openapi.project.Project):com.intellij.dvcs.hosting.RepositoryListLoader
 - a:getServiceDisplayName():java.lang.String
 com.intellij.dvcs.hosting.RepositoryListLoader
-- enable():Z
 - enable(java.awt.Component):Z
 - getAvailableRepositories(com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - getAvailableRepositoriesFromMultipleSources(com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.hosting.RepositoryListLoader$Result

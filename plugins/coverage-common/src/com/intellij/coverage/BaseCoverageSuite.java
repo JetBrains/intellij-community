@@ -86,15 +86,6 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     myCoverageByTestEnabled = coverageByTestEnabled;
   }
 
-  /**
-   * @deprecated Use {@link BaseCoverageSuite#BaseCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
-   */
-  @Deprecated(forRemoval = true)
-  public BaseCoverageSuite(String name, @Nullable CoverageFileProvider fileProvider, long timestamp,
-                           boolean coverageByTestEnabled, boolean branchCoverage, boolean trackTestFolders, CoverageRunner coverageRunner) {
-    this(name, fileProvider, timestamp, coverageByTestEnabled, branchCoverage, trackTestFolders, coverageRunner, null);
-  }
-
   @Override
   public boolean isValid() {
     return myCoverageDataFileProvider.isValid();
@@ -309,13 +300,5 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
       file = new File(PathManager.getSystemPath(), relativeOrAbsolutePath);
     }
     return new DefaultCoverageFileProvider(file, sourceProvider);
-  }
-
-  /**
-   * @deprecated Is not used
-   */
-  @Deprecated(forRemoval = true)
-  protected void setRunner(CoverageRunner runner) {
-    myRunner = runner;
   }
 }

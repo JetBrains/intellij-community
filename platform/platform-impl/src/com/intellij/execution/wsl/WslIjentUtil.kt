@@ -12,12 +12,14 @@ import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.suspendingLazy
@@ -36,8 +38,8 @@ fun fetchLoginShellEnv(
   project: Project?,
   rootUser: Boolean,
 ): Map<String, String> =
-  runBlockingCancellable {
-    wslIjentManager.getIjentApi(wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
+  runBlockingMaybeCancellable {
+    wslIjentManager.getIjentApi(null, wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
   }
 
 /**
@@ -65,7 +67,7 @@ fun runProcessBlocking(
   options: WSLCommandLineOptions,
   ptyOptions: LocalPtyOptions?,
 ): Process = runBlockingCancellable {
-  val ijentApi = wslIjentManager.getIjentApi(wslDistribution, project, options.isSudo)
+  val ijentApi: IjentPosixApi = wslIjentManager.getIjentApi(null, wslDistribution, project, options.isSudo)
 
   val args = processBuilder.command().toMutableList()
 
@@ -122,7 +124,7 @@ fun runProcessBlocking(
 
   val interactionOptions = when {
     ptyOptions != null -> with(ptyOptions) { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }
-    processBuilder.redirectErrorStream() -> EelExecApi.RedirectStdErr
+    processBuilder.redirectErrorStream() -> EelExecApi.RedirectStdErr(to = EelExecApi.RedirectTo.STDOUT)
     else -> null
   }
 

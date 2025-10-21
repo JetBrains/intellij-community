@@ -20,12 +20,10 @@ class DemoFeedbackDialogWithEmail(
   override val zendeskFeedbackType: String = "demo_feedback_with_email"
   override val zendeskTicketTitle: String = "Demo Feedback Survey"
 
-  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-    CommonFeedbackSystemData.getCurrentData()
-  }
+  override suspend fun computeSystemInfoData(): CommonFeedbackSystemData = CommonFeedbackSystemData.getCurrentData()
 
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+  override fun showFeedbackSystemInfoDialog(systemInfoData: CommonFeedbackSystemData) {
+    showFeedbackSystemInfoDialog(myProject, systemInfoData)
   }
 
   override val myTitle: String = DemoFeedbackBundle.message("dialog.top.title")

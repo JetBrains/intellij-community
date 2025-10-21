@@ -9,7 +9,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/** removes destruction caused by {@link OverrideFileTypeAction} and restores the original file type */
+/**
+ * Remove destruction caused by {@link OverrideFileTypeAction} and restore the original file type.
+ * @see <a href="https://harrypotter.fandom.com/wiki/Reverte">Reverte incantation</a> for details.
+ */
 final class ReverteOverrideFileTypeAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

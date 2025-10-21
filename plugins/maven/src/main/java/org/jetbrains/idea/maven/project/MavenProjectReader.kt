@@ -167,7 +167,8 @@ class MavenProjectReader(
   }
 
   private fun readModelBody(mavenModelBase: MavenModelBase, mavenBuildBase: MavenBuildBase, xmlModel: Element, projectFile: VirtualFile) {
-    val modules = findSubprojects(xmlModel, projectFile)
+    val modelVersion = xmlModel.getModelVersion()
+    val modules = if (isMaven4Model(modelVersion)) findSubprojects(xmlModel, projectFile) else findModules(xmlModel)
     mavenModelBase.modules = myReadHelper.filterModules(modules, projectFile)
     collectProperties(findChildByPath(xmlModel, "properties"), mavenModelBase)
 
@@ -176,21 +177,60 @@ class MavenProjectReader(
     mavenBuildBase.finalName = findChildValueByPath(xmlBuild, "finalName")
     mavenBuildBase.defaultGoal = findChildValueByPath(xmlBuild, "defaultGoal")
     mavenBuildBase.directory = findChildValueByPath(xmlBuild, "directory")
-    mavenBuildBase.resources = collectResources(
-      findChildrenByPath(xmlBuild, "resources", "resource"))
-    mavenBuildBase.testResources = collectResources(
-      findChildrenByPath(xmlBuild, "testResources", "testResource"))
+
+    if (isMaven4Model(modelVersion)) {
+      mavenBuildBase.mavenSources = collectMavenSources(xmlBuild)
+    }
+    else {
+      mavenBuildBase.resources = collectResources(
+        findChildrenByPath(xmlBuild, "resources", "resource"))
+      mavenBuildBase.testResources = collectResources(
+        findChildrenByPath(xmlBuild, "testResources", "testResource"))
+      if (mavenBuildBase is MavenBuild) {
+        val source = findChildValueByPath(xmlBuild, "sourceDirectory")
+        if (!source.isNullOrBlank()) mavenBuildBase.sources = listOf(source)
+        val testSource = findChildValueByPath(xmlBuild, "testSourceDirectory")
+        if (!testSource.isNullOrBlank()) mavenBuildBase.testSources = listOf(testSource)
+      }
+    }
+
+
     mavenBuildBase.filters = findChildrenValuesByPath(xmlBuild, "filters", "filter")
 
     if (mavenBuildBase is MavenBuild) {
-      val source = findChildValueByPath(xmlBuild, "sourceDirectory")
-      if (!source.isNullOrBlank()) mavenBuildBase.sources = listOf(source)
-      val testSource = findChildValueByPath(xmlBuild, "testSourceDirectory")
-      if (!testSource.isNullOrBlank()) mavenBuildBase.testSources = listOf(testSource)
-
       mavenBuildBase.outputDirectory = findChildValueByPath(xmlBuild, "outputDirectory")
       mavenBuildBase.testOutputDirectory = findChildValueByPath(xmlBuild, "testOutputDirectory")
     }
+  }
+
+  private fun collectMavenSources(xmlBuild: Element?): List<MavenSource> {
+    if (xmlBuild == null) return emptyList()
+    val xmlSources = findChildrenByPath(xmlBuild, "sources", "source")
+    val result: MutableList<MavenSource> = ArrayList()
+    for (each in xmlSources) {
+
+      val targetPath = findChildValueByPath(each, "targetPath")
+      val targetVersion = findChildValueByPath(each, "targetVersion")
+      val scope = findChildValueByPath(each, "scope") ?: MavenSource.MAIN_SCOPE
+      val lang = findChildValueByPath(each, "lang") ?: MavenSource.JAVA_LANG
+      val includes = findChildrenValuesByPath(each, "includes", "include")
+      val excludes = findChildrenValuesByPath(each, "excludes", "exclude")
+      val filtered = "true" == findChildValueByPath(each, "filtering")
+      val enabled = "true" == findChildValueByPath(each, "enabled")
+      val directory = findChildValueByPath(each, "directory") ?: "src/${scope}/${lang}"
+      result.add(MavenSource.fromSourceTag(
+        directory,
+        includes,
+        excludes,
+        scope,
+        lang,
+        targetPath,
+        targetVersion,
+        filtered,
+        enabled
+      ))
+    }
+    return result
   }
 
   private fun Element.getModelVersion() = this.getChild("modelVersion")?.value
@@ -226,24 +266,20 @@ class MavenProjectReader(
   }
 
   private fun findSubprojects(xmlModel: Element, projectFile: VirtualFile): List<String> {
-    val modelVersion = xmlModel.getModelVersion()
+    val subprojects = findChildrenValuesByPath(xmlModel, "subprojects", "subproject")
+    if (!subprojects.isEmpty()) return subprojects
 
-    if (modelVersion != null && StringUtil.compareVersionNumbers(modelVersion, MODEL_VERSION_4_0_0) > 0) {
-      val subprojects = findChildrenValuesByPath(xmlModel, "subprojects", "subproject")
-      if (!subprojects.isEmpty()) return subprojects
+    val modules = findModules(xmlModel)
+    if (!modules.isEmpty()) return modules
 
-      val modules = findModules(xmlModel)
-      if (!modules.isEmpty()) return modules
+    if (MavenConstants.TYPE_POM != xmlModel.getChild("packaging")?.value) return emptyList()
 
-      if (MavenConstants.TYPE_POM != xmlModel.getChild("packaging")?.value) return emptyList()
-
-      // subprojects discovery
-      // see org.apache.maven.internal.impl.model.DefaultModelBuilder.DefaultModelBuilderSession#doReadFileModel
-      return projectFile.parent.children.filter { it.hasPomFile() }.map { it.name }
-    }
-
-    return findModules(xmlModel)
+    // subprojects discovery
+    // see org.apache.maven.internal.impl.model.DefaultModelBuilder.DefaultModelBuilderSession#doReadFileModel
+    return projectFile.parent.children.filter { it.hasPomFile() }.map { it.name }
   }
+
+  private fun isMaven4Model(modelVersion: String?): Boolean = modelVersion != null && StringUtil.compareVersionNumbers(modelVersion, MODEL_VERSION_4_0_0) > 0
 
   private fun findModules(xmlModel: Element): List<String> = findChildrenValuesByPath(xmlModel, "modules", "module")
 
@@ -251,7 +287,7 @@ class MavenProjectReader(
     model: MavenModel,
     file: VirtualFile,
     problems: MutableCollection<MavenProjectProblem>,
-    recursionGuard: MutableSet<VirtualFile>
+    recursionGuard: MutableSet<VirtualFile>,
   ): MavenModel {
     if (recursionGuard.contains(file)) {
       problems.add(MavenProjectProblem.createProblem(
@@ -329,7 +365,7 @@ class MavenProjectReader(
   private suspend fun readRawResult(
     projectFile: VirtualFile,
     parentDesc: MavenParentDesc?,
-    recursionGuard: MutableSet<VirtualFile>
+    recursionGuard: MutableSet<VirtualFile>,
   ): Pair<VirtualFile, RawModelReadResult>? {
     if (parentDesc == null) {
       return null

@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyUtilCore;
@@ -81,7 +80,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return null;
     }
 
-    if (isExplicitTypeAlias(target) || looksLikeTypeHint(value)) {
+    if (isExplicitTypeAlias(target) || (looksLikeTypeHint(value) && target.getAnnotation() == null)) {
       return value;
     }
     return null;
@@ -170,7 +169,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
         boolean nonTrivial = (node.isInterpolated()
                               || node.getStringNodes().size() != 1
                               || node.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD
-                              || !ContainerUtil.getFirstItem(node.getStringElements()).getPrefix().isEmpty()
+                              || !node.getStringElements().getFirst().getPrefix().isEmpty()
                               || !TYPE_ANNOTATION_LIKE.matcher(node.getStringValue()).matches());
         if (nonTrivial) {
           illegal[0] = true;
@@ -182,6 +181,15 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
         if (node.asQualifiedName() == null) {
           illegal[0] = true;
         }
+      }
+
+      @Override
+      public void visitPyListLiteralExpression(@NotNull PyListLiteralExpression node) {
+        if (node == expression) {
+          illegal[0] = true;
+          return;
+        }
+        super.visitElement(node);
       }
 
       @Override

@@ -137,7 +137,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
       }
       else {
-        compilerProjectExtension.setCompilerOutputPointer(null);
+        compilerProjectExtension.setCompilerOutputUrl(null);
       }
 
       LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);

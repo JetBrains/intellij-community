@@ -73,7 +73,7 @@ object TerminalUi {
     }
   }
 
-  fun promptSeparatorColor(editor: Editor): Color {
+  fun promptSeparatorColor(editor: Editor? = null): Color {
     return createColorBoundToColorKey(BlockTerminalColors.PROMPT_SEPARATOR_COLOR, editor) {
       JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
     }

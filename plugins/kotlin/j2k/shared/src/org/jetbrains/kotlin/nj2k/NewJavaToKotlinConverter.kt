@@ -8,21 +8,21 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleWithElementSourceModuleKindOrProduction
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.ParseContext.*
+import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
+import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportList
@@ -74,7 +74,8 @@ class NewJavaToKotlinConverter(
             val javaFile = files[i]
             withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
             runUndoTransparentActionInEdt(inWriteAction = true) {
-                KtPsiFactory.contextual(javaFile.parent ?: javaFile).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                KtPsiFactory.contextual(javaFile.parent ?: javaFile)
+                    .createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                     .also { it.addImports(result.importsToAdd) }
             }
         }
@@ -95,33 +96,20 @@ class NewJavaToKotlinConverter(
         forInlining: Boolean = false
     ): Result {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKaModule = targetModule?.toKaSourceModuleForProductionOrTest()
-
-        // TODO
-        // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
-        // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
-
-        return when {
-            targetKaModule != null -> {
-                analyze(targetKaModule) {
-                    doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
-                }
-            }
-
-            targetFile != null -> {
-                analyze(targetFile) {
-                    doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
-                }
-            }
-
-            else -> Result.EMPTY
-        }
+        val targetKaModule =
+            targetFile?.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null)
+            // This `KaSourceModule` is not 100% waterproof, but without the target file, we don't actually know the kind of the target
+            // source module. The most reasonable assumption is that we copy the input element to a source module of the same kind.
+                ?: targetModule?.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement)
+                ?: return Result.EMPTY
+        val targetPlatform = targetKaModule.targetPlatform
+        return doConvertElementsToKotlin(contextElement, inputElements, targetPlatform, processor, bodyFilter, forInlining)
     }
 
-    context(KaSession)
     private fun doConvertElementsToKotlin(
         contextElement: PsiElement,
         inputElements: List<PsiElement>,
+        targetPlatform: TargetPlatform,
         processor: WithProgressProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean
@@ -137,12 +125,7 @@ class NewJavaToKotlinConverter(
             else -> LanguageVersionSettingsImpl.DEFAULT
         }
 
-        val kaModule =
-            targetFile?.let { KaModuleProvider.getModule(project, it, useSiteModule = null) }
-                ?: targetModule?.toKaSourceModuleForProduction()
-                ?: KaModuleProvider.getModule(project, contextElement, useSiteModule = null)
-
-        val importStorage = JKImportStorage(kaModule.targetPlatform, project)
+        val importStorage = JKImportStorage(targetPlatform, project)
         val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, bodyFilter, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports

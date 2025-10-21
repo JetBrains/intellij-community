@@ -619,10 +619,10 @@ public final class PyStringFormatInspection extends PyInspection {
               else if (callType instanceof PyClassType) {
                 return countElements(evalContext, (PyClassType)callType);
               }
-              else if (callType instanceof PyUnionType) {
+              else if (callType instanceof PyUnionType unionType) {
                 int maxNumber = 1;
                 boolean allForSure = true;
-                for (PyType member : ((PyUnionType)callType).getMembers()) {
+                for (PyType member : unionType.getMembers()) {
                   PyClassType classType = as(member, PyClassType.class);
                   if (classType != null) {
                     int elementsCount = countElements(evalContext, classType);

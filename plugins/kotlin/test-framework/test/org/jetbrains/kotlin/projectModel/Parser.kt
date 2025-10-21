@@ -10,8 +10,9 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import java.io.File
 import java.io.InputStreamReader
 import java.io.Reader
+import java.nio.file.Path
 
-open class ProjectStructureParser(private val projectRoot: File) {
+open class ProjectStructureParser(private val projectRoot: Path) {
     private var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
     private val builderByName: MutableMap<String, ResolveModule.Builder> = hashMapOf()
     private val predefinedBuilders: Map<String, ResolveLibrary.Builder> = hashMapOf(
@@ -81,12 +82,12 @@ open class ProjectStructureParser(private val projectRoot: File) {
         builder.platform = parsePlatform(platformAttribute)
 
         val root = attributes["root"] ?: builder.name!!
-        builder.root = File(projectRoot, root)
+        builder.root = projectRoot.resolve(root)
 
         builder.additionalCompilerArgs = attributes["additionalCompilerArgs"]
 
         val testRoot = attributes["testRoot"]
-        if (testRoot != null) builder.testRoot = File(projectRoot, testRoot)
+        if (testRoot != null) builder.testRoot = projectRoot.resolve(testRoot)
     }
 
     private fun Reader.parseDependenciesDefinition(fromName: String) {

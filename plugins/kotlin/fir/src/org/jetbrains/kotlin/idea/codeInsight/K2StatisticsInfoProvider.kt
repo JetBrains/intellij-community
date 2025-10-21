@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.useSiteSession
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -55,7 +56,7 @@ object K2StatisticsInfoProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun forDeclarationSymbol(symbol: KaDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
         is KaClassLikeSymbol -> symbol.classId?.asFqNameString()?.let { StatisticsInfo(context, it) }

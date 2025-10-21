@@ -32,7 +32,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.util.function.Function

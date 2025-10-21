@@ -1,0 +1,8 @@
+// FIR_IDENTICAL
+package foo
+
+class AImpl: A() {
+    override fun foo() {
+        TODO("Not yet implemented")
+    }
+}

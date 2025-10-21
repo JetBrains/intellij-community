@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -25,10 +26,7 @@ import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.awt.Color
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.Icon
@@ -432,14 +430,20 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   private fun isControlDown(e: MouseEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
 
   @Contract(pure = true)
-  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation): InlayPresentation = when {
+  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation): InlayPresentation =
+    withTooltip(tooltip, base, showAbove = true)
+
+
+
+  @ApiStatus.Internal
+  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation, showAbove: Boolean): InlayPresentation = when {
     tooltip.isEmpty() -> base
     else -> {
       var hint: LightweightHint? = null
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
           if (hint?.isVisible != true && editor.contentComponent.isShowing) {
-            hint = showTooltip(event, tooltip)
+            hint = showTooltip(event, tooltip, showAbove)
           }
         }
 
@@ -450,14 +454,20 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       })
     }
   }
-  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
+
+
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint =
+    showTooltip(e, text, showAbove = true)
+
+  @ApiStatus.Internal
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String, showAbove: Boolean): LightweightHint {
     val hint = run {
       val label = HintUtil.createInformationLabel(text)
       label.border = JBUI.Borders.empty(6, 6, 5, 6)
       LightweightHint(label)
     }
 
-    val constraint = HintManager.ABOVE
+    val constraint = if (showAbove) HintManager.ABOVE else HintManager.UNDER
 
     val point = run {
       val pointOnEditor = locationAt(e, editor.contentComponent)
@@ -476,6 +486,28 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     )
 
     return hint
+  }
+
+  @ApiStatus.Internal
+  fun highlighted(text: String, smallText: Boolean, highlighter: SyntaxHighlighter): InlayPresentation {
+    val lexer = highlighter.highlightingLexer
+    lexer.start(text)
+    val tokenPresentations = mutableListOf<InlayPresentation>()
+    while (lexer.tokenType != null) {
+      val tokenText = lexer.tokenText
+      val tokenType = lexer.tokenType
+      val textKeys = highlighter.getTokenHighlights(tokenType)
+      if (textKeys.isEmpty() || textKeys.firstOrNull()?.defaultAttributes == null || textKeys.firstOrNull()?.defaultAttributes?.fontType == 0) {
+        tokenPresentations.add(if (smallText) smallText(tokenText) else text(tokenText))
+      }
+      else {
+        val textKey = textKeys.first()
+        val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, smallText, tokenText), top = 1, down = 1)
+        tokenPresentations.add(attributes(textWithoutBox, textKey))
+      }
+      lexer.advance()
+    }
+    return SequencePresentation(tokenPresentations)
   }
 
   private fun locationAt(e: MouseEvent, component: Component): Point {

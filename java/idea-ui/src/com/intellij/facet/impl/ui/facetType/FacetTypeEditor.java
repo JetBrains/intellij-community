@@ -11,11 +11,13 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class FacetTypeEditor extends UnnamedConfigurableGroup {
   private Configurable myDefaultSettingsConfigurable;
   private final Disposable myDisposable = Disposer.newDisposable();

@@ -62,7 +62,7 @@ public class DocumentTest extends LightPlatformTestCase {
   public void testModificationInsideCommandAssertion() {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     assertTrue(!commandProcessor.isUndoTransparentActionInProgress() &&
-               commandProcessor.getCurrentCommand() == null);
+               !commandProcessor.isCommandInProgress());
 
     final Document doc = new DocumentImpl("xxx");
 

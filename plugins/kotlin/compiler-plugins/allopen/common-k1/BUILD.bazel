@@ -5,7 +5,7 @@ jvm_library(
   name = "kotlin-compiler-plugins-allopen-common-k1",
   module_name = "kotlin.compiler-plugins.allopen.common.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -13,7 +13,7 @@ jvm_library(
     "@lib//:kotlinc-allopen-compiler-plugin",
     "//platform/core-api:core",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//platform/util",
     "//java/java-psi-api:psi",
     "//platform/core-impl",

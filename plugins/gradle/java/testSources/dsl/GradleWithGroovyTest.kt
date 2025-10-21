@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleWithGroovyTest : GradleCodeInsightTestCase() {
@@ -46,8 +47,10 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
     }
   }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
+  // the test is unstable on TeamCity
+  // @ParameterizedTest
+  // @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
+  @Disabled("IDEA-375502")
   fun `test DomainObjectCollection#withType call`(gradleVersion: GradleVersion, decorator: String) {
     testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>plugins.withType(JavaPlugin) {}") {

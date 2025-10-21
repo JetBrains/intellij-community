@@ -6,12 +6,15 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AbstractPainter
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
@@ -21,6 +24,19 @@ import java.awt.*
 import javax.swing.JComponent
 
 internal class IslandsGradientPainter(private val frame: IdeFrame, private val mainColor: Color, private val enabled: () -> Boolean) : AbstractPainter() {
+
+  /**
+   * The list of auto replaced colors. Should contain only very specific colors, don't add widely used like `Panel.background`
+   */
+  private val islandsGradientColors = setOf(
+    // Root components
+    "MainWindow.background",
+    "MainToolbar.background",
+    "MainToolbar.inactiveBackground",
+    "ToolWindow.Stripe.background",
+    "StatusBar.background",
+    )
+
   private val projectWindowCustomizer = ProjectWindowCustomizerService.getInstance()
 
   private var doPaint = true
@@ -31,7 +47,11 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
     if (doPaint) {
       try {
         doPaint = false
-        islandsGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
+
+        val colorName = (g.paint as? JBColor)?.name
+        if (colorName in islandsGradientColors) {
+          islandsGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
+        }
       }
       finally {
         doPaint = true
@@ -50,6 +70,15 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
 
   val project = frame.project ?: return
 
+  if (Registry.`is`("idea.islands.color.gradient.enabled", false)) {
+    doColorGradientPaint(project, projectWindowCustomizer, component, g)
+  }
+  else {
+    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, component, g)
+  }
+}
+
+private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
   val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
 
   val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
@@ -98,4 +127,34 @@ private fun getGradientCache(root: JComponent, key: String): GradientTextureCach
   val newValue = GradientTextureCache()
   root.putClientProperty(key, newValue)
   return newValue
+}
+
+private fun doColorGradientPaint(project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
+  val info = projectWindowCustomizer.getProjectGradients(project)
+
+  g.paint = LinearGradientPaint(0f, 0f, component.width.toFloat(), component.height.toFloat(),
+                                floatArrayOf(info.getDiagonalFraction1(0f), info.getDiagonalFraction2(0.13f),
+                                             info.getDiagonalFraction3(0.3f), info.getDiagonalFraction4(1f)),
+                                arrayOf(info.diagonalColor1, info.diagonalColor2, info.diagonalColor3, info.diagonalColor4))
+
+  g.fillRect(0, 0, component.width, component.height)
+
+  val ovalRadius = component.width / 4f
+  val ovalWidth = component.width / 2
+  val ovalCenterX = component.width * 0.2f
+  val ovalCenterY = 36f
+
+  g.paint = RadialGradientPaint(ovalCenterX, ovalCenterY, ovalRadius,
+                                floatArrayOf(0f, 1f),
+                                arrayOf(info.radialColor1, info.radialColor2))
+
+  g.fillOval((ovalCenterX - ovalRadius).toInt(), (ovalCenterY - ovalRadius).toInt(), ovalWidth, ovalWidth)
+
+  g.paint = GradientPaint(0f, 0f, info.horizontalColor1, component.width.toFloat(), 0f, info.horizontalColor2)
+
+  g.fillRect(0, 0, component.width, component.height)
+
+  g.paint = GradientPaint(0f, 0f, info.verticalColor1, 0f, component.height.toFloat(), info.verticalColor2)
+
+  g.fillRect(0, 0, component.width, component.height)
 }

@@ -9,10 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
@@ -22,6 +19,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
+@ApiStatus.Internal
 public class MavenGeneralPanel implements PanelWithAnchor {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
@@ -111,7 +109,8 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected() && isModifiedNotOverridableData(data));
   }
 
-  protected void initializeFormData(MavenGeneralSettings data, Project project) {
+  @VisibleForTesting
+  public void initializeFormData(MavenGeneralSettings data, Project project) {
     myInitialSettings = data;
 
     checkboxWorkOffline.setSelected(data.isWorkOffline());

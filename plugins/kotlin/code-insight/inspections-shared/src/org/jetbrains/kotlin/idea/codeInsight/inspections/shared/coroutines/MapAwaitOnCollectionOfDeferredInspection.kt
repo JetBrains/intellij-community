@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutinesIds.AWAIT_ALL_ID
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutinesIds.DEFERRED_AWAIT_ID
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
@@ -41,7 +39,7 @@ internal class MapAwaitOnCollectionOfDeferredInspection : KotlinApplicableInspec
         val lambdaArgument = element.singleLambdaArgumentExpression() ?: return null
 
         if (!isIterableMapFunctionCall(element)) return null
-        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, DEFERRED_AWAIT_ID)) return null
+        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Deferred.await)) return null
 
         return Unit
     }
@@ -60,13 +58,13 @@ internal class MapAwaitOnCollectionOfDeferredInspection : KotlinApplicableInspec
                 element: KtCallExpression,
                 updater: ModPsiUpdater
             ) {
-                val alreadyImportedByStarImport = isPackageImportedByStarImport(element.containingKtFile, AWAIT_ALL_ID.packageName)
+                val alreadyImportedByStarImport = isPackageImportedByStarImport(element.containingKtFile, CoroutinesIds.awaitAll.packageName)
 
                 if (!alreadyImportedByStarImport) {
-                    element.containingKtFile.addImport(AWAIT_ALL_ID.asSingleFqName())
+                    element.containingKtFile.addImport(CoroutinesIds.awaitAll.asSingleFqName())
                 }
 
-                element.replace(KtPsiFactory(project).createExpression("${AWAIT_ALL_ID.callableName}()"))
+                element.replace(KtPsiFactory(project).createExpression("${CoroutinesIds.awaitAll.callableName}()"))
             }
         }
     }

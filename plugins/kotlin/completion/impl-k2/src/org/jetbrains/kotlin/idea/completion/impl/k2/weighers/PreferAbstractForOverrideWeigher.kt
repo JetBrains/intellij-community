@@ -16,7 +16,7 @@ internal object PreferAbstractForOverrideWeigher {
         IMPLEMENTED,
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun addWeight(element: OverridesCompletionLookupElementDecorator) {
         element.overrideType = if (element.isImplement) Weight.NOT_IMPLEMENTED else Weight.IMPLEMENTED
     }

@@ -8,19 +8,30 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /**
- * Helper to collect (ID,occurenceMask) pairs -- to be used in {@link IdIndexer} implementations.
+ * Helper to collect (ID, occurenceMask: {@link com.intellij.psi.search.UsageSearchContext}) pairs -- to be used in {@link IdIndexer} implementations.
  * Collects both case-sensitive and case-insensitive hashes at the same time.
  * Creates Map implementation heavily optimized for this specific purpose ({@link IdEntryToScopeMapImpl})
  * <p/>
  * All {@link IdIndexer} implementations are strongly recommended to use this class to collect IDs and occurrence masks, instead
  * of using some other Map implementation directly.
+ *
+ * @see IdIndex
+ * @see com.intellij.psi.search.UsageSearchContext
  */
 public final class IdDataConsumer {
 
   private final @NotNull IdEntryToScopeMapImpl hashToScopeMap = new IdEntryToScopeMapImpl();
 
   public @NotNull Map<IdIndexEntry, Integer> getResult() {
-    hashToScopeMap.ensureSerializedDataCached();
+    //We serialise the data in he indexer's thread(s) to reduce load on the IndexWriter's thread -- which are <=1 per
+    // index, while there are many more indexer threads. But indexer thread keeps an RA, which makes it vulnerable to
+    // RA-by-WA cancellations & retries, which are both more probable AND more expensive the longer RA is.
+    //So the tradeoff: serialise the data for reasonably small maps, and leave largest (but infrequent) maps to be
+    // serialised later, in the IndexWriter.
+    //Threshold 500 is chosen by observing Ultimate sourcetree indexing
+    if(hashToScopeMap.size() < 500) {
+      hashToScopeMap.ensureSerializedDataCached();
+    }
     return hashToScopeMap;
   }
 

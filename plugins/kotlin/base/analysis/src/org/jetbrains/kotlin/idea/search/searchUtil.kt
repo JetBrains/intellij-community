@@ -46,7 +46,7 @@ private inline fun CharSequence.ifNotEmpty(action: (CharSequence) -> Unit) {
 }
 
 fun SearchScope.toHumanReadableString(): String = buildString {
-    val scopeText = this@toHumanReadableString.toString()
+    val scopeText = this@toHumanReadableString.toFullString()
     var currentIndent = 0
     var lastIndex = 0
     for (parenthesis in parenthesisRegex.findAll(scopeText)) {

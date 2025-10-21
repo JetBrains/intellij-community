@@ -17,13 +17,13 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class EvaluateCompileTimeExpressionIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("evaluate.compile.time.expression")
+    KotlinBundle.messagePointer("evaluate.compile.time.expression")
 ) {
 
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
         if (element.getStrictParentOfType<KtBinaryExpression>() != null || !element.isConstantExpression()) return false
         val constantValue = element.getConstantValue() ?: return false
-        setTextGetter { KotlinBundle.message("replace.with.0", constantValue) }
+        setTextGetter(KotlinBundle.messagePointer("replace.with.0", constantValue))
         return true
     }
 

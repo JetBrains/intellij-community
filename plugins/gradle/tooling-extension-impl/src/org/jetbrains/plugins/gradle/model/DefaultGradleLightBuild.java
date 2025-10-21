@@ -3,20 +3,18 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.util.Pair;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
-import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
-import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class DefaultGradleLightBuild implements GradleLightBuild, Serializable {
@@ -26,18 +24,27 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   private final @NotNull DefaultGradleLightProject myRootProject;
   private final @NotNull List<DefaultGradleLightProject> myProjects;
 
-  private @Nullable DefaultBuildIdentifier myParentBuildIdentifier = null;
+  private @Nullable DefaultGradleLightBuild myParentBuild = null;
 
-  public DefaultGradleLightBuild(
-    @NotNull String name,
-    @NotNull DefaultBuildIdentifier identifier,
-    @NotNull DefaultGradleLightProject project,
-    @NotNull List<DefaultGradleLightProject> projects
-  ) {
-    myName = name;
-    myBuildIdentifier = identifier;
-    myRootProject = project;
-    myProjects = projects;
+  public DefaultGradleLightBuild(@NotNull GradleBuild gradleBuild, @NotNull GradleVersion gradleVersion) {
+    BasicGradleProject rootGradleProject = gradleBuild.getRootProject();
+    myName = rootGradleProject.getName();
+    myBuildIdentifier = new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir());
+
+    Map<BasicGradleProject, DefaultGradleLightProject> projects = new LinkedHashMap<>();
+    for (BasicGradleProject project : gradleBuild.getProjects()) {
+      projects.put(project, new DefaultGradleLightProject(this, project, gradleVersion));
+    }
+
+    replicateModelHierarchy(
+      rootGradleProject,
+      it -> projects.get(it),
+      BasicGradleProject::getChildren,
+      DefaultGradleLightProject::addChildProject
+    );
+
+    myRootProject = projects.get(rootGradleProject);
+    myProjects = new ArrayList<>(projects.values());
   }
 
   @Override
@@ -61,12 +68,12 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   }
 
   @Override
-  public @Nullable DefaultBuildIdentifier getParentBuildIdentifier() {
-    return myParentBuildIdentifier;
+  public @Nullable DefaultGradleLightBuild getParentBuild() {
+    return myParentBuild;
   }
 
-  public void setParentBuildIdentifier(@Nullable DefaultBuildIdentifier parentBuildIdentifier) {
-    myParentBuildIdentifier = parentBuildIdentifier;
+  public void setParentBuild(@Nullable DefaultGradleLightBuild parentBuild) {
+    myParentBuild = parentBuild;
   }
 
   @Override
@@ -75,49 +82,6 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
            "name='" + myName + '\'' +
            ", id=" + myBuildIdentifier +
            '}';
-  }
-
-  public static @NotNull DefaultGradleLightBuild convertGradleBuild(@NotNull GradleBuild gradleBuild) {
-    Map<BasicGradleProject, DefaultGradleLightProject> projects = gradleBuild.getProjects().stream()
-      .map(it -> new Pair<>(it, convertGradleProject(it)))
-      .collect(Collectors.toMap(it -> it.getFirst(), it -> it.getSecond()));
-    BasicGradleProject rootGradleProject = gradleBuild.getRootProject();
-
-    replicateModelHierarchy(
-      rootGradleProject,
-      it -> projects.get(it),
-      BasicGradleProject::getChildren,
-      DefaultGradleLightProject::addChildProject
-    );
-
-    return new DefaultGradleLightBuild(
-      rootGradleProject.getName(),
-      convertGradleBuildIdentifier(gradleBuild.getBuildIdentifier()),
-      projects.get(rootGradleProject),
-      new ArrayList<>(projects.values())
-    );
-  }
-
-  public static @NotNull DefaultGradleLightProject convertGradleProject(@NotNull BasicGradleProject gradleProject) {
-    return new DefaultGradleLightProject(
-      gradleProject.getName(),
-      gradleProject.getPath(),
-      gradleProject.getProjectDirectory(),
-      convertGradleProjectIdentifier(gradleProject.getProjectIdentifier())
-    );
-  }
-
-  private static @NotNull DefaultBuildIdentifier convertGradleBuildIdentifier(@NotNull BuildIdentifier buildIdentifier) {
-    return new DefaultBuildIdentifier(
-      buildIdentifier.getRootDir()
-    );
-  }
-
-  private static @NotNull DefaultProjectIdentifier convertGradleProjectIdentifier(@NotNull ProjectIdentifier projectIdentifier) {
-    return new DefaultProjectIdentifier(
-      projectIdentifier.getBuildIdentifier().getRootDir(),
-      projectIdentifier.getProjectPath()
-    );
   }
 
   public static <ModelA, ModelB> void replicateModelHierarchy(
@@ -147,6 +111,63 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
 
         addChildModel.accept(parentModelB, childModelB);
       }
+    }
+  }
+
+  /**
+   * @return {@code gradleBuilds} converted to {@link DefaultGradleLightBuild} instances.
+   * Original order is preserved: if a root build is a first element of {@code gradleBuilds},
+   * then the first element of the returned list is also a root build.
+   */
+  public static @NotNull List<DefaultGradleLightBuild> convertGradleBuilds(
+    @NotNull Collection<? extends GradleBuild> gradleBuilds,
+    @NotNull GradleVersion gradleVersion
+  ) {
+    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new LinkedHashMap<>();
+    // TODO traverse builds via graph to avoid separated parent build field initialization
+    for (GradleBuild gradleBuild : gradleBuilds) {
+      DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleVersion);
+      gradleBuildsToConverted.put(gradleBuild, build);
+    }
+    setIncludedBuildsHierarchy(gradleBuilds, gradleBuildsToConverted);
+    setBuildSrcHierarchy(gradleBuildsToConverted.values());
+    return new ArrayList<>(gradleBuildsToConverted.values());
+  }
+
+  /// Sets parent builds for included builds, relying on the data provided by Gradle.
+  private static void setIncludedBuildsHierarchy(
+    @NotNull Collection<? extends GradleBuild> gradleBuilds,
+    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted
+  ) {
+    for (GradleBuild gradleBuild : gradleBuilds) {
+      DefaultGradleLightBuild build = gradleBuildsToConverted.get(gradleBuild);
+      assert build != null;
+
+      for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
+        DefaultGradleLightBuild buildToUpdate = gradleBuildsToConverted.get(includedGradleBuild);
+        assert buildToUpdate != null;
+        buildToUpdate.setParentBuild(build);
+      }
+    }
+  }
+
+  /// Sets parent builds for buildSrc builds if any of `convertedBuilds` is located in a parent directory for buildSrc.
+  private static void setBuildSrcHierarchy(@NotNull Collection<DefaultGradleLightBuild> convertedBuilds) {
+    Map<Path, DefaultGradleLightBuild> pathToBuild = new HashMap<>();
+    for (DefaultGradleLightBuild build : convertedBuilds) {
+      pathToBuild.put(build.getBuildIdentifier().getRootDir().toPath(), build);
+    }
+    for (DefaultGradleLightBuild build : convertedBuilds) {
+      if (!build.getName().equals("buildSrc")) continue;
+
+      Path buildSrcPath = build.getBuildIdentifier().getRootDir().toPath();
+      Path parentDirectory = buildSrcPath.getParent();
+      if (parentDirectory == null) continue;
+
+      DefaultGradleLightBuild parentBuild = pathToBuild.get(parentDirectory);
+      if (parentBuild == null) continue;
+
+      build.setParentBuild(parentBuild);
     }
   }
 }

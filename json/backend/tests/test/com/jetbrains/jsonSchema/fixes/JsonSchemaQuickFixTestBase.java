@@ -41,7 +41,7 @@ public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingT
         PsiTestUtil.compareStubTexts(e);
       }
     });
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     myFixture.checkResult(afterFix);
   }
 }

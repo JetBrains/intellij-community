@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -51,7 +51,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   public static void autoPopupXmlLookup(final Project project, final Editor editor) {
-    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 
       PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);

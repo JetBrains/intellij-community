@@ -64,7 +64,7 @@ public interface PrePushHandler {
    * @deprecated Use {@link #handle(Project, List, ProgressIndicator)} instead
    */
   @CalledInAny
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @NotNull Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
     throw new UnsupportedOperationException("This method is deprecated. Use #handle(Project, List, ProgressIndicator) instead.");
   }

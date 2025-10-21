@@ -138,6 +138,7 @@ public class SearchTextField extends JPanel {
         super.focusGained(e);
       }
     });
+    myTextField.getAccessibleContext().setAccessibleName(UIBundle.message("search.text.field.accessible.name"));
     add(myTextField, BorderLayout.CENTER);
 
     setHistoryPropertyName(historyPropertyName);

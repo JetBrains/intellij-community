@@ -31,7 +31,7 @@ public final class AbstractMethodCallInConstructorInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AbstractMethodCallInConstructorVisitor();
   }
 

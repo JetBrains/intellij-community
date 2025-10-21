@@ -83,6 +83,7 @@ public abstract class ChooseByNameFilter<T> {
     myProject = project;
     myChooser = createChooser(model, filterConfiguration);
     myChooserPanel = createChooserPanel();
+    myToolbar.setTargetComponent(myChooserPanel);
     popup.setToolArea(myToolbar.getComponent());
   }
 

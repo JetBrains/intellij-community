@@ -28,6 +28,7 @@ open class TestingOptions {
     const val PERFORMANCE_TESTS_ONLY_FLAG: String = "idea.performance.tests"
     const val TEST_JRE_PROPERTY: String = "intellij.build.test.jre"
     const val REDIRECT_STDOUT_TO_FILE: String = "intellij.build.test.redirectStdoutToFile"
+    const val USE_ARCHIVED_COMPILED_CLASSES: String = "intellij.build.test.use.compiled.classes.archives"
   }
 
   /**
@@ -103,12 +104,22 @@ open class TestingOptions {
   var customRuntimePath: String? = System.getProperty(TEST_JRE_PROPERTY)
 
   /**
+   * Collect tests coverage using [IntelliJ Coverage agent](https://github.com/jetbrains/intellij-coverage)
+   */
+  var enableCoverage: Boolean = getBooleanProperty("intellij.build.test.coverage.enabled", false)
+
+  /**
+   * Specifies a list of semicolon separated include class patterns for [IntelliJ Coverage agent](https://github.com/jetbrains/intellij-coverage).
+   * Required if [enableCoverage] is set to `true`.
+   */
+  var coveredClassesPatterns: String? = System.getProperty("intellij.build.test.coverage.include.class.patterns")
+
+  /**
    * Enables capturing traces with IntelliJ test discovery agent.
    * This agent captures lightweight coverage during your testing session
-   * and allows to rerun only corresponding tests for desired method or class in your project.
+   * and allows to rerun only corresponding tests for a desired method or class in your project.
    *
-   *
-   * For more information, please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
+   * Also see [enableCoverage].
    */
   var isTestDiscoveryEnabled: Boolean = getBooleanProperty("intellij.build.test.discovery.enabled", false)
 
@@ -182,7 +193,7 @@ open class TestingOptions {
    * Whether to use jars instead of directories with classes.
    * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
    */
-  val useArchivedCompiledClasses: Boolean = getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
+  val useArchivedCompiledClasses: Boolean = getBooleanProperty(USE_ARCHIVED_COMPILED_CLASSES, false)
 
   /** Skip running (and collection) of JUnit5 tests */
   val shouldSkipJUnit5Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit5", false)

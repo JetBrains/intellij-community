@@ -5,6 +5,7 @@ package com.intellij.ide.wizard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
   }
 
   @Override
+  @RequiresEdt
   public final void _commit(boolean finishChosen) throws CommitStepException {
     commit(finishChosen ? CommitType.Finish : CommitType.Next);
   }
@@ -87,5 +89,4 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
   public @NonNls String getHelpId() {
     return null;
   }
-
 }

@@ -11,15 +11,54 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.storage.*
+import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry
 import com.intellij.workspaceModel.ide.toPath
+import java.nio.file.InvalidPathException
 import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Resolves the effective [EelDescriptor] (environment) that the Global Workspace Model
+ * should associate with this [SdkEntity].
+ *
+ * Behavior depends on the per-environment model separation flag
+ * (`ide.workspace.model.per.environment.model.separation`):
+ *
+ * - When separation is ON, the environment is inferred from `homePath`, so the SDK is attributed
+ *   to the machine that actually owns the path (e.g., local OS, a particular WSL distribution,
+ *   or a remote/container environment).
+ * - When separation is OFF, [LocalEelDescriptor] is always returned so SDKs from different
+ *   environments are kept together in a single, shared global model (compatibility mode for IDEs
+ *   that expect cross-environment SDK visibility).
+ * - If `homePath` is `null`, cannot be converted to a path, or throws [InvalidPathException],
+ *   the method falls back to [LocalEelDescriptor].
+ *
+ * The resolved descriptor is used to:
+ * - decide which [com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel] instance
+ *   (per environment) should store the SDK entity;
+ * - filter which per-environment bridges should create/load SDK bridges, preventing unrelated
+ *   environments from processing changes.
+ */
+private fun SdkEntity.getAssociatedEffectiveWorkspaceEelDescriptor(): EelDescriptor {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    return LocalEelDescriptor
+  }
+  return try {
+    homePath?.toPath()?.getEelDescriptor() ?: LocalEelDescriptor
+  }
+  catch (_: InvalidPathException) {
+    LocalEelDescriptor
+  }
+}
 
 private class GlobalSdkBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
@@ -28,40 +67,38 @@ private class GlobalSdkBridgeInitializer : BridgeInitializer {
     @Suppress("UNCHECKED_CAST")
     val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
+    val projectEelDescriptor = project.getEelDescriptor()
+    val environmentName = projectEelDescriptor.machine.getInternalEnvironmentName()
 
     for (addChange in addChanges) {
+      if (addChange.newEntity.getAssociatedEffectiveWorkspaceEelDescriptor() != projectEelDescriptor) continue
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
-        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
+        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
         sdkEntityCopy.applyChangesFrom(addChange.newEntity)
-        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
+        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy, environmentName))
       }
     }
   }
 }
 
-private class GlobalSdkBridgesLoader(private val descriptor: EelDescriptor) : GlobalSdkTableBridge {
+private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : GlobalSdkTableBridge {
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                              initialEntityStorage: VersionedEntityStorage): () -> Unit {
+    val environmentName = eelMachine.getInternalEnvironmentName()
     val sdks = mutableStorage
       .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
+      .filter { it.getAssociatedEffectiveWorkspaceEelDescriptor().machine == eelMachine }
       .map { sdkEntity ->
-        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntity.Builder
-        sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder))
+        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntityBuilder
+        sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder, environmentName))
       }
       .toList()
     thisLogger().debug("Initial load of SDKs")
 
     for ((entity, sdkBridge) in sdks) {
-      if (shouldSkipEntityProcessing(entity)) {
-        // The SDKs are populated from a single file for now. All loaded SDK entities go to the same entity storage
-        // We want to avoid having alien SDKs in storages, hence we filter them
-        mutableStorage.removeEntity(entity)
-      }
-      else {
-        mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
-      }
+      mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
     }
     return {}
   }
@@ -71,21 +108,20 @@ private class GlobalSdkBridgesLoader(private val descriptor: EelDescriptor) : Gl
     val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
 
-    for (addChange in addChanges) {
-      if (shouldSkipEntityProcessing(addChange.newEntity)) {
-        continue
-      }
+    val environmentName = eelMachine.getInternalEnvironmentName()
 
+    for (addChange in addChanges) {
+      if (addChange.newEntity.getAssociatedEffectiveWorkspaceEelDescriptor().machine != eelMachine) continue
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
-        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
+        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
         sdkEntityCopy.applyChangesFrom(addChange.newEntity)
-        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
+        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy, environmentName))
       }
     }
   }
 
-  override fun handleBeforeChangeEvents(event: VersionedStorageChange) { }
+  override fun handleBeforeChangeEvents(event: VersionedStorageChange) {}
 
   override fun handleChangedEvents(event: VersionedStorageChange) {
     val changes = event.getChanges(SdkEntity::class.java)
@@ -132,18 +168,18 @@ private class GlobalSdkBridgesLoader(private val descriptor: EelDescriptor) : Gl
     if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
       return false
     }
-    return entity.homePath?.toPath()?.getEelDescriptor() != descriptor
+    return entity.homePath?.toPath()?.getEelDescriptor()?.machine != eelMachine
   }
 }
 
 private val LOG = logger<GlobalSdkBridgesLoader>()
 
 private class GlobalSdkTableBridgeRegistryImpl : GlobalSdkTableBridgeRegistry {
-  private val registry = ConcurrentHashMap<EelDescriptor, GlobalSdkTableBridge>()
+  private val registry = ConcurrentHashMap<EelMachine, GlobalSdkTableBridge>()
 
-  override fun getTableBridge(eelDescriptor: EelDescriptor): GlobalSdkTableBridge {
-    return registry.computeIfAbsent(eelDescriptor) {
-      GlobalSdkBridgesLoader(eelDescriptor)
+  override fun getTableBridge(eelMachine: EelMachine): GlobalSdkTableBridge {
+    return registry.computeIfAbsent(eelMachine) {
+      GlobalSdkBridgesLoader(eelMachine)
     }
   }
 }

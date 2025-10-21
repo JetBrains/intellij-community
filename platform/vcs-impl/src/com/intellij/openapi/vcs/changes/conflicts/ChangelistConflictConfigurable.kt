@@ -147,7 +147,7 @@ class ChangelistConflictConfigurable(val project: Project)
     override fun invoke(): Boolean {
       if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return false
 
-      val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+      val activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()
       if (activeVcss.isEmpty()) return true // show options without VCSes
 
       val onlyPartialChangelists = LineStatusTrackerManager.getInstance(project).arePartialChangelistsEnabled() &&

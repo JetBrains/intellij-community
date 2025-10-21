@@ -83,7 +83,10 @@ class SimulatedQuantization(google.protobuf.message.Message):
         num_buckets: builtins.int | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["clipping_limits", b"clipping_limits"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["clipping_limits", b"clipping_limits", "enabled", b"enabled", "num_buckets", b"num_buckets"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal["clipping_limits", b"clipping_limits", "enabled", b"enabled", "num_buckets", b"num_buckets"],
+    ) -> None: ...
 
 global___SimulatedQuantization = SimulatedQuantization
 
@@ -126,11 +129,7 @@ class DynamicLearningRate(google.protobuf.message.Message):
     particular tag is specified by populating its corresponding index in the
     list of learning_rate scalars.
     """
-    def __init__(
-        self,
-        *,
-        tag: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, tag: builtins.int | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["tag", b"tag"]) -> None: ...
 
 global___DynamicLearningRate = DynamicLearningRate
@@ -146,15 +145,16 @@ class LearningRate(google.protobuf.message.Message):
     constant: builtins.float
     @property
     def dynamic(self) -> global___DynamicLearningRate: ...
-    def __init__(
-        self,
-        *,
-        constant: builtins.float | None = ...,
-        dynamic: global___DynamicLearningRate | None = ...,
+    def __init__(self, *, constant: builtins.float | None = ..., dynamic: global___DynamicLearningRate | None = ...) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["constant", b"constant", "dynamic", b"dynamic", "learning_rate", b"learning_rate"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["constant", b"constant", "dynamic", b"dynamic", "learning_rate", b"learning_rate"]
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["constant", b"constant", "dynamic", b"dynamic", "learning_rate", b"learning_rate"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["constant", b"constant", "dynamic", b"dynamic", "learning_rate", b"learning_rate"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["learning_rate", b"learning_rate"]) -> typing.Literal["constant", "dynamic"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["learning_rate", b"learning_rate"]
+    ) -> typing.Literal["constant", "dynamic"] | None: ...
 
 global___LearningRate = LearningRate
 
@@ -169,9 +169,7 @@ class AdagradParameters(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___AdagradParameters = AdagradParameters
 
@@ -216,7 +214,21 @@ class AdagradMomentumParameters(google.protobuf.message.Message):
         beta2: builtins.float | None = ...,
         epsilon: builtins.float | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["beta2", b"beta2", "epsilon", b"epsilon", "exponent", b"exponent", "momentum", b"momentum", "use_nesterov", b"use_nesterov"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "beta2",
+            b"beta2",
+            "epsilon",
+            b"epsilon",
+            "exponent",
+            b"exponent",
+            "momentum",
+            b"momentum",
+            "use_nesterov",
+            b"use_nesterov",
+        ],
+    ) -> None: ...
 
 global___AdagradMomentumParameters = AdagradMomentumParameters
 
@@ -249,7 +261,17 @@ class BoundedAdagradParameters(google.protobuf.message.Message):
         max_var_update: builtins.float | None = ...,
         max_accumulator: builtins.float | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["max_accumulator", b"max_accumulator", "max_var_update", b"max_var_update", "update_accumulator_first", b"update_accumulator_first"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "max_accumulator",
+            b"max_accumulator",
+            "max_var_update",
+            b"max_var_update",
+            "update_accumulator_first",
+            b"update_accumulator_first",
+        ],
+    ) -> None: ...
 
 global___BoundedAdagradParameters = BoundedAdagradParameters
 
@@ -261,9 +283,7 @@ class StochasticGradientDescentParameters(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___StochasticGradientDescentParameters = StochasticGradientDescentParameters
 
@@ -317,7 +337,23 @@ class FtrlParameters(google.protobuf.message.Message):
         multiply_linear_by_lr: builtins.bool | None = ...,
         allow_zero_accumulator: builtins.bool | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["allow_zero_accumulator", b"allow_zero_accumulator", "beta", b"beta", "l1", b"l1", "l2", b"l2", "lr_power", b"lr_power", "multiply_linear_by_lr", b"multiply_linear_by_lr"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "allow_zero_accumulator",
+            b"allow_zero_accumulator",
+            "beta",
+            b"beta",
+            "l1",
+            b"l1",
+            "l2",
+            b"l2",
+            "lr_power",
+            b"lr_power",
+            "multiply_linear_by_lr",
+            b"multiply_linear_by_lr",
+        ],
+    ) -> None: ...
 
 global___FtrlParameters = FtrlParameters
 
@@ -366,7 +402,21 @@ class AdamParameters(google.protobuf.message.Message):
         use_non_lazy_adam: builtins.bool | None = ...,
         use_sum_inside_sqrt: builtins.bool | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["beta1", b"beta1", "beta2", b"beta2", "epsilon", b"epsilon", "use_non_lazy_adam", b"use_non_lazy_adam", "use_sum_inside_sqrt", b"use_sum_inside_sqrt"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "beta1",
+            b"beta1",
+            "beta2",
+            b"beta2",
+            "epsilon",
+            b"epsilon",
+            "use_non_lazy_adam",
+            b"use_non_lazy_adam",
+            "use_sum_inside_sqrt",
+            b"use_sum_inside_sqrt",
+        ],
+    ) -> None: ...
 
 global___AdamParameters = AdamParameters
 
@@ -382,12 +432,7 @@ class MomentumParameters(google.protobuf.message.Message):
     USE_NESTEROV_FIELD_NUMBER: builtins.int
     momentum: builtins.float
     use_nesterov: builtins.bool
-    def __init__(
-        self,
-        *,
-        momentum: builtins.float | None = ...,
-        use_nesterov: builtins.bool | None = ...,
-    ) -> None: ...
+    def __init__(self, *, momentum: builtins.float | None = ..., use_nesterov: builtins.bool | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["momentum", b"momentum", "use_nesterov", b"use_nesterov"]) -> None: ...
 
 global___MomentumParameters = MomentumParameters
@@ -416,7 +461,9 @@ class LionParameters(google.protobuf.message.Message):
         beta2: builtins.float | None = ...,
         use_non_lazy_lion: builtins.bool | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["beta1", b"beta1", "beta2", b"beta2", "use_non_lazy_lion", b"use_non_lazy_lion"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["beta1", b"beta1", "beta2", b"beta2", "use_non_lazy_lion", b"use_non_lazy_lion"]
+    ) -> None: ...
 
 global___LionParameters = LionParameters
 
@@ -435,11 +482,7 @@ class RmsPropParameters(google.protobuf.message.Message):
     momentum: builtins.float
     epsilon: builtins.float
     def __init__(
-        self,
-        *,
-        rho: builtins.float | None = ...,
-        momentum: builtins.float | None = ...,
-        epsilon: builtins.float | None = ...,
+        self, *, rho: builtins.float | None = ..., momentum: builtins.float | None = ..., epsilon: builtins.float | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["epsilon", b"epsilon", "momentum", b"momentum", "rho", b"rho"]) -> None: ...
 
@@ -460,11 +503,7 @@ class CenteredRmsPropParameters(google.protobuf.message.Message):
     momentum: builtins.float
     epsilon: builtins.float
     def __init__(
-        self,
-        *,
-        rho: builtins.float | None = ...,
-        momentum: builtins.float | None = ...,
-        epsilon: builtins.float | None = ...,
+        self, *, rho: builtins.float | None = ..., momentum: builtins.float | None = ..., epsilon: builtins.float | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["epsilon", b"epsilon", "momentum", b"momentum", "rho", b"rho"]) -> None: ...
 
@@ -516,7 +555,35 @@ class MdlAdagradLightParameters(google.protobuf.message.Message):
         hard_limit_min_benefit: builtins.bool | None = ...,
         mdl_regularize: builtins.bool | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["benefit_revisit_scale", b"benefit_revisit_scale", "hard_limit_min_benefit", b"hard_limit_min_benefit", "l2", b"l2", "lr_power", b"lr_power", "max_event_benefit", b"max_event_benefit", "max_total_benefit", b"max_total_benefit", "mdl_benefit_rampup_coeff", b"mdl_benefit_rampup_coeff", "mdl_hard_limit", b"mdl_hard_limit", "mdl_min_weight", b"mdl_min_weight", "mdl_mix_in_margin", b"mdl_mix_in_margin", "mdl_regularize", b"mdl_regularize", "min_servable_mdl_benefit", b"min_servable_mdl_benefit"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "benefit_revisit_scale",
+            b"benefit_revisit_scale",
+            "hard_limit_min_benefit",
+            b"hard_limit_min_benefit",
+            "l2",
+            b"l2",
+            "lr_power",
+            b"lr_power",
+            "max_event_benefit",
+            b"max_event_benefit",
+            "max_total_benefit",
+            b"max_total_benefit",
+            "mdl_benefit_rampup_coeff",
+            b"mdl_benefit_rampup_coeff",
+            "mdl_hard_limit",
+            b"mdl_hard_limit",
+            "mdl_min_weight",
+            b"mdl_min_weight",
+            "mdl_mix_in_margin",
+            b"mdl_mix_in_margin",
+            "mdl_regularize",
+            b"mdl_regularize",
+            "min_servable_mdl_benefit",
+            b"min_servable_mdl_benefit",
+        ],
+    ) -> None: ...
 
 global___MdlAdagradLightParameters = MdlAdagradLightParameters
 
@@ -532,12 +599,7 @@ class AdadeltaParameters(google.protobuf.message.Message):
     EPSILON_FIELD_NUMBER: builtins.int
     rho: builtins.float
     epsilon: builtins.float
-    def __init__(
-        self,
-        *,
-        rho: builtins.float | None = ...,
-        epsilon: builtins.float | None = ...,
-    ) -> None: ...
+    def __init__(self, *, rho: builtins.float | None = ..., epsilon: builtins.float | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["epsilon", b"epsilon", "rho", b"rho"]) -> None: ...
 
 global___AdadeltaParameters = AdadeltaParameters
@@ -554,12 +616,7 @@ class ProximalAdagradParameters(google.protobuf.message.Message):
     L2_FIELD_NUMBER: builtins.int
     l1: builtins.float
     l2: builtins.float
-    def __init__(
-        self,
-        *,
-        l1: builtins.float | None = ...,
-        l2: builtins.float | None = ...,
-    ) -> None: ...
+    def __init__(self, *, l1: builtins.float | None = ..., l2: builtins.float | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["l1", b"l1", "l2", b"l2"]) -> None: ...
 
 global___ProximalAdagradParameters = ProximalAdagradParameters
@@ -589,11 +646,7 @@ class OnlineYogiParameters(google.protobuf.message.Message):
     beta2: builtins.float
     """\\beta_2 from Algorithm 2 in the paper."""
     def __init__(
-        self,
-        *,
-        l1: builtins.float | None = ...,
-        l2: builtins.float | None = ...,
-        beta2: builtins.float | None = ...,
+        self, *, l1: builtins.float | None = ..., l2: builtins.float | None = ..., beta2: builtins.float | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["beta2", b"beta2", "l1", b"l1", "l2", b"l2"]) -> None: ...
 
@@ -638,7 +691,9 @@ class ProximalYogiParameters(google.protobuf.message.Message):
         beta2: builtins.float | None = ...,
         epsilon: builtins.float | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["beta1", b"beta1", "beta2", b"beta2", "epsilon", b"epsilon", "l1", b"l1", "l2", b"l2"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["beta1", b"beta1", "beta2", b"beta2", "epsilon", b"epsilon", "l1", b"l1", "l2", b"l2"]
+    ) -> None: ...
 
 global___ProximalYogiParameters = ProximalYogiParameters
 
@@ -696,7 +751,19 @@ class FrequencyEstimatorParameters(google.protobuf.message.Message):
         outlier_threshold: builtins.float | None = ...,
         weight_exponent: builtins.float | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["max_delta", b"max_delta", "outlier_threshold", b"outlier_threshold", "tau", b"tau", "weight_exponent", b"weight_exponent"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "max_delta",
+            b"max_delta",
+            "outlier_threshold",
+            b"outlier_threshold",
+            "tau",
+            b"tau",
+            "weight_exponent",
+            b"weight_exponent",
+        ],
+    ) -> None: ...
 
 global___FrequencyEstimatorParameters = FrequencyEstimatorParameters
 
@@ -728,11 +795,7 @@ class UserDefinedProgramParameters(google.protobuf.message.Message):
     PROGRAM_FIELD_NUMBER: builtins.int
     @property
     def program(self) -> tensorflow.compiler.xla.service.hlo_pb2.HloModuleProto: ...
-    def __init__(
-        self,
-        *,
-        program: tensorflow.compiler.xla.service.hlo_pb2.HloModuleProto | None = ...,
-    ) -> None: ...
+    def __init__(self, *, program: tensorflow.compiler.xla.service.hlo_pb2.HloModuleProto | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["program", b"program"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["program", b"program"]) -> None: ...
 
@@ -748,9 +811,7 @@ class AssignParameters(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___AssignParameters = AssignParameters
 
@@ -768,7 +829,9 @@ class GradientAccumulationStatus(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _StatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[GradientAccumulationStatus._Status.ValueType], builtins.type):
+    class _StatusEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[GradientAccumulationStatus._Status.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNSPECIFIED: GradientAccumulationStatus._Status.ValueType  # 0
         ENABLED: GradientAccumulationStatus._Status.ValueType  # 1
@@ -781,9 +844,7 @@ class GradientAccumulationStatus(google.protobuf.message.Message):
     ENABLED: GradientAccumulationStatus.Status.ValueType  # 1
     DISABLED: GradientAccumulationStatus.Status.ValueType  # 2
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___GradientAccumulationStatus = GradientAccumulationStatus
 
@@ -835,7 +896,9 @@ class LowDimensionalPackingStatus(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _StatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[LowDimensionalPackingStatus._Status.ValueType], builtins.type):
+    class _StatusEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[LowDimensionalPackingStatus._Status.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNSPECIFIED: LowDimensionalPackingStatus._Status.ValueType  # 0
         ENABLED: LowDimensionalPackingStatus._Status.ValueType  # 1
@@ -858,9 +921,7 @@ class LowDimensionalPackingStatus(google.protobuf.message.Message):
     ENABLED: LowDimensionalPackingStatus.Status.ValueType  # 1
     DISABLED: LowDimensionalPackingStatus.Status.ValueType  # 2
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___LowDimensionalPackingStatus = LowDimensionalPackingStatus
 
@@ -876,7 +937,10 @@ class HotIdReplicationConfiguration(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _StatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[HotIdReplicationConfiguration._Status.ValueType], builtins.type):
+    class _StatusEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[HotIdReplicationConfiguration._Status.ValueType],
+        builtins.type,
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNSPECIFIED: HotIdReplicationConfiguration._Status.ValueType  # 0
         ENABLED: HotIdReplicationConfiguration._Status.ValueType  # 1
@@ -897,11 +961,7 @@ class HotIdReplicationConfiguration(google.protobuf.message.Message):
 
     STATUS_FIELD_NUMBER: builtins.int
     status: global___HotIdReplicationConfiguration.Status.ValueType
-    def __init__(
-        self,
-        *,
-        status: global___HotIdReplicationConfiguration.Status.ValueType | None = ...,
-    ) -> None: ...
+    def __init__(self, *, status: global___HotIdReplicationConfiguration.Status.ValueType | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["status", b"status"]) -> None: ...
 
 global___HotIdReplicationConfiguration = HotIdReplicationConfiguration
@@ -1056,9 +1116,145 @@ class OptimizationParameters(google.protobuf.message.Message):
         user_defined_program: global___UserDefinedProgramParameters | None = ...,
         assign: global___AssignParameters | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["adadelta", b"adadelta", "adagrad", b"adagrad", "adagrad_momentum", b"adagrad_momentum", "adam", b"adam", "assign", b"assign", "bounded_adagrad", b"bounded_adagrad", "centered_rms_prop", b"centered_rms_prop", "clipping_limits", b"clipping_limits", "frequency_estimator", b"frequency_estimator", "ftrl", b"ftrl", "gradient_clipping_limits", b"gradient_clipping_limits", "hot_id_replication_configuration", b"hot_id_replication_configuration", "learning_rate", b"learning_rate", "lion", b"lion", "mdl_adagrad_light", b"mdl_adagrad_light", "momentum", b"momentum", "online_yogi", b"online_yogi", "parameters", b"parameters", "proximal_adagrad", b"proximal_adagrad", "proximal_yogi", b"proximal_yogi", "rms_prop", b"rms_prop", "simulated_quantization", b"simulated_quantization", "stochastic_gradient_descent", b"stochastic_gradient_descent", "user_defined_program", b"user_defined_program"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["adadelta", b"adadelta", "adagrad", b"adagrad", "adagrad_momentum", b"adagrad_momentum", "adam", b"adam", "assign", b"assign", "bounded_adagrad", b"bounded_adagrad", "centered_rms_prop", b"centered_rms_prop", "clipping_limits", b"clipping_limits", "frequency_estimator", b"frequency_estimator", "ftrl", b"ftrl", "gradient_accumulation_status", b"gradient_accumulation_status", "gradient_clipping_limits", b"gradient_clipping_limits", "hot_id_replication_configuration", b"hot_id_replication_configuration", "learning_rate", b"learning_rate", "lion", b"lion", "low_dimensional_packing_status", b"low_dimensional_packing_status", "mdl_adagrad_light", b"mdl_adagrad_light", "momentum", b"momentum", "multiply_weight_decay_factor_by_learning_rate", b"multiply_weight_decay_factor_by_learning_rate", "online_yogi", b"online_yogi", "parameters", b"parameters", "proximal_adagrad", b"proximal_adagrad", "proximal_yogi", b"proximal_yogi", "rms_prop", b"rms_prop", "simulated_quantization", b"simulated_quantization", "stochastic_gradient_descent", b"stochastic_gradient_descent", "user_defined_program", b"user_defined_program", "weight_decay_factor", b"weight_decay_factor"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["parameters", b"parameters"]) -> typing.Literal["adagrad", "adagrad_momentum", "bounded_adagrad", "stochastic_gradient_descent", "ftrl", "adam", "momentum", "lion", "rms_prop", "centered_rms_prop", "mdl_adagrad_light", "adadelta", "proximal_adagrad", "online_yogi", "proximal_yogi", "frequency_estimator", "user_defined_program", "assign"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "adadelta",
+            b"adadelta",
+            "adagrad",
+            b"adagrad",
+            "adagrad_momentum",
+            b"adagrad_momentum",
+            "adam",
+            b"adam",
+            "assign",
+            b"assign",
+            "bounded_adagrad",
+            b"bounded_adagrad",
+            "centered_rms_prop",
+            b"centered_rms_prop",
+            "clipping_limits",
+            b"clipping_limits",
+            "frequency_estimator",
+            b"frequency_estimator",
+            "ftrl",
+            b"ftrl",
+            "gradient_clipping_limits",
+            b"gradient_clipping_limits",
+            "hot_id_replication_configuration",
+            b"hot_id_replication_configuration",
+            "learning_rate",
+            b"learning_rate",
+            "lion",
+            b"lion",
+            "mdl_adagrad_light",
+            b"mdl_adagrad_light",
+            "momentum",
+            b"momentum",
+            "online_yogi",
+            b"online_yogi",
+            "parameters",
+            b"parameters",
+            "proximal_adagrad",
+            b"proximal_adagrad",
+            "proximal_yogi",
+            b"proximal_yogi",
+            "rms_prop",
+            b"rms_prop",
+            "simulated_quantization",
+            b"simulated_quantization",
+            "stochastic_gradient_descent",
+            b"stochastic_gradient_descent",
+            "user_defined_program",
+            b"user_defined_program",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "adadelta",
+            b"adadelta",
+            "adagrad",
+            b"adagrad",
+            "adagrad_momentum",
+            b"adagrad_momentum",
+            "adam",
+            b"adam",
+            "assign",
+            b"assign",
+            "bounded_adagrad",
+            b"bounded_adagrad",
+            "centered_rms_prop",
+            b"centered_rms_prop",
+            "clipping_limits",
+            b"clipping_limits",
+            "frequency_estimator",
+            b"frequency_estimator",
+            "ftrl",
+            b"ftrl",
+            "gradient_accumulation_status",
+            b"gradient_accumulation_status",
+            "gradient_clipping_limits",
+            b"gradient_clipping_limits",
+            "hot_id_replication_configuration",
+            b"hot_id_replication_configuration",
+            "learning_rate",
+            b"learning_rate",
+            "lion",
+            b"lion",
+            "low_dimensional_packing_status",
+            b"low_dimensional_packing_status",
+            "mdl_adagrad_light",
+            b"mdl_adagrad_light",
+            "momentum",
+            b"momentum",
+            "multiply_weight_decay_factor_by_learning_rate",
+            b"multiply_weight_decay_factor_by_learning_rate",
+            "online_yogi",
+            b"online_yogi",
+            "parameters",
+            b"parameters",
+            "proximal_adagrad",
+            b"proximal_adagrad",
+            "proximal_yogi",
+            b"proximal_yogi",
+            "rms_prop",
+            b"rms_prop",
+            "simulated_quantization",
+            b"simulated_quantization",
+            "stochastic_gradient_descent",
+            b"stochastic_gradient_descent",
+            "user_defined_program",
+            b"user_defined_program",
+            "weight_decay_factor",
+            b"weight_decay_factor",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["parameters", b"parameters"]
+    ) -> (
+        typing.Literal[
+            "adagrad",
+            "adagrad_momentum",
+            "bounded_adagrad",
+            "stochastic_gradient_descent",
+            "ftrl",
+            "adam",
+            "momentum",
+            "lion",
+            "rms_prop",
+            "centered_rms_prop",
+            "mdl_adagrad_light",
+            "adadelta",
+            "proximal_adagrad",
+            "online_yogi",
+            "proximal_yogi",
+            "frequency_estimator",
+            "user_defined_program",
+            "assign",
+        ]
+        | None
+    ): ...
 
 global___OptimizationParameters = OptimizationParameters
 
@@ -1079,9 +1275,7 @@ class StateVariableSpecification(google.protobuf.message.Message):
 
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-        def __init__(
-            self,
-        ) -> None: ...
+        def __init__(self) -> None: ...
 
     @typing.final
     class FillWithConstant(google.protobuf.message.Message):
@@ -1094,11 +1288,7 @@ class StateVariableSpecification(google.protobuf.message.Message):
 
         INITIAL_VALUE_FIELD_NUMBER: builtins.int
         initial_value: builtins.float
-        def __init__(
-            self,
-            *,
-            initial_value: builtins.float | None = ...,
-        ) -> None: ...
+        def __init__(self, *, initial_value: builtins.float | None = ...) -> None: ...
         def ClearField(self, field_name: typing.Literal["initial_value", b"initial_value"]) -> None: ...
 
     NAME_FIELD_NUMBER: builtins.int
@@ -1117,8 +1307,20 @@ class StateVariableSpecification(google.protobuf.message.Message):
         user_defined: global___StateVariableSpecification.UserDefined | None = ...,
         fill_with_constant: global___StateVariableSpecification.FillWithConstant | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["fill_with_constant", b"fill_with_constant", "usage", b"usage", "user_defined", b"user_defined"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["fill_with_constant", b"fill_with_constant", "name", b"name", "usage", b"usage", "user_defined", b"user_defined"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["usage", b"usage"]) -> typing.Literal["user_defined", "fill_with_constant"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "fill_with_constant", b"fill_with_constant", "usage", b"usage", "user_defined", b"user_defined"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "fill_with_constant", b"fill_with_constant", "name", b"name", "usage", b"usage", "user_defined", b"user_defined"
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["usage", b"usage"]
+    ) -> typing.Literal["user_defined", "fill_with_constant"] | None: ...
 
 global___StateVariableSpecification = StateVariableSpecification

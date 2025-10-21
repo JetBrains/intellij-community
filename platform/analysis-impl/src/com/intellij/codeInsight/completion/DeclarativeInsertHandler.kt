@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
@@ -8,9 +8,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
-open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<DeclarativeInsertHandler>>,
-                                             val fallbackInsertHandler: InsertHandler<LookupElement>?)
-  : InsertHandler<LookupElement> {
+open class CompositeDeclarativeInsertHandler(
+  val handlers: Map<String, Lazy<DeclarativeInsertHandler>>,
+  val fallbackInsertHandler: InsertHandler<LookupElement>?,
+) : InsertHandler<LookupElement> {
 
   init {
     // check `handlers` to make sure we do not have multiple keys sharing the same completionChar
@@ -31,15 +32,19 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
   }
 
   companion object {
-    private fun withUniversalHandler(completionChars: String,
-                                     handler: Lazy<DeclarativeInsertHandler>): CompositeDeclarativeInsertHandler {
+    private fun withUniversalHandler(
+      completionChars: String,
+      handler: Lazy<DeclarativeInsertHandler>,
+    ): CompositeDeclarativeInsertHandler {
       val handlerMap = mapOf(completionChars to handler)
       // it's important not to provide a fallbackInsertHandler
       return CompositeDeclarativeInsertHandler(handlerMap, null)
     }
 
-    fun withUniversalHandler(completionChars: String,
-                             handler: DeclarativeInsertHandler): CompositeDeclarativeInsertHandler {
+    fun withUniversalHandler(
+      completionChars: String,
+      handler: DeclarativeInsertHandler,
+    ): CompositeDeclarativeInsertHandler {
       val lazyHandler = lazy { handler }
       return withUniversalHandler(completionChars, lazyHandler)
     }
@@ -62,7 +67,7 @@ open class DeclarativeInsertHandler protected constructor(
   val offsetToPutCaret: Int,
   val addCompletionChar: Boolean?,
   val postInsertHandler: InsertHandler<LookupElement>?,
-  val popupOptions: PopupOptions
+  val popupOptions: PopupOptions,
 ) : InsertHandler<LookupElement> {
   data class RelativeTextEdit(val rangeFrom: Int, val rangeTo: Int, val newText: String) {
     fun toAbsolute(baseOffset: Int): AbsoluteTextEdit = AbsoluteTextEdit(rangeFrom + baseOffset, rangeTo + baseOffset, newText)
@@ -101,7 +106,7 @@ open class DeclarativeInsertHandler protected constructor(
       if (element != null && popupController != null) {
         when (popupOptions) {
           PopupOptions.ParameterInfo -> popupController.autoPopupParameterInfo(context.editor, element)
-          PopupOptions.MemberLookup -> popupController.autoPopupMemberLookup(context.editor, null)
+          PopupOptions.MemberLookup -> popupController.scheduleAutoPopup(context.editor)
           PopupOptions.DoNotShow -> Unit
         }
       }
@@ -192,8 +197,10 @@ open class DeclarativeInsertHandler protected constructor(
 }
 
 @ApiStatus.Experimental
-class SingleInsertionDeclarativeInsertHandler(private val stringToInsert: String,
-                                              popupOptions: PopupOptions)
+class SingleInsertionDeclarativeInsertHandler(
+  private val stringToInsert: String,
+  popupOptions: PopupOptions,
+)
   : DeclarativeInsertHandler(listOf(RelativeTextEdit(0, 0, stringToInsert)),
                              stringToInsert.length,
                              null,

@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structureView;
 
-import com.intellij.ide.structureView.impl.java.FieldsFilter;
-import com.intellij.ide.structureView.impl.java.PropertiesGrouper;
-import com.intellij.ide.structureView.impl.java.PropertyGroup;
-import com.intellij.ide.structureView.impl.java.PublicElementsFilter;
+import com.intellij.ide.structureView.impl.java.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.GroupWrapper;
@@ -128,6 +125,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
     init();
 
     myFixture.testStructureView(component -> {
+      component.setActionActive(KindSorter.ID, true);
       component.setActionActive(PropertiesGrouper.ID, true);
       component.setActionActive(Sorter.getAlphaSorterId(), true);
       JTree tree = component.getTree();
@@ -181,6 +179,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
     myFixture.configureByText("A.java", NOT_STATIC_GETTERS);
 
     myFixture.testStructureView(component -> {
+      component.setActionActive(KindSorter.ID, true);
       component.setActionActive(PropertiesGrouper.ID, true);
       component.setActionActive(Sorter.getAlphaSorterId(), true);
       component.setActionActive(InheritedMembersNodeProvider.ID, false);

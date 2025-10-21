@@ -31,12 +31,12 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +112,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
 
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        XEvaluationOrigin origin = getOrigin(baseCallback);
+        XEvaluationOrigin origin = XEvaluationCallbackWithOrigin.getOrigin(baseCallback);
         ReportingEvaluationCallback callback = new ReportingEvaluationCallback(myDebugProcess.getProject(), baseCallback, origin);
         WatchItemDescriptor descriptor = null;
         try {

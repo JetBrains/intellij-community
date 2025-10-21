@@ -1,0 +1,102 @@
+MODULES
+my-app
+
+my-app.consumer
+
+my-app.consumer.a
+    consumer.commonMain (refines, COMPILE)
+    producer.b (COMPILE)
+    producer.c (COMPILE)
+    producer.a (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.b
+    consumer.c (refines, COMPILE)
+    consumer.a (refines, COMPILE)
+    consumer.commonMain (refines, COMPILE)
+    producer.b (COMPILE)
+    producer.c (COMPILE)
+    producer.a (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.c
+    consumer.a (refines, COMPILE)
+    consumer.commonMain (refines, COMPILE)
+    producer.b (COMPILE)
+    producer.c (COMPILE)
+    producer.a (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.commonMain
+    producer.commonMain (COMPILE)
+
+my-app.consumer.commonTest
+    consumer.commonMain (friend, TEST)
+    producer.commonMain (TEST)
+
+my-app.consumer.jsMain
+    consumer.b (refines, COMPILE)
+    consumer.c (refines, COMPILE)
+    consumer.a (refines, COMPILE)
+    consumer.commonMain (refines, COMPILE)
+    producer.jsMain (COMPILE)
+    producer.b (COMPILE)
+    producer.c (COMPILE)
+    producer.a (COMPILE)
+    producer.commonMain (COMPILE)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
+
+my-app.consumer.jsTest
+    consumer.commonTest (refines, TEST)
+    consumer.jsMain (friend, TEST)
+    consumer.b (friend, TEST)
+    consumer.c (friend, TEST)
+    consumer.a (friend, TEST)
+    consumer.commonMain (friend, TEST)
+    producer.jsMain (TEST)
+    producer.b (TEST)
+    producer.c (TEST)
+    producer.a (TEST)
+    producer.commonMain (TEST)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
+
+my-app.consumer.jvmMain
+    consumer.commonMain (refines, COMPILE)
+    producer.jvmMain (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.jvmTest
+    consumer.commonTest (refines, TEST)
+    consumer.jvmMain (friend, TEST)
+    consumer.commonMain (friend, TEST)
+    producer.jvmMain (TEST)
+    producer.commonMain (TEST)
+
+my-app.consumer.linuxX64Main
+    consumer.b (refines, COMPILE)
+    consumer.c (refines, COMPILE)
+    consumer.a (refines, COMPILE)
+    consumer.commonMain (refines, COMPILE)
+    producer.linuxX64Main (COMPILE)
+    producer.b (COMPILE)
+    producer.c (COMPILE)
+    producer.a (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.linuxX64Test
+    consumer.commonTest (refines, TEST)
+    consumer.linuxX64Main (friend, TEST)
+    consumer.b (friend, TEST)
+    consumer.c (friend, TEST)
+    consumer.a (friend, TEST)
+    consumer.commonMain (friend, TEST)
+    producer.linuxX64Main (TEST)
+    producer.b (TEST)
+    producer.c (TEST)
+    producer.a (TEST)
+    producer.commonMain (TEST)
+
+
+Test configuration:
+- hiding source modules matching .*producer.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self

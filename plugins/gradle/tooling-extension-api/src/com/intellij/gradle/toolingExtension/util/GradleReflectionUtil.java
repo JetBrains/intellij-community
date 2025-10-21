@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.util;
 
+import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+@ApiStatus.Internal
 public final class GradleReflectionUtil {
 
   public static boolean hasMethod(@NotNull Object target, @NotNull String methodName, Class<?>... parameterTypes) {
@@ -19,7 +22,7 @@ public final class GradleReflectionUtil {
     }
   }
 
-  private static @NotNull Method getMethod(
+  public static @NotNull Method getMethod(
     @NotNull Class<?> receiverParameterType,
     @NotNull String methodName,
     @NotNull Class<?> @NotNull ... parameterTypes
@@ -28,11 +31,11 @@ public final class GradleReflectionUtil {
       return receiverParameterType.getMethod(methodName, parameterTypes);
     }
     catch (NoSuchMethodException | SecurityException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 
-  private static Object invokeMethod(
+  public static Object invokeMethod(
     @NotNull Method method,
     Object receiverArgument,
     Object... arguments
@@ -41,7 +44,7 @@ public final class GradleReflectionUtil {
       return method.invoke(receiverArgument, arguments);
     }
     catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -52,7 +55,35 @@ public final class GradleReflectionUtil {
   ) {
     Method method = getMethod(receiver.getClass(), getterName);
     Object value = invokeMethod(method, receiver);
-    return valueClass.cast(value);
+    try {
+      return valueClass.cast(value);
+    }
+    catch (ClassCastException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public static <T> T getPrivateValue(
+    @NotNull Object receiver,
+    @NotNull String getterName,
+    @NotNull Class<T> valueClass
+  ) {
+    Class<?> receiverClass = receiver.getClass();
+    Method method;
+    try {
+      method = receiverClass.getDeclaredMethod(getterName);
+    }
+    catch (NoSuchMethodException e) {
+      throw new IllegalStateException(String.format("The %s method are not found in %s", getterName, receiverClass.getCanonicalName()));
+    }
+    method.setAccessible(true);
+    Object value = invokeMethod(method, receiver);
+    try {
+      return valueClass.cast(value);
+    }
+    catch (ClassCastException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static <T> void setValue(
@@ -65,6 +96,17 @@ public final class GradleReflectionUtil {
     invokeMethod(method, receiver, value);
   }
 
+  public static <T, V> T invokeMethod(
+    @NotNull Object receiver,
+    @NotNull String methodName,
+    @NotNull V argument,
+    @NotNull Class<V> argumentClass,
+    @NotNull Class<T> resultClass
+  ) {
+    Method method = getMethod(receiver.getClass(), methodName, argumentClass);
+    return resultClass.cast(invokeMethod(method, receiver, argument));
+  }
+
   /**
    * @deprecated use {@link GradleReflectionUtil#getValue} instead.
    */
@@ -75,8 +117,9 @@ public final class GradleReflectionUtil {
       Method method = target.getClass().getMethod(methodName);
       Object value = method.invoke(target);
       return aClass.cast(value);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    }
+    catch (Exception e) {
+      throw new IllegalStateException(e);
     }
   }
 
@@ -101,5 +144,18 @@ public final class GradleReflectionUtil {
     catch (ClassNotFoundException __) {
       return null;
     }
+  }
+
+  public static @NotNull Class<?> getGradleClass(@NotNull String requiredClassName) {
+    Class<?> requiredClass = findClassForName(requiredClassName);
+    if (requiredClass == null) {
+      throw new IllegalStateException(
+        String.format(
+          "Class %s not found in the classpath of the Gradle daemon %s but it should be there!",
+          requiredClass, GradleVersion.current().getBaseVersion()
+        )
+      );
+    }
+    return requiredClass;
   }
 }

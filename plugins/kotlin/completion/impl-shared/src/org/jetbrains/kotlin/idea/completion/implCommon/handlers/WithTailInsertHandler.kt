@@ -9,27 +9,31 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 
 
 abstract class SmartCompletionTailOffsetProvider {
     abstract fun getTailOffset(context: InsertionContext, item: LookupElement): Int
 }
 
-class WithTailInsertHandler(
+@Serializable
+data class WithTailInsertHandler(
     val tailText: String,
     val spaceBefore: Boolean,
     val spaceAfter: Boolean,
-    val overwriteText: Boolean = true
-) : InsertHandler<LookupElement> {
+    val overwriteText: Boolean = true,
+    val isPostInsertHandler: Boolean = false,
+) : SerializableInsertHandler {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
-        item.handleInsert(context)
+        if (!isPostInsertHandler) {
+            item.handleInsert(context)
+        }
         postHandleInsert(context, item)
     }
 
-    val asPostInsertHandler: InsertHandler<LookupElement>
-        get() = InsertHandler { context, item ->
-            postHandleInsert(context, item)
-        }
+    val asPostInsertHandler: SerializableInsertHandler
+        get() = copy(isPostInsertHandler = true)
 
     fun postHandleInsert(context: InsertionContext, item: LookupElement) {
         val completionChar = context.completionChar

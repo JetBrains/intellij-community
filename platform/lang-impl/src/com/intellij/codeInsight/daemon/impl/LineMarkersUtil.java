@@ -97,39 +97,39 @@ final class LineMarkersUtil {
     recycler.clear();
   }
 
-  private static void createOrReuseLineMarker(@NotNull LineMarkerInfo<?> info,
+  private static void createOrReuseLineMarker(@NotNull LineMarkerInfo<?> lineMarkerInfo,
                                               @NotNull Project project,
                                               @NotNull MarkupModelEx markupModel,
                                               @NotNull Long2ObjectMap<List<RangeHighlighterEx>> toReuse,
                                               @NotNull CodeInsightContext context) {
-    LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)info.createGutterRenderer();
-    List<RangeHighlighterEx> list = toReuse.get(TextRangeScalarUtil.toScalarRange(info.startOffset, info.endOffset));
+    LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)lineMarkerInfo.createGutterRenderer();
+    List<RangeHighlighterEx> list = toReuse.get(TextRangeScalarUtil.toScalarRange(lineMarkerInfo.startOffset, lineMarkerInfo.endOffset));
     RangeHighlighterEx highlighter = list == null ? null : ContainerUtil.find(list, r -> r.getLayer() == HighlighterLayer.ADDITIONAL_SYNTAX);
     if (highlighter == null) {
       highlighter = markupModel.addRangeHighlighterAndChangeAttributes(
-        null, info.startOffset, info.endOffset,
+        null, lineMarkerInfo.startOffset, lineMarkerInfo.endOffset,
         HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.LINES_IN_RANGE, false,
-        changeAttributes(info, project, true, newRenderer, context, true, true));
-
-      MarkupEditorFilter editorFilter = info.getEditorFilter();
-      if (editorFilter != MarkupEditorFilter.EMPTY) {
-        highlighter.setEditorFilter(editorFilter);
-      }
+        changeAttributes(lineMarkerInfo, project, true, newRenderer, context, true, true));
     }
     else {
       list.remove(highlighter);
       LineMarkerInfo.LineMarkerGutterIconRenderer<?> oldRenderer = highlighter.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer<?> line ? line : null;
       boolean rendererChanged = newRenderer == null || !newRenderer.equals(oldRenderer);
-      boolean lineSeparatorColorChanged = !Comparing.equal(highlighter.getLineSeparatorColor(), info.separatorColor);
-      boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
+      boolean lineSeparatorColorChanged = !Comparing.equal(highlighter.getLineSeparatorColor(), lineMarkerInfo.separatorColor);
+      boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), lineMarkerInfo.separatorPlacement);
 
-      if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-        markupModel.changeAttributesInBatch(highlighter, changeAttributes(info, project, rendererChanged, newRenderer, context, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
+      if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged || lineMarkerInfo.getEditorFilter() != highlighter.getEditorFilter()) {
+        markupModel.changeAttributesInBatch(highlighter, changeAttributes(lineMarkerInfo, project, rendererChanged, newRenderer, context, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
       }
       HighlightingNecromancer.unmarkZombieMarkup(highlighter);
     }
-    highlighter.putUserData(LINE_MARKER_INFO, info);
-    info.highlighter = highlighter;
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("LineMarkersUtil.createOrReuseLineMarker. lineMarkerInfo: " + lineMarkerInfo + "; highlighter: " + highlighter);
+    }
+
+    highlighter.putUserData(LINE_MARKER_INFO, lineMarkerInfo);
+    lineMarkerInfo.highlighter = highlighter;
   }
 
   private static @NotNull Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
@@ -149,6 +149,8 @@ final class LineMarkersUtil {
       if (lineSeparatorPlacementChanged) {
         markerEx.setLineSeparatorPlacement(info.separatorPlacement);
       }
+      MarkupEditorFilter editorFilter = info.getEditorFilter();
+      markerEx.setEditorFilter(editorFilter);
 
       CodeInsightContextHighlightingUtil.installCodeInsightContext(markerEx, project, context);
     };

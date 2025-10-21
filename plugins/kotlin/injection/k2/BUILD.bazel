@@ -1,25 +1,26 @@
-### auto-generated section `build kotlin.injection.k2` start
+### auto-generated section `build intellij.kotlin.injection` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
+  name = "custom_kotlin-injection",
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
+  x_context_parameters = True
 )
 
-jvm_resources(
-  name = "k2_resources",
-  files = glob(["resources/**/*"]),
+resourcegroup(
+  name = "kotlin-injection_resources",
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "k2",
-  module_name = "kotlin.injection.k2",
+  name = "kotlin-injection",
+  module_name = "intellij.kotlin.injection",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-injection_resources"],
+  kotlinc_opts = ":custom_kotlin-injection",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -35,7 +36,6 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/code-insight",
-  ],
-  runtime_deps = [":k2_resources"]
+  ]
 )
-### auto-generated section `build kotlin.injection.k2` end
+### auto-generated section `build intellij.kotlin.injection` end

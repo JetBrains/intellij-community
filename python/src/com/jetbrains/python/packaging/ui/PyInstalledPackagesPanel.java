@@ -23,11 +23,13 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyPackagingSettings;
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+
+import static com.jetbrains.python.SdkUiUtilKt.isVirtualEnv;
 
 
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
@@ -75,7 +77,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     if (sdk == null) return false;
     if (!PyPackageUtil.packageManagementEnabled(sdk, false, false)) return false;
 
-    if (PythonSdkUtil.isVirtualEnv(sdk) && pkg instanceof PyPackage) {
+    if (isVirtualEnv(sdk) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
       if (location != null && location.startsWith(PythonSdkUtil.getUserSite())) {
         return false;

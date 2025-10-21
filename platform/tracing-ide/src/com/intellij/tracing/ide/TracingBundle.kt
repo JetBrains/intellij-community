@@ -3,21 +3,15 @@ package com.intellij.tracing.ide
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
-internal class TracingBundle : DynamicBundle(BUNDLE) {
-  companion object {
-    @NonNls
-    private const val BUNDLE = "messages.TracingBundle"
+private const val BUNDLE = "messages.TracingBundle"
 
-    @JvmStatic
-    private val INSTANCE: TracingBundle = TracingBundle()
+internal object TracingBundle {
+  private val instance = DynamicBundle(TracingBundle::class.java, BUNDLE)
 
-    @JvmStatic
-    @Nls
-    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
-      return INSTANCE.getMessage(key, *params)
-    }
+  @JvmStatic
+  fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
+    return instance.getMessage(key, *params)
   }
 }

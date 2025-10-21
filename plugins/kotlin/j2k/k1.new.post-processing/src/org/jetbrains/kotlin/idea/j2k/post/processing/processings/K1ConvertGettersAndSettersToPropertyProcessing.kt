@@ -491,14 +491,14 @@ private val redundantGetterModifiers: Set<KtModifierKeywordToken> = redundantSet
 )
 
 private class ExternalProcessingUpdater(private val processing: NewExternalCodeProcessing) {
-    context(KaSession)
+    context(_: KaSession)
     fun update(klass: KtClassOrObject, propertiesWithAccessors: List<PropertyWithAccessors>) {
         for (propertyWithAccessors in propertiesWithAccessors) {
             updateExternalProcessingInfo(klass, propertyWithAccessors)
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun updateExternalProcessingInfo(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
         val (property, getter, setter) = propertyWithAccessors
 

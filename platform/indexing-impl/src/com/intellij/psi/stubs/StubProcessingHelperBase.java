@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.*;
 
@@ -39,6 +40,8 @@ import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexD
 @ApiStatus.Internal
 public abstract class StubProcessingHelperBase {
   protected static final Logger LOG = Logger.getInstance(StubProcessingHelperBase.class);
+  private static final AtomicInteger ourContextErrorCounter = new AtomicInteger(0);
+  private static final int MAX_CONTEXT_ERROR_NUMBER = 10;
 
   public <Psi extends PsiElement> boolean processStubsInFile(@NotNull Project project,
                                                              @NotNull VirtualFile file,
@@ -91,8 +94,7 @@ public abstract class StubProcessingHelperBase {
     if (fileInfo instanceof ActualContextFileInfo) {
       Collection<CodeInsightContext> contexts = ((ActualContextFileInfo)fileInfo).getContexts();
       if (contexts.size() > 1) {
-        // todo IJPL-339 we need to process the file twice in this case. Not supported yet
-        LOG.error("Multiple contexts for file " + file + " in scope " + scope + ". Contexts: " + contexts);
+        reportMultipleContextsAreNotSupported(file, scope, contexts);
       }
       return contexts.iterator().next();
     }
@@ -102,6 +104,16 @@ public abstract class StubProcessingHelperBase {
     // fileInfo instanceof DoesNotContainFileInfo
     LOG.error("Provided scope does not contain file " + file + ", scope = " + scope);
     return CodeInsightContexts.anyContext();
+  }
+
+  private static void reportMultipleContextsAreNotSupported(@NotNull VirtualFile file,
+                                                            @NotNull GlobalSearchScope scope,
+                                                            @NotNull Collection<CodeInsightContext> contexts) {
+    if (ourContextErrorCounter.get() < MAX_CONTEXT_ERROR_NUMBER) {
+      // todo IJPL-339 we need to process the file twice in this case. Not supported yet
+      LOG.error("Multiple contexts for file " + file + " in scope " + scope + ". Contexts: " + contexts);
+      ourContextErrorCounter.incrementAndGet();
+    }
   }
 
   private static @Unmodifiable @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {

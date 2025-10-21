@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def foo(f):
     x = 1
     x = bar(f, x)

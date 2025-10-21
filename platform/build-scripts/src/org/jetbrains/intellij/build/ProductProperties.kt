@@ -19,7 +19,7 @@ import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 import java.util.function.BiPredicate
 
 /**
@@ -338,7 +338,7 @@ abstract class ProductProperties {
    * Paths to externally built plugins to be included in the IDE.
    * They will be copied into the build, as well as included in the IDE classpath when launching it to build search index, .jar order, etc.
    */
-  open fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
+  open suspend fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
 
   /**
    * Override this function to provide additional JVM command line arguments which will be added to launchers along with 
@@ -404,6 +404,13 @@ abstract class ProductProperties {
   @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
   @Suppress("DEPRECATION")
   open fun applicationInfoOverride(project: JpsProject): ApplicationInfoOverrides? = null
+
+  /**
+   * For a standalone frontend distribution, specifies the platform prefix of its base IDE. In other cases returns `null`.
+   */
+  @get:ApiStatus.Internal
+  open val baseIdePlatformPrefixForFrontend: String? 
+    get() = null
 
   @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
   data class ApplicationInfoOverrides(

@@ -83,7 +83,7 @@ class FinishInlineRename(text: String, line: Int) : AbstractCommand(text, line) 
 
   private fun getEnclosingClassOfLambda(lambda: Class<Runnable>): Class<*>? {
     val commandClass = lambda.name
-    val lambdaOffset = commandClass.indexOf("\$\$Lambda\$")
+    val lambdaOffset = commandClass.indexOf("\$\$Lambda\$").takeIf { it >= 0 } ?: commandClass.indexOf("\$\$Lambda/")
     if (lambdaOffset > 0) {
       return Class.forName(commandClass.substring(0, lambdaOffset))
     }

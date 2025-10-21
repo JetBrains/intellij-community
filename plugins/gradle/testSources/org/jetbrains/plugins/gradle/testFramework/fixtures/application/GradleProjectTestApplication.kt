@@ -2,12 +2,15 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.application
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.SdkLeakTracker
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.impl.TestApplicationExtension
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ExternalSystemListenerLeakTracker
+import com.intellij.testFramework.junit5.impl.TypedStoreKey
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtendWith
@@ -24,30 +27,25 @@ import org.junit.jupiter.api.extension.ExtensionContext
  * @see com.intellij.testFramework.junit5.TestApplication
  */
 @Target(AnnotationTarget.CLASS)
-@ExtendWith(
-  TestApplicationExtension::class,
-  GradleProjectTestApplicationLeakTrackerExtension::class,
-)
+@ExtendWith(TestApplicationExtension::class)
+@ExtendWith(GradleProjectTestApplicationLeakTracker::class)
 annotation class GradleProjectTestApplication
 
 /**
  * @see com.intellij.testFramework.junit5.impl.TestApplicationLeakTrackerExtension
  */
-private class GradleProjectTestApplicationLeakTrackerExtension : BeforeAllCallback, AfterAllCallback {
+private class GradleProjectTestApplicationLeakTracker : BeforeAllCallback, AfterAllCallback {
 
   companion object {
-    private const val LEAK_TRACKERS_KEY = "Gradle application-level leak trackers"
+    private val LEAK_TRACKERS_KEY = TypedStoreKey.createKey<GradleLeakTrackers>()
   }
 
   override fun beforeAll(context: ExtensionContext) {
-    context.getStore(ExtensionContext.Namespace.GLOBAL)
-      .put(LEAK_TRACKERS_KEY, GradleLeakTrackers())
+    context[LEAK_TRACKERS_KEY] = GradleLeakTrackers()
   }
 
   override fun afterAll(context: ExtensionContext) {
-    context.getStore(ExtensionContext.Namespace.GLOBAL)
-      .get(LEAK_TRACKERS_KEY, GradleLeakTrackers::class.java)
-      .checkNothingLeaked()
+    context[LEAK_TRACKERS_KEY]?.checkNothingLeaked()
   }
 
   private class GradleLeakTrackers {
@@ -55,11 +53,11 @@ private class GradleProjectTestApplicationLeakTrackerExtension : BeforeAllCallba
     val sdkLeakTracker = SdkLeakTracker()
     val libraryLeakTracker = LibraryTableTracker()
     val virtualFilePointerTracker = VirtualFilePointerTracker()
-    val externalSystemListenerLeakTracker = ExternalSystemListenerLeakTracker()
 
     fun checkNothingLeaked() {
       runAll(
-        { externalSystemListenerLeakTracker.tearDown() },
+        { ExternalSystemProgressNotificationManagerImpl.assertListenersReleased() },
+        { ExternalSystemProgressNotificationManagerImpl.cleanupListeners() },
         { invokeAndWaitIfNeeded { sdkLeakTracker.checkForJdkTableLeaks() } },
         { libraryLeakTracker.assertDisposed() },
         { virtualFilePointerTracker.assertPointersAreDisposed() },

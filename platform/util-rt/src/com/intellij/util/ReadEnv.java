@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,13 +29,13 @@ public final class ReadEnv {
     }
   }
 
-  @NotNull
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static OutputStreamWriter createWriter(String[] args) throws IOException {
-    if( args.length > 0) {
+    if (args.length > 0) {
       return new OutputStreamWriter(Files.newOutputStream(Paths.get(args[0])), StandardCharsets.UTF_8);
-    } else {
-      return new OutputStreamWriter(System.out,
-                                    StandardCharsets.UTF_8);
+    }
+    else {
+      return new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
     }
   }
 }

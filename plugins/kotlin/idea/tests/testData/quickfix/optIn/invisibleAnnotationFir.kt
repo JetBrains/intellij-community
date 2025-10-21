@@ -4,6 +4,7 @@
 // ACTION: Add import for 'Foo.bar'
 // ACTION: Convert to run
 // ACTION: Convert to with
+// ACTION: Introduce import alias
 object Foo {
     @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
     private annotation class Ann

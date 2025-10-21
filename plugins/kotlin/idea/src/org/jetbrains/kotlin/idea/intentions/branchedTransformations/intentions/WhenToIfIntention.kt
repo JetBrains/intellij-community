@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
     KtWhenExpression::class.java,
-    KotlinBundle.lazyMessage("replace.when.with.if")
+    KotlinBundle.messagePointer("replace.when.with.if")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtWhenExpression): TextRange? {
         val entries = element.entries

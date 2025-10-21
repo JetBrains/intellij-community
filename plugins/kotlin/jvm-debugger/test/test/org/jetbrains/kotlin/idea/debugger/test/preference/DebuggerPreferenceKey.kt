@@ -30,6 +30,8 @@ internal object DebuggerPreferenceKeys {
     val DESCRIPTOR_VIEW_OPTIONS by debuggerPreferenceKey("FULL")
 
     val ATTACH_LIBRARY by debuggerPreferenceKey(emptyList<String>())
+    val ATTACH_LIBRARY_BY_LABEL by debuggerPreferenceKey(emptyList<String>())
+    val ATTACH_JAVA_AGENT_BY_LABEL by debuggerPreferenceKey(emptyList<String>())
     val ENABLED_LANGUAGE_FEATURE by debuggerPreferenceKey(emptyList<String>())
 
     val SKIP by debuggerPreferenceKey(emptyList<String>())

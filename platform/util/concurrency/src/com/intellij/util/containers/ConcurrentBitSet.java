@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +25,7 @@ public interface ConcurrentBitSet {
   static @NotNull ConcurrentBitSet create() {
     return new ConcurrentBitSetImpl();
   }
+
   @Contract("_->new")
   static @NotNull ConcurrentBitSet create(int estimatedSize) {
     return new ConcurrentBitSetImpl(estimatedSize);
@@ -54,8 +54,8 @@ public interface ConcurrentBitSet {
    * Sets the bit specified by the index to {@code false}.
    *
    * @param bitIndex the index of the bit to be cleared
-   * @throws IndexOutOfBoundsException if the specified index is negative
    * @return previous value
+   * @throws IndexOutOfBoundsException if the specified index is negative
    */
   boolean clear(final int bitIndex);
 
@@ -76,38 +76,38 @@ public interface ConcurrentBitSet {
   boolean get(int bitIndex);
 
   /**
-  * Returns the index of the first bit that is set to {@code true}
-  * that occurs on or after the specified starting index. If no such
-  * bit exists then {@code -1} is returned.
-  * <p/>
-  * <p>To iterate over the {@code true} bits,
-  * use the following loop:
-  * <p/>
-  * <pre> {@code
-  * for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
-  *     // operate on index i here
-  * }}</pre>
-  *
-  * @param fromIndex the index to start checking from (inclusive)
-  * @return the index of the next set bit, or {@code -1} if there
-  * is no such bit
-  * @throws IndexOutOfBoundsException if the specified index is negative
-  */
+   * Returns the index of the first bit that is set to {@code true}
+   * that occurs on or after the specified starting index. If no such
+   * bit exists then {@code -1} is returned.
+   * <p/>
+   * <p>To iterate over the {@code true} bits,
+   * use the following loop:
+   * <p/>
+   * <pre> {@code
+   * for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
+   *     // operate on index i here
+   * }}</pre>
+   *
+   * @param fromIndex the index to start checking from (inclusive)
+   * @return the index of the next set bit, or {@code -1} if there
+   * is no such bit
+   * @throws IndexOutOfBoundsException if the specified index is negative
+   */
   int nextSetBit(int fromIndex);
 
   /**
-  * Returns the index of the first bit that is set to {@code false}
-  * that occurs on or after the specified starting index.
-  *
-  * @param fromIndex the index to start checking from (inclusive)
-  * @return the index of the next clear bit
-  * @throws IndexOutOfBoundsException if the specified index is negative
-  */
+   * Returns the index of the first bit that is set to {@code false}
+   * that occurs on or after the specified starting index.
+   *
+   * @param fromIndex the index to start checking from (inclusive)
+   * @return the index of the next clear bit
+   * @throws IndexOutOfBoundsException if the specified index is negative
+   */
   int nextClearBit(int fromIndex);
 
   /**
-  * @return the number of bits of space actually in use (i.e., the index of the highest bit set)
-  */
+   * @return the number of bits of space actually in use (i.e., the index of the highest bit set)
+   */
   int size();
 
 
@@ -118,11 +118,19 @@ public interface ConcurrentBitSet {
 
   int @NotNull [] toIntArray();
 
-  static @NotNull ConcurrentBitSet readFrom(@NotNull DataInputStream inputStream) throws IOException {
-    IntList list = new IntArrayList();
-    while (inputStream.available() > 0) {
-      list.add(inputStream.readInt());
+  @SuppressWarnings("SSBasedInspection")
+  static @NotNull ConcurrentBitSet readFrom(@NotNull DataInputStream input) throws IOException {
+    IntArrayList buffer = new IntArrayList();
+    while (true) {
+      int bytesAvailable = input.available();
+      if (bytesAvailable == 0) {
+        return new ConcurrentBitSetImpl(buffer.toIntArray());
+      }
+      int intsAvailable = bytesAvailable / Integer.BYTES;
+      buffer.ensureCapacity(buffer.size() + intsAvailable);
+      for (int i = 0; i < intsAvailable; i++) {
+        buffer.add(input.readInt());
+      }
     }
-    return new ConcurrentBitSetImpl(list.toIntArray());
   }
 }

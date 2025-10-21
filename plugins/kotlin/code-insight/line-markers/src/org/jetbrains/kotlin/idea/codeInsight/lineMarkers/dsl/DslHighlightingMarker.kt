@@ -30,7 +30,7 @@ internal fun collectHighlightingDslMarkers(ktClass: KtClass, result: MutableColl
             toolTipHandler,
             navHandler(styleId),
             GutterIconRenderer.Alignment.RIGHT,
-            KotlinBundle.lazyMessage("highlighter.tool.tip.marker.annotation.for.dsl")
+            KotlinBundle.messagePointer("highlighter.tool.tip.marker.annotation.for.dsl")
         )
     )
 }

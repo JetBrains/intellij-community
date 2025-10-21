@@ -91,4 +91,7 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
 
   @TestFor(issues = "IDEA-372049")
   public void testNestedCastInVarargs() {doTest();}
+
+  @TestFor(issues = "IDEA-370768")
+  public void testFieldQualifierGenericSuperType() {doTest();}
 }

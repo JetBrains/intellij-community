@@ -11,8 +11,11 @@ import com.intellij.grazie.ide.ui.components.utils.configure
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.toSet
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
-import com.intellij.ui.*
+import com.intellij.ui.AddDeleteListPanel
 import com.intellij.ui.CommonActionsPanel.Buttons
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RowsDnDSupport
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.EditableModel
@@ -21,7 +24,7 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val onLanguageRemoved: (lang: Lang) -> Unit) :
+class GrazieLanguagesList(private val download: suspend (Collection<Lang>) -> Boolean, private val onLanguageRemoved: (lang: Lang) -> Unit) :
   AddDeleteListPanel<Lang>(null, emptyList()), GrazieUIComponent {
 
   private val decorator: ToolbarDecorator = MyToolbarDecorator(myList)
@@ -29,8 +32,9 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
     .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
     .setToolbarPosition(ActionToolbarPosition.BOTTOM)
     .setRemoveAction {
-      myList.selectedValuesList.forEach(onLanguageRemoved)
-      ListUtil.removeSelectedItems(myList)
+      val itemsToRemove = myList.selectedValuesList.filter { !it.isEnglish() }
+      itemsToRemove.forEach(onLanguageRemoved)
+      itemsToRemove.forEach { myListModel.removeElement(it) }
     }
 
   init {
@@ -78,8 +82,8 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   /** Returns pair of (available languages, languages to download) */
   private fun getLangsForPopup(): Pair<List<Lang>, List<Lang>> {
-    val enabledLangs = myListModel.elements().asSequence().map { it.displayName }.toSet()
-    val (available, toDownload) = Lang.sortedValues().filter { it.displayName !in enabledLangs }.partition { it.isAvailable() }
+    val enabledLangs = myListModel.elements().asSequence().map { it.nativeName }.toSet()
+    val (available, toDownload) = Lang.sortedValues().filter { it.nativeName !in enabledLangs }.partition { it.isAvailable() }
     return available to toDownload
   }
 
@@ -114,7 +118,9 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
     override fun updateButtons() {
       val (available, download) = getLangsForPopup()
       actionsPanel.setEnabled(Buttons.ADD, list.isEnabled && (available.isNotEmpty() || download.isNotEmpty()))
-      actionsPanel.setEnabled(Buttons.REMOVE, !list.isSelectionEmpty)
+      
+      val canRemove = !list.isSelectionEmpty && list.selectedValuesList.none { it.isEnglish() }
+      actionsPanel.setEnabled(Buttons.REMOVE, canRemove)
       updateExtraElementActions(!list.isSelectionEmpty)
     }
 

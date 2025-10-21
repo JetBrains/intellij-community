@@ -215,35 +215,6 @@ class ProjectRule(
 }
 
 /**
- * Encouraged using on static fields to avoid a project creating for each test.
- * Project created on request, so could be used as a bare (only application).
- */
-@Suppress("DEPRECATION")
-class ProjectExtension(val runPostStartUpActivities: Boolean = false, val preloadServices: Boolean = false) : ApplicationExtension() {
-  private var projectObject: ProjectObject? = null
-
-  override fun beforeAll(context: ExtensionContext) {
-    super.beforeAll(context)
-    projectObject = ProjectObject(runPostStartUpActivities, preloadServices, null).also {
-      it.testClassName = sanitizeFileName(context.testClass.map(Class<*>::getSimpleName).orElse(context.displayName).substringAfterLast('.'))
-      it.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
-    }
-  }
-
-  override fun afterAll(context: ExtensionContext) {
-    checkNotNull(projectObject).catchAndRethrow {
-      super.afterAll(context)
-    }
-    projectObject = null
-  }
-
-  val project: ProjectEx
-    get() = checkNotNull(projectObject).project
-  val module: Module
-    get() = checkNotNull(projectObject).module
-}
-
-/**
  * rules: outer, middle, inner
  * out:
  * starting outer rule

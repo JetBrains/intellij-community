@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * EventLogAllowedList storage is stored locally, not shared via Settings Sync, not exportable via Export Settings,
@@ -97,6 +98,20 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
 
   public void setLastModified(@NotNull String recorderId, long lastUpdate) {
     lastModifications.put(recorderId, Math.max(lastUpdate, 0));
+  }
+
+  private static String getDictionaryKey(@NotNull String recorderId, @NotNull String dictionaryFileName) {
+    return recorderId + "_" + dictionaryFileName;
+  }
+
+  public Map<String, Long> getDictionariesLastModified(@NotNull String recorderId) {
+    return lastModifications.entrySet().stream()
+      .filter(entry -> entry.getKey().startsWith(recorderId + "_"))
+      .collect(Collectors.toMap(entry -> entry.getKey().substring(recorderId.length() + 1), Map.Entry::getValue));
+  }
+
+  public void setDictionaryLastModified(@NotNull String recorderId, @NotNull String dictionaryFileName, long lastUpdate) {
+    lastModifications.put(getDictionaryKey(recorderId, dictionaryFileName), Math.max(lastUpdate, 0));
   }
 
   public @Nullable EventsSchemePathSettings getPathSettings(@NotNull String recorderId) {

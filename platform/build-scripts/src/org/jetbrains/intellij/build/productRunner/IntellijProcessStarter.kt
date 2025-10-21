@@ -4,8 +4,8 @@ package org.jetbrains.intellij.build.productRunner
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.xml.dom.readXmlAsModel
-import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.trace.Span
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.VmProperties
@@ -14,13 +14,14 @@ import org.jetbrains.intellij.build.impl.getCommandLineArgumentsForOpenPackages
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.runJava
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
-import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.walk
 import kotlin.time.Duration
@@ -29,6 +30,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * Internal function which runs IntelliJ process. Use [IntellijProductRunner.runProduct] instead.
  */
+@ApiStatus.Internal
 suspend fun runApplicationStarter(
   context: BuildContext,
   classpath: Collection<String>,
@@ -75,15 +77,17 @@ suspend fun runApplicationStarter(
     // a second attempt is performed as a hacky workaround for various sporadic exceptions from the IDE side like:
     // com.intellij.util.IncorrectOperationException: Sorry but parent has already been disposed so the child will never be disposed
     retryWithExponentialBackOff(attempts = 2) {
-      runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = actualTimeout) {
+      runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = actualTimeout, onError = {
         val logFile = findLogFile(systemDir)
         if (logFile != null) {
-          val logFileToPublish = Files.createTempFile(appStarterId, ".log")
+          val logDir = context.paths.logDir
+          logDir.createDirectories()
+          val logFileToPublish = Files.createTempFile(logDir, appStarterId, ".ide.log")
           Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
           context.notifyArtifactBuilt(logFileToPublish)
           Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
         }
-      }
+      })
     }
   }
   catch (e: Exception) {
@@ -96,7 +100,7 @@ suspend fun runApplicationStarter(
   }
 }
 
-private fun prepareFlatClasspath(classpath: Collection<String>, tempDir: Path, context: BuildContext): LinkedHashSet<String> {
+private suspend fun prepareFlatClasspath(classpath: Collection<String>, tempDir: Path, context: BuildContext): LinkedHashSet<String> {
   val effectiveIdeClasspath = LinkedHashSet(classpath)
 
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)

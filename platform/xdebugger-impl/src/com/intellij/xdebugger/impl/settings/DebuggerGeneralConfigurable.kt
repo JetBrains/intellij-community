@@ -30,6 +30,7 @@ internal class DebuggerGeneralConfigurable : BoundSearchableConfigurable("", "de
       if (Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume.supported").asBoolean()) {
         row {
           checkBox(XDebuggerBundle.message("setting.show.target.process.window.after.resume"))
+            .gap(RightGap.SMALL)
             .bindSelected(Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume").toBooleanProperty())
           contextHelp(XDebuggerBundle.message("setting.show.target.process.window.after.resume.help.text"))
         }

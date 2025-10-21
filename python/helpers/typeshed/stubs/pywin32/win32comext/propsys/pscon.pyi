@@ -652,6 +652,7 @@ PKEY_Link_TargetUrl: Incomplete
 PKEY_Shell_SFGAOFlagsStrings: Incomplete
 PKEY_Software_DateLastUsed: Incomplete
 PKEY_Software_ProductName: Incomplete
+PKEY_Software_ProductVersion: Incomplete
 PKEY_Sync_Comments: Incomplete
 PKEY_Sync_ConflictDescription: Incomplete
 PKEY_Sync_ConflictFirstLocation: Incomplete

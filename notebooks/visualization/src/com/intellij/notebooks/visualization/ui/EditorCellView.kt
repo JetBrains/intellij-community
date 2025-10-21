@@ -1,13 +1,14 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.ui.bind
-import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
@@ -77,13 +78,14 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
     }
     else {
       outputs?.let {
+        Disposer.dispose(it)
         remove(it)
         outputs = null
       }
     }
   }
 
-  private fun hasOutputs() = cell.interval.type == NotebookCellLines.CellType.CODE
+  private fun hasOutputs() = cell.interval.type == CellType.CODE
                              && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
   fun onViewportChanges() {

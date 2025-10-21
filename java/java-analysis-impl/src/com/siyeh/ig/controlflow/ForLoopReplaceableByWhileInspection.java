@@ -167,7 +167,7 @@ public final class ForLoopReplaceableByWhileInspection extends BaseInspection im
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ForLoopReplaceableByWhileVisitor();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.documentation.ide.impl
 
@@ -27,10 +27,14 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     if (!symbolTargets.isNullOrEmpty()) {
       return symbolTargets
     }
+    val documentationTargets = lookupElementDocumentationTarget(file, lookupElement, editor.caretModel.offset)
+    if (documentationTargets != null) {
+      return documentationTargets
+    }
     val sourceElement = DocumentationManager.getContextElement(editor, file)
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
     if (targetElement == null) {
-      return lookupElementDocumentationTarget(file,  lookupElement, editor.caretModel.offset)
+      return emptyList()
     }
     return psiDocumentationTargets(targetElement, sourceElement)
   }
@@ -39,11 +43,11 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     return documentationTargets(file, offset)
   }
 
-  private fun lookupElementDocumentationTarget(file: PsiFile, lookupElement: LookupElement, offset: Int): List<DocumentationTarget> {
+  private fun lookupElementDocumentationTarget(file: PsiFile, lookupElement: LookupElement, offset: Int): List<DocumentationTarget>? {
     for (ext in LookupElementDocumentationTargetProvider.EP_NAME.extensionList) {
       val target = ext.documentationTarget(file, lookupElement,offset)
-      if (target !=null ) return listOf(target)
+      if (target != null) return listOf(target)
     }
-    return emptyList()
+    return null
   }
 }

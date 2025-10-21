@@ -60,15 +60,18 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButtonWithText.SHORTCUT_SHOULD_SHOWN;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
 
 public final class InspectorWindow extends JDialog implements Disposable {
+  private static final JBColor HIGHLIGHT_COLOR = new JBColor(JBColor.GREEN, JBColor.RED);
   private InspectorTable myInspectorTable;
-  private final @NotNull java.util.List<Component> myComponents = new ArrayList<>();
-  private java.util.List<? extends PropertyBean> myInfo;
+  private final @NotNull List<Component> myComponents = new ArrayList<>();
+  private List<? extends PropertyBean> myInfo;
   private final @NotNull Component myInitialComponent;
-  private final @NotNull java.util.List<HighlightComponent> myHighlightComponents = new ArrayList<>();
+  private final @NotNull List<JComponent> myHighlightComponents = new ArrayList<>();
   private boolean myIsHighlighted = true;
   private final @NotNull HierarchyTree myHierarchyTree;
   private final @NotNull ComponentsNavBarPanel myNavBarPanel;
@@ -76,6 +79,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private final @Nullable Project myProject;
   private final UiInspectorAction.UiInspector myInspector;
   private final ToggleShowAccessibilityIssuesAction myShowAccessibilityIssuesAction;
+  private AWTEventListener myAltKeyListener;
+  private AWTEventListener myChangeSelectionOnHoverListener;
 
   public InspectorWindow(@Nullable Project project,
                          @NotNull Component component,
@@ -90,7 +95,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myInitialComponent = component;
     getRootPane().setBorder(JBUI.Borders.empty(5));
 
-    setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
     setLayout(new BorderLayout());
     setTitle(component.getClass().getName());
@@ -104,7 +109,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myWrapperPanel.setContent(myInspectorTable);
     myHierarchyTree = new HierarchyTree(component) {
       @Override
-      public void onComponentsChanged(java.util.List<? extends Component> components) {
+      public void onComponentsChanged(List<? extends Component> components) {
         switchComponentsInfo(components);
         updateHighlighting();
       }
@@ -116,7 +121,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
 
       @Override
-      public void onClickInfoChanged(java.util.List<? extends PropertyBean> info) {
+      public void onClickInfoChanged(List<? extends PropertyBean> info) {
         switchClickInfo(info);
         updateHighlighting();
       }
@@ -200,6 +205,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
       topPanel.add(banner);
     }
 
+    // Add a subtle, visible hint about navigation to help discovery without being intrusive
+    String altHoverHint = InternalActionsBundle.message("ui.inspector.hint.alt.hover.next");
+    // Show once by default; hide permanently after user closes it
+    String altHoverHintKey = "ui.inspector.hint.alt.hover.next.dismissed";
+    PropertiesComponent props = PropertiesComponent.getInstance();
+    if (!props.getBoolean(altHoverHintKey, false)) {
+      InlineBanner hintBanner = new InlineBanner(altHoverHint, EditorNotificationPanel.Status.Info)
+        .showCloseButton(true)
+        .setCloseAction(() -> props.setValue(altHoverHintKey, true));
+      topPanel.add(hintBanner);
+    }
+
     topPanel.add(navBarScroll);
     add(topPanel, BorderLayout.NORTH);
 
@@ -224,6 +241,82 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
       myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
+    }
+
+    installAltKeyListener();
+  }
+
+  private void installAltKeyListener() {
+    myAltKeyListener = event -> {
+      KeyEvent keyEvent = (KeyEvent)event;
+      int eventId = event.getID();
+
+      if (keyEvent.getKeyCode() == KeyEvent.VK_ALT) {
+        if (eventId == KeyEvent.KEY_PRESSED) {
+          installChangeSelectionOnHoverListener();
+          resetTree(true);
+        }
+        else if (eventId == KeyEvent.KEY_RELEASED) {
+          removeChangeSelectionOnHoverListener();
+        }
+      }
+    };
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(myAltKeyListener, AWTEvent.KEY_EVENT_MASK);
+  }
+
+  private void installChangeSelectionOnHoverListener() {
+    if (myChangeSelectionOnHoverListener != null) {
+      return;
+    }
+
+    myChangeSelectionOnHoverListener = event -> {
+      if (event.getID() != MouseEvent.MOUSE_MOVED) {
+        return;
+      }
+
+      MouseEvent mouseEvent = (MouseEvent)event;
+      if (mouseEvent.isControlDown() || mouseEvent.isMetaDown() || mouseEvent.isShiftDown()) return;
+
+      Component source = mouseEvent.getComponent();
+
+      if (source == null || SwingUtilities.isDescendingFrom(source, this)) {
+        return;
+      }
+
+      Component componentUnderMouse = UIUtil.getDeepestComponentAt(source, mouseEvent.getX(), mouseEvent.getY());
+      if (componentUnderMouse != null) {
+        myHierarchyTree.selectPath(componentUnderMouse);
+      }
+    };
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(myChangeSelectionOnHoverListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+  }
+
+  private void removeChangeSelectionOnHoverListener() {
+    if (myChangeSelectionOnHoverListener == null) {
+      return;
+    }
+
+    Toolkit.getDefaultToolkit().removeAWTEventListener(myChangeSelectionOnHoverListener);
+    myChangeSelectionOnHoverListener = null;
+    updateHighlighting();
+  }
+
+  private void resetTree(boolean ignoreOrphanComponents) {
+    TreePath path = myHierarchyTree.getLeadSelectionPath();
+    if (path == null) return;
+    HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
+    if (node == null) return;
+    Component c = node.getComponent();
+    if (c == null) return;
+    if (ignoreOrphanComponents && UIUtil.getRootPane(c) == null) return;
+
+    Component selected = ContainerUtil.getFirstItem(myComponents);
+    myHierarchyTree.resetModel(c, false);
+    TreeUtil.expandAll(myHierarchyTree);
+    if (selected != null) {
+      myHierarchyTree.selectPath(selected, false);
     }
   }
 
@@ -250,12 +343,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
     return myInspectorTable;
   }
 
-  private void switchComponentsInfo(@NotNull java.util.List<? extends Component> components) {
+  private void switchComponentsInfo(@NotNull List<? extends Component> components) {
     if (components.isEmpty()) return;
     myComponents.clear();
     myComponents.addAll(components);
     myInfo = null;
-    Component showingComponent = components.get(0);
+    Component showingComponent = components.getFirst();
     setTitle(showingComponent.getClass().getName());
     Disposer.dispose(myInspectorTable);
     myInspectorTable = new InspectorTable(showingComponent, myProject, getSelectedNodeFailedAccessibilityInspections());
@@ -301,6 +394,11 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   @Override
   public void dispose() {
+    if (myAltKeyListener != null) {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myAltKeyListener);
+      myAltKeyListener = null;
+    }
+    removeChangeSelectionOnHoverListener();
     DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
     Disposer.dispose(myInspectorTable);
@@ -328,7 +426,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   }
 
   private void updateHighlighting() {
-    for (HighlightComponent component : myHighlightComponents) {
+    for (var component : myHighlightComponents) {
       JComponent glassPane = getGlassPane(component);
       if (glassPane != null) {
         glassPane.remove(component);
@@ -340,7 +438,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     if (myIsHighlighted) {
       for (Component component : myComponents) {
-        ContainerUtil.addIfNotNull(myHighlightComponents, createHighlighter(component, null));
+        createHighlighter(component, null);
       }
       if (myInfo != null) {
         Rectangle bounds = null;
@@ -350,15 +448,31 @@ public final class InspectorWindow extends JDialog implements Disposable {
             break;
           }
         }
-        ContainerUtil.addIfNotNull(myHighlightComponents, createHighlighter(myInitialComponent, bounds));
+        createHighlighter(myInitialComponent, bounds);
       }
     }
   }
 
-  private static @Nullable HighlightComponent createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
+  private void createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
     JComponent glassPane = getGlassPane(component);
-    if (glassPane == null) return null;
+    if (glassPane == null) return;
 
+    var highlightComponent = createHighlightComponent(component, bounds, glassPane);
+    ContainerUtil.addIfNotNull(myHighlightComponents, highlightComponent);
+    glassPane.add(highlightComponent);
+
+    if (myChangeSelectionOnHoverListener != null) {
+      var dimensionComponent = createDimensionComponent(component, highlightComponent.getBounds(), glassPane);
+      ContainerUtil.addIfNotNull(myHighlightComponents, dimensionComponent);
+      glassPane.add(dimensionComponent);
+    }
+
+    glassPane.revalidate();
+    glassPane.repaint();
+
+  }
+
+  private static @NotNull HighlightComponent createHighlightComponent(@NotNull Component component, @Nullable Rectangle bounds, JComponent glassPane) {
     if (bounds != null) {
       bounds = SwingUtilities.convertRectangle(component, bounds, glassPane);
     }
@@ -367,22 +481,75 @@ public final class InspectorWindow extends JDialog implements Disposable {
       bounds = new Rectangle(pt.x, pt.y, component.getWidth(), component.getHeight());
     }
 
-    JBColor color = new JBColor(JBColor.GREEN, JBColor.RED);
+    JBColor color = HIGHLIGHT_COLOR;
     if (bounds.width == 0 || bounds.height == 0) {
-      bounds.width = Math.max(bounds.width, 1);
-      bounds.height = Math.max(bounds.height, 1);
+      bounds.width = max(bounds.width, 1);
+      bounds.height = max(bounds.height, 1);
       color = JBColor.BLUE;
     }
 
     Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBInsets.emptyInsets();
     HighlightComponent highlightComponent = new HighlightComponent(color, insets);
     highlightComponent.setBounds(bounds);
-
-    glassPane.add(highlightComponent);
-    glassPane.revalidate();
-    glassPane.repaint();
-
     return highlightComponent;
+  }
+
+  private static @NotNull JComponent createDimensionComponent(
+    @NotNull Component component,
+    @NotNull Rectangle highlighterBounds,
+    @NotNull JComponent glassPane
+  ) {
+    var dimensionsComponent = new DimensionsComponent(component);
+    dimensionsComponent.setForeground(new JPanel().getForeground());
+    dimensionsComponent.setBackground(ColorUtil.blendColorsInRgb(new JPanel().getBackground(), HIGHLIGHT_COLOR, 0.2));
+    dimensionsComponent.setBounds(findBounds(highlighterBounds, glassPane, dimensionsComponent.getPreferredSize()));
+    return dimensionsComponent;
+  }
+
+  private static @NotNull Rectangle findBounds(@NotNull Rectangle highlighterBounds, @NotNull JComponent glassPane, @NotNull Dimension size) {
+    var glassPaneSize = glassPane.getSize();
+    var gap = JBUI.scale(10);
+    var possiblePositions = new ArrayList<Point>();
+    var fitBounds = new ArrayList<Rectangle>();
+    possiblePositions.add(new Point(
+      highlighterBounds.x + (highlighterBounds.width - size.width) / 2,
+      highlighterBounds.y + highlighterBounds.height + gap
+    ));
+    possiblePositions.add(new Point(
+      highlighterBounds.x + (highlighterBounds.width - size.width) / 2,
+      highlighterBounds.y - size.height - gap
+    ));
+    possiblePositions.add(new Point(
+      highlighterBounds.x + highlighterBounds.width + gap,
+      highlighterBounds.y + (highlighterBounds.height - size.height) / 2
+    ));
+    possiblePositions.add(new Point(
+      highlighterBounds.x - size.width - gap,
+      highlighterBounds.y + (highlighterBounds.height - size.height) / 2
+    ));
+    for (Point position : possiblePositions) {
+      var possibleBounds = new Rectangle(position, size);
+      fitToGlassPane(possibleBounds, glassPaneSize);
+      fitBounds.add(possibleBounds);
+      if (possibleBounds.getLocation().equals(position)) {
+        return possibleBounds;
+      }
+    }
+    for (int i = 0; i < possiblePositions.size(); i++) {
+      var original = possiblePositions.get(i);
+      var fit = fitBounds.get(i).getLocation();
+      // If only one coordinate was moved,
+      // it means that it doesn't intersect with the highlighted component, and that's a good thing.
+      if (original.x == fit.x || original.y == fit.y) {
+        return fitBounds.get(i);
+      }
+    }
+    return fitBounds.getFirst();
+  }
+
+  private static void fitToGlassPane(@NotNull Rectangle result, @NotNull Dimension glassPaneSize) {
+    result.x = min(max(result.x, 0), glassPaneSize.width - result.width);
+    result.y = min(max(result.y, 0), glassPaneSize.height - result.height);
   }
 
   private static @Nullable JComponent getGlassPane(@NotNull Component component) {
@@ -432,7 +599,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private String findSelectedClassName() {
     if (myHierarchyTree.hasFocus()) {
       if (!myComponents.isEmpty()) {
-        return myComponents.get(0).getClass().getName();
+        return myComponents.getFirst().getClass().getName();
       }
       else {
         TreePath path = myHierarchyTree.getSelectionPath();
@@ -543,7 +710,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     private ToggleShowAccessibilityIssuesAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
-      showAccessibilityIssues = PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
+      showAccessibilityIssues =
+        isAccessibilityAuditEnabled && PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
       getTemplatePresentation().setDescription(
         InternalActionsBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
     }
@@ -626,22 +794,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
 
     private void switchHierarchy() {
-      TreePath path = myHierarchyTree.getLeadSelectionPath();
-      if (path == null) return;
-      HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
-      if (node == null) return;
-      Component c = node.getComponent();
-      if (c == null) return;
-
-      Component selected = ContainerUtil.getFirstItem(myComponents);
+      resetTree(false);
       isAccessibleEnable = !isAccessibleEnable;
       myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
-      myHierarchyTree.resetModel(c, isAccessibleEnable);
-      TreeUtil.expandAll(myHierarchyTree);
-      if (selected != null) {
-        myHierarchyTree.selectPath(selected, isAccessibleEnable);
-      }
-
       if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
         myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
       }

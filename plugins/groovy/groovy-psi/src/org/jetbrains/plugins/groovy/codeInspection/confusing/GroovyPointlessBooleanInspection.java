@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
@@ -76,6 +77,12 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
         return rhsText;
       }
       else {
+        return lhsText;
+      }
+    } else if (sign.equals(T_IMPL)) {
+      if (isFalse(lhs)) {
+        return rhsText;
+      } else  {
         return lhsText;
       }
     }
@@ -197,7 +204,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
 
   private static class PointlessBooleanExpressionVisitor extends BaseInspectionVisitor {
 
-    private static final TokenSet booleanTokens = TokenSet.create(T_LAND, T_LOR, T_XOR, T_EQ, T_NEQ);
+    private static final TokenSet booleanTokens = TokenSet.create(T_LAND, T_LOR, T_XOR, T_EQ, T_NEQ, T_IMPL);
 
     @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
@@ -253,10 +260,16 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
     }
     else if (sign.equals(T_XOR)) {
       return xorExpressionIsPointless(lhs, rhs);
+    } else if(sign.equals(T_IMPL)) {
+      return implExpressionIsPointless(lhs, rhs);
     }
     else {
       return false;
     }
+  }
+
+  private static boolean implExpressionIsPointless(@NotNull GrExpression lhs, @NotNull GrExpression rhs) {
+    return isFalse(lhs) || isTrue(rhs);
   }
 
   private static boolean equalityExpressionIsPointless(GrExpression lhs,

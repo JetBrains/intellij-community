@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshotProvider
-import com.intellij.vcs.git.shared.actions.GitSingleRefActions
+import com.intellij.vcs.git.actions.GitSingleRefActions
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.ref.GitSingleRefAction

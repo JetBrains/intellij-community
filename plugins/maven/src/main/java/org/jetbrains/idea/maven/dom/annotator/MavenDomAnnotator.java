@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,7 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Arrays;
 
-public final class MavenDomAnnotator implements DomElementsAnnotator {
+public final class MavenDomAnnotator implements DomElementsAnnotator, DumbAware {
   @Override
   public void annotate(DomElement element, DomElementAnnotationHolder holder) {
     if (element instanceof MavenDomProjectModel) {

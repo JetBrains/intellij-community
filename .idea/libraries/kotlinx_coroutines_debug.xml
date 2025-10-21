@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-debug" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-debug:1.10.1-intellij-4">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-debug:1.10.1-intellij-5">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.10.1-intellij-4/kotlinx-coroutines-debug-1.10.1-intellij-4.jar">
-          <sha256sum>b5c5240640ee148c949a08ccd63f356461f8959c2d9869eccb9b198e5623cf03</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.10.1-intellij-5/kotlinx-coroutines-debug-1.10.1-intellij-5.jar">
+          <sha256sum>f8f56f19d2b29da511809c3345d2f0bf283bfb94a0a0d83f5b630e1424625723</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.10.1-intellij-4/kotlinx-coroutines-debug-1.10.1-intellij-4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.10.1-intellij-5/kotlinx-coroutines-debug-1.10.1-intellij-5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.10.1-intellij-4/kotlinx-coroutines-debug-1.10.1-intellij-4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.10.1-intellij-5/kotlinx-coroutines-debug-1.10.1-intellij-5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

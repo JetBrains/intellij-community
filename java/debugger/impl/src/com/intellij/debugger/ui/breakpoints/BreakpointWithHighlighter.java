@@ -51,7 +51,7 @@ import java.util.Objects;
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
 
-  private @Nullable SourcePosition mySourcePosition;
+  private volatile @Nullable SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
   private volatile Icon myIcon = getSetIcon(false);
@@ -205,15 +205,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   /**
-   * @see #getDisplayName()
-   * @deprecated better use {@link Breakpoint#getDisplayName()}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull @Nls String getDescription() {
-    return getDisplayName();
-  }
-
-  /**
    * Description lines of Java-specific breakpoint properties, XML formatted.
    */
   public List<@Nls String> getPropertyXMLDescriptions() {
@@ -319,7 +310,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     if (!isVisible() || ApplicationManager.getApplication().isUnitTestMode() || !isValid()) {
       return;
     }
-    DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(myProject, () -> {
       DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess == null || !debugProcess.isAttached()) {

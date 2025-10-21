@@ -1,0 +1,50 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.textmate.core"/>
+    <module name="intellij.textmate.joni"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.textmate.bundleProvider"
+                    interface="org.jetbrains.plugins.textmate.api.TextMateBundleProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="textmate.line.highlighting.limit" defaultValue="20000"
+                 description="The maximum length of the line to be highlighted by TextMate lexer."/>
+
+    <fileType name="textmate" implementationClass="org.jetbrains.plugins.textmate.TextMateFileType" language="textmate" fieldName="INSTANCE"/>
+    <fileTypeDetector implementation="org.jetbrains.plugins.textmate.TextMateFileType$TextMateFileDetector" order="last"/>
+    <obsoleteStorage file="textmate_os.xml">
+      <components>
+        <component>TextMateSettings</component>
+      </components>
+    </obsoleteStorage>
+
+    <applicationService id="textmateService" serviceInterface="org.jetbrains.plugins.textmate.TextMateService"
+                        serviceImplementation="org.jetbrains.plugins.textmate.TextMateServiceImpl"/>
+    <editorHighlighterProvider filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"/>
+    <lang.syntaxHighlighterFactory language="textmate"
+                                   implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/>
+    <lang.parserDefinition language="textmate" implementationClass="org.jetbrains.plugins.textmate.psi.TextMateParserDefinition"/>
+    <braceMatcher filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateBraceMatcher"/>
+    <typedHandler implementation="org.jetbrains.plugins.textmate.editor.TextMateTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.textmate.editor.TextMateBackspaceHandler"/>
+    <multiLangCommenter implementation="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
+    <lang.commenter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
+    <notificationGroup id="TextMate Bundles" displayType="BALLOON" bundle="messages.TextMateBundle" key="notification.group.textmate.bundles"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.textmate.TextMateBackedFileIconProvider" order="last"/>
+    <lineIndentProvider implementation="org.jetbrains.plugins.textmate.editor.TextMateLineIndentProvider" />
+    <!--<lang.formatter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateFormattingModelBuilder"/>-->
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings" />
+    <!--<applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings"/>-->
+    <!--<rdct.remoteSettingProvider-->
+    <!--  implementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettingsRemoteInfoProvider"/>-->
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings" />
+    <!--<applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings"/>-->
+    <!--<rdct.remoteSettingProvider-->
+    <!--  implementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettingsRemoteInfoProvider"/>-->
+  </extensions>
+</idea-plugin>

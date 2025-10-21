@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow
@@ -17,7 +17,7 @@ private val EP_NAME: ExtensionPointName<SourceToSinkProvider> = create("com.inte
 interface SourceToSinkProvider {
   companion object {
     @JvmField
-    val sourceToSinkLanguageProvider = LanguageExtension<SourceToSinkProvider>(EP_NAME.name)
+    val sourceToSinkLanguageProvider: LanguageExtension<SourceToSinkProvider> = LanguageExtension<SourceToSinkProvider>(EP_NAME.name)
   }
 
   /**

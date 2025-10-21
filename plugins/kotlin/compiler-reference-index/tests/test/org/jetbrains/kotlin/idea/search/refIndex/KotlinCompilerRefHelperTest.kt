@@ -6,6 +6,7 @@ import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.util.currentJavaVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
@@ -15,6 +16,9 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 
 @SkipSlowTestLocally
 open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedPluginModeProvider {
+    // it is known that Kotlin 1.9.25 is incompatible with JDK25
+    val isCompatibleVersions: Boolean = (pluginMode == KotlinPluginMode.K2 || currentJavaVersion().feature < 25)
+
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1
 
@@ -29,6 +33,7 @@ open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedP
     }
 
     fun `test dirty scope`() {
+        if (!isCompatibleVersions) return
         installCompiler()
         val javaFile = myFixture.addFileToProject(
             "JavaClass.java", """
@@ -68,6 +73,7 @@ open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedP
     }
 
     fun `test enum scope`() {
+        if (!isCompatibleVersions) return
         installCompiler()
         val javaFile = myFixture.addFileToProject(
             "Main.java", """

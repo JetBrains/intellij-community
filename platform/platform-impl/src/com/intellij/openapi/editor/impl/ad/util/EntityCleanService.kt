@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.ad.util
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.impl.ad.AdTheManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

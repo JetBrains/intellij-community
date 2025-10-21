@@ -1,7 +1,6 @@
-import sys
 from _typeshed import Unused
 from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
-from typing import Any, Literal, NoReturn, overload
+from typing import Any, Final, Literal, NoReturn, overload, type_check_only
 from typing_extensions import Self
 
 import numpy
@@ -12,7 +11,8 @@ from numpy.typing import NDArray
 # Actual type: _cffi_backend.__CDataOwn <cdata 'struct _jack_position *'>
 # This is not a real subclassing. Just ensuring type-checkers sees this type as compatible with _CDataBase
 # pyright has no error code for subclassing final
-class _JackPositionT(_CDataBase):  # type: ignore[misc]  # pyright: ignore
+@type_check_only
+class _JackPositionT(_CDataBase):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     audio_frames_per_video_frame: float
     bar: int
     bar_start_tick: float
@@ -34,6 +34,7 @@ class _JackPositionT(_CDataBase):  # type: ignore[misc]  # pyright: ignore
     valid: int
     video_offset: int
 
+@type_check_only
 class _CBufferType:
     @overload
     def __getitem__(self, key: int) -> str: ...
@@ -191,7 +192,7 @@ class Port:
     def set_alias(self, alias: str) -> None: ...
     def unset_alias(self, alias: str) -> None: ...
     @property
-    def uuid(self) -> str: ...
+    def uuid(self) -> int: ...
     @property
     def is_audio(self) -> bool: ...
     @property
@@ -307,7 +308,7 @@ class CallbackExit(Exception): ...
 
 def get_property(subject: int | str, key: str) -> tuple[bytes, str] | None: ...
 def get_properties(subject: int | str) -> dict[str, tuple[bytes, str]]: ...
-def get_all_properties() -> dict[str, dict[str, tuple[bytes, str]]]: ...
+def get_all_properties() -> dict[int, dict[str, tuple[bytes, str]]]: ...
 def position2dict(pos: _JackPositionT) -> dict[str, Any]: ...  # Anyof[int, float, _CDataBase]
 def version() -> tuple[int, int, int, int]: ...
 def version_string() -> str: ...
@@ -317,14 +318,14 @@ def set_error_function(callback: Callable[[str], object] | None = None) -> None:
 def set_info_function(callback: Callable[[str], object] | None = None) -> None: ...
 def client_pid(name: str) -> int: ...
 
-METADATA_CONNECTED: str
-METADATA_HARDWARE: str
-METADATA_ICON_LARGE: str
-METADATA_ICON_SMALL: str
-METADATA_PORT_GROUP: str
-METADATA_PRETTY_NAME: str
-if sys.platform != "linux":
-    METADATA_EVENT_TYPES: str
-    METADATA_ICON_NAME: str
-    METADATA_ORDER: str
-    METADATA_SIGNAL_TYPE: str
+# Some METADATA_ constants are not available on all systems.
+METADATA_CONNECTED: Final[str]
+METADATA_HARDWARE: Final[str]
+METADATA_ICON_LARGE: Final[str]
+METADATA_ICON_SMALL: Final[str]
+METADATA_PORT_GROUP: Final[str]
+METADATA_PRETTY_NAME: Final[str]
+METADATA_EVENT_TYPES: Final[str]
+METADATA_ICON_NAME: Final[str]
+METADATA_ORDER: Final[str]
+METADATA_SIGNAL_TYPE: Final[str]

@@ -149,7 +149,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
           }
         }
 
-        if (project.isDefault || ProjectLevelVcsManager.getInstance(project).allSupportedVcss.any { it.editFileProvider != null }) {
+        if (project.isDefault || ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss().any { it.editFileProvider != null }) {
           row {
             checkBox(cdShowReadOnlyStatusDialog(project))
           }

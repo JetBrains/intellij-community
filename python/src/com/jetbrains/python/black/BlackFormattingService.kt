@@ -25,6 +25,10 @@ import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.ui.LightweightHint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
+import com.jetbrains.python.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_EXCEPTION
+import com.jetbrains.python.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_FAILED
+import com.jetbrains.python.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_SDK_NOT_CONFIGURED
+import com.jetbrains.python.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_TIMEOUT
 import org.jetbrains.annotations.Nls
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -74,7 +78,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     if (sdk == null) {
       val message = PyBundle.message("black.sdk.not.configured.error", project.name)
       LOG.warn(message)
-      formattingRequest.onError(PyBundle.message("black.sdk.not.configured.error.title"), message)
+      formattingRequest.onError(PyBundle.message("black.sdk.not.configured.error.title"), message, BLACK_FORMATTER_SDK_NOT_CONFIGURED)
       return null
     }
 
@@ -143,7 +147,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
 
               }
               else {
-                formattingRequest.onError(response.title, response.getPopupMessage())
+                formattingRequest.onError(response.title, response.getPopupMessage(), BLACK_FORMATTER_FAILED)
               }
             }
             is BlackFormattingResponse.Ignored -> {
@@ -156,7 +160,8 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
             is ProcessCanceledException -> { /* ignore */ }
             else -> {
               LOG.warn(exception)
-              formattingRequest.onError(PyBundle.message("black.exception.error.message"), exception.localizedMessage)
+              formattingRequest.onError(PyBundle.message("black.exception.error.message"),
+                                        exception.localizedMessage, BLACK_FORMATTER_EXCEPTION)
             }
           }
         }
@@ -214,6 +219,8 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
   }
 
   override fun getNotificationGroupId(): String = NOTIFICATION_GROUP_ID
+
+  override fun getTimeoutNotificationDisplayId(): String = BLACK_FORMATTER_TIMEOUT
 
   override fun getName(): String = NAME
 }

@@ -76,6 +76,8 @@ internal class ProgressDialogWrapper(
   override fun createPeer(project: Project?, canBeParent: Boolean, ideModalityType: IdeModalityType): DialogWrapperPeer {
     error("must not be called")
   }
+
+  override fun canRecordDialogId(): Boolean = false
 }
 
 internal fun createDialogWrapper(

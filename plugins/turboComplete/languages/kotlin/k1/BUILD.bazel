@@ -1,14 +1,14 @@
 ### auto-generated section `build intellij.turboComplete.languages.kotlin.k1` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_provided_library(
-  name = "kotlin-completion-impl-k1_provided",
+  name = "plugins_kotlin_completion_kotlin-completion-impl-k1_provided",
   lib = "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1"
 )
 
@@ -16,7 +16,8 @@ jvm_library(
   name = "k1",
   module_name = "intellij.turboComplete.languages.kotlin.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -25,8 +26,7 @@ jvm_library(
     "//plugins/turboComplete",
     "//platform/platform-impl/internal",
     "//platform/platform-impl:ide-impl",
-    ":kotlin-completion-impl-k1_provided",
-  ],
-  runtime_deps = [":k1_resources"]
+    ":plugins_kotlin_completion_kotlin-completion-impl-k1_provided",
+  ]
 )
 ### auto-generated section `build intellij.turboComplete.languages.kotlin.k1` end

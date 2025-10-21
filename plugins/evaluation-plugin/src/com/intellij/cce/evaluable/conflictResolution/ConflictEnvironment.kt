@@ -36,7 +36,7 @@ class ConflictEnvironment(
     override val name: String = "${fileConflict.hash} - ${fileConflict.fileName}"
     override val datasetName: String = datasetRef.name
 
-    override fun evaluate(
+    override suspend fun evaluate(
       handler: InterpretationHandler,
       filter: InterpretFilter, // TODO should we use it somehow?
       order: InterpretationOrder, // TODO should we use somehow?

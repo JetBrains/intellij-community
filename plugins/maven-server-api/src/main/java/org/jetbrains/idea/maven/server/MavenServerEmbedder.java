@@ -62,8 +62,9 @@ public interface MavenServerEmbedder extends Remote {
   HashSet<MavenRemoteRepository> resolveRepositories(@NotNull ArrayList<MavenRemoteRepository> repositories, MavenToken token)
     throws RemoteException;
 
-  @Nullable
-  String evaluateEffectivePom(
+  @NotNull
+  MavenServerResponse<@NotNull String> evaluateEffectivePom(
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull File file,
     @NotNull ArrayList<String> activeProfiles,
     @NotNull ArrayList<String> inactiveProfiles,

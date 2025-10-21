@@ -150,13 +150,18 @@ object LocalTrackerDiffUtil {
     val newFragments = textDiffProvider.compare(diffData.vcsText, diffData.localText, linesRanges, indicator)!!
 
     val toggleableLineRanges = mutableListOf<ToggleableLineRange>()
+
+    val fallbackExclusionState = computeFallbackExclusionState(ranges,
+                                                               activeChangelistId,
+                                                               allowExcludeChangesFromCommit,
+                                                               areVCSBoundedActionsDisabled)
     for (i in ranges.indices) {
       val localRange = ranges[i]
       val lineRange = linesRanges[i]
-
-      val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, localRange.exclusionState,
+      val exclusionState = if (areVCSBoundedActionsDisabled) fallbackExclusionState else localRange.exclusionState
+      val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, exclusionState,
                                                 localRange.clientIds)
-      if (rangesFragmentData.isPartiallyExcluded() && allowExcludeChangesFromCommit) {
+      if (!areVCSBoundedActionsDisabled && rangesFragmentData.isPartiallyExcluded() && allowExcludeChangesFromCommit) {
         val fragment = ComparisonManagerImpl.createLineFragment(lineRange.start1, lineRange.end1,
                                                                 lineRange.start2, lineRange.end2,
                                                                 lineOffsets1, lineOffsets2)
@@ -171,6 +176,15 @@ object LocalTrackerDiffUtil {
       }
     }
     return handler.done(isContentsEqual, areVCSBoundedActionsDisabled, texts, toggleableLineRanges)
+  }
+
+  private fun computeFallbackExclusionState(rangeList: List<LocalRange>, activeChangeListId: String, allowExcludeChangesFromCommit: Boolean, areVCSBoundedActionsDisabled: Boolean): RangeExclusionState {
+
+    val isAnyRangeExcluded = rangeList.any {
+      LineFragmentData.isExcluded(it.changelistId, activeChangeListId, it.exclusionState, allowExcludeChangesFromCommit) ||
+      LineFragmentData.isPartiallyExcluded(it.changelistId, activeChangeListId, it.exclusionState)
+    }
+    return if (areVCSBoundedActionsDisabled && isAnyRangeExcluded) RangeExclusionState.Excluded else RangeExclusionState.Included
   }
 
   interface LocalTrackerDiffHandler {
@@ -201,12 +215,29 @@ object LocalTrackerDiffUtil {
     val exclusionState: RangeExclusionState,
     val clientIds: List<ClientId>
   ) {
-    fun isFromActiveChangelist() = changelistId == activeChangelistId
+    fun isFromActiveChangelist() = isFromActiveChangelist(changelistId, activeChangelistId)
     fun isSkipped() = !isFromActiveChangelist()
-    fun isExcluded(allowExcludeChangesFromCommit: Boolean) = !isFromActiveChangelist() ||
-                                                             allowExcludeChangesFromCommit && exclusionState == RangeExclusionState.Excluded
+    fun isExcluded(allowExcludeChangesFromCommit: Boolean) = isExcluded(changelistId, activeChangelistId, exclusionState, allowExcludeChangesFromCommit)
 
-    fun isPartiallyExcluded(): Boolean = isFromActiveChangelist() && exclusionState is RangeExclusionState.Partial
+    fun isPartiallyExcluded(): Boolean = isPartiallyExcluded(changelistId, activeChangelistId, exclusionState)
+
+    companion object {
+      fun isFromActiveChangelist(changelistId: String, activeChangelistId: String): Boolean = changelistId == activeChangelistId
+
+      fun isExcluded(
+        changelistId: String,
+        activeChangelistId: String,
+        exclusionState: RangeExclusionState,
+        allowExcludeChangesFromCommit: Boolean
+      ): Boolean {
+        return !isFromActiveChangelist(changelistId, activeChangelistId) ||
+        allowExcludeChangesFromCommit && exclusionState == RangeExclusionState.Excluded
+      }
+
+      fun isPartiallyExcluded(changelistId: String, activeChangelistId: String, exclusionState: RangeExclusionState): Boolean {
+        return isFromActiveChangelist(changelistId, activeChangelistId) && exclusionState is RangeExclusionState.Partial
+      }
+    }
   }
 
   private sealed interface TrackerData {

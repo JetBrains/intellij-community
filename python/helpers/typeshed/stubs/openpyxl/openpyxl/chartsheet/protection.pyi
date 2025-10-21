@@ -19,9 +19,9 @@ class ChartsheetProtection(Serialisable, _Protected):
         self,
         content: _ConvertibleToBool | None = None,
         objects: _ConvertibleToBool | None = None,
-        hashValue: Incomplete | None = None,
+        hashValue=None,
         spinCount: ConvertibleToInt | None = None,
-        saltValue: Incomplete | None = None,
+        saltValue=None,
         algorithmName: str | None = None,
-        password: Incomplete | None = None,
+        password=None,
     ) -> None: ...

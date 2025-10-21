@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
@@ -8,9 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  * Interface for breaking a file into a sequence of tokens.
  *
  * @see [Implementing Lexer](https://plugins.jetbrains.com/docs/intellij/implementing-lexer.html)
- * @see RestartableLexer
  *
- * // todo bring RestartableLexer to this library
  */
 @ApiStatus.Experimental
 interface Lexer {

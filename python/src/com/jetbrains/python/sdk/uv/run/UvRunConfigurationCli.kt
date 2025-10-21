@@ -16,13 +16,8 @@ import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
-fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Boolean): PythonExecution {
-  val toolPath = getUvExecutable()
-
-  if (toolPath == null) {
-    throw RuntimeException("Unable to find uv executable.")
-  }
-
+suspend fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Boolean): PythonExecution {
+  val toolPath = requireNotNull(getUvExecutable()) { "Unable to find uv executable." }
   val toolParams = mutableListOf("run")
 
   if (isDebug && !options.uvArgs.contains("--cache-dir")) {
@@ -52,9 +47,11 @@ fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Bool
             toolPath.pathString,
             options.scriptOrModule
           ) + toolParams
-        } else if (!isDebug) {
+        }
+        else if (!isDebug) {
           toolParams + "--script"
-        } else {
+        }
+        else {
           toolParams
         },
         pythonScriptPath = constant(Path.of(options.scriptOrModule))

@@ -10,6 +10,8 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -227,12 +229,12 @@ internal object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    context(KaSession)
+    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createWrapWithSafeLetCallInputForNullableExpression(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
-        surroundingExpression: KtExpression? = findParentExpressionAtNullablePosition(nullableExpression)
+        surroundingExpression: KtExpression? = session.findParentExpressionAtNullablePosition(nullableExpression)
             ?: nullableExpression?.surroundingExpression,
     ): List<WrapWithSafeLetCallModCommandAction> {
         if (nullableExpression == null || surroundingExpression == null) return emptyList()
@@ -241,7 +243,7 @@ internal object WrapWithSafeLetCallFixFactories {
 
         // Note, the order of the candidate matters. We would prefer the default `it` so the generated code won't need to declare the
         // variable explicitly.
-        val candidateNames = listOfNotNull(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, getDeclaredParameterNameForArgument(nullableExpression))
+        val candidateNames = listOfNotNull(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, session.getDeclaredParameterNameForArgument(nullableExpression))
 
         val elementContext = ElementContext(
             nullableExpressionPointer = nullableExpression.createSmartPointer(),

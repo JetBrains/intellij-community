@@ -300,7 +300,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     hostRecentItems.add(newRecentItem);
 
     while (hostRecentItems.size() > 4) {
-      hostRecentItems.remove(hostRecentItems.iterator().next());
+      hostRecentItems.remove(hostRecentItems.getFirst());
     }
   }
 

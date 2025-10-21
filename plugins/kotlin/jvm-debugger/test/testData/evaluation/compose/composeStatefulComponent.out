@@ -1,0 +1,10 @@
+LineBreakpoint created at composeStatefulComponent.kt:21
+Run Java
+Connected to the target VM
+composeStatefulComponent.kt:21
+Compile bytecode for state.value
+Compile bytecode for getStateValue(state)
+Compile bytecode for incrementState(state)
+Disconnected from the target VM
+
+Process finished with exit code 0

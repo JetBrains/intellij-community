@@ -531,11 +531,11 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
             for (int i=0; i<10; i++) {
               type(" ");
               TimeoutUtil.sleep(100);
-              UIUtil.dispatchAllInvocationEvents();
+              PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
             }
             long typing = System.currentTimeMillis();
             while (!emptyAnnotator.didIDoIt()) {
-              UIUtil.dispatchAllInvocationEvents();
+              PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
             }
             long end = System.currentTimeMillis();
 

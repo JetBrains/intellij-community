@@ -21,6 +21,19 @@ internal fun <K, V> ConcurrentHashMapWasm(base: MutableMap<K, V>): ConcurrentHas
     return get(key) ?: f(key).also { put(key, it) }
   }
 
+  override fun computeIfPresent(key: K, f: (K, V) -> V): V? {
+    return get(key)?.let { oldValue ->
+      val newValue = f(key, oldValue)
+      if (newValue != null) {
+        put(key, newValue)
+      }
+      else {
+        remove(key)
+      }
+      newValue
+    }
+  }
+
   override fun compute(key: K, f: (K, V?) -> V?): V? {
     val oldValue = get(key)
     val newValue = f(key, oldValue)

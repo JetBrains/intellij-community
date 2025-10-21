@@ -298,7 +298,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceOr1() {
-    doTest("Union[str, int]",
+    doTest("Union[int, str]",
            """
                def foo(a):
                    if isinstance(a, int) or isinstance(a, str):
@@ -307,7 +307,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceOr2() {
-    doTest("Union[B, A, int, str]",
+    doTest("Union[str, int, A, B]",
            """
            class A:
                pass
@@ -351,7 +351,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceLogicalExpressions() {
-    doTest("Union[B, str]",
+    doTest("Union[str, B]",
            """
              class A:
                  pass
@@ -1775,7 +1775,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20409
   public void testGetFromDictWithDefaultNoneValue() {
-    doTest("Optional[Any]",
+    doTest("Any",
            "d = {}\n" +
            "expr = d.get(\"abc\", None)");
   }
@@ -2064,43 +2064,32 @@ public class PyTypeTest extends PyTestCase {
                  def nuf():
                      global a
                      expr = a""");
-  }
 
-  // PY-37755
-  public void testNonLocalType() {
-    doTest("bool",
+    // PY-82115
+    doTest("Any",
            """
-             def fun():
-                 expr = True
+             def outer():
+                 s = "aba"
 
-                 def nuf():
-                     nonlocal expr
-                     expr""");
+                 def inner():
+                     global s
+                     expr = s # 's' is unbound
+             """);
 
-    doTest("bool",
+    // PY-82115
+    doTest("int",
            """
-             a = []
-
-             def fun():
-                 a = True
-
-                 def nuf():
-                     nonlocal a
-                     expr = a""");
-
-    doTest("Union[bool, int]",
-           """
-             a = []
-
-             def fun():
-                 if True:
-                     a = True
-                 else:
-                     a = 5
-
-                 def nuf():
-                     nonlocal a
-                     expr = a""");
+             def outer():
+                 s = "aba"
+             
+                 def inner1():
+                     global s
+                     s = 1
+             
+                 def inner2():
+                     global s
+                     expr = s
+             """);
   }
 
   // PY-21906
@@ -2880,14 +2869,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-25751
   public void testNotImportedModuleInDunderAll() {
-    doMultiFileTest("Union[aaa.py, Any]",
+    doMultiFileTest("Union[pkg.aaa, Any]",
                     "from pkg import *\n" +
                     "expr = aaa");
   }
 
   // PY-25751
   public void testNotImportedPackageInDunderAll() {
-    doMultiFileTest("Union[__init__.py, Any]",
+    doMultiFileTest("Union[pkg.aaa, Any]",
                     "from pkg import *\n" +
                     "expr = aaa");
   }

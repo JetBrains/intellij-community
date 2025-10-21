@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -31,32 +31,40 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     setEnabledInModalContext(true);
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
   public final synchronized EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
-    if (HANDLER_LOG.isDebugEnabled()) {
-      HANDLER_LOG.debug("Setup EditorActionHandler for " + this.getClass() + " with " + newHandler,
-                        HANDLER_LOG.isTraceEnabled() ? new Throwable() : null);
-    }
-
+    debugLog(newHandler, "setup EditorActionHandler");
     EditorActionHandler tmp = getHandler();
     doSetupHandler(newHandler);
     return tmp;
   }
 
-  private void doSetupHandler(@NotNull EditorActionHandler newHandler) {
-    myHandler = newHandler;
-    myHandler.setWorksInInjected(isInInjectedContext());
-  }
-
   public final synchronized EditorActionHandler getHandler() {
     if (myDynamicHandler == null && myHandler != null) {
-      doSetupHandler(myDynamicHandler = new DynamicEditorActionHandler(this, myHandler));
+      myDynamicHandler = new DynamicEditorActionHandler(this, myHandler);
+      doSetupHandler(myDynamicHandler);
     }
     return myHandler;
+  }
+
+  public synchronized void clearDynamicHandlersCache() {
+    if (myDynamicHandler != null) {
+      myDynamicHandler.clearCache();
+    }
+  }
+
+  public synchronized <T> @Nullable T getHandlerOfType(@NotNull Class<T> type) {
+    EditorActionHandler handler = getHandler(); // make sure handlers are initialized in EditorAction.getHandlerOfType
+    if (handler != null) {
+      T result = handler.getHandlerOfType(type);
+      if (result != null) {
+        return result;
+      }
+    }
+    EditorActionHandler dynamicHandler = myDynamicHandler;
+    if (dynamicHandler != null && dynamicHandler != handler) {
+      return dynamicHandler.getHandlerOfType(type);
+    }
+    return null;
   }
 
   @Override
@@ -82,54 +90,29 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     actionPerformed(editor, dataContext);
   }
 
-  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
-    return EDITOR.getData(dataContext);
-  }
-
-  public final void actionPerformed(final Editor editor, final @NotNull DataContext dataContext) {
-    if (editor == null) return;
+  public final void actionPerformed(Editor editor, @NotNull DataContext dataContext) {
+    if (editor == null) {
+      return;
+    }
     if (editor.isDisposed()) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
       LOG.error("Action " + this + " invoked on a disposed editor" + (file == null ? "" : " for file " + file));
       return;
     }
-
-    final EditorActionHandler handler = getHandler();
+    EditorActionHandler handler = getHandler();
     if (!handler.executeInCommand(editor, dataContext)) {
       executeHandler(handler, editor, dataContext);
       return;
     }
-
     String commandName = getTemplatePresentation().getText();
-    if (commandName == null) commandName = "";
-    CommandProcessor.getInstance().executeCommand(editor.getProject(),
-                                                  () -> executeHandler(handler, editor, dataContext),
-                                                  commandName,
-                                                  handler.getCommandGroupId(editor),
-                                                  UndoConfirmationPolicy.DEFAULT,
-                                                  editor.getDocument());
-  }
-
-  private void executeHandler(@NotNull EditorActionHandler handler, @NotNull Editor editor, @NotNull DataContext dataContext) {
-    if (HANDLER_LOG.isDebugEnabled()) {
-      HANDLER_LOG.debug("Started EditorAction: " + this.getClass() + " in " + editor,
-                        HANDLER_LOG.isTraceEnabled() ? new Throwable() : null);
-    }
-
-    handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
-
-    if (HANDLER_LOG.isDebugEnabled()) {
-      HANDLER_LOG.debug("Finished EditorAction: " + this.getClass() + " in " + editor,
-                        HANDLER_LOG.isTraceEnabled() ? new Throwable() : null);
-    }
-  }
-
-  public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    presentation.setEnabled(getHandler().isEnabled(editor, null, dataContext));
-  }
-
-  public void updateForKeyboardAccess(Editor editor, Presentation presentation, DataContext dataContext) {
-    update(editor, presentation, dataContext);
+    CommandProcessor.getInstance().executeCommand(
+      editor.getProject(),
+      () -> executeHandler(handler, editor, dataContext),
+      commandName == null ? "" : commandName,
+      handler.getCommandGroupId(editor),
+      UndoConfirmationPolicy.DEFAULT,
+      editor.getDocument()
+    );
   }
 
   @Override
@@ -161,27 +144,51 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  public void update(Editor editor, Presentation presentation, DataContext dataContext) {
+    presentation.setEnabled(getHandler().isEnabled(editor, null, dataContext));
+  }
+
+  public void updateForKeyboardAccess(Editor editor, Presentation presentation, DataContext dataContext) {
+    update(editor, presentation, dataContext);
+  }
+
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
+    return EDITOR.getData(dataContext);
+  }
+
+  private void doSetupHandler(@NotNull EditorActionHandler newHandler) {
+    myHandler = newHandler;
+    myHandler.setWorksInInjected(isInInjectedContext()); // IDEA-128025 Expand selection in multiple carets through injections still failing
+  }
+
+  private void executeHandler(
+    @NotNull EditorActionHandler handler,
+    @NotNull Editor editor,
+    @NotNull DataContext dataContext
+  ) {
+    debugLog(editor, "handler started");
+    handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
+    debugLog(editor, "handler finished");
+  }
+
+  private void debugLog(@NotNull Object object, @NotNull String prefix) {
+    if (HANDLER_LOG.isDebugEnabled()) {
+      HANDLER_LOG.debug(
+        prefix + " for EditorAction " + this.getClass() + " with " + object,
+        HANDLER_LOG.isTraceEnabled() ? new Throwable() : null
+      );
+    }
+  }
+
   private static @NotNull DataContext getProjectAwareDataContext(@NotNull Editor editor, @NotNull DataContext original) {
     if (PROJECT.getData(original) == editor.getProject()) {
       return original;
     }
     return CustomizedDataContext.withSnapshot(original, sink -> sink.set(PROJECT, editor.getProject()));
-  }
-
-  public synchronized void clearDynamicHandlersCache() {
-    if (myDynamicHandler != null) myDynamicHandler.clearCache();
-  }
-
-  public synchronized <T> @Nullable T getHandlerOfType(@NotNull Class<T> type) {
-    EditorActionHandler handler = getHandler();
-    if (handler != null) {
-      T result = handler.getHandlerOfType(type);
-      if (result != null) return result;
-    }
-    EditorActionHandler dynamicHandler = myDynamicHandler;
-    if (dynamicHandler != null && dynamicHandler != handler) {
-      return dynamicHandler.getHandlerOfType(type);
-    }
-    return null;
   }
 }

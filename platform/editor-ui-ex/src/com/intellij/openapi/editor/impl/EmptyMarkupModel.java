@@ -67,6 +67,7 @@ public final class EmptyMarkupModel implements MarkupModelEx {
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
                                       @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+    throw new ProcessCanceledException();
   }
 
   @Override
@@ -81,10 +82,12 @@ public final class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   public void removeHighlighter(@NotNull RangeHighlighter rangeHighlighter) {
+    throw new ProcessCanceledException();
   }
 
   @Override
   public void removeAllHighlighters() {
+    throw new ProcessCanceledException();
   }
 
   @Override
@@ -99,6 +102,7 @@ public final class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
+    throw new ProcessCanceledException();
   }
 
   @Override
@@ -107,12 +111,12 @@ public final class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   public RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
-    return null;
+    throw new ProcessCanceledException();
   }
 
   @Override
   public @Nullable RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
-    return null;
+    throw new ProcessCanceledException();
   }
 
   @Override
@@ -122,11 +126,12 @@ public final class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   public void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener) {
+    throw new ProcessCanceledException();
   }
 
   @Override
   public void setRangeHighlighterAttributes(final @NotNull RangeHighlighter highlighter, final @NotNull TextAttributes textAttributes) {
-
+    throw new ProcessCanceledException();
   }
 
   @Override
@@ -141,7 +146,6 @@ public final class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return MarkupIterator.EMPTY;
+    return MarkupIterator.emptyIterator();
   }
-
 }

@@ -4,6 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
@@ -96,5 +97,17 @@ public interface ServiceViewDescriptor {
 
   default boolean isVisible() {
     return true;
+  }
+
+  /**
+   * Required, if {@link ServiceViewContributor}/{@link ServiceViewDescriptor} instances are registered on the frontend.
+   * The value (if provided) should be unique across descriptors used by the same {@link ServiceViewContributor}.
+   * It's used to get {@link Navigatable} instance on backend.
+   *
+   * @see BackendServiceViewNavigatableProvider#getNavigatable(Project, String)
+   */
+  @ApiStatus.Experimental
+  default String getUniqueId() {
+    return null;
   }
 }

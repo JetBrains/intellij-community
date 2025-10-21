@@ -3,12 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
+import com.intellij.collaboration.async.childScope
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
@@ -24,11 +24,13 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
+private val LOG = logger<GitLabMergeRequestChanges>()
+
 interface GitLabMergeRequestChanges {
   /**
-   * List of merge request commits
+   * Load the list of merge request commits
    */
-  val commits: Deferred<List<GitLabCommit>>
+  suspend fun getCommits(): List<GitLabCommit>
 
   /**
    * Load and parse changes diffs
@@ -46,8 +48,6 @@ fun GitBranchComparisonResult.findLatestCommitWithChangesTo(gitRepository: GitRe
   return commits.lastOrNull { commit -> commit.patches.any { it.filePath == relativePath } }?.sha
 }
 
-private val LOG = logger<GitLabMergeRequestChanges>()
-
 class GitLabMergeRequestChangesImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
@@ -56,11 +56,11 @@ class GitLabMergeRequestChangesImpl(
   private val mergeRequestDetails: GitLabMergeRequestFullDetails
 ) : GitLabMergeRequestChanges {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val glProject = projectMapping.repository
 
-  override val commits: Deferred<List<GitLabCommit>> = cs.async {
+  private val commits: Deferred<List<GitLabCommit>> = cs.async {
     if (glMetadata != null && glMetadata.version < GitLabVersion(14, 7)) {
       val initialURI = api.getMergeRequestCommitsURI(glProject, mergeRequestDetails.iid)
       return@async ApiPageUtil.createPagesFlowByLinkHeader(initialURI) { uri -> api.rest.loadMergeRequestCommits(uri) }
@@ -74,6 +74,8 @@ class GitLabMergeRequestChangesImpl(
       .foldToList(GitLabCommit.Companion::fromGraphQLDTO)
       .asReversed()
   }
+
+  override suspend fun getCommits(): List<GitLabCommit> = commits.await()
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits.await())
@@ -99,6 +101,14 @@ class GitLabMergeRequestChangesImpl(
           }
         }.awaitAll()
       }
+    }.apply {
+      forEach { commit ->
+        commit.patches.forEach {
+          if (it is TextFilePatch && it.hunks.isEmpty()) {
+            LOG.warn("""Empty patch for file change [${it.beforeName} -> ${it.afterName}] in commit ${commit.sha} in MR ${mergeRequestDetails.iid} with refs ${mergeRequestDetails.diffRefs}.""")
+          }
+        }
+      }
     }
     val headPatches = withContext(Dispatchers.IO) {
       if (api.getMetadata().version < GitLabVersion(15, 7)) {
@@ -111,6 +121,12 @@ class GitLabMergeRequestChangesImpl(
         ApiPageUtil.createPagesFlowByPagination { page ->
           api.rest.loadMergeRequestDiffs(api.getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid, page))
         }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
+      }
+    }.apply {
+      forEach {
+        if (it.hunks.isEmpty()) {
+          LOG.warn("""Empty patch for file change [${it.beforeName} -> ${it.afterName}] in MR ${mergeRequestDetails.iid} with refs ${mergeRequestDetails.diffRefs}.""")
+        }
       }
     }
     return GitBranchComparisonResult.create(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)

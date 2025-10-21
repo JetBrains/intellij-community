@@ -229,20 +229,31 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       adapters.add(adapter);
     }
 
+    boolean isOneFileForPreview = adapters.size() == 1 || adapters.stream().map(UsageInfoAdapter::getPath).distinct().count() == 1;
+    if (FindKey.isLazyPreviewEnabled() && isOneFileForPreview &&
+        ContainerUtil.exists(adapters, adapter -> adapter instanceof ItemWithLazyContent &&
+                                                  !((ItemWithLazyContent)adapter).isContentComputed())) {
+      LOG.debug("Preview will be updated when item will be loaded");
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myUsagePreviewPanel.showLoading();
+      });
+      return;
+    }
+
     String selectedFilePath = file;
 
     UsageAdaptersKt.getUsageInfoAsFuture(adapters, myProject).thenAccept(selectedUsages -> {
       record UsagesFileInfo(boolean isOneAndOnlyOnePsiFileInUsages, @Nullable VirtualFile virtualFile, String path) {
       }
       ReadAction.nonBlocking(() -> new UsagesFileInfo(
-          UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages),
+          isOneFileForPreview,
           selectedFilePath != null && !FindKey.isEnabled()? VfsUtil.findFileByIoFile(new File(selectedFilePath), true) : null,
           selectedFilePath
         ))
         .finishOnUiThread(ModalityState.nonModal(), usagesFileInfo -> {
           myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
           FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-          myUsagePreviewPanel.updateLayout(myProject, selectedUsages);
+          myUsagePreviewPanel.updateLayout(myProject, selectedUsages, !isOneFileForPreview);
           myUsagePreviewTitle.clear();
           if (usagesFileInfo.isOneAndOnlyOnePsiFileInUsages && selectedFilePath != null) {
             myUsagePreviewTitle.append(PathUtil.getFileName(selectedFilePath), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -762,7 +773,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     myPreviewSplitter = new OnePixelSplitter(true, .33f);
     myPreviewSplitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
-    myPreviewSplitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+    myPreviewSplitter.getDivider().setBackground(JBUI.CurrentTheme.Separator.color());
     JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
       @Override
       public Dimension getMinimumSize() {
@@ -1340,14 +1351,19 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       public void onFinish() {
         ApplicationManager.getApplication().invokeLater(() -> {
+          boolean isEmpty = resultsCount.get() == 0;
+
           if (!isCancelled()) {
-            boolean isEmpty = resultsCount.get() == 0;
             if (isEmpty) {
               showEmptyText(FindBundle.message("message.nothingFound"), true);
             }
           }
           FindUsagesCollector.recordSearchFinished(System.currentTimeMillis() - startTime.get(), resultsCount.get(), ShowUsagesAction.getUsagesPageSize());
           onStop(hash);
+
+          if (FindKey.isEnabled()) {
+            myHelper.onSearchFinish(isEmpty ? 0 : myResultsPreviewTable.getRowCount());
+          }
         }, state);
       }
     }, myResultsPreviewSearchProgress);
@@ -1572,7 +1588,10 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       if (backendValidator.isFinished) {
         header.loadingIcon.setIcon(EmptyIcon.ICON_16);
       }
-      myHelper.onSearchStop();
+
+      if (!FindKey.isEnabled()) {
+        myHelper.onSearchFinish(myResultsPreviewTable.getRowCount());
+      }
     });
   }
 
@@ -1770,6 +1789,15 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         result.setFont(JBFont.medium());
 
         return result;
+      }
+
+      @Override
+      protected boolean canReuseActionButton(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
+        if (!ExperimentalUI.isNewUI()) {
+          return super.canReuseActionButton(oldActionButton, newPresentation);
+        }
+
+        return oldActionButton instanceof ActionButtonWithText;
       }
     };
 

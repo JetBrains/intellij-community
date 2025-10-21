@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-@SuppressWarnings("CallToSystemGC")
 @ApiStatus.Internal
+@TestOnly
 public final class GCUtil {
   /**
    * Try to force VM to collect soft references if possible.
@@ -37,6 +37,7 @@ public final class GCUtil {
     ReferenceQueue<Object> q = new ReferenceQueue<>();
     SoftReference<Object> ref = new SoftReference<>(new Object(), q);
 
+    //noinspection CallToSystemGC
     System.gc();
 
     StringBuilder log = new StringBuilder();
@@ -75,6 +76,7 @@ public final class GCUtil {
 
         if (i > 0 && i % 100 == 0 && !until.getAsBoolean()) {
           log.append("  Calling System.gc()\n");
+          //noinspection CallToSystemGC
           System.gc();
         }
       }

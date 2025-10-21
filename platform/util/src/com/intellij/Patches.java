@@ -13,11 +13,6 @@ public final class Patches {
   public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
 
   /**
-   * IBM JVM 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection().
-   */
-  public static final boolean IBM_JDK_DISABLE_COLLECTION_BUG = "false".equalsIgnoreCase(System.getProperty("idea.debugger.keep.temp.objects"));
-
-  /**
    * See <a href="https://bugs.openjdk.org/browse/JDK-4818143">JDK-4818143</a>.
    * The bug is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
    * for up to 10 seconds if clipboard owner is not responding.

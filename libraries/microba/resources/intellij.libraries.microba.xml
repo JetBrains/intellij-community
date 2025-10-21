@@ -1,2 +1,2 @@
-<idea-plugin>
+<idea-plugin visibility="public" package="com.michaelbaranov.microba">
 </idea-plugin>

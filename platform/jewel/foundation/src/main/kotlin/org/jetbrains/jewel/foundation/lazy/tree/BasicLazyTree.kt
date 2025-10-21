@@ -73,7 +73,7 @@ import org.jetbrains.jewel.foundation.state.SelectableComponentState
  */
 @Suppress("UNCHECKED_CAST", "ComposableParamOrder")
 @Composable
-@Deprecated("Use BasicLazyTree with 'interactionSource' parameter instead")
+@Deprecated("Use BasicLazyTree with 'interactionSource' parameter instead", level = DeprecationLevel.HIDDEN)
 public fun <T> BasicLazyTree(
     tree: Tree<T>,
     selectionMode: SelectionMode = SelectionMode.Multiple,
@@ -119,6 +119,7 @@ public fun <T> BasicLazyTree(
         pointerEventScopedActions = pointerEventScopedActions,
         chevronContent = chevronContent,
         nodeContent = nodeContent,
+        interactionSource = remember { MutableInteractionSource() },
     )
 }
 

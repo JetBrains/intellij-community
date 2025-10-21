@@ -1,0 +1,8 @@
+include *.rst *.txt *.md LICENSE-EPL LICENSE-APACHE *.pyx *.cpp *.hpp
+recursive-include pydevd_attach_to_process *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx *.cpp *.hpp
+recursive-include pydevd_attach_to_process/common *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx *.cpp *.hpp
+recursive-include pydevd_attach_to_process/linux_and_mac *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx *.cpp *.hpp
+recursive-include pydevd_attach_to_process/winappdbg *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx *.cpp *.hpp
+recursive-include pydevd_attach_to_process/windows *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx *.cpp *.hpp
+recursive-include _pydevd_bundle *.pyx *.cpp *.hpp
+recursive-include build_tools *.py

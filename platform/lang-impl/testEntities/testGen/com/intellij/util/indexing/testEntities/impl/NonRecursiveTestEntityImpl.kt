@@ -1,13 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities.impl
 
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -16,6 +10,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
+import com.intellij.util.indexing.testEntities.NonRecursiveTestEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -49,7 +44,7 @@ internal class NonRecursiveTestEntityImpl(private val dataSource: NonRecursiveTe
 
 
   internal class Builder(result: NonRecursiveTestEntityData?) : ModifiableWorkspaceEntityBase<NonRecursiveTestEntity, NonRecursiveTestEntityData>(
-    result), NonRecursiveTestEntity.Builder {
+    result), NonRecursiveTestEntityBuilder {
     internal constructor() : this(NonRecursiveTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -128,7 +123,7 @@ internal class NonRecursiveTestEntityData : WorkspaceEntityData<NonRecursiveTest
 
   internal fun isRootInitialized(): Boolean = ::root.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NonRecursiveTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<NonRecursiveTestEntity> {
     val modifiable = NonRecursiveTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -154,7 +149,7 @@ internal class NonRecursiveTestEntityData : WorkspaceEntityData<NonRecursiveTest
     return NonRecursiveTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return NonRecursiveTestEntity(root, entitySource) {
     }
   }

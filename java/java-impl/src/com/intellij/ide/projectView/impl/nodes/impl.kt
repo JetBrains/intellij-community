@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.ApiStatus.Internal
 
-fun moduleDescriptions(project: Project): List<ModuleDescription> {
+public fun moduleDescriptions(project: Project): List<ModuleDescription> {
   val snapshot = WorkspaceModel
     .getInstance(project)
     .currentSnapshot

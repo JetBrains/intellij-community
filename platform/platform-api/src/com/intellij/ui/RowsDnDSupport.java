@@ -53,6 +53,10 @@ public final class RowsDnDSupport {
             event.setDropPossible(false, "");
             return true;
           }
+          if (!component.isEnabled()) {
+            event.setDropPossible(false, "");
+            return true;
+          }
           event.setDropPossible(true);
           int oldIndex = ((RowDragInfo)o).row;
           int newIndex = getRow(component, event.getPoint());
@@ -113,7 +117,7 @@ public final class RowsDnDSupport {
         public void drop(DnDEvent event) {
           final Object o = event.getAttachedObject();
           final Point p = event.getPoint();
-          if (o instanceof RowDragInfo && ((RowDragInfo)o).component == component) {
+          if (o instanceof RowDragInfo && ((RowDragInfo)o).component == component && component.isEnabled()) {
             int oldIndex = ((RowDragInfo)o).row;
             if (oldIndex == -1) return;
             int newIndex = getRow(component, p);

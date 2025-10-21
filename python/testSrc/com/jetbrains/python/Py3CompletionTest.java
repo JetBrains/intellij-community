@@ -441,7 +441,7 @@ public class Py3CompletionTest extends PyTestCase {
                                                       c1 = Cat1("name", 5)
                                                       c1.<caret>""");
         assertNotNull(suggested);
-        assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
+        assertContainsElements(suggested, PyNamedTupleType.getSpecialAttributes(LanguageLevel.PYTHON37));
       }
     );
   }
@@ -859,6 +859,38 @@ public class Py3CompletionTest extends PyTestCase {
         assertContainsElements(suggestedNew, "find", "join");
       }
     );
+  }
+
+  public void testImportNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        for (String fileName : List.of("import_binary",
+                                       "from_import_binary",
+                                       "import_attribute_from_binary",
+                                       "import_and_reference_binary")) {
+          myFixture.configureByFile("%s/%s.py".formatted(testDir, fileName));
+          myFixture.completeBasic();
+          myFixture.checkResultByFile("%s/%s.after.py".formatted(testDir, fileName));
+        }
+      });
+    });
+  }
+
+  public void testImportNestedBinarySubModuleNoInitPy() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        for (String fileName : List.of("import_binary",
+                                       "from_import_binary",
+                                       "import_attribute_from_binary",
+                                       "import_and_reference_binary")) {
+          myFixture.configureByFile("%s/%s.py".formatted(testDir, fileName));
+          myFixture.completeBasic();
+          myFixture.checkResultByFile("%s/%s.after.py".formatted(testDir, fileName));
+        }
+      });
+    });
   }
 
   private void doTestVariants(String @NotNull ... expected) {

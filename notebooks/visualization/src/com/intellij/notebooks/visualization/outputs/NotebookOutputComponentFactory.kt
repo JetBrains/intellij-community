@@ -59,7 +59,7 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
     val resizable: Boolean,
     val collapsedTextSupplier: () -> @Nls String,
     @ApiStatus.Obsolete val executionCountHolder: ExecutionCountHolder? = null, // See the docs for ExecutionCountHolder
-    val disposable: Disposable? = component as? Disposable,
+    val disposable: Disposable?,
     val gutterRenderer: GutterIconRenderer? = null,
   )
 

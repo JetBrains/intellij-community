@@ -11,14 +11,14 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
 
-abstract class AbstractJavaSplitJoinContext : CommaListSplitJoinContext() {
+public abstract class AbstractJavaSplitJoinContext : CommaListSplitJoinContext() {
   override fun isValidIntermediateElement(data: ListWithElements, element: PsiElement): Boolean {
     return super.isValidIntermediateElement(data, element) ||
            element is PsiComment && element.tokenType === JavaTokenType.C_STYLE_COMMENT
   }
 }
 
-class JavaSplitJoinArgumentsContext : AbstractJavaSplitJoinContext() {
+public class JavaSplitJoinArgumentsContext : AbstractJavaSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? =
     getCallArgumentsList(context)?.let { ListWithElements(it, it.expressions.asList()) }
 
@@ -43,7 +43,7 @@ class JavaSplitJoinArgumentsContext : AbstractJavaSplitJoinContext() {
   override fun getSplitText(data: ListWithElements): String = JavaBundle.message("intention.family.put.arguments.on.separate.lines")
 }
 
-class JavaSplitJoinParametersContext : AbstractJavaSplitJoinContext() {
+public class JavaSplitJoinParametersContext : AbstractJavaSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? =
     PsiTreeUtil.getParentOfType(context, PsiParameterList::class.java, false)?.let { ListWithElements(it, it.parameters.toList()) }
 
@@ -57,7 +57,7 @@ class JavaSplitJoinParametersContext : AbstractJavaSplitJoinContext() {
   override fun getJoinText(data: ListWithElements): String = JavaBundle.message("intention.family.put.parameters.on.one.line")
 }
 
-class JavaSplitJoinRecordComponentsContext : AbstractJavaSplitJoinContext() {
+public class JavaSplitJoinRecordComponentsContext : AbstractJavaSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? =
     PsiTreeUtil.getParentOfType(context, PsiRecordHeader::class.java, false, PsiCodeBlock::class.java, PsiExpression::class.java)
       ?.let { ListWithElements(it, it.recordComponents.toList()) }

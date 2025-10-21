@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.inspections.substring
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 
 class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
@@ -21,6 +23,16 @@ class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection() {
 
     override fun isApplicableInner(element: KtDotQualifiedExpression): Boolean {
         val arguments = element.callExpression?.valueArguments ?: return false
-        return arguments.size == 2 && element.isFirstArgumentZero()
+        if (arguments.size != 2 || !element.isFirstArgumentZero()) return false
+        
+        // Don't trigger if ReplaceSubstringWithDropLastInspection would be triggered
+        val secondArgument = arguments[1].getArgumentExpression() as? KtBinaryExpression ?: return true
+        if (secondArgument.operationReference.getReferencedNameElementType() != KtTokens.MINUS) return true
+        return !isLengthAccess(secondArgument.left, element.receiverExpression)
     }
+
+    private fun isLengthAccess(expression: KtExpression?, expectedReceiver: KtExpression): Boolean =
+        expression is KtDotQualifiedExpression
+                && expression.selectorExpression.let { it is KtNameReferenceExpression && it.getReferencedName() == "length" }
+                && expression.receiverExpression.isSimplifiableTo(expectedReceiver)
 }

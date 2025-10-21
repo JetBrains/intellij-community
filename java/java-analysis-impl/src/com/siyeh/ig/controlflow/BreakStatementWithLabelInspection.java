@@ -31,7 +31,7 @@ public final class BreakStatementWithLabelInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BreakStatementWithLabelVisitor();
   }
 

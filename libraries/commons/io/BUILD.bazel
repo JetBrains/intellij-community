@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.commons.io` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "io_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "io",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":io_resources"],
+  exports = ["@lib//:commons-io"],
+  runtime_deps = ["@lib//:commons-io"]
+)
+### auto-generated section `build intellij.libraries.commons.io` end

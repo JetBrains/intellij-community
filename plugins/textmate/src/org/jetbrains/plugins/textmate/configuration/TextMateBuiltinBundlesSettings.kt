@@ -21,6 +21,10 @@ class TextMateBuiltinBundlesSettings : SerializablePersistentStateComponent<Text
     updateState { State(names.sorted()) }
   }
 
+  override fun noStateLoaded() {
+    loadState(State())
+  }
+
   fun getTurnedOffBundleNames(): Set<String> = state.turnedOffBundleNames.toSet()
 
   data class State(

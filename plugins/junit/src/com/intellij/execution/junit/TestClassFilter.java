@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -65,8 +67,12 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
 
     if (!PsiClassUtil.isRunnableClass(psiClass, true, true)) return false;
 
-    TestFramework framework = TestFrameworks.detectFramework(psiClass);
-    if (framework instanceof JUnit4Framework || framework instanceof JUnit3Framework) {
+    // Find JUnit Framework if it's available
+    // ScalaTest is a separate framework, though it allows annotating the code with @RunWith annotation to activate dedicated junit 4 runner
+    // When we detect only one framework, then it would be ScalaTest and the class won't run as part of JUnit suite, though it should
+    @NotNull Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
+    TestFramework framework = ContainerUtil.find(frameworks, f -> f instanceof JUnit4Framework || f instanceof JUnit3Framework);
+    if (framework != null) {
       return framework.isTestClass(psiClass);
     }
     return false;

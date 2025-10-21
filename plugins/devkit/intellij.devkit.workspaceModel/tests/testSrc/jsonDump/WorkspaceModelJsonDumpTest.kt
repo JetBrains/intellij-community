@@ -18,6 +18,9 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.intellij.workspaceModel.ide.impl.jsonDump.WorkspaceModelJsonDumpService
+import com.intellij.workspaceModel.ide.impl.jsonDump.WorkspaceModelSerializers
+import com.intellij.workspaceModel.ide.impl.jsonDump.genericParameterForList
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
 import org.junit.jupiter.api.Assertions.assertEquals

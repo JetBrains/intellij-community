@@ -495,6 +495,11 @@ class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
     doTest()
   }
 
+  // PY-63319
+  fun testNonChainableBinaryExpressionAsComparisonLeftOperand() {
+    doTest()
+  }
+
   private fun doTest() {
     doIntentionTest(PyPsiBundle.message("INTN.invert.if.condition"))
   }

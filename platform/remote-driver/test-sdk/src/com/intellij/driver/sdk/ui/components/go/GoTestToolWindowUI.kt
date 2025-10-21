@@ -7,16 +7,13 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 
 fun Finder.goTestToolWindow(action: GoTestToolWindowUI.() -> Unit = {}) {
   x(GoTestToolWindowUI::class.java) {
-    byClass("InternalDecoratorImpl")
+    byClass("TestsConsoleViewImpl")
   }.apply(action)
 }
 
 class GoTestToolWindowUI(data: ComponentData) : UiComponent(data) {
   val editor: UiComponent
     get() = x { byAccessibleName("Editor") }
-
-  val scrollDownButton: UiComponent
-    get() = x { byAttribute("myicon", "scrollDown.svg") }
 
   fun getEditorText(): String = editor.getAllTexts().asString()
 

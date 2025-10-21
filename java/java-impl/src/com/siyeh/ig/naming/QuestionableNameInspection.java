@@ -87,7 +87,7 @@ public final class QuestionableNameInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new QuestionableNameVisitor();
   }
 

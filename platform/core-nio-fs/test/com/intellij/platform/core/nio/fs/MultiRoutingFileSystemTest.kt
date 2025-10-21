@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs
 
 import io.kotest.assertions.withClue
@@ -46,7 +46,20 @@ class MultiRoutingFileSystemTest {
     val wslFs = mockk<FileSystem>()
 
     init {
-      fs.computeBackend("\\\\wsl.localhost\\Ubuntu-22.04", false, false) { _, _ -> wslFs }
+      val root = "//wsl.localhost/ubuntu-22.04"
+
+      fs.setBackendProvider(
+        { localFs, sanitizedPath ->
+          if (sanitizedPath.lowercase().startsWith(root)) wslFs
+          else localFs
+        },
+        { localFs ->
+          listOf(localFs.getPath(root))
+        },
+        {
+          TODO("Not yet implemented")
+        },
+      )
     }
 
     @Test
@@ -55,34 +68,8 @@ class MultiRoutingFileSystemTest {
     }
 
     @Test
-    fun `prefix is not a directory`() {
-      fs.getBackend("\\\\wsl.localhost\\Ubuntu-22.04-Different") shouldBe defaultSunNioFs
-    }
-
-    @Test
-    fun `case insensitiveness`() {
-      fs.getBackend("\\\\WsL.LoCaLhOsT\\UbUnTu-22.04") shouldBe wslFs
-    }
-
-    @Test
-    fun `trailing slash`() {
-      fs.getBackend("\\\\wsl.localhost\\Ubuntu-22.04\\") shouldBe wslFs
-      fs.getBackend("\\\\wsl.localhost\\Ubuntu-22.04\\\\") shouldBe wslFs
-    }
-
-    @Test
     fun `unix slash`() {
       fs.getBackend("//wsl.localhost/Ubuntu-22.04") shouldBe wslFs
-    }
-
-    @Test
-    fun `another path`() {
-      fs.getBackend("\\\\wsl.localhost\\Ubuntu-22.04\\home\\user") shouldBe wslFs
-    }
-
-    @Test
-    fun `another path with unix slash`() {
-      fs.getBackend("//wsl.localhost/Ubuntu-22.04/home/user") shouldBe wslFs
     }
 
     @Test

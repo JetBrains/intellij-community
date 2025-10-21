@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
-internal class KotlinCompletionCharFilter : CharFilter() {
+open class KotlinCompletionCharFilter : CharFilter() {
     companion object {
         val JUST_TYPING_PREFIX: Key<String> = Key("KotlinCompletionCharFilter.JUST_TYPING_PREFIX")
     }
@@ -43,6 +43,10 @@ internal class KotlinCompletionCharFilter : CharFilter() {
             currentItem?.putUserDataDeep(JUST_TYPING_PREFIX, lookup.itemPattern(currentItem))
         }
 
+        val customResult = customResult(c, prefixLength, lookup)
+        if (customResult != null) {
+            return customResult
+        }
         return when (c) {
             '.' -> {
                 if (prefixLength == 0 && isAutopopup && !lookup.isSelectionTouched) {
@@ -65,6 +69,10 @@ internal class KotlinCompletionCharFilter : CharFilter() {
 
             else -> Result.HIDE_LOOKUP
         }
+    }
+
+    open fun customResult(c: Char, prefixLength: Int, lookup: Lookup): Result? {
+        return null
     }
 
     private fun isWithinStringLiteral(lookup: Lookup): Boolean = lookup.psiElement?.parent is KtStringTemplateExpression

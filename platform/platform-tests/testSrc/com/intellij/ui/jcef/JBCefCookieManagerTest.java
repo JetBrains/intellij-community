@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.CefApp;
 import org.cef.browser.CefBrowser;
@@ -11,10 +12,7 @@ import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,6 +32,9 @@ public class JBCefCookieManagerTest {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   private static final @NotNull String TEST_URL = "http://wikipedia.org";
+
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
 
   @Before
   public void before() {
@@ -89,7 +90,7 @@ public class JBCefCookieManagerTest {
      */
     System.out.println("Test setCookie()...");
     Future<Boolean> result = manager.setCookie(urlToQuery, cookie);
-    JBCefTestHelper.showAsync(browser, JBCefCookieManagerTest.class.getSimpleName());
+    JBCefTestHelper.showAsync(browser, JBCefCookieManagerTest.class.getSimpleName(), myDisposableRule.getDisposable());
     testFuture(result, Function.identity());
     assertTrue(loadStartedLatch.getCount() > 0); // assure the cookie had been set before the site loading has started
     System.out.println("...done");

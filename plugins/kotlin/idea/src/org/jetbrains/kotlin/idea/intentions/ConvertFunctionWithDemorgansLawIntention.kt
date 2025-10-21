@@ -3,12 +3,13 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils
 import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Util.invertSelectorFunction
@@ -30,9 +31,10 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.function.Supplier
 
-sealed class ConvertFunctionWithDemorgansLawIntention(
-    intentionName: () -> String,
+internal sealed class ConvertFunctionWithDemorgansLawIntention(
+    intentionName: Supplier<@IntentionName String>,
     conversions: List<Conversion>,
 ) : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java,
@@ -62,7 +64,7 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         } ?: return null
         if (predicate.getType(context)?.isBoolean() != true) return null
 
-        setTextGetter(KotlinBundle.lazyMessage("replace.0.with.1", fromFunctionName, toFunctionName))
+        setTextGetter(KotlinBundle.messagePointer("replace.0.with.1", fromFunctionName, toFunctionName))
         return callee.textRange
     }
 
@@ -163,8 +165,8 @@ private data class Conversion(
     val negatePredicate: Boolean
 )
 
-class ConvertCallToOppositeIntention : ConvertFunctionWithDemorgansLawIntention(
-    KotlinBundle.lazyMessage("replace.function.call.with.the.opposite"),
+internal class ConvertCallToOppositeIntention : ConvertFunctionWithDemorgansLawIntention(
+    KotlinBundle.messagePointer("replace.function.call.with.the.opposite"),
     listOf(
         Conversion("all", "none", false, true),
         Conversion("none", "all", false, true),
@@ -177,16 +179,16 @@ class ConvertCallToOppositeIntention : ConvertFunctionWithDemorgansLawIntention(
     )
 )
 
-class ConvertAnyToAllAndViceVersaIntention : ConvertFunctionWithDemorgansLawIntention(
-    KotlinBundle.lazyMessage("replace.0.with.1.and.vice.versa", "any", "all"),
+internal class ConvertAnyToAllAndViceVersaIntention : ConvertFunctionWithDemorgansLawIntention(
+    KotlinBundle.messagePointer("replace.0.with.1.and.vice.versa", "any", "all"),
     listOf(
         Conversion("any", "all", true, true),
         Conversion("all", "any", true, true)
     )
 )
 
-class ConvertAnyToNoneAndViceVersaIntention : ConvertFunctionWithDemorgansLawIntention(
-    KotlinBundle.lazyMessage("replace.0.with.1.and.vice.versa", "any", "none"),
+internal class ConvertAnyToNoneAndViceVersaIntention : ConvertFunctionWithDemorgansLawIntention(
+    KotlinBundle.messagePointer("replace.0.with.1.and.vice.versa", "any", "none"),
     listOf(
         Conversion("any", "none", true, false),
         Conversion("none", "any", true, false)

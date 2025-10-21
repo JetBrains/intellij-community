@@ -270,7 +270,8 @@ class BlockTerminalView(
       promptView.let { it.terminalWidth to it.charSize }
     }
     return if (width > 0 && component.height > 0) {
-      TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
+      val gridSize = TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
+      TermSize(gridSize.columns, gridSize.rows)
     }
     else null
   }
@@ -300,6 +301,10 @@ class BlockTerminalView(
     val outputText = outputView.controller.outputModel.editor.document.text
     val promptText = promptView.controller.model.editor.document.text
     return "$outputText\n$promptText"
+  }
+
+  override fun getCurrentDirectory(): String? {
+    return promptView.controller.model.promptState?.currentDirectory
   }
 
   override fun dispose() {}

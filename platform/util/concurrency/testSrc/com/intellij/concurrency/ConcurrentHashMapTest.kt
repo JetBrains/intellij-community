@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 class ConcurrentHashMapTest {
   @Test
   fun `put and get`() {
-    val map = chMap<Int, Int>()
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int,Int>()
     assertThat(map.size).isEqualTo(0)
     assertThat(map.isEmpty()).isTrue()
     map[1] = 0
@@ -30,7 +30,8 @@ class ConcurrentHashMapTest {
 
   @Test
   fun remove() {
-    val map = chMap(mapOf(1 to 2, 2 to 3, 3 to 4))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int,Int>()
+    map.putAll(mapOf(1 to 2, 2 to 3, 3 to 4))
     assertThat(map.size).isEqualTo(3)
     assertThat(map.remove(4)).isNull()
     assertThat(map.remove(3, 5)).isFalse()
@@ -46,7 +47,7 @@ class ConcurrentHashMapTest {
 
   @Test
   fun entries() {
-    val map = chMap(mapOf(1 to 2, 2 to 3, 3 to 4))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2, 2 to 3, 3 to 4)) }
     assertThat(map.entries.map { it.key to it.value }).containsExactlyInAnyOrder(1 to 2, 2 to 3, 3 to 4)
     assertThat(map.keys).containsExactlyInAnyOrder(1, 2, 3)
     assertThat(map.values).containsExactlyInAnyOrder(2, 3, 4)
@@ -54,7 +55,7 @@ class ConcurrentHashMapTest {
 
   @Test
   fun `put if absent`() {
-    val map = chMap(mapOf(1 to 2))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2)) }
     assertThat(map.putIfAbsent(1, 3)).isEqualTo(2)
     assertThat(map[1]).isEqualTo(2)
     assertThat(map.putIfAbsent(2, 3)).isNull()
@@ -63,7 +64,7 @@ class ConcurrentHashMapTest {
 
   @Test
   fun `compute if absent`() {
-    val map = chMap(mapOf(1 to 2))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2)) }
     assertThat(map.computeIfAbsent(1) { 3 }).isEqualTo(2)
     assertThat(map[1]).isEqualTo(2)
     assertThat(map.computeIfAbsent(2) { 3 }).isEqualTo(3)
@@ -72,7 +73,7 @@ class ConcurrentHashMapTest {
 
   @Test
   fun `compute if present`() {
-    val map = chMap(mapOf(1 to 2))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2)) }
     assertThat(map.computeIfPresent(2) { _, _ -> 3 }).isNull()
     assertThat(map[1]).isEqualTo(2)
     assertThat(map.computeIfPresent(1) { _, _ -> 3 }).isEqualTo(3)
@@ -81,7 +82,7 @@ class ConcurrentHashMapTest {
 
   @Test
   fun compute() {
-    val map = chMap(mapOf(1 to 2))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2)) }
     assertThat(map.compute(1) { _, _ -> 3 }).isEqualTo(3)
     assertThat(map[1]).isEqualTo(3)
     assertThat(map.compute(2) { _, _ -> 3 }).isEqualTo(3)
@@ -90,7 +91,7 @@ class ConcurrentHashMapTest {
 
   @Test
   fun replace() {
-    val map = chMap(mapOf(1 to 2, 2 to 3))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2, 2 to 3)) }
     assertThat(map.replace(3, 4)).isNull()
     assertThat(map.replace(2, 4)).isEqualTo(3)
     assertThat(map[2]).isEqualTo(4)
@@ -101,14 +102,14 @@ class ConcurrentHashMapTest {
 
   @Test
   fun `replace all`() {
-    val map = chMap(mapOf(1 to 2, 2 to 3))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2, 2 to 3)) }
     map.replaceAll { k, v -> k + v}
     assertThat(map).isEqualTo(mapOf(1 to 3, 2 to 5))
   }
 
   @Test
   fun merge() {
-    val map = chMap(mapOf(1 to 2, 2 to 3))
+    val map = ConcurrentCollectionFactory.createConcurrentMap<Int, Int>().also { it.putAll(mapOf(1 to 2, 2 to 3)) }
     assertThat(map.merge(3, 4) { _, _ -> 4 }).isEqualTo(4)
     assertThat(map[3]).isEqualTo(4)
     assertThat(map.merge(1, 3) { a, b -> a+b }).isEqualTo(5)

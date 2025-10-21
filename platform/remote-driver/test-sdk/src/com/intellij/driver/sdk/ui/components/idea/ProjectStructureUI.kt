@@ -3,27 +3,35 @@ package com.intellij.driver.sdk.ui.components.idea
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.accessibleList
 
 fun Finder.projectStructure(action: ProjectStructureUI.() -> Unit) {
   x(ProjectStructureUI::class.java) { byTitle("Project Structure") }.action()
 }
 
-class ProjectStructureUI(data: ComponentData) : DialogUiComponent(data) {
+open class ProjectStructureUI(data: ComponentData) : DialogUiComponent(data) {
+
+  private fun selectItemFromProjectStructure(itemTitle: String) {
+    return accessibleList().clickItem(itemTitle)
+  }
+
   fun openSdkSettings() {
-    x("//div[@class='JBList']")
-      .waitOneText("SDKs")
-      .click()
+    selectItemFromProjectStructure("SDKs")
   }
 
   fun openModuleSettings() {
-    x("//div[@class='JBList']")
-      .waitOneText("Modules")
-      .click()
+    selectItemFromProjectStructure("Modules")
   }
 
-  fun openLibrarySettings() {
-    x("//div[@class='JBList']")
-      .waitOneText("Libraries")
-      .click()
+  fun openArtifactsSettings() {
+    selectItemFromProjectStructure("Artifacts")
+  }
+
+  fun openFacetsSettings() {
+    selectItemFromProjectStructure("Facets")
+  }
+
+  fun openProjectSettings() {
+    selectItemFromProjectStructure("Project")
   }
 }

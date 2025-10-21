@@ -51,34 +51,19 @@ public class Config {
     return contextAttributes;
   }
 
-  public void setScrollToFirst(boolean b) {
-    scrollToFirst = b;
-  }
-
   public boolean isUseContextAtCursor() {
     return bUseContextAtCursor;
-  }
-
-  public void setUseContextAtCursor(boolean b) {
-    bUseContextAtCursor = b;
   }
 
   public boolean isHighlightStartTagOnly() {
     return bHighlightStartTagOnly;
   }
 
-  public void setHighlightStartTagOnly(boolean b) {
-    bHighlightStartTagOnly = b;
-  }
-
   public boolean isAddErrorStripe() {
     return bAddErrorStripe;
   }
 
-  public void setAddErrorStripe(boolean b) {
-    bAddErrorStripe = b;
-  }
-
+  // May be not used now
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -97,6 +82,7 @@ public class Config {
     return contextAttributes.equals(config.contextAttributes);
   }
 
+  // May be not used now
   @Override
   public int hashCode() {
     int result = (OPEN_NEW_TAB ? 1 : 0);

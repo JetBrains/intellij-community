@@ -10,7 +10,7 @@ import java.util.function.Supplier
 @NonNls
 private const val BUNDLE = "messages.KotlinReferenceIndexBundle"
 
-object KotlinReferenceIndexBundle : AbstractKotlinBundle(BUNDLE) {
+internal object KotlinReferenceIndexBundle : AbstractKotlinBundle(BUNDLE) {
     fun message(
         @NonNls @PropertyKey(resourceBundle = BUNDLE) key: String,
         vararg params: Any,
@@ -19,5 +19,5 @@ object KotlinReferenceIndexBundle : AbstractKotlinBundle(BUNDLE) {
     fun lazyMessage(
         @NonNls @PropertyKey(resourceBundle = BUNDLE) key: String,
         vararg params: Any,
-    ): Supplier<@Nls String> = getLazyMessage(key, *params)
+    ): Supplier<@Nls String> = instance.getLazyMessage(key, *params)
 }

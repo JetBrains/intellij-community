@@ -18,8 +18,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
   }
 
   private PsiElement resolve() {
-    PsiReference ref = findReferenceAtCaret("method/" + getTestName(false) + ".java");
-    return ref.resolve();
+    return findReferenceAtCaret("method/" + getTestName(false) + ".java").resolve();
   }
 
   private JavaResolveResult advancedResolve() {
@@ -148,15 +147,12 @@ public class ResolveMethodTest extends LightResolveTestCase {
     assertEquals("println", ((PsiMethod)target).getName());
   }
 
-  /*
-  public void testSCR5134() throws Exception{
-    PsiReference ref = configureByFile("method/SCR5134.java");
-    PsiElement target = ref.resolve();
+  public void testSCR5134() {
+    PsiElement target = resolve();
     assertInstanceOf(target, PsiMethod.class);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
-    assertTrue(parm.getType().getText().equals("Integer"));
+    assertEquals("Integer", parm.getType().getPresentableText());
   }
-  */
 
   public void testPartlyImplement1() {
     PsiElement target = resolve();
@@ -239,13 +235,6 @@ public class ResolveMethodTest extends LightResolveTestCase {
     assertTrue(result.getElement() instanceof PsiMethod);
     assertFalse(result.isAccessible());
   }
-
-  // This test complile but it seems to be a bug.
-  //public void testDependingParams1() throws Exception{
-  //  PsiJavaReference ref = (PsiJavaReference) configureByFile("method/generics/DependingParams.java");
-  //  final JavaResolveResult result = ref.advancedResolve(true);
-  //  assertTrue(result.isValidResult());
-  //}
 
   public void testImplementOrder() {
     PsiElement target = resolve();

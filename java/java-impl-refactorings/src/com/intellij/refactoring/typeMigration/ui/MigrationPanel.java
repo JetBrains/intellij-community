@@ -120,7 +120,8 @@ public final class MigrationPanel extends JPanel implements Disposable {
     add(conflictsSplitter, BorderLayout.CENTER);
     Disposer.register(this, myConflictsPanel);
 
-    model.invalidateAsync();
+    model
+      .invalidateAsync();
   }
 
   private void selectionChanged() {

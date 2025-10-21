@@ -1,0 +1,4 @@
+#!/usr/bin/env kotlin
+val test = 1
+
+// IGNORE_K1

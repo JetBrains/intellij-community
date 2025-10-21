@@ -12,45 +12,13 @@
     { "name": "G", "dependencies": [] }
   ],
   "targets": [
-    {
-      "library": "L1",
-      "directDependents": ["F"],
-      "transitiveDependents": ["F", "C", "A"]
-    },
-    {
-      "module": "A",
-      "directDependents": [],
-      "transitiveDependents": []
-    },
-    {
-      "module": "B",
-      "directDependents": ["A"],
-      "transitiveDependents": ["A"]
-    },
-    {
-      "module": "C",
-      "directDependents": ["A"],
-      "transitiveDependents": ["A"]
-    },
-    {
-      "module": "D",
-      "directDependents": ["B"],
-      "transitiveDependents": ["B", "A"]
-    },
-    {
-      "module": "E",
-      "directDependents": ["B"],
-      "transitiveDependents": ["B", "A"]
-    },
-    {
-      "module": "F",
-      "directDependents": ["C"],
-      "transitiveDependents": ["C", "A"]
-    },
-    {
-      "module": "G",
-      "directDependents": ["C"],
-      "transitiveDependents": ["C", "A"]
-    }
+    { "library": "L1" },
+    { "module": "A" },
+    { "module": "B" },
+    { "module": "C" },
+    { "module": "D" },
+    { "module": "E" },
+    { "module": "F" },
+    { "module": "G" }
   ]
 }

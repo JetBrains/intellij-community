@@ -6,9 +6,11 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -18,6 +20,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
@@ -27,7 +31,7 @@ import org.jetbrains.kotlin.types.Variance
 
 internal object TypeLookupElementFactory {
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookup(type: KaType): LookupElement? {
         val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
@@ -53,7 +57,7 @@ internal object TypeLookupElementFactory {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createLookup(symbol: KaClassifierSymbol): LookupElement? {
         val relativeName = symbol.name
             ?: return null
@@ -102,9 +106,13 @@ internal object TypeLookupElementFactory {
     }
 }
 
-data class TypeLookupObject(val fqRenderedType: String)
+@Serializable
+data class TypeLookupObject(
+    val fqRenderedType: String,
+): SerializableLookupObject
 
-private object TypeInsertHandler : InsertHandler<LookupElement> {
+@Serializable
+internal object TypeInsertHandler : SerializableInsertHandler {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val lookupObject = item.`object` as TypeLookupObject
         context.insertAndShortenReferencesInStringUsingTemporarySuffix(lookupObject.fqRenderedType)

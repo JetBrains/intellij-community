@@ -31,7 +31,7 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   @Override
   public LibraryTablePresentation getLibraryTablePresentation() {
-    return LibraryTablesRegistrar.getInstance().getLibraryTable().getPresentation();
+    return LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(myProject).getPresentation();
   }
 
   @Override

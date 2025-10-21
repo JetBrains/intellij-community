@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -106,7 +106,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private final @NotNull JComponent myBrowserBottomPanel = createHorizontalBox();
   private final @NotNull MyChangeProcessor myDiffDetails;
   private final @NotNull CommitMessage myCommitMessageArea;
-  private final @NotNull CommitLegendPanel myLegend;
+  private final @NotNull CommitLegendComponent myLegend;
 
   private final @NotNull Splitter mySplitter;
   private final @NotNull SplitterWithSecondHideable myDetailsSplitter;
@@ -251,7 +251,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());
     myCommitMessageArea = new CommitMessage(myProject, true, true, isDefaultCommitEnabled());
     myChangesInfoCalculator = new ChangeInfoCalculator();
-    myLegend = new CommitLegendPanel(myChangesInfoCalculator);
+    myLegend = CommitLegendComponent.create(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
     boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
     myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable, false, JBUI.Borders.empty());

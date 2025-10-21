@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.log.impl"/>
@@ -19,6 +19,10 @@
 
     <advancedSetting id="enable.combined.diff.for.codereview"
                      default="false"
+                     bundle="messages.CollaborationToolsBundle"
+                     groupKey="advanced.settings.collab.tools"/>
+    <advancedSetting id="show.review.threads.with.increased.margins"
+                     default="true"
                      bundle="messages.CollaborationToolsBundle"
                      groupKey="advanced.settings.collab.tools"/>
   </extensions>

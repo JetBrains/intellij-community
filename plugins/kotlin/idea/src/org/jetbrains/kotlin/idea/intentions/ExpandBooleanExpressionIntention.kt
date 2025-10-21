@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.types.typeUtil.isBoolean
 
 class ExpandBooleanExpressionIntention : SelfTargetingRangeIntention<KtExpression>(
     KtExpression::class.java,
-    KotlinBundle.lazyMessage("expand.boolean.expression.to.if.else")
+    KotlinBundle.messagePointer("expand.boolean.expression.to.if.else")
 ) {
     override fun applicabilityRange(element: KtExpression): TextRange? {
         if (!element.isTargetExpression() || element.parent.isTargetExpression()) return null

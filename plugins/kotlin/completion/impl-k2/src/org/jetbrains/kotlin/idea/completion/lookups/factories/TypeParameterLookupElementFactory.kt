@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
 
 internal object TypeParameterLookupElementFactory {
 
-    context(KaSession)
+    context(_: KaSession)
     fun createLookup(symbol: KaTypeParameterSymbol): LookupElementBuilder {
         return LookupElementBuilder.create(UniqueLookupObject(), symbol.name.asString())
             .let { withClassifierSymbolInfo(symbol, it) }

@@ -1,21 +1,23 @@
-### auto-generated section `build kotlin.performanceExtendedPlugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
-  name = "performanceExtendedPlugin_resources",
-  files = glob(["resources/**/*"]),
+resourcegroup(
+  name = "kotlin.performanceExtendedPlugin_resources",
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "performanceExtendedPlugin",
-  module_name = "kotlin.performanceExtendedPlugin",
+  name = "kotlin.performanceExtendedPlugin",
+  module_name = "intellij.kotlin.performanceExtendedPlugin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin.performanceExtendedPlugin_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -38,7 +40,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry-impl",
     "//plugins/kotlin/base/code-insight/minimal",
-    "//plugins/kotlin/kotlin.ide:ide",
+    "//plugins/kotlin/kotlin.ide",
     "//platform/lang-impl",
     "//platform/core-ui",
     "//plugins/kotlin/base/compiler-configuration",
@@ -46,7 +48,6 @@ jvm_library(
     "//plugins/kotlin/idea",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/project-structure",
-  ],
-  runtime_deps = [":performanceExtendedPlugin_resources"]
+  ]
 )
-### auto-generated section `build kotlin.performanceExtendedPlugin` end
+### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` end

@@ -40,7 +40,6 @@ final class RestoreConfigurationAction
     RunDashboardRunConfigurationNode node = project == null ? null : getTarget(e);
     if (node == null) return;
 
-    // todo delegate to backend - ask Lera?
     RunManager runManager = RunManager.getInstance(project);
     RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
     runManager.setUniqueNameIfNeeded(settings.getConfiguration());

@@ -15,7 +15,7 @@ class NestedVariableTypedHandlerDelegate: TypedHandlerDelegate() {
         }
         return when(charTyped) {
             '$' -> {
-                AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null)
+                AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
                 return Result.CONTINUE
             }
             else -> super.checkAutoPopup(charTyped, project, editor, file)

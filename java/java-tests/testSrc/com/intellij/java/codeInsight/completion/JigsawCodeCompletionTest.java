@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -152,9 +152,34 @@ public class JigsawCodeCompletionTest extends LightFixtureCompletionTestCase {
         }""");
   }
 
+  public void testCircularDependencyCompletion() {
+    completeBasic("Main.java", """
+      public class Main {
+        private void foo() {
+          new MyACla<caret>
+        }
+      }
+      """)
+      .variants(new Variant("MyAClass", " org.jetbrains.a", Color.RED))
+      .choose(new Variant("MyAClass", " org.jetbrains.a", Color.RED))
+      .check("Main.java", """
+        import org.jetbrains.a.MyAClass;
+
+        public class Main {
+          private void foo() {
+            new MyAClass()
+          }
+        }
+        """)
+      .check("module-info.java", """
+        module module.main {
+            requires module.b;
+        }""");
+  }
+
   private JigsawCodeCompletionTest variants(Variant @NotNull ... variants) {
     final LookupElement[] elements = myFixture.getLookupElements();
-    assertEquals(Arrays.toString(elements), elements.length, variants.length);
+    assertEquals(Arrays.toString(elements), variants.length, elements.length);
     for (int i = 0; i < elements.length; i++) {
       final LookupElementPresentation element = NormalCompletionTestCase.renderElement(elements[i]);
       assertEquals(variants[i].text(), element.getItemText());

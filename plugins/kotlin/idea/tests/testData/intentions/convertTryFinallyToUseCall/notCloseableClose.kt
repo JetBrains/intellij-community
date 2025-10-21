@@ -1,5 +1,6 @@
 // IS_APPLICABLE: false
 // WITH_STDLIB
+// PROBLEM: none
 import java.io.Closeable
 
 class Resource : Closeable {

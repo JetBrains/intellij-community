@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -24,9 +24,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.attach.*;
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem;
+import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider;
 import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
@@ -262,7 +265,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
 
       //do not allow further for idea process
       // read only attach is disabled on macos because of IDEA-252760
-      if (!pid.equals(OSProcessUtil.getApplicationPid()) && !SystemInfo.isMac) {
+      if (!pid.equals(String.valueOf(OSProcessUtil.getCurrentProcessId())) && !SystemInfo.isMac) {
         Properties systemProperties = vm.getSystemProperties();
 
         // prefer sa-jdwp attach if available
@@ -357,8 +360,8 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
 
     @Override
-    String getProcessDisplayText(String text) {
-      return text + " (" + myAddress + ")";
+    @Nullable @NlsSafe String getAddress() {
+      return myAddress;
     }
   }
 
@@ -436,9 +439,15 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
 
     abstract @NlsSafe String getDebuggerName();
 
-    @NlsSafe
-    String getProcessDisplayText(String text) {
-      return text;
+    final @NlsSafe String getProcessDisplayText(String text) {
+      var extra = getAddress();
+      return StringUtil.isEmpty(extra)
+             ? text
+             : text + " (" + extra + ")";
+    }
+
+    @Nullable @NlsSafe String getAddress() {
+      return null;
     }
   }
 
@@ -539,5 +548,54 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       .createConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
     ((JavaAttachDebuggerProvider.ProcessAttachRunConfiguration)runSettings.getConfiguration()).myAttachInfo = info;
     ProgramRunnerUtil.executeConfiguration(runSettings, JavaAttachDebuggerProvider.ProcessAttachDebugExecutor.INSTANCE);
+  }
+
+  static class JavaAttachDialogItemPresentationProvider implements XAttachDialogItemPresentationProvider {
+
+    @Override
+    public boolean isApplicableFor(@NotNull AttachDialogProcessItem item) {
+      return ContainerUtil.exists(item.getDebuggers(), d -> d instanceof JavaLocalAttachDebugger);
+    }
+
+    @Override
+    public int getPriority() {
+      // Almost arbitrary number.
+      return 5;
+    }
+
+    @Override
+    public @Nls @NotNull String getProcessExecutableText(@NotNull AttachDialogProcessItem item) {
+      String executable = XAttachDialogItemPresentationProvider.super.getProcessExecutableText(item);
+
+      ProcessInfo info = item.getProcessInfo();
+      UserDataHolder dataHolder = item.getDataHolder();
+      JavaAttachDebuggerProvider.LocalAttachInfo attachInfo =
+        getAttachInfo(null, info.getPid(), info.getCommandLine(), dataHolder.getUserData(ADDRESS_MAP_KEY));
+      if (attachInfo == null) return executable;
+
+      StringBuilder extra = new StringBuilder();
+      if ("java".equals(executable)) {
+        if (!StringUtil.isEmpty(attachInfo.myClass)) {
+          extra.append(attachInfo.myClass);
+        }
+        else {
+          var shouldBeClassName = ArrayUtil.getLastElement(item.getProcessInfo().getCommandLine().split(" "));
+          if (!StringUtil.isEmpty(shouldBeClassName)) {
+            extra.append(shouldBeClassName);
+          }
+        }
+      }
+      var address = attachInfo.getAddress();
+      if (!StringUtil.isEmpty(address)) {
+        if (!extra.isEmpty()) {
+          extra.append(", ");
+        }
+        extra.append(address);
+      }
+
+      return !extra.isEmpty()
+             ? executable + " (" + extra + ")"
+             : executable;
+    }
   }
 }

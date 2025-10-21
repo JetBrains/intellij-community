@@ -47,7 +47,7 @@ private class SimpleTypeRequest(private val fqn: String?, private val annotation
   override fun getAnnotations(): List<AnnotationRequest> = annotations
 }
 
-fun methodRequest(project: Project, methodName: String, modifiers: List<JvmModifier>, returnType: JvmType): CreateMethodRequest {
+public fun methodRequest(project: Project, methodName: String, modifiers: List<JvmModifier>, returnType: JvmType): CreateMethodRequest {
   return SimpleMethodRequest(
     methodName = methodName,
     modifiers = modifiers,
@@ -56,20 +56,20 @@ fun methodRequest(project: Project, methodName: String, modifiers: List<JvmModif
   )
 }
 
-fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType>>): CreateConstructorRequest {
+public fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType>>): CreateConstructorRequest {
   return SimpleConstructorRequest(
     expectedParameters = parameters.map { expectedParameter(it.second, it.first) },
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )
 }
 
-fun typeRequest(fqn: String?, annotations: List<AnnotationRequest>): ChangeTypeRequest = 
+public fun typeRequest(fqn: String?, annotations: List<AnnotationRequest>): ChangeTypeRequest = 
   SimpleTypeRequest(fqn, annotations)
 
-fun setMethodParametersRequest(parameters: Iterable<Map.Entry<String, JvmType>>): ChangeParametersRequest =
+public fun setMethodParametersRequest(parameters: Iterable<Map.Entry<String, JvmType>>): ChangeParametersRequest =
   SimpleChangeParametersRequest(parameters.map { expectedParameter(it.value, it.key) })
 
-fun updateMethodParametersRequest(parametersOwnerPointer: Supplier<JvmMethod?>,
+public fun updateMethodParametersRequest(parametersOwnerPointer: Supplier<JvmMethod?>,
                                   updateFunction: Function<List<ExpectedParameter>, List<ExpectedParameter>>): ChangeParametersRequest =
   UpdateParametersRequest(parametersOwnerPointer, updateFunction)
 

@@ -12,6 +12,7 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.actions.speedSearch.SpeedSearchAction
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -19,6 +20,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
@@ -74,7 +76,7 @@ import java.util.function.Supplier
 import javax.swing.*
 import kotlin.math.abs
 
-internal class ToolWindowImpl(
+@ApiStatus.Internal class ToolWindowImpl(
   @JvmField val toolWindowManager: ToolWindowManagerImpl,
   private val id: String,
   private val canCloseContent: Boolean,
@@ -172,6 +174,20 @@ internal class ToolWindowImpl(
   private class UpdateBackgroundContentManager : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
       InternalDecoratorImpl.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+    }
+
+    override fun selectionChanged(event: ContentManagerEvent) {
+      if (event.operation == ContentManagerEvent.ContentOperation.add && UISettings.getInstance().differentToolwindowBackground) {
+        ApplicationManager.getApplication().invokeLater { contentAdded(event) }
+      }
+    }
+  }
+
+  internal fun updateContentBackgroundColors() {
+    val color = JBUI.CurrentTheme.ToolWindow.background()
+
+    for (content in contentManager.value.contents) {
+      InternalDecoratorImpl.setBackgroundRecursively(content.component, color)
     }
   }
 
@@ -722,7 +738,7 @@ internal class ToolWindowImpl(
 
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
     return object : ActionGroupWrapper(GearActionGroup()) {
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val result = mutableListOf<AnAction>()
         result.addAll(super.getChildren(e))
         if (!skipHideAction) {
@@ -774,7 +790,7 @@ internal class ToolWindowImpl(
       templatePresentation.text = IdeBundle.message("show.options.menu")
     }
 
-    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val group = DefaultActionGroup()
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {

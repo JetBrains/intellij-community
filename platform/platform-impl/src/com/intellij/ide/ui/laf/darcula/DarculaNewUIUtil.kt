@@ -46,16 +46,6 @@ object DarculaNewUIUtil {
     }
   }
 
-  /**
-   * Will be removed after the next 25.1 release
-   */
-  @ApiStatus.Internal
-  @Deprecated("Use drawRoundedComponentRectangle instead")
-  @ScheduledForRemoval
-  fun paintComponentBorder(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
-    drawRoundedComponentRectangle(g, rect, color, arc, thick)
-  }
-
   fun drawRoundedComponentRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
     val g2 = g.create() as Graphics2D
 

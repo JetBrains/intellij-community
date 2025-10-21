@@ -25,7 +25,6 @@ final class DimensionsComponent extends JComponent {
     myComponent = component;
     setOpaque(true);
     setBackground(JBColor.WHITE);
-    setBorder(JBUI.Borders.customLine(JBColor.border()));
 
     setFont(JBUI.Fonts.label(9));
 
@@ -67,23 +66,14 @@ final class DimensionsComponent extends JComponent {
     g2d.setColor(getForeground());
     drawCenteredString(g2d, fm, fontHeight, sizeString, centerX, centerY);
 
-    g2d.setColor(JBColor.GRAY);
-    g2d.drawRect(innerX, innerY, innerWidth, innerHeight);
-
-    Insets borderInsets = null;
-    if (myBorder != null) borderInsets = myBorder.getBorderInsets(myComponent);
-    UIUtil.drawDottedRectangle(g2d, innerX - boxSize, innerY - boxSize, innerX + innerWidth + boxSize, innerY + innerHeight + boxSize);
-    drawInsets(g2d, fm, "border", borderInsets, boxSize, fontHeight, innerX, innerY, innerWidth, innerHeight);
-
     g2d.drawRect(innerX - boxSize * 2, innerY - boxSize * 2, innerWidth + boxSize * 4, innerHeight + boxSize * 4);
-    drawInsets(g2d, fm, "insets", myInsets, boxSize * 2, fontHeight, innerX, innerY, innerWidth, innerHeight);
+    drawInsets(g2d, fm, myInsets, boxSize * 2, fontHeight, innerX, innerY, innerWidth, innerHeight);
 
     config.restore();
   }
 
   private static void drawInsets(Graphics2D g2d,
                                  FontMetrics fm,
-                                 String name,
                                  Insets insets,
                                  int offset,
                                  int fontHeight,
@@ -91,9 +81,6 @@ final class DimensionsComponent extends JComponent {
                                  int innerY,
                                  int innerWidth,
                                  int innerHeight) {
-    g2d.setColor(JBColor.BLACK);
-    g2d.drawString(name, innerX - offset + JBUIScale.scale(5), innerY - offset + fontHeight);
-
     g2d.setColor(JBColor.GRAY);
 
     int outerX = innerX - offset;
@@ -133,6 +120,18 @@ final class DimensionsComponent extends JComponent {
 
   @Override
   public Dimension getPreferredSize() {
-    return JBUI.size(150);
+    final String sizeString = String.format("%d x %d", myWidth, myHeight);
+
+    int boxSize = JBUIScale.scale(15);
+    FontMetrics fm = getFontMetrics(getFont());
+    int sizeWidth = fm.stringWidth(sizeString);
+    int fontHeight = fm.getHeight();
+
+    int innerBoxWidthGap = JBUIScale.scale(20);
+    int innerBoxHeightGap = JBUIScale.scale(5);
+
+    int innerWidth = sizeWidth + innerBoxWidthGap * 2 + boxSize * 4;
+    int innerHeight = fontHeight + innerBoxHeightGap * 2 + boxSize * 4;
+    return new Dimension(innerWidth, innerHeight);
   }
 }

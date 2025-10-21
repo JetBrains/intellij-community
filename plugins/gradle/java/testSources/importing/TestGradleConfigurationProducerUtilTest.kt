@@ -56,12 +56,17 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
           }
       }
     """.trimIndent())
+    val archivesBaseName = if (isGradleAtLeast("9.0")) {
+      "project.base.archivesName"
+    } else {
+      "project.archivesBaseName"
+    }
     createBuildFile("module") {
       withJavaPlugin()
       withJUnit4()
       addPostfix("""
         task myTestsJar(type: Jar, dependsOn: testClasses) {
-            archiveBaseName = "test-${'$'}{project.archivesBaseName}"
+            archiveBaseName = "test-${'$'}{$archivesBaseName}"
             from sourceSets.test.output
         }
 

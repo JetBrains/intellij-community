@@ -1,17 +1,17 @@
-LineBreakpoint created at suspendFramesBeforeLaunch.kt:16
+LineBreakpoint created at suspendFramesBeforeLaunch.kt:17
 Run Java
 Connected to the target VM
-suspendFramesBeforeLaunch.kt:16
+suspendFramesBeforeLaunch.kt:17
 vvv stack trace vvv
-  invokeSuspend:16, SuspendFramesBeforeLaunchKt$main$1$1$1$1
+  invokeSuspend:17, SuspendFramesBeforeLaunchKt$main$1$1$1$1
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
-  invokeSuspend:13, SuspendFramesBeforeLaunchKt$main$1$1$1
+  invokeSuspend:14, SuspendFramesBeforeLaunchKt$main$1$1$1
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
-  main:7, SuspendFramesBeforeLaunchKt
+  main:8, SuspendFramesBeforeLaunchKt
   main:-1, SuspendFramesBeforeLaunchKt
 ^^^ stack trace ^^^
 Disconnected from the target VM

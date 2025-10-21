@@ -274,7 +274,7 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
 
     // if we didn't find the appropriate repository, request update mappings if needed and try again
     // may be this should not be called from several places (for example, branch widget updating from edt).
-    return if (updateIfNeeded && vcsManager.allVersionedRoots.contains(root)) {
+    return if (updateIfNeeded && vcsManager.getAllVersionedRoots().contains(root)) {
       checkAndUpdateRepositoryCollection(root)
 
       REPO_LOCK.readLock().lock()
@@ -401,7 +401,7 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
 
   private fun findNewRoots(knownRoots: Set<VirtualFile>): Map<VirtualFile, Repository> {
     val newRootsMap = HashMap<VirtualFile, Repository>()
-    for (root in vcsManager.allVcsRoots) {
+    for (root in vcsManager.getAllVcsRoots()) {
       val rootPath = root.path
       if (!knownRoots.contains(rootPath)) {
         val repository = root.vcs?.let {

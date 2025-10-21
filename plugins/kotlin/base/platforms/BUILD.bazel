@@ -1,17 +1,18 @@
-### auto-generated section `build kotlin.base.platforms` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+### auto-generated section `build intellij.kotlin.base.platforms` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "platforms_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
   name = "platforms",
-  module_name = "kotlin.base.platforms",
+  module_name = "intellij.kotlin.base.platforms",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":platforms_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -30,7 +31,6 @@ jvm_library(
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//java/idea-ui:ui",
-  ],
-  runtime_deps = [":platforms_resources"]
+  ]
 )
-### auto-generated section `build kotlin.base.platforms` end
+### auto-generated section `build intellij.kotlin.base.platforms` end

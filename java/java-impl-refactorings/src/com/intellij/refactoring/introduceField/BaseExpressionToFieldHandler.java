@@ -874,17 +874,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                                             ? checkForwardRefs(initializer, parentClass) : null);
     }
 
-    /**
-     * @deprecated use CommonJavaRefactoringUtil.appendField instead
-     */
-    @Deprecated(forRemoval = true)
-    public static PsiField appendField(final PsiClass destClass,
-                                       final PsiField psiField,
-                                       final PsiElement anchorMember,
-                                       final PsiField forwardReference) {
-      return CommonJavaRefactoringUtil.appendField(destClass, psiField, anchorMember, forwardReference);
-    }
-
     private static @Nullable PsiField checkForwardRefs(final @Nullable PsiExpression initializer, final PsiClass parentClass) {
       if (initializer == null) return null;
       final PsiField[] refConstantFields = new PsiField[1];

@@ -30,10 +30,7 @@ import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -236,6 +233,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     updateRequest();
   }
 
+  @CalledInAny
   public @Nullable Wrapper getCurrentChange() {
     return myCurrentChange;
   }
@@ -407,6 +405,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     public abstract @NotNull Object getUserObject();
 
+    @CalledInAny
     public abstract @Nullable @Nls String getPresentableName();
 
     public abstract @Nullable DiffRequestProducer createProducer(@Nullable Project project);

@@ -78,7 +78,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -90,7 +90,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>56</offset>
     <length>1</length>
@@ -102,7 +102,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -114,7 +114,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -150,7 +150,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -210,7 +210,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>42</offset>
     <length>1</length>
@@ -270,7 +270,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>48</offset>
     <length>1</length>
@@ -354,7 +354,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>90</offset>
     <length>1</length>
@@ -498,7 +498,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -558,7 +558,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -594,7 +594,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -606,7 +606,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -618,7 +618,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -666,7 +666,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -678,7 +678,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -978,7 +978,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="CollectionLiteralInAnnotation.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>8</offset>
     <length>1</length>
@@ -1098,7 +1098,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="CollectionLiteralInAnnotation.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>11</offset>
     <length>1</length>
@@ -1218,7 +1218,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="CollectionLiteralInAnnotation.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>14</offset>
     <length>1</length>
@@ -1818,7 +1818,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="DestructuringDeclarationsInLambda.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>46</offset>
     <length>1</length>
@@ -1830,7 +1830,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="DestructuringDeclarationsInLambda.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -1842,7 +1842,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="DestructuringDeclarationsInLambda.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>50</offset>
     <length>1</length>
@@ -2046,7 +2046,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="DestructuringDeclarationsInLambda.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>50</offset>
     <length>1</length>
@@ -2058,7 +2058,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="DestructuringDeclarationsInLambda.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>54</offset>
     <length>1</length>
@@ -2226,7 +2226,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="DestructuringDeclarationsInLambda.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>46</offset>
     <length>1</length>
@@ -2334,7 +2334,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -2370,7 +2370,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -2382,7 +2382,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -2418,7 +2418,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -2502,7 +2502,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>42</offset>
     <length>1</length>
@@ -2598,7 +2598,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>107</offset>
     <length>1</length>
@@ -2610,7 +2610,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>90</offset>
     <length>1</length>
@@ -2754,7 +2754,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -2814,7 +2814,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -2850,7 +2850,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -2862,7 +2862,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -2874,7 +2874,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -2922,7 +2922,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -2934,7 +2934,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="IndicesAccess.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -3102,7 +3102,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="LambdaParameterList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>13</offset>
     <length>1</length>
@@ -3294,7 +3294,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="LambdaValueParameters.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>76</offset>
     <length>1</length>
@@ -3318,7 +3318,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="LambdaValueParameters.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -3402,7 +3402,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="LambdaValueParameters.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>49</offset>
     <length>1</length>
@@ -3450,7 +3450,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="MultiVariableDeclaration.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>13</offset>
     <length>1</length>
@@ -3462,7 +3462,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="MultiVariableDeclaration.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>10</offset>
     <length>1</length>
@@ -3498,7 +3498,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="MultiVariableDeclaration.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>10</offset>
     <length>1</length>
@@ -3582,7 +3582,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="MultiVariableDeclaration.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>17</offset>
     <length>1</length>
@@ -3594,7 +3594,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="MultiVariableDeclaration.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>21</offset>
     <length>1</length>
@@ -3606,7 +3606,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="MultiVariableDeclaration.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>14</offset>
     <length>1</length>
@@ -3618,7 +3618,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="MultiVariableDeclaration.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>10</offset>
     <length>1</length>
@@ -3822,7 +3822,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ParameterList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>25</offset>
     <length>1</length>
@@ -4062,7 +4062,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ParameterList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>30</offset>
     <length>1</length>
@@ -4074,7 +4074,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="ParameterList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>52</offset>
     <length>1</length>
@@ -4470,7 +4470,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -4482,7 +4482,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>56</offset>
     <length>1</length>
@@ -4530,7 +4530,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -4542,7 +4542,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>48</offset>
     <length>1</length>
@@ -4662,7 +4662,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -4722,7 +4722,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>19</offset>
     <length>1</length>
@@ -4794,7 +4794,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -4806,7 +4806,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -4818,7 +4818,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>45</offset>
     <length>1</length>
@@ -4866,7 +4866,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -4878,7 +4878,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeArgumentList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>51</offset>
     <length>1</length>
@@ -5298,7 +5298,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="TypeParameterList.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>6</offset>
     <length>1</length>
@@ -5550,7 +5550,7 @@
     <package>light_idea_test_case</package>
     <entry_point TYPE="file" FQNAME="WhenEntry.kt" />
     <problem_class severity="INFO" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Trailing comma recommendations</problem_class>
-    <description>Useless trailing comma</description>
+    <description>Redundant trailing comma</description>
     <highlighted_element>,</highlighted_element>
     <offset>9</offset>
     <length>1</length>

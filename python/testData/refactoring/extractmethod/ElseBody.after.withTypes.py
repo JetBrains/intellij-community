@@ -1,3 +1,7 @@
+from io import TextIOWrapper, _WrappedBuffer
+from typing import Any, IO
+
+
 def foo():
     for arg in sys.argv[1:]:
         try:

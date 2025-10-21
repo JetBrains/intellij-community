@@ -46,17 +46,17 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
 
   public void testLibraryScope() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createFastUtilLibrary(), DependencyScope.RUNTIME, false);
-    ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(myModule, createSampleLibrary(), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar(), getAsmJar());
+    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar(), getSampleLibJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY, getFastUtilJar());
   }
 
   public void testProvidedScope() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createFastUtilLibrary(), DependencyScope.PROVIDED, false);
-    ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(myModule, createSampleLibrary(), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar(), getAsmJar());
+    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar(), getSampleLibJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
     assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), getFastUtilJar());
   }

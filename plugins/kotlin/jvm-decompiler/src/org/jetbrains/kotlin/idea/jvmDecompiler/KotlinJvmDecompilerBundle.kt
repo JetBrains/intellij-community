@@ -7,13 +7,12 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.util.AbstractKotlinBundle
 
-@NonNls
 private const val BUNDLE = "messages.KotlinJvmDecompilerBundle"
 
-object KotlinJvmDecompilerBundle : AbstractKotlinBundle(BUNDLE) {
+internal object KotlinJvmDecompilerBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic
     fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
-        return if (containsKey(key)) getMessage(key, *params) else KotlinJvmDecompilerDeprecatedMessagesBundle.message(key)
+        return if (instance.containsKey(key)) getMessage(key, *params) else KotlinJvmDecompilerDeprecatedMessagesBundle.message(key)
     }
 }

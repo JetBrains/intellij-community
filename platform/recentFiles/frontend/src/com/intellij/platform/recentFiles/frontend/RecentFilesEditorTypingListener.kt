@@ -4,6 +4,7 @@ package com.intellij.platform.recentFiles.frontend
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -32,7 +33,7 @@ private class RecentFilesEditorTypingListener : AnActionListener {
       LOG.debug("RecentFilesEditorTypingListener: debounceInterval=$debounceInterval")
       recentlyChangedFiles.debounce(debounceInterval.milliseconds)
         .collect { (file, project) ->
-          LOG.debug("Adding file to the frontend recent files model after typing: ${file.name}")
+          LOG.debug { "Adding file to the frontend recent files model after typing: ${file.name}" }
           FrontendRecentFilesModel.getInstanceAsync(project).applyFrontendChanges(RecentFileKind.RECENTLY_EDITED, listOf(file), FileChangeKind.ADDED)
         }
     }

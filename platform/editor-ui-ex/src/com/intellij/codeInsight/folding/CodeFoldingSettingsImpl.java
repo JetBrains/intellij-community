@@ -19,4 +19,9 @@ final class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Persi
   public void loadState(@NotNull CodeFoldingSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
+
+  @Override
+  public void noStateLoaded() {
+    loadState(new CodeFoldingSettings());
+  }
 }

@@ -7,11 +7,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
+import com.intellij.testFramework.utils.editor.commitToPsi
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
 class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -708,6 +712,155 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent())
         assertThrows(RefactoringErrorHintException::class.java) {
             K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
+
+    fun `test explicit package request for file exists`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            class MyClass
+        """.trimIndent())
+
+        val targetDir = runWriteAction {
+            file.containingDirectory.virtualFile.createChildDirectory(this, "foo").toPsiDirectory(project)
+        }
+        val model = K2MoveModel.create(arrayOf(file), targetDir)
+        val requestedExplicitPackage = model?.target?.explicitPkgMoveFqName
+        assert(requestedExplicitPackage == FqName("foo")) {
+            "Expected explicit package in the move target model to be 'foo', found '$requestedExplicitPackage'"
+        }
+    }
+
+    // target can change after model creation
+    fun `test explicit package request for initially mismatched package exists`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            interface <caret>IFace
+        """.trimIndent())
+
+        val targetDir = runWriteAction {
+            file.containingDirectory.virtualFile.createChildDirectory(this, "bar").toPsiDirectory(project)
+        }
+        val model = K2MoveModel.create(arrayOf(file), targetDir)
+        val requestedExplicitPackage = model?.target?.explicitPkgMoveFqName
+        assert(requestedExplicitPackage == FqName("foo")) {
+            "Expected explicit package in the move target model to be 'foo', found '$requestedExplicitPackage'"
+        }
+    }
+
+    fun `test explicit package request for moving function to directory is empty`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            fun bar<caret>() {
+            }
+        """.trimIndent())
+
+        val targetDir = runWriteAction {
+            file.containingDirectory.virtualFile.createChildDirectory(this, "foo").toPsiDirectory(project)
+        }
+        val model = K2MoveModel.create(arrayOf(myFixture.elementAtCaret), targetDir)
+        val requestedExplicitPackage = model?.target?.explicitPkgMoveFqName
+        assert(requestedExplicitPackage == null) {
+            "Expected explicit package in the move target model to be null, found '$requestedExplicitPackage'"
+        }
+    }
+
+    fun `test explicit package request for moving function to file is empty`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            fun bar<caret>() {
+            }
+        """.trimIndent())
+
+        val targetFile = runWriteAction {
+            val dir = file.containingDirectory.virtualFile.createChildDirectory(this, "foo").toPsiDirectory(project)
+            dir?.createFile("Bar.kt")?.also {
+                val document = it.fileDocument
+                document.setText("package foo.foo")
+                document.commitToPsi(project)
+            }
+        } ?: error("Failed to create test file")
+        val model = K2MoveModel.create(arrayOf(myFixture.elementAtCaret), targetFile)
+        val requestedExplicitPackage = model?.target?.explicitPkgMoveFqName
+        assert(requestedExplicitPackage == null) {
+            "Expected explicit package in the move target model to be null, found '$requestedExplicitPackage'"
+        }
+    }
+
+    fun `test explicit package request for no default target is empty`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            class MyClass
+        """.trimIndent())
+
+        val model = K2MoveModel.create(arrayOf(file), null)
+        val requestedExplicitPackage = model?.target?.explicitPkgMoveFqName
+        assert(requestedExplicitPackage == null) {
+            "Expected explicit package in the move target model to be null, found '$requestedExplicitPackage'"
+        }
+    }
+
+    fun `test explicit package request for nested file is empty`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+
+            class MyClass
+        """.trimIndent())
+
+        val (fileToMove, dstDir) = runWriteAction {
+            val srcDir = file.containingDirectory.virtualFile.createChildDirectory(this, "bar").toPsiDirectory(project)
+                ?: error("Can't create test source dir")
+            val dstDir = file.containingDirectory.virtualFile
+                .createChildDirectory(this, "foo")
+                .createChildDirectory(this, "bar")
+                .toPsiDirectory(project)
+                ?: error("Can't create test target dir")
+
+            val fileToMove = srcDir.createFile("Bar.kt").also {
+                val document = it.fileDocument
+                document.setText(
+                    """
+                    package foo.bar
+                    
+                    class Bar
+                """.trimIndent())
+                document.commitToPsi(project)
+            }
+
+            fileToMove to dstDir
+        }
+        val model = K2MoveModel.create(arrayOf(fileToMove), dstDir)
+        val requestedExplicitPackage = model?.target?.explicitPkgMoveFqName
+        assert(requestedExplicitPackage == null) {
+            "Expected explicit package in the move target model to be null, found '$requestedExplicitPackage'"
+        }
+    }
+
+    fun `test explicit package request for two files exists`() {
+        val fooKt = myFixture.createFile("Foo.kt", """
+            package foo
+            
+            class Foo
+        """.trimIndent()).toPsiFile(project) as? KtFile ?: error("Failed to create test file")
+        val barKt = myFixture.createFile("Bar.kt", """
+            package foo
+            
+            class Bar
+        """.trimIndent()).toPsiFile(project) as? KtFile ?: error("Failed to create test file")
+
+        val targetDir = runWriteAction {
+            fooKt.containingDirectory?.virtualFile?.createChildDirectory(this, "foo")?.toPsiDirectory(project)
+        }
+
+        val model = K2MoveModel.create(arrayOf(fooKt, barKt), targetDir)
+        val requestedExplicitPackage = model?.target?.explicitPkgMoveFqName
+        assert(requestedExplicitPackage == FqName("foo")) {
+            "Expected explicit package in the move target model to be 'foo', found '$requestedExplicitPackage'"
         }
     }
 }

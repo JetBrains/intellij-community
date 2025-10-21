@@ -68,7 +68,11 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   private static void restart(@NotNull RunContentDescriptor descriptor) {
     descriptor.setActivateToolWindowWhenAdded(false);
     descriptor.setReuseToolWindowActivation(true);
-    ExecutionUtil.restart(descriptor);
+    ExecutionEnvironment env = getCurrentEnvironment(descriptor);
+    if (env != null) {
+      env.setAutoTriggered(true);
+      ExecutionUtil.restart(env);
+    }
   }
 
   private static void saveConfigurationState(@NotNull State state, @NotNull RunProfile profile) {

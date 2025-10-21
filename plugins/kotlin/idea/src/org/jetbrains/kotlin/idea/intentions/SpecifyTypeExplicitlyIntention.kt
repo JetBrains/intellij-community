@@ -45,7 +45,7 @@ import org.jetbrains.kotlin.utils.ifEmpty
 
 class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
-    KotlinBundle.lazyMessage("specify.type.explicitly")
+    KotlinBundle.messagePointer("specify.type.explicitly")
 ), HighPriorityAction {
     override fun applicabilityRange(element: KtCallableDeclaration): TextRange? {
         if (!ExplicitApiDeclarationChecker.returnTypeCheckIsApplicable(element)) return null
@@ -65,7 +65,7 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
 
         setTextGetter(
             if (element is KtFunction)
-                KotlinBundle.lazyMessage("specify.return.type.explicitly")
+                KotlinBundle.messagePointer("specify.return.type.explicitly")
             else
                 defaultTextGetter
         )

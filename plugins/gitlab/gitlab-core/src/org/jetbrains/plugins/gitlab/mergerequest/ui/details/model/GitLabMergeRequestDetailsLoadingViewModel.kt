@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.collaboration.async.childScope
 import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +31,7 @@ class GitLabMergeRequestDetailsLoadingViewModelImpl(
   override val mergeRequestId: String,
   detailsVm: Flow<Result<GitLabMergeRequestDetailsViewModel>>
 ) : GitLabMergeRequestDetailsLoadingViewModel {
-  private val scope = parentScope.childScope(Dispatchers.Default)
+  private val scope = parentScope.childScope(this::class, Dispatchers.Default)
 
   override val mergeRequestLoadingFlow: Flow<LoadingState> = detailsVm.map { vmResult ->
     vmResult.map { LoadingState.Result(it) }.getOrElse { LoadingState.Error(it) }

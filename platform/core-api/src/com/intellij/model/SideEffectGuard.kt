@@ -38,7 +38,7 @@ interface SideEffectGuard {
     @JvmStatic
     fun <T> computeWithAllowedSideEffectsBlocking(effects: EnumSet<EffectType>, action: () -> T): T {
       val context = currentThreadContext()
-      return installThreadContext(context + AllowedSideEffectsElement(effects), replace = true).use {
+      return installThreadContext(context + AllowedSideEffectsElement(effects), replace = true) {
         action()
       }
     }

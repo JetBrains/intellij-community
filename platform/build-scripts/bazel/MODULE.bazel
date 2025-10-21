@@ -3,7 +3,7 @@ module(
     version = "0.1",
 )
 
-bazel_dep(name = "rules_java", version = "8.11.0")
+bazel_dep(name = "rules_java", version = "8.14.0")
 bazel_dep(name = "rules_kotlin", version = "2.1.3")
 bazel_dep(name = "rules_jvm_external", version = "6.7")
 
@@ -28,7 +28,7 @@ maven.install(
         "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
         "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
         "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
-        "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20",
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.2.0",
         "org.jetbrains.teamcity:serviceMessages:2024.07",
     ],
     fail_if_repin_required = True,
@@ -42,12 +42,27 @@ maven.install(
 )
 use_repo(maven, "j2b_maven")
 
-bazel_dep(name = "hermetic_cc_toolchain", version = "3.2.0")
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-use_repo(toolchains, "zig_sdk", "zig_sdk-linux-amd64", "zig_sdk-linux-arm64", "zig_sdk-macos-amd64", "zig_sdk-macos-arm64", "zig_sdk-windows-amd64")
+
+use_repo(toolchains, "zig_sdk")
 
 register_toolchains(
     "@zig_sdk//toolchain/...",
     "@zig_sdk//libc_aware/toolchain/...",
+)
+
+bazel_dep(name = "rules_python", version = "1.6.3")
+
+# Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "remote_java_tools_windows_with_vc_redist",
+    sha256 = "9ec4e41ebbb2b7259eb14f1ad708e8ee60087f33515bdec4876c675205e6950f",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v13.18-with-vc_redist.zip",
+)
+override_repo(
+    use_extension("@rules_java//java:extensions.bzl", "toolchains"),
+    remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
 )

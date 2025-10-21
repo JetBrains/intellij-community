@@ -464,4 +464,27 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     );
   }
 
+  // PY-82699
+  public void testTypeParameterRebind() {
+    doTestByText("""
+                   def outer1[T]() -> None:
+                       print(<error descr="Unresolved reference 'T'">T</error>)
+                       T = 1
+                   
+                   def outer2[T]() -> None:
+                       print(T)
+                   """);
+  }
+
+
+  // PY-83529
+  public void testPackageAttributeInPresenceOfBinarySkeleton() {
+    runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/python_stubs", () -> {
+        final PsiFile currentFile = myFixture.configureByFile(getTestDirectoryPath() + "/main.py");
+        configureInspection();
+        assertSdkRootsNotParsed(currentFile);
+      });
+    });
+  }
 }

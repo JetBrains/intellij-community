@@ -4,14 +4,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.terminal.frontend.TerminalInput
-import com.intellij.terminal.frontend.TerminalOutputScrollingModel
-import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.ui.getClipboardText
-import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
@@ -21,13 +19,14 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.output
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.simpleTerminalController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 
 internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor as? EditorEx ?: return
-    val input = e.terminalInput
+    val editor = e.terminalEditor as? EditorEx ?: return
+    val terminalView = e.terminalView
     when {
       editor.isPromptEditor -> pasteIntoPrompt(e, e.dataContext)
       editor.isAlternateBufferEditor -> pasteIntoTerminalSession(e)
@@ -40,8 +39,8 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
           pasteIntoPrompt(e, dataContext = null)
         }
       }
-      input != null -> {
-        pasteIntoInput(input)
+      terminalView != null -> {
+        pasteIntoTerminalView(terminalView)
 
         // Scroll to the cursor if the scrolling model is available in this editor.
         // It can be absent if it is the alternate buffer editor.
@@ -52,7 +51,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
+    val editor = e.terminalEditor
     e.presentation.isEnabledAndVisible = editor != null && (
       editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
       editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2
@@ -85,10 +84,11 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
     }
   }
 
-  private fun pasteIntoInput(input: TerminalInput) {
+  private fun pasteIntoTerminalView(view: TerminalView) {
     val text = getClipboardText() ?: return
-    val sanitizedText = sanitizeLineSeparators(text)
-    input.sendBracketedString(sanitizedText)
+    view.createSendTextBuilder()
+      .useBracketedPasteMode()
+      .send(text)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

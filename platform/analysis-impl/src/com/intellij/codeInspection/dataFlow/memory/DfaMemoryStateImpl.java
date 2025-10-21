@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow.memory;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
@@ -34,7 +33,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final @NotNull DfaValueFactory myFactory;
 
-  private final List<EqClassImpl> myEqClasses;
+  final List<EqClassImpl> myEqClasses; // used from DistinctPairSet
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
   private final Int2IntMap myIdToEqClassesIndices;
   protected final Stack<DfaValue> myStack;
@@ -213,11 +212,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (qualifier != null && !var.getDescriptor().isStable()) {
       flushFields(new QualifierStatusMap(Set.of(qualifier), var.getDescriptor(), dfType));
     }
-    if (value instanceof DfaVariableValue varValue && !ControlFlow.isTempVariable(var) &&
-        !ControlFlow.isTempVariable(varValue) &&
-        (qualifier == null || !ControlFlow.isTempVariable(qualifier))) {
-      // assigning a = b when b is known to be null: could be ephemeral
-      checkEphemeral(var, value);
+    if (value instanceof DfaVariableValue varValue && !DfaValueFactory.isTempVariable(var)) {
+      if (!DfaValueFactory.isTempVariable(varValue) &&
+          (qualifier == null || !DfaValueFactory.isTempVariable(qualifier))) {
+        // assigning a = b when b is known to be null: could be ephemeral
+        checkEphemeral(var, value);
+      }
     }
     recordVariableType(var, dfType);
     applyBinOpRelations(value, RelationType.EQ, var);
@@ -554,25 +554,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    */
   private int @Nullable [] getClassesMap(DfaMemoryStateImpl that) {
     List<EqClassImpl> thisClasses = this.myEqClasses;
-    List<EqClassImpl> thatClasses = that.myEqClasses;
     int thisSize = thisClasses.size();
-    int thatSize = thatClasses.size();
     int[] thisToThat = new int[thisSize];
     // If any two values are equivalent in this, they also must be equivalent in that
     for (int thisIdx = 0; thisIdx < thisSize; thisIdx++) {
-      EqClass thisClass = thisClasses.get(thisIdx);
+      EqClassImpl thisClass = thisClasses.get(thisIdx);
       thisToThat[thisIdx] = -1;
       if (thisClass != null) {
-        boolean found = false;
-        for (int thatIdx = 0; thatIdx < thatSize; thatIdx++) {
-          EqClass thatClass = thatClasses.get(thatIdx);
-          if (thatClass != null && thatClass.containsAll(thisClass)) {
-            thisToThat[thisIdx] = thatIdx;
-            found = true;
-            break;
-          }
+        int varId = thisClass.get(0);
+        int thatIdx = that.getRawEqClassIndex(varId);
+        if (thatIdx != -1) {
+          EqClass thatClass = that.myEqClasses.get(thatIdx);
+          // thisClass.size() == 1 doesn't require containsAll check (it will always be true),
+          // so we can save some CPU time
+          if (thisClass.size() > 1 && !thatClass.containsAll(thisClass)) return null;
+          thisToThat[thisIdx] = thatIdx;
+        } else {
+          if (thisClass.size() > 1) return null;
         }
-        if (!found && thisClass.size() > 1) return null;
       }
     }
     return thisToThat;
@@ -584,10 +583,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return superValue.getDfType().isMergeable(subValue.getDfType());
     }
     return false;
-  }
-
-  public List<EqClass> getEqClasses() {
-    return Collections.unmodifiableList(myEqClasses);
   }
 
   private @Nullable EqClass getEqClass(DfaValue value) {
@@ -1429,17 +1424,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter, boolean onlyThis) {
-    Set<DfaVariableValue> vars = new HashSet<>();
-    for (EqClass aClass : myEqClasses) {
+    BitSet vars = new BitSet();
+    for (EqClassImpl aClass : myEqClasses) {
       if (aClass != null) {
-        for (DfaVariableValue value : aClass) {
-          vars.add(value);
-        }
+        aClass.setAll(vars);
       }
     }
-    vars.addAll(myVariableTypes.keySet());
-    vars.removeIf(filter.negate());
-    vars.forEach(variable -> flushVariable(variable, !onlyThis, !onlyThis));
+    for (DfaVariableValue value : myVariableTypes.keySet()) {
+      vars.set(value.getID());
+    }
+    for (int id = vars.nextSetBit(0); id >= 0; id = vars.nextSetBit(id + 1)) {
+      DfaVariableValue var = (DfaVariableValue)myFactory.getValue(id);
+      if (filter.test(var)) {
+        flushVariable(var, !onlyThis, !onlyThis);
+      }
+    }
   }
 
   /**
@@ -1528,13 +1527,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else {
       DfaVariableValue newCanonical = varClass.getCanonicalVariable();
-      if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical &&
-          (ControlFlow.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
-           newCanonical.getDepth() <= previousCanonical.getDepth())) {
-        // Do not transfer to deeper qualifier. E.g., if we have two classes like (a, b.c) (a.d, e),
-        // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
-        boolean successfullyConverted = convertQualifiers(previousCanonical, newCanonical);
-        assert successfullyConverted;
+      if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical) {
+        if (DfaValueFactory.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
+         newCanonical.getDepth() <= previousCanonical.getDepth()) {
+          // Do not transfer to deeper qualifier. E.g., if we have two classes like (a, b.c) (a.d, e),
+          // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
+          boolean successfullyConverted = convertQualifiers(previousCanonical, newCanonical);
+          assert successfullyConverted;
+        }
       }
     }
 

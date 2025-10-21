@@ -60,7 +60,7 @@ public final class ObsoleteCollectionInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ObsoleteCollectionVisitor();
   }
 

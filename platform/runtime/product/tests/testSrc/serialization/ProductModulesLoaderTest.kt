@@ -3,15 +3,14 @@ package com.intellij.platform.runtime.product.serialization
 
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
-import com.intellij.platform.runtime.repository.RuntimeModuleId
-import com.intellij.platform.runtime.repository.createRepository
+import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
+import com.intellij.platform.runtime.repository.*
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.repository.writePluginXml
-import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.directoryContent
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -201,6 +200,52 @@ class ProductModulesLoaderTest {
     assertEquals(listOf("root"), mainModules.map { it.moduleDescriptor.moduleId.stringId })
     val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId }
     assertEquals(listOf("plugin"), bundledPlugins)
+  }
+  
+  @Test
+  fun `service module mapping`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor.create("root", listOf("root"), emptyList()),
+      RawRuntimeModuleDescriptor.create("additional1", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("lib.common", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin1", listOf("plugin1"), listOf("additional1", "lib.common")),
+      RawRuntimeModuleDescriptor.create("plugin2", listOf("plugin2"), listOf("lib.common")),
+    )
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin1"), "plugin1")
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin2"), "plugin2")
+    val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
+    productModulesWithPlugins(
+      mainModules = listOf("root"),
+      plugins = listOf("plugin1", "plugin2")
+    ).generate(rootProductModulesPath)
+    val productModules = ProductModulesSerialization.loadProductModules(rootProductModulesPath.resolve(FILE_NAME), ProductMode.MONOLITH, repository)
+    val (plugin1, plugin2) = productModules.bundledPluginModuleGroups
+    val moduleMapping = ServiceModuleMapping.buildMapping(productModules)
+    assertEquals(listOf("additional1", "lib.common"), moduleMapping.getAdditionalModules(plugin1).map { it.moduleId.stringId})
+    assertEquals(listOf("lib.common"), moduleMapping.getAdditionalModules(plugin2).map { it.moduleId.stringId })
+  }
+  
+  @Test
+  fun `service module mapping reports error about ambiguous module`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor.create("root", listOf("root"), emptyList()),
+      RawRuntimeModuleDescriptor.create("additional", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin1", listOf("plugin1"), listOf("additional")),
+      RawRuntimeModuleDescriptor.create("plugin2", listOf("plugin2"), listOf("additional")),
+    )
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin1"), "plugin1")
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin2"), "plugin2")
+    val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
+    productModulesWithPlugins(
+      mainModules = listOf("root"),
+      plugins = listOf("plugin1", "plugin2")
+    ).generate(rootProductModulesPath)
+    val productModules = ProductModulesSerialization.loadProductModules(rootProductModulesPath.resolve(FILE_NAME), ProductMode.MONOLITH, repository)
+    assertThrows<MalformedRepositoryException> {
+      ServiceModuleMapping.buildMapping(productModules)
+    }
   }
 
   private fun writePluginXmlWithModules(resourcePath: Path, pluginId: String, vararg contentModules: String) {

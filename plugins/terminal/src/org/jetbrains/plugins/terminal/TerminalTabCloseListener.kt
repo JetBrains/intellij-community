@@ -10,12 +10,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import kotlin.time.TimeSource
 
-class TerminalTabCloseListener(val content: Content,
-                               val project: Project,
-                               parentDisposable: Disposable) : BaseContentCloseListener(content, project, parentDisposable) {
+@ApiStatus.Internal
+abstract class TerminalTabCloseListener(
+  private val content: Content,
+  private val project: Project,
+  parentDisposable: Disposable,
+) : BaseContentCloseListener(content, project, parentDisposable) {
   override fun disposeContent(content: Content) {
   }
 
@@ -27,10 +31,9 @@ class TerminalTabCloseListener(val content: Content,
       return true
     }
 
-    val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return true
     val startTime = TimeSource.Monotonic.markNow()
     try {
-      if (!widget.isCommandRunning()) {
+      if (!hasChildProcesses(content)) {
         return true
       }
     }
@@ -48,6 +51,8 @@ class TerminalTabCloseListener(val content: Content,
     val result = TerminateRemoteProcessDialog.show(project, "Terminal ${content.displayName}", proxy)
     return result != null
   }
+
+  abstract fun hasChildProcesses(content: Content): Boolean
 
   override fun canClose(project: Project): Boolean {
     return project === this.project && closeQuery(this.content, true)

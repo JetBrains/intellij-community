@@ -220,7 +220,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   /**
    * @deprecated use {@link GradleTaskManagerExtensionDebuggerBridge#DEBUGGER_ENABLED} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String DEBUGGER_ENABLED = GradleTaskManagerExtensionDebuggerBridge.DEBUGGER_ENABLED;
 
   /**

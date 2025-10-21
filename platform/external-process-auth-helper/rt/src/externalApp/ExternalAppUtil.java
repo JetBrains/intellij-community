@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package externalApp;
 
-import externalApp.nativessh.NativeSshAskPassApp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,6 @@ public final class ExternalAppUtil {
 
   private ExternalAppUtil() { }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static @NotNull Result sendIdeRequest(@NotNull String entryPoint, int idePort, @NotNull String handlerId, @Nullable String bodyContent) {
     try {
       // allow self-signed certificates of IDE
@@ -67,6 +65,9 @@ public final class ExternalAppUtil {
     }
   }
 
+  /**
+   * @deprecated use the version with ExternalAppEntry
+   */
   @Deprecated(since = "2025.2", forRemoval = true)
   public static @NotNull String getEnv(@NotNull String env) {
     String value = System.getenv(env);
@@ -84,6 +85,9 @@ public final class ExternalAppUtil {
     return value;
   }
 
+  /**
+   * @deprecated use the version with ExternalAppEntry
+   */
   @Deprecated(since = "2025.2", forRemoval = true)
   public static int getEnvInt(@NotNull String env) {
     return Integer.parseInt(getEnv(env));
@@ -93,6 +97,9 @@ public final class ExternalAppUtil {
     return Integer.parseInt(getEnv(env, environment));
   }
 
+  /**
+   * @deprecated use the version with ExternalAppEntry
+   */
   @Deprecated(since = "2025.2", forRemoval = true)
   public static void handleAskPassInvocation(@NotNull String handlerIdEnvName,
                                              @NotNull String idePortEnvName,
@@ -111,8 +118,8 @@ public final class ExternalAppUtil {
                                              ExternalAppEntry entry) {
     try {
       var args = entry.getArgs();
-      String handlerId = getEnv(handlerIdEnvName);
-      int idePort = getEnvInt(idePortEnvName);
+      String handlerId = getEnv(handlerIdEnvName, entry.getEnvironment());
+      int idePort = getEnvInt(idePortEnvName, entry.getEnvironment());
 
       String description = args.length > 0 ? args[0] : null;
 

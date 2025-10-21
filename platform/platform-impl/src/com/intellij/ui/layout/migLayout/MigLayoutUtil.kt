@@ -26,6 +26,7 @@ fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
+@ApiStatus.Internal
 fun createLayoutConstraints(): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(0, true)

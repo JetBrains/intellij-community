@@ -77,7 +77,7 @@ public class JBCefFpsTest {
       frame.setSize(w, h);
       frame.setLocationRelativeTo(null);
 
-      JBCefBrowser browser = new JBCefBrowser(new JBCefBrowserBuilder().setOffScreenRendering(true));
+      JBCefBrowser browser = new JBCefBrowser(new JBCefBrowserBuilder().setOffScreenRendering(true)) {};
       browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
         @Override
         public void onLoadEnd(CefBrowser cefBrowser, CefFrame frame, int httpStatusCode) {

@@ -74,6 +74,10 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myHintData = new HintData();
   }
 
+  boolean isAlwaysVisible() {
+    return myAlwaysVisible;
+  }
+
   private boolean nodeIsVisible(ExecutionNode node) {
     return node.myAlwaysVisible || myFilter == null || myFilter.test(node);
   }
@@ -88,7 +92,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       presentation.addText(myTitle + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
-    String hint = myHintData.getCurrentHint(this);
+    String hint = getCurrentHint();
     boolean isNotEmptyName = StringUtil.isNotEmpty(myName);
     if (isNotEmptyName && myTitle != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -99,6 +103,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       }
       presentation.addText(hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
+  }
+
+  @BuildEventsNls.Hint
+  String getCurrentHint() {
+    return myHintData.getCurrentHint(this);
   }
 
   @ApiStatus.Internal
@@ -370,7 +379,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
-  private Icon getCurrentIcon() {
+  Icon getCurrentIcon() {
     if (myPreferredIconValue != null) {
       return myPreferredIconValue.getValue();
     }

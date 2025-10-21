@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.javax.activation` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "activation_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "activation",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":activation_resources"],
+  exports = ["@lib//:javax-activation"],
+  runtime_deps = ["@lib//:javax-activation"]
+)
+### auto-generated section `build intellij.libraries.javax.activation` end

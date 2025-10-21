@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 
 class MovePropertyToConstructorIntention :
-  SelfTargetingIntention<KtProperty>(KtProperty::class.java, KotlinBundle.lazyMessage("move.to.constructor")),
+  SelfTargetingIntention<KtProperty>(KtProperty::class.java, KotlinBundle.messagePointer("move.to.constructor")),
   LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

@@ -9,6 +9,7 @@ import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.model.repositoryModel.ProjectRepositoriesModel
 import com.intellij.gradle.toolingExtension.model.repositoryModel.RepositoryModel
 import com.intellij.gradle.toolingExtension.model.repositoryModel.UrlRepositoryModel
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository
@@ -77,14 +78,15 @@ class ProjectRepositoriesModelBuilder : ModelBuilderService {
   }
 
   private fun getRepositories(project: Project): List<Repository> {
+    val isUrlArtifactRepositoryClassAvailable = GradleVersionUtil.isCurrentGradleAtLeast("5.7")
     @Suppress("UNNECESSARY_SAFE_CALL") // url is nullable; e.g, an ivy repository could be declared with ivyPattern instead of url
     return project.repositories
       .map {
-        return@map when (it) {
-          is MavenArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.MAVEN)
-          is IvyArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.IVY)
-          is UrlArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.OTHER)
-          is FlatDirectoryArtifactRepository -> FileRepository(it.name, it.dirs.map { file -> file.path })
+        return@map when {
+          it is MavenArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.MAVEN)
+          it is IvyArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.IVY)
+          isUrlArtifactRepositoryClassAvailable && it is UrlArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.OTHER)
+          it is FlatDirectoryArtifactRepository -> FileRepository(it.name, it.dirs.map { file -> file.path })
           else -> DeclaredRepositoryImpl(it.name)
         }
       }

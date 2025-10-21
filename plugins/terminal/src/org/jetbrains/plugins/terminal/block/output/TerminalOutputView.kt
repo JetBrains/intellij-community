@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.output
 
+import com.intellij.find.EditorSearchSession
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -91,10 +92,12 @@ class TerminalOutputView(
     }
 
     override fun doLayout() {
+      val searchReplaceComponent = EditorSearchSession.getSearchReplaceComponent(editor)
+
       for (component in components) {
         when (component) {
           editor.component -> layoutEditor(component)
-          is SearchReplaceComponent -> layoutSearchComponent(component)
+          searchReplaceComponent -> layoutSearchComponent(component)
         }
       }
     }

@@ -1,0 +1,51 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.markdown.extensions.github.strikethrough {
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughHtmlConverterExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension {
+    method public java.util.Set<java.lang.String> getSupportedTags();
+    method public org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter provideConverter(String tagName);
+    property public java.util.Set<java.lang.String> supportedTags;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughHtmlConverterExtension INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughInlineProcessorExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension {
+    method public boolean canProcess(org.commonmark.node.Delimited delimited);
+    method public org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode processDelimitedInline(org.commonmark.node.Delimited delimited, org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor);
+    field public static final org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughInlineProcessorExtension INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughInlineRendererExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension {
+    method public boolean canRender(org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode node);
+    method public androidx.compose.ui.text.AnnotatedString render(org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode node, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer, org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked);
+    field public static final org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughInlineRendererExtension INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughNode implements org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    ctor public GitHubStrikethroughNode(String delimiter, java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
+    method public String component1();
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> component2();
+    method public org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughNode copy(optional String delimiter, optional java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
+    method public String getDelimiter();
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    method public String getOpeningDelimiter();
+    property public String delimiter;
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+    property public String openingDelimiter;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughProcessorExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension {
+    ctor public GitHubStrikethroughProcessorExtension();
+    ctor public GitHubStrikethroughProcessorExtension(optional boolean requireTwoTildes);
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension delimitedInlineProcessorExtension;
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension htmlConverterExtension;
+    property public org.commonmark.parser.Parser.ParserExtension parserExtension;
+    property public org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension textRendererExtension;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughRendererExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension {
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension delimitedInlineRenderer;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughRendererExtension INSTANCE;
+  }
+
+}
+

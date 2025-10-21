@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.ui.ComparableColor;
 import com.intellij.util.ui.JBUI.CurrentTheme;
@@ -24,6 +25,8 @@ import java.awt.image.ColorModel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import static com.intellij.ui.ColorMixture.ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION;
 
 /**
  * @author Konstantin Bulenkov
@@ -284,7 +287,7 @@ public class JBColor extends Color implements PresentableColor, ComparableColor 
 
   @Override
   public @NotNull Color brighter() {
-    if (Registry.is("ide.color.mixture.mark.colors")) {
+    if (SystemProperties.getBooleanProperty(ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION, false)) {
       return new SwingTuneBrighter(this).createColor(true);
     }
     if (func != null) {
@@ -299,7 +302,7 @@ public class JBColor extends Color implements PresentableColor, ComparableColor 
 
   @Override
   public @NotNull Color darker() {
-    if (Registry.is("ide.color.mixture.mark.colors")) {
+    if (SystemProperties.getBooleanProperty(ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION, false)) {
       return new SwingTuneDarker(this).createColor(true);
     }
     if (func != null) {

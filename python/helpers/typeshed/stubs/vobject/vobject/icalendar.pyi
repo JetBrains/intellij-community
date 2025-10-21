@@ -1,50 +1,55 @@
+import datetime
 from _typeshed import Incomplete
-from datetime import timedelta
-from typing import Any
+from collections.abc import Iterable
+from datetime import timedelta, tzinfo
+from typing import Final, Literal, overload
 
 from .base import Component
 from .behavior import Behavior
 
-DATENAMES: tuple[str, ...]
-RULENAMES: tuple[str, ...]
-DATESANDRULES: tuple[str, ...]
-PRODID: str
-WEEKDAYS: tuple[str, ...]
-FREQUENCIES: tuple[str, ...]
-zeroDelta: timedelta
-twoHours: timedelta
+DATENAMES: Final[tuple[str, ...]]
+RULENAMES: Final[tuple[str, ...]]
+DATESANDRULES: Final[tuple[str, ...]]
+PRODID: Final[str]
+WEEKDAYS: Final[tuple[str, ...]]
+FREQUENCIES: Final[tuple[str, ...]]
+ZERO_DELTA: Final[timedelta]
+twoHours: Final[timedelta]
 
+@overload
+def toUnicode(s: None) -> None: ...
+@overload
 def toUnicode(s: str | bytes) -> str: ...
-def registerTzid(tzid, tzinfo) -> None: ...
-def getTzid(tzid, smart: bool = True): ...
+def registerTzid(tzid: str | bytes, tzinfo) -> None: ...
+def getTzid(tzid: str, smart: bool = True): ...
 
-utc: Any  # dateutil.tz.tz.tzutc
+utc: tzinfo  # dateutil.tz.tz.tzutc (subclass of tzinfo)
 
 class TimezoneComponent(Component):
     isNative: bool
-    behavior: Any
-    tzinfo: Any
+    behavior: Incomplete
+    tzinfo: Incomplete
     name: str
     useBegin: bool
-    def __init__(self, tzinfo: Incomplete | None = None, *args, **kwds) -> None: ...
+    def __init__(self, tzinfo=None, *args, **kwds) -> None: ...
     @classmethod
-    def registerTzinfo(cls, tzinfo): ...
+    def registerTzinfo(cls, tzinfo) -> str | None: ...
     def gettzinfo(self): ...
-    tzid: Any
-    daylight: Any
-    standard: Any
-    def settzinfo(self, tzinfo, start: int = 2000, end: int = 2030): ...
-    normal_attributes: Any
+    tzid: Incomplete
+    daylight: Incomplete
+    standard: Incomplete
+    def settzinfo(self, tzinfo, start: int = 2000, end: int = 2030) -> None: ...
+    normal_attributes: Incomplete
     @staticmethod
-    def pickTzid(tzinfo, allowUTC: bool = False): ...
-    def prettyPrint(self, level, tabwidth) -> None: ...  # type: ignore[override]
+    def pickTzid(tzinfo, allowUTC: bool = False) -> str | None: ...
+    def prettyPrint(self, level: int, tabwidth: int) -> None: ...  # type: ignore[override]
 
 class RecurringComponent(Component):
     isNative: bool
     def __init__(self, *args, **kwds) -> None: ...
     def getrruleset(self, addRDate: bool = False): ...
     def setrruleset(self, rruleset): ...
-    rruleset: Any
+    rruleset: Incomplete
     def __setattr__(self, name, value) -> None: ...
 
 class TextBehavior(Behavior):
@@ -55,7 +60,7 @@ class TextBehavior(Behavior):
     def encode(cls, line) -> None: ...
 
 class VCalendarComponentBehavior(Behavior):
-    defaultBehavior: Any
+    defaultBehavior: Incomplete
     isComponent: bool
 
 class RecurringBehavior(VCalendarComponentBehavior):
@@ -105,8 +110,7 @@ class VCalendar2_0(VCalendarComponentBehavior):
     name: str
     description: str
     versionString: str
-    sortFirst: Any
-    knownChildren: Any
+    sortFirst: Incomplete
     @classmethod
     def generateImplicitParameters(cls, obj) -> None: ...
     @classmethod
@@ -116,10 +120,9 @@ class VTimezone(VCalendarComponentBehavior):
     name: str
     hasNative: bool
     description: str
-    sortFirst: Any
-    knownChildren: Any
+    sortFirst: Incomplete
     @classmethod
-    def validate(cls, obj, raiseException, *args): ...
+    def validate(cls, obj, raiseException: bool, *args) -> bool: ...  # type: ignore[override]
     @staticmethod
     def transformToNative(obj): ...
     @staticmethod
@@ -129,57 +132,49 @@ class TZID(Behavior): ...
 
 class DaylightOrStandard(VCalendarComponentBehavior):
     hasNative: bool
-    knownChildren: Any
 
 class VEvent(RecurringBehavior):
     name: str
-    sortFirst: Any
+    sortFirst: Incomplete
     description: str
-    knownChildren: Any
     @classmethod
-    def validate(cls, obj, raiseException, *args): ...
+    def validate(cls, obj, raiseException: bool, *args) -> bool: ...  # type: ignore[override]
 
 class VTodo(RecurringBehavior):
     name: str
     description: str
-    knownChildren: Any
     @classmethod
-    def validate(cls, obj, raiseException, *args): ...
+    def validate(cls, obj, raiseException: bool, *args) -> bool: ...  # type: ignore[override]
 
 class VJournal(RecurringBehavior):
     name: str
-    knownChildren: Any
 
 class VFreeBusy(VCalendarComponentBehavior):
     name: str
     description: str
-    sortFirst: Any
-    knownChildren: Any
+    sortFirst: Incomplete
 
 class VAlarm(VCalendarComponentBehavior):
     name: str
     description: str
-    knownChildren: Any
     @staticmethod
     def generateImplicitParameters(obj) -> None: ...
     @classmethod
-    def validate(cls, obj, raiseException, *args): ...
+    def validate(cls, obj, raiseException: bool, *args) -> bool: ...  # type: ignore[override]
 
 class VAvailability(VCalendarComponentBehavior):
     name: str
     description: str
-    sortFirst: Any
-    knownChildren: Any
+    sortFirst: Incomplete
     @classmethod
-    def validate(cls, obj, raiseException, *args): ...
+    def validate(cls, obj, raiseException: bool, *args) -> bool: ...  # type: ignore[override]
 
 class Available(RecurringBehavior):
     name: str
-    sortFirst: Any
+    sortFirst: Incomplete
     description: str
-    knownChildren: Any
     @classmethod
-    def validate(cls, obj, raiseException, *args): ...
+    def validate(cls, obj, raiseException: bool, *args) -> bool: ...  # type: ignore[override]
 
 class Duration(Behavior):
     name: str
@@ -212,26 +207,30 @@ class FreeBusy(PeriodBehavior):
 
 class RRule(Behavior): ...
 
-utcDateTimeList: Any
-dateTimeOrDateList: Any
-textList: Any
+utcDateTimeList: list[str]
+dateTimeOrDateList: list[str]
+textList: list[str]
 
-def numToDigits(num, places): ...
-def timedeltaToString(delta): ...
-def timeToString(dateOrDateTime): ...
-def dateToString(date): ...
-def dateTimeToString(dateTime, convertToUTC: bool = False): ...
-def deltaToOffset(delta): ...
+def numToDigits(num: float | None, places: int) -> str: ...
+def timedeltaToString(delta: datetime.timedelta) -> str: ...
+def timeToString(dateOrDateTime: datetime.date | datetime.datetime) -> str: ...
+def dateToString(date: datetime.date) -> str: ...
+def dateTimeToString(dateTime: datetime.datetime, convertToUTC: bool = False) -> str: ...
+def deltaToOffset(delta: datetime.timedelta) -> str: ...
 def periodToString(period, convertToUTC: bool = False): ...
-def isDuration(s): ...
-def stringToDate(s): ...
-def stringToDateTime(s, tzinfo: Incomplete | None = None): ...
+def isDuration(s: str) -> bool: ...
+def stringToDate(s: str) -> datetime.date: ...
+def stringToDateTime(s: str, tzinfo: datetime._TzInfo | None = None, strict: bool = False) -> datetime.datetime: ...
 
 escapableCharList: str
 
-def stringToTextValues(s, listSeparator: str = ",", charList: Incomplete | None = None, strict: bool = False): ...
-def stringToDurations(s, strict: bool = False): ...
+def stringToTextValues(
+    s: str, listSeparator: str = ",", charList: Iterable[str] | None = None, strict: bool = False
+) -> list[str]: ...
+def stringToDurations(s: str, strict: bool = False) -> list[datetime.timedelta]: ...
 def parseDtstart(contentline, allowSignatureMismatch: bool = False): ...
-def stringToPeriod(s, tzinfo: Incomplete | None = None): ...
-def getTransition(transitionTo, year, tzinfo): ...
-def tzinfo_eq(tzinfo1, tzinfo2, startYear: int = 2000, endYear: int = 2020): ...
+def stringToPeriod(s: str, tzinfo=None): ...
+def getTransition(transitionTo: Literal["daylight", "standard"], year: int, tzinfo: datetime._TzInfo): ...
+def tzinfo_eq(
+    tzinfo1: datetime._TzInfo | None, tzinfo2: datetime._TzInfo | None, startYear: int = 2000, endYear: int = 2020
+) -> bool: ...

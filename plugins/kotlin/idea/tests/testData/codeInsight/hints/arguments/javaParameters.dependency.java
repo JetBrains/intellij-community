@@ -7,11 +7,11 @@ public class SomeClass {
 
     }
 
-    public void singleParamDslWithSameParamName(String singleParamDslWithSameParamName) {
+    public void singleParamDslWithSameParamName(String name) {
 
     }
 
-    public void sameFirstParamNameAndVararg(String sameFirstParamNameAndVararg, Object... variables) {
+    public void sameFirstParamNameAndVararg(String name, Object... variables) {
 
     }
 }

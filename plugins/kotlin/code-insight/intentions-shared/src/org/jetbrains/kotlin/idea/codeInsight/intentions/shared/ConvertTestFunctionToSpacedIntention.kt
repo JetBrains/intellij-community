@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
 import org.jetbrains.kotlin.utils.SmartList
 
 internal sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingRangeIntention<KtNamedFunction>(
-    KtNamedFunction::class.java, KotlinBundle.lazyMessage("replace.0.name.with.spaces", case)
+    KtNamedFunction::class.java, KotlinBundle.messagePointer("replace.0.name.with.spaces", case)
 ) {
     abstract fun split(name: String): List<String>
 
@@ -45,7 +45,7 @@ internal sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfT
 
         if (KotlinPsiBasedTestFramework.findTestFramework(element) == null) return null
 
-        setTextGetter(KotlinBundle.lazyMessage("rename.to.01", newName))
+        setTextGetter(KotlinBundle.messagePointer("rename.to.01", newName))
 
         return range
     }

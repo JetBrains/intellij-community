@@ -116,7 +116,6 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:getPoint():com.intellij.openapi.extensions.ExtensionPoint
 - f:getPoint(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.ExtensionPoint
 - f:hasAnyExtensions():Z
-- f:removeExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 f:com.intellij.openapi.extensions.ExtensionPointName$Companion
 - f:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.openapi.extensions.ExtensionPointUtil
@@ -202,8 +201,8 @@ bf:com.intellij.openapi.extensions.PluginId$$serializer
 f:com.intellij.openapi.extensions.PluginId$Companion
 - f:findId(java.lang.String):com.intellij.openapi.extensions.PluginId
 - f:findId(java.lang.String[]):com.intellij.openapi.extensions.PluginId
-- f:getEMPTY_ARRAY():com.intellij.openapi.extensions.PluginId[]
 - f:getId(java.lang.String):com.intellij.openapi.extensions.PluginId
+- f:invoke(java.lang.String):com.intellij.openapi.extensions.PluginId
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - com.intellij.openapi.extensions.BaseExtensionPointName

@@ -1,18 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -27,13 +26,13 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSourceRootPropertiesEntityData) :
-  JavaSourceRootPropertiesEntity, WorkspaceEntityBase(dataSource) {
+internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSourceRootPropertiesEntityData) : JavaSourceRootPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      SourceRootEntity::class.java, JavaSourceRootPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
-    )
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
+                                                                              JavaSourceRootPropertiesEntity::class.java,
+                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       SOURCEROOT_CONNECTION_ID,
@@ -66,9 +65,8 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
   }
 
 
-  internal class Builder(result: JavaSourceRootPropertiesEntityData?) :
-    ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(result),
-    JavaSourceRootPropertiesEntity.Builder {
+  internal class Builder(result: JavaSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(
+    result), JavaSourceRootPropertiesEntity.Builder {
     internal constructor() : this(JavaSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -137,16 +135,16 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
 
       }
 
-    override var sourceRoot: SourceRootEntity.Builder
+    override var sourceRoot: SourceRootEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(SOURCEROOT_CONNECTION_ID, this) as? SourceRootEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(SOURCEROOT_CONNECTION_ID, this) as? SourceRootEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity.Builder
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntityBuilder
         }
       }
       set(value) {
@@ -205,7 +203,7 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
 
   internal fun isPackagePrefixInitialized(): Boolean = ::packagePrefix.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaSourceRootPropertiesEntity> {
     val modifiable = JavaSourceRootPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -231,9 +229,9 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
     return JavaSourceRootPropertiesEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return JavaSourceRootPropertiesEntity(generated, packagePrefix, entitySource) {
-      parents.filterIsInstance<SourceRootEntity.Builder>().singleOrNull()?.let { this.sourceRoot = it }
+      parents.filterIsInstance<SourceRootEntityBuilder>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 

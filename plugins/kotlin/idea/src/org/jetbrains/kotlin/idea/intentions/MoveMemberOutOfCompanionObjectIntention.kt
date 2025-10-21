@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
-class MoveMemberOutOfCompanionObjectIntention : MoveMemberOutOfObjectIntention(KotlinBundle.lazyMessage("move.out.of.companion.object")) {
+internal class MoveMemberOutOfCompanionObjectIntention : MoveMemberOutOfObjectIntention(KotlinBundle.messagePointer("move.out.of.companion.object")) {
     override fun addConflicts(element: KtNamedDeclaration, conflicts: MultiMap<PsiElement, String>) {
         val targetClass = element.containingClassOrObject?.containingClassOrObject ?: return
         val targetClassDescriptor = runReadAction { targetClass.unsafeResolveToDescriptor() as ClassDescriptor }

@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -45,6 +46,16 @@ public final class GitRebaseUtils {
                             final @NotNull ProgressIndicator indicator) {
     if (!isRebaseAllowed(project, repositories)) return;  // TODO maybe move to the outside
     new GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, indicator), null).rebase();
+  }
+
+  public static boolean rebaseWithResult(final @NotNull Project project,
+                                         final @NotNull List<? extends GitRepository> repositories,
+                                         final @NotNull GitRebaseParams params,
+                                         final @NotNull ProgressIndicator indicator) {
+    if (!isRebaseAllowed(project, repositories)) return false;
+    var process = new GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, indicator), null);
+    process.rebase();
+    return process.isSuccessful();
   }
 
   public static void continueRebase(@NotNull Project project) {

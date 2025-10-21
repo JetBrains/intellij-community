@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -101,7 +102,6 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     builder.row { cell(onShowTrigger) }
 
     val sdkPanelBuilder = PythonSdkPanelBuilderAndSdkCreator(
-      onlyAllowedInterpreterTypes = null,
       errorSink = ShowingMessageErrorSync,
       module = null,
     )
@@ -123,14 +123,14 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     moduleOrProject.moduleIfExists?.takeIf { createPythonModuleStructure }?.let { module ->
       runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.module.structure")) {
         pySdkCreator.createPythonModuleStructure(module).onFailure {
-          errorSink.emit(it)
+          errorSink.emit(it, project)
         }
       }
     }
 
     runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
       val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
-        errorSink.emit(it.error)
+        errorSink.emit(it.error, project)
         return@runWithModalProgressBlocking
       }
       pythonSdk = sdk

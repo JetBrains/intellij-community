@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
@@ -9,6 +9,7 @@ import com.intellij.build.progress.BuildProgressDescriptor;
 import com.intellij.compiler.impl.CompilerPropertiesAction;
 import com.intellij.compiler.impl.ExcludeFromCompileAction;
 import com.intellij.compiler.impl.ExitStatus;
+import com.intellij.compiler.options.ExcludeFromValidationAction;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.UrlFilter;
@@ -51,11 +52,21 @@ public class BuildOutputService implements BuildViewService {
   private final @NotNull Project myProject;
   private final @NotNull BuildProgress<BuildProgressDescriptor> myBuildProgress;
   private final @NotNull @NlsContexts.TabTitle String myContentName;
+  private final boolean myCompilationStartedAutomatically;
   private final ConsolePrinter myConsolePrinter;
 
   public BuildOutputService(@NotNull Project project, @NotNull @NlsContexts.TabTitle String contentName) {
+    this(project, contentName, false);
+  }
+
+  public BuildOutputService(
+    @NotNull Project project,
+    @NotNull @NlsContexts.TabTitle String contentName,
+    boolean compilationStartedAutomatically
+  ) {
     myProject = project;
     myContentName = contentName;
+    myCompilationStartedAutomatically = compilationStartedAutomatically;
     myBuildProgress = BuildViewManager.createBuildProgress(project);
     myConsolePrinter = new ConsolePrinter(myBuildProgress);
   }
@@ -93,19 +104,17 @@ public class BuildOutputService implements BuildViewService {
             protected @Nullable VirtualFile getFile() {
               List<Navigatable> navigatables = node.getNavigatables();
               if (navigatables.size() != 1) return null;
-              Navigatable navigatable = navigatables.get(0);
-              if (navigatable instanceof OpenFileDescriptor) {
-                return ((OpenFileDescriptor)navigatable).getFile();
-              }
-              else if (navigatable instanceof FileNavigatable) {
-                OpenFileDescriptor fileDescriptor = ((FileNavigatable)navigatable).getFileDescriptor();
-                return fileDescriptor != null ? fileDescriptor.getFile() : null;
-              }
-              return null;
+              Navigatable navigatable = navigatables.getFirst();
+              return ExcludeFromValidationAction.getTargetFile(navigatable);
             }
           };
         })
         .withContextActions(contextActions.toArray(AnAction.EMPTY_ARRAY));
+
+    if (myCompilationStartedAutomatically) {
+      // When compilation is triggered automatically (e.g., by auto test run), avoid stealing focus
+      buildDescriptor.setActivateToolWindowWhenFailed(false);
+    }
 
     myBuildProgress.start(new BuildProgressDescriptor() {
       @Override

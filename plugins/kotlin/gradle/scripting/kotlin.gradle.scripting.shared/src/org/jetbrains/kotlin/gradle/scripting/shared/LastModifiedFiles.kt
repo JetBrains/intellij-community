@@ -5,11 +5,7 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
-import org.jetbrains.kotlin.idea.core.util.readNullable
-import org.jetbrains.kotlin.idea.core.util.readStringList
-import org.jetbrains.kotlin.idea.core.util.writeNullable
-import org.jetbrains.kotlin.idea.core.util.writeStringList
+import org.jetbrains.kotlin.idea.core.script.v1.*
 import java.io.DataInputStream
 import java.io.DataOutput
 import java.io.DataOutputStream
@@ -75,7 +71,7 @@ class LastModifiedFiles(
                     readLastModifiedFiles(it)
                 }
             } catch (e: Exception) {
-                scriptingErrorLog("Cannot read data for buildRoot=$buildRoot from file attributes", e)
+              scriptingErrorLog("Cannot read data for buildRoot=$buildRoot from file attributes", e)
                 return null
             }
         }
@@ -91,7 +87,7 @@ class LastModifiedFiles(
                     writeLastModifiedFiles(it, data)
                 }
             } catch (e: Exception) {
-                scriptingErrorLog("Cannot store data=$data for buildRoot=$buildRoot to file attributes", e)
+              scriptingErrorLog("Cannot store data=$data for buildRoot=$buildRoot to file attributes", e)
 
                 fileAttribute.writeFileAttribute(buildRoot).use {
                     writeLastModifiedFiles(it, null)

@@ -21,7 +21,16 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
   void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType);
 
   @ApiStatus.Internal
-  void addRoot(@NotNull File file, @NotNull JpsOrderRootType rootType);
+  void addRoot(@NotNull Path path, @NotNull JpsOrderRootType rootType);
+
+  /**
+   * @deprecated use {@link #addRoot(Path, JpsOrderRootType)} instead
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  default void addRoot(@NotNull File path, @NotNull JpsOrderRootType rootType) {
+    addRoot(path.toPath(), rootType);
+  }
 
   @ApiStatus.Internal
   void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType, @NotNull JpsLibraryRoot.InclusionOptions options);

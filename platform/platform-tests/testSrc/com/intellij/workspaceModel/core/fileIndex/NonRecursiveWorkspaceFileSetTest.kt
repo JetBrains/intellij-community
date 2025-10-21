@@ -121,5 +121,4 @@ class NonRecursiveWorkspaceFileSetTest {
       assertFalse(fileIndex.isInContent(file2))
     }
   }
-
 }

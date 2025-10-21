@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.*;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
+import com.intellij.execution.target.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;

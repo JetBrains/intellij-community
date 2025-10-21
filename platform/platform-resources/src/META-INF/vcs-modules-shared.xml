@@ -1,6 +1,0 @@
-<idea-plugin>
-  <content>
-    <module name="intellij.platform.vcs.impl.shared"/>
-    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
-  </content>
-</idea-plugin>

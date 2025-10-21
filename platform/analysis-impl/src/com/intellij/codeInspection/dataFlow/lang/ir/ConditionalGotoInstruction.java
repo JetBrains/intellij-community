@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public class ConditionalGotoInstruction extends Instruction {
    * @return PSI element associated with this instruction
    * @deprecated used in "Find the cause" feature only. Will be removed
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public @Nullable PsiElement getPsiAnchor() {
     return myAnchor;

@@ -10,8 +10,6 @@ import org.jetbrains.jps.util.Pair;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.jetbrains.jps.util.Iterators.*;
 
@@ -19,7 +17,7 @@ import static org.jetbrains.jps.util.Iterators.*;
  * This class provides implementation common to all jvm strategies
  */
 public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateStrategy{
-  private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.java.JvmDifferentiateStrategyImpl");
+  public static final String LOGGER_NAME = "#org.jetbrains.jps.dependency.java.JvmDifferentiateStrategyImpl";
 
   protected final <T extends AnnotationInstance, D extends AnnotationInstance.Diff<T>> boolean isAffectedByAnnotations(
     Proto element, Difference.Specifier<T, D> annotationsDiff, Set<AnnotationGroup.AffectionKind> affectionKinds, Predicate<? super TypeRepr.ClassType> annotationSelector
@@ -63,7 +61,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
     Set<AnnotationGroup.AffectionScope> affectionScope = EnumSet.noneOf(AnnotationGroup.AffectionScope.class);
     for (AnnotationGroup group : filter(getTrackedAnnotations(), gr -> gr.targets.contains(AnnotationGroup.AnnTarget.type))) {
       if (isAffectedByAnnotations(changedClass, annotationDiff, group.affectionKind, group.types::contains)) {
-        debug(group.name, " changed for ", changedClass.getName(), " --- affecting class usages");
+        debug(context, group.name, " changed for ", changedClass.getName(), " --- affecting class usages");
         affectionScope.addAll(group.affectionScope);
         if (affectionScope.equals(maxScope)) {
           break;
@@ -88,7 +86,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
     Set<AnnotationGroup.AffectionScope> affectionScope = EnumSet.noneOf(AnnotationGroup.AffectionScope.class);
     for (AnnotationGroup group : filter(getTrackedAnnotations(), gr -> gr.targets.contains(AnnotationGroup.AnnTarget.field))) {
       if (isAffectedByAnnotations(changedField, annotationDiff, group.affectionKind, group.types::contains) ) {
-        debug(group.name, " changed for field ", changedField, " --- affecting field usages");
+        debug(context, group.name, " changed for field ", changedField, " --- affecting field usages");
         affectionScope.addAll(group.affectionScope);
         if (affectionScope.equals(maxScope)) {
           break;
@@ -118,10 +116,10 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
         if (!changedMethod.isFinal()) {
           // ensure the affection scope is expanded for subclasses
           affectionScope.add(AnnotationGroup.AffectionScope.subclasses);
-          debug(group.name, " changed for non-final method ", changedMethod, " --- affecting method usages and subclasses");
+          debug(context, group.name, " changed for non-final method ", changedMethod, " --- affecting method usages and subclasses");
         }
         else {
-          debug(group.name, " changed for method ", changedMethod, " --- affecting method usages");
+          debug(context, group.name, " changed for method ", changedMethod, " --- affecting method usages");
         }
         if (affectionScope.equals(maxScope)) {
           break;
@@ -136,10 +134,10 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
           if (!changedMethod.isFinal()) {
             // ensure the affection scope is expanded for subclasses
             affectionScope.add(AnnotationGroup.AffectionScope.subclasses);
-            debug(group.name, " changed for non-final method parameters ", changedMethod, " --- affecting method usages and subclasses");
+            debug(context, group.name, " changed for non-final method parameters ", changedMethod, " --- affecting method usages and subclasses");
           }
           else {
-            debug(group.name, " changed for method parameters ", changedMethod, " --- affecting method usages");
+            debug(context, group.name, " changed for method parameters ", changedMethod, " --- affecting method usages");
           }
           if (affectionScope.equals(maxScope)) {
             break;
@@ -231,37 +229,33 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
       else {
         context.affectUsage(usageFactory.apply(id));
       }
-      debug("Affect ", usageKind, " usage owned by node '", id.getNodeName(), "'");
+      debug(context, "Affect ", usageKind, " usage owned by node '", id.getNodeName(), "'");
     }
   }
 
-  protected boolean isDebugEnabled() {
-    return LOG.isLoggable(Level.FINE);
-  }
-
-  protected void debug(String message, Object... details) {
-    if (isDebugEnabled()) {
+  protected void debug(DifferentiateContext context, String message, Object... details) {
+    context.getParams().logConsumer().consume(Utils.lazyValue(() -> {
       StringBuilder msg = new StringBuilder(message);
       for (Object detail : details) {
         msg.append(detail);
       }
-      debug(msg.toString());
-    }
+      return msg.toString();
+    }));
   }
 
-  protected void debug(String message) {
-    LOG.log(Level.FINE, message);
+  protected void debug(DifferentiateContext context, String message) {
+    context.getParams().logConsumer().consume(message);
   }
 
   protected void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {
-    debug("Affecting subclasses of class: ", fromClass, "; with usages affection: ", affectUsages);
+    debug(context, "Affecting subclasses of class: ", fromClass, "; with usages affection: ", affectUsages);
     for (ReferenceID cl : utils.withAllSubclasses(fromClass)) {
       affectNodeSources(context, cl, "Affecting source file: ", utils);
       if (affectUsages) {
         String nodeName = utils.getNodeName(cl);
         if (nodeName != null) {
           context.affectUsage(new ClassUsage(nodeName));
-          debug("Affect usage of class ", nodeName);
+          debug(context, "Affect usage of class ", nodeName);
         }
       }
     }
@@ -277,7 +271,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
     for (NodeSource source : filter(sources, affectionFilter::test)) {
       if ((forceAffect || !context.isCompiled(source)) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
-        debug(affectReason, source);
+        debug(context, affectReason, source);
       }
     }
   }
@@ -297,7 +291,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
         context.affectNodeSource(candidate);
         msg.append(candidate).append("; ");
       }
-      debug(msg.toString());
+      debug(context, msg.toString());
       return true;
     }
     return false;

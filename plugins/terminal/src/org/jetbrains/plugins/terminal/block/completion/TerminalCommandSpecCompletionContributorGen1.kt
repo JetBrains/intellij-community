@@ -14,6 +14,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
+import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
@@ -23,9 +24,8 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.fi
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.getNextSuggestionsString
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
@@ -43,8 +43,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (parameters.editor.isReworkedTerminalEditor) return
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
-    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
-    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY) ?: return
+    val completionServices = parameters.editor.getUserData(TerminalCommandCompletionServices.KEY) ?: return
     val promptModel = parameters.editor.terminalPromptModel ?: return
 
     if (session.model.isCommandRunning || parameters.completionType != CompletionType.BASIC) {
@@ -62,7 +61,14 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
     }
 
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
-    val context = TerminalCompletionContext(runtimeContextProvider, generatorsExecutor, shellSupport, parameters, session.shellIntegration.shellType)
+    val context = TerminalCompletionContext(
+      completionServices.commandSpecsManager,
+      completionServices.runtimeContextProvider,
+      completionServices.dataGeneratorsExecutor,
+      shellSupport,
+      parameters,
+      session.shellIntegration.shellType
+    )
 
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
@@ -114,7 +120,11 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
     }
 
     val runtimeContext = context.runtimeContextProvider.getContext(tokens.last())
-    val completion = ShellCommandSpecCompletion(ShellCommandSpecsManagerImpl.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
+    val completion = ShellCommandSpecCompletion(
+      context.commandSpecsManager,
+      context.generatorsExecutor,
+      context.runtimeContextProvider
+    )
     val commandExecutable = tokens.first()
     val commandArguments = tokens.subList(1, tokens.size)
     val availableCommandsProvider = suspend { context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator()) }
@@ -284,6 +294,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
   }
 
   private class TerminalCompletionContext(
+    val commandSpecsManager: ShellCommandSpecsManager,
     val runtimeContextProvider: ShellRuntimeContextProvider,
     val generatorsExecutor: ShellDataGeneratorsExecutor,
     val shellSupport: TerminalShellSupport,

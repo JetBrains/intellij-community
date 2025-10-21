@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ModuleEntityAndExtensions")
 
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
@@ -27,17 +26,10 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val facets: List<FacetEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleEntity> {
-    override var entitySource: EntitySource
-    var name: String
-    var type: ModuleTypeId?
-    var dependencies: MutableList<ModuleDependencyItem>
-    var contentRoots: List<ContentRootEntity.Builder>
-    var facets: List<FacetEntity.Builder>
-  }
-
+  @Deprecated(message = "Use ModuleEntityBuilder instead")
+  interface Builder : ModuleEntityBuilder
   companion object : EntityType<ModuleEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -46,20 +38,14 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
       dependencies: List<ModuleDependencyItem>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.name = name
-      builder.dependencies = dependencies.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ModuleEntityType.compatibilityInvoke(name, dependencies, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyModuleEntity(
   entity: ModuleEntity,
   modification: ModuleEntity.Builder.() -> Unit,
@@ -69,28 +55,53 @@ fun MutableEntityStorage.modifyModuleEntity(
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.customImlData: ModuleCustomImlDataEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ModuleCustomImlDataEntity::class.java)
+  get() = (this as ModuleEntityBuilder).customImlData as ModuleCustomImlDataEntity.Builder?
+  set(value) {
+    (this as ModuleEntityBuilder).customImlData = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.exModuleOptions: ExternalSystemModuleOptionsEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ExternalSystemModuleOptionsEntity::class.java)
+  get() = (this as ModuleEntityBuilder).exModuleOptions as ExternalSystemModuleOptionsEntity.Builder?
+  set(value) {
+    (this as ModuleEntityBuilder).exModuleOptions = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.facetOrder: FacetsOrderEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(FacetsOrderEntity::class.java)
+  get() = (this as ModuleEntityBuilder).facetOrder as FacetsOrderEntity.Builder?
+  set(value) {
+    (this as ModuleEntityBuilder).facetOrder = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.groupPath: ModuleGroupPathEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ModuleGroupPathEntity::class.java)
+  get() = (this as ModuleEntityBuilder).groupPath as ModuleGroupPathEntity.Builder?
+  set(value) {
+    (this as ModuleEntityBuilder).groupPath = value
+  }
+
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
-  by WorkspaceEntity.extensionBuilder(SourceRootEntity::class.java)
+  get() = (this as ModuleEntityBuilder).sourceRoots as List<SourceRootEntity.Builder>
+  set(value) {
+    (this as ModuleEntityBuilder).sourceRoots = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.testProperties: TestModulePropertiesEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(TestModulePropertiesEntity::class.java)
+  get() = (this as ModuleEntityBuilder).testProperties as TestModulePropertiesEntity.Builder?
+  set(value) {
+    (this as ModuleEntityBuilder).testProperties = value
+  }
 //endregion

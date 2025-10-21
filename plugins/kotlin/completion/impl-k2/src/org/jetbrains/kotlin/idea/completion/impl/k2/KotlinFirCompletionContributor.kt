@@ -3,14 +3,20 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.MatchesExpectedType
+import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
@@ -82,13 +88,41 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         if (AFTER_NUMBER_LITERAL.accepts(position)) return
         val positionContext = KotlinPositionContextDetector.detect(position)
 
-        Completions.complete(
+        registerRestartCompletion(result, parameters, positionContext)
+
+        val resultSet = result
+            .withRelevanceSorter(parameters, positionContext)
+            .withPrefixMatcher(parameters)
+
+        val addedResults = Completions.complete(
             parameters = parameters,
             positionContext = positionContext,
-            resultSet = result
-                .withRelevanceSorter(parameters, positionContext)
-                .withPrefixMatcher(parameters),
+            resultSet = resultSet,
         )
+
+        // If we have not found any results and we have an invocation count 1, we want to re-run completion because
+        // it will also start looking in nested objects etc.
+        if (!addedResults && parameters.invocationCount == 1) {
+            val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
+            Completions.complete(newParameters, positionContext, resultSet)
+        }
+    }
+
+    private fun registerRestartCompletion(
+        result: CompletionResultSet,
+        parameters: KotlinFirCompletionParameters,
+        positionContext: KotlinRawPositionContext
+    ) {
+        if (!RegistryManager.getInstance().`is`("kotlin.k2.dot.add.enabled")) return
+
+        if (positionContext is KotlinExpressionNameReferencePositionContext &&
+            parameters.offset > 0
+        ) {
+            val findElementAt = parameters.originalFile.findElementAt(parameters.offset - 1)
+            if (findElementAt != null && findElementAt.node.elementType == KtTokens.DOT) {
+                result.restartCompletionOnPrefixChange(".")
+            }
+        }
     }
 
     private fun CompletionResultSet.withPrefixMatcher(
@@ -102,6 +136,9 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         )
 
         return withPrefixMatcher(prefix)
+            .applyIf(parameters.completionType == CompletionType.SMART) {
+                withPrefixMatcher(SmartCompletionPrefixMatcher(prefixMatcher))
+            }
     }
 
     private fun CompletionResultSet.withRelevanceSorter(
@@ -118,4 +155,23 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         PsiJavaPatterns.psiElement().withText(""),
         PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
     )
+
+    private class SmartCompletionPrefixMatcher(
+        private val delegate: PrefixMatcher,
+    ) : PrefixMatcher(delegate.prefix) {
+
+        override fun prefixMatches(element: LookupElement): Boolean =
+            when (element.matchesExpectedType) {
+                MatchesExpectedType.MATCHES_PREFERRED,
+                MatchesExpectedType.MATCHES -> true
+
+                else -> false
+            } && super.prefixMatches(element)
+
+        override fun prefixMatches(name: String): Boolean =
+            delegate.prefixMatches(name)
+
+        override fun cloneWithPrefix(prefix: String): PrefixMatcher =
+            SmartCompletionPrefixMatcher(delegate.cloneWithPrefix(prefix))
+    }
 }

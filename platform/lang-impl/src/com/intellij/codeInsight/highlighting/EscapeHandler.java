@@ -66,7 +66,9 @@ public final class EscapeHandler extends EditorActionHandler {
 
   @Override
   public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    if (editor.hasHeaderComponent()) return true;
+    if (editor.hasHeaderComponent()) {
+      return true;
+    }
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project != null) {
@@ -75,7 +77,9 @@ public final class EscapeHandler extends EditorActionHandler {
         return true;
       }
       // Escape can be used to get rid of light bulb
-      if (DaemonCodeAnalyzerEx.getInstanceEx(project).hasVisibleLightBulbOrPopup()) return true;
+      if (DaemonCodeAnalyzerEx.getInstanceEx(project).hasVisibleLightBulbOrPopup()) {
+        return true;
+      }
     }
 
     return myOriginalHandler.isEnabled(editor, caret, dataContext);

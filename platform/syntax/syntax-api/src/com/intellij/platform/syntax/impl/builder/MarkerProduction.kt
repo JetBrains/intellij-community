@@ -3,7 +3,7 @@ package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.Logger
 import com.intellij.util.fastutil.ints.IntArrayList
-import com.intellij.util.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.isEmpty
 import com.intellij.util.fastutil.ints.lastIndexOf
 import fleet.util.multiplatform.linkToActual
 import kotlin.math.abs
@@ -14,7 +14,14 @@ internal class MarkerProduction(
   private val myOptionalData: MarkerOptionalData,
   private val logger: Logger,
   private val production: IntArrayList = IntArrayList(256)
-) : IntList by production {
+) {
+
+  val size get() = production.size
+
+  fun isEmpty() = production.isEmpty()
+
+  operator fun get(index: Int): Int = production[index]
+
   fun addBefore(marker: ProductionMarker, anchor: ProductionMarker) {
     production.add(indexOf(anchor), marker.markerId)
   }

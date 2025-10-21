@@ -44,6 +44,8 @@ public interface JavaDocElementType {
   IElementType DOC_TAG = new JavaDocCompositeElementType("DOC_TAG", () -> new PsiDocTagImpl(), BasicJavaDocElementType.BASIC_DOC_TAG);
   IElementType DOC_INLINE_TAG = new JavaDocCompositeElementType("DOC_INLINE_TAG", () -> new PsiInlineDocTagImpl(), BasicJavaDocElementType.BASIC_DOC_INLINE_TAG);
   IElementType DOC_METHOD_OR_FIELD_REF = new JavaDocCompositeElementType("DOC_METHOD_OR_FIELD_REF", () -> new PsiDocMethodOrFieldRef(), BasicJavaDocElementType.BASIC_DOC_METHOD_OR_FIELD_REF);
+  IElementType DOC_FRAGMENT_REF = new JavaDocCompositeElementType("DOC_FRAGMENT_REF", () -> new PsiDocFragmentRefImpl(), BasicJavaDocElementType.BASIC_DOC_FRAGMENT_REF);
+  IElementType DOC_FRAGMENT_NAME = new JavaDocCompositeElementType("DOC_FRAGMENT_NAME", () -> new PsiDocFragmentNameImpl(), BasicJavaDocElementType.BASIC_DOC_FRAGMENT_NAME);
   IElementType DOC_PARAMETER_REF = new JavaDocCompositeElementType("DOC_PARAMETER_REF", () -> new PsiDocParamRef(), BasicJavaDocElementType.BASIC_DOC_PARAMETER_REF);
   IElementType DOC_TAG_VALUE_ELEMENT = new JavaDocParentProviderElementType("DOC_TAG_VALUE_ELEMENT", BasicJavaDocElementType.BASIC_DOC_TAG_VALUE_ELEMENT);
   IElementType DOC_SNIPPET_TAG = new JavaDocCompositeElementType("DOC_SNIPPET_TAG", () -> new PsiSnippetDocTagImpl(), BasicJavaDocElementType.BASIC_DOC_SNIPPET_TAG);

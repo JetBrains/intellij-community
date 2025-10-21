@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
-import com.intellij.ide.util.*;
+import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -138,12 +141,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
         public void actionPerformed(ActionEvent e) {
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myContext.getProject())
             .createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"),
-                                                GlobalSearchScope.projectScope(myContext.getProject()), new ClassFilter() {
-                @Override
-                public boolean isAccepted(PsiClass aClass) {
-                  return aClass.getParent() instanceof GroovyFile || aClass.hasModifierProperty(PsiModifier.STATIC);
-                }
-              }, null);
+                                                GlobalSearchScope.projectScope(myContext.getProject()),
+                                                aClass -> aClass.getParent() instanceof GroovyFile || aClass.hasModifierProperty(PsiModifier.STATIC), null);
           if (myTargetClass != null) {
             chooser.selectDirectory(myTargetClass.getContainingFile().getContainingDirectory());
           }

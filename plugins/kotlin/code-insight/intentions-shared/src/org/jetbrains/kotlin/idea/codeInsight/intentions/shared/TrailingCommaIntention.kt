@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 internal class TrailingCommaIntention : SelfTargetingIntention<KtElement>(
     KtElement::class.java,
-    KotlinBundle.lazyMessage("intention.trailing.comma.text")
+    KotlinBundle.messagePointer("intention.trailing.comma.text")
 ), LowPriorityAction {
     override fun applyTo(element: KtElement, editor: Editor?) {
         SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)
@@ -25,7 +25,7 @@ internal class TrailingCommaIntention : SelfTargetingIntention<KtElement>(
 
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean = element.canAddTrailingCommaWithRegistryCheck().also {
         val actionNumber = 1.takeIf { element.containingKtFile.kotlinCustomSettings.ALLOW_TRAILING_COMMA } ?: 0
-        setTextGetter(KotlinBundle.lazyMessage("intention.trailing.comma.custom.text", actionNumber))
+        setTextGetter(KotlinBundle.messagePointer("intention.trailing.comma.custom.text", actionNumber))
     }
 
     override fun startInWriteAction(): Boolean = false

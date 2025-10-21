@@ -5,4 +5,4 @@ import com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
 import com.intellij.workspaceModel.test.api.impl.MetadataStorageImpl
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal object MetadataStorageImpl: MetadataStorageBridge(MetadataStorageImpl)
+internal object MetadataStorageImpl : MetadataStorageBridge(MetadataStorageImpl)

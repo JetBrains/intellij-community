@@ -1,6 +1,6 @@
 package suspendFunctionsWithContext
 
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-coroutines-core-1.4.2.jar)
 
 import kotlinx.coroutines.yield
 import kotlinx.coroutines.runBlocking
@@ -21,8 +21,12 @@ suspend fun three(): Int {
 }
 
 fun main(args: Array<String>) = runBlocking {
-    // EXPRESSION: one() + two() + three()
-    // RESULT: 6: I
     //Breakpoint!
     println("")
 }
+
+// EXPRESSION: one() + two() + three()
+// RESULT: 6: I
+
+// EXPRESSION: one(); 41 + 1
+// RESULT: 42: I

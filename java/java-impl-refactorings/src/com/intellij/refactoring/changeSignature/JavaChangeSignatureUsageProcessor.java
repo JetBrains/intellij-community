@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
@@ -936,7 +935,8 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
             newType = mySubstitutor.substitute(newType);
           }
           if (newType != null) {
-            typeElement.replace(myFactory.createTypeElement(newType));
+            PsiTypeElement targetElement = (PsiTypeElement)typeElement.replace(myFactory.createTypeElement(newType));
+            applyNullability(targetElement, newType);
           }
         }
       }
@@ -950,6 +950,22 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
 
     protected PsiSubstitutor getSubstitutor() {
       return null;
+    }
+  }
+
+  private static void applyNullability(@NotNull PsiTypeElement typeElement, @NotNull PsiType origType) {
+    TypeNullability typeNullability = typeElement.getType().getNullability();
+    Nullability nullability = typeNullability.nullability();
+    if (typeNullability.equals(TypeNullability.UNKNOWN)) {
+      PsiElement parent = typeElement.getParent();
+      if (parent instanceof PsiModifierListOwner owner) {
+        nullability = NullableNotNullManager.getNullability(owner);
+      }
+    }
+    if (nullability != origType.getNullability().nullability()) {
+      String annotation = NullableNotNullManager.getInstance(typeElement.getProject())
+        .getDefaultAnnotation(origType.getNullability().nullability(), typeElement);
+      typeElement.addAnnotation(annotation);
     }
   }
 

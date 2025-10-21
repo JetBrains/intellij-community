@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.builtins.createFunctionType
@@ -41,14 +42,14 @@ import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     @Deprecated(
         "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
-                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+                "Please use analysis API: https://kotl.in/analysis-api",
         replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
     )
     fun getBindingContext(element: KtElement): BindingContext
 
     @Deprecated(
         "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
-                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+                "Please use analysis API: https://kotl.in/analysis-api",
         replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
     )
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
@@ -64,7 +65,15 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         get() = KotlinConverter
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
-        return ktElement.toLightAnnotation()
+        ktElement.toLightAnnotation()?.let { return it }
+        return if (ktElement is KtAnnotationEntry) {
+            KtLightAnnotationForSourceEntry(
+                name = ktElement.shortName?.identifier,
+                lazyQualifiedName = { qualifiedAnnotationName(ktElement) },
+                kotlinOrigin = ktElement,
+                parent = ktElement.parent,
+            )
+        } else null
     }
 
     private fun getResolvedCall(sourcePsi: KtCallElement): ResolvedCall<*>? {

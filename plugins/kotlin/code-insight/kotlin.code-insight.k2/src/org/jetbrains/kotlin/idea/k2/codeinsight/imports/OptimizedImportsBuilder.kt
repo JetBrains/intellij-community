@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -21,11 +22,12 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.resolve.ImportPath
 
-internal fun KaSession.buildOptimizedImports(
+context(_: KaSession)
+internal fun buildOptimizedImports(
     file: KtFile,
     data: UsedReferencesCollector.Result,
 ): List<ImportPath>? {
-    return OptimizedImportsBuilder(file, data, file.kotlinCustomSettings).run { buildOptimizedImports() }
+    return OptimizedImportsBuilder(file, data, file.kotlinCustomSettings).buildOptimizedImports()
 }
 
 internal class OptimizedImportsBuilder(
@@ -53,7 +55,8 @@ internal class OptimizedImportsBuilder(
 
     private val importRules: MutableSet<ImportRule> = mutableSetOf()
 
-    fun KaSession.buildOptimizedImports(): List<ImportPath>? {
+    context(_: KaSession)
+    fun buildOptimizedImports(): List<ImportPath>? {
         require(importRules.isEmpty())
 
         val importsWithUnresolvedNames = file.importDirectives
@@ -70,7 +73,8 @@ internal class OptimizedImportsBuilder(
         }
     }
 
-    fun KaSession.tryBuildOptimizedImports(): List<ImportPath>? {
+    context(_: KaSession)
+    fun tryBuildOptimizedImports(): List<ImportPath>? {
         val importsToGenerate = hashSetOf<ImportPath>()
         importsToGenerate += importRules.filterIsInstance<ImportRule.Add>().map { it.importPath }
 
@@ -126,7 +130,7 @@ internal class OptimizedImportsBuilder(
         }
 
         val importingScopes = buildImportingScopes(file, importsToGenerate.filter { it.isAllUnder })
-        val hierarchicalScope = HierarchicalScope.run { createFrom(importingScopes) }
+        val hierarchicalScope = HierarchicalScope.createFrom(importingScopes)
 
         for (fqName in classNamesToCheck) {
             val foundClassifiers = hierarchicalScope.findClassifiers(fqName.shortName()).firstOrNull()
@@ -204,10 +208,11 @@ internal class OptimizedImportsBuilder(
         }
     }
 
-    private fun KaSession.resolveToSymbolInfo(originalReference: KtReference): List<SymbolInfo> {
-        val usedReference = UsedReference.run { createFrom(originalReference) } ?: return emptyList()
-        val referencedSymbols = usedReference.run { resolveToReferencedSymbols() }
-        return referencedSymbols.map { it.run { toSymbolInfo() } }
+    context(_: KaSession)
+    private fun resolveToSymbolInfo(originalReference: KtReference): List<SymbolInfo> {
+        val usedReference = UsedReference.createFrom(originalReference) ?: return emptyList()
+        val referencedSymbols = usedReference.resolveToReferencedSymbols()
+        return referencedSymbols.map { it.toSymbolInfo() }
     }
 
     private fun areTargetsEqual(
@@ -262,14 +267,16 @@ internal class OptimizedImportsBuilder(
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }
 
-    private fun KaSession.canUseStarImport(importableSymbol: SymbolInfo, fqName: FqName): Boolean = when {
+    context(_: KaSession)
+    private fun canUseStarImport(importableSymbol: SymbolInfo, fqName: FqName): Boolean = when {
         fqName.parent().isRoot -> false
         // star import from objects is not allowed
         (containingClassSymbol(importableSymbol) as? KaClassSymbol)?.classKind?.isObject == true -> false
         else -> true
     }
 
-    private fun KaSession.nameCountToUseStar(symbol: SymbolInfo): Int {
+    context(_: KaSession)
+    private fun nameCountToUseStar(symbol: SymbolInfo): Int {
         if (containingClassSymbol(symbol) == null) {
             return codeStyleSettings.NAME_COUNT_TO_USE_STAR_IMPORT
         } else {

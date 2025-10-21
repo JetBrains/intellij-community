@@ -249,7 +249,7 @@ public class UsageViewPresentation {
   /**
    * @deprecated Use {@link #setReplaceString(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setReplacePattern(Pattern replacePattern) { }
 
   public void setReplaceString(String replaceString) {

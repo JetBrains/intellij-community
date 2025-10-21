@@ -22,7 +22,9 @@ final class PostfixTemplatesCompletionProvider extends CompletionProvider<Comple
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
     Editor editor = parameters.getEditor();
-    if (!isCompletionEnabled(parameters) || LiveTemplateCompletionContributor.shouldShowAllTemplates() ||
+    boolean showAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup();
+    if (!isCompletionEnabled(parameters) ||
+        LiveTemplateCompletionContributor.shouldShowAllTemplates() && !showAsSeparateGroup ||
         editor.getCaretModel().getCaretCount() != 1) {
       // disabled or covered with com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
       return;
@@ -31,7 +33,11 @@ final class PostfixTemplatesCompletionProvider extends CompletionProvider<Comple
     PsiFile originalFile = parameters.getOriginalFile();
     PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(originalFile, editor);
     if (postfixLiveTemplate != null) {
-      postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(new MyPrefixMatcher(result.getPrefixMatcher().getPrefix())));
+      PrefixMatcher matcher = result.getPrefixMatcher();
+      if (!showAsSeparateGroup) {
+        matcher = new MyPrefixMatcher(matcher.getPrefix());
+      }
+      postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(matcher));
       String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(editor, originalFile));
       if (possibleKey != null) {
         result = result.withPrefixMatcher(possibleKey);
@@ -43,7 +49,7 @@ final class PostfixTemplatesCompletionProvider extends CompletionProvider<Comple
 
   private static boolean isCompletionEnabled(@NotNull CompletionParameters parameters) {
     ProgressManager.checkCanceled();
-    if (!parameters.isAutoPopup()) {
+    if (!parameters.isAutoPopup() && !PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup()) {
       return false;
     }
 

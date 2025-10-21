@@ -119,7 +119,7 @@ fun demoComponents(): DialogPanel {
       spinner(0.0..100.0, 0.01)
     }
 
-    row("spinner(0.0..100.0, 0.01):") {
+    row("slider(0, 10, 1, 5):") {
       slider(0, 10, 1, 5)
         .labelTable(mapOf(
           0 to JLabel("0"),

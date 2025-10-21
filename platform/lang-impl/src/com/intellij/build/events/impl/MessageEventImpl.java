@@ -1,38 +1,68 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
-import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.BuildEvents;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
+import com.intellij.build.events.BuildEventsNls.Title;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.MessageEventResult;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 /**
  * @author Vladislav.Soroka
  */
+@Internal
 public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent {
 
   private final @NotNull Kind myKind;
-  private final @NotNull @BuildEventsNls.Title String myGroup;
+  private final @NotNull @Title String myGroup;
+  private final @Nullable Navigatable myNavigatable;
 
-  public MessageEventImpl(@NotNull Object parentId,
-                          @NotNull Kind kind,
-                          @Nullable @BuildEventsNls.Title String group,
-                          @NotNull @BuildEventsNls.Message String message,
-                          @Nullable @BuildEventsNls.Description String detailedMessage) {
-    super(new Object(), parentId, System.currentTimeMillis(), message);
+  @Internal
+  public MessageEventImpl(
+    @Nullable Object id,
+    @Nullable Object parentId,
+    @Nullable Long time,
+    @NotNull @Message String message,
+    @Nullable @Hint String hint,
+    @Nullable @Description String description,
+    @NotNull Kind kind,
+    @Nullable @Title String group,
+    @Nullable Navigatable navigatable
+  ) {
+    super(id, parentId, time, message, hint, description);
     myKind = kind;
-    myGroup = group == null ? LangBundle.message("build.event.title.other.messages") : group;
-    setDescription(detailedMessage);
+    myGroup = notNull(group, () -> LangBundle.message("build.event.title.other.messages"));
+    myNavigatable = navigatable;
+  }
+
+  /**
+   * @deprecated Use {@link BuildEvents#message()} event builder instead.
+   */
+  @Deprecated
+  public MessageEventImpl(
+    @NotNull Object parentId,
+    @NotNull Kind kind,
+    @Nullable @Title String group,
+    @NotNull @Message String message,
+    @Nullable @Description String detailedMessage
+  ) {
+    this(null, parentId, null, message, null, detailedMessage, kind, group, null);
   }
 
   @Override
-  public final void setDescription(@Nullable @BuildEventsNls.Description String description) {
+  public final void setDescription(@Nullable @Description String description) {
     super.setDescription(description);
   }
 
@@ -48,11 +78,11 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
 
   @Override
   public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-    return null;
+    return myNavigatable;
   }
 
   @Override
-  public MessageEventResult getResult() {
+  public @NotNull MessageEventResult getResult() {
     return new MessageEventResult() {
       @Override
       public Kind getKind() {

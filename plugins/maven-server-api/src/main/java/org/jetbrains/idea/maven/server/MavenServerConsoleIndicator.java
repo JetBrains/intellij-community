@@ -30,6 +30,8 @@ public interface MavenServerConsoleIndicator {
   @NotNull
   List<MavenArtifactEvent> pullDownloadEvents();
 
+  @NotNull List<DownloadArtifactEvent> pullDownloadArtifactEvents();
+
   @NotNull
   List<MavenServerConsoleEvent> pullConsoleEvents();
 

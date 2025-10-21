@@ -1,17 +1,15 @@
-from _typeshed import Incomplete
-
 def paged_search_generator(
     connection,
     search_base,
     search_filter,
     search_scope="SUBTREE",
     dereference_aliases="ALWAYS",
-    attributes: Incomplete | None = None,
+    attributes=None,
     size_limit: int = 0,
     time_limit: int = 0,
     types_only: bool = False,
     get_operational_attributes: bool = False,
-    controls: Incomplete | None = None,
+    controls=None,
     paged_size: int = 100,
     paged_criticality: bool = False,
 ) -> None: ...
@@ -21,12 +19,12 @@ def paged_search_accumulator(
     search_filter,
     search_scope="SUBTREE",
     dereference_aliases="ALWAYS",
-    attributes: Incomplete | None = None,
+    attributes=None,
     size_limit: int = 0,
     time_limit: int = 0,
     types_only: bool = False,
     get_operational_attributes: bool = False,
-    controls: Incomplete | None = None,
+    controls=None,
     paged_size: int = 100,
     paged_criticality: bool = False,
 ): ...

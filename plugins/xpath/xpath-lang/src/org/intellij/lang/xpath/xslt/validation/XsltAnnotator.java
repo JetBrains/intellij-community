@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -33,7 +34,7 @@ import org.intellij.lang.xpath.xslt.quickfix.FlipOperandsFix;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltAnnotator implements Annotator {
+public class XsltAnnotator implements Annotator, DumbAware {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     final boolean isXslt = ContextProvider.getContextProvider(psiElement) instanceof XsltContextProviderBase;

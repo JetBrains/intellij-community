@@ -32,6 +32,7 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcsUtil.VcsUIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.LayoutFocusTraversalPolicy
@@ -56,15 +57,19 @@ abstract class NonModalCommitPanel(
   private var commitInputBorder: CommitInputBorder? = null
 
   private val mainPanel: BorderLayoutPanel = object : BorderLayoutPanel(), UiDataProvider {
+    init {
+      isOpaque = false
+    }
+
     override fun uiDataSnapshot(sink: DataSink) {
       DataSink.uiDataSnapshot(sink, commitMessage)
       uiDataSnapshotFromProviders(sink)
     }
   }
 
-  protected val centerPanel: BorderLayoutPanel = JBUI.Panels.simplePanel()
+  protected val centerPanel: BorderLayoutPanel = JBUI.Panels.simplePanel().also { it.isOpaque = false }
 
-  private val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0))
+  private val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0)).also { it.isOpaque = false }
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar: ActionToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
@@ -231,6 +236,7 @@ abstract class NonModalCommitPanel(
     internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
     internal val COMMIT_OPTIONS_POPUP_MINIMUM_SIZE = 300
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Extracted to a separate file",
                 replaceWith = ReplaceWith("showAbove(component)", "com.intellij.vcsUtil.showAbove"))
     fun JBPopup.showAbove(component: JComponent) = VcsUIUtil.showPopupAbove(this, component)

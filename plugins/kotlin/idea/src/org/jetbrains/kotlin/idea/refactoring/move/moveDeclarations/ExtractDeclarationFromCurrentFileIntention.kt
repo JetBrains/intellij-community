@@ -43,7 +43,7 @@ private const val TIMEOUT_FOR_IMPORT_OPTIMIZING_MS: Long = 700L
 
 class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<KtClassOrObject>(
     KtClassOrObject::class.java,
-    KotlinBundle.lazyMessage("intention.extract.declarations.from.file.text")
+    KotlinBundle.messagePointer("intention.extract.declarations.from.file.text")
 ), LowPriorityAction {
     private fun KtClassOrObject.tryGetExtraClassesToMove(): List<KtNamedDeclaration>? {
 
@@ -71,7 +71,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
         val endOffset = element.nameIdentifier?.endOffset ?: return null
 
         setTextGetter(
-            KotlinBundle.lazyMessage(
+            KotlinBundle.messagePointer(
                 "intention.extract.declarations.from.file.text.details",
                 element.name.toString(),
                 extraClassesToMove.size

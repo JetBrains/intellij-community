@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
@@ -11,8 +11,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -97,7 +97,9 @@ private class FileNotInSourceRootService(
           fileSystem.addVirtualFileListener(listener)
           Disposer.register(fileEditor) { fileSystem.removeVirtualFileListener(listener) }
 
-          DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, infoAndFile.first, infoAndFile.second, null)
+          DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(
+            GROUP, infoAndFile.first, infoAndFile.second, null, null
+          )
         }
       }
     }
@@ -110,7 +112,7 @@ private class FileNotInSourceRootService(
 
     val fileIndex = ProjectFileIndex.getInstance(project)
     if (fileIndex.isInSource(virtualFile) || fileIndex.isExcluded(virtualFile) || fileIndex.isUnderIgnored(virtualFile)) return null
-    if (fileIndex.getOrderEntriesForFile(virtualFile).isNotEmpty()) return null
+    if (fileIndex.findContainingLibraries(virtualFile).isNotEmpty() || fileIndex.findContainingSdks(virtualFile).isNotEmpty()) return null
 
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as? PsiJavaFile ?: return null
     if (DaemonCodeAnalyzerEx.getInstanceEx(project).hasFileLevelHighlights(GROUP, psiFile)) return null

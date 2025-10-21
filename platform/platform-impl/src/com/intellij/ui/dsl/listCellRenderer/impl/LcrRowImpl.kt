@@ -66,6 +66,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var selectionColor: Color? = null
   override var toolTipText: @NlsContexts.Tooltip String? = null
   override var rowHeight: Int? = JBUI.CurrentTheme.List.rowHeight()
+  override var rowWidth: Int? = null
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
@@ -189,12 +190,12 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       }
     }
 
-    applyRowStyle(result, renderingType, rowHeight ?: (minHeight + JBUIScale.scale(2)), roundSelectionTop, roundSelectionBottom)
+    applyRowStyle(result, renderingType, rowHeight ?: (minHeight + JBUIScale.scale(2)), rowWidth, roundSelectionTop, roundSelectionBottom)
 
     return result
   }
 
-  private fun applyRowStyle(rendererPanel: RendererPanel, renderingType: RenderingType, rowHeight: Int,
+  private fun applyRowStyle(rendererPanel: RendererPanel, renderingType: RenderingType, rowHeight: Int, rowWidth: Int?,
                             roundSelectionTop: Boolean, roundSelectionBottom: Boolean) {
     if (ExperimentalUI.isNewUI()) {
       if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
@@ -202,7 +203,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       }
       else {
         rendererPanel.initItem(background, if (selected) selectionColor else null,
-                               rowHeight,
+                               rowHeight, rowWidth,
                                roundSelectionTop, roundSelectionBottom)
       }
     }
@@ -434,7 +435,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     }
   }
 
-  fun initItem(background: Color?, selectionColor: Color?, rowHeight: Int,
+  fun initItem(background: Color?, selectionColor: Color?, rowHeight: Int, rowWidth: Int?,
                roundSelectionTop: Boolean, roundSelectionBottom: Boolean) {
     val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get()
     val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets()
@@ -446,6 +447,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
       selectionInsets = JBInsets.create(0, leftRightInset)
       border = JBUI.Borders.empty(0, innerInsets.left + leftRightInset, 0, innerInsets.right + leftRightInset)
       preferredHeight = rowHeight
+      preferredWidth = rowWidth
       selectionArcCorners = when {
         roundSelectionTop && roundSelectionBottom -> SelectablePanel.SelectionArcCorners.ALL
         roundSelectionTop -> SelectablePanel.SelectionArcCorners.TOP

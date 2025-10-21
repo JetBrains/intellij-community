@@ -287,6 +287,8 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
   /**
    * Returns the list of names in the class' __slots__ attribute, or null if the class
    * does not define such an attribute.
+   * <p>
+   * Does not include synthesized slot attributes from <code>@dataclass(slots=True)</code>.
    *
    * @return the list of names or null.
    */

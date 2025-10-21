@@ -35,8 +35,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private boolean myUsePreviewTab;
   private ScrollType myScrollType = ScrollType.CENTER;
 
-  // todo IJPL-339 design properly
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull CodeInsightContext context, int offset) {
     this(project, file, context, -1, -1, offset, false);
   }

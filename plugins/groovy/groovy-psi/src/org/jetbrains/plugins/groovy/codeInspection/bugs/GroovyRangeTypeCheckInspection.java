@@ -10,6 +10,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -35,8 +36,9 @@ public final class GroovyRangeTypeCheckInspection extends BaseInspection {
     return new MyVisitor();
   }
 
+  @VisibleForTesting
   @Override
-  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     final GrRangeExpression range = (GrRangeExpression)location;
     final PsiType type = range.getType();
     final List<LocalQuickFix> fixes = new ArrayList<>(3);

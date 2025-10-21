@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ex.InspectionElementsMergerBase
 import com.intellij.openapi.util.JDOMExternalizerUtil
 import org.jdom.Element
 
-class MissingJavadocMerger: InspectionElementsMergerBase() {
+public class MissingJavadocMerger: InspectionElementsMergerBase() {
   override fun getMergedToolName(): String = "MissingJavadoc"
   override fun getSourceToolNames(): Array<String> = arrayOf("JavaDoc")
   override fun transformElement(sourceToolName: String, sourceElement: Element, toolElement: Element): Element {

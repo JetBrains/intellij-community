@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,8 @@ public final class AnalysisActionUtils {
   /**
    * @deprecated Use {@link #getInspectionScope(DataContext, Project, boolean)} instead.
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext,
                                                            @NotNull Project project,
                                                            Boolean acceptNonProjectDirectories) {

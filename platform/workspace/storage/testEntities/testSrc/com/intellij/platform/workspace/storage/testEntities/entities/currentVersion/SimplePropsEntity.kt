@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -15,50 +15,4 @@ interface SimplePropsEntity: WorkspaceEntity {
   val set: Set<List<String>>
   val map: Map<Set<String>, List<String>> // Change is here Set<Int> to Set<String>
   val bool: Boolean
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<SimplePropsEntity> {
-    override var entitySource: EntitySource
-    var text: String
-    var list: MutableList<Int>
-    var set: MutableSet<List<String>>
-    var map: Map<Set<String>, List<String>>
-    var bool: Boolean
-  }
-
-  companion object : EntityType<SimplePropsEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      text: String,
-      list: List<Int>,
-      set: Set<List<String>>,
-      map: Map<Set<String>, List<String>>,
-      bool: Boolean,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.text = text
-      builder.list = list.toMutableWorkspaceList()
-      builder.set = set.toMutableWorkspaceSet()
-      builder.map = map
-      builder.bool = bool
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifySimplePropsEntity(
-  entity: SimplePropsEntity,
-  modification: SimplePropsEntity.Builder.() -> Unit,
-): SimplePropsEntity {
-  return modifyEntity(SimplePropsEntity.Builder::class.java, entity, modification)
-}
-//endregion

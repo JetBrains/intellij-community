@@ -5,5 +5,4 @@ fun foo(file: File): String {
     return file.<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: "ext"

@@ -13,9 +13,12 @@ import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Color
 import java.awt.Component
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.ListCellRenderer
@@ -29,7 +32,16 @@ private val VGAP = JBUI.value(2f)
 
 internal class ActivityItemRenderer(private val presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : ListCellRenderer<ActivityItem> {
 
-  private val contentPanel = BorderLayoutPanel().apply {
+  private val contentPanel = object : BorderLayoutPanel() {
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleJPanel() {
+          override fun getAccessibleRole() = AccessibleRole.LIST_ITEM
+        }
+      }
+      return accessibleContext
+    }
+  }.apply {
     isOpaque = true
     putClientProperty(JBList.IGNORE_LIST_ROW_HEIGHT, true)
     border = JBUI.Borders.empty(0, ROW_LEFT_RIGHT_BORDER)
@@ -55,6 +67,7 @@ internal class ActivityItemRenderer(private val presentationFunction: (item: Act
     val rowComponent = createRowComponent(list, activityPresentation.text, activityPresentation.icon, value.timestamp,
                                           cellBackgroundColor, isSelected, isSelectionTop, isSelectionBottom)
     contentPanel.addToCenter(rowComponent)
+    contentPanel.accessibleContext.accessibleName = rowComponent.accessibleContext.accessibleName
 
     return contentPanel
   }
@@ -82,6 +95,9 @@ private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, 
     timestampLabel.componentStyle = UIUtil.ComponentStyle.SMALL
     timestampLabel.foreground = if (isSelected) list.selectionForeground else JBColor.GRAY
     content.add(timestampLabel)
+    content.accessibleContext.accessibleName = AccessibleContextUtil.getCombinedName("\n", mainLabel, timestampLabel)
+  } else {
+    content.accessibleContext.accessibleName = mainLabel.accessibleContext.accessibleName
   }
 
   return content

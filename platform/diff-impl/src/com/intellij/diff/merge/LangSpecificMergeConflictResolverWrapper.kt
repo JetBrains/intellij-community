@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class LangSpecificMergeConflictResolverWrapper(private val project: Project?, contentList: List<DocumentContent>) {
   private val resolver: LangSpecificMergeConflictResolver? = if (`is`("semantic.merge.conflict.resolution", false)) {
-    LangSpecificMergeConflictResolver.findApplicable(project, contentList)
+    LangSpecificMergeConflictResolver.findApplicable(contentList)
   }
   else {
     null

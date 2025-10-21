@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
@@ -306,7 +307,7 @@ class OutflowSlicer(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun processImplicitInvokeCall(functionCall: KaCallableMemberCall<*, *>, idx: Int) {
         val receiverValue = functionCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue ?: return
         var receiverType: KaType? = receiverValue.type

@@ -2,6 +2,8 @@
 package com.intellij.psi.impl;
 
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLambdaParameterType;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -92,5 +94,20 @@ public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTe
       PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
     assertNotNull(ref);
     assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+  }
+
+  public void testLambdaInIfCondition() {
+    // code is invalid, test that we don't throw exceptions
+    myFixture.configureByText("Test.java", """
+      class Test {
+        void test() {
+          if (<caret>s -> s.equalsIgnoreCase("foo")) { }
+        }
+      }
+      """);
+    PsiLambdaExpression lambda =
+      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiLambdaExpression.class);
+    assertNotNull(lambda);
+    assertInstanceOf(lambda.getParameterList().getParameters()[0].getType(), PsiLambdaParameterType.class);
   }
 }

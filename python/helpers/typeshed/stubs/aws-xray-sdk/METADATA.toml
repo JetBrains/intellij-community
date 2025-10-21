@@ -1,6 +1,2 @@
 version = "2.14.*"
 upstream_repository = "https://github.com/aws/aws-xray-sdk-python"
-partial_stub = true
-
-[tool.stubtest]
-ignore_missing_stub = true

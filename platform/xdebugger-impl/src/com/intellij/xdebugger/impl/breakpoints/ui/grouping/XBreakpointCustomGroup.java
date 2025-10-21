@@ -3,9 +3,8 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,7 @@ public class XBreakpointCustomGroup extends XBreakpointGroup {
 
   public XBreakpointCustomGroup(@NotNull String name, Project project) {
     myName = name;
-    myIsDefault = name.equals(((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager()).getDefaultGroup());
+    myIsDefault = name.equals(XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getDefaultGroup());
   }
 
   @Override

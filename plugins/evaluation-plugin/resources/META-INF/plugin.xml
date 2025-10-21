@@ -10,24 +10,27 @@
     <p>The plugin deals with the quality evaluation of IDE features based on artificial queries.</p>
   ]]></description>
   
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.evaluationPlugin.languages.java"/>
     <module name="intellij.evaluationPlugin.languages.python"/>
     <module name="intellij.evaluationPlugin.languages.kotlin"/>
 
     <module name="intellij.evaluationPlugin.languages.cpp"/>
+    <module name="intellij.evaluationPlugin.languages.cppRd"/>
     <module name="intellij.evaluationPlugin.languages.csharp"/>
     <module name="intellij.evaluationPlugin.languages.go"/>
     <module name="intellij.evaluationPlugin.languages.js"/>
     <module name="intellij.evaluationPlugin.languages.json"/>
     <module name="intellij.evaluationPlugin.languages.markdown"/>
     <module name="intellij.evaluationPlugin.languages.php"/>
+    <module name="intellij.evaluationPlugin.languages.properties"/>
     <module name="intellij.evaluationPlugin.languages.pythonDocker"/>
     <module name="intellij.evaluationPlugin.languages.ruby"/>
     <module name="intellij.evaluationPlugin.languages.rust"/>
     <module name="intellij.evaluationPlugin.languages.sql"/>
     <module name="intellij.evaluationPlugin.languages.terraform"/>
     <module name="intellij.evaluationPlugin.languages.xml"/>
+    <module name="intellij.evaluationPlugin.languages.terminal"/>
     <module name="intellij.evaluationPlugin.languages.yaml"/>
     <module name="intellij.evaluationPlugin.inlineCompletion"/>
     <module name="intellij.evaluationPlugin.fullLine"/>
@@ -42,6 +45,7 @@
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.platform.warmup"/>
+    <module name="intellij.libraries.commons.text"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

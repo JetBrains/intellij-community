@@ -33,7 +33,7 @@ import org.jetbrains.intellij.build.impl.compilation.keepCompilationState
 import org.jetbrains.intellij.build.impl.compilation.reuseOrCompile
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
-import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
+import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleRepository
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.readZipFile
@@ -67,6 +67,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.stream.Stream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
 
@@ -75,7 +76,7 @@ fun createCompilationContextBlocking(
   projectHome: Path,
   defaultOutputRoot: Path,
   options: BuildOptions = BuildOptions(),
-): CompilationContextImpl = runBlocking(Dispatchers.Default) {
+): CompilationContext = runBlocking(Dispatchers.Default) {
   createCompilationContext(projectHome, defaultOutputRoot, options)
 }
 
@@ -83,10 +84,10 @@ suspend fun createCompilationContext(
   projectHome: Path,
   defaultOutputRoot: Path,
   options: BuildOptions = BuildOptions(),
-): CompilationContextImpl {
+): CompilationContext {
   val logDir = options.logDir ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
-  return CompilationContextImpl.createCompilationContext(projectHome, { defaultOutputRoot }, options, setupTracer = false)
+  return CompilationContextImpl.createCompilationContext(projectHome, { defaultOutputRoot }, options, setupTracer = false).asBazelIfNeeded
 }
 
 internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, projectHome: Path, artifactDir: Path? = null): BuildPaths {
@@ -237,10 +238,11 @@ class CompilationContextImpl private constructor(
     return jdkHome
   }
 
-  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
-    generateRuntimeModuleRepository(this)
-    return OriginalModuleRepositoryImpl(this)
+  private val originalModuleRepository = asyncLazy("Build original module repository") {
+    buildOriginalModuleRepository(this@CompilationContextImpl)
   }
+  
+  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
     val copy = CompilationContextImpl(projectModel, messages, paths, options)
@@ -310,10 +312,9 @@ class CompilationContextImpl private constructor(
     val override = options.classOutDir
     when {
       !override.isNullOrEmpty() -> classesOutputDirectory = Path.of(override)
-      options.useCompiledClassesFromProjectOutput -> check(Files.exists(classesOutputDirectory)) {
-        "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory $classesOutputDirectory doesn't exist"
+      !options.useCompiledClassesFromProjectOutput || isBazelTestRun() -> {
+        classesOutputDirectory = paths.buildOutputDir.resolve("classes")
       }
-      else -> classesOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
     Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
@@ -439,7 +440,7 @@ private fun suppressWarnings(project: JpsProject) {
 
 private suspend fun defineJavaSdk(context: CompilationContext) {
   val homePath = context.getStableJdkHome()
-  val jbrVersionName = "jbr-17"
+  val jbrVersionName = "jbr-21"
   defineJdk(global = context.projectModel.global, jdkName = jbrVersionName, homeDir = homePath)
   readModulesFromReleaseFile(model = context.projectModel, sdkName = jbrVersionName, sdkHome = homePath)
 
@@ -453,10 +454,10 @@ private suspend fun defineJavaSdk(context: CompilationContext) {
   for ((sdkRef, module) in sdkReferenceToFirstModule) {
     val sdkName = sdkRef.sdkName
     val vendorPrefixEnd = sdkName.indexOf('-')
-    val sdkNameWithoutVendor = (if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)).removeSuffix(" (WSL)")
-    check(sdkNameWithoutVendor == "17") {
+    val sdkNameWithoutVendor = (if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1))
+    check(sdkNameWithoutVendor.startsWith("21")) {
       "Project model at ${context.paths.projectHome} [module ${module.name}] requested SDK $sdkNameWithoutVendor, " +
-      "but only '17' is supported as SDK in intellij project"
+      "but only '21' is supported as SDK in intellij project"
     }
 
     if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
@@ -588,4 +589,12 @@ suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePa
       throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
     }
   }
+}
+
+/**
+ * TODO: need to use bazel path, but options.useCompiledClassesFromProjectOutput is true even if intellij.build.use.compiled.classes == false
+ *  see com.intellij.platform.buildScripts.testFramework.BuildScriptTestUtilsKt.createBuildOptionsForTest(org.jetbrains.intellij.build.ProductProperties, java.nio.file.Path, boolean, org.junit.jupiter.api.TestInfo)
+ */
+internal fun isBazelTestRun(): Boolean {
+  return Stream.of("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES").allMatch { bazelTestEnv: String? -> System.getenv(bazelTestEnv) != null }
 }

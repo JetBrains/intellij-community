@@ -1,0 +1,4 @@
+version = "0.8.*"
+# Requires a version of numpy with a `py.typed` file
+requires = ["numpy>=1.21"]
+upstream_repository = "https://github.com/nmslib/hnswlib"

@@ -73,7 +73,7 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener {
     Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
     PsiFile psiFile = document == null ? null : PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile != null) {
-      DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
+      DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile, this);
     }
   }
 

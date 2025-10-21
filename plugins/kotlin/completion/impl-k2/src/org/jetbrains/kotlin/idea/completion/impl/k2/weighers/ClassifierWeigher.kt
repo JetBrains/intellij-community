@@ -21,7 +21,7 @@ internal object ClassifierWeigher {
         NON_LOCAL
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun addWeight(
         lookupElement: LookupElement,
         symbol: KaSymbol,

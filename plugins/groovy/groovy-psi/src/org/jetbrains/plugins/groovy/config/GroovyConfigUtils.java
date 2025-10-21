@@ -41,6 +41,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public static final @NlsSafe String GROOVY2_5 = "2.5";
   public static final @NlsSafe String GROOVY3_0 = "3.0";
   public static final @NlsSafe String GROOVY4_0 = "4.0";
+  public static final @NlsSafe String GROOVY5_0 = "5.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   private static final Map<String, Map<String, Integer>> versionsCompareMap = new LRUMap<>();
@@ -74,6 +75,10 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isAtLeastGroovy40(@NotNull PsiElement element) {
     return getInstance().isVersionAtLeast(element, GROOVY4_0);
+  }
+
+  public static boolean isAtLeastGroovy50(@NotNull PsiElement element) {
+    return getInstance().isVersionAtLeast(element, GROOVY5_0);
   }
 
   public static @NlsSafe String getMavenSdkRepository(@NotNull String groovyVersion) {
@@ -117,13 +122,22 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return isVersionAtLeast(psiElement, version, true);
   }
 
-  public boolean isVersionAtLeast(PsiElement psiElement, String version, boolean unknownResult) {
+  public boolean isVersionAtLeast(@Nullable Module module, @NotNull String version) {
+    return isVersionAtLeast(module, version, true);
+  }
+
+  public boolean isVersionAtLeast(PsiElement psiElement, @NotNull String version, boolean unknownResult) {
     Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
+    return isVersionAtLeast(module, version, unknownResult);
+  }
+
+  public boolean isVersionAtLeast(@Nullable Module module, @NotNull String version, boolean unknownResult) {
     if (module == null) return unknownResult;
     final String sdkVersion = getSDKVersion(module);
     if (sdkVersion == null) return unknownResult;
     return compareSdkVersions(sdkVersion, version) >= 0;
   }
+
 
   public static int compareSdkVersions(@NotNull String leftVersion, @NotNull String rightVersion) {
     return getInstance().compareSdkVersionsInner(leftVersion, rightVersion);

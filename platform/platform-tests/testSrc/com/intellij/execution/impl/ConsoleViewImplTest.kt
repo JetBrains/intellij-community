@@ -249,7 +249,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
         repeat(10_000_000) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT)
           console.print("yyy\n", ConsoleViewContentType.SYSTEM_OUTPUT)
-          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+          UIUtil.dispatchAllInvocationEvents()
         }
         LightPlatformCodeInsightTestCase.type('\n', consoleEditor, project)
         console.waitAllRequests()

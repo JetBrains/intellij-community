@@ -108,7 +108,6 @@ DONT_TRACE = {
     'pydevd_import_class.py': PYDEV_FILE,
     'pydevd_io.py': PYDEV_FILE,
     'pydevd_ipython_console_output.py': PYDEV_FILE,
-    'pydevd_kill_all_pydevd_threads.py': PYDEV_FILE,
     'pydevd_matplotlib_image.py': PYDEV_FILE,
     'pydevd_modify_bytecode.py': PYDEV_FILE,
     'pydevd_numpy.py': PYDEV_FILE,

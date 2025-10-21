@@ -4,9 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -25,19 +23,11 @@ interface Panel : CellBase<Panel> {
 
   override fun enabledIf(predicate: ComponentPredicate): Panel
 
-  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  override fun verticalAlign(verticalAlign: VerticalAlign): Panel
-
   override fun align(align: Align): Panel
 
   override fun resizableColumn(): Panel
 
   override fun gap(rightGap: RightGap): Panel
-
-  @Deprecated("Use customize(UnscaledGaps) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  override fun customize(customGaps: Gaps): Panel
 
   override fun customize(customGaps: UnscaledGaps): Panel
 

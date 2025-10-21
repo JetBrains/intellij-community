@@ -1,35 +1,51 @@
 import re
 import subprocess
-from _typeshed import Incomplete
+from _typeshed import Incomplete, StrPath
 from builtins import range as _range
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Iterable, Iterator
 from datetime import datetime
 from logging import Logger
 from types import TracebackType
-from typing import Any, SupportsIndex, overload
+from typing import Any, Final, Literal, Protocol, SupportsIndex, TypeVar, overload, type_check_only
 from typing_extensions import Self, TypeAlias
 
+from croniter.croniter import croniter
 from cronlog import CronLog
 
 _User: TypeAlias = str | bool | None
+_K = TypeVar("_K")
+_V = TypeVar("_V")
 
-__pkgname__: str
-ITEMREX: re.Pattern[str]
-SPECREX: re.Pattern[str]
-DEVNULL: str
-WEEK_ENUM: list[str]
-MONTH_ENUM: list[str | None]
-SPECIALS: dict[str, str]
-SPECIAL_IGNORE: list[str]
-S_INFO: list[dict[str, Any]]
-WINOS: bool
-POSIX: bool
-SYSTEMV: bool
-ZERO_PAD: bool
+# cron_descriptor.Options class
+@type_check_only
+class _Options(Protocol):
+    casing_type: Literal[1, 2, 3]
+    verbose: bool
+    day_of_week_start_index_zero: bool
+    use_24hour_time_format: bool
+    locale_location: StrPath | None
+    locale_code: str | None
+    def __init__(self) -> None: ...
+
+__pkgname__: Final[str]
+__version__: Final[str]
+ITEMREX: Final[re.Pattern[str]]
+SPECREX: Final[re.Pattern[str]]
+DEVNULL: Final[str]
+WEEK_ENUM: Final[list[str]]
+MONTH_ENUM: Final[list[str | None]]
+SPECIALS_CONVERSION: Final[bool]
+SPECIALS: Final[dict[str, str]]
+SPECIAL_IGNORE: Final[list[str]]
+S_INFO: Final[list[dict[str, str | int | list[str] | list[str | None]]]]
+WINOS: Final[bool]
+POSIX: Final[bool]
+SYSTEMV: Final[bool]
+ZERO_PAD: Final[bool]
 LOG: Logger
-CRON_COMMAND: str
-SHELL: str
+CRON_COMMAND: Final[str]
+SHELL: Final[str]
 current_user: Callable[[], str | None]
 
 class Process:
@@ -50,7 +66,7 @@ class CronTab:
     crons: list[CronItem] | None
     filen: str | None
     cron_command: str
-    env: OrderedVariableList | None
+    env: OrderedVariableList[Incomplete, Incomplete] | None
     root: bool
     intab: str | None
     tabfile: str | None
@@ -73,22 +89,22 @@ class CronTab:
         item: CronItem,
         line: str = ...,
         read: bool = ...,
-        before: str | re.Pattern[str] | list[CronItem] | tuple[CronItem, ...] | Generator[CronItem, Any, Any] | None = ...,
+        before: str | re.Pattern[str] | list[CronItem] | tuple[CronItem, ...] | Generator[CronItem] | None = ...,
     ) -> None: ...
     def write(self, filename: str | None = ..., user: _User = ..., errors: bool = ...) -> None: ...
     def write_to_user(self, user: bool | str = ...) -> None: ...
     # Usually `kwargs` are just `now: datetime | None`, but technically this can
     # work for `CronItem` subclasses, which might define other kwargs.
-    def run_pending(self, **kwargs: Any) -> Iterator[str]: ...
+    def run_pending(self, *, now: datetime | None = ..., **kwargs: Any) -> Iterator[str]: ...
     def run_scheduler(self, timeout: int = -1, cadence: int = 60, warp: bool = False) -> Iterator[str]: ...
-    def render(self, errors: bool = ..., specials: bool | None = ...) -> str: ...
+    def render(self, errors: bool = ...) -> str: ...
     def new(
         self,
         command: str = ...,
         comment: str = ...,
         user: str | None = ...,
         pre_comment: bool = ...,
-        before: str | re.Pattern[str] | list[CronItem] | tuple[CronItem, ...] | Generator[CronItem, Any, Any] | None = ...,
+        before: str | re.Pattern[str] | list[CronItem] | tuple[CronItem, ...] | Generator[CronItem] | None = ...,
     ) -> CronItem: ...
     def find_command(self, command: str | re.Pattern[str]) -> Iterator[CronItem]: ...
     def find_comment(self, comment: str | re.Pattern[str]) -> Iterator[CronItem]: ...
@@ -116,7 +132,7 @@ class CronItem:
     comment: str
     command: str | None
     last_run: datetime | None
-    env: OrderedVariableList
+    env: OrderedVariableList[Incomplete, Incomplete]
     pre_comment: bool
     marker: str | None
     stdin: str | None
@@ -133,7 +149,7 @@ class CronItem:
     def enable(self, enabled: bool = ...) -> bool: ...
     def is_enabled(self) -> bool: ...
     def is_valid(self) -> bool: ...
-    def render(self, specials: bool = ...) -> str: ...
+    def render(self) -> str: ...
     def every_reboot(self) -> None: ...
     def every(self, unit: int = ...) -> Every: ...
     def setall(self, *args: Any) -> None: ...
@@ -157,10 +173,18 @@ class CronItem:
     def frequency_at_hour(self, year: None = None, month: None = None, day: None = None, hour: None = None) -> int: ...
     def run_pending(self, now: datetime | None = ...) -> int | str: ...
     def run(self) -> str: ...
-    # TODO: use types from `croniter` module here:
-    def schedule(self, date_from: datetime | None = ...): ...
-    # TODO: use types from `cron_descriptor` here:
-    def description(self, **kw): ...
+    def schedule(self, date_from: datetime | None = ...) -> croniter: ...
+    def description(
+        self,
+        *,
+        options: _Options | None = None,
+        casing_type: Literal[1, 2, 3] = 2,
+        verbose: bool = False,
+        day_of_week_start_index_zero: bool = True,
+        use_24hour_time_format: bool = ...,
+        locale_location: StrPath | None = None,
+        locale_code: str | None = ...,
+    ) -> str | None: ...
     @property
     def log(self) -> CronLog: ...
     @property
@@ -202,7 +226,7 @@ class CronSlices(list[CronSlice]):
     def is_valid(cls, *args: Any) -> bool: ...
     def setall(self, *slices: str) -> None: ...
     def clean_render(self) -> str: ...
-    def render(self, specials: bool = ...) -> str: ...
+    def render(self) -> str: ...
     def clear(self) -> None: ...
     def frequency(self, year: int | None = ...) -> int: ...
     def frequency_per_year(self, year: int | None = ...) -> int: ...
@@ -288,11 +312,12 @@ class CronRange:
     def __gt__(self, value: object) -> bool: ...
     def __int__(self) -> int: ...
 
-# TODO: make generic
-class OrderedVariableList(OrderedDict[Incomplete, Incomplete]):
-    job: Incomplete
-    def __init__(self, *args: Any, **kw: Any) -> None: ...
+class OrderedVariableList(OrderedDict[_K, _V]):
+    job: CronItem | None
+    # You cannot actually pass `*args`, it will raise an exception,
+    # also known kwargs are added:
+    def __init__(self, *, job: CronItem | None = None, **kw: _V) -> None: ...
     @property
-    def previous(self): ...
+    def previous(self) -> Self | None: ...
     def all(self) -> Self: ...
-    def __getitem__(self, key): ...
+    def __getitem__(self, key: _K) -> _V: ...

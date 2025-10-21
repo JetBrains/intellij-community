@@ -3,8 +3,13 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.writeText
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.getBuildScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 
@@ -20,7 +25,10 @@ fun GradleImportingTestCase.createSettingsFile(
   configure: GradleSettingScriptBuilder<*>.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
-    projectRoot.createSettingsFile(relativeModulePath, GradleDsl.GROOVY, settingsScript(configure))
+    myProjectRoot.findOrCreateDirectory(relativeModulePath)
+      .findOrCreateFile(getSettingsScriptName(GradleDsl.GROOVY)).apply {
+        writeText(settingsScript(configure))
+      }
   }
 }
 
@@ -29,6 +37,18 @@ fun GradleImportingTestCase.createBuildFile(
   configure: TestGradleBuildScriptBuilder.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
-    projectRoot.createBuildFile(relativeModulePath, GradleDsl.GROOVY, script(configure))
+    myProjectRoot.findOrCreateDirectory(relativeModulePath)
+      .findOrCreateFile(getBuildScriptName(GradleDsl.GROOVY)).apply {
+        writeText(script(configure))
+      }
+  }
+}
+
+fun GradleImportingTestCase.createGradleWrapper(
+  relativeModulePath: String = ".",
+) {
+  runWriteActionAndGet {
+    myProjectRoot.findOrCreateDirectory(relativeModulePath)
+      .createGradleWrapper(currentGradleVersion)
   }
 }

@@ -384,8 +384,8 @@ internal object ChangeVisibilityFixFactories {
             is KtPrimaryConstructor -> SpecialNames.INIT.asString()
             is KtPropertyAccessor -> symbol.name?.asString()?.let {
                 when {
-                    isGetter() -> "<get-$it>"
-                    isSetter() -> "<set-$it>"
+                    isGetter -> "<get-$it>"
+                    isSetter -> "<set-$it>"
                     else -> null
                 }
             }

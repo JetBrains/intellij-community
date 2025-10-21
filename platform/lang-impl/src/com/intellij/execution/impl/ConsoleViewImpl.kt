@@ -85,6 +85,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -576,7 +577,8 @@ open class ConsoleViewImpl protected constructor(
     }
   }
 
-  internal var useOwnModalityForUpdates: Boolean = false
+  @ApiStatus.Internal
+  var useOwnModalityForUpdates: Boolean = false
 
   protected open val stateForUpdate: ModalityState?
     get() = if (useOwnModalityForUpdates) ModalityState.stateForComponent(this) else null
@@ -834,7 +836,7 @@ open class ConsoleViewImpl protected constructor(
       group = actionManager.getAction(CONSOLE_VIEW_POPUP_MENU) as ActionGroup
     }
     return object : ActionGroupWrapper(group) {
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
         val children = super.getChildren(e)
         val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
         if (postProcessors.isEmpty()) return children

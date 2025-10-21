@@ -15,7 +15,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

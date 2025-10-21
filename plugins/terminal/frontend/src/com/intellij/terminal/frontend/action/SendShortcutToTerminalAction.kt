@@ -2,10 +2,13 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.frontend.TerminalEventDispatcher
-import com.intellij.terminal.frontend.TimedKeyEvent
+import com.intellij.terminal.frontend.view.impl.TerminalEventsHandler
+import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
+import com.intellij.terminal.frontend.view.impl.handleKeyEvent
 import org.jetbrains.plugins.terminal.TerminalBundle
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
@@ -24,7 +27,7 @@ import javax.swing.KeyStroke
  * It is also promoted, so it's considered before other platform actions.
  */
 internal class SendShortcutToTerminalAction(
-  private val dispatcher: TerminalEventDispatcher,
+  private val handler: TerminalEventsHandler,
 ) : DumbAwareAction() {
 
   private var actions: List<AnAction> = emptyList()
@@ -70,7 +73,12 @@ internal class SendShortcutToTerminalAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val event = e.inputEvent as? KeyEvent ?: return
-    dispatcher.handleKeyEvent(TimedKeyEvent(event))
+    LOG.trace { "All actions bound to this shortcut are disabled, sending key event to terminal: $event" }
+    handler.handleKeyEvent(TimedKeyEvent(event))
+  }
+
+  companion object {
+    private val LOG = logger<SendShortcutToTerminalAction>()
   }
 }
 

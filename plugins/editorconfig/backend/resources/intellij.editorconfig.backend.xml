@@ -1,5 +1,5 @@
 <!-- Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.spellchecker"/>
@@ -22,7 +22,7 @@
     <codeStyleSettingsModifier id="org.editorconfig.EditorConfigCodeStyleSettingsModifier" implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" id="editorConfigTrailingSpacesOptionsProvider"/>
-    <fileEditorProvider id="org.editorconfig.configmanagement.editor" implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider" fileType="EditorConfig"/>
+    <fileEditorProvider id="org.editorconfig.configmanagement.editor" implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
     <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
     <stripTrailingSpacesFilterFactory implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesFilterFactory"/>

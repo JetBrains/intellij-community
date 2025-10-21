@@ -13,14 +13,15 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 final class IgnoredFileCache {
   private final ConcurrentBitSet myNonIgnoredIds = ConcurrentBitSet.create();
-  private final IgnoredPatternSet myIgnoredPatterns;
+  private final Predicate<? super CharSequence> myIsIgnored;
   private int myVfsEventNesting;
 
-  IgnoredFileCache(@NotNull IgnoredPatternSet ignoredPatterns) {
-    myIgnoredPatterns = ignoredPatterns;
+  IgnoredFileCache(@NotNull Predicate<? super CharSequence> isIgnored) {
+    myIsIgnored = isIgnored;
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
     connect.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -75,7 +76,7 @@ final class IgnoredFileCache {
     return result;
   }
 
-  private boolean calcIgnored(VirtualFile file) {
-    return myIgnoredPatterns.isIgnored(file.getNameSequence());
+  private boolean calcIgnored(@NotNull VirtualFile file) {
+    return myIsIgnored.test(file.getNameSequence());
   }
 }

@@ -35,7 +35,8 @@ public class TestStatusLine extends NonOpaquePanel {
   private final JPanel myProgressPanel;
 
   @TestOnly
-  protected SimpleColoredComponent getStateDescription() {
+  @ApiStatus.Internal
+  public SimpleColoredComponent getStateDescription() {
     return myStateDescription;
   }
 
@@ -63,15 +64,14 @@ public class TestStatusLine extends NonOpaquePanel {
     stateWrapper.add(myWarning, constraint.next().insetLeft(12));
 
     add(stateWrapper, BorderLayout.WEST);
-    myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
+    myState.append(ExecutionBundle.message("junit.running.info.starting.label"));
 
     myConverter = new HtmlToSimpleColoredComponentConverter((tag, attr) -> {
       final String className = (String) attr.getAttribute(HTML.Attribute.CLASS);
-      if (className == null) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
       return switch (className) {
         case "failed" -> FAILED_ATTRIBUTES;
         case "ignored" -> IGNORED_ATTRIBUTES;
-        default -> SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        case null, default -> SimpleTextAttributes.REGULAR_ATTRIBUTES;
       };
     });
   }
@@ -174,7 +174,7 @@ public class TestStatusLine extends NonOpaquePanel {
   /**
    * @deprecated Use {@link #setStatus(String)} with values from {@link JBUI.CurrentTheme.ProgressBar}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setStatusColor(Color color) {
     myProgressBar.setForeground(color);
   }
@@ -182,7 +182,7 @@ public class TestStatusLine extends NonOpaquePanel {
   /**
    * @deprecated Use {@link #getStatus()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Color getStatusColor() {
     return myProgressBar.getForeground();
   }
@@ -213,6 +213,12 @@ public class TestStatusLine extends NonOpaquePanel {
     return myState.toString();
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull SimpleColoredComponent.ColoredIterator getStateIterator() {
+    return myState.iterator();
+  }
+  
   @ApiStatus.Internal
   public void setWarning(@Nls @NotNull String suffix) {
     myWarning.setText(suffix);

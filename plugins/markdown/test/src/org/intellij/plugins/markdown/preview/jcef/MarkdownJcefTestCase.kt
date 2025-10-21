@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.preview.jcef
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.ProjectExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.ui.jcef.JBCefBrowser
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -12,12 +12,12 @@ import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefLoadHandler
 import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.RegisterExtension
 import java.awt.BorderLayout
 import javax.swing.JFrame
 import kotlin.coroutines.resume
 
 @ExtendWith(WaitForBuiltInServerExtension::class)
+@TestApplication
 abstract class MarkdownJcefTestCase {
 
   @TestDisposable
@@ -81,9 +81,5 @@ abstract class MarkdownJcefTestCase {
         }
       }, cefBrowser)
     }
-
-    @JvmField
-    @RegisterExtension
-    val projectExtension = ProjectExtension()
   }
 }

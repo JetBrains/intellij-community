@@ -17,9 +17,6 @@ com/intellij/openapi/fileEditor/impl/FileEditorOpenOptions
 com/intellij/openapi/fileEditor/impl/text/TextEditorComponent
 com/intellij/openapi/keymap/impl/ActionProcessor
 com/intellij/openapi/options/newEditor/AbstractEditor
-com/intellij/openapi/updateSettings/impl/ExternalPluginResults
-com/intellij/openapi/updateSettings/impl/InternalPluginResults
-com/intellij/openapi/updateSettings/impl/PlatformUpdates
 com/intellij/openapi/updateSettings/impl/pluginsAdvertisement/InstallAndEnableTask
 com/intellij/openapi/vfs/newvfs/persistent/FSRecordsImpl
 com/intellij/openapi/wm/WelcomeScreenLeftPanel

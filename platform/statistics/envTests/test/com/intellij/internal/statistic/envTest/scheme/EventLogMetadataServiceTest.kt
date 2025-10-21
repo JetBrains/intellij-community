@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFi
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
-import com.jetbrains.fus.reporting.model.http.StatsBasicConnectionSettings
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings
 
 private val SETTINGS = StatsBasicConnectionSettings("Test IntelliJ")
 internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {

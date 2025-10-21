@@ -142,7 +142,7 @@ object IgnoreTests {
             return
         }
 
-        if (!testIsEnabled) {
+        if (!testIsEnabled && !skipWrongDirectiveCheck(testFile)) {
             handleTestWithWrongDirective(testPasses = true, testFile, directive, directivePosition, additionalFiles)
         }
     }
@@ -239,6 +239,11 @@ object IgnoreTests {
         return InTextDirectivesUtils.textWithDirectives(file.parent.toFile()).lineSequence().any { it.isLineWithDirective(directive) }
     }
 
+    private fun skipWrongDirectiveCheck(file: Path): Boolean {
+        if (file.notExists()) return false
+        return (file.useLines { lines -> lines.any { it.trim() == DIRECTIVES.SKIP_WRONG_DIRECTIVE_CHECK } })
+    }
+
     private fun String.isLineWithDirective(directive: EnableOrDisableTestDirective): Boolean =
         substringBefore(':').trim() == directive.directiveText.trim()
 
@@ -285,6 +290,8 @@ object IgnoreTests {
         const val IGNORE_FE10_BINDING_BY_FIR: String = "// IGNORE_FE10_BINDING_BY_FIR"
 
         const val IGNORE_K1: String = "// IGNORE_K1"
+
+        const val SKIP_WRONG_DIRECTIVE_CHECK: String = "// SKIP_WRONG_DIRECTIVE_CHECK"
 
         @JvmStatic
         fun of(mode: KotlinPluginMode): String = if (mode == KotlinPluginMode.K2) IGNORE_K2 else IGNORE_K1

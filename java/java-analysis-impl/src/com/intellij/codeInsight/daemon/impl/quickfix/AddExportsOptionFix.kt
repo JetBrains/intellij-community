@@ -6,7 +6,7 @@ import com.intellij.java.codeserver.core.JpmsModuleAccessInfo
 import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.Nls
 
-class AddExportsOptionFix(module: Module,
+public class AddExportsOptionFix(module: Module,
                                   targetName: String,
                                   packageName: String,
                                   private val useName: String) : CompilerOptionFix(module) {

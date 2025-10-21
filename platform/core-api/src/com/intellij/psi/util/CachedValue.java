@@ -8,23 +8,31 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A wrapper object that holds a computation ({@link #getValueProvider()}) and caches the result of the computation.
- * The recommended way of creation is to use one of {@link CachedValuesManager#getCachedValue} methods.<p></p>
- *
- * When {@link #getValue()} is invoked the first time, the computation is run and its result is returned and remembered internally.
+ * <p>
+ * The recommended way to create a new CachedValue is to use one of {@link CachedValuesManager#getCachedValue} methods.<p></p>
+ * <p>
+ * <h2>Behavior</h2>
+ * <h3>Basics</h3>
+ * When {@link #getValue()} is invoked for the first time, the computation (the {@link #getValueProvider()} method) is run, and its result is returned and remembered internally.
  * In subsequent invocations, the result will be reused to avoid running the same code again and again.<p/>
- *
+ * <p>
  * The computation will be re-run in the following circumstances:
  * <ol>
  *   <li>Garbage collector collects the result cached internally (it's kept via a {@link java.lang.ref.SoftReference}).
- *   <li>The IDE determines that cached value is outdated because some of its dependencies have changed.
+ *   <li>The IDE determines that the cached value is outdated because some of its dependencies have changed.
  *   See {@link CachedValueProvider.Result#getDependencyItems()}
  * </ol>
- *
- * The implementation is thread-safe but not atomic, i.e. if several threads request the cached value simultaneously, the computation may
+ * <p>
+ * The implementation is thread-safe but not atomic: if several threads request the cached value simultaneously, the computation may
  * be run concurrently on more than one thread. Due to this and unpredictable garbage collection,
- * cached value providers shouldn't have side effects.<p></p>
+ * cached value providers shouldn't have side effects.
+ * <p>
+ * The IDE has a <i>cached values profiler</i> that makes it easy to see various metrics of CachedValue objects in real-time.
+ * It can be enabled in <b>Menu | Tools | Internal Actions | Performance | (Start/Stop) Cached Value Profiling</b>
+ * (it requires <a href="https://plugins.jetbrains.com/docs/intellij/enabling-internal.html">internal mode</a>).
  *
- * <b>Result equivalence</b>: CachedValue might return a different result even if the previous one
+ * <h3>Result equivalence</h3>
+ * CachedValue might return a different result even if the previous one
  * is still reachable and not garbage-collected, and dependencies haven't changed.
  * Therefore, CachedValue results should be equivalent and interchangeable if they're called multiple times.
  * Examples:
@@ -38,17 +46,18 @@ import org.jetbrains.annotations.NotNull;
  * This is enforced at runtime by occasional checks in {@link com.intellij.util.IdempotenceChecker#checkEquivalence(Object, Object, Class, Computable)}.
  * See that method's documentation for further information and advice, when a failure happens.<p></p>
  *
- * <b>Context-independence</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
- * may only depend on X and parts of the global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
- * Otherwise, re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results,
+ * <h3>Context-independence</h3>
+ * If you store the CachedValue in a field or {@link com.intellij.openapi.util.UserDataHolder user data} of some object {@code X},
+ * then its {@link CachedValueProvider} may only depend on {@code X} and parts of the global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
+ * Otherwise, re-invoking the {@link CachedValueProvider} after invalidation would use outdated data and produce incorrect results,
  * possibly causing exceptions in places far, far away. In particular, the provider may not capture:
  * <ul>
  *   <li>Parameters of a method where CachedValue is created, except for {@code X} itself. Example:
- *   <pre>
+ *   <pre>{@code
  *   PsiElement resolve(PsiElement e, boolean incompleteCode) {
  *     return CachedValuesManager.getCachedValue(e, () -> doResolve(e, incompleteCode)); // WRONG!!!
  *   }
- *   </pre>
+ *   }</pre>
  *
  *   </li>
  *   <li>"this" object creating the CachedValue, if {@code X} can outlive it,
@@ -58,16 +67,17 @@ import org.jetbrains.annotations.NotNull;
  *   to ensure values depending on unstable data won't be cached.</li>
  *   <li>PSI elements around {@code X}, when {@code X} is a {@link com.intellij.psi.PsiElement} itself,
  *   as they can change during the lifetime of that PSI element. Example:
- *   <pre>
+ *   <pre>{@code
  *   PsiMethod[] methods = psiClass.getMethods();
  *   return CachedValuesManager.getCachedValue(psiClass, () -> calculateSomeResult(methods)); // WRONG!!!
- *   </pre>
+ *   }</pre>
  *   </ul>
  * </ul>
  * This is enforced at runtime by occasional checks in {@link com.intellij.util.CachedValueStabilityChecker}.
- * See that class's documentation for further information and advice, when a failure happens.<p></p>
+ * See that class's documentation for further information and advice when a failure happens.<p></p>
  *
- * <b>Recursion prevention</b>: The same cached value provider can be re-entered recursively on the same thread,
+ * <h3>Recursion prevention</h3>
+ * The same cached value provider can be re-entered recursively on the same thread
  * if the computation is inherently cyclic. Note that this is likely to result in {@link StackOverflowError},
  * so avoid such situations at all cost. If there's no other way, use
  * {@link com.intellij.openapi.util.RecursionManager#doPreventingRecursion} instead of custom thread-locals to help get out of the endless loop. Please ensure this call happens inside
@@ -77,22 +87,20 @@ import org.jetbrains.annotations.NotNull;
  * and even the top-level call would be considered incomplete if it happens inside {@code doPreventingRecursion}.
  *
  * @param <T> The type of the computation result.
- *
  * @see CachedValueProvider
  * @see CachedValuesManager
  */
 public interface CachedValue<T> {
 
   /**
-   * @return cached value if it's already computed and not outdated, newly computed value otherwise
+   * @return cached value if it's already computed and not outdated, or newly computed value otherwise
    */
   T getValue();
 
   /**
    * @return the object calculating the value to cache
    */
-  @NotNull
-  CachedValueProvider<T> getValueProvider();
+  @NotNull CachedValueProvider<T> getValueProvider();
 
   /**
    * @return whether there is a cached result inside this object, and it's not outdated

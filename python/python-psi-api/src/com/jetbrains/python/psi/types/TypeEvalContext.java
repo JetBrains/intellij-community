@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
@@ -17,6 +19,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.pyi.PyiLanguageDialect;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +53,11 @@ public sealed class TypeEvalContext {
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
   protected final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
+  public final Map<PyTypedElement, PyType> myExternalEvaluated = CollectionFactory.createConcurrentSoftValueMap();
   protected final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
   protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = CollectionFactory.createConcurrentSoftValueMap();
+
+  protected static final Logger logger = Logger.getInstance(TypeEvalContext.class);
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     this(new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin));
@@ -68,15 +74,19 @@ public sealed class TypeEvalContext {
   }
 
   public boolean allowDataFlow(PsiElement element) {
-    return myConstraints.myAllowDataFlow || inOrigin(element);
+    return myConstraints.myAllowDataFlow && !inPyiFile(element) || inOrigin(element);
   }
 
   public boolean allowReturnTypes(PsiElement element) {
-    return myConstraints.myAllowDataFlow || inOrigin(element);
+    return myConstraints.myAllowDataFlow && !inPyiFile(element) || inOrigin(element);
   }
 
   public boolean allowCallContext(@NotNull PsiElement element) {
-    return myConstraints.myAllowCallContext && inOrigin(element);
+    return myConstraints.myAllowCallContext && !inPyiFile(element) && inOrigin(element);
+  }
+
+  public boolean maySwitchToAST(@NotNull PsiElement element) {
+    return myConstraints.myAllowStubToAST && !inPyiFile(element) || inOrigin(element);
   }
 
   /**
@@ -208,6 +218,11 @@ public sealed class TypeEvalContext {
     return this instanceof AssumptionContext;
   }
 
+  @ApiStatus.Internal
+  public boolean isKnown(PyTypedElement element) {
+    return getKnownType(element) != null;
+  }
+
   protected @Nullable PyType getKnownType(final @NotNull PyTypedElement element) {
     if (element instanceof PyInstantTypeProvider) {
       return element.getType(this, Key.INSTANCE);
@@ -216,6 +231,11 @@ public sealed class TypeEvalContext {
     if (cachedType != null) {
       assertValid(cachedType, element);
       return cachedType;
+    }
+    final PyType cachedExternalType = myExternalEvaluated.get(element);
+    if (cachedExternalType != null) {
+      assertValid(cachedExternalType, element);
+      return cachedExternalType;
     }
     return null;
   }
@@ -227,6 +247,11 @@ public sealed class TypeEvalContext {
       return cachedType;
     }
     return null;
+  }
+
+  @ApiStatus.Experimental
+  public void putExternalType(PyTypedElement element, PyType type) {
+    myExternalEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
   }
 
   private static boolean isLibraryElement(@NotNull PsiElement element) {
@@ -265,6 +290,24 @@ public sealed class TypeEvalContext {
       Pair.create(element, this),
       false,
       () -> {
+        // Try external providers first
+        for (var provider : TypeEvalExternalTypeProvider.EP_NAME.getExtensionList()) {
+          try {
+            var provided = provider.provideType(element, this);
+            if (provided != null) {
+              var type = provided.get();
+              myExternalEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
+              return type;
+            }
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            logger.warn("Exception during external type provider " + provider.getClass().getName(), e);
+          }
+        }
+
         PyType type = element.getType(this, Key.INSTANCE);
         assertValid(type, element);
         myEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
@@ -315,10 +358,6 @@ public sealed class TypeEvalContext {
     }
   }
 
-  public boolean maySwitchToAST(@NotNull PsiElement element) {
-    return myConstraints.myAllowStubToAST || inOrigin(element);
-  }
-
   public @Nullable PsiFile getOrigin() {
     return myConstraints.myOrigin;
   }
@@ -363,6 +402,14 @@ public sealed class TypeEvalContext {
     return file1.getViewProvider().getVirtualFile().equals(file2.getViewProvider().getVirtualFile());
   }
 
+  private static boolean inPyiFile(@NotNull PsiElement element) {
+    if (isPyiFile(element.getContainingFile())) {
+      return true;
+    }
+    PsiFile contextFile = getContextFile(element);
+    return contextFile != null && isPyiFile(contextFile);
+  }
+
   private static PsiFile getContextFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
@@ -373,6 +420,10 @@ public sealed class TypeEvalContext {
     else {
       return getContextFile(context);
     }
+  }
+
+  private static boolean isPyiFile(@NotNull PsiFile file) {
+    return file.getLanguage().equals(PyiLanguageDialect.getInstance());
   }
 
   private static class PyNullType implements PyType {
@@ -457,6 +508,18 @@ public sealed class TypeEvalContext {
     }
   }
 
+  final static class LibraryTypeEvalContext extends TypeEvalContext {
+    private LibraryTypeEvalContext(@NotNull TypeEvalConstraints constraints) {
+      super(constraints);
+    }
+
+    @Override
+    protected boolean canDelegateToLibraryContext(PyTypedElement element) {
+      // It's already the library-context.
+      return false;
+    }
+  }
+
   final static class OptimizedTypeEvalContext extends TypeEvalContext {
     private volatile TypeEvalContext codeInsightFallback;
 
@@ -514,18 +577,6 @@ public sealed class TypeEvalContext {
         return getFallbackContext(callable.getProject()).getReturnType(callable);
       }
       return super.getReturnType(callable);
-    }
-  }
-
-  final static class LibraryTypeEvalContext extends TypeEvalContext {
-    private LibraryTypeEvalContext(@NotNull TypeEvalConstraints constraints) {
-      super(constraints);
-    }
-
-    @Override
-    protected boolean canDelegateToLibraryContext(PyTypedElement element) {
-      // It's already the library-context.
-      return false;
     }
   }
 }

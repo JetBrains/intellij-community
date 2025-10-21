@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -11,6 +12,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.handlers.skipSpaces
 import org.jetbrains.kotlin.idea.core.moveCaret
@@ -64,7 +67,28 @@ class NameWithTypeLookupElementDecorator(
         }
     }
 
-    override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, element ->
+    override fun getDelegateInsertHandler(): InsertHandler<LookupElement> =
+        NameWithTypeLookupElementDecoratorInsertHandler(parameterName, typeIdString, shouldInsertType)
+
+    override fun equals(other: Any?) = other is NameWithTypeLookupElementDecorator &&
+            parameterName == other.parameterName &&
+            typeIdString == other.typeIdString &&
+            shouldInsertType == other.shouldInsertType
+
+    override fun hashCode() = parameterName.hashCode()
+}
+
+
+@Serializable
+data class NameWithTypeLookupElementDecoratorInsertHandler(
+    private val parameterName: String,
+    private val typeIdString: String,
+    private val shouldInsertType: Boolean
+) : SerializableInsertHandler {
+    override fun handleInsert(
+        context: InsertionContext,
+        item: LookupElement
+    ) {
         if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) {
             val tailOffset = context.tailOffset
 
@@ -89,18 +113,11 @@ class NameWithTypeLookupElementDecorator(
             // update start offset so that it does not include the text we inserted
             context.offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset + text.length)
 
-            element.handleInsert(context)
+            item.handleInsert(context)
         } else {
             context.document.replaceString(startOffset, context.tailOffset, parameterName)
 
             context.commitDocument()
         }
     }
-
-    override fun equals(other: Any?) = other is NameWithTypeLookupElementDecorator &&
-            parameterName == other.parameterName &&
-            typeIdString == other.typeIdString &&
-            shouldInsertType == other.shouldInsertType
-
-    override fun hashCode() = parameterName.hashCode()
 }

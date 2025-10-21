@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.util.Java11Shim
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -13,10 +15,11 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
 
   @ApiStatus.Internal
   class ModuleItem(
-    val name: String,
+    val moduleId: PluginModuleId,
     val configFile: String?,
     internal val descriptorContent: CharArray?,
-    val loadingRule: ModuleLoadingRule,
+    private val loadingRule: ModuleLoadingRule,
+    private val requiredIfAvailable: PluginModuleId?,
   ) {
     /**
      * all content module descriptors are assigned during plugin descriptor loading
@@ -38,7 +41,34 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
     @TestOnly
     fun getDescriptorOrNull(): ContentModuleDescriptor? = _descriptor
 
-    override fun toString(): String = "ModuleItem(name=$name, descriptor=$_descriptor, configFile=$configFile)"
+    /**
+     * Note: the effective loading rule depends on the app environment context (e.g., frontend/backend/monolith mode)
+     * @see determineLoadingRule
+     */
+    val defaultLoadingRule: ModuleLoadingRule get() = loadingRule
+
+    // TODO this logic should happen in plugin pre-init stage, not after descriptor parsing
+    fun determineLoadingRule(initContext: PluginInitializationContext, diagnosticPluginId: PluginId): ModuleLoadingRule {
+      if (requiredIfAvailable == null) {
+        return loadingRule
+      }
+      if (loadingRule == ModuleLoadingRule.EMBEDDED || loadingRule == ModuleLoadingRule.REQUIRED) {
+        return loadingRule
+      }
+      val targetModule = initContext.environmentConfiguredModules[requiredIfAvailable]
+      if (targetModule == null) {
+        // TODO should lift this log out of here
+        logger<PluginManagerCore>().error("Plugin id='$diagnosticPluginId' uses required-if-available statement in content module '${moduleId.name}' " +
+                                          "with a target module that is unknown or is not configured by the environment: $requiredIfAvailable")
+        return loadingRule
+      }
+      if (targetModule.isAvailable) {
+        return ModuleLoadingRule.REQUIRED
+      }
+      return loadingRule
+    }
+
+    override fun toString(): String = "ModuleItem(id=$moduleId, descriptor=$_descriptor, configFile=$configFile)"
   }
 
   override fun toString(): String = "PluginContentDescriptor(modules=$modules)"

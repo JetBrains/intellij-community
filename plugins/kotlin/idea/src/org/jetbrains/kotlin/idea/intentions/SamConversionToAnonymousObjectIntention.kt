@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCallExpression>(
-    KtCallExpression::class.java, KotlinBundle.lazyMessage("convert.to.anonymous.object")
+    KtCallExpression::class.java, KotlinBundle.messagePointer("convert.to.anonymous.object")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtCallExpression): TextRange? {
         val callee = element.calleeExpression ?: return null

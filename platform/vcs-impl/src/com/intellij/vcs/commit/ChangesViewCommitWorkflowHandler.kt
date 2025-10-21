@@ -171,8 +171,7 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   private fun isInclusionEmpty(): Boolean {
-    return inclusionModel.isInclusionEmpty() || (MergeConflictManager.isForceIncludeResolvedConflicts()
-                                                 && inclusionModel.getInclusion().all { it in knownActiveResolvedConflicts })
+    return inclusionModel.isInclusionEmpty()
   }
 
   private fun setSelection(changeList: LocalChangeList) {

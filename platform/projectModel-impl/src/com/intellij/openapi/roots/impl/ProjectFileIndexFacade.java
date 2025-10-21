@@ -81,6 +81,10 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.isUnderIgnored(file);
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public boolean isIndexable(@NotNull VirtualFile file) { return myWorkspaceFileIndex.isIndexable(file); }
+
   @Override
   public @Nullable Module getModuleForFile(@NotNull VirtualFile file) {
     return myFileIndex.getModuleForFile(file);

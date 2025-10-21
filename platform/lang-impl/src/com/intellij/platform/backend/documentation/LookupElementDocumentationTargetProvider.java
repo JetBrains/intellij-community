@@ -13,8 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Implement this interface and register as {@code com.intellij.platform.backend.documentation.psiTargetProvider} extension
+ * Implement this interface and register as
+ * {@code com.intellij.platform.backend.documentation.lookupElementTargetProvider} extension
  * to provide a {@link DocumentationTarget} implementation by a {@link LookupElement}.
+ * <p>
+ * The documentation provided by such providers takes precedence over the PSI-provided documentation
+ * ({@link PsiDocumentationTargetProvider}).
  */
 @ApiStatus.Experimental
 @OverrideOnly

@@ -145,7 +145,9 @@ public final class MatchVariableConstraint extends NamedScriptableDefinition {
       }
       else if (c == '\\') {
         if (i + 1 < length) {
-          result.appendCodePoint(regexp.codePointAt(i + 1));
+          int d = regexp.codePointAt(i + 1);
+          if (!MatchUtil.isRegExpMetaChar(d)) return ""; // can't convert
+          result.appendCodePoint(d);
           i++;
         }
         else {

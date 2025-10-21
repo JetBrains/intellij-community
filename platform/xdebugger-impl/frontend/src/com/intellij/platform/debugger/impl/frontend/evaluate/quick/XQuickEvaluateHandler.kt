@@ -47,12 +47,12 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       XDebuggerValueLookupHintsRemoteApi.getInstance().adjustOffset(projectId, editorId, offset)
     }
     val expressionInfoDeferred = documentCoroutineScope.async(Dispatchers.IO) {
-      val adjustedOffset = adjustedOffsetDeferred.await()
+      val adjustedOffset = adjustedOffsetDeferred.await() ?: return@async null
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
       remoteApi.getExpressionInfo(projectId, editorId, adjustedOffset, type)
     }
     val hintDeferred: Deferred<AbstractValueHint?> = documentCoroutineScope.async(Dispatchers.IO) {
-      val adjustedOffset = adjustedOffsetDeferred.await()
+      val adjustedOffset = adjustedOffsetDeferred.await() ?: return@async null
       val expressionInfo = expressionInfoDeferred.await()
       val textLength = document.textLength
       if (expressionInfo == null) {
@@ -65,11 +65,11 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       }
       val frontendType = FrontendApplicationInfo.getFrontendType()
 
-      if (frontendType is FrontendType.RemoteDev && Registry.`is`("xdebugger.lux.evaluation.popup")) {
+      if (frontendType is FrontendType.Remote && Registry.`is`("xdebugger.lux.evaluation.popup")) {
         RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo)
       }
       else {
-        val currentSession = if (frontendType is FrontendType.RemoteDev) {
+        val currentSession = if (frontendType is FrontendType.Remote) {
           FrontendXDebuggerManager.getInstance(project).currentSession.value
         }
         else {

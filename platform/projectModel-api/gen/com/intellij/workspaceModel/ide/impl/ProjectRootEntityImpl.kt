@@ -1,14 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -17,7 +10,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.ProjectRootEntity
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.workspaceModel.ide.ProjectRootEntityBuilder
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -52,7 +45,7 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
 
 
   internal class Builder(result: ProjectRootEntityData?) : ModifiableWorkspaceEntityBase<ProjectRootEntity, ProjectRootEntityData>(
-    result), ProjectRootEntity.Builder {
+    result), ProjectRootEntityBuilder {
     internal constructor() : this(ProjectRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -131,7 +124,7 @@ internal class ProjectRootEntityData : WorkspaceEntityData<ProjectRootEntity>() 
 
   internal fun isRootInitialized(): Boolean = ::root.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectRootEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ProjectRootEntity> {
     val modifiable = ProjectRootEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -157,7 +150,7 @@ internal class ProjectRootEntityData : WorkspaceEntityData<ProjectRootEntity>() 
     return ProjectRootEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ProjectRootEntity(root, entitySource) {
     }
   }

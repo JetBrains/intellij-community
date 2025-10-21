@@ -1,10 +1,6 @@
 0(1) element: null
-1(2) element: PyTypeParameter
-2(3) WRITE ACCESS: T
-3(4) element: PyTypeParameter
-4(5) WRITE ACCESS: U
-5(6) element: PySubscriptionExpression
-6(7) READ ACCESS: BaseClass
-7(8) READ ACCESS: T
-8(9) element: PyPassStatement
-9() element: null
+1(2) element: PySubscriptionExpression
+2(3) READ ACCESS: BaseClass
+3(4) READ ACCESS: T
+4(5) element: PyPassStatement
+5() element: null

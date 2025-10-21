@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.fir
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.AbstractJSBasicCompletionTestBase
+import org.jetbrains.kotlin.idea.fir.completion.SerializabilityChecker
 import org.jetbrains.kotlin.idea.test.KotlinStdJSLegacyCombinedJarProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 
@@ -26,6 +28,10 @@ abstract class AbstractK2JsBasicCompletionLegacyStdlibTest : AbstractJSBasicComp
             { project.invalidateCaches() },
             { super.tearDown() },
         )
+    }
+
+    override fun extraLookupElementCheck(lookupElement: LookupElement) {
+        SerializabilityChecker.checkLookupElement(lookupElement, myFixture.project)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {

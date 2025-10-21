@@ -12,17 +12,18 @@ import kotlin.time.measureTime
 /**
  * Note that [lexStarts] and [lexTypes] can be longer than [tokenCount].
  * It's guaranteed that [lexStarts] and [lexTypes] contain all tokens from 0 to [tokenCount] - 1, but tail elements can be empty.
+ * Also, it's guaranteed that [lexStarts] contains the end offset of the last token as `lexStarts[tokenCount]`.
  */
 internal class TokenListImpl(
-  internal val lexStarts: IntArray,
-  internal val lexTypes: Array<SyntaxElementType>,
+  val lexStarts: IntArray,
+  val lexTypes: Array<SyntaxElementType>,
   override val tokenCount: Int,
   override val tokenizedText: CharSequence,
   val startIndex: Int = 0,
 ) : TokenList {
   init {
-    require(tokenCount < lexStarts.size)
-    require(tokenCount < lexTypes.size)
+    require(startIndex + tokenCount < lexStarts.size)
+    require(startIndex + tokenCount <= lexTypes.size)
   }
 
   fun assertMatches(
@@ -33,16 +34,21 @@ internal class TokenListImpl(
   ) {
     val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
     check(tokenCount == sequence.tokenCount)
-    for (j in 0..tokenCount) {
-      if (sequence.lexStarts[j] != lexStarts[j] || sequence.lexTypes[j] !== lexTypes[j]) {
+    for (j in 0 until tokenCount) {
+      if (sequence.lexStarts[j] != lexStarts[startIndex + j] || sequence.lexTypes[j] !== lexTypes[startIndex + j]) {
         check(false)
       }
+    }
+
+    // check end offsets
+    if (sequence.lexStarts[tokenCount] != lexStarts[startIndex + tokenCount]) {
+      check(false)
     }
   }
 
   override fun getTokenType(index: Int): SyntaxElementType? {
-    if (index < 0 || index >= tokenCount) return null
-    return lexTypes[index]
+    if (index !in 0 until tokenCount) return null
+    return lexTypes[startIndex + index]
   }
 
   override fun slice(start: Int, end: Int): TokenList {
@@ -57,15 +63,17 @@ internal class TokenListImpl(
   }
 
   override fun getTokenStart(index: Int): Int {
-    return lexStarts[index]
+    require(index in 0 until tokenCount)
+    return lexStarts[startIndex + index]
   }
 
   override fun remap(index: Int, newValue: SyntaxElementType) {
-    lexTypes[index] = newValue
+    require(index in 0 until tokenCount)
+    lexTypes[startIndex + index] = newValue
   }
 
   override fun getTokenEnd(index: Int): Int {
-    return lexStarts[index + 1]
+    return lexStarts[startIndex + index + 1]
   }
 }
 

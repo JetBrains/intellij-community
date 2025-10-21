@@ -110,13 +110,6 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use createView instead", ReplaceWith("createView(suitesBundle, activate)"))
-  @RequiresEdt
-  fun createToolWindow(suitesBundle: CoverageSuitesBundle, activate: Boolean) {
-    createView(suitesBundle, activate)
-  }
-
   private fun getContentManager(): ContentManager? {
     myContentManager?.also { return it }
     return getToolWindow()?.contentManager?.also { myContentManager = it }

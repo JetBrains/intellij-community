@@ -54,13 +54,13 @@ internal class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<Kt
         }
     }
 
-    override fun getApplicableRanges(returnExpression: KtReturnExpression): List<TextRange> {
-        val whenExpr = returnExpression.returnedExpression as? KtWhenExpression ?: return listOf()
+    override fun getApplicableRanges(element: KtReturnExpression): List<TextRange> {
+        val whenExpr = element.returnedExpression as? KtWhenExpression ?: return listOf()
         if (!KtPsiUtil.checkWhenExpressionHasSingleElse(whenExpr)) return listOf()
         if (whenExpr.entries.any { it.expression == null }) return listOf()
 
-        val returnKeywordRange = returnExpression.returnKeyword.textRangeIn(returnExpression)
-        val whenKeywordRange = whenExpr.whenKeyword.textRangeIn(returnExpression)
+        val returnKeywordRange = element.returnKeyword.textRangeIn(element)
+        val whenKeywordRange = whenExpr.whenKeyword.textRangeIn(element)
 
         return listOf(returnKeywordRange.union(whenKeywordRange))
     }

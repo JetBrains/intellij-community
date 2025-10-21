@@ -100,6 +100,6 @@ public class RemoveRedundantParameterTypesFix extends PsiUpdateModCommandAction<
   }
 
   private static boolean keepVarType(PsiParameter parameter) {
-    return parameter.hasModifierProperty(PsiModifier.FINAL) || parameter.getAnnotations().length > 0;
+    return parameter.hasModifierProperty(PsiModifier.FINAL) || parameter.hasAnnotations();
   }
 }

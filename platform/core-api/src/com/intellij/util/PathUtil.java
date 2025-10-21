@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -11,10 +10,8 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.system.OS;
+import org.jetbrains.annotations.*;
 
 public final class PathUtil {
   private PathUtil() { }
@@ -43,10 +40,10 @@ public final class PathUtil {
     return getLocalPath(VirtualFileManager.extractPath(url));
   }
 
-  /**
-   * @deprecated Use {@link FileUtil#toCanonicalPath(String)}
-   */
+  /** @deprecated Use NIO API instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static String getCanonicalPath(@NonNls String path) {
     return FileUtil.toCanonicalPath(path);
   }
@@ -90,10 +87,8 @@ public final class PathUtil {
   }
 
   public static @NotNull String driveLetterToLowerCase(@NotNull String path) {
-    if (SystemInfoRt.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(path) && Character.isUpperCase(path.charAt(0))) {
-      return Character.toLowerCase(path.charAt(0)) + path.substring(1);
-    }
-    return path;
+    boolean convert = OS.CURRENT == OS.Windows && OSAgnosticPathUtil.isAbsoluteDosPath(path) && Character.isUpperCase(path.charAt(0));
+    return convert ? Character.toLowerCase(path.charAt(0)) + path.substring(1) : path;
   }
 
   public static @NotNull String makeFileName(@NotNull String name, @Nullable String extension) {

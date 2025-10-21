@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrPatternVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 public interface GrInstanceOfExpression extends GrExpression {
@@ -16,6 +17,13 @@ public interface GrInstanceOfExpression extends GrExpression {
 
   @NotNull
   GrExpression getOperand();
+
+  /**
+   * @return Pattern variable against which operand will be matched, or null if there is no pattern variable.
+   */
+  @Nullable
+  GrPatternVariable getPatternVariable();
+
 
   static boolean isNegated(@NotNull GrInstanceOfExpression expression) {
     return expression.getOperationToken().getNode().getElementType() == GroovyElementTypes.T_NOT_INSTANCEOF;

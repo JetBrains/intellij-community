@@ -20,6 +20,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.changes.ChangeListChangeIdCache;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.*;
@@ -263,7 +264,7 @@ public final class ChangeListWorker {
     return new ArrayList<>(myIdx.getChanges());
   }
 
-  public @NotNull List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
+  public @NotNull @Unmodifiable List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
     return ContainerUtil.map(getAffectedListsData(changes), this::toChangeList);
   }
 
@@ -856,16 +857,25 @@ public final class ChangeListWorker {
   private LocalChangeListImpl toChangeList(@Nullable ListData data) {
     if (data == null) return null;
 
-    if (myReadOnlyChangesCache == null || myReadOnlyChangesCacheInvalidated.get()) {
-      myReadOnlyChangesCacheInvalidated.set(false);
-      myReadOnlyChangesCache = getChangesMapping();
-    }
-    Set<Change> cachedChanges = myReadOnlyChangesCache.get(data);
+    Set<Change> cachedChanges = getCache().get(data);
     Set<Change> changes = cachedChanges != null ? Collections.unmodifiableSet(cachedChanges) : Collections.emptySet();
 
     return buildChangeListFrom(data)
       .setChangesCollection(changes)
       .build();
+  }
+
+  private @NotNull Map<ListData, Set<Change>> getCache() {
+    if (myReadOnlyChangesCache == null || myReadOnlyChangesCacheInvalidated.get()) {
+      myReadOnlyChangesCacheInvalidated.set(false);
+      Map<ListData, Set<Change>> mapping = getChangesMapping();
+      myReadOnlyChangesCache = mapping;
+      if (myMainWorker) {
+        ChangeListChangeIdCache.getInstance(myProject).updateCache(mapping.values());
+      }
+    }
+
+    return myReadOnlyChangesCache;
   }
 
   /**

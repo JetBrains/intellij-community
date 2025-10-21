@@ -24,6 +24,7 @@ import java.util.Objects;
 
 public final class EditorModificationUtil extends EditorModificationUtilEx {
   private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_HINT_KEY");
+  private static final Key<Boolean> IGNORE_READ_ONLY_HINT_KEY = Key.create("IGNORE_READ_ONLY_HINT_KEY");
 
   private EditorModificationUtil() { }
 
@@ -141,6 +142,9 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     if (!editor.isViewer()) return true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
 
+    Boolean ignoreHint = IGNORE_READ_ONLY_HINT_KEY.get(editor);
+    if (ignoreHint == Boolean.TRUE) return false;
+
     ReadOnlyHint hint = ObjectUtils.chooseNotNull(READ_ONLY_VIEW_HINT_KEY.get(editor), new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null));
     HintManager.getInstance().showInformationHint(editor, hint.message, hint.linkListener);
     return false;
@@ -161,6 +165,14 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
    */
   public static void setReadOnlyHint(@NotNull Editor editor, @Nullable @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
     editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
+  }
+
+  /**
+   * @param shouldShow whether the read-only hint should be shown in the provided editor if it is in a view mode.
+   *                   By default, the hint is showing.
+   */
+  public static void setShowReadOnlyHint(@NotNull Editor editor, boolean shouldShow) {
+    editor.putUserData(IGNORE_READ_ONLY_HINT_KEY, shouldShow ? null : true);
   }
 
   private record ReadOnlyHint(@NotNull @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {

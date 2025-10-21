@@ -10,15 +10,16 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.IS_IN_COMMIT_TOOLWINDOW_KEY
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -64,6 +65,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     val contentManager = toolWindow.contentManager
     contentManager.addUiDataProvider { sink ->
       sink[ChangesViewContentManager.CONTENT_TAB_NAME_KEY] = contentManager.selectedContent?.tabName
+      sink[ChangesViewContentManager.IS_COMMIT_TOOLWINDOW_WINDOWED_KEY] =
+        toolWindow.id == COMMIT_TOOLWINDOW_ID &&
+        CommitToolWindowUtil.isInWindow(toolWindow.type)
     }
   }
 
@@ -153,7 +157,7 @@ private fun createExtensionContent(project: Project, extension: ChangesViewConte
     isCloseable = false
     tabName = extension.tabName //NON-NLS overridden by displayName above
     putUserData(CHANGES_VIEW_EXTENSION, extension)
-    putUserData(CONTENT_PROVIDER_SUPPLIER_KEY) { extension.getInstance(project) }
+    ToolWindowLazyContent.setContentSupplier(this) { content -> extension.getInstance(project)?.initTabContent(content) }
     putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, extension.isInCommitToolWindow)
 
     extension.newPreloaderInstance(project)?.preloadTabContent(this)

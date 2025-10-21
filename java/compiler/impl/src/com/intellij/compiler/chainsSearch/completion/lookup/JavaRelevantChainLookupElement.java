@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.completion.lookup;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -20,7 +20,7 @@ public final class JavaRelevantChainLookupElement extends LookupElementDecorator
   }
 
   @Override
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
+  public @NotNull AutoCompletionPolicy getAutoCompletionPolicy() {
     return AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
   }
 }

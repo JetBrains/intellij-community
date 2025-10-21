@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.gradleJava
 
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataNodeOrNull
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradlePluginVersion
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
@@ -46,3 +48,13 @@ val Module.kotlinGradlePluginVersion: KotlinGradlePluginVersion?
         val projectDataNode = dataNode.kotlinGradleProjectDataNodeOrNull ?: return null
         return projectDataNode.data.kotlinGradlePluginVersion
     }
+
+private class GradleKotlinCompilerVersionProvider : KotlinCompilerVersionProvider {
+    override fun getKotlinCompilerVersion(module: Module): IdeKotlinVersion? {
+        return module.kotlinGradlePluginVersion?.versionString?.let(IdeKotlinVersion::opt)
+    }
+
+    override fun isAvailable(module: Module): Boolean {
+        return module.kotlinGradlePluginVersion != null
+    }
+}

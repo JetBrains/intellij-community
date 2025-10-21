@@ -7,12 +7,14 @@ import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
-internal object ShellEnvBasedGenerators {
+@ApiStatus.Internal
+object ShellEnvBasedGenerators {
   private val LOG: Logger = logger<ShellEnvBasedGenerators>()
 
   /**

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
+import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,5 +45,10 @@ public class CompositeValidationRulesStorage implements IntellijValidationRulesS
   @Override
   public @NotNull ValidationTestRulesPersistedStorage getTestGroupStorage() {
     return myTestRulesStorage;
+  }
+
+  @Override
+  public @Nullable DictionaryStorage getDictionaryStorage() {
+    return myRulesStorage.getDictionaryStorage();
   }
 }

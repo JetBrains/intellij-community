@@ -13,18 +13,15 @@ public class Pair<A, B> {
   public final A first;
   public final B second;
 
-  @NotNull
-  public static <A, B> Pair<A, B> create(A first, B second) {
+  public static @NotNull <A, B> Pair<A, B> create(A first, B second) {
     return new Pair<>(first, second);
   }
 
-  @NotNull
-  public static <A, B> NonNull<A, B> createNonNull(@NotNull A first, @NotNull B second) {
+  public static @NotNull <A, B> NonNull<A, B> createNonNull(@NotNull A first, @NotNull B second) {
     return new NonNull<>(first, second);
   }
 
-  @NotNull
-  public static <A, B> Pair<A, B> pair(A first, B second) {
+  public static @NotNull <A, B> Pair<A, B> pair(A first, B second) {
     return new Pair<>(first, second);
   }
 
@@ -39,9 +36,8 @@ public class Pair<A, B> {
   @SuppressWarnings({"rawtypes", "unchecked"})
   private static final Pair EMPTY = create(null, null);
 
-  @NotNull
   @SuppressWarnings("unchecked")
-  public static <A, B> Pair<A, B> empty() {
+  public static @NotNull <A, B> Pair<A, B> empty() {
     return EMPTY;
   }
 
@@ -90,12 +86,7 @@ public class Pair<A, B> {
    * @return a comparator that compares pair values by first value
    */
   public static <A extends Comparable<? super A>, B> Comparator<Pair<A, B>> comparingByFirst() {
-    return new Comparator<Pair<A, B>>() {
-      @Override
-      public int compare(Pair<A, B> o1, Pair<A, B> o2) {
-        return o1.first.compareTo(o2.first);
-      }
-    };
+    return Comparator.comparing(o -> o.first);
   }
 
   /**
@@ -104,11 +95,6 @@ public class Pair<A, B> {
    * @return a comparator that compares pair values by second value
    */
   public static <A, B extends Comparable<? super B>> Comparator<Pair<A, B>> comparingBySecond() {
-    return new Comparator<Pair<A, B>>() {
-      @Override
-      public int compare(Pair<A, B> o1, Pair<A, B> o2) {
-        return o1.second.compareTo(o2.second);
-      }
-    };
+    return Comparator.comparing(o -> o.second);
   }
 }

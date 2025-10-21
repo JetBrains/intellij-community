@@ -250,7 +250,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   public void doCancelAction() {
     super.doCancelAction();
 
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
   }
 
   @Override

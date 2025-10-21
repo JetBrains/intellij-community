@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection;
 
@@ -298,7 +298,21 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testNotNullTypeArgumentWithNullableSuperType() {
+    myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
     setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testUnannotatedInstantiationOfNonNullTypeParameter() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testUnannotatedInstantiationOfNonNullTypeParameterOn() {
+    myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
 
@@ -383,16 +397,9 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testQuickFixOnTypeArgument() {
+    myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
     setupTypeUseAnnotations("typeUse", myFixture);
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
-    String oldDefault = manager.getDefaultNotNull();
-    try {
-      manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as '@NotNull'");
-    }
-    finally {
-      manager.setDefaultNotNull(oldDefault);
-    }
+    doTestWithFix("Annotate as '@NotNull'");
   }
 
   public void testRemoveAnnotationWithImportQuickFix() {
@@ -401,15 +408,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testQuickFixOnTypeArgumentNullable() {
     setupTypeUseAnnotations("typeUse", myFixture);
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
-    String oldDefault = manager.getDefaultNotNull();
-    try {
-      manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as '@NotNull'");
-    }
-    finally {
-      manager.setDefaultNotNull(oldDefault);
-    }
+    doTestWithFix("Annotate as '@NotNull'");
   }
 
   public void testCheckerDefaultTypeUseRecursiveGeneric() {
@@ -423,6 +422,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testDisableOnLocals() {
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testDisableOnLocals2() {
+    myInspection.REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = false;
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
@@ -443,12 +448,14 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testParameterUnderDefaultNotNull() {
-    DataFlowInspectionTestCase.addJetBrainsNotNullByDefault(myFixture);
     doTest();
   }
   
   public void testRedundantNotNull() {
-    DataFlowInspectionTestCase.addJetBrainsNotNullByDefault(myFixture);
+    doTest();
+  }
+  
+  public void testRedundantNotNull2() {
     doTest();
   }
   
@@ -459,10 +466,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
   
   public void testIncompatibleConstructors() {
-    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
-    String nullable = nnnManager.getDefaultNullable();
-    nnnManager.setDefaultNullable("org.jspecify.annotations.Nullable");
-    Disposer.register(myFixture.getTestRootDisposable(), () -> nnnManager.setDefaultNullable(nullable));
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
@@ -480,6 +483,17 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   
   public void testNullableExtendsNullable() {
     addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testIncompatibleContainer() {
+    addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
+
+  public void testReturnIncompatibilitiesWithGeneric() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }

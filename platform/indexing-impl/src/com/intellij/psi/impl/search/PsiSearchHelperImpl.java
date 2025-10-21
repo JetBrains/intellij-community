@@ -627,7 +627,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         PsiFile psiFile = myManager.findFile(vfile, context);
 
 
-
         if (psiFile instanceof PsiBinaryFile binaryFile) {
           PsiFile originalPsiFile = findOriginalPsiFile(binaryFile);
           if (originalPsiFile != null) {
@@ -941,22 +940,39 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(IndexingBundle.message("psi.search.for.word.progress", concat(allWords), totalSize));
 
       int alreadyProcessedFiles = 0;
-      if (!targetFiles.isEmpty()) {
-        result = processCandidates(localProcessors, targetFiles, progress, totalSize, alreadyProcessedFiles);
-        if (!result) return false;
-        alreadyProcessedFiles += targetFiles.size();
+      FileRankerMlService fileRankerService = FileRankerMlService.getInstance();
+      boolean useOldImpl = (fileRankerService == null || fileRankerService.shouldUseOldImplementation());
+      List<String> queryNames = new ArrayList<>(allWords);
+      List<VirtualFile> queryFiles = ReadAction.compute(
+        () -> ContainerUtil.flatMap(localProcessors.keySet(), requestInfo -> requestInfo.getSearchSession().getTargetVirtualFiles()));
+      if (useOldImpl) {
+        // This is the original implementation for processing files before introducing FileRankerMlService.
+        // It should be removed after validating that the new implementation does not cause any issues/performance degradations.
+        result = processCandidatesInChunks(progress,
+                                           localProcessors,
+                                           targetFiles,
+                                           totalSize,
+                                           alreadyProcessedFiles,
+                                           nearDirectoryFiles,
+                                           intersectionCandidateFiles,
+                                           restCandidateFiles,
+                                           fileRankerService,
+                                           queryNames,
+                                           queryFiles);
       }
-      if (!nearDirectoryFiles.isEmpty()) {
-        result = processCandidates(localProcessors, nearDirectoryFiles, progress, totalSize, alreadyProcessedFiles);
-        if (!result) return false;
-        alreadyProcessedFiles += nearDirectoryFiles.size();
+      else {
+        result = processCandidatesInOneCall(progress,
+                                            localProcessors,
+                                            targetFiles,
+                                            totalSize,
+                                            alreadyProcessedFiles,
+                                            nearDirectoryFiles,
+                                            intersectionCandidateFiles,
+                                            restCandidateFiles,
+                                            fileRankerService,
+                                            queryNames,
+                                            queryFiles);
       }
-      if (!intersectionCandidateFiles.isEmpty()) {
-        result = processCandidates(localProcessors, intersectionCandidateFiles, progress, totalSize, alreadyProcessedFiles);
-        if (!result) return false;
-        alreadyProcessedFiles += intersectionCandidateFiles.size();
-      }
-      result = processCandidates(localProcessors, restCandidateFiles, progress, totalSize, alreadyProcessedFiles);
     }
     finally {
       progress.popState();
@@ -965,14 +981,85 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return result;
   }
 
+  private <T extends WordRequestInfo> Optional<Integer> processUnsortedCandidates(@NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
+                                                                                  @NotNull Map<VirtualFile, Collection<T>> candidateFiles,
+                                                                                  @NotNull ProgressIndicator progress,
+                                                                                  int totalSize,
+                                                                                  int alreadyProcessedFiles) {
+    if (!candidateFiles.isEmpty()) {
+      boolean result = processCandidates(localProcessors, candidateFiles, new ArrayList<>(candidateFiles.keySet()), progress, totalSize,
+                                         alreadyProcessedFiles);
+      if (!result) return Optional.empty();
+    }
+    return Optional.of(alreadyProcessedFiles + candidateFiles.size());
+  }
+
+  private <T extends WordRequestInfo> boolean processCandidatesInChunks(@NotNull ProgressIndicator progress,
+                                                                        @NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
+                                                                        @NotNull Map<VirtualFile, Collection<T>> targetFiles,
+                                                                        int totalSize,
+                                                                        int alreadyProcessedFiles,
+                                                                        @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
+                                                                        @NotNull Map<VirtualFile, Collection<T>> intersectionCandidateFiles,
+                                                                        @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
+                                                                        @Nullable FileRankerMlService fileRankerMlService,
+                                                                        @NotNull List<String> queryNames,
+                                                                        @NotNull List<VirtualFile> queryFiles) {
+
+    if (fileRankerMlService != null) {
+      // Inform fileRankerMlService about this session, but discard the order, as it is not used.
+      ArrayList<VirtualFile> candidateFiles = new ArrayList<>(totalSize);
+      candidateFiles.addAll(targetFiles.keySet());
+      candidateFiles.addAll(nearDirectoryFiles.keySet());
+      candidateFiles.addAll(intersectionCandidateFiles.keySet());
+      candidateFiles.addAll(restCandidateFiles.keySet());
+
+      fileRankerMlService.getFileOrder(queryNames, queryFiles, candidateFiles);
+    }
+
+    for (Map<VirtualFile, Collection<T>> files : List.of(targetFiles, nearDirectoryFiles, intersectionCandidateFiles, restCandidateFiles)) {
+      Optional<Integer> resultProcessed = processUnsortedCandidates(localProcessors, files, progress, totalSize, alreadyProcessedFiles);
+      if (resultProcessed.isEmpty()) return false;
+      alreadyProcessedFiles = resultProcessed.get();
+    }
+    return true;
+  }
+
+  private <T extends WordRequestInfo> boolean processCandidatesInOneCall(@NotNull ProgressIndicator progress,
+                                                                         @NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
+                                                                         @NotNull Map<VirtualFile, Collection<T>> targetFiles,
+                                                                         int totalSize,
+                                                                         int alreadyProcessedFiles,
+                                                                         @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
+                                                                         @NotNull Map<VirtualFile, Collection<T>> intersectionCandidateFiles,
+                                                                         @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
+                                                                         @Nullable FileRankerMlService fileRankerService,
+                                                                         @NotNull List<String> queryNames,
+                                                                         @NotNull List<VirtualFile> queryFiles) {
+    Map<VirtualFile, Collection<T>> allFiles = new HashMap<>(totalSize);
+    allFiles.putAll(targetFiles);
+    allFiles.putAll(nearDirectoryFiles);
+    allFiles.putAll(intersectionCandidateFiles);
+    allFiles.putAll(restCandidateFiles);
+
+    List<VirtualFile> allFilesList = new ArrayList<>(totalSize);
+    allFilesList.addAll(targetFiles.keySet());
+    allFilesList.addAll(nearDirectoryFiles.keySet());
+    allFilesList.addAll(intersectionCandidateFiles.keySet());
+    allFilesList.addAll(restCandidateFiles.keySet());
+
+    List<VirtualFile> orderedFiles = fileRankerService.getFileOrder(queryNames, queryFiles, allFilesList);
+    return processCandidates(localProcessors, allFiles, orderedFiles, progress, totalSize, alreadyProcessedFiles);
+  }
+
+
   private <T> boolean processCandidates(@NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
                                         @NotNull Map<VirtualFile, Collection<T>> candidateFiles,
+                                        @NotNull List<VirtualFile> orderedFiles,
                                         @NotNull ProgressIndicator progress,
                                         int totalSize,
                                         int alreadyProcessedFiles) {
-    List<VirtualFile> files = new ArrayList<>(candidateFiles.keySet());
-
-    return processPsiFileRoots(files, totalSize, alreadyProcessedFiles, progress, candidateInfo -> {
+    return processPsiFileRoots(orderedFiles, totalSize, alreadyProcessedFiles, progress, candidateInfo -> {
       VirtualFile vfile = candidateInfo.candidateVirtualFile();
       if (vfile instanceof BackedVirtualFile) {
         vfile = ((BackedVirtualFile)vfile).getOriginFile();
@@ -1052,7 +1139,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, processors, key);
       List<VirtualFile> allFilesForKeys = new ArrayList<>();
       processFilesContainingAllKeys(myManager.getProject(), commonScope, Processors.cancelableCollectProcessor(allFilesForKeys), key);
-      Object2IntMap<VirtualFile> file2Mask=new Object2IntOpenHashMap<>();
+      Object2IntMap<VirtualFile> file2Mask = new Object2IntOpenHashMap<>();
       file2Mask.defaultReturnValue(-1);
       IntRef maskRef = new IntRef();
       for (VirtualFile file : allFilesForKeys) {

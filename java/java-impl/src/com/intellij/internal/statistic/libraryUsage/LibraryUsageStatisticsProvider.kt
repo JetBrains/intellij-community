@@ -48,8 +48,8 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
   }
 }
 
-class LibraryUsageStatisticReporter(private val project: Project) {
-  fun addStatsFromFile(vFile: VirtualFile) {
+public class LibraryUsageStatisticReporter(private val project: Project) {
+  public fun addStatsFromFile(vFile: VirtualFile) {
     project.service<FileImportsCollector>().run(vFile)
   }
 }

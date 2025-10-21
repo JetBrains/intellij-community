@@ -5,7 +5,7 @@ jvm_library(
   name = "common",
   module_name = "intellij.maven.artifactResolver.common",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = ["@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided"]
 )

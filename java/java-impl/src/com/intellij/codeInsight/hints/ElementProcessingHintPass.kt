@@ -16,7 +16,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
-abstract class ElementProcessingHintPass(
+public abstract class ElementProcessingHintPass(
   private val rootElement: PsiElement,
   editor: Editor,
   private val modificationStampHolder: ModificationStampHolder
@@ -56,22 +56,22 @@ abstract class ElementProcessingHintPass(
   /**
    * Returns true if this pass should be applied for current [virtualFile]
    */
-  abstract fun isAvailable(virtualFile: VirtualFile): Boolean
+  public abstract fun isAvailable(virtualFile: VirtualFile): Boolean
 
   /**
    * For current [element] collect hints information if it is possible
    */
-  abstract fun collectElementHints(element: PsiElement, collector: (offset: Int, hint : String) -> Unit)
+  public abstract fun collectElementHints(element: PsiElement, collector: (offset: Int, hint : String) -> Unit)
 
   /**
    * Returns key marking inlay as created by this pass
    */
-  abstract fun getHintKey(): Key<Boolean>
+  public abstract fun getHintKey(): Key<Boolean>
 
   /**
    * Creates inlay renderer for hints created by this pass
    */
-  abstract fun createRenderer(text: String): HintRenderer
+  public abstract fun createRenderer(text: String): HintRenderer
 
   private fun applyHintsToEditor() {
     val inlayModel = myEditor.inlayModel
@@ -97,8 +97,8 @@ abstract class ElementProcessingHintPass(
   }
 }
 
-class ModificationStampHolder(private val key: Key<Long>) {
-  fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
+public class ModificationStampHolder(private val key: Key<Long>) {
+  public fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
     editor.putUserData(key, ParameterHintsPassFactory.getCurrentModificationStamp(file))
   }
 
@@ -106,11 +106,11 @@ class ModificationStampHolder(private val key: Key<Long>) {
     editor.putUserData(key, null)
   }
 
-  fun forceHintsUpdateOnNextPass() {
+  public fun forceHintsUpdateOnNextPass() {
     EditorFactory.getInstance().allEditors.forEach { forceHintsUpdateOnNextPass(it) }
   }
 
-  fun isNotChanged(editor: Editor, file: PsiFile): Boolean {
+  public fun isNotChanged(editor: Editor, file: PsiFile): Boolean {
     return key.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)
   }
 }

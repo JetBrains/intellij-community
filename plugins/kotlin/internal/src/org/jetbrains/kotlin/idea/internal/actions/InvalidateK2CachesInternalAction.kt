@@ -31,7 +31,7 @@ internal class InvalidateK2CachesInternalAction : AnAction() {
         val project = e.project ?: return
         val invalidationMode = InvalidateCachesDialog.show() ?: return
         invalidateCaches(project, invalidationMode)
-        DaemonCodeAnalyzer.getInstance(project).restart()
+        DaemonCodeAnalyzer.getInstance(project).restart(this)
 
         showNotificationAboutInvalidatedCaches(project, invalidationMode)
     }

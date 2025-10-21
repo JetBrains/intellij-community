@@ -1,0 +1,1 @@
+deprecated: aws.svg; to be removed (Use AllIcons.Providers.AmazonWebServices instead)

@@ -5,11 +5,15 @@ import com.intellij.testFramework.TestDataPath
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.IncorrectCancellationExceptionHandlingInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : IncorrectCancellationExceptionHandlingInspectionTestBase() {
+abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : IncorrectCancellationExceptionHandlingInspectionTestBase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
 
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin { super.setUp() }
     addKotlinFile("JvmPlatformAnnotations.kt", """
         package kotlin.jvm
         import kotlin.reflect.KClass
@@ -67,12 +71,12 @@ Ignored: Analysis API doesn't work correctly with K1, and tests on Aggregator ar
 @TestDataPath("/inspections/incorrectCeHandling")
 class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectCancellationExceptionHandlingInspectionTestBase() {
 
-  private val USE_K2_KEY = "idea.kotlin.plugin.use.k2"
-  private var previousK2Property: String? = null
+  private val USE_K1_KEY = "idea.kotlin.plugin.use.k1"
+  private var previousK1Property: String? = null
 
   override fun setUp() {
-    previousK2Property = System.getProperty(USE_K2_KEY)
-    System.setProperty(USE_K2_KEY, "true")
+    previousK1Property = System.getProperty(USE_K1_KEY)
+    System.setProperty(USE_K1_KEY, "false")
     super.setUp()
     myFixture.addClass("""
       package java.util.concurrent;
@@ -97,12 +101,12 @@ class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectCancel
 
   override fun tearDown() {
     try {
-      val prevK2Property = previousK2Property
+      val prevK2Property = previousK1Property
       if (prevK2Property != null) {
-        System.setProperty(USE_K2_KEY, prevK2Property)
+        System.setProperty(USE_K1_KEY, prevK2Property)
       }
       else {
-        System.clearProperty(USE_K2_KEY)
+        System.clearProperty(USE_K1_KEY)
       }
     }
     catch (e: Throwable) {

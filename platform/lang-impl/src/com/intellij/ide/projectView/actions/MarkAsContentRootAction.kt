@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.OptionalExclusionUtil
 
 internal class MarkAsContentRootAction : DumbAwareAction() {
@@ -24,25 +23,19 @@ internal class MarkAsContentRootAction : DumbAwareAction() {
     }
     val fileIndex = ProjectRootManager.getInstance(module.project).fileIndex
     e.presentation.isEnabledAndVisible = files.all {
-      it.isDirectory && fileIndex.isExcluded(it) && ProjectRootsUtil.findExcludeFolder(module, it) == null
+      it.isDirectory && fileIndex.isExcluded(it) &&
+      ProjectRootsUtil.findExcludeFolder(module, it) == null &&
+      !OptionalExclusionUtil.canCancelExclusion(module.project, it)
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
     val module = MarkRootActionBase.getModule(e, files) ?: return
-    val contentRootsToAdd = ArrayList<VirtualFile>()
-    for (file in files) {
-      if (!OptionalExclusionUtil.cancelExclusion(module.project, file)) {
-        contentRootsToAdd.add(file)
-      }
+    val model = ModuleRootManager.getInstance(module).modifiableModel
+    for (it in files) {
+      model.addContentEntry(it)
     }
-    if (contentRootsToAdd.isNotEmpty()) {
-      val model = ModuleRootManager.getInstance(module).modifiableModel
-      for (it in contentRootsToAdd) {
-        model.addContentEntry(it)
-      }
-      MarkRootsManager.commitModel(module, model)
-    }
+    MarkRootsManager.commitModel(module, model)
   }
 }

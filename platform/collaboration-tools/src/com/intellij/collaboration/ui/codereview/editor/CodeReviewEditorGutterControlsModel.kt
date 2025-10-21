@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.editor
 
+import com.intellij.diff.util.LineRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 
@@ -30,5 +31,8 @@ interface CodeReviewEditorGutterControlsModel : CodeReviewCommentableEditorModel
     fun isLineCommentable(lineIdx: Int): Boolean
   }
 
-  interface WithMultilineComments : CodeReviewCommentableEditorModel.WithMultilineComments
+  interface WithMultilineComments : CodeReviewCommentableEditorModel.WithMultilineComments {
+    @RequiresEdt
+    fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange)
+  }
 }

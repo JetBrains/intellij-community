@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
@@ -30,11 +30,14 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
     Project project = editor.getProject();
     assert project != null;
     InputEvent inputEvent = e.getInputEvent();
-    createHandler(type, true, false, true).invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0);
+    CodeCompletionHandlerBase handler = createHandler(type, true, false, true);
+    handler.invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0);
   }
 
-  public @NotNull CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
-
+  public @NotNull CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
+                                                          boolean invokedExplicitly,
+                                                          boolean autopopup,
+                                                          boolean synchronous) {
     return new CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup, synchronous);
   }
 

@@ -21,13 +21,13 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
 class AddLabeledReturnInLambdaIntention : SelfTargetingRangeIntention<KtBlockExpression>(
     KtBlockExpression::class.java,
-    KotlinBundle.lazyMessage("add.labeled.return.to.last.expression.in.a.lambda")
+    KotlinBundle.messagePointer("add.labeled.return.to.last.expression.in.a.lambda")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtBlockExpression): TextRange? {
         if (!isApplicableTo(element)) return null
         val labelName = element.getParentLambdaLabelName() ?: return null
         if (labelName == KtTokens.SUSPEND_KEYWORD.value) return null
-        setTextGetter(KotlinBundle.lazyMessage("add.return.at.0", labelName))
+        setTextGetter(KotlinBundle.messagePointer("add.return.at.0", labelName))
         return element.statements.lastOrNull()?.textRange
     }
 

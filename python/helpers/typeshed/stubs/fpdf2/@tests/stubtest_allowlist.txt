@@ -8,7 +8,9 @@ fpdf._fonttools_shims
 # Only present if harfbuzz is installed
 fpdf.fonts.HarfBuzzFont
 
-# Checking the following function crashes stubtest 0.991, but seems to be
-# fixed in later versions.
-fpdf.FPDF.set_encryption
-fpdf.fpdf.FPDF.set_encryption
+# Stubtest wants us to use Literals, but that is unreasonable.
+fpdf.unicode_script.UNICODE_RANGE_TO_SCRIPT
+
+# Ignore stubtest weirdness "fpdf.fonts.Glyph._DT is not present at runtime"
+# https://github.com/python/mypy/issues/18811
+fpdf.fonts.Glyph._DT

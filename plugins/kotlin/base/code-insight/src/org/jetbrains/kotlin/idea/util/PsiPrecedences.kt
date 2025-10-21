@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
 import org.jetbrains.kotlin.psi.*
 
@@ -18,7 +19,7 @@ object PsiPrecedences {
             is KtPrefixExpression -> 1
             is KtOperationExpression -> {
                 val operation = expression.operationReference.getReferencedNameElementType()
-                val binaryOperationPrecedence = KotlinExpressionParsing.TOKEN_TO_BINARY_PRECEDENCE_MAP[operation]
+                val binaryOperationPrecedence = BinaryOperationPrecedence.TOKEN_TO_BINARY_PRECEDENCE_MAP[operation]
                 if (binaryOperationPrecedence == null) {
                     LOG.error("No precedence for operation: $operation")
                     14 // Number of unary (2) and binary (12) precedences

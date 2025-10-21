@@ -4,9 +4,9 @@ package andel.lines
 import andel.intervals.Interval
 import andel.intervals.IntervalsQuery
 import andel.text.*
-import fleet.util.text.CodepointClass
-import fleet.util.text.codepointClass
-import fleet.util.text.isFullWidth
+import fleet.codepoints.CodepointClass
+import fleet.codepoints.codepointClass
+import fleet.codepoints.isFullWidth
 
 data class FixedWidthSoftWrapBuilder(
   val width: Float = Float.POSITIVE_INFINITY,

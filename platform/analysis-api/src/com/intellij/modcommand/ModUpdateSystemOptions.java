@@ -32,8 +32,8 @@ public record ModUpdateSystemOptions(@NotNull List<@NotNull ModifiedOption> opti
 
   @Override
   public @NotNull ModCommand andThen(@NotNull ModCommand next) {
-    if (next instanceof ModUpdateSystemOptions nextUpdate) {
-      return new ModUpdateSystemOptions(ContainerUtil.concat(options, nextUpdate.options));
+    if (next instanceof ModUpdateSystemOptions(var nextOptions)) {
+      return new ModUpdateSystemOptions(ContainerUtil.concat(options, nextOptions));
     }
     return ModCommand.super.andThen(next);
   }

@@ -86,6 +86,13 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
     override val validationRule: List<String>
       get() = listOf("{regexp:$regexp}")
   }
+
+  data class ValidatedByDictionary @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                   @NonNls val dictionaryName: String,
+                                   @NonNls override val description: String? = null) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{dictionary#$dictionaryName}")
+  }
 }
 
 // region Numeric fields
@@ -442,6 +449,13 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
                                      @NonNls override val description: String? = null) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{regexp:$regexp}")
+  }
+
+  data class ValidatedByDictionary @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                   @NonNls val dictionaryName: String,
+                                   @NonNls override val description: String? = null) : StringListEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{dictionary#$dictionaryName}")
   }
 }
 

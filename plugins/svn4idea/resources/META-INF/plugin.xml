@@ -9,12 +9,20 @@
       Requires command line svn client.
       ]]>
   </description>
-  <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.SvnBundle</resource-bundle>
 
-  <actions>
+  <dependencies>
+    <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.libraries.javax.activation"/>
+  </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.libraries.javax.activation), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
 
+  <actions>
     <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction">
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
@@ -140,11 +148,11 @@
     <search.projectOptionsTopHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"
          areChildrenValidMappings="true"/>
-    <projectConfigurable id="vcs.Subversion" key="configurable.name.svn.general" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
+    <projectConfigurable id="vcs.Subversion" key="configurable.name.svn.general" instance="org.jetbrains.idea.svn.GeneralSvnConfigurable"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">
-      <configurable id="vcs.Subversion.Presentation" instance="org.jetbrains.idea.svn.SvnConfigurable$Presentation"
+      <configurable id="vcs.Subversion.Presentation" instance="org.jetbrains.idea.svn.PresentationSvnConfigurable"
                     bundle="messages.SvnBundle" key="configurable.name.svn.presentation"/>
-      <configurable id="vcs.Subversion.Network" instance="org.jetbrains.idea.svn.SvnConfigurable$Network"
+      <configurable id="vcs.Subversion.Network" instance="org.jetbrains.idea.svn.NetworkSvnConfigurable"
                     bundle="messages.SvnBundle" key="configurable.name.svn.network"/>
       <configurable id="vcs.Subversion.SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"
                     bundle="messages.SvnBundle" key="configurable.name.svn.ssh"/>

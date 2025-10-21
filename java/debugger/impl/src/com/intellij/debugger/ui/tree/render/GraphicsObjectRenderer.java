@@ -6,9 +6,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.sun.jdi.*;
 
-import javax.swing.*;
-
-public final class GraphicsObjectRenderer extends CompoundRendererProvider {
+public final class GraphicsObjectRenderer extends AbstractImageRenderer {
   @Override
   protected String getName() {
     return "Graphics";
@@ -17,11 +15,6 @@ public final class GraphicsObjectRenderer extends CompoundRendererProvider {
   @Override
   protected String getClassName() {
     return "sun.java2d.SunGraphics2D";
-  }
-
-  @Override
-  protected boolean isEnabled() {
-    return true;
   }
 
   @Override
@@ -45,12 +38,8 @@ public final class GraphicsObjectRenderer extends CompoundRendererProvider {
         if (!(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, "java.awt.Image")) {
           return null;
         }
-        return new ImageObjectRenderer.IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
-          @Override
-          protected Icon getData() {
-            return ImageObjectRenderer.getIcon(getEvaluationContext(), bufImgValue, "imageToBytes");
-          }
-        };
+        return createImagePopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext,
+                                         bufImgValue, "imageToBytes");
       }
       catch (Exception ignored) {
       }

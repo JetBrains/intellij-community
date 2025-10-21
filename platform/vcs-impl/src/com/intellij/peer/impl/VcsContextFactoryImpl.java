@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.peer.impl;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.RemoteFilePath;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -21,16 +18,6 @@ import java.nio.file.Path;
 
 public class VcsContextFactoryImpl implements VcsContextFactory {
   private static final Logger LOG = Logger.getInstance(VcsContextFactoryImpl.class);
-
-  @Override
-  public @NotNull VcsContext createCachedContextOn(@NotNull AnActionEvent event) {
-    return VcsContextWrapper.createCachedInstanceOn(event);
-  }
-
-  @Override
-  public @NotNull VcsContext createContextOn(@NotNull AnActionEvent event) {
-    return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
-  }
 
   @Override
   public @NotNull FilePath createFilePathOn(@NotNull VirtualFile virtualFile) {

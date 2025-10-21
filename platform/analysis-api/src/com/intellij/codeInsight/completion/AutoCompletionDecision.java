@@ -10,7 +10,7 @@ public class AutoCompletionDecision {
   public static final AutoCompletionDecision SHOW_LOOKUP = new AutoCompletionDecision();
   public static final AutoCompletionDecision CLOSE_LOOKUP = new AutoCompletionDecision();
 
-  public static AutoCompletionDecision insertItem(@NotNull LookupElement element) {
+  public static @NotNull AutoCompletionDecision insertItem(@NotNull LookupElement element) {
     return new InsertItem(element);
   }
 
@@ -21,13 +21,12 @@ public class AutoCompletionDecision {
   public static final class InsertItem extends AutoCompletionDecision {
     private final LookupElement myElement;
 
-    private InsertItem(LookupElement element) {
+    private InsertItem(@NotNull LookupElement element) {
       myElement = element;
     }
 
-    public LookupElement getElement() {
+    public @NotNull LookupElement getElement() {
       return myElement;
     }
   }
-
 }

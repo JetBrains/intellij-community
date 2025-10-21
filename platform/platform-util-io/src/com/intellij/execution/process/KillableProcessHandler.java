@@ -30,7 +30,7 @@ import java.util.Set;
  * On Unix, graceful termination corresponds to sending SIGINT signal.
  * On Windows, graceful termination executes GenerateConsoleCtrlEvent under the hood.
  */
-public class KillableProcessHandler extends OSProcessHandler implements KillableProcess {
+public class KillableProcessHandler extends OSProcessHandler implements KillableProcess, SoftlyKillableProcessHandler {
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
 
   private boolean myShouldKillProcessSoftly = true;
@@ -68,6 +68,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * @return {@code true} if graceful process termination should be attempted first
    */
+  @Override
   public boolean shouldKillProcessSoftly() {
     return myShouldKillProcessSoftly;
   }

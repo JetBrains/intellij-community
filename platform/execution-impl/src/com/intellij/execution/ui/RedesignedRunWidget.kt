@@ -82,7 +82,7 @@ class RunWidgetResumeManager(private val project: Project) {
 
 private fun createRunActionToolbar(): ActionToolbar {
   val group = object : ActionGroup(), DumbAware {
-    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       if (e == null) return emptyArray()
       return arrayOf(e.actionManager.getAction("RunToolbarMainActionGroup"))
     }
@@ -197,7 +197,9 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
   }
 }
 
-private class RunWidgetButtonLook : HeaderToolbarButtonLook() {
+private class RunWidgetButtonLook : HeaderToolbarButtonLook(
+  iconSize = { 16 }
+) {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
     val isDisabled = (component as? ActionButton)?.presentation?.isEnabled == false
     val isStopButton = isStopButton(component)

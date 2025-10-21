@@ -79,6 +79,12 @@ abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
         return shortenReference(sourcePsi).toUElementOfType()
     }
 
+    override fun shortenReference(uDeclaration: UDeclaration): UDeclaration? {
+        val sourcePsi = uDeclaration.sourcePsi ?: return null
+        if (sourcePsi !is KtElement) return null
+        return shortenReference(sourcePsi).toUElementOfType()
+    }
+
     abstract fun shortenReference(sourcePsi: KtElement): PsiElement?
 
     override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
@@ -296,6 +302,16 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return stringBuilder.toString()
     }
 
+    override fun createIntegerConstantExpression(
+        integer: Int,
+        context: PsiElement?
+    ): UExpression? {
+        return when (val literalExpr = psiFactory(context).createExpression("$integer")) {
+            is KtConstantExpression -> KotlinULiteralExpression(literalExpr, null)
+            else -> null
+        }
+    }
+
     override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
         return when (val literalExpr = psiFactory(context).createExpression(long.toString() + "L")) {
             is KtConstantExpression -> KotlinULiteralExpression(literalExpr, null)
@@ -310,6 +326,21 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
     override fun createComment(text: String, context: PsiElement?): UComment {
         return psiFactory(context).createComment(text).toUElementOfType()!!
+    }
+
+    override fun createClass(className: String, extends: List<String>, implements: List<String>, context: PsiElement): UClass? {
+        val extendsPart = if (extends.size + implements.size >= 1)
+            (extends + implements).joinToString(", ", " : ")
+        else
+            ""
+
+        val classText = """
+            class $className$extendsPart {
+            }
+        """.trimIndent()
+
+        val ktClass = psiFactory(context).createClass(classText)
+        return ktClass.toUElement(UClass::class.java)
     }
 
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {

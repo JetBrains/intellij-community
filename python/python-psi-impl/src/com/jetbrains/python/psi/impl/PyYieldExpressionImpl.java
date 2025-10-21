@@ -8,7 +8,8 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyYieldExpression;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
     if (isDelegating()) {
       final PyExpression e = getExpression();
       final PyType type = e != null ? context.getType(e) : null;
-      var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.create(type);
+      var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGeneratorOrProtocol(type, context);
       if (generatorDesc != null) {
         return generatorDesc.returnType();
       }
@@ -55,7 +56,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
     if (ScopeUtil.getScopeOwner(this) instanceof PyFunction function) {
       if (function.getAnnotation() != null || function.getTypeCommentAnnotation() != null) {
         var returnType = context.getReturnType(function);
-        var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.create(returnType);
+        var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGeneratorOrProtocol(returnType, context);
         if (generatorDesc != null) {
           return generatorDesc.sendType();
         }
@@ -65,7 +66,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
     if (isDelegating()) {
       final PyExpression e = getExpression();
       final PyType type = e != null ? context.getType(e) : null;
-      var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.create(type);
+      var generatorDesc = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGeneratorOrProtocol(type, context);
       if (generatorDesc != null) {
         return generatorDesc.sendType();
       }

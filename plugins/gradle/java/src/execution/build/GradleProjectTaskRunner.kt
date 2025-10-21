@@ -115,6 +115,7 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
                   it.putUserData(INIT_SCRIPT_KEY, settings.getInitScript(rootProjectPath))
                   it.putUserData(INIT_SCRIPT_PREFIX_KEY, BUILD_INIT_SCRIPT_NAME)
                 })
+                .withActivateToolWindowOnFailure(!context.isAutoRun)
             )
           }
         }

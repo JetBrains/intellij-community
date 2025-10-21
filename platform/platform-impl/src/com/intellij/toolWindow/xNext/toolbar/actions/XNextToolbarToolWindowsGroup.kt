@@ -26,7 +26,7 @@ import javax.swing.JComponent
 internal class XNextToolbarToolWindowsGroup : ActionGroup(), DumbAware {
   private val cache = mutableMapOf<String, AnAction>()
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val list = mutableListOf<AnAction>()
 

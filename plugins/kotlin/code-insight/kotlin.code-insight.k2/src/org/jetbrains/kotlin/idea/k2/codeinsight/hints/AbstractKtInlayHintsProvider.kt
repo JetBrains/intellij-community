@@ -5,19 +5,13 @@ import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
-abstract class AbstractKtInlayHintsProvider: InlayHintsProvider {
-    @Suppress("SSBasedInspection")
-    private val log = Logger.getInstance(this::class.java)
+abstract class AbstractKtInlayHintsProvider : InlayHintsProvider {
 
     open fun shouldShowForFile(ktFile: KtFile, project: Project): Boolean = true
 
@@ -34,15 +28,8 @@ abstract class AbstractKtInlayHintsProvider: InlayHintsProvider {
                 element: PsiElement,
                 sink: InlayTreeSink
             ) {
-                try {
+                collectInlaysWithErrorsLogging(element) {
                     this@AbstractKtInlayHintsProvider.collectFromElement(element, sink)
-                } catch (e: ProcessCanceledException) {
-                    throw e
-                } catch (e: IndexNotReadyException) {
-                    throw e
-                } catch (e: Exception) {
-                    log.error(KotlinExceptionWithAttachments("Unable to provide inlay hint for $element", e)
-                        .withPsiAttachment("element", element))
                 }
             }
         }

@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Named("Intellij Idea Maven 4 Importer Spy")
 @Singleton
+// consider using Maven40TransferListenerAdapter bound to a repository session instead of global event spy
 public class Maven40ImporterSpy extends AbstractEventSpy {
 
   private volatile MavenServerConsoleIndicator myIndicator;

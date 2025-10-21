@@ -32,6 +32,7 @@ class MoveArgsBuilder(
   fun doNotReplace(): MoveArgsBuilder =
     replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE)
 
+  /** For compatibility with Java NIO. */
   fun doNotReplaceDirectories(): MoveArgsBuilder =
     replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES)
 

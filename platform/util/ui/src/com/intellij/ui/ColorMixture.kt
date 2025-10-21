@@ -2,7 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.SystemProperties
 import com.intellij.util.ui.ComparableColor
 import com.intellij.util.ui.PresentableColor
 import com.intellij.util.ui.UIUtil
@@ -65,12 +65,17 @@ abstract class ColorMixture internal constructor(
     if (supportDynamicColors && args.any { it is JBColor }) {
       return JBColor.lazy(this)
     }
-    else if (Registry.`is`("ide.color.mixture.mark.colors")) {
+    else if (SystemProperties.getBooleanProperty(ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION, false)) {
       return NamedColor(getPresentableName(), get())
     }
     else {
       return get()
     }
+  }
+
+  companion object {
+    @ApiStatus.Internal
+    const val ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION: String = "ide.color.mixture.mark.colors"
   }
 }
 

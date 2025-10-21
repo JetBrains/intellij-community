@@ -207,6 +207,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
         }
       }
       Splitter splitter = new MySplitter();
+      splitter.getDivider().setBackground(JBUI.CurrentTheme.Separator.color());
       splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, true));
       splitter.setSecondComponent(previewPanel);
 

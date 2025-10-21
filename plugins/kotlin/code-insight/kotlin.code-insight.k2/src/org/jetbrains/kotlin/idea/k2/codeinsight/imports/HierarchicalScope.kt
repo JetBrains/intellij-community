@@ -23,7 +23,8 @@ internal class HierarchicalScope private constructor(private val scopes: List<Ka
     }
 
     companion object {
-        fun KaSession.createFrom(scopes: List<KaScopeWithKind>): HierarchicalScope {
+        context(_: KaSession)
+        fun createFrom(scopes: List<KaScopeWithKind>): HierarchicalScope {
             val scopesSorted = scopes.sortedBy { it.kind.indexInTower }.map { it.scope }
 
             return HierarchicalScope(scopesSorted)

@@ -865,23 +865,23 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       () -> {
         myFixture.configureByText(
           "a.java",
-          """
-          class A{
-            public static void main(String[] args) {
-              <caret>
+            """
+            class A{
+              public static void main(String[] args) {
+                <caret>
+              }
             }
-          }
-          """);
+            """);
         final TemplateImpl template = TemplateSettings.getInstance().getTemplate("iop", "Java");
         startTemplate(template);
         myFixture.checkResult(
-          """
-          class A{
-            public static void main(String[] args) {
-                IO.println(<caret>);
+            """
+            class A{
+              public static void main(String[] args) {
+                  IO.println(<caret>);
+              }
             }
-          }
-          """);
+            """);
       }
     );
   }
@@ -893,21 +893,21 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       () -> {
         myFixture.configureByText(
           "a.java",
-          """
-          class A{
-            public static void main(String[] args) {
-                <caret>
-            }
-          }""");
+            """
+            class A{
+              public static void main(String[] args) {
+                  <caret>
+              }
+            }""");
         final TemplateImpl template = TemplateSettings.getInstance().getTemplate("ior", "Java");
         startTemplate(template);
         myFixture.checkResult(
-          """
-          class A{
-            public static void main(String[] args) {
-                IO.readln(<caret>);
-            }
-          }""");
+            """
+            class A{
+              public static void main(String[] args) {
+                  IO.readln(<caret>);
+              }
+            }""");
       }
     );
   }

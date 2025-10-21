@@ -14,7 +14,7 @@ public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   /**
    * @deprecated {@link VcsFileSystem} cannot be overwritten
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child, @NotNull VirtualFileSystem ignored) {
     this(name, child);
   }

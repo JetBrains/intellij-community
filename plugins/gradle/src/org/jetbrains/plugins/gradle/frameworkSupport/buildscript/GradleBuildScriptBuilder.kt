@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.function.Consumer
 
@@ -16,12 +16,26 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun addGroup(group: String): Self
   fun addVersion(version: String): Self
 
-  fun registerTask(name: String, type: String?, configure: Consumer<ScriptTreeBuilder>): Self = registerTask(name, type) { configure.accept(this) }
-  fun registerTask(name: String, type: String? = null, configure: ScriptTreeBuilder.() -> Unit = {}): Self
+  fun registerTask(name: String, type: String?, configure: Consumer<GradleScriptTreeBuilder>): Self = registerTask(name, type, configure::accept)
+  fun registerTask(name: String, type: String? = null, configure: GradleScriptTreeBuilder.() -> Unit = {}): Self
 
-  fun configureTask(name: String, type: String, configure: Consumer<ScriptTreeBuilder>): Self = configureTask(name, type) { configure.accept(this) }
-  fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self
-  fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self
+  fun configureTask(name: String, type: String, configure: Consumer<GradleScriptTreeBuilder>): Self = configureTask(name, type, configure::accept)
+  fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): Self
+
+  @Deprecated("Renamed, use the [test] function instead.")
+  fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self = test(configure)
+
+  fun test(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun test(configure: Consumer<GradleScriptTreeBuilder>): Self =
+    test(configure::accept)
+
+  fun compileJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun compileJava(configure: Consumer<GradleScriptTreeBuilder>): Self =
+    compileJava(configure::accept)
+
+  fun compileTestJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun compileTestJava(configure: Consumer<GradleScriptTreeBuilder>): Self =
+    compileTestJava(configure::accept)
 
   fun addDependency(scope: String, dependency: String): Self = addDependency(scope, dependency, null)
   fun addDependency(scope: String, dependency: Expression): Self = addDependency(scope, dependency, null)
@@ -66,21 +80,30 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun withPlugin(id: String): Self = withPlugin(id, null)
   fun withPlugin(id: String, version: String?): Self
 
+  fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withJava(configure: Consumer<GradleScriptTreeBuilder>): Self = withJava(configure::accept)
   fun withJavaPlugin(): Self
   fun withJavaLibraryPlugin(): Self
-  fun withIdeaPlugin(): Self
-  fun withKotlinJvmPlugin(): Self
+  fun withJavaToolchain(languageVersion: Int): Self
 
-  /**
-   * Adds the Kotlin JVM plugin using the [version], or omitting the version call if [version] is null.
-   */
+  fun withIdeaPlugin(): Self
+
+  fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withKotlin(configure: Consumer<GradleScriptTreeBuilder>): Self = withKotlin(configure::accept)
+  fun withKotlinJvmPlugin(): Self
   fun withKotlinJvmPlugin(version: String?): Self
   fun withKotlinJsPlugin(): Self
   fun withKotlinMultiplatformPlugin(): Self
   fun withKotlinJvmToolchain(jvmTarget: Int): Self
+
   fun withKotlinDsl(): Self
+
   fun withGroovyPlugin(): Self
   fun withGroovyPlugin(version: String): Self
+
+  fun withApplication(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withApplication(configure: Consumer<GradleScriptTreeBuilder>): Self = withApplication(configure::accept)
+  fun withApplicationPlugin(): Self
   fun withApplicationPlugin(
     mainClass: String? = null,
     mainModule: String? = null,
@@ -99,9 +122,9 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun project(name: String): Expression
   fun project(name: String, configuration: String): Expression
 
-  fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder
-  fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder
-  fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder
+  fun GradleScriptTreeBuilder.mavenRepository(url: String): GradleScriptTreeBuilder
+  fun GradleScriptTreeBuilder.mavenCentral(): GradleScriptTreeBuilder
+  fun GradleScriptTreeBuilder.mavenLocal(url: String): GradleScriptTreeBuilder
 
   companion object {
 
@@ -112,10 +135,7 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
 
     @JvmStatic
     fun create(gradleVersion: GradleVersion, gradleDsl: GradleDsl): GradleBuildScriptBuilder<*> {
-      return when (gradleDsl) {
-        GradleDsl.GROOVY -> GroovyDslGradleBuildScriptBuilder.Impl(gradleVersion)
-        GradleDsl.KOTLIN -> KotlinDslGradleBuildScriptBuilder.Impl(gradleVersion)
-      }
+      return AbstractGradleBuildScriptBuilder.Impl(gradleVersion, gradleDsl)
     }
 
     @JvmStatic

@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.DumbAware;
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.javadoc.PsiDocFragmentName;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -95,6 +97,12 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
       final var reference = value.getFirstChild().getReference();
       if (reference != null) {
         myHolder.add(HighlightNamesUtil.highlightModule(javaModule, reference, myHolder.getColorsScheme()));
+      }
+    }
+    else if (value instanceof PsiDocFragmentName docFragmentName) {
+      final var fragmentData = JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(value.getProject(), docFragmentName);
+      if (fragmentData != null) {
+        myHolder.add(HighlightNamesUtil.highlightFragmentReference(docFragmentName));
       }
     }
   }

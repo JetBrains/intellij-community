@@ -31,7 +31,7 @@ import kotlin.reflect.KClass
 // The class still can be used, if you want to create a pair for existing intention with additional checker
 abstract class IntentionBasedInspection<TElement : PsiElement> private constructor(
     private val intentionInfo: IntentionData<TElement>,
-    protected open val problemText: String?
+    protected open val problemText: String? // todo here must be messagePointer: Supplier<String> instead
 ) : AbstractKotlinInspection() {
 
     val intention: SelfTargetingRangeIntention<TElement> by lazy {

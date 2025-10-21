@@ -67,7 +67,7 @@ class TableFormula(Serialisable):
     array: Bool[Literal[True]]
     attr_text: Incomplete
     text: Alias
-    def __init__(self, array: _ConvertibleToBool | None = None, attr_text: Incomplete | None = None) -> None: ...
+    def __init__(self, array: _ConvertibleToBool | None = None, attr_text=None) -> None: ...
 
 class TableColumn(Serialisable):
     tagname: ClassVar[str]
@@ -170,8 +170,8 @@ class Table(Serialisable):
     def __init__(
         self,
         id: ConvertibleToInt = 1,
-        displayName: Incomplete | None = None,
-        ref: Incomplete | None = None,
+        displayName=None,
+        ref=None,
         name: str | None = None,
         comment: str | None = None,
         tableType: _TableTableType | Literal["none"] | None = None,
@@ -218,5 +218,5 @@ class TablePartList(Serialisable):
 
 class TableList(dict[Incomplete, Incomplete]):
     def add(self, table) -> None: ...
-    def get(self, name: Incomplete | None = None, table_range: Incomplete | None = None): ...
+    def get(self, name=None, table_range=None): ...
     def items(self): ...

@@ -1,5 +1,5 @@
 // PRIORITY: HIGH
-// COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries -opt-in=kotlin.ExperimentalStdlibApi
+// COMPILER_ARGUMENTS: -opt-in=kotlin.ExperimentalStdlibApi
 // WITH_STDLIB
 // AFTER-WARNING: Ambiguous access to property 'entries' is deprecated. Please, specify type of the referenced expression explicitly
 // AFTER-WARNING: The expression is unused

@@ -26,17 +26,31 @@ class CommunityPluginModelTest {
       modulesWithIncorrectlyPlacedModuleDescriptor = setOf(
         "intellij.android.device-explorer",
       ),
-      pathsIncludedFromLibrariesViaXiInclude = setOf(
+      prefixesOfPathsIncludedFromLibrariesViaXiInclude = listOf(
         "META-INF/analysis-api/analysis-api-fe10.xml",
         "META-INF/analysis-api/analysis-api-fir.xml",
         "META-INF/wizard-template-impl.xml",
+        "META-INF/tips-"
+      ),
+      additionalPatternsOfDirectoriesContainingIncludedXmlFiles = listOf(
+        "org/jetbrains/android/dom",
+        "com/android/tools/idea/ui/resourcemanager/META-INF",
+      ),
+      componentImplementationClassesToIgnore = setOf(
+        "com.intellij.designer.DesignerToolWindowManager",
+        "com.intellij.designer.palette.PaletteToolWindowManager",
       ),
       pluginVariantsWithDynamicIncludes = listOf(
         PluginVariantWithDynamicIncludes(
           mainModuleName = "kotlin.plugin",
-          systemPropertyName = "idea.kotlin.plugin.use.k2",
+          systemPropertyName = "idea.kotlin.plugin.use.k1",
+          systemPropertyValue = "false",
+        ),
+        PluginVariantWithDynamicIncludes(
+          mainModuleName = "kotlin.plugin",
+          systemPropertyName = "idea.kotlin.plugin.use.k1",
           systemPropertyValue = "true",
-        )
+        ),
       )
     )
     val result = validatePluginModel(communityPath, options)

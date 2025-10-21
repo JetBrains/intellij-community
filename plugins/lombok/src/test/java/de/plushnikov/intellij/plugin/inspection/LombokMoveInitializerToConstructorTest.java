@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class LombokMoveInitializerToConstructorTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   public void testMoveInitializerToConstructor() {

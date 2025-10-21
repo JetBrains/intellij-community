@@ -4,7 +4,7 @@ package git4idea.light
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.wm.StatusBar
@@ -14,7 +14,7 @@ import git4idea.i18n.GitBundle
 import java.awt.Component
 
 private const val ID = "light.edit.git"
-private val LOG = Logger.getInstance(LightGitStatusBarWidget::class.java)
+private val LOG = logger<LightGitStatusBarWidget>()
 
 private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTracker) : StatusBarWidget, StatusBarWidget.TextPresentation {
   private var statusBar: StatusBar? = null
@@ -35,14 +35,15 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
 
   override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
 
-  override fun getText(): String =
-    lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.text", it) } ?: ""
+  override fun getText(): String = lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.text", it) } ?: ""
 
   override fun getTooltipText(): String {
     val locationText = lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.tooltip", it) } ?: ""
-    if (locationText.isBlank()) return locationText
+    if (locationText.isBlank()) {
+      return locationText
+    }
 
-    val selectedFile = LightEditService.getInstance().selectedFile
+    val selectedFile = LightEditService.getInstance().getSelectedFile()
     if (selectedFile != null) {
       val statusText = lightGitTracker.getFileStatus(selectedFile).getPresentation()
       if (statusText.isNotBlank()) return HtmlBuilder().append(locationText).br().append(statusText).toString()

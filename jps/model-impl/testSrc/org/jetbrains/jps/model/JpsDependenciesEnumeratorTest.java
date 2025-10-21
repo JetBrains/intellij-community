@@ -58,8 +58,8 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return getJarUrlFromProjectLib("fastutil-min");
   }
 
-  private static String getAsmJar() {
-    return getJarUrlFromProjectLib("ASM");
+  private static String getCaffeineJar() {
+    return getJarUrlFromProjectLib("caffeine");
   }
 
   private static String getJarUrlFromProjectLib(final String libraryName) {
@@ -85,9 +85,9 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return library;
   }
 
-  private JpsLibrary createAsmLibrary() {
-    JpsLibrary library = addLibrary("asm");
-    library.addRoot(getAsmJar(), JpsOrderRootType.COMPILED);
+  private JpsLibrary createCaffeineLibrary() {
+    JpsLibrary library = addLibrary("caffeine");
+    library.addRoot(getCaffeineJar(), JpsOrderRootType.COMPILED);
     return library;
   }
 
@@ -170,12 +170,12 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   public void testNotExportedLibrary() {
     final JpsModule dep = addModule("dep");
     JpsModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), JpsJavaDependencyScope.COMPILE, false);
-    JpsModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), JpsJavaDependencyScope.COMPILE, false);
+    JpsModuleRootModificationUtil.addDependency(myModule, createCaffeineLibrary(), JpsJavaDependencyScope.COMPILE, false);
     JpsModuleRootModificationUtil.addDependency(myModule, dep, JpsJavaDependencyScope.COMPILE, false);
 
-    assertClassRoots(dependencies(myModule).withoutSdk(), getAsmJar());
-    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getAsmJar(), getFastUtilJar());
-    assertClassRoots(dependencies(myModule).withoutSdk().recursivelyExportedOnly(), getAsmJar());
+    assertClassRoots(dependencies(myModule).withoutSdk(), getCaffeineJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getCaffeineJar(), getFastUtilJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursivelyExportedOnly(), getCaffeineJar());
     assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly().recursively());
   }
 

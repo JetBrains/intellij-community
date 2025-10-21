@@ -198,7 +198,7 @@ public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInsp
             return null;
           }
         }
-        return new DiffRange(block.statements.get(0), block.statements.get(block.statements.size() - 1),
+        return new DiffRange(block.statements.getFirst(), block.statements.getLast(),
                              equalsComments(comments, block.comments)
                              ? ProblemHighlightType.WEAK_WARNING
                              : ProblemHighlightType.INFORMATION);

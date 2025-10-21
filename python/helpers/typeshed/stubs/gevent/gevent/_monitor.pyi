@@ -19,6 +19,7 @@ def implementer(interface: Any, /) -> Callable[[_T], _T]: ...
 class MonitorWarning(RuntimeWarning): ...
 
 class _MonitorEntry:
+    __slots__ = ("function", "period", "last_run_time")
     function: Callable[[Hub], object]
     period: float
     last_run_time: float

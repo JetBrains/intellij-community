@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.BorderPainterHolder;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,7 +40,10 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +59,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class WindowTabsComponent extends JBTabsImpl {
+public final class WindowTabsComponent extends JBTabsImpl implements BorderPainterHolder {
   private static final String TITLE_LISTENER_KEY = "TitleListener";
   public static final String CLOSE_TAB_KEY = "CloseTab";
 
@@ -66,6 +70,8 @@ public final class WindowTabsComponent extends JBTabsImpl {
   private final IdeFrameImpl myNativeWindow;
   private final Disposable myParentDisposable;
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
+
+  private BorderPainter borderPainter = new DefaultBorderPainter();
 
   public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
     super(project, parentDisposable);
@@ -90,6 +96,19 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
     createTabActions();
     installDnD();
+  }
+
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull BorderPainter getBorderPainter() {
+    return borderPainter;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setBorderPainter(@NotNull BorderPainter painter) {
+    this.borderPainter = painter;
   }
 
   private static @NotNull Insets getContentInsets() {
@@ -120,6 +139,12 @@ public final class WindowTabsComponent extends JBTabsImpl {
   @Override
   public @NotNull Dimension getPreferredSize() {
     return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
+  }
+
+  @Override
+  public void paintChildren(Graphics g) {
+    super.paintChildren(g);
+    borderPainter.paintAfterChildren(this, g);
   }
 
   @Override
@@ -889,7 +914,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }
 
     @Override
-    public void executePaint(Component component, Graphics2D g) {
+    public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
       GraphicsUtil.setupAAPainting(g);
       g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
       g.fill(myArea);

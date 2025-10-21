@@ -108,6 +108,7 @@ import kotlin.coroutines.CoroutineContext
  */
 @ApiStatus.Experimental
 interface IntelliJContextElement : CoroutineContext.Element {
+
   /**
    * Called when _scheduling_ of a child computation is requested.
    *

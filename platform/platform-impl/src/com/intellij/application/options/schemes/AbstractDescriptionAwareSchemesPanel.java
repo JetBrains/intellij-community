@@ -94,7 +94,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
       }
 
       @Override
-      public void executePaint(Component component, Graphics2D g) {
+      public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
         if (myDescriptionTextField.isShowing()) {
           GraphicsUtil.setupAntialiasing(g);
           g.setColor(JBColor.GRAY);

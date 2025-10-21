@@ -29,6 +29,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-72232
+  public void testWithItemNonContextManager() {
+    doTest();
+  }
+
   // PY-10660
   public void testStructUnpackPy3() {
     doMultiFileTest();
@@ -55,6 +60,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-16898
   public void testAsyncForIterable() {
+    doTest();
+  }
+
+  // PY-6729
+  public void testYieldFromNonIterable() {
     doTest();
   }
 
@@ -102,7 +112,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionReturnTypePy3() {
     doTest();
   }
-  
+
   public void testFunctionYieldTypePy3() {
     doTest();
   }
@@ -558,8 +568,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    class Color(Enum):
                        R = 1
-                       G == 2
-                       B == 3
+                       G = 2
+                       B = 3
                        RED = R
                        BLUE = B
                    
@@ -2648,7 +2658,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    compatible: MyCallable[[int], object] = MyCallable[[object], str]()
                    incompatible1: MyCallable[[object], object] = <warning descr="Expected type 'MyCallable[[object], object]', got 'MyCallable[[int], str]' instead">MyCallable[[int], str]()</warning>
                    incompatible2: MyCallable[[int], str] = <warning descr="Expected type 'MyCallable[[int], str]', got 'MyCallable[[object], object]' instead">MyCallable[[object], object]()</warning>
-                   """);    
+                   """);
   }
 
   // PY-77541
@@ -2992,6 +3002,73 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    
                    v5: Hashable = DC5(0)
+                   """);
+  }
+
+  // PY-76855
+  public void testAccessToAttributeOfGenericClassWithDefaultIsNotAmbiguous() {
+    doTestByText("""
+                   class Test1[T = int]():
+                       attr: T
+                   class Test2[T]():
+                       attr: T
+                   
+                   Test1.attr #OK
+                   Test2.<warning descr="Access to generic instance variables via class is ambiguous">attr</warning>
+                   """);
+  }
+
+  // PY-76818
+  public void testMatchModuleWithProtocolNumOfAttrs() {
+    doMultiFileTest();
+  }
+
+  // PY-76818
+  public void testMatchProtocolWithModuleCallables() {
+    doMultiFileTest();
+  }
+
+  // PY-76818
+  public void testMatchGenericProtocolWithModule() {
+    doMultiFileTest();
+  }
+
+  // PY-82871
+  public void testConcatenateWithEllipsis() {
+    doTestByText("""
+                   from typing import Callable, Concatenate
+                   
+                   call: Callable[Concatenate[int, ...], str]
+                   
+                   call(42)
+                   call(42, True)
+                   call(<warning descr="Expected type 'int', got 'str' instead">"foo"</warning>)
+                   call()
+                   
+                   def single_int(x: int) -> str:
+                       pass
+                   
+                   def int_bool(x: int, y: bool) -> str:
+                       pass
+
+                   def single_str(x: str) -> str:
+                       pass
+
+                   def empty() -> str:
+                       pass
+                   
+                   call = single_int
+                   call = int_bool
+                   call = <warning descr="Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead">single_str</warning>
+                   call = <warning descr="Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead">empty</warning>
+                   """);
+  }
+
+  public void testNoWarningIfUnreachable() {
+    doTestByText("""
+                   def foo() -> int:
+                       assert False
+                       return "42" # no warning here, because it is unreachable
                    """);
   }
 }

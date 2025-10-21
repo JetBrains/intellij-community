@@ -15,6 +15,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IdempotenceChecker;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,11 +117,11 @@ public final class XmlPsiUtil {
         if (!xmlConditionalSection.isIncluded(targetFile)) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
-      else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
+      else if (processIncludes && isXInclude(element)) {
         if (IdempotenceChecker.isLoggingEnabled()) {
           IdempotenceChecker.logTrace("Processing xinclude " + element.getText());
         }
-        PsiElement[] tags = InclusionProvider.getIncludedTags((XmlTag)element);
+        PsiElement[] tags = InclusionProvider.getInstance().getIncludedTags((XmlTag)element);
         for (PsiElement psiElement : tags) {
           if (IdempotenceChecker.isLoggingEnabled()) {
             IdempotenceChecker.logTrace("Processing included tag " + psiElement);
@@ -149,7 +150,7 @@ public final class XmlPsiUtil {
         else if (child instanceof XmlConditionalSection) {
           if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
         }
-        else if (processIncludes && XmlIncludeHandler.isXInclude(child)) {
+        else if (processIncludes && isXInclude(child)) {
           if (!processXmlElements(child, false, wideFlag, true)) return false;
         }
         else if (!processor.execute(child)) return false;
@@ -161,7 +162,9 @@ public final class XmlPsiUtil {
     }
   }
 
-  private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
+  private static @Nullable PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
+    if (PlatformUtils.isJetBrainsClient()) return null;
+
     XmlEntityContextType type = getContextType(ref);
 
     {
@@ -243,5 +246,22 @@ public final class XmlPsiUtil {
       }, false));
 
     return value.getValue();
+  }
+
+  private static final @NonNls String INCLUDE_TAG_NAME = "include";
+
+  public static boolean isXInclude(PsiElement element) {
+    if (element instanceof XmlTag xmlTag) {
+
+      if (xmlTag.getParent() instanceof XmlDocument) return false;
+
+      if (xmlTag.getLocalName().equals(INCLUDE_TAG_NAME) && xmlTag.getAttributeValue("href") != null) {
+        if (xmlTag.getNamespace().equals(XmlPsiUtil.XINCLUDE_URI)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

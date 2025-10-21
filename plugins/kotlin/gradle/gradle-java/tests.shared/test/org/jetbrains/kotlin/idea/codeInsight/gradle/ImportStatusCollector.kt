@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -20,9 +21,9 @@ class ImportStatusCollector : ExternalSystemTaskNotificationListener {
         events.add(event)
     }
 
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
         if (text.contains("BUILD FAILED")) isBuildSuccessful = false
-        super.onTaskOutput(id, text, stdOut)
+        super.onTaskOutput(id, text, processOutputType)
     }
 
     val buildEvents get() = events.filterIsInstance<ExternalSystemBuildEvent>()

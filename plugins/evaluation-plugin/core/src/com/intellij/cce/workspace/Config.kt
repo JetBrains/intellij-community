@@ -5,6 +5,7 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
+import com.intellij.cce.workspace.filter.LookupFilter
 import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.cce.workspace.filter.NamedFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
@@ -57,14 +58,23 @@ data class Config private constructor(
    * @property evaluationRoots The list of evaluation roots. Directories and files with relative and absolute paths are allowed.
    * @property ignoreFileNames The set of file names to ignore. Files and directories with these names inside [evaluationRoots] will be skipped.
    */
-  data class ActionsGeneration internal constructor(
-    val projectPath: String,
-    val projectName: String,
-    val language: String,
-    val evaluationRoots: List<String>,
-    val ignoreFileNames: Set<String>,
-    val sourceFile: String?,
-  )
+  interface ActionsGeneration {
+    val projectPath: String
+    val projectName: String
+    val language: String?
+    val evaluationRoots: List<String>
+    val ignoreFileNames: Set<String>
+    val sourceFile: String?
+  }
+
+  data class ActionsGenerationIml internal constructor(
+    override var projectPath: String,
+    override val projectName: String,
+    override val language: String?,
+    override val evaluationRoots: List<String>,
+    override val ignoreFileNames: Set<String>,
+    override val sourceFile: String?,
+  ): ActionsGeneration
 
   /**
    * Represents a configuration for datasets stored on a file system (probably in one file).
@@ -72,10 +82,15 @@ data class Config private constructor(
    * @property url The URL of the file. Check DatasetRef for available options.
    * @property chunkSize The size of each chunk when reading and rendering the file.
    */
-  data class FileDataset internal constructor(
-    val url: String,
-    val chunkSize: Int?,
-  )
+  interface FileDataset {
+    val url: String
+    val chunkSize: Int?
+  }
+  
+  data class FileDatasetImpl internal constructor(
+    override val url: String,
+    override val chunkSize: Int?,
+  ) : FileDataset
 
   /**
    * Represents the configuration for the interpretation of actions.
@@ -132,6 +147,7 @@ data class Config private constructor(
    * @property defaultMetrics The list of default metrics rendered in the report.
    * @property sessionsFilters The list of session filters. These filters allow computing metrics and render reports on a subset of sessions.
    * @property comparisonFilters The list of comparison filters. These filters allow subsetting sessions based on multiple evaluations.
+   * @property lookupFilters The list of lookup filters. These filters allow filtering out certain lookups from the session.
    */
   data class ReportGeneration internal constructor(
     val evaluationTitle: String,
@@ -139,6 +155,7 @@ data class Config private constructor(
     val sessionsFilters: List<SessionsFilter>,
     val comparisonFilters: List<CompareSessionsFilter>,
     val openTelemetrySpanFilter: SpanFilter?,
+    val lookupFilters: List<LookupFilter>,
   )
 
   class Builder internal constructor() {
@@ -171,6 +188,7 @@ data class Config private constructor(
     var openTelemetrySpanFilter: SpanFilter? = null
     private val sessionsFilters: MutableList<SessionsFilter> = mutableListOf()
     private val comparisonFilters: MutableList<CompareSessionsFilter> = mutableListOf()
+    private val lookupFilters: MutableList<LookupFilter> = mutableListOf()
 
     constructor(config: Config) : this() {
       actions = config.actions
@@ -198,10 +216,13 @@ data class Config private constructor(
       openTelemetrySpanFilter = config.reports.openTelemetrySpanFilter
       mergeFilters(config.reports.sessionsFilters)
       mergeComparisonFilters(config.reports.comparisonFilters)
+      mergeLookupFilters(config.reports.lookupFilters)
     }
 
     fun mergeFilters(filters: List<SessionsFilter>) = merge(filters, sessionsFilters as MutableList<NamedFilter>)
     fun mergeComparisonFilters(filters: List<CompareSessionsFilter>) = merge(filters, comparisonFilters as MutableList<NamedFilter>)
+    fun mergeLookupFilters(filters: List<LookupFilter>) =
+      merge(filters, lookupFilters as MutableList<NamedFilter>)
 
     private fun merge(filters: List<NamedFilter>, existedFilters: MutableList<NamedFilter>) {
       for (filter in filters) {
@@ -249,8 +270,20 @@ data class Config private constructor(
         defaultMetrics,
         sessionsFilters,
         comparisonFilters,
-        openTelemetrySpanFilter
+        openTelemetrySpanFilter,
+        lookupFilters
       )
     )
   }
 }
+
+// todo: create better approach
+fun Config.ActionsGeneration.copy(projectPath: String): Config.ActionsGeneration =
+  Config.ActionsGenerationIml(
+    projectPath,
+    projectName,
+    language,
+    evaluationRoots,
+    ignoreFileNames,
+    sourceFile
+  )

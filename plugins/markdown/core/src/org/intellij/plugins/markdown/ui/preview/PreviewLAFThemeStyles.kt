@@ -10,7 +10,6 @@ internal object PreviewLAFThemeStyles {
   @Suppress("ConstPropertyName", "CssInvalidHtmlTagReference")
   object Variables {
     const val FontSize = "--default-font-size"
-    const val Scale = "--scale"
   }
 
   val defaultFontSize: Int
@@ -33,14 +32,11 @@ internal object PreviewLAFThemeStyles {
     return """
     :root {
       ${Variables.FontSize}: ${scheme.fontSize}px;
-      ${Variables.Scale}: ${scheme.scale};
     }
 
     body {
         background-color: ${backgroundColor};
         font-size: var(${Variables.FontSize}) !important;
-        transform: scale(var(${Variables.Scale})) !important;
-        transform-origin: 0 0;
     }
     
     body, p, blockquote, ul, ol, dl, table, pre, code, tr  {

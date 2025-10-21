@@ -19,6 +19,6 @@ internal class PoetryLockAction() : PoetryPackageManagerAction() {
 
 internal class PoetryUpdateAction() : PoetryPackageManagerAction() {
   override suspend fun execute(e: AnActionEvent, manager: PoetryPackageManager): PyResult<Unit> {
-    return manager.sync().mapSuccess { }
+    return manager.updateProject()
   }
 }

@@ -32,7 +32,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   internal fun onItemSelected(project: Project?,
                               seSessionId: Int,
-                              shouldLogFeatures: Boolean,
                               elementIdProvider: SearchEverywhereMlItemIdProvider,
                               cache: SearchEverywhereMlSearchState,
                               featureCache: SearchEverywhereMlFeaturesCache,
@@ -41,12 +40,13 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                               closePopup: Boolean,
                               timeToFirstResult: Int,
                               mixedListInfo: SearchEverywhereMixedListInfo,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+                              elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                              sessionDurationMs: Int) {
     if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
     val additionalEvents = buildList {
       addAll(getSelectedElementsEvents(selectedIndices, elements, elementIdProvider, selectedItems))
-      addAll(getOnFinishEvents(closePopup))
+      addAll(getOnFinishEvents(closePopup, sessionDurationMs))
     }
     reportElements(
       project = project,
@@ -54,7 +54,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       seSessionId = seSessionId,
       cache = cache,
       featureCache = featureCache,
-      shouldLogFeatures = shouldLogFeatures,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
       elements = elements,
@@ -65,23 +64,22 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   internal fun onSearchFinished(project: Project?,
                                 seSessionId: Int,
-                                shouldLogFeatures: Boolean,
                                 elementIdProvider: SearchEverywhereMlItemIdProvider,
                                 cache: SearchEverywhereMlSearchState,
                                 featureCache: SearchEverywhereMlFeaturesCache,
                                 timeToFirstResult: Int,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
-                                elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+                                elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                                sessionDurationMs: Int) {
     if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
-    val additionalEvents = getOnFinishEvents(closePopup = true)
+    val additionalEvents = getOnFinishEvents(closePopup = true, sessionDurationMs)
     reportElements(
       project = project,
       eventId = SESSION_FINISHED,
       seSessionId = seSessionId,
       cache = cache,
       featureCache = featureCache,
-      shouldLogFeatures = shouldLogFeatures,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
       elements = elements,
@@ -91,7 +89,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   internal fun onSearchRestarted(project: Project?, seSessionId: Int,
-                                 shouldLogFeatures: Boolean,
                                  elementIdProvider: SearchEverywhereMlItemIdProvider,
                                  context: SearchEverywhereMLContextInfo,
                                  cache: SearchEverywhereMlSearchState,
@@ -104,7 +101,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     val additionalEvents = buildList {
       if (cache.searchStartReason == SearchRestartReason.SEARCH_STARTED) {
         addAll(
-          getSessionLevelEvents(project, shouldLogFeatures, context)
+          getSessionLevelEvents(project, context)
         )
       }
     }
@@ -114,7 +111,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       seSessionId = seSessionId,
       cache = cache,
       featureCache = featureCache,
-      shouldLogFeatures = shouldLogFeatures,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
       elements = elements,
@@ -128,7 +124,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              seSessionId: Int,
                              cache: SearchEverywhereMlSearchState,
                              featureCache: SearchEverywhereMlFeaturesCache,
-                             shouldLogFeatures: Boolean,
                              timeToFirstResult: Int,
                              mixedListInfo: SearchEverywhereMixedListInfo,
                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
@@ -155,20 +150,25 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       )
 
       addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
-      addAll(getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider,
+      addAll(getElementsEvents(project, featureCache, elements, mixedListInfo, elementIdProvider,
                                cache.sessionStartTime))
     }
   }
 
-  private fun getOnFinishEvents(closePopup: Boolean): List<EventPair<Boolean>> {
+  private fun getOnFinishEvents(closePopup: Boolean, sessionDurationMs: Int): List<EventPair<*>> {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
-    return listOf(
-      CLOSE_POPUP_KEY.with(closePopup),
-      FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry)
-    )
+    return buildList {
+      add(CLOSE_POPUP_KEY.with(closePopup))
+      add(FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry))
+
+      if (closePopup) {
+        // The following fields will be reported only when the Search Everywhere session has finished
+        add(SESSION_DURATION.with(sessionDurationMs))
+      }
+    }
   }
 
-  private fun getElementsEvents(project: Project?, shouldLogFeatures: Boolean,
+  private fun getElementsEvents(project: Project?,
                                 featureCache: SearchEverywhereMlFeaturesCache,
                                 elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
@@ -176,19 +176,12 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                 sessionStartTime: Long): List<EventPair<*>> {
     val contributorFeaturesProvider = { it: SearchEverywhereFoundElementInfoWithMl ->
       buildList {
-        if (shouldLogFeatures) {
-          val baseFeatures = contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo, sessionStartTime)
-          val essentialFeatures = contributorFeaturesProvider.getEssentialContributorFeatures(it.contributor)
-          addAll(baseFeatures)
-          addAll(essentialFeatures)
-        }
-        else {
-          add(contributorFeaturesProvider.getContributorIdFeature(it.contributor))
-        }
+        addAll(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo, sessionStartTime))
+        addAll(contributorFeaturesProvider.getEssentialContributorFeatures(it.contributor))
       }
     }
 
-    val updateEvents = featureCache.getUpdateEventsAndCache(project, shouldLogFeatures, elements.take(REPORTED_ITEMS_LIMIT),
+    val updateEvents = featureCache.getUpdateEventsAndCache(project, elements.take(REPORTED_ITEMS_LIMIT),
                                                             contributorFeaturesProvider, elementIdProvider)
     val events = listOf(
       IS_PROJECT_DISPOSED_KEY.with(updateEvents == null)
@@ -236,14 +229,9 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   private fun getSessionLevelEvents(project: Project?,
-                                    shouldLogFeatures: Boolean,
                                     context: SearchEverywhereMLContextInfo) = buildList {
     add(PROJECT_OPENED_KEY.with(project != null))
-    add(LOG_FEATURES_DATA_KEY.with(shouldLogFeatures))
-
-    if (shouldLogFeatures) {
-      addAll(context.features)
-    }
+    addAll(context.features)
   }
 
   private val isLoggingEnabled: Boolean
@@ -297,13 +285,15 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 116, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 122, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
   private val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
   private val EXPERIMENT_VERSION = EventFields.Int("experimentVersion")
   private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
+  @VisibleForTesting
+  internal val SESSION_DURATION = EventFields.Int("sessionDuration", "Duration of the Search Everywhere session in ms")
   private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
 
   // context fields
@@ -315,7 +305,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
   private val SESSION_ID_LOG_DATA_KEY = EventFields.Int("sessionId")
   private val SEARCH_INDEX_DATA_KEY = EventFields.Int("searchIndex")
-  private val LOG_FEATURES_DATA_KEY = EventFields.Boolean("logFeatures")
   private val TYPED_SYMBOL_KEYS = EventFields.Int("typedSymbolKeys")
   private val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = EventFields.Int("totalItems")
   private val TYPED_BACKSPACES_DATA_KEY = EventFields.Int("typedBackspaces")
@@ -354,7 +343,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   // events
   @VisibleForTesting
-  val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
+  val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP, SESSION_DURATION)
   val SEARCH_RESTARTED = registerEvent("searchRestarted")
 
   private val CLASSES_WITHOUT_KEY_PROVIDERS_FIELD = ClassListEventField("unsupported_classes")
@@ -388,33 +377,36 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   private fun registerEvent(eventId: String, vararg additional: EventField<*>): VarargEventId {
-    val fields = arrayListOf(
-      PROJECT_OPENED_KEY,
-      SESSION_ID_LOG_DATA_KEY,
-      SEARCH_INDEX_DATA_KEY,
-      LOG_FEATURES_DATA_KEY,
-      TOTAL_NUMBER_OF_ITEMS_DATA_KEY,
-      SE_TAB_ID_KEY,
-      EXPERIMENT_GROUP,
-      EXPERIMENT_VERSION,
-      ORDER_BY_ML_GROUP,
-      IS_INTERNAL,
-      SEARCH_START_TIME_KEY,
-      TIME_TO_FIRST_RESULT_DATA_KEY,
-      TYPED_SYMBOL_KEYS,
-      TYPED_BACKSPACES_DATA_KEY,
-      REBUILD_REASON_KEY,
-      IS_MIXED_LIST,
-      IS_PROJECT_DISPOSED_KEY,
-      SELECTED_INDEXES_DATA_KEY,
-      SELECTED_ELEMENTS_DATA_KEY,
-      SELECTED_ELEMENTS_CONSISTENT,
-      SEARCH_STATE_FEATURES_DATA_KEY,
-      COLLECTED_RESULTS_DATA_KEY
-    )
-    fields.addAll(SearchEverywhereSessionPropertyProvider.getAllDeclarations())
-    fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
-    fields.addAll(additional)
+    val fields = buildList {
+      addAll(listOf(
+        PROJECT_OPENED_KEY,
+        SESSION_ID_LOG_DATA_KEY,
+        SEARCH_INDEX_DATA_KEY,
+        TOTAL_NUMBER_OF_ITEMS_DATA_KEY,
+        SE_TAB_ID_KEY,
+        EXPERIMENT_GROUP,
+        EXPERIMENT_VERSION,
+        ORDER_BY_ML_GROUP,
+        IS_INTERNAL,
+        SEARCH_START_TIME_KEY,
+        TIME_TO_FIRST_RESULT_DATA_KEY,
+        TYPED_SYMBOL_KEYS,
+        TYPED_BACKSPACES_DATA_KEY,
+        REBUILD_REASON_KEY,
+        IS_MIXED_LIST,
+        IS_PROJECT_DISPOSED_KEY,
+        SELECTED_INDEXES_DATA_KEY,
+        SELECTED_ELEMENTS_DATA_KEY,
+        SELECTED_ELEMENTS_CONSISTENT,
+        SEARCH_STATE_FEATURES_DATA_KEY,
+        COLLECTED_RESULTS_DATA_KEY
+      ))
+
+      addAll(SearchEverywhereSessionPropertyProvider.getAllDeclarations())
+      addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
+      addAll(additional)
+    }
+
     return GROUP.registerVarargEvent(eventId, *fields.toTypedArray())
   }
 }

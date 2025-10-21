@@ -58,7 +58,7 @@ class KotlinConsoleKeeper(val project: Project) {
 
         fun createReplCommandLine(project: Project, module: Module?): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
             val javaParameters = JavaParametersBuilder(project)
-                .withSdkFrom(module, true)
+                .withSdkFrom(module)
                 .withMainClassName("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
                 .build()
 
@@ -86,7 +86,6 @@ class KotlinConsoleKeeper(val project: Project) {
                     KotlinArtifacts.kotlinStdlib,
                     KotlinArtifacts.kotlinReflect,
                     KotlinArtifacts.kotlinScriptRuntime,
-                    KotlinArtifacts.trove4j,
                     KotlinArtifacts.kotlinDaemon,
                     KotlinArtifacts.kotlinScriptingCompiler,
                     KotlinArtifacts.kotlinScriptingCompilerImpl,
@@ -130,6 +129,7 @@ class KotlinConsoleKeeper(val project: Project) {
             }
 
             with(javaParameters.programParametersList) {
+                add("-Xrepl")
                 add("-kotlin-home")
                 val kotlinHome = KotlinPluginLayout.kotlinc
                 check(kotlinHome.exists()) { "Kotlin compiler is not found" }

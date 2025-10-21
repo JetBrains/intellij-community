@@ -9,6 +9,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatur
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.promo.djangoPromoFeatureList
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import javax.swing.Icon

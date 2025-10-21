@@ -21,7 +21,7 @@ public abstract class BaseAssignmentToParameterInspection extends BaseInspection
   protected abstract boolean isApplicable(PsiParameter parameter);
 
   @Override
-  public final BaseInspectionVisitor buildVisitor() {
+  public final @NotNull BaseInspectionVisitor buildVisitor() {
     return new AssignmentToParameterVisitor();
   }
 

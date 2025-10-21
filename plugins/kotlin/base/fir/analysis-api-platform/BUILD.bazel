@@ -1,28 +1,31 @@
-### auto-generated section `build kotlin.base.fir.analysis-api-platform` start
+### auto-generated section `build intellij.kotlin.analysis.platform` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_kotlin-analysis-platform",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-  ]
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
 )
 
-jvm_resources(
-  name = "analysis-api-platform_resources",
-  files = glob(["resources/**/*"]),
+resourcegroup(
+  name = "kotlin-analysis-platform_resources",
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "analysis-api-platform",
-  module_name = "kotlin.base.fir.analysis-api-platform",
+  name = "kotlin-analysis-platform",
+  module_name = "intellij.kotlin.analysis.platform",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-analysis-platform_resources"],
+  kotlinc_opts = ":custom_kotlin-analysis-platform",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -37,14 +40,15 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlin-analysis-platform-ehcache-sizeof",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/analysis",
     "//platform/core-impl",
     "//platform/projectModel-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/base/analysis-api-platform",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/openapi:java",
     "//plugins/kotlin/base/facet",
     "//platform/workspace/jps",
@@ -52,18 +56,17 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/analysis-impl",
     "//plugins/kotlin/base/psi",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/kotlin.searching",
     "//java/java-psi-impl:psi-impl",
-  ],
-  runtime_deps = [":analysis-api-platform_resources"]
+  ]
 )
 
 jvm_library(
-  name = "analysis-api-platform_test_lib",
+  name = "kotlin-analysis-platform_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
-  associates = [":analysis-api-platform"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-analysis-platform",
+  associates = [":kotlin-analysis-platform"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -71,6 +74,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/workspace/storage",
     "//plugins/kotlin/plugin/k2",
@@ -82,7 +86,8 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-low-level-api-fir",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:gson",
+    "@lib//:kotlin-analysis-platform-ehcache-sizeof",
+    "//libraries/gson",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/project-structure",
@@ -97,8 +102,8 @@ jvm_library(
     "//platform/core-impl",
     "//platform/projectModel-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/base/analysis-api-platform",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/openapi:java",
@@ -109,17 +114,22 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/platform-api:ide",
     "//platform/analysis-impl",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/base/psi",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/kotlin.searching",
     "//java/java-psi-impl:psi-impl",
-  ],
-  runtime_deps = [":analysis-api-platform_resources"]
+    "//plugins/kotlin/base/fir/project-structure",
+    "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/indices/tests:tests_test_lib",
+  ]
 )
+### auto-generated section `build intellij.kotlin.analysis.platform` end
 
-jvm_test(
-  name = "analysis-api-platform_test",
-  runtime_deps = [":analysis-api-platform_test_lib"]
+### auto-generated section `test intellij.kotlin.analysis.platform` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-analysis-platform_test",
+  runtime_deps = [":kotlin-analysis-platform_test_lib"]
 )
-### auto-generated section `build kotlin.base.fir.analysis-api-platform` end
+### auto-generated section `test intellij.kotlin.analysis.platform` end

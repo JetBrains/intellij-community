@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
@@ -25,6 +26,7 @@ class TaskExecutionSpecBuilderImpl : TaskExecutionSpecBuilder {
   private var userData: UserDataHolderBase? = null
   private var activateToolWindowBeforeRun: Boolean = false
   private var activateToolWindowOnFailure: Boolean = true
+  private var navigateToError: ThreeState = ThreeState.UNSURE
 
   override fun withProject(project: Project): TaskExecutionSpecBuilder = apply {
     this.project = project
@@ -79,6 +81,16 @@ class TaskExecutionSpecBuilderImpl : TaskExecutionSpecBuilder {
     return this
   }
 
+  override fun navigateToError(): TaskExecutionSpecBuilder {
+    this.navigateToError = ThreeState.YES
+    return this
+  }
+
+  override fun dontNavigateToError(): TaskExecutionSpecBuilder {
+    this.navigateToError = ThreeState.NO
+    return this
+  }
+
   override fun build(): TaskExecutionSpec {
     return TaskExecutionSpecImpl(
       project = project,
@@ -90,7 +102,8 @@ class TaskExecutionSpecBuilderImpl : TaskExecutionSpecBuilder {
       listener = listener,
       userData = userData,
       activateToolWindowBeforeRun = activateToolWindowBeforeRun,
-      activateToolWindowOnFailure = activateToolWindowOnFailure
+      activateToolWindowOnFailure = activateToolWindowOnFailure,
+      navigateToError = navigateToError
     )
   }
 }

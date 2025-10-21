@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -101,7 +101,7 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
     JPanel panel = new JPanel(new BorderLayout());
     JComponent callSitesViewer = createCallSitesViewer(usageEditor, memberEditor);
     panel.add(callSitesViewer);
-    myTreeSelectionListener.updateEditorTexts(roots.get(0));
+    myTreeSelectionListener.updateEditorTexts(roots.getFirst());
     JPanel toolbar = createToolbar();
     panel.add(toolbar, BorderLayout.NORTH);
     splitter.setSecondComponent(panel);

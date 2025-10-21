@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // AFTER-WARNING: Variable 't' is never used
+// PRIORITY: LOW
 package p
 
 import p.isFoo

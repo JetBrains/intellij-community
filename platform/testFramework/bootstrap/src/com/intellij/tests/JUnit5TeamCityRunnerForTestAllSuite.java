@@ -34,6 +34,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
 
+import static com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath.assertNoUnhandledExceptions;
+
 // Used to run JUnit 3/4 tests via JUnit 5 runtime
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5TeamCityRunnerForTestAllSuite {
@@ -43,7 +45,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       System.exit(1);
     }
     try {
-      Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
+      Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(true).build());
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       List<? extends DiscoverySelector> selectors;
       List<Filter<?>> filters = new ArrayList<>(0);
@@ -78,11 +80,12 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
         System.exit(42);
       }
     }
-    catch (Throwable x) {
-      //noinspection CallToPrintStackTrace
-      x.printStackTrace();
+    catch (Throwable e) {
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite", e);
+      System.exit(1);
     }
     finally {
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite",null);
       System.exit(0);
     }
   }
@@ -414,7 +417,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       return string;
     }
 
-    protected static String getTrace(Throwable ex, int limit) {
+    public static String getTrace(Throwable ex, int limit) {
       final StringWriter stringWriter = new StringWriter();
       final LimitedStackTracePrintWriter writer = new LimitedStackTracePrintWriter(stringWriter, limit);
       ex.printStackTrace(writer);

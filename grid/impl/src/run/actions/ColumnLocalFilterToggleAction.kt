@@ -6,9 +6,11 @@ import com.intellij.database.run.ui.table.TableResultView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 
-class ColumnLocalFilterToggleAction : ToggleAction(), DumbAware, GridAction {
+class ColumnLocalFilterToggleAction : ToggleAction(), DumbAware, GridAction,
+                                      ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   override fun update(e: AnActionEvent) {
     val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)

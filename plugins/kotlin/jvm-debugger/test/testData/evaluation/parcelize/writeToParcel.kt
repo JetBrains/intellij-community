@@ -41,3 +41,6 @@ interface Parcelable {
 
 // EXPRESSION: @Parcelize data class x(val y: Int, val z: String?) : Parcelable
 // RESULT: Class 'x' is not abstract and does not implement abstract member 'writeToParcel'.
+
+// IGNORE_K2
+//See KTIJ-28636

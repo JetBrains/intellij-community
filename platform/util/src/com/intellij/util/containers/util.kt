@@ -6,7 +6,7 @@ package com.intellij.util.containers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import org.jetbrains.annotations.ApiStatus.Experimental

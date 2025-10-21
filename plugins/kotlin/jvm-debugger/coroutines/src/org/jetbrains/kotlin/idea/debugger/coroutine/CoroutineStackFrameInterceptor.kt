@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
@@ -31,7 +32,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 
 
 private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
-    override fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
+    override suspend fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl
             || frame is SkipCoroutineStackFrameProxyImpl
@@ -60,14 +61,24 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContext) ?: return null
 
         if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
-            showOrHideCoroutinePanel(debugProcess, true)
+            val xDebugSession = debugProcess.xdebugProcess?.session as? XDebugSessionImpl
+            val sessionId = xDebugSession?.id
+            if (sessionId != null) {
+                val sessionProxy = XDebugManagerProxy.getInstance().findSessionProxy(debugProcess.project, sessionId)
+                if (sessionProxy != null) {
+                    showOrHideCoroutinePanel(sessionProxy, true)
+                }
+            }
         }
 
         if (!threadAndContextSupportsEvaluation(suspendContext, frame)) {
             return listOf(stackFrame)
         }
         val frameItemLists = CoroutineFrameBuilder.build(stackFrame, withPreFrames = false)
-        return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
+        return listOf(stackFrame) + frameItemLists.frames.mapNotNull {
+            val sourcePosition = debugProcess.positionManager.getSourcePositionAsync(it.location)
+            it.createFrame(debugProcess, sourcePosition)
+        }
     }
 
     private fun anySuspendFramesBefore(frame: StackFrameProxyImpl): Boolean {
@@ -84,17 +95,18 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         if (continuationFilter != null) return continuationFilter
         // If continuation could not be extracted or the root continuation was not an instance of BaseContinuationImpl,
         // dump coroutines running on the current thread and compute [CoroutineIdFilter].
-        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
-        return if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
-            // first try the helper, it is the fastest way, then try the mirror
-            val currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
-                ?: debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
-
-            if (currentCoroutines.isNotEmpty()) CoroutineIdFilter(currentCoroutines)
-            else null
+        val currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext)
+            ?: run {
+                val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
+                if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+                    debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
+                } else null
+            }
+        return if (currentCoroutines != null) {
+            if (currentCoroutines.isNotEmpty()) CoroutineIdFilter(currentCoroutines) else null
         } else {
             //TODO: IDEA-341142 show nice notification about this
-            thisLogger().warn("[coroutine filter]: kotlinx-coroutines debug agent was not enabled, DebugProbesImpl class is not found.")
+            thisLogger().warn("[coroutine filter]: kotlinx-coroutines debug agent was not enabled or DebugProbesImpl class is not found.")
             null
         }
     }
@@ -181,11 +193,11 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     }
 
     private fun getCoroutinesRunningOnCurrentThreadFromHelper(
-        context: DefaultExecutionContext,
-        debugProbesImpl: DebugProbesImpl
+        context: DefaultExecutionContext
     ): Set<Long>? {
         val threadReferenceProxyImpl = context.suspendContext.thread ?: return null
-        val args = listOf(debugProbesImpl.getObject(), threadReferenceProxyImpl.threadReference)
+        val debugProbesImplClass = context.vm.findDebugProbesImplClass() ?: return null
+        val args = listOf(debugProbesImplClass, threadReferenceProxyImpl.threadReference)
         val result = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutinesRunningOnCurrentThread", args)
         result ?: return null
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()

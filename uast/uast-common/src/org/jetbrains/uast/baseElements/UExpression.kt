@@ -90,14 +90,4 @@ open class UastEmptyExpression(override val uastParent: UElement?) : UExpression
   override fun equals(other: Any?): Boolean =
     if (other is UastEmptyExpression) other.uastParent == uastParent
     else false
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("create class instance instead")
-  companion object : UastEmptyExpression(null) {
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("create class instance instead")
-    @JvmField
-    val INSTANCE: UastEmptyExpression = this
-  }
-
 }

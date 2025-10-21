@@ -4,7 +4,8 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.ModalProgressTitle
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -65,41 +66,6 @@ suspend fun <T> withBackgroundProgress(
   action: suspend CoroutineScope.() -> T
 ): T {
   return withBackgroundProgress(project, title, cancellation, action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  "Moved to com.intellij.platform.ide.progress",
-  ReplaceWith(
-    "withModalProgress(project, title, action)",
-    "com.intellij.platform.ide.progress.withModalProgress",
-  ),
-  level = DeprecationLevel.ERROR,
-)
-suspend fun <T> withModalProgress(
-  project: Project,
-  title: @ProgressTitle String,
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return withModalProgress(project, title, action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  "Moved to com.intellij.platform.ide.progress",
-  ReplaceWith(
-    "withModalProgress(owner, title, cancellation, action)",
-    "com.intellij.platform.ide.progress.withModalProgress",
-  ),
-  level = DeprecationLevel.ERROR,
-)
-suspend fun <T> withModalProgress(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation,
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return withModalProgress(owner, title, cancellation, action)
 }
 
 @Deprecated(
@@ -228,39 +194,3 @@ fun <T> runBlockingModalWithRawProgressReporter(
   }
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Function was renamed to `runWithModalProgressBlocking`",
-  replaceWith = ReplaceWith(
-    "runWithModalProgressBlocking(project, title, action)",
-    "com.intellij.openapi.progress.runWithModalProgressBlocking",
-  ),
-)
-@RequiresBlockingContext
-@RequiresEdt
-fun <T> runBlockingModal(
-  project: Project,
-  title: @ModalProgressTitle String,
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return runWithModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Function was renamed to `runWithModalProgressBlocking`",
-  replaceWith = ReplaceWith(
-    "runWithModalProgressBlocking(owner, title, cancellation, action)",
-    "com.intellij.openapi.progress.runWithModalProgressBlocking",
-  ),
-)
-@RequiresBlockingContext
-@RequiresEdt
-fun <T> runBlockingModal(
-  owner: ModalTaskOwner,
-  title: @ModalProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return runWithModalProgressBlocking(owner, title, cancellation, action)
-}

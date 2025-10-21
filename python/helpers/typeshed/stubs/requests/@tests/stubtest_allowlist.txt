@@ -3,5 +3,5 @@ requests.packages.mod
 requests.packages.package
 requests.packages.target
 
-# Alias for builtins.bytes
-requests.compat.bytes.__buffer__
+# Should allow setting any attribute:
+requests.structures.LookupDict.__setattr__

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
@@ -7,10 +7,8 @@ import com.intellij.debugger.actions.JvmSmartStepIntoErrorReporter
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler.SmartStepIntoDetectionStatus
 import com.intellij.debugger.actions.SmartStepTarget
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.MethodFilter
-import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil
@@ -25,10 +23,11 @@ import com.intellij.psi.util.parents
 import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import com.sun.jdi.Location
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.compute
+import org.jetbrains.concurrency.asPromise
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.dumbAction
@@ -54,25 +53,31 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
         }
 
     override fun findSmartStepTargetsAsync(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> {
-        val promise = AsyncPromise<List<SmartStepTarget>>()
         val debuggerContext = session.contextManager.context
-        executeOnDMT(debuggerContext) {
-            promise.compute { findSmartStepTargetsInternal(position, session) }
-        }.invokeOnCompletion {
-            if (it is CancellationException) {
-                promise.setError("Cancelled")
+        return session.process.managerThread.coroutineScope.async {
+            withDebugContext(debuggerContext) {
+                val suspendContext = (DebuggerManagerThreadImpl.getCurrentCommand() as SuspendContextCommandImpl).suspendContext
+                if (ContextUtil.getSourcePosition(suspendContext) != position) {
+                    // The source position has changed - just cancel the current command
+                    throw CancellationException()
+                }
+                findSmartStepTargetsInternal(position, session, suspendContext)
             }
-        }
-        return promise
+        }.asCompletableFuture().asPromise()
     }
 
-    override fun findSmartStepTargets(position: SourcePosition): List<SmartStepTarget> = findSmartStepTargetsSync(position, null)
+    override fun findSmartStepTargets(position: SourcePosition): List<SmartStepTarget> = findSmartStepTargetsSync(position, null, null)
 
     @ApiStatus.Internal
-    fun findSmartStepTargetsSync(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
-        runBlockingCancellable {
-            findSmartStepTargetsInternal(position, session)
+    fun findSmartStepTargetsSync(
+        position: SourcePosition,
+        session: DebuggerSession?,
+        suspendContext: SuspendContextImpl?
+    ): List<SmartStepTarget> {
+        return runBlockingCancellable {
+            findSmartStepTargetsInternal(position, session, suspendContext)
         }
+    }
 
     override fun createMethodFilter(stepTarget: SmartStepTarget?): MethodFilter? =
         when (stepTarget) {
@@ -80,9 +85,13 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             else -> super.createMethodFilter(stepTarget)
         }
 
-    private suspend fun findSmartStepTargetsInternal(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
+    private suspend fun findSmartStepTargetsInternal(
+        position: SourcePosition,
+        session: DebuggerSession?,
+        suspendContext: SuspendContextImpl?
+    ): List<SmartStepTarget> =
         try {
-            findSmartStepTargets(position, session)
+            findSmartStepTargets(position, session, suspendContext)
         } catch (e: Exception) {
             DebuggerStatistics.logSmartStepIntoTargetsDetection(
                 session?.project, Engine.KOTLIN,
@@ -91,7 +100,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             throw e
         }
 
-    private suspend fun findSmartStepTargets(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> {
+    private suspend fun findSmartStepTargets(position: SourcePosition, session: DebuggerSession?, suspendContext: SuspendContextImpl?): List<SmartStepTarget> {
         val expression = readAction { position.getContainingExpression() } ?: run {
             DebuggerStatistics.logSmartStepIntoTargetsDetection(
                 session?.project, Engine.KOTLIN,
@@ -111,14 +120,15 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             readAction { findSmartStepTargets(expression, lines) }
         }
         if (targets.isEmpty()) return emptyList()
-        if (session != null) {
-            val currentMethodName = session.process.suspendManager.pausedContext?.frameProxy?.safeLocation()?.safeMethod()?.name()
+        val location = suspendContext?.frameProxy?.safeLocation()
+        if (session != null && location != null) {
+            val currentMethodName = location.safeMethod()?.name()
             // Cannot analyze method calls in the default method body, as they are located in a different method in bytecode
             if (currentMethodName?.endsWith("\$default") == true) {
                 DebuggerStatistics.logSmartStepIntoTargetsDetection(session.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.NO_TARGETS)
                 return emptyList()
             }
-            val context = SmartStepIntoContext(expression, session.process, position, lines.toClosedRange())
+            val context = SmartStepIntoContext(expression, session.process, position, lines.toClosedRange(), location)
             targets = dumbAction(project, fallback = targets) { calculateSmartStepTargetsToShow(targets, context) }
         } else {
             DebuggerStatistics.logSmartStepIntoTargetsDetection(
@@ -161,8 +171,7 @@ suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
         return DexBytecodeInspector.EP.extensionList.firstOrNull()?.filterAlreadyExecutedTargets(this, context)
             ?: this
     }
-    val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
-    val location = specificLocation ?: frameProxy?.safeLocation() ?: run {
+    val location = specificLocation ?: context.location ?: run {
         DebuggerStatistics.logSmartStepIntoTargetsDetection(
             debugProcess.project, Engine.KOTLIN,
             SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE
@@ -298,9 +307,11 @@ private class SmartStepTargetsBytecodeVisitor(private val targetFiltererAdapter:
 
 private fun Range<Int>.toClosedRange() = from..to
 
+@ApiStatus.Internal
 data class SmartStepIntoContext(
     val expression: KtElement,
     val debugProcess: DebugProcessImpl,
     val position: SourcePosition,
     val lines: ClosedRange<Int>,
+    val location: Location,
 )

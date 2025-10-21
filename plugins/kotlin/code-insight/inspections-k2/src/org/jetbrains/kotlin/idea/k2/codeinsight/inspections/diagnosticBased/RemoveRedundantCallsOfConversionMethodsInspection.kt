@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -20,6 +21,8 @@ import kotlin.reflect.KClass
 
 internal class RemoveRedundantCallsOfConversionMethodsInspection :
     KotlinPsiDiagnosticBasedInspectionBase<KtQualifiedExpression, KaFirDiagnostic.RedundantCallOfConversionMethod, Unit>() {
+
+    override val diagnosticFilter: KaDiagnosticCheckerFilter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 
     override val diagnosticType: KClass<KaFirDiagnostic.RedundantCallOfConversionMethod>
         get() = KaFirDiagnostic.RedundantCallOfConversionMethod::class

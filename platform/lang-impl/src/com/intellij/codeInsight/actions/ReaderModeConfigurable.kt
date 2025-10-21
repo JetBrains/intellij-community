@@ -67,7 +67,7 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
           }
           row {
             checkBox(cdLineSpacing)
-            comment(LangBundle.message("checkbox.reader.mode.line.height.comment"))
+              .commentRight(LangBundle.message("checkbox.reader.mode.line.height.comment"))
           }.enabledIf(enabled.selected)
           row {
             checkBox(cdInlays).visible(PlatformUtils.isIntelliJ())

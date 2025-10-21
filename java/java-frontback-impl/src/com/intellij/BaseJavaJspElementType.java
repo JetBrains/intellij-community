@@ -4,8 +4,13 @@ package com.intellij;
 import com.intellij.lang.xml.XmlTokenElementMarkTypes;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 
-
+/**
+ * @deprecated Use the direct comparison.
+ */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public interface BaseJavaJspElementType {
   ParentAwareTokenSet WHITE_SPACE_BIT_SET = ParentAwareTokenSet.orSet(
     ParentAwareTokenSet.create(TokenSet.WHITE_SPACE),

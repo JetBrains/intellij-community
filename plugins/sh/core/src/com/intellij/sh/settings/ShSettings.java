@@ -3,6 +3,7 @@ package com.intellij.sh.settings;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.sh.ShBundle;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+import static com.intellij.execution.configurations.PathEnvironmentVariableUtil.findInPath;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 public final class ShSettings {
@@ -18,8 +20,12 @@ public final class ShSettings {
 
   private static final String SHELLCHECK_PATH = "SHELLCHECK.PATH";
   private static final String SHELLCHECK_SKIPPED_VERSION = "SHELLCHECK.SKIPPED.VERSION";
+  private static final String SHELLCHECK_UNIX_EXECUTABLE = "shellcheck";
+  private static final String SHELLCHECK_WIN_EXECUTABLE = "shellcheck.exe";
   private static final String SHFMT_PATH = "SHFMT.PATH";
   private static final String SHFMT_SKIPPED_VERSION = "SHFMT.SKIPPED.VERSION";
+  private static final String SHFMT_UNIX_EXECUTABLE = "shfmt";
+  private static final String SHFMT_WIN_EXECUTABLE = "shfmt.exe";
 
   public static @NotNull String getShellcheckPath(@NotNull Project project) {
     final var eelDescriptor = getEelDescriptor(project);
@@ -35,7 +41,10 @@ public final class ShSettings {
       }
     }
 
-    return PropertiesComponent.getInstance(project).getValue(SHELLCHECK_PATH, "");
+    final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHELLCHECK_WIN_EXECUTABLE : SHELLCHECK_UNIX_EXECUTABLE);
+    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
+
+    return PropertiesComponent.getInstance(project).getValue(SHELLCHECK_PATH, defaultExecutablePath);
   }
 
   public static void setShellcheckPath(@NotNull Project project, @Nullable String path) {
@@ -56,7 +65,10 @@ public final class ShSettings {
       }
     }
 
-    return PropertiesComponent.getInstance(project).getValue(SHFMT_PATH, "");
+    final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHFMT_WIN_EXECUTABLE : SHFMT_UNIX_EXECUTABLE);
+    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
+
+    return PropertiesComponent.getInstance(project).getValue(SHFMT_PATH, defaultExecutablePath);
   }
 
   public static void setShfmtPath(@NotNull Project project, @Nullable String path) {

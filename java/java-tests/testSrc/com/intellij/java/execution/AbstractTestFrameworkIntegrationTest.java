@@ -11,6 +11,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.TestMethods;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -19,8 +21,10 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.sm.runner.OutputEventSplitter;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -35,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -44,20 +49,31 @@ import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 
 import java.io.File;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigurationTestCase {
   public static ProcessOutput doStartTestsProcess(RunConfiguration configuration) throws ExecutionException {
+    return doStartTestsProcess(configuration, Collections.emptySet());
+  }
+
+  public static ProcessOutput doStartTestsProcess(RunConfiguration configuration, Set<String> tests) throws ExecutionException {
+    List<SMTestProxy> proxies = ContainerUtil.map(tests, hint -> {
+      String path = hint.substring(hint.indexOf("://") + 3);
+      String methodName = path.substring(path.lastIndexOf('/') + 1);
+      SMTestProxy proxy = new SMTestProxy(methodName, false, hint);
+      proxy.setLocator(new JavaTestLocator());
+      return proxy;
+    });
+
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Project project = configuration.getProject();
     RunnerAndConfigurationSettingsImpl
       settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), configuration, false);
     ExecutionEnvironment
       environment = new ExecutionEnvironment(executor, ProgramRunner.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings.getConfiguration()), settings, project);
-    JavaTestFrameworkRunnableState<?> state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
+    JavaTestFrameworkRunnableState<?> state = configuration instanceof JUnitConfiguration jUnitConfiguration && !proxies.isEmpty()
+                                              ? new TestMethods(jUnitConfiguration, environment, proxies)
+                                              : ((JavaTestConfigurationBase)configuration).getState(executor, environment);
     state.downloadAdditionalDependencies(state.getJavaParameters());
     state.appendForkInfo(executor);
     state.appendRepeatMode();

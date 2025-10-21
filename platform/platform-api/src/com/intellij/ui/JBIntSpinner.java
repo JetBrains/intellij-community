@@ -4,12 +4,20 @@ package com.intellij.ui;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * Please avoid using spinners in new code. This component is marked as obsolete as it no longer aligns with current design guidelines.
+ * <p>
+ * The simplest replacement is a text field with validation — it is both more flexible and easier to maintain.
+ * Typical use cases (e.g., port inputs) do not benefit from increment/decrement buttons; range validation is sufficient.
+ */
+@ApiStatus.Obsolete(since = "2025.3")
 public class JBIntSpinner extends JSpinner {
   public JBIntSpinner(UINumericRange range) {
     this(range.initial, range.min, range.max);

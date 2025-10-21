@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -87,7 +87,7 @@ internal class CoroutineScopeModel internal constructor(
             else -> dataContextFromFocusPromise().await()
           }
           fireScopesUpdated(getScopeDescriptors(effectiveDataContext, filter))
-        }.getOrLogException {
+        }.getOrHandleException {
           LOG.error("Error while refreshing scopes", it)
         }
       }
@@ -143,7 +143,7 @@ internal class CoroutineScopeModel internal constructor(
       val scopes = readAction {
         runCatching {
           provider.getScopeDescriptors(project, dataContext)
-        }.getOrLogException {
+        }.getOrHandleException {
           LOG.error("Couldn't retrieve scope descriptors from $provider", it)
         } ?: emptyArray()
       }
@@ -160,7 +160,7 @@ internal class CoroutineScopeModel internal constructor(
       val scopes = readAction {
         runCatching {
           provider.getSearchScopes(project, dataContext)
-        }.getOrLogException {
+        }.getOrHandleException {
           LOG.error("Couldn't retrieve scopes from $provider", it)
         } ?: emptyList()
       }

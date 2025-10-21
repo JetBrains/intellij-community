@@ -6,7 +6,7 @@ import com.intellij.util.Processor
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
-fun createDumbContributor(id: String, showTab: Boolean = false, essential: Boolean = false): SearchEverywhereContributor<Unit> =
+fun createDumbContributor(id: String, showTab: Boolean = false, essentialByDefault: Boolean = false): SearchEverywhereContributor<Unit> =
   object : SearchEverywhereContributor<Unit>, EssentialContributor {
     override fun getSearchProviderId(): String = id
     override fun getGroupName(): String = id
@@ -17,7 +17,7 @@ fun createDumbContributor(id: String, showTab: Boolean = false, essential: Boole
     override fun processSelectedItem(selected: Unit, modifiers: Int, searchText: String): Boolean = false
     override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in Unit>) {}
 
-    override fun isEssential(): Boolean = essential
+    override fun isEssentialByDefault(): Boolean = essentialByDefault
 
     override fun toString(): String = id
   }

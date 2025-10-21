@@ -22,3 +22,5 @@ class IMapUnordered(Greenlet[_P, _T]):
 
 class IMap(IMapUnordered[_P, _T]):
     index: int
+
+__all__ = ["IMapUnordered", "IMap"]

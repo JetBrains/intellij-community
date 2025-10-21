@@ -21,7 +21,7 @@ fun attr(ident: String, schema: Schema): Attribute<*> =
 sealed class Attributes<E : Entity>(
   val namespace: String,
   val module: String,
-  initial: Map<String, EntityAttribute<in E, *>>
+  initial: Map<String, EntityAttribute<in E, *>>,
 ) {
 
   private val mutableAttrInfos: MutableMap<String, EntityAttribute<in E, *>> = HashMap(initial)
@@ -45,39 +45,27 @@ sealed class Attributes<E : Entity>(
     ident: String,
     attr: Attribute<*>,
     serializer: Lazy<KSerializer<V>>?,
-    defaultValue: DefaultValue<V>?
+    defaultValue: DefaultValue<V>?,
   ) : EntityAttribute<E, V>(ident, attr, serializer, defaultValue) {
     operator fun invoke(entity: E): V = entity[this]
     operator fun getValue(entity: E, property: KProperty<*>): V = entity[this]
-
-    // TODO: to be removed after migration
-    operator fun setValue(entity: E, property: KProperty<*>, value: V): Unit =
-      let { attribute ->
-        requireChangeScope { entity[attribute] = value }
-      }
   }
 
   inner class Optional<V : Any> internal constructor(
     ident: String,
     attr: Attribute<*>,
     serializer: Lazy<KSerializer<V>>?,
-    defaultValue: DefaultValue<V>?
+    defaultValue: DefaultValue<V>?,
   ) : EntityAttribute<E, V>(ident, attr, serializer, defaultValue) {
     operator fun invoke(entity: E): V? = entity[this]
     operator fun getValue(entity: E, property: KProperty<*>): V? = entity[this]
-
-    // TODO: to be removed after migration
-    operator fun setValue(entity: E, property: KProperty<*>, value: V?): Unit =
-      let { attribute ->
-        requireChangeScope { entity[attribute] = value }
-      }
   }
 
   inner class Many<V : Any> internal constructor(
     ident: String,
     attr: Attribute<*>,
     serializer: Lazy<KSerializer<V>>?,
-    defaultValue: DefaultValue<V>?
+    defaultValue: DefaultValue<V>?,
   ) : EntityAttribute<E, V>(ident, attr, serializer, defaultValue) {
     operator fun invoke(entity: E): Set<V> = entity[this]
     operator fun getValue(entity: E, property: KProperty<*>): Set<V> = entity[this]
@@ -94,7 +82,7 @@ sealed class Attributes<E : Entity>(
     name: String,
     serializer: KSerializer<T>,
     valueFlags: Indexing = Indexing.NOT_INDEXED,
-    defaultValueProvider: DefaultValue<T>? = null
+    defaultValueProvider: DefaultValue<T>? = null,
   ): Required<T> =
     addAttr(Required(
       ident = "$namespace/$name",
@@ -122,7 +110,7 @@ sealed class Attributes<E : Entity>(
     name: String,
     serializer: KSerializer<T>,
     valueFlags: Indexing = Indexing.NOT_INDEXED,
-    defaultValueProvider: DefaultValue<T>? = null
+    defaultValueProvider: DefaultValue<T>? = null,
   ): Optional<T> =
     addAttr(Optional(
       ident = "$namespace/$name",
@@ -177,7 +165,7 @@ sealed class Attributes<E : Entity>(
   protected fun <T : Any> requiredTransient(
     name: String,
     valueFlags: Indexing = Indexing.NOT_INDEXED,
-    defaultValueProvider: DefaultValue<T>? = null
+    defaultValueProvider: DefaultValue<T>? = null,
   ): Required<T> =
     addAttr(Required(
       ident = "$namespace/$name",
@@ -204,19 +192,20 @@ sealed class Attributes<E : Entity>(
   protected fun <T : Any> optionalTransient(
     name: String,
     valueFlags: Indexing = Indexing.NOT_INDEXED,
-    defaultValueProvider: DefaultValue<T>? = null
+    defaultValueProvider: DefaultValue<T>? = null,
   ): Optional<T> =
     addAttr(Optional(
       ident = "$namespace/$name",
-      attr("$namespace/$name", schema = Schema(
-        cardinality = Cardinality.One,
-        isRef = false,
-        indexed = Indexing.INDEXED == valueFlags,
-        unique = Indexing.UNIQUE == valueFlags,
-        cascadeDelete = false,
-        cascadeDeleteBy = false,
-        required = false
-      )),
+      attr = attr(ident = "$namespace/$name",
+                  schema = Schema(
+                    cardinality = Cardinality.One,
+                    isRef = false,
+                    indexed = Indexing.INDEXED == valueFlags,
+                    unique = Indexing.UNIQUE == valueFlags,
+                    cascadeDelete = false,
+                    cascadeDeleteBy = false,
+                    required = false
+                  )),
       serializer = null,
       defaultValue = defaultValueProvider
     ))
@@ -259,7 +248,7 @@ sealed class Attributes<E : Entity>(
    * */
   protected fun <T : Entity> requiredRef(
     name: String,
-    vararg refFlags: RefFlags
+    vararg refFlags: RefFlags,
   ): Required<T> =
     addAttr(Required(
       ident = "$namespace/$name",
@@ -284,7 +273,7 @@ sealed class Attributes<E : Entity>(
    * */
   protected fun <T : Entity> optionalRef(
     name: String,
-    vararg refFlags: RefFlags
+    vararg refFlags: RefFlags,
   ): Optional<T> =
     addAttr(Optional(
       ident = "$namespace/$name",
@@ -308,7 +297,7 @@ sealed class Attributes<E : Entity>(
    * */
   protected fun <T : Entity> manyRef(
     name: String,
-    vararg refFlags: RefFlags
+    vararg refFlags: RefFlags,
   ): Many<T> =
     addAttr(Many(
       ident = "$namespace/$name",
@@ -364,7 +353,7 @@ enum class RefFlags {
   CASCADE_DELETE_BY
 }
 
-internal fun<E: Entity> merge(attrs: List<Attributes<in E>>): Map<String, EntityAttribute<in E, *>> =
+internal fun <E : Entity> merge(attrs: List<Attributes<in E>>): Map<String, EntityAttribute<in E, *>> =
   buildMap {
     attrs.forEach { m ->
       m.entityAttributes.forEach { (k, v) ->
@@ -377,8 +366,9 @@ internal fun<E: Entity> merge(attrs: List<Attributes<in E>>): Map<String, Entity
     }
   }
 
-internal fun ChangeScope.registerAttributes(attributes: Attributes<*>): Unit =
-  context.run {
+context(cs: ChangeScope)
+internal fun registerAttributes(attributes: Attributes<*>): Unit =
+  cs.context.run {
     attributes.entityAttributes.forEach { (attrIdent, entityAttribute) ->
       if (entity(entityAttribute.attr.eid) == null) {
         mutate(CreateEntity(

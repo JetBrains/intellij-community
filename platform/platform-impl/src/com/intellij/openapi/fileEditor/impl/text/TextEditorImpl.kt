@@ -117,7 +117,7 @@ open class TextEditorImpl @Internal constructor(
   companion object {
     @Internal
     fun getDocumentLanguage(editor: Editor): Language? {
-      val project = editor.project ?: return LanguageUtil.getFileTypeLanguage(editor.virtualFile.fileType)
+      val project = editor.project ?: return editor.virtualFile?.let { file -> LanguageUtil.getFileTypeLanguage(file.fileType) }
       if (project.isDisposed) {
         logger<TextEditorImpl>().warn("Attempting to get a language for document on a disposed project: ${project.name}")
         return null

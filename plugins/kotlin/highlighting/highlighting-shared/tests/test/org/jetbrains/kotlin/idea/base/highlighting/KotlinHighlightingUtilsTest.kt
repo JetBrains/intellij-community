@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.highlighting
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
@@ -10,15 +10,19 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-import kotlin.apply
-import kotlin.collections.first
-import kotlin.io.writeText
-import kotlin.text.replace
 
-class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
+class KotlinHighlightingUtilsTest : LightPlatformTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     private fun createKotlinFileAtPath(path: String): KtFile {
         val file = File(project.basePath, path.replace("/", File.separator))
         file.parentFile.mkdirs()
@@ -54,7 +58,7 @@ class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
 
     fun testMarkedAsOutsider() {
         val file = createKotlinFileAtPath("src/main/kotlin/Main.kt")
-        OutsidersPsiFileSupport.markFile(file.virtualFile)
+        SyntheticPsiFileSupport.markFile(file.virtualFile)
         assertTrue(file.shouldHighlightFile())
     }
 

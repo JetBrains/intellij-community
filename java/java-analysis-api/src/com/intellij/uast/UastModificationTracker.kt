@@ -9,7 +9,7 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.uast.UastLanguagePlugin
 
 @Service(Service.Level.PROJECT)
-class UastModificationTracker internal constructor(private val project: Project) : ModificationTracker, Disposable {
+public class UastModificationTracker internal constructor(private val project: Project) : ModificationTracker, Disposable {
   private var languageTrackers: List<ModificationTracker>
 
   init {
@@ -28,9 +28,9 @@ class UastModificationTracker internal constructor(private val project: Project)
     // do nothing
   }
 
-  companion object {
+  public companion object {
     @JvmStatic
-    fun getInstance(project: Project): UastModificationTracker {
+    public fun getInstance(project: Project): UastModificationTracker {
       return project.getService(UastModificationTracker::class.java)
     }
 

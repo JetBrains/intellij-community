@@ -3,7 +3,9 @@ package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.execution.application.ApplicationRunLineMarkerProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.MainMethodSearcherBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.util.GroovyMainMethodSearcher;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.METHOD_IDENTIFIERS;
 
@@ -11,5 +13,10 @@ final class GroovyAppLineMarkerContributor extends ApplicationRunLineMarkerProvi
   @Override
   protected boolean isIdentifier(@NotNull PsiElement e) {
     return METHOD_IDENTIFIERS.contains(e.getNode().getElementType());
+  }
+
+  @Override
+  protected MainMethodSearcherBase getMainMethodUtil() {
+    return GroovyMainMethodSearcher.INSTANCE;
   }
 }

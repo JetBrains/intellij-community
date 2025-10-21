@@ -1,5 +1,5 @@
-from _typeshed import Incomplete
 from typing import Any, ClassVar
+from typing_extensions import Self
 
 import passlib.utils.handlers as uh
 
@@ -39,47 +39,41 @@ class _Argon2Common(  # type: ignore[misc]
     @classmethod
     def using(  # type: ignore[override]
         cls,
-        type: Incomplete | None = None,
-        memory_cost: Incomplete | None = None,
-        salt_len: Incomplete | None = None,
-        time_cost: Incomplete | None = None,
-        digest_size: Incomplete | None = None,
-        checksum_size: Incomplete | None = None,
-        hash_len: Incomplete | None = None,
-        max_threads: Incomplete | None = None,
+        type=None,
+        memory_cost=None,
+        salt_len=None,
+        time_cost=None,
+        digest_size=None,
+        checksum_size=None,
+        hash_len=None,
+        max_threads=None,
         **kwds,
     ): ...
     @classmethod
     def identify(cls, hash): ...
     @classmethod
-    def from_string(cls, hash): ...
-    def __init__(
-        self,
-        type: Incomplete | None = None,
-        type_d: bool = False,
-        version: Incomplete | None = None,
-        memory_cost: Incomplete | None = None,
-        data: Incomplete | None = None,
-        **kwds,
-    ) -> None: ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
+    def __init__(self, type=None, type_d: bool = False, version=None, memory_cost=None, data=None, **kwds) -> None: ...
 
 class _NoBackend(_Argon2Common):
     @classmethod
-    def hash(cls, secret): ...
+    def hash(cls, secret): ...  # type: ignore[override]
     @classmethod
-    def verify(cls, secret, hash): ...
+    def verify(cls, secret, hash): ...  # type: ignore[override]
     @classmethod
-    def genhash(cls, secret, config): ...
+    def genhash(cls, secret, config): ...  # type: ignore[override]
 
 class _CffiBackend(_Argon2Common):
     @classmethod
-    def hash(cls, secret): ...
+    def hash(cls, secret): ...  # type: ignore[override]
     @classmethod
-    def verify(cls, secret, hash): ...
+    def verify(cls, secret, hash): ...  # type: ignore[override]
     @classmethod
-    def genhash(cls, secret, config): ...
+    def genhash(cls, secret, config): ...  # type: ignore[override]
 
 class _PureBackend(_Argon2Common): ...
 
 class argon2(_NoBackend, _Argon2Common):  # type: ignore[misc]
     backends: ClassVar[tuple[str, ...]]
+
+__all__ = ["argon2"]

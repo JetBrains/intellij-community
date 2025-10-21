@@ -248,7 +248,7 @@ public final class CommonJavaFragments {
         editor.addSettingsProvider(e -> {
           ExtendableTextComponent.Extension extension = ExtendableTextComponent.Extension.create(
             AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, ExecutionBundle.message("insert.macros"),
-            () -> MacrosDialog.show(editor, MacrosDialog.Filters.ALL, MacrosDialog.getPathMacros(hasModule.compute())));
+            true, () -> MacrosDialog.show(editor, MacrosDialog.Filters.ALL, MacrosDialog.getPathMacros(hasModule.compute())));
           ExtendableEditorSupport.setupExtension(e, editor.getBackground(), extension);
         });
         if (pathEditor != null) {

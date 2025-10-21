@@ -3,6 +3,8 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.InitSessionResult;
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -13,6 +15,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -24,30 +27,34 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
+@IntellijInternalApi
 public class InstallFromDiskAction extends DumbAwareAction {
   private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
-  private final @NotNull InstalledPluginsTableModel myTableModel;
+  private InstalledPluginsTableModel myTableModel;
   private final @NotNull PluginEnabler myPluginEnabler;
   private final @Nullable JComponent myParentComponent;
 
   @SuppressWarnings({"unused", "ActionPresentationInstantiatedInCtor"})
     // called reflectively
   InstallFromDiskAction() {
-    this(new InstalledPluginsTableModel(null), PluginEnabler.HEADLESS, null);
+    this(null, PluginEnabler.HEADLESS, null);
   }
 
   @SuppressWarnings("ActionPresentationInstantiatedInCtor")
   protected InstallFromDiskAction(
-    @NotNull InstalledPluginsTableModel tableModel,
+    @Nullable InstalledPluginsTableModel tableModel,
     @NotNull PluginEnabler pluginEnabler,
     @Nullable JComponent parentComponent
   ) {
     super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"), AllIcons.Nodes.Plugin);
-    myTableModel = tableModel;
+    if (tableModel != null) {
+      myTableModel = tableModel;
+    }
     myPluginEnabler = pluginEnabler;
     myParentComponent = parentComponent;
   }
@@ -70,7 +77,11 @@ public class InstallFromDiskAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     var project = e.getProject();
     var file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    installPluginFromDisk(file, project, myTableModel, myPluginEnabler, myParentComponent, callbackData -> {
+    var sessionId = UUID.randomUUID();
+    //As backend and frontend have their own actions, we don't need a combined state and can use the local one.
+    InitSessionResult initSessionResult = DefaultUiPluginManagerController.INSTANCE.initSessionSync(sessionId.toString());
+    var tableModel = myTableModel == null ? new InstalledPluginsTableModel(null, initSessionResult, sessionId) : myTableModel;
+    installPluginFromDisk(file, project, tableModel, myPluginEnabler, myParentComponent, callbackData -> {
       onPluginInstalledFromDisk(callbackData, project);
     });
   }

@@ -4,7 +4,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.core.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.core.SettingsSnapshotZipSerializer.deserializeSettingsProviders
@@ -16,7 +15,7 @@ import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsStateMerger.mer
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
-import kotlinx.serialization.encodeToString
+import com.intellij.util.system.OS
 import kotlinx.serialization.json.Json
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
@@ -258,7 +257,7 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
             user:     ${it.userName}
             host:     ${it.hostName}
             config:   ${it.configFolder}
-            os:       ${SystemInfo.getOsName()}
+            os:       ${OS.CURRENT}
         """.trimIndent()
 
       val restoresMessage = restoresRevision?.let { hash -> "\nrestores: $hash" } ?: ""

@@ -1,1 +1,0 @@
-deprecated: openRecentProject.svg; to be removed without replacement

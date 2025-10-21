@@ -8,12 +8,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.*
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.junit.Assume
 import java.io.File
 
-abstract class KotlinFacetTestCase : UsefulTestCase() {
+abstract class KotlinFacetTestCase : UsefulTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
     private lateinit var myTestFixture: JavaCodeInsightTestFixture
     lateinit var myProject: Project
     private lateinit var myKotlinFixtureBuilder: KotlinModuleFixtureBuilder
@@ -27,7 +32,7 @@ abstract class KotlinFacetTestCase : UsefulTestCase() {
 
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
 
         val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
         val testDataPath: String = getTestDataPath()

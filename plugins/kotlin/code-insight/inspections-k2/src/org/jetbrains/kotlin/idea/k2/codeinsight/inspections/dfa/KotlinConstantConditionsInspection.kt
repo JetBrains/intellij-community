@@ -31,7 +31,7 @@ import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -481,7 +481,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return isCallToBuiltInMethod(call, "also")
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {
             return when (parent) {
                 is KtBinaryExpression ->
@@ -570,7 +570,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return analyze(expression) { shouldSuppress(constant, expression, true) }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression, ignoreSmartCasts: Boolean): Boolean {
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
@@ -698,8 +698,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
                 else -> {}
             }
-            if (expression is KtSimpleNameExpression) {
-                val target = expression.mainReference.resolve()
+            val targetExpression = (expression as? KtDotQualifiedExpression)?.selectorExpression ?: expression
+            if (targetExpression is KtSimpleNameExpression) {
+                val target = targetExpression.mainReference.resolve()
                 if (target is KtProperty && !target.isVar && target.initializer is KtConstantExpression) {
                     // suppress warnings uses of boolean constant like 'val b = true'
                     return true
@@ -711,7 +712,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return !expression.isUsedAsExpression
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun isZero(expression: KtExpression?): Boolean {
             expression ?: return false
             val constantValue = expression.evaluate()?.value
@@ -719,7 +720,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
 
         // x || return y
-        context(KaSession)
+        context(_: KaSession)
         private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
             if (expression !is KtBinaryExpression || expression.operationToken != token) return false
             val type = expression.right?.expressionType

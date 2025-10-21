@@ -1,3 +1,4 @@
+# Python 2 compatibility cruft:
 assertpy.collection.Iterable
 assertpy.contains.str_types
 assertpy.contains.xrange

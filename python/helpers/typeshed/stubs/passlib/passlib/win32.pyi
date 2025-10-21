@@ -1,7 +1,16 @@
-from typing import Any
+from binascii import hexlify as hexlify
+from typing import Final, Literal, overload
 
-from passlib.hash import nthash as nthash
+from passlib.handlers.windows import nthash as nthash
 
-raw_nthash: Any
+LM_MAGIC: Final[bytes]
+raw_nthash = nthash.raw_nthash
 
-def raw_lmhash(secret, encoding: str = "ascii", hex: bool = False): ...
+@overload
+def raw_lmhash(secret: str | bytes, encoding: str = "ascii", hex: Literal[False] = False) -> bytes: ...
+@overload
+def raw_lmhash(secret: str | bytes, encoding: str, hex: Literal[True]) -> str: ...
+@overload
+def raw_lmhash(secret: str | bytes, *, hex: Literal[True]) -> str: ...
+
+__all__ = ["nthash", "raw_lmhash", "raw_nthash"]

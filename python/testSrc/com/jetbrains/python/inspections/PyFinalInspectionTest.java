@@ -353,7 +353,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                                    self.a: Final[str] = "str"
 
                                def method(self):
-                                   <warning descr="'Final' attribute should be declared in class body or '__init__'">self.a</warning>: Final[int] = 10
+                                   <warning descr="'Final' attribute should be declared in class body or '__init__'"><warning descr="Already declared name could not be redefined as 'Final'">self.a</warning></warning>: Final[int] = 10
                                    <warning descr="'Final' attribute should be declared in class body or '__init__'">self.b</warning>: Final[int] = 10""")
     );
   }

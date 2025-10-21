@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performanceTesting.frontend.commands
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.recentFiles.frontend.Switcher
-import com.intellij.platform.recentFiles.frontend.createAndShowNewSwitcherSuspend
+import com.intellij.platform.recentFiles.frontend.createAndShowNewRecentFilesSuspend
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -30,7 +29,7 @@ internal class ShowRecentFilesCommand(text: String, line: Int) : PerformanceComm
         alreadyOpenedSwitcher.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
       }
       else {
-        createAndShowNewSwitcherSuspend(false, null, IdeBundle.message("title.popup.recent.files"), context.project)
+        createAndShowNewRecentFilesSuspend(false, context.project)
       }
       delay(secondsToWaitBeforeClose * 1000L)
 

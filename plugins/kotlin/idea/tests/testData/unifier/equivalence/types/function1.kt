@@ -1,4 +1,3 @@
-// IGNORE_K2
 val a: Function1<Int, String> = { "" }
 val b: kotlin.Function1<kotlin.Int, kotlin.String> = { "" }
 val c: <selection>(Int) -> String</selection> = { "" }

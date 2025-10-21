@@ -8,7 +8,6 @@ import com.intellij.execution.TargetDebuggerConnectionUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
@@ -53,6 +52,11 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   public void clear() {
     myParams = null;
+    if(Registry.is("ide.jvm.command.line.clear.all.environments")) {
+      myTargetEnvironmentRequest = null;
+      myCommandLine = null;
+      myTargetDebuggerConnection = null;
+    }
   }
 
   @Override

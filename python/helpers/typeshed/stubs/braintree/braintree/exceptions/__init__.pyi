@@ -8,6 +8,9 @@ from braintree.exceptions.not_found_error import NotFoundError as NotFoundError
 from braintree.exceptions.request_timeout_error import RequestTimeoutError as RequestTimeoutError
 from braintree.exceptions.server_error import ServerError as ServerError
 from braintree.exceptions.service_unavailable_error import ServiceUnavailableError as ServiceUnavailableError
+from braintree.exceptions.test_operation_performed_in_production_error import (
+    TestOperationPerformedInProductionError as TestOperationPerformedInProductionError,
+)
 from braintree.exceptions.too_many_requests_error import TooManyRequestsError as TooManyRequestsError
 from braintree.exceptions.unexpected_error import UnexpectedError as UnexpectedError
 from braintree.exceptions.upgrade_required_error import UpgradeRequiredError as UpgradeRequiredError

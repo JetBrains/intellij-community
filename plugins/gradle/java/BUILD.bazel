@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.gradle.java` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "java",
   module_name = "intellij.gradle.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":java_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle",
@@ -20,15 +21,18 @@ jvm_library(
     "//plugins/gradle/jps-plugin:jps",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-impl:ide-impl",
     "//java/idea-ui:ui",
     "//platform/observable",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/usageView",
@@ -45,10 +49,10 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-impl:impl",
     "//platform/smRunner",
-    "@lib//:gson",
+    "//libraries/gson",
     "//jps/jps-builders:build",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "@lib//:x_stream",
+    "//libraries/xstream",
     "//plugins/groovy/groovy-psi:psi",
     "//java/execution/openapi:java-execution",
     "//plugins/maven",
@@ -67,39 +71,36 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/backend/workspace",
     "//platform/backend/observation",
-    "@lib//:hash4j",
-    "@lib//:fastutil-min",
+    "//libraries/hash4j",
+    "//libraries/fastutil",
     "//platform/platform-impl/ui",
     "//java/debugger/shared",
     "//platform/eel-provider",
   ],
   exports = ["//plugins/gradle:gradle-common"],
-  runtime_deps = [
-    ":java_resources",
-    "@lib//ant/lib:ant-antlr",
-  ]
+  runtime_deps = ["@lib//ant/lib:ant-antlr"]
 )
 ### auto-generated section `build intellij.gradle.java` end
 
 ### auto-generated section `build intellij.gradle.java.tests` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
-jvm_resources(
+resourcegroup(
   name = "java-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
-java_library(
+jvm_library(
   name = "java-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "java-tests_test_lib",
+  module_name = "intellij.gradle.java.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  resources = [":java-tests_test_resources"],
   deps = [
     "@lib//:jmock",
     "@lib//:junit4",
@@ -108,9 +109,11 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
@@ -125,8 +128,9 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/external-system-api/dependency-updater",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/maven-server-api:maven-server",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//java/execution/impl",
     "//plugins/groovy",
@@ -159,12 +163,15 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/statistics/testFramework",
-  ],
-  runtime_deps = [":java-tests_test_resources"]
+  ]
 )
+### auto-generated section `build intellij.gradle.java.tests` end
 
-jvm_test(
+### auto-generated section `test intellij.gradle.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "java-tests_test",
   runtime_deps = [":java-tests_test_lib"]
 )
-### auto-generated section `build intellij.gradle.java.tests` end
+### auto-generated section `test intellij.gradle.java.tests` end

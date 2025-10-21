@@ -41,7 +41,7 @@ public final class GlobalSearchScopeUtil {
   public static @NotNull List<GlobalSearchScope> flattenUnionScope(@NotNull GlobalSearchScope scope) {
     if (scope instanceof UnionScope) {
       UnionScope unionScope = (UnionScope)scope;
-      return Arrays.stream(unionScope.myScopes)
+      return Arrays.stream(unionScope.getMyScopes())
         .flatMap(s -> flattenUnionScope(s).stream()).collect(Collectors.toList());
     }
     return Collections.singletonList(scope);

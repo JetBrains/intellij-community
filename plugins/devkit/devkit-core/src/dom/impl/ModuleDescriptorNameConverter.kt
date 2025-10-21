@@ -106,11 +106,16 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
       val moduleName = module.name
 
       processModuleSourceRoots(module) { root ->
-        val plugins = DescriptorUtil.getPlugins(project, GlobalSearchScopes.directoryScope(project, root, false))
-        if (prioritize) {
-          plugins.forEach { it.putUserData(LOOKUP_PRIORITY, if (module === currentModule) 200.0 else 100.0) }
-        }
-        variants.addAll(plugins.filter { DomUtil.getFile(it).name.startsWith(moduleName) })
+        root.children
+          .filter { it.extension == "xml" && it.name.startsWith(moduleName) }
+          .mapNotNull {
+            findIdeaPlugin(root, it.name, project)?.apply {
+              if (prioritize) {
+                putUserData(LOOKUP_PRIORITY, if (module === currentModule) 200.0 else 100.0)
+              }
+            }
+          }
+          .forEach { variants.add(it) }
         true
       }
     }

@@ -249,6 +249,7 @@ public final @Unmodifiable class UnmodifiableHashMap<K, V> implements Map<@NotNu
    * of the resulting map is the same as the strategy of this map.
    */
   public @NotNull UnmodifiableHashMap<K, V> withAll(@NotNull Map<? extends K, ? extends V> map) {
+    if (map == this) return this;
     if (isEmpty()) {
       return fromMap(strategy, map);
     }
@@ -261,20 +262,31 @@ public final @Unmodifiable class UnmodifiableHashMap<K, V> implements Map<@NotNu
       Entry<? extends K, ? extends V> entry = map.entrySet().iterator().next();
       return with(entry.getKey(), entry.getValue());
     }
+    Iterator<? extends Entry<? extends K, ? extends V>> iterator = map.entrySet().iterator();
+    Set<Entry<K, V>> myEntries = entrySet();
+    while (iterator.hasNext()) {
+      Entry<? extends K, ? extends V> entry = iterator.next();
+      if (!myEntries.contains(entry)) {
+        Map<K, V> newMap;
+        if (strategy == HashingStrategy.canonical()) {
+          //noinspection SSBasedInspection
+          newMap = new Object2ObjectOpenHashMap<>(mapSize + size);
+        }
+        else {
+          // Could be optimized further for map.size() == 2 or 3.
+          newMap = new Object2ObjectOpenCustomHashMap<>(mapSize + size, getFastutilHashingStrategy(strategy));
+        }
 
-    Map<K, V> newMap;
-    if (strategy == HashingStrategy.canonical()) {
-      //noinspection SSBasedInspection
-      newMap = new Object2ObjectOpenHashMap<>(mapSize + size);
+        newMap.putAll(this);
+        newMap.put(entry.getKey(), entry.getValue());
+        while (iterator.hasNext()) {
+          entry = iterator.next();
+          newMap.put(entry.getKey(), entry.getValue());
+        }
+        return fromMap(strategy, newMap);
+      }
     }
-    else {
-      // Could be optimized further for map.size() == 2 or 3.
-      newMap = new Object2ObjectOpenCustomHashMap<>(mapSize + size, getFastutilHashingStrategy(strategy));
-    }
-
-    newMap.putAll(this);
-    newMap.putAll(map);
-    return fromMap(strategy, newMap);
+    return this;
   }
 
   private static @NotNull <K> Hash.Strategy<K> getFastutilHashingStrategy(@NotNull HashingStrategy<K> strategy) {
@@ -668,6 +680,19 @@ public final @Unmodifiable class UnmodifiableHashMap<K, V> implements Map<@NotNu
   @Override
   public @NotNull Set<Entry<K, V>> entrySet() {
     return new AbstractSet<Entry<K, V>>() {
+      @Override
+      public boolean contains(Object o) {
+        if (!(o instanceof Entry)) return false;
+        Entry<?, ?> entry = (Entry<?, ?>)o;
+        Object key = entry.getKey();
+        if (key == null) return false;
+        V value = get(key);
+        if (value == null) {
+          return entry.getValue() == null && containsKey(key);
+        }
+        return value.equals(entry.getValue());
+      }
+
       @Override
       public @NotNull Iterator<Entry<K, V>> iterator() {
         return new MyIterator<Entry<K, V>>() {

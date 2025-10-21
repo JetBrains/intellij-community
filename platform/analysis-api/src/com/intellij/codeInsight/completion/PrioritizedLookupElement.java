@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see CompletionContributor
  */
-public final class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> {
+public final class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> implements TransparentForInsertHandling {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static final ClassConditionKey<PrioritizedLookupElement<?>> CLASS_CONDITION_KEY =
     (ClassConditionKey)ClassConditionKey.create(PrioritizedLookupElement.class);

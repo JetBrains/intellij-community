@@ -1607,7 +1607,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
 
     @Override
-    public void executePaint(Component component, Graphics2D g) {
+    public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
       g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);

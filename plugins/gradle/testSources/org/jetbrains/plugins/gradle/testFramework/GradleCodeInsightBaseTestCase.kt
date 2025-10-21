@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -52,13 +54,20 @@ abstract class GradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest
   }
 
   private class GradleIdeaProjectTestFixture(private val gradleFixture: GradleProjectTestFixture) : IdeaProjectTestFixture {
+
+    private lateinit var testDisposable: Disposable
+
     override fun getProject(): Project = gradleFixture.project
     override fun getModule(): Module = gradleFixture.module
+    override fun getTestRootDisposable(): Disposable = testDisposable
+
     override fun setUp() {
-      TestApplicationManager.getInstance().setDataProvider(GradleDataProvider(gradleFixture))
+      testDisposable = Disposer.newDisposable()
+      TestApplicationManager.getInstance().setDataProvider(GradleDataProvider(gradleFixture), testDisposable)
     }
+
     override fun tearDown() {
-      TestApplicationManager.getInstance().setDataProvider(null)
+      Disposer.dispose(testDisposable)
     }
   }
 

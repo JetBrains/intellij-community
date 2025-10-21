@@ -2,30 +2,49 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
 /**
  * This helper is not an API, consider using methods listed below.
  *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
- *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
  */
-fun pyRequirement(name: String, versionSpec: PyRequirementVersionSpec? = null): PyRequirement = PyRequirementImpl(name,
-                                                                                                                  listOfNotNull(versionSpec),
-                                                                                                                  listOf(name),
-                                                                                                                  "")
+
+fun pyRequirement(
+  name: String,
+  versionSpecs: List<PyRequirementVersionSpec>,
+  extras: List<String>,
+): PyRequirement {
+  val extrasString = extras.joinToString(prefix = "[", postfix = "]", separator = ",") { it }
+  return PyRequirementImpl(name,
+                           versionSpecs,
+                           listOf(name),
+                           extrasString)
+}
+
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec? = null,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     "")
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec?,
+  extras: String,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     extras)
 
 /**
  * This helper is not an API, consider using methods listed below.
- *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
  *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
@@ -38,9 +57,6 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
 /**
  * This helper is not an API, consider using methods listed below.
  * If given version could not be normalized, then specified relation will be replaced with [PyRequirementRelation.STR_EQ].
- *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
  *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
@@ -128,12 +144,11 @@ private data class PyRequirementVersionSpecImpl(
                                         toEqPartOfCompatibleRelation(parsedVersion)).matches(version)
       }
       PyRequirementRelation.STR_EQ -> version == this.version
-      else -> false
     }
   }
 
   private fun splitIntoPublicAndLocalVersions(version: PyPackageVersion): Pair<String, String> {
-    return version.copy(local = null).presentableText to StringUtil.notNullize(version.local)
+    return version.copy(local = null).presentableText to (version.local ?: "")
   }
 
   private fun splitIntoPublicAndLocalVersions(version: String): Pair<String, String> {

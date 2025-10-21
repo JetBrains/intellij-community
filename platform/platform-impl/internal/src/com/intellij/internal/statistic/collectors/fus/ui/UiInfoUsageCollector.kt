@@ -3,6 +3,7 @@
 
 package com.intellij.internal.statistic.collectors.fus.ui
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
@@ -18,10 +19,11 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.platform.jbr.JdkEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.ui.JreHiDpiUtil
@@ -63,7 +65,7 @@ private enum class HidpiMode {
   per_monitor_dpi, system_dpi
 }
 
-private val GROUP = EventLogGroup("ui.info.features", 15)
+private val GROUP = EventLogGroup("ui.info.features", 16)
 private val orientationField = Enum("value", VisibilityType::class.java)
 private val UI_TYPE = GROUP.registerEvent("UI.type", Enum("value", UiType::class.java))
 private val NAV_BAR = GROUP.registerEvent("Nav.Bar", Enum("value", NavBarType::class.java))
@@ -92,6 +94,8 @@ private val SCREEN_RESOLUTION_FIELD: StringEventField = object : StringEventFiel
                                                   "{regexp#integer}x{regexp#integer}")
 }
 private val SCREEN_RESOLUTION = GROUP.registerEvent("Screen.Resolution", Int("display_id"), SCREEN_RESOLUTION_FIELD)
+private val BACKGROUND_IMAGE_SET = Boolean("background_image_set")
+private val BACKGROUND_IMAGE = GROUP.registerEvent("background.image", BACKGROUND_IMAGE_SET)
 
 private suspend fun getDescriptors(): Set<MetricEvent> {
   val set = HashSet<MetricEvent>()
@@ -120,6 +124,7 @@ private suspend fun getDescriptors(): Set<MetricEvent> {
   addScreenScale(set)
   addNumberOfMonitors(set)
   addScreenResolutions(set)
+  set.add(BACKGROUND_IMAGE.metric(isBackgroundImageSet()))
   return set
 }
 
@@ -158,7 +163,7 @@ private suspend fun addScreenScale(set: MutableSet<MetricEvent>) {
   val userScale = roundScaleValue(JBUIScale.scale(1.0f))
   var isScaleMode: Boolean? = null
   if (!GraphicsEnvironment.isHeadless()) {
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       val dm = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode
       isScaleMode = dm != null && !JdkEx.getDisplayModeEx().isDefault(dm)
     }
@@ -167,7 +172,7 @@ private suspend fun addScreenScale(set: MutableSet<MetricEvent>) {
   data.add(SCALE_FIELD.with(scale))
   data.add(USER_SCALE_FIELD.with(userScale))
   if (isScaleMode != null) {
-    data.add(SCALE_MODE_FIELD.with(isScaleMode == true))
+    data.add(SCALE_MODE_FIELD.with(isScaleMode))
   }
   set.add(SCREEN_SCALE.metric(data))
 }
@@ -184,3 +189,11 @@ private fun roundScaleValue(scale: Float): Float {
   }
   return scaleBase + scaleFraction
 }
+
+private fun isBackgroundImageSet(): Boolean =
+  IdeBackgroundUtil.isEditorBackgroundImageSet(null) ||
+  IdeBackgroundUtil.isFrameBackgroundImageSet(null) ||
+  ProjectUtil.getOpenProjects().any {
+    IdeBackgroundUtil.isEditorBackgroundImageSet(it) ||
+    IdeBackgroundUtil.isFrameBackgroundImageSet(it)
+  }

@@ -314,7 +314,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @RequiresEdt
   private void showNotificationWithSpan(Notification notification, @Nullable Project project) {
     TraceKt.use(myTracer.spanBuilder("show notification")
-                  .setAttribute("project", project != null ? project.toString() : null)
+                  .setAttribute("project", project == null ? null : project.toString())
                   .setAttribute("notification", notification.toString()), __ -> {
       showNotificationInner(notification, project);
       return null;

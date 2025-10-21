@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -36,18 +37,8 @@ public class SdkEqualityTest extends LightPlatformTestCase {
   }
   
   boolean areSdkEqual(Sdk sdk1, Sdk sdk2) {
-    LightProjectDescriptor desc1 = new LightPlatformTestCase() {
-      @Override
-      protected Sdk getProjectJDK() {
-        return sdk1;
-      }
-    }.getProjectDescriptor();
-    LightProjectDescriptor desc2 = new LightPlatformTestCase() {
-      @Override
-      protected Sdk getProjectJDK() {
-        return sdk2;
-      }
-    }.getProjectDescriptor();
+    LightProjectDescriptor desc1 = createSimpleLightProjectDescriptor(EmptyModuleType.EMPTY_MODULE, sdk1);
+    LightProjectDescriptor desc2 = createSimpleLightProjectDescriptor(EmptyModuleType.EMPTY_MODULE, sdk2);
     return desc1.equals(desc2);
   }
 }

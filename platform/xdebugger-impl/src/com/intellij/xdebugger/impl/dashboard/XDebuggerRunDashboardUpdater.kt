@@ -41,7 +41,7 @@ internal class XDebuggerRunDashboardUpdater : ExecutionListener {
       }
 
       private fun updateDashboard() {
-        project.messageBus.syncPublisher<RunDashboardListener>(RunDashboardManager.DASHBOARD_TOPIC).configurationChanged(profile, false)
+        project.messageBus.syncPublisher<RunDashboardListener>(RunDashboardListener.DASHBOARD_TOPIC).configurationChanged(profile, false)
       }
     })
   }

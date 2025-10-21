@@ -2,6 +2,8 @@
 package com.intellij.openapi.ui
 
 import org.junit.jupiter.api.Test
+import javax.swing.JEditorPane
+import kotlin.test.assertEquals
 
 class UiUtilTest : UiUtilTestCase() {
 
@@ -58,5 +60,16 @@ class UiUtilTest : UiUtilTestCase() {
     assertShortenText("1111111", "1111111", 0, minTextPrefixLength = 2, minTextSuffixLength = 2)
     assertShortenText("11...11", "1112111", 0, minTextPrefixLength = 2, minTextSuffixLength = 2)
     assertShortenText("11...11", "11111111", 0, minTextPrefixLength = 2, minTextSuffixLength = 2)
+  }
+
+  @Test
+  fun test_setCopyable() {
+    val pane = JEditorPane()
+    val initialListeners = pane.focusListeners.size
+    pane.setCopyable(true)
+    pane.setCopyable(true)
+    assertEquals(pane.focusListeners.size, initialListeners + 1)
+    pane.setCopyable(false)
+    assertEquals(pane.focusListeners.size, initialListeners)
   }
 }

@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class ImportedLibraryType : LibraryType<ImportedLibraryProperties>(IMPORTED_LIBRARY_KIND) {
+public class ImportedLibraryType : LibraryType<ImportedLibraryProperties>(IMPORTED_LIBRARY_KIND) {
 
   // not supposed to be created manually from project structure dialog
   override fun getCreateActionName(): @NlsContexts.Label String? = null
@@ -38,8 +38,8 @@ class ImportedLibraryType : LibraryType<ImportedLibraryProperties>(IMPORTED_LIBR
     }
   }
 
-  companion object {
-    val IMPORTED_LIBRARY_KIND: PersistentLibraryKind<ImportedLibraryProperties> =
+  public companion object {
+    public val IMPORTED_LIBRARY_KIND: PersistentLibraryKind<ImportedLibraryProperties> =
       object : PersistentLibraryKind<ImportedLibraryProperties>("java-imported") {
       override fun createDefaultProperties(): ImportedLibraryProperties {
         return ImportedLibraryProperties(null)

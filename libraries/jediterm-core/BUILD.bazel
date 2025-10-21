@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jediterm.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jediterm-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jediterm-core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jediterm-core_resources"],
+  exports = ["@lib//:jediterm-core"],
+  runtime_deps = ["@lib//:jediterm-core"]
+)
+### auto-generated section `build intellij.libraries.jediterm.core` end

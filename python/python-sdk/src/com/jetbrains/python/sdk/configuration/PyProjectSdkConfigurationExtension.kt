@@ -1,12 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.configuration
 
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PyToolUIInfo
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CheckReturnValue
 
 /**
  * Used on directory opening with an attempt to configure suitable Python interpreter
@@ -17,54 +16,52 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface PyProjectSdkConfigurationExtension {
-
   companion object {
     @JvmStatic
-    val EP_NAME = ExtensionPointName.create<PyProjectSdkConfigurationExtension>("Pythonid.projectSdkConfigurationExtension")
+    val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
 
-    @JvmStatic
-    fun findForModule(module: Module): Pair<@IntentionName String, PyProjectSdkConfigurationExtension>? =
-      EP_NAME.computeSafeIfAny { ext -> ext.getIntention(module)?.let { Pair(it, ext) } }
+    /**
+     * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
+     * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
+     */
+    suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfo> = EP_NAME.extensionsIfPointIsRegistered
+        .mapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module) }.sorted()
   }
 
-  /**
-   * An implementation is responsible for interpreter setup and registration in IDE.
-   * In case of failures `null` should be returned, the implementation is responsible for errors displaying.
-   *
-   * Rule of thumb is to explicitly ask a user if sdk creation is desired and allowed.
-   */
-  @RequiresBackgroundThread
-  fun createAndAddSdkForConfigurator(module: Module): Sdk?
+  val toolInfo: PyToolUIInfo
 
   /**
-   * Called by sdk configurator and interpreter inspection
-   * to determine if an extension could configure or suggest an interpreter for the passed [module].
+   * Discovers whether this extension can provide a Python SDK for the given module and prepares a creator for it.
    *
-   * First applicable extension is processed, others are ignored.
-   * If there is no applicable extension, configurator and inspection guess a suitable interpreter.
+   * This function is executed on a background thread and may perform I/O-intensive checks such as
+   * reading project files (for example, pyproject.toml, Pipfile, requirements.txt, environment.yml), probing the
+   * file system, or invoking external tools (poetry/hatch/pipenv/uv/etc.). No SDK must be created or registered here.
+   * Instead, the method returns a [CreateSdkInfo] descriptor that encapsulates:
+   * - user-facing labels (intentionName) and tool metadata (toolInfo), and
+   * - a suspendable sdkCreator that will create and register the SDK when executed by the caller
+   *   (see [PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo]).
    *
-   * Could be called from AWT hence should be as fast as possible.
+   * Return value semantics:
+   * - Existing environment found: return a CreateSdkInfo.ExistingEnv whose creator simply registers the discovered SDK.
+   * - No environment yet, but can be created: return a CreateSdkInfo.WillCreateEnv whose creator performs the creation
+   *   (and optional user confirmation) and registers the SDK.
+   * - Tool is not applicable, or configuration cannot proceed (missing binaries, incompatible project, errors): return null.
+   *   Implementations are responsible for showing any user-facing error notifications when they decide to return null.
    *
-   * If returned value is `null`, then the extension can't be used to configure an interpreter (not applicable).
-   * Otherwise returned string is used as a quick fix name.
+   * The default ordering prefers existing environments over newly created ones; see CreateSdkInfo.compareTo.
    *
-   * Example: `Create a virtual environment using requirements.txt`.
+   * @param module module to inspect and derive configuration from
+   * @return descriptor to create/register a suitable SDK, or null if this extension cannot configure the project
    */
-  @IntentionName
-  fun getIntention(module: Module): String?
+  @CheckReturnValue
+  suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo?
 
   /**
-   * An implementation is responsible for interpreter setup and registration in IDE.
-   * In case of failures `null` should be returned, the implementation is responsible for errors displaying.
+   * Returns this extension as a [PyProjectTomlConfigurationExtension] when a tool supports configuring with
+   * pyproject.toml, or null otherwise.
    *
-   * You're free here to create sdk immediately, without any user permission since quick fix is explicitly clicked.
+   * Callers that need to skip pyproject.toml validation should do it using
+   * [PyProjectTomlConfigurationExtension.createSdkWithoutPyProjectTomlChecks].
    */
-  @RequiresBackgroundThread
-  fun createAndAddSdkForInspection(module: Module): Sdk?
-
-  /**
-   * If headless supported implementation is responsible for interpreter setup and registration
-   * for [createAndAddSdkForConfigurator] method in IDE without an additional user input.
-   */
-  fun supportsHeadlessModel(): Boolean = false
+  fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension?
 }

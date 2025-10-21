@@ -5,7 +5,7 @@ public class IncorrectPlacementAmbiguous extends <warning descr="Nullability ann
   
   <warning descr="Nullability annotation is not applicable to constructors">@Nullable</warning> IncorrectPlacementAmbiguous() {}
   
-  void test(<warning descr="Receiver parameter is inherently not-null">@Nullable</warning> IncorrectPlacementAmbiguous this) {
+  void test(<warning descr="Receiver parameter is inherently non-null">@Nullable</warning> IncorrectPlacementAmbiguous this) {
     @Nullable IncorrectPlacementAmbiguous.Inner a1;
     IncorrectPlacementAmbiguous.@Nullable Inner a2;
   }

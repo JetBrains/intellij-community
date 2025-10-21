@@ -27,7 +27,7 @@ fun GitRepository.isSubmodule(): Boolean = asSubmodule() != null
 
 fun GitRepository.getDirectSubmodules(): Collection<GitRepository> {
   return submodules.mapNotNull { module ->
-    val submoduleDir = runReadAction { root.findFileByRelativePath(module.path) }
+    val submoduleDir = root.findFileByRelativePath(module.path)
     if (submoduleDir == null) {
       LOG.debug("submodule dir not found at declared path [${module.path}] of root [$root]")
       return@mapNotNull null

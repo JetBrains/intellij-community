@@ -27,7 +27,7 @@ public interface GradleLightBuild extends BuildModel {
   BuildIdentifier getBuildIdentifier();
 
   @Nullable
-  BuildIdentifier getParentBuildIdentifier();
+  GradleLightBuild getParentBuild();
 
   @NotNull
   GradleLightProject getRootProject();

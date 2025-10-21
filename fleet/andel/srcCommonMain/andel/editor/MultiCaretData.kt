@@ -43,7 +43,7 @@ data class MultiCaretData(val sortedCarets: List<Caret> = emptyList(),
 
   fun caret(caretId: CaretId) = caretsById[mergedAnchors[caretId] ?: caretId]
 
-  fun edit(operation: Operation, preserveVcol: Boolean = false): MultiCaretData = transformOnto(operation, Sticky.LEFT, preserveVcol)
+  fun edit(operation: Operation, preserveVcol: Boolean = false, direction: Sticky = Sticky.LEFT): MultiCaretData = transformOnto(operation, direction, preserveVcol)
 
   fun edit(newOffsetProvider: NewOffsetProvider): MultiCaretData {
     val updatingCarets = ArrayList<Caret>()

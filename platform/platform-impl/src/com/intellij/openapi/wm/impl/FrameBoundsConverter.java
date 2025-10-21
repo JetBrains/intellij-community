@@ -20,8 +20,8 @@ import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_L
  */
 @ApiStatus.Internal
 public final class FrameBoundsConverter {
-  private static final int MIN_WIDTH = 350;
-  private static final int MIN_HEIGHT = 150;
+  static final int MIN_WIDTH = 350;
+  static final int MIN_HEIGHT = 150;
 
   /**
    * @param bounds the bounds in the device space

@@ -33,7 +33,7 @@ internal class CodeVisionProjectSettings(
       }
     }
     if (changed) {
-      forceCodeVisionPass()
+      forceCodeVisionPass("CodeVisionProjectSettings.enabled=$isEnabled")
     }
   }
 
@@ -47,9 +47,9 @@ internal class CodeVisionProjectSettings(
     var isEnabledForProject: Boolean by property(true)
   }
 
-  private fun forceCodeVisionPass() {
+  private fun forceCodeVisionPass(reason: Any) {
     ModificationStampUtil.clearModificationStamp()
-    DaemonCodeAnalyzer.getInstance(project).restart()
+    DaemonCodeAnalyzer.getInstance(project).restart(reason)
     project.service<CodeVisionHost>().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
   }
 

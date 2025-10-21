@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.impl.ProgressManagerScope
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -19,8 +22,9 @@ internal class CallableImportCandidatesProvider(
     private fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
         acceptsKotlinCallableAtPosition(kotlinCallable) && !kotlinCallable.isImported() && kotlinCallable.canBeImported()
 
-    private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
-        when (importContext.positionType) {
+    private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean {
+        ProgressManager.checkCanceled()
+        return when (importContext.positionType) {
             is ImportPositionType.InfixCall -> {
                 kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && kotlinCallable.isExtensionDeclaration()
             }
@@ -31,19 +35,24 @@ internal class CallableImportCandidatesProvider(
 
             else -> true
         }
+    }
 
     private fun acceptsJavaCallable(javaCallable: PsiMember): Boolean =
         acceptsJavaCallableAtPosition() && !javaCallable.isImported() && javaCallable.canBeImported()
 
-    private fun acceptsJavaCallableAtPosition(): Boolean =
-        when (importContext.positionType) {
+    private fun acceptsJavaCallableAtPosition(): Boolean {
+        ProgressManager.checkCanceled()
+        return when (importContext.positionType) {
             is ImportPositionType.InfixCall,
             is ImportPositionType.OperatorCall -> false
+
             else -> true
         }
+    }
 
-    private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
-        when (importContext.positionType) {
+    private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean {
+        ProgressManager.checkCanceled()
+        return when (importContext.positionType) {
             is ImportPositionType.InfixCall -> {
                 val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
                 functionSymbol?.isInfix == true && functionSymbol.isExtension
@@ -56,8 +65,9 @@ internal class CallableImportCandidatesProvider(
 
             else -> true
         }
+    }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(
         name: Name,
@@ -99,7 +109,7 @@ internal class CallableImportCandidatesProvider(
                     )
 
                     yieldAll(
-                        indexProvider.getExtensionCallableSymbolsFromSubclassObjects(name, receiverTypes)
+                        indexProvider.getCallableSymbolsFromSubclassObjects(name, receiverTypes)
                             .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
                     )
                 }

@@ -35,7 +35,7 @@ import java.util.function.Function;
 /**
  * @author Vladislav.Soroka
  */
-public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode<T>> {
+public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode<?>> {
 
   static final int BUILTIN_TASKS_DATA_NODE_ORDER = 10;
   static final int BUILTIN_DEPENDENCIES_DATA_NODE_ORDER = BUILTIN_TASKS_DATA_NODE_ORDER + 10;
@@ -407,7 +407,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Override
-  public int compareTo(@NotNull ExternalSystemNode node) {
+  public int compareTo(@NotNull ExternalSystemNode<?> node) {
     return StringUtil.compare(this.getName(), node.getName(), true);
   }
 

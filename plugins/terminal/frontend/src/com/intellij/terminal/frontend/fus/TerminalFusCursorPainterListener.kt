@@ -1,7 +1,7 @@
 package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.terminal.frontend.TerminalCursorPainterListener
+import com.intellij.terminal.frontend.view.impl.TerminalCursorPainterListener
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 

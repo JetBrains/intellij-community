@@ -7,21 +7,24 @@ import java.util.List;
 
 public final class LongRunningTaskStatus implements Serializable {
   public static final LongRunningTaskStatus EMPTY = new LongRunningTaskStatus(
-    0, 0, Collections.emptyList(), Collections.emptyList());
+    0, 0, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
   private final int total;
   private final int finished;
   private final List<MavenServerConsoleEvent> consoleEvents;
   private final List<MavenArtifactEvent> downloadEvents;
+  private final List<DownloadArtifactEvent> downloadArtifactEvents;
 
   public LongRunningTaskStatus(int total,
                                int finished,
                                List<MavenServerConsoleEvent> consoleEvents,
-                               List<MavenArtifactEvent> downloadEvents) {
+                               List<MavenArtifactEvent> downloadEvents,
+                               List<DownloadArtifactEvent> downloadArtifactEvents) {
     this.total = total;
     this.finished = finished;
     this.consoleEvents = consoleEvents;
     this.downloadEvents = downloadEvents;
+    this.downloadArtifactEvents = downloadArtifactEvents;
   }
 
   public int total() { return total; }
@@ -41,6 +44,10 @@ public final class LongRunningTaskStatus implements Serializable {
 
   public List<MavenArtifactEvent> downloadEvents() {
     return downloadEvents;
+  }
+
+  public List<DownloadArtifactEvent> downloadArtifactEvents() {
+    return downloadArtifactEvents;
   }
 
   @Override

@@ -3,7 +3,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.application.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +94,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   }
 
   static @NotNull Path getLocalBuildSystemDirectory() {
-    return PathManagerEx.getAppSystemDir().resolve(BuildManager.SYSTEM_ROOT);
+    return PathManager.getSystemDir().resolve(BuildManager.SYSTEM_ROOT);
   }
 
   static void setUnixProcessPriority(GeneralCommandLine commandLine, int priority) {

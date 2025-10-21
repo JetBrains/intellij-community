@@ -20,7 +20,7 @@ class ReplaceSizeCheckWithIsNotEmptyInspection : IntentionBasedInspection<KtBina
     }
 }
 
-class ReplaceSizeCheckWithIsNotEmptyIntention : ReplaceSizeCheckIntention(KotlinBundle.lazyMessage("replace.size.check.with.isnotempty")) {
+internal class ReplaceSizeCheckWithIsNotEmptyIntention : ReplaceSizeCheckIntention(KotlinBundle.messagePointer("replace.size.check.with.isnotempty")) {
     override fun getTargetExpression(element: KtBinaryExpression): KtExpression? = when (element.operationToken) {
         KtTokens.EXCLEQ -> when {
             element.right.isZero() -> element.left
@@ -40,14 +40,14 @@ class ReplaceSizeCheckWithIsNotEmptyIntention : ReplaceSizeCheckIntention(Kotlin
                 targetExpression = expression,
                 newFunctionCall = "isEmpty()",
                 negate = true,
-                intentionTextGetter = KotlinBundle.lazyMessage("replace.size.check.with.0", "!isEmpty")
+                intentionTextGetter = KotlinBundle.messagePointer("replace.size.check.with.0", "!isEmpty")
             )
         } else {
             Replacement(
                 targetExpression = expression,
                 newFunctionCall = "isNotEmpty()",
                 negate = false,
-                intentionTextGetter = KotlinBundle.lazyMessage("replace.size.check.with.0", "isNotEmpty")
+                intentionTextGetter = KotlinBundle.messagePointer("replace.size.check.with.0", "isNotEmpty")
             )
         }
     }

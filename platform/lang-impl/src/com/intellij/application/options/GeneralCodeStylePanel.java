@@ -2,8 +2,6 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.application.options.codeStyle.excludedFiles.ExcludedGlobPatternsPanel;
-import com.intellij.application.options.codeStyle.excludedFiles.ExcludedScopesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +29,6 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.GradientViewport;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -56,32 +53,20 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
 
   private JPanel myPanel;
-  private JCheckBox myEnableFormatterTags;
-  private JTextField myFormatterOnTagField;
-  private JTextField myFormatterOffTagField;
-  private JCheckBox myAcceptRegularExpressionsCheckBox;
-  private JBLabel myFormatterOffLabel;
-  private JBLabel myFormatterOnLabel;
-  private JPanel myMarkerOptionsPanel;
   private JBTabbedPane myTabbedPane;
-  private ExcludedGlobPatternsPanel myExcludedPatternsPanel;
-  private ExcludedScopesPanel       myExcludedScopesPanel;
   private JPanel myGeneralTab;
   private JPanel myFormatterTab;
   private final JScrollPane         myScrollPane;
   private static int ourSelectedTabIndex = -1;
   private final GeneralCodeStyleGeneralTab generalTab;
+  private final GeneralCodeStyleFormatterTab formatterTab;
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
 
     generalTab = new GeneralCodeStyleGeneralTab(settings);
+    formatterTab = new GeneralCodeStyleFormatterTab();
     addPanelToWatch(myPanel);
-
-    myEnableFormatterTags.addActionListener(__ -> {
-      boolean tagsEnabled = myEnableFormatterTags.isSelected();
-      setFormatterTagControlsEnabled(tagsEnabled);
-    });
 
     myPanel.setBorder(JBUI.Borders.empty());
     myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
@@ -89,10 +74,10 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     updateGeneralOptionsPanel();
 
-    myGeneralTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
+    myGeneralTab.setBorder(JBUI.Borders.empty(10));
     myGeneralTab.add(generalTab.panel, BorderLayout.CENTER);
-    myFormatterTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
-    myMarkerOptionsPanel.setBorder(JBUI.Borders.emptyTop(10));
+    myFormatterTab.setBorder(JBUI.Borders.empty(10));
+    myFormatterTab.add(formatterTab.panel, BorderLayout.CENTER);
     if (ourSelectedTabIndex >= 0) {
       myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
     }
@@ -153,34 +138,28 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     generalTab.myVisualGuides.validateContent();
     generalTab.myRightMarginField.validateContent();
     settings.setDefaultSoftMargins(generalTab.myVisualGuides.getValue());
-    myExcludedScopesPanel.apply(settings);
-    myExcludedPatternsPanel.apply(settings);
+    formatterTab.excludedScopesPanel.apply(settings);
+    formatterTab.apply(settings);
 
     settings.LINE_SEPARATOR = generalTab.getLineSeparator();
 
     settings.setDefaultRightMargin(getRightMargin());
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = generalTab.myCbWrapWhenTypingReachesRightMargin.isSelected();
 
-    settings.FORMATTER_TAGS_ENABLED = myEnableFormatterTags.isSelected();
-    settings.FORMATTER_TAGS_ACCEPT_REGEXP = myAcceptRegularExpressionsCheckBox.isSelected();
+    settings.FORMATTER_TAGS_ENABLED = formatterTab.enableFormatterTags.isSelected();
+    settings.FORMATTER_TAGS_ACCEPT_REGEXP = formatterTab.acceptRegularExpressionsCheckBox.isSelected();
 
-    settings.FORMATTER_OFF_TAG = getTagText(myFormatterOffTagField, settings.FORMATTER_OFF_TAG);
-    settings.setFormatterOffPattern(compilePattern(settings, myFormatterOffTagField, settings.FORMATTER_OFF_TAG));
+    settings.FORMATTER_OFF_TAG = getTagText(formatterTab.formatterOffTagField, settings.FORMATTER_OFF_TAG);
+    settings.setFormatterOffPattern(compilePattern(settings, formatterTab.formatterOffTagField, settings.FORMATTER_OFF_TAG));
 
-    settings.FORMATTER_ON_TAG = getTagText(myFormatterOnTagField, settings.FORMATTER_ON_TAG);
-    settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
+    settings.FORMATTER_ON_TAG = getTagText(formatterTab.formatterOnTagField, settings.FORMATTER_ON_TAG);
+    settings.setFormatterOnPattern(compilePattern(settings, formatterTab.formatterOnTagField, settings.FORMATTER_ON_TAG));
 
     settings.AUTODETECT_INDENTS = generalTab.myAutodetectIndentsBox.isSelected();
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
     }
-  }
-
-  private void createUIComponents() {
-    myExcludedPatternsPanel = new ExcludedGlobPatternsPanel();
-    myExcludedPatternsPanel.setBorder(JBUI.Borders.emptyTop(5));
-    myExcludedScopesPanel = new ExcludedScopesPanel();
   }
 
   private static @Nullable Pattern compilePattern(CodeStyleSettings settings, JTextField field, String patternText) {
@@ -206,8 +185,8 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     if (!generalTab.myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
 
-    if (myExcludedScopesPanel.isModified(settings)) return true;
-    if (myExcludedPatternsPanel.isModified(settings)) return true;
+    if (formatterTab.excludedScopesPanel.isModified(settings)) return true;
+    if (formatterTab.isModified(settings)) return true;
 
     if (!Objects.equals(generalTab.getLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
@@ -219,12 +198,12 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     if (getRightMargin() != settings.getDefaultRightMargin()) return true;
 
-    if (myEnableFormatterTags.isSelected()) {
+    if (formatterTab.enableFormatterTags.isSelected()) {
       if (
         !settings.FORMATTER_TAGS_ENABLED ||
-        settings.FORMATTER_TAGS_ACCEPT_REGEXP != myAcceptRegularExpressionsCheckBox.isSelected() ||
-        !StringUtil.equals(myFormatterOffTagField.getText(), settings.FORMATTER_OFF_TAG) ||
-        !StringUtil.equals(myFormatterOnTagField.getText(), settings.FORMATTER_ON_TAG)) return true;
+        settings.FORMATTER_TAGS_ACCEPT_REGEXP != formatterTab.acceptRegularExpressionsCheckBox.isSelected() ||
+        !StringUtil.equals(formatterTab.formatterOffTagField.getText(), settings.FORMATTER_OFF_TAG) ||
+        !StringUtil.equals(formatterTab.formatterOnTagField.getText(), settings.FORMATTER_ON_TAG)) return true;
     }
     else {
       if (settings.FORMATTER_TAGS_ENABLED) return true;
@@ -246,35 +225,24 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     generalTab.myVisualGuides.setValue(settings.getDefaultSoftMargins());
 
-    myExcludedScopesPanel.reset(settings);
-    myExcludedPatternsPanel.reset(settings);
+    formatterTab.excludedScopesPanel.reset(settings);
+    formatterTab.reset(settings);
 
     generalTab.setLineSeparator(settings.LINE_SEPARATOR);
     generalTab.myRightMarginField.setValue(settings.getDefaultRightMargin());
     generalTab.myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
 
-    myAcceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);
-    myEnableFormatterTags.setSelected(settings.FORMATTER_TAGS_ENABLED);
+    formatterTab.acceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);
+    formatterTab.enableFormatterTags.setSelected(settings.FORMATTER_TAGS_ENABLED);
 
-    myFormatterOnTagField.setText(settings.FORMATTER_ON_TAG);
-    myFormatterOffTagField.setText(settings.FORMATTER_OFF_TAG);
-
-    setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
+    formatterTab.formatterOnTagField.setText(settings.FORMATTER_ON_TAG);
+    formatterTab.formatterOffTagField.setText(settings.FORMATTER_OFF_TAG);
 
     generalTab.myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);
     }
-  }
-
-  private void setFormatterTagControlsEnabled(boolean isEnabled) {
-    myFormatterOffTagField.setEnabled(isEnabled);
-    myFormatterOnTagField.setEnabled(isEnabled);
-    myAcceptRegularExpressionsCheckBox.setEnabled(isEnabled);
-    myFormatterOffLabel.setEnabled(isEnabled);
-    myFormatterOnLabel.setEnabled(isEnabled);
-    myMarkerOptionsPanel.setEnabled(isEnabled);
   }
 
   @Override
@@ -303,7 +271,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   public void setModel(@NotNull CodeStyleSchemesModel model) {
     super.setModel(model);
-    myExcludedScopesPanel.setSchemesModel(model);
+    formatterTab.excludedScopesPanel.setSchemesModel(model);
   }
 
   @Override

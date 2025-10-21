@@ -15,7 +15,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Tag("class-filter")
 public class ClassFilter implements JDOMExternalizable, Cloneable{
@@ -30,7 +30,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   @Attribute("include")
   public boolean INCLUDE = true;
 
-  private Matcher myMatcher;  // to speed up matching
+  private volatile Pattern myCompiledPattern;  // to speed up matching
 
   public ClassFilter() {
   }
@@ -57,7 +57,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   public void setPattern(String pattern) {
     if (pattern != null && !pattern.equals(PATTERN)) {
       PATTERN = pattern;
-      getMatcher(""); // compile the pattern in advance to have it ready before doing deepCopy
+      compilePattern(); // compile the pattern in advance to have it ready before doing deepCopy
     }
   }
   public void setEnabled(boolean value) {
@@ -114,18 +114,15 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   }
 
   public boolean matches(String name) {
-    return getMatcher(name).matches();
+    if (myCompiledPattern == null) {
+      compilePattern();
+    }
+    return myCompiledPattern.matcher(name).matches();
   }
 
-  private Matcher getMatcher(final String name) {
-    if (myMatcher == null) {
-      // need to quote dots, dollars, etc.
-      myMatcher = PatternUtil.fromMask(getPattern()).matcher(name);
-    }
-    else {
-      myMatcher.reset(name);
-    }
-    return myMatcher;
+  private void compilePattern() {
+    // need to quote dots, dollars, etc.
+    myCompiledPattern = PatternUtil.fromMask(getPattern());
   }
 
   public static ClassFilter @NotNull [] deepCopyOf(ClassFilter @NotNull [] original) {

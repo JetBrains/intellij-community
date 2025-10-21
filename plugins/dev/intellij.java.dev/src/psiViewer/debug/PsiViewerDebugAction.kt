@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.memory.action.DebuggerTreeAction
 import com.intellij.dev.psiViewer.PsiViewerDialog
+import com.intellij.idea.AppMode
 import com.intellij.java.dev.JavaDevBundle
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
@@ -18,37 +19,35 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase
 import com.sun.jdi.ObjectReference
 
 private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
 private const val PSI_ELEMENT = "com.intellij.psi.PsiElement"
 private const val GET_NAME = "getName"
 
-internal class PsiViewerDebugAction : DebuggerTreeAction() {
+internal class PsiViewerDebugAction : XDebuggerTreeBackendOnlyActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
-    val refType = getObjectReference(node)?.referenceType()
+  override fun isEnabled(value: XValue, nodeName: @NlsSafe String?, e: AnActionEvent): Boolean {
+    val refType = DebuggerTreeAction.getObjectReference(value)?.referenceType()
     return DebuggerUtils.instanceOf(refType, PSI_ELEMENT)
   }
 
-  override fun perform(
-    node: XValueNodeImpl,
-    nodeName: @NlsSafe String,
-    e: AnActionEvent
-  ) {
+  override fun perform(value: XValue, nodeName: @NlsSafe String, e: AnActionEvent) {
     val project = e.project ?: return
     val debugProcess = JavaDebugProcess.getCurrentDebugProcess(e)
+    val debugSessionProxy = DebuggerUIUtil.getSessionProxy(e)
     val suspendContext = debugProcess?.suspendManager?.getPausedContext()
     suspendContext?.managerThread?.schedule(object : SuspendContextCommandImpl(suspendContext) {
       override fun contextAction(suspendContext: SuspendContextImpl) {
         try {
           val evalContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
 
-          val psiElemObj = getObjectReference(node) ?: return
+          val psiElemObj = DebuggerTreeAction.getObjectReference(value) ?: return
           val psiFileObj = debugProcess.invokeMethod(psiElemObj, GET_CONTAINING_FILE, evalContext) as? ObjectReference ?: return
           val fileText = psiFileObj.getText(debugProcess, evalContext) ?: return
           val fileName = DebuggerUtils.getValueAsString(evalContext, debugProcess.invokeMethod(psiFileObj, GET_NAME, evalContext))
@@ -69,15 +68,15 @@ internal class PsiViewerDebugAction : DebuggerTreeAction() {
 
             fun showDebugTab() {
               val debugSession = debugProcess.session?.xDebugSession ?: return
-              val runnerLayoutUi = debugSession.ui ?: return
-              val psiViewerPanel = PsiViewerDebugPanel(project, editor, language, node.name!!, debugSession, fileName)
+              // TODO: [XDebugSessionImpl.getUI] in split
+              val runnerLayoutUi = debugSessionProxy?.sessionTab?.ui ?: return
+              val psiViewerPanel = PsiViewerDebugPanel(project, editor, language, nodeName, debugSession, fileName)
               val id = PsiViewerDebugPanel.getTitle(nodeName, PsiViewerDebugSettings.getInstance().watchMode)
               val content = runnerLayoutUi.createContent(id, psiViewerPanel, id, null, null)
               runnerLayoutUi.addContent(content)
               runnerLayoutUi.selectAndFocus(content, true, true)
             }
-
-            if (PsiViewerDebugSettings.getInstance().showDialogFromDebugAction) showDialog() else showDebugTab()
+            if (PsiViewerDebugSettings.getInstance().showDialogFromDebugAction || AppMode.isRemoteDevHost()) showDialog() else showDebugTab()
           }
         } catch (e: EvaluateException) {
           XDebuggerManagerImpl.getNotificationGroup().createNotification(

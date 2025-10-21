@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.net.IdeHttpClientHelpers
 import git4idea.repo.GitRepository
 import org.apache.http.HttpStatus
+import org.apache.http.client.ClientProtocolException
 import org.apache.http.client.config.CookieSpecs
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpHead
@@ -41,6 +42,9 @@ class GitAvailabilityChecker(val project: Project) {
       try {
         val response = it.execute(HttpHead(url))
         return response.statusLine.statusCode == HttpStatus.SC_OK
+      }
+      catch (_: ClientProtocolException) {
+        return false
       }
       catch (e: Exception) {
         LOG.warn(e)

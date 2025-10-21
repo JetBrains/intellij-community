@@ -31,6 +31,8 @@ internal class MarkdownInlayUpdateOnSoftWrapListener: EditorFactoryListener {
     })
   }
 
-  private fun isMarkdownEditor(editor: Editor): Boolean =
-    editor.virtualFile != null && FileTypeManager.getInstance().isFileOfType(editor.virtualFile, MarkdownFileType.INSTANCE)
+  private fun isMarkdownEditor(editor: Editor): Boolean {
+    val file = editor.virtualFile ?: return false
+    return FileTypeManager.getInstance().isFileOfType(file, MarkdownFileType.INSTANCE)
+  }
 }

@@ -577,7 +577,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Unmodifiable Collection<Usage> testFindUsagesUsingAction(@TestDataFile String @NotNull ... fileNames);
 
   @NotNull
-  Collection<UsageInfo> findUsages(@NotNull PsiElement to);
+  @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement to);
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from the usages.
@@ -585,7 +585,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   String getUsageViewTreeTextRepresentation(@NotNull Collection<? extends UsageInfo> usages);
 
-  @NotNull String getUsageViewTreeTextRepresentation(@NotNull List<UsageTarget> usageTargets, @NotNull Collection<? extends Usage> usages);
+  @NotNull String getUsageViewTreeTextRepresentation(@NotNull @Unmodifiable List<? extends UsageTarget> usageTargets, @NotNull @Unmodifiable Collection<? extends Usage> usages);
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of {@code to}
@@ -615,7 +615,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #findGutter(String)
    */
   @NotNull
-  List<GutterMark> findGuttersAtCaret();
+  @Unmodifiable List<GutterMark> findGuttersAtCaret();
 
   @NotNull
   PsiManager getPsiManager();
@@ -775,7 +775,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param inlayPresenter function to render text of inlay. Inlays come to this function only if {@code inlayFilter} returned {@code true}.
    * @param inlayFilter    filter to check only required inlays
    */
-  void testInlays(Function<? super Inlay<?>, String> inlayPresenter, Predicate<? super Inlay<?>> inlayFilter);
+  void testInlays(@NotNull Function<? super Inlay<?>, String> inlayPresenter, Predicate<? super Inlay<?>> inlayFilter);
 
   void checkResultWithInlays(String text);
 
@@ -826,7 +826,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #completeBasic()
    */
   @NotNull
-  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeIfOnlyOneOrNoCompletion,
+  @Unmodifiable List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeIfOnlyOneOrNoCompletion,
                                              @Nullable Character charToTypeIfMultipleCompletions);
 
   /**
@@ -838,7 +838,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *                                  or it has only one completion that was performed automatically.
    */
   @NotNull
-  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
+  @Unmodifiable List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
 
   /**
    * Get elements found by the Goto Class action called with the given pattern
@@ -849,7 +849,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return a list of the results (likely PsiElements) found for the given pattern.
    */
   @NotNull
-  List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+  @Unmodifiable List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
   /**
    * Get elements found by the Goto Symbol action called with the given pattern.
@@ -860,7 +860,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return a list of the results (likely PsiElements) found for the given pattern.
    */
   @NotNull
-  List<Object> getGotoSymbolResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+  @Unmodifiable List<Object> getGotoSymbolResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
   /**
    * Get breadcrumbs to be generated for position marked by {@link #CARET_MARKER} in the loaded file.

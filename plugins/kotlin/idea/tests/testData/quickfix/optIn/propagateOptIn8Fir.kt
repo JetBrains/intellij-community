@@ -1,5 +1,6 @@
 // "Propagate 'SubclassOptInRequired(UnstableApi::class)' opt-in requirement to 'SomeImplementation'" "false"
 // ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@UnstableApi', '@OptIn(UnstableApi::class)' or '@SubclassOptInRequired(UnstableApi::class)'
+// ACTION: Introduce import alias
 // ACTION: Opt in for 'UnstableApi' in containing file 'propagateOptIn8Fir.kt'
 // ACTION: Opt in for 'UnstableApi' in module 'light_idea_test_case'
 // ACTION: Opt in for 'UnstableApi' on 'foo'

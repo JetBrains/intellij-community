@@ -3,4 +3,4 @@ package com.intellij.pycharm.community.ide.impl
 
 import com.jetbrains.python.PythonIdeLanguageCustomization
 
-internal class PyCharmPythonIdeLanguageCustomization : PythonIdeLanguageCustomization()
+private class PyCharmPythonIdeLanguageCustomization : PythonIdeLanguageCustomization()

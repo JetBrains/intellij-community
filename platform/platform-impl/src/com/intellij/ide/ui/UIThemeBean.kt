@@ -1,7 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SSBasedInspection")
 @file:ApiStatus.Internal
-
 package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -65,12 +63,13 @@ internal class UIThemeBean {
 }
 
 @VisibleForTesting
-fun readThemeBeanForTest(@Language("json") data: String,
-                         warn: (String, Throwable?) -> Unit,
-                         iconConsumer: ((String, Any?) -> Unit)? = null,
-                         awtColorConsumer: ((String, Color) -> Unit)? = null,
-                         namedColorConsumer: ((String, String) -> Unit)? = null):
-  Map<String, String?> {
+fun readThemeBeanForTest(
+  @Language("json") data: String,
+  warn: (String, Throwable?) -> Unit,
+  iconConsumer: ((String, Any?) -> Unit)? = null,
+  awtColorConsumer: ((String, Color) -> Unit)? = null,
+  namedColorConsumer: ((String, String) -> Unit)? = null,
+): Map<String, String?> {
   val bean = readTheme(JsonFactory().createParser(data), warn)
   if (iconConsumer != null) {
     val icons = bean.icons ?: return emptyMap()
@@ -115,7 +114,7 @@ internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): 
           "ui" -> {
             // ordered map is required (not clear why)
             val map = LinkedHashMap<String, Any?>(700)
-            readFlatMapFromJson(parser = parser, result = map, warn = warn)
+            readFlatMapFromJson(parser, map, warn)
             putDefaultsIfAbsent(map)
             bean.ui = map
           }
@@ -123,7 +122,7 @@ internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): 
             parser.skipChildren()
           }
           else -> {
-            logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
+            logger<UIThemeBean>().warn("Unknown object: ${parser.currentName()}")
           }
         }
       }
@@ -140,14 +139,12 @@ internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): 
           "parentTheme" -> bean.parentTheme = parser.valueAsString
           "resourceBundle" -> bean.resourceBundle = parser.valueAsString
           "author" -> bean.author = parser.valueAsString
-
           "editorScheme" -> bean.editorScheme = parser.valueAsString
         }
       }
       JsonToken.VALUE_TRUE -> readTopLevelBoolean(parser, bean, value = true)
       JsonToken.VALUE_FALSE -> readTopLevelBoolean(parser, bean, value = false)
-      JsonToken.FIELD_NAME -> {
-      }
+      JsonToken.FIELD_NAME -> { }
       null -> break
       else -> {
         logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
@@ -212,7 +209,7 @@ private fun customize(bean: UIThemeBean) {
     if (editorSchemeCustomizer?.isNotEmpty() == true) {
       val currentScheme = bean.editorScheme
       if (currentScheme != null) {
-        val newTheme = editorSchemeCustomizer.get(currentScheme)
+        val newTheme = editorSchemeCustomizer[currentScheme]
         if (newTheme != null) {
           bean.editorScheme = newTheme
         }
@@ -273,7 +270,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
                 path.append('.')
               }
               path.append(fieldName)
-              result.put(path.toString(), parser.text)
+              result[path.toString()] = parser.text
               path.setLength(0)
             }
             else -> {
@@ -283,7 +280,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
         }
       }
       JsonToken.VALUE_STRING -> {
-        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.text, key = it, warn = warn) }
+        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.text, key = it, warn) }
       }
       JsonToken.VALUE_NUMBER_INT -> {
         putEntry(prefix, result, parser, path) { parser.intValue }
@@ -328,7 +325,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
     when (parser.nextToken()) {
       JsonToken.START_OBJECT -> {
         val m = LinkedHashMap<String, Any?>()
-        result.put(parser.currentName(), m)
+        result[parser.currentName()] = m
         readMapFromJson(parser, m)
       }
       JsonToken.END_OBJECT -> {
@@ -341,29 +338,26 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
         if (isColorLike(text)) {
           val color = parseColorOrNull(text, key)
           if (color != null) {
-            result.put(key, createColorResource(color, key))
+            result[key] = createColorResource(color, key)
             continue@l
           }
           logger<UITheme>().warn("$key=$text has # prefix but cannot be parsed as color")
         }
-        result.put(key, text)
+        result[key] = text
       }
       JsonToken.VALUE_NUMBER_INT -> {
-        result.put(parser.currentName(), parser.intValue)
+        result[parser.currentName()] = parser.intValue
       }
       JsonToken.VALUE_NUMBER_FLOAT -> {
-        result.put(parser.currentName(), parser.doubleValue)
+        result[parser.currentName()] = parser.doubleValue
       }
       JsonToken.VALUE_FALSE -> {
-        result.put(parser.currentName(), false)
+        result[parser.currentName()] = false
       }
       JsonToken.VALUE_TRUE -> {
-        result.put(parser.currentName(), true)
+        result[parser.currentName()] = true
       }
-      JsonToken.VALUE_NULL -> {
-      }
-      JsonToken.FIELD_NAME -> {
-      }
+      JsonToken.VALUE_NULL, JsonToken.FIELD_NAME -> { }
       null -> {
         break
       }
@@ -379,12 +373,10 @@ private const val OS_WINDOWS_KEY = "os.windows"
 private const val OS_LINUX_KEY = "os.linux"
 private const val OS_DEFAULT_KEY = "os.default"
 
-private fun getOsKey(): String {
-  return when {
-    ClientSystemInfo.isWindows() -> OS_WINDOWS_KEY
-    ClientSystemInfo.isMac() -> OS_MACOS_KEY
-    else -> OS_LINUX_KEY
-  }
+private fun getOsKey(): String = when {
+  ClientSystemInfo.isWindows() -> OS_WINDOWS_KEY
+  ClientSystemInfo.isMac() -> OS_MACOS_KEY
+  else -> OS_LINUX_KEY
 }
 
 private fun putEntry(
@@ -408,8 +400,7 @@ private fun putEntry(
   }
 
   when (val key = parser.currentName()) {
-    getOsKey() -> {
-    }
+    getOsKey() -> { }
     OS_WINDOWS_KEY, OS_MACOS_KEY, OS_LINUX_KEY -> {
       path.setLength(0)
       return
@@ -438,14 +429,14 @@ private fun putEntry(
 
   val finalKey = path.toString()
   val value = getter(finalKey)
-  result.put(finalKey, value)
+  result[finalKey] = value
   path.setLength(0)
 }
 
 private class OsDefaultValue(@JvmField val v: Any?)
 
 private fun logError(parser: JsonParser) {
-  logger<UIThemeBean>().warn("JSON contains data in unsupported format (token=${parser.currentToken}): ${parser.currentValue()}")
+  logger<UIThemeBean>().warn("JSON contains data in unsupported format (token=${parser.currentToken()}): ${parser.currentValue()}")
 }
 
 /**
@@ -494,8 +485,7 @@ internal fun importFromParentTheme(theme: UIThemeBean, parentTheme: UIThemeBean)
   theme.iconColorOnSelectionMap.rawMap = importMapFromParentTheme(theme.iconColorOnSelectionMap.rawMap, parentTheme.iconColorOnSelectionMap.rawMap)
 }
 
-@Suppress("SSBasedInspection")
-private fun <T : Any?> importMapFromParentTheme(map: Map<String, T>?, parentMap: Map<String, T>?): Map<String, T>? {
+private fun <T> importMapFromParentTheme(map: Map<String, T>?, parentMap: Map<String, T>?): Map<String, T>? {
   if (parentMap == null) {
     return map
   }
@@ -506,7 +496,7 @@ private fun <T : Any?> importMapFromParentTheme(map: Map<String, T>?, parentMap:
   val result = LinkedHashMap<String, T>(parentMap.size + map.size)
   for (entry in parentMap.entries) {
     if (entry.key !in map) {
-      result.put(entry.key, entry.value)
+      result[entry.key] = entry.value
     }
   }
   result.putAll(map)

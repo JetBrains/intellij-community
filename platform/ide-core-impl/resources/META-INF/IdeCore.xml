@@ -15,6 +15,8 @@
     <activityTracker implementation="com.intellij.util.MergingUpdateQueueActivityTracker"/>
     <applicationService serviceInterface="com.intellij.util.ui.update.MergingUpdateQueueTracker"
                         serviceImplementation="com.intellij.util.MergingUpdateQueueTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.util.download.eel.EelDownloadableFileService"
+                        serviceImplementation="com.intellij.util.download.impl.eel.EelDownloadableFileServiceImpl"/>
     <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
     <applicationService serviceInterface="com.intellij.notification.NotificationGroupManager"

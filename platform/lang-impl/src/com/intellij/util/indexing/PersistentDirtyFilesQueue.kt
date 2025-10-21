@@ -90,7 +90,7 @@ object PersistentDirtyFilesQueue {
           fileIds.add(it.readInt())
         }
         thisLogger().info("Dirty file ids read. Size: ${fileIds.size}. Index: $index Path: $queueFile." +
-                          if (isUnittestMode) " Ids: ${fileIds.toIntArray().contentToString()}" else "")
+                          if (isUnittestMode && thisLogger().isTraceEnabled) " Ids: ${fileIds.toIntArray().contentToString()}" else "")
         return IndexingQueueReadResult(fileIds, index, null)
       }
     }

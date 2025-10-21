@@ -104,6 +104,9 @@ public final class JavaModuleGraphUtil {
     if (to.equals(from.getName())) return false;
     if (!PsiNameHelper.isValidModuleName(to, from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
+
+    PsiJavaModule toModule = JavaPsiFacade.getInstance(from.getProject()).findModule(to, from.getResolveScope());
+    if (toModule != null && JavaPsiModuleUtil.reads(toModule, from)) return false; // check for circular dependencies
     PsiUtil.addModuleStatement(from, JavaKeywords.REQUIRES + " " +
                                      (isStaticModule(to, scope) ? JavaKeywords.STATIC + " " : "") +
                                      (isExported ? JavaKeywords.TRANSITIVE + " " : "") +
@@ -129,10 +132,11 @@ public final class JavaModuleGraphUtil {
     if (to.getName().equals(JAVA_BASE)) return false;
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
     if (from instanceof LightJavaModule) return false;
-    if (from == to) return false;
+    if (from == to || from.getName().equals(to.getName())) return false;
     if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
     if (contains(from.getRequires(), to.getName())) return false;
     if (JavaPsiModuleUtil.reads(from, to)) return false;
+    if (JavaPsiModuleUtil.reads(to, from)) return false; // check for circular dependencies
     PsiUtil.addModuleStatement(from, JavaKeywords.REQUIRES + " " +
                                       (isStaticModule(to.getName(), scope) ? JavaKeywords.STATIC + " " : "") +
                                       (isExported(from, to) ? JavaKeywords.TRANSITIVE + " " : "") +

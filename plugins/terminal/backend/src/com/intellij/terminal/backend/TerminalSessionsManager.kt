@@ -9,15 +9,18 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 @OptIn(AwaitCancellationAndInvoke::class)
 @Service(Service.Level.APP)
-internal class TerminalSessionsManager {
+class TerminalSessionsManager {
   private val sessionsMap = ConcurrentHashMap<TerminalSessionId, BackendTerminalSession>()
 
   /**
@@ -47,7 +50,14 @@ internal class TerminalSessionsManager {
     // and cancel the main scope.
     val jediTermScope = scope.childScope("JediTerm session")
     val jediTermSession = createTerminalSession(project, observableTtyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), jediTermScope)
-    val stateAwareSession = StateAwareTerminalSession(jediTermSession, scope)
+
+    // It should be guaranteed that the shell command and working directory are not null.
+    val options = TerminalStartupOptionsImpl(
+      shellCommand = configuredOptions.shellCommand!!,
+      workingDirectory = configuredOptions.workingDirectory!!,
+      envVariables = configuredOptions.envVariables,
+    )
+    val stateAwareSession = StateAwareTerminalSession(project, jediTermSession, options, scope)
 
     val sessionId = storeSession(stateAwareSession, scope)
 
@@ -81,7 +91,8 @@ internal class TerminalSessionsManager {
   }
 }
 
-internal data class TerminalSessionStartResult(
+@ApiStatus.Internal
+data class TerminalSessionStartResult(
   val configuredOptions: ShellStartupOptions,
   val sessionId: TerminalSessionId,
   val ttyConnector: ObservableTtyConnector,

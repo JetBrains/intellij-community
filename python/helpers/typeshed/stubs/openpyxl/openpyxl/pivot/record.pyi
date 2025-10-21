@@ -15,17 +15,7 @@ class Record(Serialisable):
     s: Incomplete
     d: Incomplete
     x: Incomplete
-    def __init__(
-        self,
-        _fields=(),
-        m: Incomplete | None = None,
-        n: Incomplete | None = None,
-        b: Incomplete | None = None,
-        e: Incomplete | None = None,
-        s: Incomplete | None = None,
-        d: Incomplete | None = None,
-        x: Incomplete | None = None,
-    ) -> None: ...
+    def __init__(self, _fields=(), m=None, n=None, b=None, e=None, s=None, d=None, x=None) -> None: ...
 
 class RecordList(Serialisable):
     mime_type: str

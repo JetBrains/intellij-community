@@ -44,7 +44,7 @@ internal open class MarkerPool(
     freeMarkerStack.push(marker.markerId)
   }
 
-  fun get(index: Int): ProductionMarker =
+  operator fun get(index: Int): ProductionMarker =
     list[index]
 }
 

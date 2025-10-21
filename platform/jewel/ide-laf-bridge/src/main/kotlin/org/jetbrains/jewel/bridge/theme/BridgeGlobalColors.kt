@@ -11,14 +11,17 @@ import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.OutlineColors
 import org.jetbrains.jewel.foundation.TextColors
 
+/** Creates a [GlobalColors] instance by reading the values from the current IntelliJ LaF. */
 public fun GlobalColors.Companion.readFromLaF(): GlobalColors =
     GlobalColors(
         borders = BorderColors.readFromLaF(),
         outlines = OutlineColors.readFromLaF(),
         text = TextColors.readFromLaF(),
         panelBackground = UIUtil.getPanelBackground().toComposeColor(),
+        toolwindowBackground = JBUI.CurrentTheme.ToolWindow.background().toComposeColor(),
     )
 
+/** Creates a [BorderColors] instance by reading the values from the current IntelliJ LaF. */
 public fun BorderColors.Companion.readFromLaF(): BorderColors =
     BorderColors(
         normal = JBColor.border().toComposeColorOrUnspecified(),
@@ -26,6 +29,7 @@ public fun BorderColors.Companion.readFromLaF(): BorderColors =
         disabled = DarculaUIUtil.getOutlineColor(false, false).toComposeColorOrUnspecified(),
     )
 
+/** Creates a [TextColors] instance by reading the values from the current IntelliJ LaF. */
 public fun TextColors.Companion.readFromLaF(): TextColors =
     TextColors(
         normal = JBUI.CurrentTheme.Label.foreground().toComposeColor(),
@@ -37,6 +41,7 @@ public fun TextColors.Companion.readFromLaF(): TextColors =
         warning = JBUI.CurrentTheme.Label.warningForeground().toComposeColor(),
     )
 
+/** Creates an [OutlineColors] instance by reading the values from the current IntelliJ LaF. */
 public fun OutlineColors.Companion.readFromLaF(): OutlineColors =
     OutlineColors(
         focused = JBUI.CurrentTheme.Focus.focusColor().toComposeColor(),

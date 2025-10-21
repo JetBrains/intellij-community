@@ -28,7 +28,7 @@ class ExistingThreadContextTest : CancellationTest() {
   @Test
   fun context() {
     val tc = Dispatchers.Default + TestElement("e")
-    installThreadContext(tc).use {
+    installThreadContext(tc) {
       assertSame(tc, currentThreadContextOrNull())
       prepareThreadContext { prepared ->
         assertNull(currentThreadContextOrNull())
@@ -42,7 +42,7 @@ class ExistingThreadContextTest : CancellationTest() {
   fun cancellation() {
     val t = object : Throwable() {}
     val ce = assertThrows<CeProcessCanceledException> {
-      installThreadContext(Job()).use {
+      installThreadContext(Job()) {
         throw assertThrows<CeProcessCanceledException> {
           prepareThreadContextTest { currentJob ->
             testNoExceptions()
@@ -67,7 +67,7 @@ class ExistingThreadContextTest : CancellationTest() {
     val job = Job()
     val t = Throwable()
     val ce = assertThrows<ProcessCanceledException> {
-      installThreadContext(job).use {
+      installThreadContext(job) {
         throw assertThrows<CeProcessCanceledException> {
           prepareThreadContextTest { currentJob ->
             testNoExceptions()

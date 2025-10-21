@@ -13,7 +13,7 @@ class ListCompat(dict[str, tuple[str, str]]):
 
 class bdist(Command):
     description: ClassVar[str]
-    user_options: ClassVar[list[tuple[str, str | None, str | None]]]
+    user_options: ClassVar[list[tuple[str, str | None, str]]]
     boolean_options: ClassVar[list[str]]
     help_options: ClassVar[list[tuple[str, str | None, str, Callable[[], Unused]]]]
     no_format_option: ClassVar[tuple[str, ...]]

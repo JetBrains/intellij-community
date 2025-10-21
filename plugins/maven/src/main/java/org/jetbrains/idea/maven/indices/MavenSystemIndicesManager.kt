@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.ApplicationManager
@@ -266,25 +266,23 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
       luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(idx.repository.url, null, null,
                                                                         MavenIndexUpdateState.State.INDEXING)
       cs.launchTracked {
+        var state = MavenIndexUpdateState.State.FAILED
+
         try {
           val indicator = MavenProgressIndicator(null, null)
           idx.update(indicator, explicit)
           getOrCreateState().updateTimestamp(idx.repository)
-          luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
-            idx.repository.url, null, null,
-            MavenIndexUpdateState.State.SUCCEED)
-
+          state = MavenIndexUpdateState.State.SUCCEED
         }
         catch (e: Throwable) {
-          try {
-            MavenLog.LOG.error(e)
-          } catch (_: AssertionError) {
-          }
+          state = MavenIndexUpdateState.State.FAILED
+          MavenLog.LOG.error(e)
+        }
+        finally {
           luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
             idx.repository.url, null, null,
-            MavenIndexUpdateState.State.FAILED)
+            state)
         }
-
       }
     }
   }

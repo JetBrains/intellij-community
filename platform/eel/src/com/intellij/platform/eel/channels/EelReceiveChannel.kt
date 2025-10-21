@@ -22,5 +22,5 @@ interface EelReceiveChannel {
    * Closes channel for receiving. You can't receive from the closed channel.
    * Another side will get an error trying to write to this channel.
    */
-  suspend fun close()
+  suspend fun closeForReceive()
 }

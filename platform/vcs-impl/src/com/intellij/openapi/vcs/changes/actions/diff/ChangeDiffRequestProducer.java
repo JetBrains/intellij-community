@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -264,11 +265,27 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     return request;
   }
 
-  private @NotNull List<DiffEditorTitleCustomizer> createTitleCustomizers() {
+  @ApiStatus.Internal
+  public @NotNull List<DiffEditorTitleCustomizer> createTitleCustomizers() {
     return DiffTitleWithDetailsCustomizers.getTitleCustomizers(myProject, myChange,
-                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE),
-                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE)
+                                                               getLeftContentTitle(),
+                                                               getRightContentTitle()
     );
+  }
+
+  @ApiStatus.Internal
+  public @Nls String getLeftContentTitle() {
+    return (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
+  }
+
+  @ApiStatus.Internal
+  public @Nls String getRightContentTitle() {
+    return (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
+  }
+
+  @ApiStatus.Internal
+  public @Nls String getEditorTabTitle() {
+    return (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_EDITOR_TAB_TITLE);
   }
 
   @SuppressWarnings("unchecked")
@@ -315,7 +332,8 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     }
   }
 
-  private @NotNull SimpleDiffRequest createSimpleRequest(@Nullable Project project,
+  @ApiStatus.Internal
+  public @NotNull SimpleDiffRequest createSimpleRequest(@Nullable Project project,
                                                          @NotNull Change change,
                                                          @NotNull UserDataHolder context,
                                                          @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
@@ -329,16 +347,16 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     if (bRev != null) checkContentRevision(project, bRev, context, indicator);
     if (aRev != null) checkContentRevision(project, aRev, context, indicator);
 
-    final String editorTabTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_EDITOR_TAB_TITLE);
+    final String editorTabTitle = getEditorTabTitle();
     String title = editorTabTitle == null ? getRequestTitle(change) : editorTabTitle;
 
     indicator.setIndeterminate(true);
     DiffContent content1 = createContent(project, bRev, context, indicator);
     DiffContent content2 = createContent(project, aRev, context, indicator);
 
-    final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
+    final String userLeftRevisionTitle = getLeftContentTitle();
     String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, getBaseVersion());
-    final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
+    final String userRightRevisionTitle = getRightContentTitle();
     String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, getYourVersion());
 
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);

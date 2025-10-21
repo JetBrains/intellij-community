@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.navigator.structure;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -20,8 +21,9 @@ public final class RootNode extends ProjectsGroupNode {
     return true;
   }
 
+  @VisibleForTesting
   @Override
-  protected List<? extends MavenSimpleNode> doGetChildren() {
+  public List<? extends MavenSimpleNode> doGetChildren() {
     var children = new CopyOnWriteArrayList<MavenSimpleNode>(List.of(myProfilesNode));
     children.addAll(super.doGetChildren());
     return children;

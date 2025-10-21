@@ -4,13 +4,17 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.vmOptions.VMOption;
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.impl.light.LightJavaModule;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -30,6 +34,15 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
   public JavaRunConfigurationBase(@NotNull JavaRunConfigurationModule configurationModule,
                                   @NotNull ConfigurationFactory factory) {
     super(configurationModule, factory);
+  }
+
+  public @Nullable String findJavaModuleName(boolean inTests) {
+    Module module = getConfigurationModule().getModule();
+    if (module == null) return null;
+    PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByModule(module, inTests);
+    if (javaModule == null) return null;
+    if (javaModule instanceof LightJavaModule) return null;
+    return javaModule.getName();
   }
 
   private boolean jdkHomeSatisfies(Predicate<String> condition) {

@@ -5,8 +5,9 @@ package org.jetbrains.kotlin.idea.maven.configuration
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -18,8 +19,10 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -31,24 +34,31 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.maven.*
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingConfigurationError
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
-abstract class KotlinMavenConfigurator
-protected constructor(
+abstract class KotlinMavenConfigurator protected constructor(
     private val testArtifactId: String?,
     private val addJunit: Boolean,
     override val name: String,
     override val presentableText: String
 ) : KotlinProjectConfigurator {
+
+    override fun canRunAutoConfig(): Boolean = isAutoConfigurationEnabled()
 
     override fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus {
         val module = moduleSourceRootGroup.baseModule
@@ -65,7 +75,7 @@ protected constructor(
         }
 
         if (isKotlinModule(module)) {
-            return runReadAction { checkKotlinPlugin(module) }
+            return runReadAction { checkPluginConfiguration(module) }
         }
         return ConfigureKotlinStatus.CAN_BE_CONFIGURED
     }
@@ -74,7 +84,7 @@ protected constructor(
         return module.buildSystemType == BuildSystemType.Maven
     }
 
-    private fun checkKotlinPlugin(module: Module): ConfigureKotlinStatus {
+    protected open fun checkPluginConfiguration(module: Module): ConfigureKotlinStatus {
         val psi = findModulePomFile(module) as? XmlFile ?: return ConfigureKotlinStatus.BROKEN
         val pom = PomFile.forFileOrNull(psi) ?: return ConfigureKotlinStatus.NON_APPLICABLE
 
@@ -85,7 +95,7 @@ protected constructor(
         val mavenProjectsManager = MavenProjectsManager.getInstance(module.project)
         val mavenProject = mavenProjectsManager.findProject(module) ?: return ConfigureKotlinStatus.BROKEN
 
-        val kotlinPluginId = kotlinPluginId(null)
+        val kotlinPluginId = kotlinPluginId()
         val kotlinPlugin = mavenProject.plugins.find { it.mavenId.equals(kotlinPluginId.groupId, kotlinPluginId.artifactId) }
             ?: return ConfigureKotlinStatus.CAN_BE_CONFIGURED
 
@@ -96,11 +106,11 @@ protected constructor(
         return ConfigureKotlinStatus.CAN_BE_CONFIGURED
     }
 
-    private fun hasKotlinPlugin(pom: PomFile): Boolean {
-        val plugin = pom.findPlugin(kotlinPluginId(null)) ?: return false
+    protected fun hasKotlinPlugin(pom: PomFile): Boolean {
+        val plugin = pom.findPlugin(kotlinPluginId()) ?: return false
 
-        return plugin.executions.executions.any {
-            it.goals.goals.any { isRelevantGoal(it.stringValue ?: "") }
+        return plugin.executions.executions.any { execution ->
+            execution.goals.goals.any { isRelevantGoal(it.stringValue ?: "") }
         }
     }
 
@@ -110,6 +120,7 @@ protected constructor(
 
     override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
         val dialog = ConfigureDialogWithModulesAndVersion(project, this, excludeModules, getMinimumSupportedVersion())
+        if (dialog.modulesToConfigure.isEmpty()) return emptySet()
 
         dialog.show()
         if (!dialog.isOK) return emptySet()
@@ -118,32 +129,44 @@ protected constructor(
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
 
         val configuredModules = mutableSetOf<Module>()
-        WriteCommandAction.runWriteCommandAction(project) {
+        project.executeWriteCommand(KotlinMavenBundle.message("configure.title")) {
             val collector = NotificationMessageCollector.create(project)
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
-                if (file != null && canConfigureFile(file)) {
+                if (file != null) {
                     val configured = configureModule(module, file, IdeKotlinVersion.get(kotlinVersion), collector)
                     if (configured) {
+                        queueSyncIfNeeded(project)
                         OpenFileAction.openFile(file.virtualFile, project)
                         configuredModules.add(module)
+                    } else {
+                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, KotlinJ2KOnboardingConfigurationError.OTHER)
                     }
                 } else {
+                    KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+                        project,
+                        KotlinJ2KOnboardingConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
+                    )
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
                 }
             }
+            KotlinMavenAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
             collector.showNotification()
 
-            UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
-                override fun undo() {
-                    KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
-                }
-
-                override fun redo() {}
-            })
+            collectInformationAboutUndoableAction(project)
             ConfigureKotlinNotificationManager.expireOldNotifications(project)
         }
         return configuredModules
+    }
+
+    private fun collectInformationAboutUndoableAction(project: Project) {
+        UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
+            override fun undo() {
+                KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
+            }
+
+            override fun redo() {}
+        })
     }
 
     override fun queueSyncIfNeeded(project: Project) {
@@ -155,7 +178,72 @@ protected constructor(
         Observation.awaitConfiguration(project)
     }
 
-    protected open fun getMinimumSupportedVersion() = "1.0.0"
+    override suspend fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? {
+        return readAction {
+            calculateAutoConfigSettingsReadAction(module)
+        }
+    }
+
+    private fun calculateAutoConfigSettingsReadAction(module: Module): AutoConfigurationSettings? {
+        if (!isAutoConfigurationEnabled()) return null
+
+        val moduleGroup = module.toModuleGroup()
+        val status = getStatus(moduleGroup)
+        if (status != ConfigureKotlinStatus.CAN_BE_CONFIGURED) return null
+
+        val project = module.project
+        if (project.isMavenSyncPending(module) || project.isMavenSyncInProgress()) return null
+
+        if (module.hasKotlinPluginEnabled()) return null
+
+        val compilerVersionFromSettings = KotlinCompilerVersionProvider.getVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
+        val baseModule = moduleGroup.baseModule
+        return AutoConfigurationSettings(baseModule, compilerVersionFromSettings)
+    }
+
+    override fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.maven.autoConfig.enabled", true)
+
+    override suspend fun runAutoConfig(settings: AutoConfigurationSettings) {
+        val module = settings.module
+        val project = module.project
+        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project, true)
+        reportSequentialProgress { reporter ->
+            reporter.nextStep(endFraction = 30, KotlinProjectConfigurationBundle.message("step.configure.kotlin.preparing"))
+            edtWriteAction {
+                @Suppress("DialogTitleCapitalization")
+                project.executeWriteCommand(KotlinProjectConfigurationBundle.message("command.name.configure.kotlin.automatically")) {
+                    val file = findModulePomFile(module)
+                    reporter.nextStep(endFraction = 100, KotlinProjectConfigurationBundle.message("step.configure.kotlin.writing"))
+                    if (file != null) {
+                        val changedBuildFiles = ChangedConfiguratorFiles()
+                        changedBuildFiles.storeOriginalFileContent(file)
+                        val configured = configureModuleSilently(module, file, settings.kotlinVersion)
+                        if (configured) {
+                            queueSyncIfNeeded(project)
+                            val notificationHolder = KotlinMavenAutoConfigurationNotificationHolder.getInstance(project)
+                            addUndoAutoconfigurationListener(project, listOf(module), isAutoConfig = true, notificationHolder)
+                            notificationHolder
+                                .showAutoConfiguredNotification(module.name, changedBuildFiles.calculateChanges())
+
+                            val collector = NotificationMessageCollector.create(project)
+                            collector.showNotification()
+                            ConfigureKotlinNotificationManager.expireOldNotifications(project)
+                        } else {
+                            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, KotlinJ2KOnboardingConfigurationError.OTHER)
+                        }
+                    } else {
+                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+                            project,
+                            KotlinJ2KOnboardingConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
+                        )
+                        showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
+                    }
+                }
+            }
+        }
+    }
+
+    protected open fun getMinimumSupportedVersion(): String = "1.0.0"
 
     protected abstract fun isKotlinModule(module: Module): Boolean
     protected abstract fun isRelevantGoal(goalName: String): Boolean
@@ -166,20 +254,42 @@ protected constructor(
     open fun configureModule(module: Module, file: PsiFile, version: IdeKotlinVersion, collector: NotificationMessageCollector): Boolean =
         changePomFile(module, file, version, collector)
 
+    private fun configureModuleSilently(module: Module, file: PsiFile, version: IdeKotlinVersion): Boolean =
+        changePomFile(module, file, version, collector = null)
+
     private fun changePomFile(
         module: Module,
         file: PsiFile,
         version: IdeKotlinVersion,
-        collector: NotificationMessageCollector
+        collector: NotificationMessageCollector?
     ): Boolean {
-        val virtualFile = file.virtualFile ?: error("Virtual file should exists for psi file " + file.name)
-        val domModel = MavenDomUtil.getMavenDomProjectModel(module.project, virtualFile)
+        val virtualFile = file.virtualFile
+        val project = module.project
+        if (virtualFile == null) {
+            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+                project,
+                KotlinJ2KOnboardingConfigurationError.VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE
+            )
+            error("Virtual file should exists for psi file " + file.name)
+        }
+        val domModel = MavenDomUtil.getMavenDomProjectModel(project, virtualFile)
         if (domModel == null) {
-            showErrorMessage(module.project, null)
+            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+                project,
+                KotlinJ2KOnboardingConfigurationError.DOM_MODEL_DOESNT_EXIST
+            )
+            showErrorMessage(project, null)
             return false
         }
 
-        val pom = PomFile.forFileOrNull(file as XmlFile) ?: return false
+        val pom = PomFile.forFileOrNull(file as XmlFile)
+        if (pom == null) {
+            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+                project,
+                KotlinJ2KOnboardingConfigurationError.WASNT_ABLE_TO_TRANSFORM_XML_TO_POM
+            )
+            return false
+        }
         pom.addProperty(KOTLIN_VERSION_PROPERTY, version.artifactVersion)
 
         pom.addDependency(
@@ -190,7 +300,13 @@ protected constructor(
             null
         )
         if (testArtifactId != null) {
-            pom.addDependency(MavenId(GROUP_ID, testArtifactId, "\${$KOTLIN_VERSION_PROPERTY}"), MavenArtifactScope.TEST, null, false, null)
+            pom.addDependency(
+                MavenId(GROUP_ID, testArtifactId, $$"${$$KOTLIN_VERSION_PROPERTY}"),
+                MavenArtifactScope.TEST,
+                null,
+                false,
+                null
+            )
         }
         if (addJunit) {
             // TODO currently it is always disabled: junit version selection could be shown in the configurator dialog
@@ -210,11 +326,11 @@ protected constructor(
 
         CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement<PsiFile>(file)
 
-        collector.addMessage(KotlinMavenBundle.message("file.was.modified", virtualFile.path))
+        collector?.addMessage(KotlinMavenBundle.message("file.was.modified", virtualFile.path))
         return true
     }
 
-    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
+    protected open fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion?) {
     }
 
     protected fun createExecution(
@@ -331,10 +447,21 @@ protected constructor(
         return element
     }
 
+    private fun Project.isMavenSyncPending(module: Module): Boolean {
+        return KotlinProjectConfigurationService.getInstance(this).isSyncDesired(module)
+    }
+
+    private fun Project.isMavenSyncInProgress(): Boolean {
+        return KotlinProjectConfigurationService.getInstance(this).isSyncing()
+    }
+
     companion object {
-        const val GROUP_ID = "org.jetbrains.kotlin"
-        const val MAVEN_PLUGIN_ID = "kotlin-maven-plugin"
-        private const val KOTLIN_VERSION_PROPERTY = "kotlin.version"
+        const val GROUP_ID: String = "org.jetbrains.kotlin"
+        const val MAVEN_PLUGIN_ID: String = "kotlin-maven-plugin"
+        const val KOTLIN_VERSION_PROPERTY: String = "kotlin.version"
+
+        fun kotlinPluginId(version: String? = null): MavenId =
+            MavenId(GROUP_ID, MAVEN_PLUGIN_ID, version)
 
         fun findModulePomFile(module: Module): PsiFile? {
             val files = MavenProjectsManager.getInstance(module.project).projectsFiles
@@ -343,6 +470,7 @@ protected constructor(
                 if (module != fileModule) continue
                 val psiFile = PsiManager.getInstance(module.project).findFile(file) ?: continue
                 if (!MavenDomUtil.isProjectFile(psiFile)) continue
+                if (!canConfigureFile(psiFile)) continue
                 return psiFile
             }
             return null

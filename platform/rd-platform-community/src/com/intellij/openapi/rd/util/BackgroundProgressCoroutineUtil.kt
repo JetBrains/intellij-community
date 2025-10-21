@@ -103,6 +103,7 @@ fun Lifetime.startWithModalProgressAsync(
   withModalProgress(project, title, action)
 }
 
+@ApiStatus.Internal
 @Deprecated("Use withModalProgress")
 suspend fun <T>  withModalProgressContext(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
@@ -121,6 +122,7 @@ suspend fun <T>  withModalProgressContext(
   }
 }
 
+@ApiStatus.Internal
 @Deprecated("Use withModalProgress")
 suspend fun <T>  withModalProgressContext(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
@@ -129,6 +131,7 @@ suspend fun <T>  withModalProgressContext(
   action: suspend ProgressCoroutineScope.() -> T
 ): T = withModalProgressContext(title, canBeCancelled, true, project, Lifetime.Eternal, action)
 
+@ApiStatus.Internal
 @Deprecated("Use withBackgroundProgress")
 suspend fun <T> withBackgroundProgressContext(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
@@ -141,6 +144,7 @@ suspend fun <T> withBackgroundProgressContext(
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use withBackgroundProgress")
 suspend fun <T> withBackgroundProgressContext(
@@ -154,6 +158,7 @@ suspend fun <T> withBackgroundProgressContext(
   return doRunUnderProgress(context, action)
 }
 
+@ApiStatus.Internal
 @Deprecated("Use launchWithModalProgress")
 fun Lifetime.launchUnderModalProgress(
   @Nls(capitalization = Nls.Capitalization.Title) title: String,
@@ -174,6 +179,7 @@ fun Lifetime.launchUnderBackgroundProgress(
   action: suspend ProgressCoroutineScope.() -> Unit
 ): Job = launchBackground { withBackgroundProgressContext(title, canBeCancelled, project, action) }
 
+@ApiStatus.Internal
 @Deprecated("Use launchWithBackgroundProgress")
 fun Lifetime.launchUnderBackgroundProgress(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
@@ -195,6 +201,7 @@ fun <T> Lifetime.startUnderModalProgressAsync(
   withModalProgressContext(title, canBeCancelled, isIndeterminate, project, this@startUnderModalProgressAsync, action)
 }
 
+@ApiStatus.Internal
 @Deprecated("Use startWithBackgroundProgressAsync")
 fun <T> Lifetime.startUnderBackgroundProgressAsync(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
@@ -204,7 +211,7 @@ fun <T> Lifetime.startUnderBackgroundProgressAsync(
   action: suspend ProgressCoroutineScope.() -> T
 ): Deferred<T> = startBackgroundAsync { withBackgroundProgressContext(title, canBeCancelled, project, action) }
 
-
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use startWithBackgroundProgressAsync")
 fun <T> Lifetime.startUnderBackgroundProgressAsync(
@@ -458,16 +465,4 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use progress reporter api")
-  inline fun withDetails(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
-    val oldText = indicator.text2
-    try {
-      indicator.text2 = text
-      action()
-    }
-    finally {
-      indicator.text2 = oldText
-    }
-  }
 }

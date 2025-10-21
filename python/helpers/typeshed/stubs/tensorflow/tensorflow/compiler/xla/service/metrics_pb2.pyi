@@ -56,8 +56,22 @@ class PassMetrics(google.protobuf.message.Message):
         pass_duration: google.protobuf.duration_pb2.Duration | None = ...,
         custom_metrics: google.protobuf.any_pb2.Any | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["custom_metrics", b"custom_metrics", "pass_duration", b"pass_duration"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["custom_metrics", b"custom_metrics", "module_id", b"module_id", "pass_duration", b"pass_duration", "pass_name", b"pass_name"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["custom_metrics", b"custom_metrics", "pass_duration", b"pass_duration"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "custom_metrics",
+            b"custom_metrics",
+            "module_id",
+            b"module_id",
+            "pass_duration",
+            b"pass_duration",
+            "pass_name",
+            b"pass_name",
+        ],
+    ) -> None: ...
 
 global___PassMetrics = PassMetrics
 
@@ -95,8 +109,64 @@ class JobInfo(google.protobuf.message.Message):
         task_id: builtins.int | None = ...,
         task_uid: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_cell", b"_cell", "_name", b"_name", "_task_id", b"_task_id", "_task_uid", b"_task_uid", "_uid", b"_uid", "_user", b"_user", "cell", b"cell", "name", b"name", "task_id", b"task_id", "task_uid", b"task_uid", "uid", b"uid", "user", b"user"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_cell", b"_cell", "_name", b"_name", "_task_id", b"_task_id", "_task_uid", b"_task_uid", "_uid", b"_uid", "_user", b"_user", "cell", b"cell", "name", b"name", "task_id", b"task_id", "task_uid", b"task_uid", "uid", b"uid", "user", b"user"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_cell",
+            b"_cell",
+            "_name",
+            b"_name",
+            "_task_id",
+            b"_task_id",
+            "_task_uid",
+            b"_task_uid",
+            "_uid",
+            b"_uid",
+            "_user",
+            b"_user",
+            "cell",
+            b"cell",
+            "name",
+            b"name",
+            "task_id",
+            b"task_id",
+            "task_uid",
+            b"task_uid",
+            "uid",
+            b"uid",
+            "user",
+            b"user",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_cell",
+            b"_cell",
+            "_name",
+            b"_name",
+            "_task_id",
+            b"_task_id",
+            "_task_uid",
+            b"_task_uid",
+            "_uid",
+            b"_uid",
+            "_user",
+            b"_user",
+            "cell",
+            b"cell",
+            "name",
+            b"name",
+            "task_id",
+            b"task_id",
+            "task_uid",
+            b"task_uid",
+            "uid",
+            b"uid",
+            "user",
+            b"user",
+        ],
+    ) -> None: ...
     @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["_cell", b"_cell"]) -> typing.Literal["cell"] | None: ...
     @typing.overload
@@ -122,7 +192,10 @@ class CompilationLogEntry(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _CompilationStageEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CompilationLogEntry._CompilationStage.ValueType], builtins.type):
+    class _CompilationStageEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CompilationLogEntry._CompilationStage.ValueType],
+        builtins.type,
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNSPECIFIED: CompilationLogEntry._CompilationStage.ValueType  # 0
         END_TO_END: CompilationLogEntry._CompilationStage.ValueType  # 1
@@ -184,7 +257,27 @@ class CompilationLogEntry(google.protobuf.message.Message):
         module_ids: collections.abc.Iterable[builtins.int] | None = ...,
         job_info: global___JobInfo | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["duration", b"duration", "job_info", b"job_info", "timestamp", b"timestamp"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["duration", b"duration", "job_info", b"job_info", "module_ids", b"module_ids", "pass_metrics", b"pass_metrics", "stage", b"stage", "task_index", b"task_index", "timestamp", b"timestamp"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["duration", b"duration", "job_info", b"job_info", "timestamp", b"timestamp"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "duration",
+            b"duration",
+            "job_info",
+            b"job_info",
+            "module_ids",
+            b"module_ids",
+            "pass_metrics",
+            b"pass_metrics",
+            "stage",
+            b"stage",
+            "task_index",
+            b"task_index",
+            "timestamp",
+            b"timestamp",
+        ],
+    ) -> None: ...
 
 global___CompilationLogEntry = CompilationLogEntry

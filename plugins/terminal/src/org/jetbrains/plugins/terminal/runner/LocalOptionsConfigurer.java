@@ -12,19 +12,16 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatformKt;
-import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
-import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalStartupKt;
@@ -48,8 +45,10 @@ public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
   public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
-    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
-    List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir);
+    String requestedWorkingDirectory = findValidWorkingDirectory(baseOptions.getWorkingDirectory());
+    boolean isRequestedWorkingDirectoryInvalid = baseOptions.getWorkingDirectory() != null && requestedWorkingDirectory == null;
+    String workingDir = requestedWorkingDirectory != null ? requestedWorkingDirectory : getDefaultWorkingDirectory(project);
+    List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir, isRequestedWorkingDirectoryInvalid);
     var eelDescriptor = findEelDescriptor(workingDir, initialCommand);
     Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), project, eelDescriptor, initialCommand);
 
@@ -62,15 +61,14 @@ public final class LocalOptionsConfigurer {
       .shellCommand(initialCommand)
       .workingDirectory(workingDir)
       .envVariables(envs)
+      .modify(builder -> {
+        builder.setInitialShellCommand(new InitialShellCommand(initialCommand));
+        return Unit.INSTANCE;
+      })
       .build();
   }
 
-  @VisibleForTesting
-  static @NotNull String getWorkingDirectory(@Nullable String directory, Project project) {
-    String validDirectory = findValidWorkingDirectory(directory);
-    if (validDirectory != null) {
-      return validDirectory;
-    }
+  private static @NotNull String getDefaultWorkingDirectory(@NotNull Project project) {
     String configuredWorkingDirectory = TerminalProjectOptionsProvider.getInstance(project).getStartingDirectory();
     if (configuredWorkingDirectory != null && isDirectory(configuredWorkingDirectory)) {
       return configuredWorkingDirectory;
@@ -101,6 +99,8 @@ public final class LocalOptionsConfigurer {
       return null;
     }
 
+    if (!directoryPath.isAbsolute()) return null;
+
     if (Files.isDirectory(directoryPath)) {
       return directoryPath.toString();
     }
@@ -122,16 +122,14 @@ public final class LocalOptionsConfigurer {
     Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
     if (envData.isPassParentEnvs()) {
-      if (eelDescriptor == LocalEelDescriptor.INSTANCE) {
-        // Use the default environment variables when running locally.
-        // Calling `fetchLoginShellEnvVariables(eelDescriptor)` retrieves shell environment variables
-        // via `com.intellij.util.EnvironmentUtil.getEnvironmentMap`, which can break PATH.
-        envs.putAll(System.getenv());
-      }
-      else {
-        envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
-      }
+      envs.putAll(TerminalStartupKt.fetchMinimalEnvironmentVariablesBlocking(eelDescriptor));
       EnvironmentRestorer.restoreOverriddenVars(envs);
+      if (envs.isEmpty()) {
+        LOG.warn("Empty parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")");
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")" + ": " + envs);
+      }
     }
     else {
       LOG.info("No parent environment passed");
@@ -161,9 +159,10 @@ public final class LocalOptionsConfigurer {
   private static @NotNull List<String> getInitialCommand(
     @NotNull ShellStartupOptions options,
     @NotNull Project project,
-    @NotNull String workingDir
+    @NotNull String workingDir,
+    boolean isRequestedWorkingDirectoryInvalid
   ) {
-    List<String> shellCommand = fixShellCommand(options.getShellCommand());
+    List<String> shellCommand = fixShellCommand(options.getShellCommand(), isRequestedWorkingDirectoryInvalid);
     if (shellCommand != null) {
       return shellCommand;
     }
@@ -171,10 +170,19 @@ public final class LocalOptionsConfigurer {
     return LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath, workingDir);
   }
 
-  private static @Nullable List<String> fixShellCommand(@Nullable List<String> shellCommand) {
+  private static @Nullable List<String> fixShellCommand(
+    @Nullable List<String> shellCommand,
+    boolean isRequestedWorkingDirectoryInvalid
+  ) {
     if (OS.CURRENT == OS.Windows && !TerminalStartupKt.shouldUseEelApi() &&
         isUnixPath(ContainerUtil.getFirstItem(shellCommand))) {
       return null; // use the default shell path
+    }
+    if (isRequestedWorkingDirectoryInvalid && isUnixPath(ContainerUtil.getFirstItem(shellCommand))) {
+      // When switching between Host and DevContainer projects,
+      // terminal tabs are stored in the same place (unfortunately).
+      // Let's use the default shell path instead of the invalid stored shell path in such a case.
+      return null;
     }
     return shellCommand;
   }
@@ -195,9 +203,5 @@ public final class LocalOptionsConfigurer {
 
   private static @NotNull String getShellPath(@NotNull Project project) {
     return TerminalProjectOptionsProvider.getInstance(project).getShellPath();
-  }
-
-  private static Map<String, String> fetchLoginShellEnvVariables(@NotNull EelDescriptor eelDescriptor) {
-    return EelUtilsKt.fetchLoginShellEnvVariablesBlocking(EelProviderUtil.toEelApiBlocking(eelDescriptor).getExec());
   }
 }

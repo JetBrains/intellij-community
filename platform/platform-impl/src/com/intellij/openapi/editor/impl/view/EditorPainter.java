@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -16,7 +20,9 @@ import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDescriptor;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -32,7 +38,6 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
@@ -53,11 +58,11 @@ import java.util.function.Consumer;
 //@ApiStatus.Internal
 public final class EditorPainter implements TextDrawingCallback {
 
+  private static final Logger LOG = Logger.getInstance(EditorPainter.class);
+
   private static final Color CARET_LIGHT = Gray._255;
   private static final Color CARET_DARK = Gray._0;
   private static final int CARET_DIRECTION_MARK_SIZE = 3;
-  private static final char IDEOGRAPHIC_SPACE = '\u3000';
-  private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
   private static final Object ourCachedDot = ObjectUtils.sentinel("space symbol");
 
   @ApiStatus.Internal
@@ -75,6 +80,11 @@ public final class EditorPainter implements TextDrawingCallback {
     return editor.getSettings().isRightMarginShown() &&
            editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null &&
            (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
+  }
+
+  static float getBaseMarginWidth(@NotNull EditorView view) {
+    Editor editor = view.getEditor();
+    return editor.getSettings().getRightMargin(editor.getProject()) * view.getPlainSpaceWidth();
   }
 
   private final EditorView myView;
@@ -277,11 +287,11 @@ public final class EditorPainter implements TextDrawingCallback {
         LinePainter2D.paint(myGraphics, baseMarginX, 0, baseMarginX, myClip.height);
       }
       else {
-        int displayedLinesCount = myMarginPositions.x.length - 1;
+        int displayedLinesCount = myMarginPositions.x().length - 1;
         for (int i = 0; i <= displayedLinesCount; i++) {
-          float width = myMarginPositions.x[i];
+          float width = myMarginPositions.x()[i];
           int x = width == 0 ? baseMarginX : (int)width;
-          int y = myMarginPositions.y[i];
+          int y = myMarginPositions.y()[i];
           if (i == 0 && y > myYShift) {
             myGraphics.fillRect(baseMarginX, myYShift, 1, y - myYShift);
             if (x != baseMarginX) {
@@ -290,9 +300,9 @@ public final class EditorPainter implements TextDrawingCallback {
           }
           if (i < displayedLinesCount) {
             myGraphics.fillRect(x, y, 1, myLineHeight);
-            float nextWidth = myMarginPositions.x[i + 1];
+            float nextWidth = myMarginPositions.x()[i + 1];
             int nextX = nextWidth == 0 ? baseMarginX : (int)nextWidth;
-            int nextY = myMarginPositions.y[i + 1];
+            int nextY = myMarginPositions.y()[i + 1];
             if (nextY > y + myLineHeight) {
               if (x != baseMarginX) {
                 myGraphics.fillRect(Math.min(x, baseMarginX), y + myLineHeight - 1, Math.abs(x - baseMarginX) + 1, 1);
@@ -313,11 +323,6 @@ public final class EditorPainter implements TextDrawingCallback {
           }
         }
       }
-    }
-
-    private static float getBaseMarginWidth(EditorView view) {
-      Editor editor = view.getEditor();
-      return editor.getSettings().getRightMargin(editor.getProject()) * view.getPlainSpaceWidth();
     }
 
     private boolean isMarginShown() {
@@ -367,7 +372,7 @@ public final class EditorPainter implements TextDrawingCallback {
         int visualLine = visLinesIterator.getVisualLine();
         if (visualLine > myEndVisualLine + 1) break;
         int y = visLinesIterator.getY() + myYShift;
-        if (calculateMarginWidths) myMarginPositions.y[visualLine - myStartVisualLine] = y;
+        if (calculateMarginWidths) myMarginPositions.y()[visualLine - myStartVisualLine] = y;
         if (y > prevY) {
           TextAttributes attributes = getBetweenLinesAttributes(visualLine, visLinesIterator.getVisualLineStartOffset(),
                                                                 Objects.requireNonNull(caretIterator));
@@ -424,8 +429,14 @@ public final class EditorPainter implements TextDrawingCallback {
                 ));
               }
               if (attributes != null) {
-                Color color = attributes.getForegroundColor();
-                if (color != null) {
+                Color foregroundColor = attributes.getForegroundColor();
+                if (foregroundColor != null) {
+                  if (attributes.getEffectType() == EffectType.FADED) {
+                    foregroundColor = ColorUtil.editorFaded(foregroundColor, EditorColorsManager.getInstance().isDarkEditor());
+                  }
+
+                  Color color = foregroundColor;
+
                   myTextDrawingTasks.add(g -> g.setColor(color));
                   myTextDrawingTasks.add(fragment.draw(xStart, y + myAscent, start, end));
                 }
@@ -490,12 +501,12 @@ public final class EditorPainter implements TextDrawingCallback {
             }
           }
         }, calculateMarginWidths && !visLinesIterator.endsWithSoftWrap() && !visLinesIterator.startsWithSoftWrap()
-           ? width -> myMarginPositions.x[visualLine - myStartVisualLine] = width : null);
+           ? width -> myMarginPositions.x()[visualLine - myStartVisualLine] = width : null);
         prevY = y + visLinesIterator.getLineHeight();
         visLinesIterator.advance();
       }
       if (calculateMarginWidths && myEndVisualLine >= lineCount - 1) {
-        myMarginPositions.y[myMarginPositions.y.length - 1] = myMarginPositions.y[myMarginPositions.y.length - 2] + myLineHeight;
+        myMarginPositions.y()[myMarginPositions.y().length - 1] = myMarginPositions.y()[myMarginPositions.y().length - 2] + myLineHeight;
       }
     }
 
@@ -628,7 +639,12 @@ public final class EditorPainter implements TextDrawingCallback {
           CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
           if (customRenderer == null) continue;
           try (AccessToken ignore = SlowOperations.reportOnceIfViolatedFor(customRenderer)) {
-            customRenderer.paint(myEditor, highlighter, myGraphics);
+            try {
+              customRenderer.paint(myEditor, highlighter, myGraphics);
+            } catch (Exception e) {
+              PluginDescriptor descriptor =  PluginManager.getPluginByClass(customRenderer.getClass());
+              LOG.error(new PluginException("Failed to perform custom painting", e, descriptor != null ? descriptor.getPluginId() : null));
+            }
           }
         }
         myGraphics.translate(0, -myYShift);
@@ -896,8 +912,8 @@ public final class EditorPainter implements TextDrawingCallback {
       List<LineExtensionData> data = myExtensionData.get(visualLine);
       if (data == null) return;
       for (LineExtensionData datum : data) {
-        float width = datum.layout.getWidth();
-        paintBackground(datum.info.getBgColor(), x, y, width);
+        float width = datum.layout().getWidth();
+        paintBackground(datum.info().getBgColor(), x, y, width);
         x += width;
       }
     }
@@ -906,7 +922,7 @@ public final class EditorPainter implements TextDrawingCallback {
       List<LineExtensionData> data = myExtensionData.get(visualLine);
       if (data == null) return;
       for (LineExtensionData datum : data) {
-        x = paintLineLayoutWithEffect(datum.layout, x, y, datum.info.getColor(), datum.info.getEffectColor(), datum.info.getEffectType());
+        x = paintLineLayoutWithEffect(datum.layout(), x, y, datum.info().getColor(), datum.info().getEffectColor(), datum.info().getEffectType());
       }
       int currentLineWidth = myCorrector.lineWidth(visualLine, x);
       EditorSizeManager sizeManager = myView.getSizeManager();
@@ -1630,12 +1646,15 @@ public final class EditorPainter implements TextDrawingCallback {
       return TextAttributesEffectsBuilder.create(secondary).coverWith(primary).applyTo(result);
     }
 
+    // local copy of com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl.FRONTEND_CREATED
+    // to avoid circular dependency.
+    private static final Key<Boolean> FRONTEND_CREATED = Key.create("FRONTEND_CREATED");
     private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
       if (Registry.is("cache.markup.debug") && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
         TextAttributes zombieAttr = foldAttributes.clone();
         zombieAttr.copyFrom(foldAttributes);
         zombieAttr.setEffectType(EffectType.STRIKEOUT);
-        if (region.getUserData(FoldingKeys.AUTO_CREATED_ZOMBIE) != null) {
+        if (FRONTEND_CREATED.isIn(region)) {
           zombieAttr.setEffectColor(JBColor.MAGENTA);
         } else {
           zombieAttr.setEffectColor(JBColor.DARK_GRAY);
@@ -1643,253 +1662,6 @@ public final class EditorPainter implements TextDrawingCallback {
         return zombieAttr;
       }
       return foldAttributes;
-    }
-  }
-
-  interface LineFragmentPainter {
-    void paintBeforeLineStart(TextAttributes attributes, boolean hasSoftWrap, int columnEnd, float xEnd, int y);
-    void paint(VisualLineFragmentsIterator.Fragment fragment, int start, int end, TextAttributes attributes,
-               float xStart, float xEnd, int y);
-    void paintAfterLineEnd(IterationState iterationState, int columnStart, float x, int y);
-  }
-
-  private static final class LineWhitespacePaintingStrategy {
-    private final boolean myWhitespaceShown;
-    private final boolean myLeadingWhitespaceShown;
-    private final boolean myInnerWhitespaceShown;
-    private final boolean myTrailingWhitespaceShown;
-    private final boolean mySelectionWhitespaceShown;
-
-    // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
-    private int currentLeadingEdge;
-    private int currentTrailingEdge;
-
-    LineWhitespacePaintingStrategy(EditorSettings settings) {
-      myWhitespaceShown = settings.isWhitespacesShown();
-      myLeadingWhitespaceShown = settings.isLeadingWhitespaceShown();
-      myInnerWhitespaceShown = settings.isInnerWhitespaceShown();
-      myTrailingWhitespaceShown = settings.isTrailingWhitespaceShown();
-      mySelectionWhitespaceShown = settings.isSelectionWhitespaceShown();
-    }
-
-    private boolean showAnyWhitespace() {
-      return myWhitespaceShown && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown || mySelectionWhitespaceShown);
-    }
-
-    private void update(CharSequence chars, int lineStart, int lineEnd) {
-      if (showAnyWhitespace() && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
-        currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
-        currentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, currentTrailingEdge, WHITESPACE_CHARS);
-      }
-    }
-
-    private boolean showWhitespaceAtOffset(int offset, CaretDataInView caretData) {
-      if (!myWhitespaceShown) return false;
-      if (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
-          offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
-          myInnerWhitespaceShown) {
-        return true;
-      } else {
-        return mySelectionWhitespaceShown && caretData != null && caretData.isOffsetInSelection(offset);
-      }
-    }
-  }
-
-  private interface XCorrector {
-    float startX(int line);
-    int lineWidth(int line, float x);
-    int emptyTextX();
-    int minX(int startLine, int endLine);
-    int maxX(int startLine, int endLine);
-    int lineSeparatorStart(int minX);
-    int lineSeparatorEnd(int maxX);
-    float singleLineBorderStart(float x);
-    float singleLineBorderEnd(float x);
-    int marginX(float marginWidth);
-    List<Integer> softMarginsX();
-
-    static @NotNull XCorrector create(@NotNull EditorView view, @NotNull Insets insets) {
-      return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view, insets);
-    }
-
-    final class LeftAligned implements XCorrector {
-      private final EditorView myView;
-      private final int myLeftInset;
-
-      private LeftAligned(@NotNull EditorView view, @NotNull Insets insets) {
-        myView = view;
-        myLeftInset = insets.left;
-      }
-
-      @Override
-      public float startX(int line) {
-        return myLeftInset;
-      }
-
-      @Override
-      public int emptyTextX() {
-        return myLeftInset;
-      }
-
-      @Override
-      public int minX(int startLine, int endLine) {
-        return myLeftInset;
-      }
-
-      @Override
-      public int maxX(int startLine, int endLine) {
-        return minX(startLine, endLine) + myView.getMaxTextWidthInLineRange(startLine, endLine - 1) - 1;
-      }
-
-      @Override
-      public float singleLineBorderStart(float x) {
-        return x;
-      }
-
-      @Override
-      public float singleLineBorderEnd(float x) {
-        return x + 1;
-      }
-
-      @Override
-      public int lineWidth(int line, float x) {
-        return (int)x - myLeftInset;
-      }
-
-      @Override
-      public int lineSeparatorStart(int maxX) {
-        return myLeftInset;
-      }
-
-      @Override
-      public int lineSeparatorEnd(int maxX) {
-        return isMarginShown(myView.getEditor()) ? Math.min(marginX(Session.getBaseMarginWidth(myView)), maxX) : maxX;
-      }
-
-      @Override
-      public int marginX(float marginWidth) {
-        return (int)(myLeftInset + marginWidth);
-      }
-
-      @Override
-      public List<Integer> softMarginsX() {
-        List<Integer> margins = myView.getEditor().getSettings().getSoftMargins();
-        List<Integer> result = new ArrayList<>(margins.size());
-        for (Integer margin : margins) {
-          result.add((int)(myLeftInset + margin * myView.getPlainSpaceWidth()));
-        }
-        return result;
-      }
-    }
-
-    final class RightAligned implements XCorrector {
-      private final EditorView myView;
-
-      private RightAligned(@NotNull EditorView view) {
-        myView = view;
-      }
-
-      @Override
-      public float startX(int line) {
-        return myView.getRightAlignmentLineStartX(line);
-      }
-
-      @Override
-      public int lineWidth(int line, float x) {
-        return (int)(x - myView.getRightAlignmentLineStartX(line));
-      }
-
-      @Override
-      public int emptyTextX() {
-        return myView.getRightAlignmentMarginX();
-      }
-
-      @Override
-      public int minX(int startLine, int endLine) {
-        return myView.getRightAlignmentMarginX() - myView.getMaxTextWidthInLineRange(startLine, endLine - 1) - 1;
-      }
-
-      @Override
-      public int maxX(int startLine, int endLine) {
-        return myView.getRightAlignmentMarginX() - 1;
-      }
-
-      @Override
-      public float singleLineBorderStart(float x) {
-        return x - 1;
-      }
-
-      @Override
-      public float singleLineBorderEnd(float x) {
-        return x;
-      }
-
-      @Override
-      public int lineSeparatorStart(int minX) {
-        return isMarginShown(myView.getEditor()) ? Math.max(marginX(Session.getBaseMarginWidth(myView)), minX) : minX;
-      }
-
-      @Override
-      public int lineSeparatorEnd(int maxX) {
-        return maxX;
-      }
-
-      @Override
-      public int marginX(float marginWidth) {
-        return (int)(myView.getRightAlignmentMarginX() - marginWidth);
-      }
-
-      @Override
-      public List<Integer> softMarginsX() {
-        List<Integer> margins = myView.getEditor().getSettings().getSoftMargins();
-        List<Integer> result = new ArrayList<>(margins.size());
-        for (Integer margin : margins) {
-          result.add((int)(myView.getRightAlignmentMarginX() - margin * myView.getPlainSpaceWidth()));
-        }
-        return result;
-      }
-    }
-  }
-
-  private record LineExtensionData(LineExtensionInfo info, LineLayout layout) {
-  }
-
-  private static final class MarginPositions {
-    private final float[] x;
-    private final int[] y;
-
-    private MarginPositions(int size) {
-      x = new float[size];
-      y = new int[size];
-    }
-  }
-
-  private static final class CaretDataInView {
-    private final int[] selectionStarts;
-    private final int[] selectionEnds;
-    private final int caretCount;
-
-    private CaretDataInView(CaretModel caretModel, int startOffset, int endOffset) {
-      List<Caret> carets = caretModel.getAllCarets();
-      selectionStarts = new int[carets.size()];
-      selectionEnds = new int[carets.size()];
-
-      int i = 0;
-      for (Caret caret : carets) {
-        if (!caret.hasSelection()) continue;
-        if (caret.getSelectionStart() >= endOffset || caret.getSelectionEnd() <= startOffset) continue;
-        selectionStarts[i] = caret.getSelectionStart();
-        selectionEnds[i] = caret.getSelectionEnd();
-        ++i;
-      }
-      caretCount = i;
-    }
-
-    private boolean isOffsetInSelection(int offset) {
-      for (int i = 0; i < caretCount; ++i) {
-        if (offset >= selectionStarts[i] && offset < selectionEnds[i]) return true;
-      }
-      return false;
     }
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,19 +40,6 @@ public interface ChangelistBuilder {
   void processChangeInList(@NotNull Change change, @Nullable @NlsSafe String changeListName, VcsKey vcsKey);
 
   void removeRegisteredChangeFor(final FilePath path);
-
-  /**
-   * Process a file that is not under version control.
-   *
-   * @param file a file to process
-   * @deprecated use {@link #processUnversionedFile(FilePath)} instead
-   */
-  @Deprecated(forRemoval = true)
-  default void processUnversionedFile(VirtualFile file) {
-    if (file != null) {
-      processUnversionedFile(VcsUtil.getFilePath(file));
-    }
-  }
 
   void processUnversionedFile(FilePath filePath);
 

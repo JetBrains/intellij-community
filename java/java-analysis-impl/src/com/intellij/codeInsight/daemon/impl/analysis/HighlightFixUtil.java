@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -25,6 +25,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -332,7 +333,7 @@ public final class HighlightFixUtil {
   public static void registerFixesForExpressionStatement(@NotNull Consumer<? super CommonIntentionAction> info,
                                                          @NotNull PsiElement statement) {
     if (!(statement instanceof PsiExpressionStatement)) return;
-    if (!(statement.getParent() instanceof PsiCodeBlock block)) return; 
+    if (!(statement.getParent() instanceof PsiCodeBlock block)) return;
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();
@@ -436,7 +437,7 @@ public final class HighlightFixUtil {
     }
 
     PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(methodCall.getProject());
-    CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
+    CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
     IntentionAction action2 = QuickFixFactory.getInstance().createSurroundWithArrayFix(methodCall, null);
     info.accept(action2);
 
@@ -753,7 +754,6 @@ public final class HighlightFixUtil {
                                          @NotNull JavaResolveResult @NotNull [] resolveResults) {
     PsiExpressionList list = methodCall.getArgumentList();
     MethodCandidateInfo[] candidates = toMethodCandidates(resolveResults);
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, sink);
     WrapWithAdapterMethodCallFix.registerCastActions(candidates, methodCall, sink);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, sink);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), sink);
@@ -843,6 +843,17 @@ public final class HighlightFixUtil {
         if (type instanceof PsiArrayType) {
           AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, iteratedValue, rType.createArrayType(), type);
         }
+      }
+    }
+    if (anchor instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+      factory.createReplaceTypeWithWrongImportFixes(classReference).forEach(sink);
+    }
+    if (anchor.getParent() instanceof PsiVariable variable && variable.getTypeElement() != null &&
+        !variable.getTypeElement().isInferredType()) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null) {
+        factory.createReplaceTypeWithWrongImportFixes(typeElement.getInnermostComponentReferenceElement()).forEach(sink);
       }
     }
     registerChangeParameterClassFix(sink, lType, rType);
@@ -968,7 +979,7 @@ public final class HighlightFixUtil {
    * @return true if type parameters of a class are potentially compatible with type arguments in the list
    * (that is: number of parameters is the same, and argument types are within bounds)
    */
-  private static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
+  public static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
     PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
 
     PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
@@ -1114,6 +1125,19 @@ public final class HighlightFixUtil {
       .append(StreamEx.of(missingClasses).map(PsiClass::getQualifiedName))
       .distinct()
       .toList();
+  }
+
+  static @Nullable CommonIntentionAction createVariableTypeFix(PsiJavaCodeReferenceElement ref) {
+    if (!(ref.getParent() instanceof PsiTypeElement typeElement)) return null;
+    if (!(typeElement.getParent() instanceof PsiLocalVariable localVariable)) return null;
+    PsiExpression initializer = localVariable.getInitializer();
+    if (initializer == null) return null;
+    PsiType type = initializer.getType();
+    if (type == null || !PsiTypesUtil.isDenotableType(type, localVariable)) return null;
+    if (PsiTypes.voidType().equals(type) || PsiTypes.nullType().equals(type)) return null;
+    if (IncompleteModelUtil.hasUnresolvedComponent(type)) return null;
+    return PriorityIntentionActionWrapper.highPriority(
+      QuickFixFactory.getInstance().createSetVariableTypeFix(localVariable, type));
   }
 
   private static final class ReturnModel {

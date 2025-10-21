@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -115,9 +116,18 @@ public final class ModCommandActionWrapper implements IntentionAction, PriorityA
   @Override
   public @Unmodifiable @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     if (myPresentation == null) return List.of();
-    return ContainerUtil.map(myPresentation.rangesToHighlight(), range -> new RangeToHighlight(file, range.range(), range.highlightKey()));
+    return ContainerUtil.mapNotNull(myPresentation.rangesToHighlight(), range -> convertToRangeToHighlight(file, range));
   }
-  
+
+  private static @Nullable RangeToHighlight convertToRangeToHighlight(@NotNull PsiFile file, @Nullable Presentation.HighlightRange range) {
+    if (range == null) return null;
+    return switch (range.highlightingKind()) {
+      case AFFECTED_RANGE -> new RangeToHighlight(file, range.range(), EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      case DELETED_RANGE -> new RangeToHighlight(file, range.range(), EditorColors.DELETED_TEXT_ATTRIBUTES);
+      case APPLICABLE_TO_RANGE -> null;
+    };
+  }
+
   @Override
   public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
     ModCommandAction unwrapped = action.asModCommandAction();

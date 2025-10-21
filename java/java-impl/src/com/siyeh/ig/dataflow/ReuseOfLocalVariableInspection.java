@@ -60,7 +60,7 @@ public final class ReuseOfLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ReuseOfLocalVariableVisitor();
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -98,4 +99,10 @@ abstract class PerformanceWatcher {
 
   @Internal
   abstract fun startEdtSampling()
+
+  /**
+   * Enter EDT pumping phase that shall be reported as UI freeze regardless
+   */
+  @Internal
+  abstract fun smokeAndMirrors(name: @NonNls String): AccessToken
 }

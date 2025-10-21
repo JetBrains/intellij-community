@@ -3,7 +3,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class Foo {
-  @Contract("<warning descr="Parameter 'f' is annotated as not-null, so '!null' is always satisfied">!null</warning>,true->!null")
+  @Contract("<warning descr="Parameter 'f' is annotated as non-null, so '!null' is always satisfied">!null</warning>,true->!null")
   String delegationToInstance(@NotNull Foo f, boolean createIfNeeded) { return f.getString(createIfNeeded); }
 
   @Contract("true->!null")

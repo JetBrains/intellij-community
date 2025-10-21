@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
@@ -30,9 +31,8 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="library" name="clikt" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="commons-text" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.inspect" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.text" />
     <orderEntry type="module" module-name="intellij.platform.warmup" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />

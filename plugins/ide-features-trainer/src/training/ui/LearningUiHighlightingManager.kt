@@ -182,7 +182,7 @@ internal class LearningHighlightPainter(
 ) : AbstractPainter() {
   private val pulsationOffset = if (options.usePulsation) pulsationSize else 0
   private var previous: Long = 0
-  override fun executePaint(component: Component?, g: Graphics2D) {
+  override fun executePaint(component: Component, g: Graphics2D) {
     val r: Rectangle = bounds
     val time = Date().time
     val delta = time - startDate.time

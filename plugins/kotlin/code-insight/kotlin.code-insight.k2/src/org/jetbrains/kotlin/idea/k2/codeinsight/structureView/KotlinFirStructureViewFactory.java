@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.KotlinIconProvider;
+import org.jetbrains.kotlin.idea.base.util.KotlinSingleClassFileAnalyzer;
 import org.jetbrains.kotlin.idea.structureView.KotlinStructureViewModel;
 import org.jetbrains.kotlin.psi.KtFile;
 
@@ -41,7 +41,7 @@ final class KotlinFirStructureViewFactory implements PsiStructureViewFactory {
 
             @Override
             public boolean isRootNodeShown() {
-                return !KotlinIconProvider.Companion.isSingleClassFile(file);
+                return !KotlinSingleClassFileAnalyzer.isSingleClassFile(file);
             }
         };
     }

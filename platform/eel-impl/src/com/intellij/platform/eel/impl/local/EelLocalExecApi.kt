@@ -7,38 +7,187 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil.getPathDirs
 import com.intellij.execution.process.LocalProcessService
 import com.intellij.execution.process.LocalPtyOptions
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesDeferred
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.utils.bindToScope
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.ShellEnvironmentReader
+import com.intellij.util.fastutil.skip
 import com.pty4j.PtyProcess
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.*
 
+@OptIn(EelDelicateApi::class)
 @ApiStatus.Internal
-class EelLocalExecPosixApi : EelExecPosixApi {
+class EelLocalExecPosixApi(
+  private val platform: EelPlatform.Posix,
+  private val userInfo: EelUserPosixInfo,
+) : EelExecPosixApi, LocalEelExecApi {
   override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelPosixProcess {
     val process = executeImpl(generatedBuilder)
-    return if (process is PtyProcess)
+    val r = if (process is PtyProcess)
       LocalEelPosixProcess.create(process, process::setWinSize)
     else
       LocalEelPosixProcess.create(process, null)
+    generatedBuilder.scope?.let { r.bindToScope(it) }
+    return r
   }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
-  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = EnvironmentUtil.getEnvironmentMap()
+  private val loginNonInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
+  private val loginInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
+
+  @TestOnly
+  fun clearCaches() {
+    loginNonInteractiveCache.set(null)
+    loginInteractiveCache.set(null)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EnvironmentVariablesDeferred {
+    val opts =
+      opts as? EelExecPosixApi.PosixEnvironmentVariablesOptions
+      ?: object : EelExecPosixApi.PosixEnvironmentVariablesOptions, EelExecApi.EnvironmentVariablesOptions by opts {}
+
+    val (cache, interactive) = when (opts.mode) {
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.DEFAULT -> {
+        return EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
+      }
+
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL -> {
+        return EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv()))
+      }
+
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> {
+        loginNonInteractiveCache to false
+      }
+
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> {
+        loginInteractiveCache to true
+      }
+    }
+
+    val result = cache.updateAndGet { old ->
+      if (old != null && !opts.onlyActual && old.isCompleted && old.getCompletionExceptionOrNull() == null) {
+        old
+      }
+      else {
+        service<CoroutineScopeService>().coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+          try {
+            val shell = getUserShell()
+            // Timeout is chosen at random.
+            ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
+          }
+          catch (err: CancellationException) {
+            throw err
+          }
+          catch (err: Exception) {
+            throw EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
+          }
+        }
+      }
+    }!!
+    result.start()
+    return EnvironmentVariablesDeferred(result)
+  }
+
+  private suspend fun getUserShell(): String {
+    // Keep in sync with `get_shell` in ijent_service/processes/unix.rs
+    //
+    // Reasons for such complicated logic of getting the desired shell:
+    // * The IDE process can inherit a different shell than the preferred user shell.
+    // * Some tests run this code inside a Docker container with no defined `SHELL`.
+    //   F.i., `docker run --rm ubuntu:24.04 printenv` shows no shell.
+    val errorsToAttach = mutableListOf<Throwable>()
+
+    var shell = when (platform) {
+      is EelPlatform.Darwin -> {
+        try {
+          spawnProcess("dscl", ".", "-read", userInfo.home.toString(), "UserShell").eelIt()
+            .awaitProcessResult()
+            .takeIf { it.exitCode == 0 }
+            ?.stdoutString
+            ?.removePrefix("UserShell:")
+            ?.trim()
+        }
+        catch (err: ExecuteProcessException) {
+          // `getent` is absent in some busybox builds.
+          errorsToAttach += err
+          null
+        }
+      }
+
+      is EelPlatform.FreeBSD, is EelPlatform.Linux -> {
+        // TODO This code wasn't checked on BSD.
+        var passwdLines =
+          try {
+            spawnProcess("getent", "passwd", userInfo.uid.toString()).eelIt()
+              .awaitProcessResult()
+              .takeIf { it.exitCode == 0 }
+              ?.stdoutString
+              ?.lines()
+          }
+          catch (err: ExecuteProcessException) {
+            // `getent` is absent in some busybox builds.
+            errorsToAttach += err
+            null
+          }
+
+        if (passwdLines == null) {
+          passwdLines = try {
+            withContext(Dispatchers.IO) {
+              Files.readAllLines(Path("/etc/passwd"))
+            }
+          }
+          catch (err: IOException) {
+            // It's an exceptional case. Unlikely a caller can handle this problem anyhow.
+            // If it happens, it looks like a problem with the user's machine.
+            errorsToAttach += err
+            listOf()
+          }
+        }
+
+        getShellFromPasswdRecords(passwdLines, userInfo.uid)
+      }
+    }
+
+    if (shell == null) {
+      // The last resort. It may be not what the user wants to see.
+      LOG.info("Failed to get OS-specific shell. Falling back to environment variables.", errorsToAttach.lastOrNull())
+      shell = System.getenv("SHELL")
+    }
+
+    if (shell == null) {
+      val err = IllegalStateException("No shell detected for the current user")
+      errorsToAttach.forEach(err::addSuppressed)
+      throw err
+    }
+
+    return shell
+  }
+
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
@@ -53,20 +202,24 @@ class EelLocalExecPosixApi : EelExecPosixApi {
 }
 
 @ApiStatus.Internal
-class EelLocalExecWindowsApi : EelExecWindowsApi {
+class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
   override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelWindowsProcess {
     val process = executeImpl(generatedBuilder)
-    return if (process is PtyProcess)
-      LocalEelWindowsProcess.create(process, process::setWinSize)
+    val commandLineForDebug = (listOf(generatedBuilder.exe) + generatedBuilder.args).joinToString(" ")
+    val r = if (process is PtyProcess)
+      LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
     else
-      LocalEelWindowsProcess.create(process, null)
+      LocalEelWindowsProcess.create(process, null, commandLineForDebug)
+    generatedBuilder.scope?.let { r.bindToScope(it) }
+    return r
   }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
-  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = EnvironmentUtil.getEnvironmentMap()
+  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EnvironmentVariablesDeferred =
+    EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
@@ -113,10 +266,18 @@ private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
           false,
         ) as PtyProcess
       }
-      EelExecApi.RedirectStdErr, null -> {
+      is EelExecApi.RedirectStdErr, null -> {
         ProcessBuilder(escapedCommandLine).apply {
           environment().putAll(environment)
-          redirectErrorStream(p != null)
+          when (p?.to) {
+            null -> Unit
+            EelExecApi.RedirectTo.NULL -> {
+              redirectError(ProcessBuilder.Redirect.DISCARD)
+            }
+            EelExecApi.RedirectTo.STDOUT -> {
+              redirectErrorStream(true)
+            }
+          }
           builder.workingDirectory?.let {
             directory(File(it.toString()))
           }
@@ -189,3 +350,21 @@ private fun toPath(pathStr: String, log: Logger): Path? =
     log.info("skipping $pathStr", e)
     null
   }
+
+@VisibleForTesting
+fun getShellFromPasswdRecords(records: Iterable<String>, uid: Int): String? {
+  val uid = uid.toString()
+  return records.firstNotNullOfOrNull mapper@{ line ->
+    val line = line.trim()
+    if (line.startsWith("#")) return@mapper null
+    val split = line.splitToSequence(':').iterator()
+    split.skip(2)
+    if (!split.hasNext() || split.next() != uid) return@mapper null
+    split.skip(3)
+    if (!split.hasNext()) return@mapper null
+    split.next()
+  }
+}
+
+@Service
+private class CoroutineScopeService(val coroutineScope: CoroutineScope)

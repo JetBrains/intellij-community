@@ -1,6 +1,5 @@
 package com.intellij.cce.util
 
-import com.intellij.openapi.progress.runBlockingCancellable
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.HttpRequestRetry
@@ -36,7 +35,7 @@ private val httpClient: HttpClient by lazy {
   }
 }
 
-private suspend fun httpGetSuspend(url: String, authToken: String?): ByteArray {
+suspend fun httpGet(url: String, authToken: String?): ByteArray {
   val response = httpClient.get(url) {
     headers {
       if (authToken != null) {
@@ -50,11 +49,4 @@ private suspend fun httpGetSuspend(url: String, authToken: String?): ByteArray {
   }
 
   return response.bodyAsBytes()
-}
-
-fun httpGet(url: String, authToken: String?): ByteArray {
-  //todo refac eval framework to make it work with suspend funs
-  return runBlockingCancellable {
-    httpGetSuspend(url, authToken)
-  }
 }

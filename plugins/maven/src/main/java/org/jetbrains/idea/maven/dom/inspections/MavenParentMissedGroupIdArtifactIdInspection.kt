@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.inspections
 
+import com.intellij.openapi.project.DumbAware
 import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 
-class MavenParentMissedGroupIdArtifactIdInspection : MavenParentMissedCoordinatesInspection() {
+class MavenParentMissedGroupIdArtifactIdInspection : MavenParentMissedCoordinatesInspection(), DumbAware {
   override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel?>,
                                 holder: DomElementAnnotationHolder) {
     val parent = getParentIfExists(domFileElement) ?: return

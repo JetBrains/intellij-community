@@ -84,6 +84,21 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
     }
   }
 
+  /**
+   * IDEA-380354: Although the partial completion works for this case, the lookup does not have elements fulfilling a reference completely.
+   */
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testCompletionLongInDynamicallyAddedSubproject(gradleVersion: GradleVersion) {
+    test(gradleVersion, GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE) {
+      testCompletion("subprojectsDir/subproject1/build.gradle",
+                     "customLibs.a<caret>",
+                     listOf("apache")
+                     //listOf("apache.groovy") - expected once IDEA-380354 is fixed
+      )
+    }
+  }
+
   companion object {
 
     private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") { gradleVersion ->

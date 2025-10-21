@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.HttpRequests
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.Binary
 import com.jetbrains.python.sdk.Resource
 import com.jetbrains.python.sdk.installer.*

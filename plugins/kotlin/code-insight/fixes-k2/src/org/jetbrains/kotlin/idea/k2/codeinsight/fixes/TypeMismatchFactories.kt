@@ -50,7 +50,7 @@ object TypeMismatchFactories {
         actualType: KaType
     ): List<ModCommandAction> {
         // TODO: Add more fixes than just AddExclExclCallFix when available.
-        if (!expectedType.canBeNull && actualType.canBeNull) {
+        if (!expectedType.isNullable && actualType.isNullable) {
             // We don't want to offer AddExclExclCallFix if we know the expression is definitely null, e.g.:
             //
             //   if (nullableInt == null) {

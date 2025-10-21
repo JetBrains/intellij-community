@@ -17,6 +17,7 @@ import java.nio.file.Path;
 public abstract class RequestBuilder {
   public abstract RequestBuilder connectTimeout(int value);
   public abstract RequestBuilder readTimeout(int value);
+  public abstract RequestBuilder followRedirects(boolean value);
   public abstract RequestBuilder redirectLimit(int redirectLimit);
 
   /**

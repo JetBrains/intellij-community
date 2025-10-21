@@ -128,10 +128,9 @@ public abstract class XDebuggerUtil {
   public static final String INLINE_BREAKPOINTS_KEY = "debugger.show.breakpoints.inline";
 
   public static boolean areInlineBreakpointsEnabled(@Nullable VirtualFile file) {
+    boolean isRemDev = AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient();
     return Registry.is(INLINE_BREAKPOINTS_KEY) &&
-           // It's a temporary workaround for completely broken lambda breakpoints in RD, IDEA-358375.
-           !AppMode.isRemoteDevHost() &&
-           !PlatformUtils.isJetBrainsClient() &&
+           (SplitDebuggerMode.useFeProxy() || !isRemDev) &&
            !ContainerUtil.exists(InlineBreakpointsDisabler.Companion.getEP().getExtensionList(),
                                  disabler -> disabler.areInlineBreakpointsDisabled(file));
   }

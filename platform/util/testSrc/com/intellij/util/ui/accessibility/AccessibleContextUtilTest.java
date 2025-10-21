@@ -37,4 +37,21 @@ public class AccessibleContextUtilTest {
 
     Assert.assertEquals("a" + p + s + "b" + p + s + "c" + p, AccessibleContextUtil.replaceLineSeparatorsWithPunctuation("a\nb\n\nc"));
   }
+
+  @Test
+  public void testCombineAccessibleStrings() {
+    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings(null, null));
+    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings("", ""));
+    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings(null, ""));
+    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings("", null));
+
+    Assert.assertEquals("first", AccessibleContextUtil.combineAccessibleStrings("first", null));
+    Assert.assertEquals("first", AccessibleContextUtil.combineAccessibleStrings("first", ""));
+
+    Assert.assertEquals("second", AccessibleContextUtil.combineAccessibleStrings(null, "second"));
+    Assert.assertEquals("second", AccessibleContextUtil.combineAccessibleStrings("", "second"));
+
+    Assert.assertEquals("first second", AccessibleContextUtil.combineAccessibleStrings("first", "second"));
+    Assert.assertEquals("first, second", AccessibleContextUtil.combineAccessibleStrings("first", ", ", "second"));
+  }
 }

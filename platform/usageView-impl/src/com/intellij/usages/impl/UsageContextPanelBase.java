@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.usages.impl;
 
@@ -12,6 +12,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,13 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
   }
 
   @Override
+  @ApiStatus.Internal
+  public final void updateLayout(@NotNull Project project, final @Nullable List<? extends UsageInfo> infos, boolean severalFilesSelected) {
+    AppUIExecutor.onUiThread().withDocumentsCommitted(project).expireWith(this).execute(() -> updateLayoutLater(infos, severalFilesSelected
+    ));
+  }
+
+  @Override
   public final void updateLayout(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     AppUIExecutor.onUiThread().withDocumentsCommitted(project).expireWith(this)
       .execute(() -> updateLayoutLater(infos, usageView));
@@ -71,4 +79,9 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
   }
 
   protected abstract void updateLayoutLater(@Nullable List<? extends UsageInfo> infos);
+
+  @ApiStatus.Internal
+  protected void updateLayoutLater(@Nullable List<? extends UsageInfo> infos, boolean severalFilesSelected) {
+    updateLayoutLater(infos);
+  }
 }

@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
@@ -60,6 +61,7 @@ public interface Component extends DomElement {
     @SuppressWarnings("DeprecatedIsStillUsed")
     @NotNull
     @SubTag(value = "skipForDefaultProject", indicator = true)
+    @ApiStatus.Internal
     @Deprecated
     GenericDomValue<Boolean> getSkipForDefaultProject();
 

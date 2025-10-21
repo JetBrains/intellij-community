@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
 import org.jetbrains.annotations.NotNull
@@ -116,7 +117,7 @@ class SdkDownloaderTest : LightPlatformTestCase() {
     val th = threadEx { result.set(runCatching { action() }) }
     while (th.isAlive) {
       ProgressManager.checkCanceled()
-      dispatchAllInvocationEvents()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       th.join(100)
     }
     return result.get()?.getOrThrow() ?: error("No result was set")

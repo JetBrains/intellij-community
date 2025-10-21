@@ -12,11 +12,16 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.components.samConstructor
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -28,8 +33,11 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject.Companion.hasReceiver
@@ -41,18 +49,19 @@ import org.jetbrains.kotlin.renderer.render
 
 internal object FunctionLookupElementFactory {
 
-    context(KaSession)
+    context(_: KaSession)
     fun createLookup(
         shortName: Name,
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
+        aliasName: Name? = null,
     ): LookupElementBuilder {
         val valueParameters = signature.valueParameters
 
         val symbol = signature.symbol
         val lookupObject = FunctionCallLookupObject(
-            shortName = shortName,
+            shortName = aliasName ?: shortName,
             options = options,
             renderedDeclaration = CompletionShortNamesRenderer.renderFunctionParameters(valueParameters),
             hasReceiver = signature.hasReceiver,
@@ -60,10 +69,10 @@ internal object FunctionLookupElementFactory {
             inputTypeArgumentsAreRequired = !FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(symbol, expectedType),
         )
 
-        return createLookupElement(signature, lookupObject)
+        return createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     internal fun getTrailingFunctionSignature(
         signature: KaFunctionSignature<*>,
         checkDefaultValues: Boolean = true,
@@ -77,7 +86,7 @@ internal object FunctionLookupElementFactory {
             ?.takeUnless { it.symbol.isVararg }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     internal fun createTrailingFunctionDescriptor(
         trailingFunctionSignature: KaVariableSignature<KaValueParameterSymbol>,
     ): TrailingFunctionDescriptor? {
@@ -114,12 +123,14 @@ internal object FunctionLookupElementFactory {
         }
     }
 
-    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
     @ApiStatus.Experimental
     fun createLookupWithTrailingLambda(
         shortName: Name,
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
+        aliasName: Name?,
     ): LookupElementBuilder? {
         val trailingFunctionSignature = getTrailingFunctionSignature(signature)
             ?: return null
@@ -129,27 +140,33 @@ internal object FunctionLookupElementFactory {
             ?: return null
 
         val lookupObject = FunctionCallLookupObject(
-            shortName = shortName,
+            shortName = aliasName ?: shortName,
             options = options,
             renderedDeclaration = CompletionShortNamesRenderer.renderTrailingFunction(trailingFunctionSignature, trailingFunctionType),
             hasReceiver = signature.hasReceiver,
             inputTrailingLambdaIsRequired = true,
         )
-
-        return createLookupElement(signature, lookupObject).apply {
+        createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null).apply {
             hasTrailingLambda = true
+            if (trailingFunctionType.parameters.size > 1) {
+                TrailingLambdaInsertionHandler.create(trailingFunctionType)?.let {
+                    return withInsertHandler(it)
+                }
+            }
+            return this
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElement(
         signature: KaFunctionSignature<*>,
         lookupObject: FunctionCallLookupObject,
+        useFqNameInTailText: Boolean = false,
     ): LookupElementBuilder = LookupElementBuilder.create(
         /* lookupObject = */ lookupObject,
         /* lookupString = */ lookupObject.shortName.asString(),
     ).appendTailText(lookupObject.renderedDeclaration, true)
-        .appendTailText(TailTextProvider.getTailText(signature), true)
+        .appendTailText(TailTextProvider.getTailText(signature, useFqName = useFqNameInTailText), true)
         .let { withCallableSignatureInfo(signature, it) }
         .also { it.acceptOpeningBrace = true }
         .let { builder ->
@@ -165,22 +182,12 @@ internal object FunctionLookupElementFactory {
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> builder.withInsertHandler(FunctionInsertionHandler)
             CallableInsertionStrategy.AsIdentifier -> builder.withInsertHandler(CallableIdentifierInsertionHandler())
-            is CallableInsertionStrategy.AsIdentifierCustom -> builder.withInsertHandler(object : CallableIdentifierInsertionHandler() {
-                override fun handleInsert(context: InsertionContext, item: LookupElement) {
-                    super.handleInsert(context, item)
-                    insertionStrategy.insertionHandlerAction(context)
-                }
-            })
+            is CallableInsertionStrategy.InfixCallableInsertionStrategy -> builder.withInsertHandler(AsIdentifierCustomInsertionHandler)
 
             is CallableInsertionStrategy.WithCallArgs -> {
                 val argString = insertionStrategy.args.joinToString(", ", prefix = "(", postfix = ")")
                 builder.withInsertHandler(
-                    object : QuotedNamesAwareInsertionHandler() {
-                        override fun handleInsert(context: InsertionContext, item: LookupElement) {
-                            super.handleInsert(context, item)
-                            context.insertString(argString)
-                        }
-                    }
+                    WithCallArgsInsertionHandler(argString)
                 ).withTailText(argString, false)
             }
 
@@ -192,8 +199,30 @@ internal object FunctionLookupElementFactory {
     }
 }
 
+@Serializable
+internal object AsIdentifierCustomInsertionHandler : CallableIdentifierInsertionHandler() {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        super.handleInsert(context, item)
+        if (context.completionChar == ' ') {
+            context.setAddCompletionChar(false)
+        }
+
+        context.insertStringAndInvokeCompletion(" ")
+    }
+}
+
+@Serializable
+internal data class WithCallArgsInsertionHandler(
+    val argString: String,
+): QuotedNamesAwareInsertionHandler() {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        super.handleInsert(context, item)
+        context.insertString(argString)
+    }
+}
+
 object FunctionInsertionHelper {
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
         symbol: KaFunctionSymbol,
@@ -253,20 +282,25 @@ object FunctionInsertionHelper {
         }
 
 
-        symbol.receiverParameter?.returnType?.let { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = true) }
-        symbol.valueParameters.forEach { collectPotentiallyInferredTypes(it.returnType, onlyCollectReturnTypeOfFunctionalType = true) }
+        symbol.receiverParameter?.returnType?.let {
+            collectPotentiallyInferredTypes(it.upperBoundIfFlexible(), onlyCollectReturnTypeOfFunctionalType = true)
+        }
+        symbol.valueParameters.forEach {
+            collectPotentiallyInferredTypes(it.returnType.upperBoundIfFlexible(), onlyCollectReturnTypeOfFunctionalType = true)
+        }
 
         // check that there is an expected type and the return value of the function can potentially match it
         if (expectedType != null && symbol.returnType isPossiblySubTypeOf expectedType) {
-            collectPotentiallyInferredTypes(symbol.returnType, onlyCollectReturnTypeOfFunctionalType = false)
+            collectPotentiallyInferredTypes(symbol.returnType.upperBoundIfFlexible(), onlyCollectReturnTypeOfFunctionalType = false)
         }
 
         return potentiallyInferredTypeParameters.containsAll(symbol.typeParameters)
     }
 }
 
+@Serializable
 internal data class FunctionCallLookupObject(
-    override val shortName: Name,
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
     val hasReceiver: Boolean, // todo find a better solution
@@ -283,6 +317,7 @@ internal data class FunctionCallLookupObject(
     }
 }
 
+@Serializable
 internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
     private fun addArguments(context: InsertionContext, offsetElement: PsiElement, lookupObject: FunctionCallLookupObject) {

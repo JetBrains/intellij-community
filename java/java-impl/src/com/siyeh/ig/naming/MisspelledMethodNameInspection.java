@@ -57,7 +57,7 @@ public final class MisspelledMethodNameInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MethodNamesDifferOnlyByCaseVisitor();
   }
 

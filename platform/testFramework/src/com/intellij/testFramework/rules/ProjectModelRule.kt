@@ -216,7 +216,7 @@ open class ProjectModelRule : TestRule {
   }
 
   fun setUnloadedModules(vararg moduleName: String) {
-    runUnderModalProgressIfIsEdt {
+    runUnderModalProgressIfIsEdt(project) {
       moduleManager.setUnloadedModules(moduleName.toList())
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project)

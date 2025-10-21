@@ -437,8 +437,8 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
 
     companion object {
         const val TYPED_VAR_PREFIX: String = "_____"
-        val DEFAULT_CONTEXT: PatternContext = PatternContext("default", KotlinBundle.lazyMessage("context.default"))
-        val PROPERTY_CONTEXT: PatternContext = PatternContext("property", KotlinBundle.lazyMessage("context.property.getter.or.setter"))
+        val DEFAULT_CONTEXT: PatternContext = PatternContext("default", KotlinBundle.messagePointer("context.default"))
+        val PROPERTY_CONTEXT: PatternContext = PatternContext("property", KotlinBundle.messagePointer("context.property.getter.or.setter"))
         private val PATTERN_CONTEXTS: MutableList<PatternContext> = mutableListOf(DEFAULT_CONTEXT, PROPERTY_CONTEXT)
         private val PATTERN_ERROR: Key<String> = Key("patternError")
 

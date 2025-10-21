@@ -22,26 +22,11 @@ import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 @Named("Intellij Idea Maven Embedded Event Spy")
 @Singleton
 public class IntellijMavenSpy extends AbstractEventSpy {
-  private EventInfoPrinter myPrinter;
+  private static EventInfoPrinter ourPrinter = new EventInfoPrinter(s -> System.out.println(s));
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  @Override
-  public void init(Context context) throws Exception {
-    try {
-      doInit(context);
-    }
-    catch (Throwable ignore) {
-    }
 
-    if (myPrinter == null) {
-      myPrinter = new EventInfoPrinter(s -> System.out.println(s));
-      System.err.println("IntellijMavenSpy not initialized, build nodes could be displayed incorrectly");
-    }
-  }
-
-  private void doInit(Context context)
-    throws Throwable {
-    myPrinter = new EventInfoPrinter(s -> System.out.println(s));
+  public static void printInternalLogging(String message){
+    ourPrinter.printMavenEventInfo("IDEA_INTERNAL_MESSAGE", "error", message);
   }
 
   @Override
@@ -67,7 +52,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
 
   private void onDependencyResolutionRequest(DependencyResolutionRequest event) {
     String projectId = event.getMavenProject() == null ? "unknown" : event.getMavenProject().getId();
-    myPrinter.printMavenEventInfo("DependencyResolutionRequest", "id", projectId);
+    ourPrinter.printMavenEventInfo("DependencyResolutionRequest", "id", projectId);
   }
 
   private void onDependencyResolutionResult(DependencyResolutionResult event) {
@@ -79,7 +64,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
       }
       result.append(e.getMessage());
     }
-    myPrinter.printMavenEventInfo("DependencyResolutionResult", "error", result);
+    ourPrinter.printMavenEventInfo("DependencyResolutionResult", "error", result);
   }
 
   private void collectAndPrintLastLinesForEA(Throwable e) {
@@ -90,7 +75,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     for (int i = 0; i < lines; i++) {
       builder.append(e.getStackTrace()[i]).append("\n");
     }
-    myPrinter.printMavenEventInfo("INTERR", "error", builder);
+    ourPrinter.printMavenEventInfo("INTERR", "error", builder);
   }
 
   private void onRepositoryEvent(RepositoryEvent event) {
@@ -103,7 +88,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     String errMessage = event.getException() == null ? "" : event.getException().getMessage();
     String path = event.getFile() == null ? "" : event.getFile().getPath();
     String artifactCoord = event.getArtifact() == null ? "" : event.getArtifact().toString();
-    myPrinter.printMavenEventInfo(type, "path", path, "artifactCoord", artifactCoord, "error", errMessage);
+    ourPrinter.printMavenEventInfo(type, "path", path, "artifactCoord", artifactCoord, "error", errMessage);
   }
 
   private void onExecutionEvent(ExecutionEvent event) {
@@ -111,17 +96,17 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     String projectId = event.getProject() == null ? "unknown" : event.getProject().getId();
     if (mojoExec != null) {
       String errMessage = event.getException() == null ? "" : getErrorMessage(event.getException());
-      myPrinter.printMavenEventInfo(event.getType(), "source", String.valueOf(mojoExec.getSource()), "goal", mojoExec.getGoal(), "id",
-                                    projectId,
-                          "error",
-                          errMessage);
+      ourPrinter.printMavenEventInfo(event.getType(), "source", String.valueOf(mojoExec.getSource()), "goal", mojoExec.getGoal(), "id",
+                                     projectId,
+                                     "error",
+                                     errMessage);
     }
     else {
       if (event.getType() == ExecutionEvent.Type.SessionStarted) {
         printSessionStartedEventAndReactorData(event, projectId);
       }
       else {
-        myPrinter.printMavenEventInfo(event.getType(), "id", projectId);
+        ourPrinter.printMavenEventInfo(event.getType(), "id", projectId);
       }
     }
   }
@@ -147,10 +132,10 @@ public class IntellijMavenSpy extends AbstractEventSpy {
           .append(project.getArtifactId()).append(":")
           .append(project.getVersion()).append("&&");
       }
-      myPrinter.printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder);
+      ourPrinter.printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder);
     }
     else {
-      myPrinter.printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", "");
+      ourPrinter.printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", "");
     }
   }
 }

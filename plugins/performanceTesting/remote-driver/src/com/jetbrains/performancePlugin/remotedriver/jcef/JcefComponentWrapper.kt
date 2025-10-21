@@ -25,6 +25,8 @@ internal class JcefComponentWrapper(private val component: Component) {
 
   fun runJs(js: String) = jsExecutor.runJs(js)
 
+  fun isLoading() = jbCefBrowser.cefBrowser.isLoading
+
   /**
    * Executes the provided JavaScript code in the embedded browser and returns the result. The code must be able to fit in JBCefJSQuery.
    * Normally, it should be a one-line function call.

@@ -13,8 +13,8 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/XmlBundle" key="schema2instance.dialog.schema.path"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.schema2instance.url.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="schema2instance.dialog.schema.path"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.schema2instance.url.tooltip"/>
         </properties>
       </component>
       <component id="bef0c" class="javax.swing.JLabel" binding="statusText">
@@ -22,8 +22,8 @@
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/XmlBundle" key="any.dialog.status"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="webservice.status.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="any.dialog.status"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="webservice.status.tooltip"/>
         </properties>
       </component>
       <component id="6432a" class="javax.swing.JLabel" binding="status">
@@ -32,7 +32,7 @@
         </constraints>
         <properties>
           <text value=""/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="webservice.status.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="webservice.status.tooltip"/>
         </properties>
       </component>
       <component id="b2571" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="generateFromUrl">
@@ -42,7 +42,7 @@
           </grid>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.instance2schema.url.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.instance2schema.url.tooltip"/>
         </properties>
       </component>
       <component id="73cde" class="javax.swing.JLabel" binding="rootElementChooserText">
@@ -50,8 +50,8 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/XmlBundle" key="schema2instance.dialog.element.name"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.rootelement.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="schema2instance.dialog.element.name"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.rootelement.tooltip"/>
         </properties>
       </component>
       <component id="d3b6f" class="javax.swing.JComboBox" binding="rootElementChooser">
@@ -60,7 +60,7 @@
         </constraints>
         <properties>
           <editable value="true"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.rootelement.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.rootelement.tooltip"/>
         </properties>
       </component>
       <component id="a0090" class="javax.swing.JCheckBox" binding="enableRestrictionCheck">
@@ -70,8 +70,8 @@
         <properties>
           <margin top="0" left="0" bottom="0" right="0"/>
           <selected value="true"/>
-          <text resource-bundle="messages/XmlBundle" key="schema2instance.dialog.enable.restriction.check"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.particle.valid.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="schema2instance.dialog.enable.restriction.check"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.particle.valid.tooltip"/>
         </properties>
       </component>
       <component id="3df45" class="javax.swing.JCheckBox" binding="enableUniqueCheck">
@@ -83,8 +83,8 @@
           <horizontalTextPosition value="4"/>
           <margin top="0" left="0" bottom="0" right="0"/>
           <selected value="true"/>
-          <text resource-bundle="messages/XmlBundle" key="schema2instance.dialog.enable.unique.check"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.unique.particle.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="schema2instance.dialog.enable.unique.check"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.unique.particle.tooltip"/>
         </properties>
       </component>
       <component id="9cfb7" class="javax.swing.JLabel" binding="outputFileNameText">
@@ -93,8 +93,8 @@
         </constraints>
         <properties>
           <labelFor value="aa173"/>
-          <text resource-bundle="messages/XmlBundle" key="schema2instance.dialog.instance.document.name"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.instance.document.name.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="schema2instance.dialog.instance.document.name"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.instance.document.name.tooltip"/>
         </properties>
       </component>
       <component id="aa173" class="javax.swing.JTextField" binding="outputFileName">
@@ -104,7 +104,7 @@
           </grid>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.instance.document.name.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.instance.document.name.tooltip"/>
         </properties>
       </component>
     </children>

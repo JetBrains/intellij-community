@@ -2,6 +2,7 @@
 package com.intellij.ui.messages
 
 import com.intellij.BundleBase
+import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
@@ -29,6 +30,7 @@ import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.plaf.basic.BasicHTML
@@ -93,19 +95,20 @@ internal class AlertMessagesManager {
 
 private const val PARENT_WIDTH_KEY = "parent.width"
 
-@ApiStatus.Internal
-class AlertDialog(project: Project?,
-                  parentComponent: Component?,
-                  @NlsContexts.DialogMessage val myMessage: String?,
-                  @NlsContexts.DialogTitle val myTitle: String?,
-                  val myOptions: Array<String>,
-                  val myDefaultOptionIndex: Int,
-                  val myFocusedOptionIndex: Int,
-                  icon: Icon,
-                  doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
-                  val myHelpId: String?,
-                  invocationPlace: String? = null,
-                  val exitActionTypes: Array<ExitActionType> = emptyArray()) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
+internal class AlertDialog(
+  project: Project?,
+  parentComponent: Component?,
+  @NlsContexts.DialogMessage val myMessage: String?,
+  @NlsContexts.DialogTitle val myTitle: String?,
+  val myOptions: Array<String>,
+  val myDefaultOptionIndex: Int,
+  val myFocusedOptionIndex: Int,
+  icon: Icon,
+  @Suppress("RemoveRedundantQualifierName") doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
+  val myHelpId: String?,
+  invocationPlace: String? = null,
+  val exitActionTypes: Array<ExitActionType> = emptyArray(),
+) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
@@ -133,6 +136,7 @@ class AlertDialog(project: Project?,
         }
       }
       myCloseButton.preferredSize = JBDimension(22, 22)
+      myCloseButton.accessibleContext.accessibleName = CommonBundle.message("button.without.mnemonic.close")
     }
     else {
       myCloseButton = null
@@ -206,6 +210,14 @@ class AlertDialog(project: Project?,
     }
 
     WindowRoundedCornersManager.configure(this)
+
+    val alertBackground = JBColor.namedColor("AlertDialog.background", JBColor.PanelBackground)
+
+    UIUtil.uiTraverser(window).traverse().consumeEach {
+      if (JBColor.PanelBackground.equals(it.background)) {
+        it.background = alertBackground
+      }
+    }
   }
 
   override fun setSizeDuringPack() = false
@@ -354,6 +366,15 @@ class AlertDialog(project: Project?,
           }
           return super.getPreferredSize()
         }
+
+        override fun getAccessibleContext(): AccessibleContext? {
+          if (accessibleContext == null) {
+            accessibleContext = object : AccessibleJEditorPane() {
+              override fun getAccessibleRole(): AccessibleRole? = AccessibleRole.LABEL
+            }
+          }
+          return accessibleContext
+        }
       }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
 
       messageComponent.font = JBFont.regular()
@@ -454,11 +475,10 @@ class AlertDialog(project: Project?,
     kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
     component.editorKit = kit
     component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-
-    if (BasicHTML.isHTMLString(message)) {
-      component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
-                                  StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message!!, " ")))
-    }
+    component.putClientProperty(
+      AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+      if (BasicHTML.isHTMLString(message)) StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message!!, " ")) else message
+    )
 
     component.text = message
 

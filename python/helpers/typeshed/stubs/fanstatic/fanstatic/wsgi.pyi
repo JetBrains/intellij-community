@@ -8,7 +8,7 @@ from webob import Request, Response
 from webob.dec import wsgify
 
 def Fanstatic(
-    app: WSGIApplication, publisher_signature: str = ..., injector: InjectorPlugin | None = None, **config: Any
+    app: WSGIApplication, publisher_signature: str = "fanstatic", injector: InjectorPlugin | None = None, **config: Any
 ) -> Delegator: ...
 def make_fanstatic(app: WSGIApplication, global_config: Any, **local_config: Any) -> Delegator: ...
 

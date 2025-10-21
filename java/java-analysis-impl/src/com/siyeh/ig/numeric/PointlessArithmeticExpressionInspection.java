@@ -81,8 +81,8 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     final PsiJavaToken token = expression.getTokenBeforeOperand(operands[1]);
     assert token != null;
     String prefix = "";
-    if (isZero(expressions.get(0)) && expressions.size() > 1 && JavaTokenType.MINUS == token.getTokenType()) {
-      expressions.remove(0);
+    if (isZero(expressions.getFirst()) && expressions.size() > 1 && JavaTokenType.MINUS == token.getTokenType()) {
+      expressions.removeFirst();
       prefix = "- ";
     }
     final String delimiter = " " + token.getText() + " ";
@@ -105,15 +105,15 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
         continue;
       }
       else if (tokenType.equals(JavaTokenType.MINUS) && !expressions.isEmpty() &&
-               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expressions.get(0), operand)) {
-        expressions.remove(0);
-        expressions.add(0, factory.createExpressionFromText(numberAsText(0, type), operand));
+               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expressions.getFirst(), operand)) {
+        expressions.removeFirst();
+        expressions.addFirst(factory.createExpressionFromText(numberAsText(0, type), operand));
         continue;
       }
       else if (tokenType.equals(JavaTokenType.DIV) &&
                EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(ContainerUtil.getLastItem(expressions), operand)) {
-        expressions.remove(expressions.size() - 1);
-        expressions.add(factory.createExpressionFromText(numberAsText(1, type), operand));
+        expressions.removeLast();
+        expressions.addLast(factory.createExpressionFromText(numberAsText(1, type), operand));
         continue;
       }
       else if (tokenType.equals(JavaTokenType.ASTERISK) && isZero(operand) ||
@@ -164,7 +164,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PointlessArithmeticVisitor();
   }
 

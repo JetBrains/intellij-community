@@ -1,13 +1,14 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Mapping
-from typing import Any, Generic, TypeVar, overload
+from typing import Any, Final, Generic, TypeVar, overload
 from typing_extensions import ParamSpec, Self
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
-__all__ = ["_dispatch"]
+__all__ = ["_dispatchable"]
+FAILED_TO_CONVERT: Final[str]
 
-class _dispatch(Generic[_P, _R]):
+class _dispatchable(Generic[_P, _R]):
     __defaults__: Incomplete
     __kwdefaults__: Incomplete
     __module__: Incomplete
@@ -20,12 +21,13 @@ class _dispatch(Generic[_P, _R]):
     preserve_edge_attrs: bool
     preserve_node_attrs: bool
     preserve_graph_attrs: bool
+    mutates_input: bool
     optional_graphs: Incomplete
     list_graphs: Incomplete
     graphs: dict[str, int]
     backends: dict[str, Incomplete]
     # Incomplete: Ignoring the case where func=None returns a partial,
-    # we only care about `_dispatch` used as a static-typing decorator
+    # we only care about `_dispatchable` used as a static-typing decorator
     def __new__(
         cls,
         func: Callable[_P, _R] | None = None,
@@ -38,6 +40,9 @@ class _dispatch(Generic[_P, _R]):
         preserve_node_attrs: bool = False,
         preserve_graph_attrs: bool = False,
         preserve_all_attrs: bool = False,
+        mutates_input: bool = False,
+        returns_graph: bool = False,
+        implemented_by_nx: bool = True,
     ) -> Self: ...
     @property
     def __doc__(self): ...
@@ -57,5 +62,4 @@ class _dispatch(Generic[_P, _R]):
     # def __call__(self, *args: _P.args, backend: None = None, **kwargs: _P.kwargs) -> _R: ...
     # @overload
     # def __call__(self, *args: _P.args, backend: str, **kwargs: _P.kwargs, **backend_kwargs: Any) -> _R: ...
-
     def __reduce__(self): ...

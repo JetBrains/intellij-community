@@ -6,7 +6,7 @@ import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -19,15 +19,14 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.roots
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchInProgressListener
 import git4idea.i18n.GitBundle.message
-import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitTagHolder
-import git4idea.repo.GitTagLoaderListener
+import git4idea.repo.*
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +70,8 @@ class AsyncBranchesDashboardTreeModel(private val cs: CoroutineScope, logData: V
 
   override fun refreshTree() {
     startLoading()
-    cs.launch(Dispatchers.UI) {
+    // EDT because listener of `setTree` starts RA in TreeUtil.promiseVisit
+    cs.launch(Dispatchers.EDT) {
       try {
         val treeNodes = refreshMutex.withPermit {
           val refs = refs.copy()
@@ -102,6 +102,7 @@ abstract class BranchesDashboardTreeModelBase(
 ) : BranchesTreeModelBase(), BranchesDashboardTreeModel, Disposable {
 
   protected val project: Project = logData.project
+  private val roots = logData.roots.toSet()
 
   internal val refs: RefsCollection = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf<BranchInfo>(), hashSetOf<RefInfo>())
 
@@ -121,6 +122,21 @@ abstract class BranchesDashboardTreeModelBase(
   }
 
   init {
+    project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
+      override fun repositoryCreated(repository: GitRepository, info: GitRepoInfo) {
+        if (!roots.contains(repository.root)) return
+        runInEdt {
+          updateBranchesTree()
+        }
+      }
+
+      override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
+        if (!roots.contains(repository.root)) return
+        runInEdt {
+          updateBranchesTree()
+        }
+      }
+    })
     project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
       override fun branchFavoriteSettingsChanged() {
         runInEdt {
@@ -151,7 +167,11 @@ abstract class BranchesDashboardTreeModelBase(
         updateBranchesIncomingOutgoingState()
       })
 
-    val changeListener = DataPackChangeListener { updateBranchesTree() }
+    val changeListener = DataPackChangeListener {
+      runInEdt {
+        if (showOnlyMy) updateBranchesTree()
+      }
+    }
     logData.addDataPackChangeListener(changeListener)
     Disposer.register(this) {
       logData.removeDataPackChangeListener(changeListener)

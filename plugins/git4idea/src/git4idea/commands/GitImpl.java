@@ -445,22 +445,31 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
-  public @NotNull GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
+  public @NotNull GitCommandResult reset(@NotNull GitRepository repository,
+                                         @NotNull GitResetMode mode,
+                                         @NotNull String target,
+                                         @Nullable String reflogMessage,
                                          GitLineHandlerListener @NotNull ... listeners) {
-    return reset(repository, mode.getArgument(), target, listeners);
+    return reset(repository, mode.getArgument(), target, reflogMessage, listeners);
   }
 
   @Override
   public @NotNull GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision) {
-    return reset(repository, "--merge", revision);
+    return reset(repository, "--merge", revision, null);
   }
 
-  private @NotNull GitCommandResult reset(@NotNull GitRepository repository, @NotNull String argument, @Nullable String target,
+  private @NotNull GitCommandResult reset(@NotNull GitRepository repository,
+                                          @NotNull String argument,
+                                          @Nullable String target,
+                                          @Nullable String reflogMessage,
                                           GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.RESET);
     handler.addParameters(argument);
     if (target != null) {
       handler.addParameters(target);
+    }
+    if (reflogMessage != null) {
+      handler.addCustomEnvironmentVariable(GitCommand.GIT_REFLOG_ACTION_ENV, reflogMessage);
     }
     addListeners(handler, listeners);
     return runCommand(handler);
@@ -791,6 +800,18 @@ public class GitImpl extends GitImplBase {
       LOG.debug("Reference [" + ref + "] is unknown to Git in " + root);
       return null;
     }
+  }
+
+  @Override
+  public @NotNull GitCommandResult updateReference(@NotNull GitRepository repository, @NotNull String reference,
+                                                   @NotNull Hash newObjectId,
+                                                   @Nullable String reflogMessage) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_REF);
+    h.addParameters(reference, newObjectId.asString());
+    if (reflogMessage != null) {
+      h.addParameters("-m", reflogMessage);
+    }
+    return runCommand(h);
   }
 
   private @NotNull GitCommandResult doLsRemote(final @NotNull Project project,

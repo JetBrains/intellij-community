@@ -1,4 +1,4 @@
-<idea-plugin package="training">
+<idea-plugin package="training" allow-bundled-update="true">
   <id>training</id>
   <name>IDE Features Trainer</name>
   <vendor>JetBrains</vendor>
@@ -19,10 +19,10 @@
     <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.vcs.git.featuresTrainer"/>
     <module name="intellij.featuresTrainer.onboarding"/>
-    <module name="intellij.kotlin.onboarding-promoter"/>
+    <module name="intellij.kotlin.onboarding.promoter"/>
   </content>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>

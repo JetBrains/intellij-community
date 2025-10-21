@@ -88,6 +88,9 @@ public abstract class LafManager {
   @ApiStatus.Internal
   public void applyDensity() { }
 
+  @ApiStatus.Internal
+  public void applyAltColors() { }
+
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */

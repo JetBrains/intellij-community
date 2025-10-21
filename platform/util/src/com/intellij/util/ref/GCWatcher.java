@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * so, if you pass fields or local variables there, nullify them before calling {@link #ensureCollected()}.
  *
  */
+@TestOnly
 @ApiStatus.Internal
 public final class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();

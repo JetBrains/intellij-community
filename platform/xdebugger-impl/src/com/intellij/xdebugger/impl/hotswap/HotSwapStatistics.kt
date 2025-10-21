@@ -5,13 +5,13 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import kotlinx.serialization.Serializable
+import com.intellij.xdebugger.impl.rpc.HotSwapSource
 import org.jetbrains.annotations.ApiStatus
 
 @Suppress("PublicApiImplicitType")
 @ApiStatus.Internal
 object HotSwapStatistics : CounterUsagesCollector() {
-  private val group = EventLogGroup("debugger.hotswap", 1)
+  private val group = EventLogGroup("debugger.hotswap", 2)
 
   private val hotSwapCalled = group.registerEvent("hotswap.called", EventFields.Enum<HotSwapSource>("source"))
   private val hotSwapStatus = group.registerEvent("hotswap.finished", EventFields.Enum<HotSwapStatus>("status"))
@@ -31,16 +31,6 @@ object HotSwapStatistics : CounterUsagesCollector() {
 
   @JvmStatic
   fun logClassesReloaded(project: Project, count: Int) = hotSwapClassesNumber.log(project, count)
-
-  @Serializable
-  enum class HotSwapSource {
-    RELOAD_FILE,
-    RELOAD_ALL,
-    ON_REBUILD_AUTO,
-    ON_REBUILD_ASK,
-    RELOAD_MODIFIED_ACTION,
-    RELOAD_MODIFIED_BUTTON,
-  }
 
   enum class HotSwapStatus {
     SUCCESS,

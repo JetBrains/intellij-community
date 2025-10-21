@@ -11,9 +11,11 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
+import com.intellij.openapi.externalSystem.util.awaitProjectActivity
+import com.intellij.openapi.externalSystem.util.waitForProjectActivity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -41,7 +43,7 @@ class GradleExecutionTestFixtureImpl(
   }
 
   override fun tearDown() {
-    RunAll.Companion.runAll(
+    runAll(
       { executionLeakTracker.tearDown() },
       { taskExecutionLeakTracker.tearDown() }
     )
@@ -51,7 +53,7 @@ class GradleExecutionTestFixtureImpl(
     commandLine: String,
     isRunAsTest: Boolean
   ): RunnerAndConfigurationSettings {
-    val runManager = RunManager.Companion.getInstance(project)
+    val runManager = RunManager.getInstance(project)
     val runConfigurationName = "GradleExecutionTestFixture (" + LocalTimeCounter.currentTime() + ")"
     val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)
     val runConfiguration = runnerSettings.configuration as GradleRunConfiguration
@@ -123,25 +125,13 @@ class GradleExecutionTestFixtureImpl(
 
   override fun <R> waitForAnyGradleTaskExecution(action: () -> R): R {
     return assertAnyGradleTaskExecution(numExec = 1) {
-      waitForGradleEventDispatcherClosing {
-        waitForAnyExecution(project) {
-          org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
-            action()
-          }
-        }
-      }
+      waitForProjectActivity(project, action)
     }
   }
 
   override suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R {
     return assertAnyGradleTaskExecutionAsync(numExec = 1) {
-      awaitGradleEventDispatcherClosing {
-        awaitAnyExecution(project) {
-          org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleTaskExecution {
-            action()
-          }
-        }
-      }
+      awaitProjectActivity(project, action)
     }
   }
 }

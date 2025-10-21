@@ -22,15 +22,21 @@ object FreezeAnalyzer {
     return edtThread?.let { analyzeEDThread(it, threadDumpParsed, testName) }
   }
 
+  private fun ThreadState.isEdtWaiting() = this.isWaiting || isWaitingOnSuvorod(this)
+
   private fun analyzeEDThread(edt: ThreadState, threadDumpParsed: List<ThreadState>, testName: String?): FreezeAnalysisResult? =
     when {
-      !edt.isWaiting && !edt.isSleeping -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
-      edt.isWaiting && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.threads + listOf(edt), it.additionalMessage) }
-      edt.isWaiting && !isEDTFreezed(edt) && testName == null -> null
-      edt.isWaiting && !isEDTFreezed(edt) && testName != null -> FreezeAnalysisResult("${testName}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
-      edt.isWaiting -> analyzeLock(edt, threadDumpParsed)
+      !edt.isEdtWaiting() && !edt.isSleeping -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
+      edt.isEdtWaiting() && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.threads + listOf(edt), it.additionalMessage) }
+      edt.isEdtWaiting() && !isEDTFreezed(edt) && testName == null -> null
+      edt.isEdtWaiting() && !isEDTFreezed(edt) && testName != null -> FreezeAnalysisResult("${testName}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
+      edt.isEdtWaiting() -> analyzeLock(edt, threadDumpParsed)
       else -> null
     }
+
+  private fun isWaitingOnSuvorod(edt: ThreadState): Boolean {
+    return getMethodList(edt.stackTrace).any { it.contains("SuvorovProgress") }
+  }
 
   private fun isEDTFreezed(edt: ThreadState): Boolean {
     return findFirstRelevantMethod(edt.stackTrace) != "com.intellij.ide.IdeEventQueue.getNextEvent"
@@ -39,7 +45,7 @@ object FreezeAnalyzer {
   private fun analyzeLock(edt: ThreadState, threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? {
     val relevantMethodFromEdt = findFirstRelevantMethod(edt.stackTrace)
     if (relevantMethodFromEdt == null) return null
-    if (edt.stackTrace != null && edt.stackTrace.contains("on kotlinx.coroutines.BlockingCoroutine") && getMethodList(edt.stackTrace).any { it.contains("BlockingCoroutine.joinBlocking") }) return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt which called runBlocking", listOf(edt),)
+    if (edt.stackTrace != null && edt.stackTrace.contains("on kotlinx.coroutines.BlockingCoroutine") && getMethodList(edt.stackTrace).any { it.contains("BlockingCoroutine.joinBlocking") }) return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt which called runBlocking", listOf(edt))
     var possibleThreadWithLock: ThreadState? = null
     for (it in getPotentialMethodsWithLock(edt.stackTrace)) {
       val clazz = extractClassFromMethod(it)
@@ -72,13 +78,15 @@ object FreezeAnalyzer {
     threadState.stackTrace.lineSequence().map { it.trimStart() }.any {
       it.startsWith("at com.intellij.openapi.application.impl.ReadMostlyRWLock.writeLock") ||
       it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
-      it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
+      it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit") ||
+      it.contains("SuvorovProgress")
     }
 
   private fun findThreadThatTookReadWriteLock(threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? =
     threadDumpParsed.asSequence()
       .filter { it.name != "Coroutine dump" }
       .filter { !isWaitingOnReadWriteLock(it) && !it.isKnownJDKThread }
+      .filter { !it.isEDT }
       .firstOrNull { isReadWriteLockTaken(it.stackTrace) }
       ?.let { threadState ->
         threadDumpParsed.firstOrNull { it.isAwaitedBy(threadState) }?.let {
@@ -102,7 +110,8 @@ object FreezeAnalyzer {
         it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getReadPermit") ||
         it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
         it.startsWith("at com.intellij.openapi.application.impl.ComputationState.acquireReadPermit") ||
-        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
+        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit") ||
+        it.startsWith("at com.intellij.platform.locking.impl.RunSuspend.await")
       }
 
   private fun isReadWriteLockTaken(stackTrace: String): Boolean =
@@ -117,10 +126,10 @@ object FreezeAnalyzer {
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runReadAction") ||
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runWriteIntentReadAction") ||
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.tryRunReadAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runWriteAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runReadAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runWriteIntentReadAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.tryRunReadAction")
+    contains("NestedLocksThreadingSupport.runWriteAction") ||
+    contains("NestedLocksThreadingSupport.runReadAction") ||
+    contains("NestedLocksThreadingSupport.runWriteIntentReadAction") ||
+    contains("NestedLocksThreadingSupport.tryRunReadAction")
 
 
   private fun String.isJDKMethod(): Boolean {
@@ -150,15 +159,44 @@ object FreezeAnalyzer {
       "at com.intellij.openapi.progress.",
       "at com.intellij.openapi.application.",
       "at platform/jdk.zipfs",
-      "at net.jpountz.lz4."
+      "at net.jpountz.lz4.",
+      "at com.intellij.concurrency.",
+      "at com.intellij.platform.locking."
     )
+    if(this.contains("\$\$Lambda")) return false
     return !isJDKMethod() && irrelevantStarts.none { this.startsWith(it) }
   }
 
   private fun findFirstRelevantMethod(stackTrace: String): String? {
-    val methodList = getMethodList(stackTrace)
-    return (methodList.firstOrNull { it.isRelevantMethod() } ?: methodList.firstOrNull { !it.isJDKMethod() })?.let { extractMethodName(it) }
+    val methodList = getMethodList(stackTrace).toList()
+    if (methodList.isEmpty()) return null
 
+
+    val readActions = listOf(
+      "at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction",
+      "at com.intellij.openapi.application.ActionsKt.runReadAction",
+      "at com.intellij.openapi.application.ReadAction.compute",
+      "at com.intellij.openapi.application.ReadAction.run",
+      "at com.intellij.openapi.application.rw.InternalReadAction.insideReadAction"
+    )
+
+
+    var blockingMethod: String? = null
+    methodList.forEachIndexed { i, line ->
+      if (readActions.any { line.startsWith(it) }) {
+        for (j in i - 1 downTo 0) {
+          val candidate = methodList[j]
+          if (candidate.isRelevantMethod()) {
+            blockingMethod = candidate
+            break
+          }
+        }
+        if (blockingMethod != null) return@forEachIndexed
+      }
+    }
+    if (blockingMethod != null) return extractMethodName(blockingMethod)
+
+    return (methodList.firstOrNull { it.isRelevantMethod() } ?: methodList.firstOrNull { !it.isJDKMethod() })?.let { extractMethodName(it) }
   }
 
   private fun getMethodList(stackTrace: String) = stackTrace.lineSequence()

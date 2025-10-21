@@ -196,7 +196,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new StringConcatenationArgumentToLogCallVisitor();
   }
 

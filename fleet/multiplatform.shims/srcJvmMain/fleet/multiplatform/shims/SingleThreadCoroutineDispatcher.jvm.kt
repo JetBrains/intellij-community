@@ -2,17 +2,19 @@
 package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.Actual
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
 @Actual("newSingleThreadCoroutineDispatcher")
 fun newSingleThreadCoroutineDispatcherJvm(
   name: String,
-  priority: DispatcherPriority
+  priority: DispatcherPriority,
 ): HighPriorityCoroutineDispatcherResource =
   object : HighPriorityCoroutineDispatcherResource {
-    override suspend fun <U> use(body: suspend (CoroutineContext) -> U): U {
+    override suspend fun <U> use(body: suspend CoroutineScope.(CoroutineContext) -> U): U {
       val changesThread = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, name).apply {
           this.isDaemon = true
@@ -25,7 +27,7 @@ fun newSingleThreadCoroutineDispatcherJvm(
       }
 
       return try {
-        body(changesThread.asCoroutineDispatcher())
+        coroutineScope { body(changesThread.asCoroutineDispatcher()) }
       }
       finally {
         changesThread.shutdown()

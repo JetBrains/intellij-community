@@ -22,6 +22,7 @@ from antlr4.PredictionContext import (
 from antlr4.Token import Token as Token
 
 class SimState:
+    __slots__ = ("index", "line", "column", "dfaState")
     def __init__(self) -> None: ...
     index: int
     line: int
@@ -30,6 +31,7 @@ class SimState:
     def reset(self) -> None: ...
 
 class LexerATNSimulator(ATNSimulator):
+    __slots__ = ("decisionToDFA", "recog", "startIndex", "line", "column", "mode", "DEFAULT_MODE", "MAX_CHAR_VALUE", "prevAccept")
     debug: bool
     dfa_debug: bool
     MIN_DFA_EDGE: int

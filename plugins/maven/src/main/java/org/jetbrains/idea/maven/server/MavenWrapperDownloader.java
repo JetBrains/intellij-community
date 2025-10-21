@@ -17,6 +17,7 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
+import java.nio.file.Path;
 import java.util.Locale;
 
 public final class MavenWrapperDownloader {
@@ -29,6 +30,10 @@ public final class MavenWrapperDownloader {
                                            @Nullable String workingDir,
                                            boolean showNotificationIfUrlMissing) {
     checkOrInstall(project, workingDir, MavenProjectsManager.getInstance(project).getSyncConsole(), showNotificationIfUrlMissing);
+  }
+
+  public static void invalidateCaches() {
+    MavenWrapperMapping.getInstance().invalidate();
   }
 
   private static synchronized void checkOrInstall(@NotNull Project project,
@@ -59,7 +64,7 @@ public final class MavenWrapperDownloader {
     try {
       distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, indicator, project);
       if (syncConsole != null && distributionUrl.toLowerCase(Locale.ENGLISH).startsWith("http:")) {
-        MavenWrapperSupport.showUnsecureWarning(syncConsole, LocalFileSystem.getInstance().findFileByPath(multiModuleDir));
+        MavenWrapperSupport.showUnsecureWarning(syncConsole, Path.of(multiModuleDir));
       }
       distributionsCache.addWrapper(multiModuleDir, distribution);
       if (syncConsole != null) syncConsole.finishWrapperResolving(null);

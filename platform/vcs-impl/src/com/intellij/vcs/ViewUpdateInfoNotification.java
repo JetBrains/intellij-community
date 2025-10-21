@@ -3,10 +3,8 @@ package com.intellij.vcs;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -20,17 +18,11 @@ public final class ViewUpdateInfoNotification extends NotificationAction {
   private final @NotNull Project myProject;
   private final @NotNull UpdateInfoTree myTree;
 
-  public ViewUpdateInfoNotification(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree, 
-                                    @NotNull @NlsContexts.NotificationContent String actionName, @NotNull Notification notification) {
+  public ViewUpdateInfoNotification(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree,
+                                    @NotNull @NlsContexts.NotificationContent String actionName) {
     super(actionName);
     myProject = project;
     myTree = updateInfoTree;
-    Disposer.register(updateInfoTree, new Disposable() {
-      @Override
-      public void dispose() {
-        notification.expire();
-      }
-    });
   }
 
   @Override

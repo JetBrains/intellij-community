@@ -39,6 +39,11 @@ public class YamlBooleanType extends YamlEnumType {
     super.validateScalarValue(scalarValue, holder);
   }
 
+  @Override
+  public boolean isSupportedTag(@NotNull String tag) {
+    return tag.contains("bool");
+  }
+
   private static class StandardYamlBoolean extends YamlBooleanType {
     private static final StandardYamlBoolean SHARED = new StandardYamlBoolean();
 

@@ -57,7 +57,7 @@ public final class FileTypeAssocTable<T> {
   }
 
   public FileTypeAssocTable() {
-    this(FileTypeAssocTable::createCharSequenceConcurrentMap);
+    this((source, caseSensitive) -> createCharSequenceConcurrentMap(source, caseSensitive));
   }
 
   public boolean isAssociatedWith(@NotNull T type, @NotNull FileNameMatcher matcher) {
@@ -320,9 +320,15 @@ public final class FileTypeAssocTable<T> {
   // todo drop it, when ConcurrentCollectionFactory will be available in the classpath
   private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source,
                                                                                    boolean caseSensitive) {
-    Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(caseSensitive, source.size(), 0.5f);
-    map.putAll(source);
-    return Collections.synchronizedMap(map);
+    Map<CharSequence, T> map;
+    if (caseSensitive) {
+      map = new ConcurrentHashMap<>(source);
+    }
+    else {
+      map = Collections.synchronizedMap(CollectionFactory.createCharSequenceMap(false, source.size(), 0.5f));
+      map.putAll(source);
+    }
+    return map;
   }
 
   @ApiStatus.Internal
@@ -344,6 +350,7 @@ public final class FileTypeAssocTable<T> {
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public void clear() {
     myHashBangMap.clear();
     myMatchingMappings.clear();

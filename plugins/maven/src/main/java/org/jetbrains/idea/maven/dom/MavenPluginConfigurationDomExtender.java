@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +17,7 @@ import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry;
@@ -29,18 +31,30 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.function.Function;
 
 public final class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
   public static final Key<ParameterData> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
   private static final Set<String> COLLECTIONS_TYPE_NAMES = Set.of("java.util.Collection", CommonClassNames.JAVA_UTIL_SET,
-                                                                          CommonClassNames.JAVA_UTIL_LIST,
-                                                                          "java.util.ArrayList", "java.util.HashSet",
-                                                                          CommonClassNames.JAVA_UTIL_LINKED_LIST);
+                                                                   CommonClassNames.JAVA_UTIL_LIST,
+                                                                   "java.util.ArrayList", "java.util.HashSet",
+                                                                   CommonClassNames.JAVA_UTIL_LINKED_LIST);
+  private final Function<@NotNull MavenDomConfiguration, @Nullable MavenDomPluginModel> myRetriever;
+
+  @IntellijInternalApi
+  @ApiStatus.Internal
+  public MavenPluginConfigurationDomExtender(Function<@NotNull MavenDomConfiguration, @Nullable MavenDomPluginModel> modelRetriever) {
+    myRetriever = modelRetriever;
+  }
+
+  public MavenPluginConfigurationDomExtender() {
+    this(MavenPluginDomUtil::getMavenPluginModel);
+  }
 
   @Override
   public void registerExtensions(@NotNull MavenDomConfiguration config, @NotNull DomExtensionsRegistrar r) {
-    MavenDomPluginModel pluginModel = MavenPluginDomUtil.getMavenPluginModel(config);
+    MavenDomPluginModel pluginModel = myRetriever.apply(config);
     if (pluginModel == null) {
       r.registerCustomChildrenExtension(MavenDomConfigurationParameter.class);
       return;
@@ -68,6 +82,7 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
     return pluginManagementTag instanceof XmlTag && "pluginManagement".equals(((XmlTag)pluginManagementTag).getName());
   }
 
+
   private static Collection<ParameterData> collectParameters(MavenDomPluginModel pluginModel, MavenDomConfiguration config) {
     List<String> selectedGoals = null;
 
@@ -94,12 +109,13 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
       if (goal == null) continue;
 
       if (selectedGoals == null || selectedGoals.contains(goal)) {
+        var mojoConfig = getMojoConfigurationAsMap(eachMojo);
         for (MavenDomParameter eachParameter : eachMojo.getParameters().getParameters()) {
           String name = eachParameter.getName().getStringValue();
           if (name == null) continue;
 
           ParameterData data = new ParameterData(eachParameter);
-          fillParameterData(name, data, eachMojo);
+          fillParameterData(name, data, mojoConfig);
 
           ParameterData oldParameter = namesWithParameters.get(name);
           if (oldParameter == null || hasMorePriority(data, oldParameter, executionElement != null)) {
@@ -122,16 +138,30 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
     return d1.getRequiringLevel() > d2.getRequiringLevel();
   }
 
-  private static void fillParameterData(String name, ParameterData data, MavenDomMojo mojo) {
-    XmlTag config = mojo.getConfiguration().getXmlTag();
-    if (config == null) return;
 
+  private static Map<String, XmlTag> getMojoConfigurationAsMap(MavenDomMojo mojo) {
+    if (mojo == null) return Collections.emptyMap();
+    var config = mojo.getConfiguration().getXmlTag();
+    if (config == null) return Collections.emptyMap();
+    Map<String, XmlTag> result = new HashMap<>();
     for (XmlTag each : config.getSubTags()) {
-      if (!name.equals(each.getName())) continue;
-      data.defaultValue = each.getAttributeValue("default-value");
-      data.expression = each.getValue().getTrimmedText();
+      result.put(each.getName(), each);
+    }
+    return result;
+  }
+
+  private static void fillParameterData(String name, ParameterData data, Map<String, XmlTag> mojoConfig) {
+    XmlTag configForMaven3 = mojoConfig.get(name);
+    if (configForMaven3 != null) {
+      data.defaultValue = configForMaven3.getAttributeValue("default-value");
+      data.expression = configForMaven3.getValue().getTrimmedText();
+    }
+    else {
+      data.defaultValue = data.parameter.getDefaultValue().getStringValue();
+      data.expression = data.parameter.getExpression().getStringValue();
     }
   }
+
 
   private static void registerPluginParameter(boolean isInPluginManagement, DomExtensionsRegistrar r, final ParameterData parameter) {
     String paramName = parameter.parameter.getName().getStringValue();
@@ -141,7 +171,10 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
     if (alias != null) registerPluginParameter(isInPluginManagement, r, parameter, alias);
   }
 
-  private static void registerPluginParameter(boolean isInPluginManagement, DomExtensionsRegistrar r, final ParameterData data, final String parameterName) {
+  private static void registerPluginParameter(boolean isInPluginManagement,
+                                              DomExtensionsRegistrar r,
+                                              final ParameterData data,
+                                              final String parameterName) {
     DomExtension e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
 
     if (isCollection(data.parameter)) {
@@ -178,7 +211,7 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
     if (Boolean.parseBoolean(data.parameter.getRequired().getStringValue())
         && StringUtil.isEmptyOrSpaces(data.defaultValue)
         && StringUtil.isEmptyOrSpaces(data.expression)) {
-      e.addCustomAnnotation(new Required(){
+      e.addCustomAnnotation(new Required() {
         @Override
         public boolean value() {
           return true;
@@ -193,9 +226,10 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
         public boolean identifier() {
           return false;
         }
+
         @Override
         public Class<? extends Annotation> annotationType() {
-              return Required.class;
+          return Required.class;
         }
       });
     }
@@ -243,5 +277,4 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
       return 2;
     }
   }
-
 }

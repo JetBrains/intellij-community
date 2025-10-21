@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlRegistrationCheck -->
     <projectService serviceInterface="com.intellij.ide.util.scopeChooser.ScopeModelService"

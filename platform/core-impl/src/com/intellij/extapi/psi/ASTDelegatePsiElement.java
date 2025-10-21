@@ -29,7 +29,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -101,6 +100,11 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
+  public PsiElement getParent() {
+    return SharedImplUtil.getParent(getNode());
+  }
+
+  @Override
   public PsiElement getPrevSibling() {
     return SharedImplUtil.getPrevSibling(getNode());
   }
@@ -169,6 +173,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   protected @Nullable <T extends PsiElement> T findChildByType(@NotNull IElementType type) {
     ASTNode node = getNode().findChildByType(type);
+    //noinspection unchecked
     return node == null ? null : (T)node.getPsi();
   }
 
@@ -176,7 +181,10 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     PsiElement child = getLastChild();
     while (child != null) {
       final ASTNode node = child.getNode();
-      if (node != null && node.getElementType() == type) return (T)child;
+      if (node != null && node.getElementType() == type) {
+        //noinspection unchecked
+        return (T)child;
+      }
       child = child.getPrevSibling();
     }
     return null;
@@ -188,6 +196,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   protected @Nullable <T extends PsiElement> T findChildByType(@NotNull TokenSet type) {
     ASTNode node = getNode().findChildByType(type);
+    //noinspection unchecked
     return node == null ? null : (T)node.getPsi();
   }
 
@@ -195,17 +204,8 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return notNullChild(findChildByType(type));
   }
 
-  /**
-   * @deprecated Use {@link #findChildByType(TokenSet)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  protected @Nullable PsiElement findChildByFilter(@NotNull TokenSet tokenSet) {
-    ASTNode[] nodes = getNode().getChildren(tokenSet);
-    return nodes.length == 0 ? null : nodes[0].getPsi();
-  }
-
   protected <T extends PsiElement> T @NotNull [] findChildrenByType(@NotNull IElementType elementType, @NotNull Class<T> arrayClass) {
+    //noinspection unchecked
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
@@ -218,6 +218,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
         if (result == Collections.<T>emptyList()) {
           result = new ArrayList<>();
         }
+        //noinspection unchecked
         result.add((T)child.getPsi());
       }
       child = child.getTreeNext();
@@ -233,6 +234,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
         if (result == Collections.<T>emptyList()) {
           result = new ArrayList<>();
         }
+        //noinspection unchecked
         result.add((T)child.getPsi());
       }
       child = child.getTreeNext();
@@ -241,6 +243,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   protected <T extends PsiElement> T @NotNull [] findChildrenByType(@NotNull TokenSet elementType, @NotNull Class<T> arrayClass) {
+    //noinspection unchecked
     return ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, s -> (T)s.getPsi());
   }
 
@@ -310,25 +313,22 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public void delete() throws IncorrectOperationException {
-    deleteElementFromParent(this);
-  }
-
-  public static void deleteElementFromParent(@NotNull PsiElement element) {
-    PsiElement parent = element.getParent();
+    PsiElement parent = getParent();
     if (parent instanceof ASTDelegatePsiElement) {
-      CheckUtil.checkWritable(element);
-      ((ASTDelegatePsiElement)parent).deleteChildInternal(element.getNode());
+      CheckUtil.checkWritable(this);
+      ((ASTDelegatePsiElement)parent).deleteChildInternal(((PsiElement)this).getNode());
     }
     else if (parent instanceof CompositeElement) {
-      CheckUtil.checkWritable(element);
-      ((CompositeElement)parent).deleteChildInternal(element.getNode());
+      CheckUtil.checkWritable(this);
+      ((CompositeElement)parent).deleteChildInternal(((PsiElement)this).getNode());
     }
     else if (parent instanceof PsiFile) {
-      CheckUtil.checkWritable(element);
-      parent.deleteChildRange(element, element);
+      CheckUtil.checkWritable(this);
+      parent.deleteChildRange(this, this);
     }
     else {
-      throw new UnsupportedOperationException(element.getClass().getName() + " under " + (parent == null ? "null" : parent.getClass().getName()));
+      throw new UnsupportedOperationException(
+        ((PsiElement)this).getClass().getName() + " under " + (parent == null ? "null" : parent.getClass().getName()));
     }
   }
 
@@ -372,7 +372,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   private @Nullable ASTNode getAnchorNode(@Nullable ASTNode anchor, @Nullable Boolean before) {
-    assert (anchor == null) || (anchor != null && before != null);
+    assert anchor == null || before != null;
 
     if (anchor != null) {
       return before.booleanValue() ? anchor : anchor.getTreeNext();

@@ -10,16 +10,21 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.JavaModuleTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.project.IdeaModelInfosCache
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
-abstract class AbstractModuleInfoCacheTest : JavaModuleTestCase() {
+abstract class AbstractModuleInfoCacheTest : JavaModuleTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin {  super.setUp() }
 
         getOrCreateProjectBaseDir()
     }

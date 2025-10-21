@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
@@ -22,6 +23,8 @@ public final class CaseStatementsSelectioner extends AbstractBasicBackBasicSelec
   public boolean canSelect(@NotNull PsiElement e) {
     ASTNode node = BasicJavaAstTreeUtil.toNode(e);
     return node != null &&
+           !BasicJavaAstTreeUtil.is(node, JavaTokenType.RBRACE) &&
+           !BasicJavaAstTreeUtil.is(node, JavaTokenType.LBRACE) &&
            BasicJavaAstTreeUtil.is(node.getTreeParent(), BASIC_CODE_BLOCK) &&
            BasicJavaAstTreeUtil.is(node.getTreeParent().getTreeParent(), BASIC_SWITCH_STATEMENT);
   }

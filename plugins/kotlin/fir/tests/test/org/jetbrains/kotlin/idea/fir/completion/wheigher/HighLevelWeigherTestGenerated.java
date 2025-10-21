@@ -705,6 +705,56 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/PreferGetMethodToProperty.kt");
         }
 
+        @TestMetadata("PreferImportedMatchingName.kt")
+        public void testPreferImportedMatchingName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferImportedMatchingName.kt");
+        }
+
+        @TestMetadata("PreferImportedToNonImportedMatchingName.kt")
+        public void testPreferImportedToNonImportedMatchingName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferImportedToNonImportedMatchingName.kt");
+        }
+
+        @TestMetadata("PreferMatchingArgumentName.kt")
+        public void testPreferMatchingArgumentName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferMatchingArgumentName.kt");
+        }
+
+        @TestMetadata("PreferMatchingArgumentNameType.kt")
+        public void testPreferMatchingArgumentNameType() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferMatchingArgumentNameType.kt");
+        }
+
+        @TestMetadata("PreferMatchingNamedArgumentName.kt")
+        public void testPreferMatchingNamedArgumentName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferMatchingNamedArgumentName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingConstructorParameterName.kt")
+        public void testPreferTypesMatchingConstructorParameterName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingConstructorParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingConstructorValParameterName.kt")
+        public void testPreferTypesMatchingConstructorValParameterName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingConstructorValParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingContextParameterName.kt")
+        public void testPreferTypesMatchingContextParameterName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingContextParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingParameterName.kt")
+        public void testPreferTypesMatchingParameterName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingPropertyTypeName.kt")
+        public void testPreferTypesMatchingPropertyTypeName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferTypesMatchingPropertyTypeName.kt");
+        }
+
         @TestMetadata("Prefix.kt")
         public void testPrefix() throws Exception {
             runTest("../../completion/testData/weighers/basic/Prefix.kt");

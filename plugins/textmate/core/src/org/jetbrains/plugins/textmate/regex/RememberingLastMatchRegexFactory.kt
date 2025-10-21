@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.regex
 
 import kotlinx.coroutines.Runnable
+import org.jetbrains.plugins.textmate.concurrent.TextMateThreadLocal
 import org.jetbrains.plugins.textmate.createTextMateThreadLocal
 import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED
 
@@ -39,10 +40,10 @@ private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFa
     return delegate.match(string, checkCancelledCallback)
   }
 
-  override fun match(string: TextMateString, byteOffset: Int, matchBeginPosition: Boolean, matchBeginString: Boolean, checkCancelledCallback: Runnable?): MatchData {
+  override fun match(string: TextMateString, byteOffset: TextMateByteOffset, matchBeginPosition: Boolean, matchBeginString: Boolean, checkCancelledCallback: Runnable?): MatchData {
     val lastResult = matchResult.get()
     val lastStringId = lastResult?.stringId
-    val lastOffset = lastResult?.offset ?: Int.MAX_VALUE
+    val lastOffset = lastResult?.offset ?: Int.MAX_VALUE.byteOffset()
     val lastMatchBeginPosition = lastResult?.matchBeginPosition ?: true
     val lastMatchBeginString = lastResult?.matchBeginString ?: true
     val lastMatch = lastResult?.matchData ?: NOT_MATCHED
@@ -51,7 +52,7 @@ private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFa
         lastOffset <= byteOffset &&
         (!hasAMatch || (byteOffset == lastOffset && matchBeginString == lastMatchBeginString)) &&
         (!hasGMatch || (byteOffset == lastOffset && matchBeginPosition == lastMatchBeginPosition))) {
-      if (!lastMatch.matched || lastMatch.byteOffset().start >= byteOffset) {
+      if (!lastMatch.matched || lastMatch.byteRange().start >= byteOffset) {
         return lastMatch
       }
     }
@@ -61,9 +62,13 @@ private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFa
     }
   }
 
+  override fun close() {
+    delegate.close()
+  }
+
   private class LastMatch(
     val stringId: Any?,
-    val offset: Int,
+    val offset: TextMateByteOffset,
     val matchBeginPosition: Boolean,
     val matchBeginString: Boolean,
     val matchData: MatchData,

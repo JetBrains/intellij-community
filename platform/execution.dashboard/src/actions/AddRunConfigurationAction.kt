@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.containers.ContainerUtil
 import java.util.function.Consumer
@@ -31,7 +30,7 @@ private val IGNORE_CASE_DISPLAY_NAME_COMPARATOR = Comparator<ConfigurationType> 
   t1.displayName.compareTo(t2.displayName, ignoreCase = true)
 }
 
-class AddRunConfigurationAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class AddRunConfigurationAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -72,7 +71,7 @@ class AddRunConfigurationAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
       configuration = addRunConfiguration(type, project)
     }
     if (configuration != null && !runDashboardManager.isShowInDashboard(configuration)) {
-      (runDashboardManager as RunDashboardManagerImpl).restoreConfigurations(listOf(configuration))
+      runDashboardManager.restoreConfigurations(listOf(configuration))
     }
   }
 
@@ -115,7 +114,6 @@ private fun addRunConfiguration(type: ConfigurationType, project: Project): RunC
   runManager.setUniqueNameIfNeeded(settings)
   callNewConfigurationCreated(settings.getFactory(), settings.getConfiguration())
 
-  // fixme ask Lera?
   val added = RunDialog.editConfiguration(project, settings,
                                           ExecutionBundle.message("add.new.run.configuration.action2.name"))
   if (added) {

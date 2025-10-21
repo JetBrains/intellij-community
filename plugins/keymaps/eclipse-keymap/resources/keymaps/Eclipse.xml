@@ -200,8 +200,6 @@
     <keyboard-shortcut first-keystroke="shift control F7"/>
   </action>
   <action id="IDEtalk.Rename"/>
-  <action id="Images.ShowThumbnails"/>
-  <action id="Images.Thumbnails.ToggleRecursive"/>
   <action id="ImplementMethods">
     <keyboard-shortcut first-keystroke="shift alt P"/>
   </action>

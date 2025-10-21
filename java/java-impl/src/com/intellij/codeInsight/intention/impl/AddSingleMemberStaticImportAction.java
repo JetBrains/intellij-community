@@ -155,14 +155,13 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
     PsiClass aClass = resolved.getContainingClass();
     if (aClass != null && !PsiUtil.isAccessible(aClass.getProject(), aClass, element, null)) {
       final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier();
-      if (qualifier instanceof PsiReferenceExpression) {
-        final PsiElement qResolved = ((PsiReferenceExpression)qualifier).resolve();
-        if (qResolved instanceof PsiVariable) {
-          aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)qResolved).getType());
-        }
-        else if (qResolved instanceof PsiClass) {
-          aClass = (PsiClass)qResolved;
-        }
+      if (qualifier instanceof PsiReferenceExpression ref) {
+        final PsiElement qResolved = ref.resolve();
+        return switch (qResolved) {
+          case PsiVariable variable -> PsiUtil.resolveClassInClassTypeOnly(variable.getType());
+          case PsiClass cls -> cls;
+          case null, default -> aClass;
+        };
       }
     }
     return aClass;

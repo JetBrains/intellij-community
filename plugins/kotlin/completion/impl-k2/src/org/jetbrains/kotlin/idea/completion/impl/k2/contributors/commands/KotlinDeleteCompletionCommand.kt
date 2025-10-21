@@ -66,7 +66,7 @@ private fun getTopWithTheSameOffset(psiElement: KtExpression, offset: Int): KtEx
 private class KotlinDeleteCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: IntentionPreviewInfo,
-) : CompletionCommand(), CompletionCommandWithPreview, DumbAware {
+) : CompletionCommand(), DumbAware {
   override val synonyms: List<String>
     get() = listOf("Delete element")
   override val presentableName: @Nls String

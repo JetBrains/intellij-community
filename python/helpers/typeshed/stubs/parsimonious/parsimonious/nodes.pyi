@@ -8,6 +8,7 @@ from parsimonious.expressions import Expression
 from parsimonious.grammar import Grammar
 
 class Node:
+    __slots__ = ["expr", "full_text", "start", "end", "children"]
     expr: Expression
     full_text: str
     start: int
@@ -25,6 +26,7 @@ class Node:
     def __repr__(self, top_level: bool = True) -> str: ...
 
 class RegexNode(Node):
+    __slots__ = ["match"]
     match: Match[str]
 
 class RuleDecoratorMeta(type): ...

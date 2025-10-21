@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -72,7 +73,7 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private tailrec fun KtSecondaryConstructor.isReachableByDelegationFrom(
         constructor: KtSecondaryConstructor, visited: Set<KtSecondaryConstructor> = emptySet()
     ): Boolean {

@@ -6,7 +6,7 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
@@ -24,7 +24,7 @@ internal val ExtractionMetricsScope: Scope = Scope("ExtractionMetricsScope", Pla
 
 /** Class intentionally named *Perf* (and not a *Performance*) test.
  * That way it will not be ignored during Aggregator run */
-@TestApplication
+@StressTestApplication
 class ApplicationMetricsExtractionFromUnitPerfTest {
   private val tracer = TelemetryManager.getTracer(ExtractionMetricsScope)
 

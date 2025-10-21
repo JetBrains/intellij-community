@@ -408,14 +408,14 @@ public class ConfigurationContext {
 
   private @Nullable List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
-      myPreferredProducers = PreferredProducerFind.findPreferredProducers(myLocation, this, true);
+      myPreferredProducers = PreferredProducerFind.findPreferredProducers(getLocation(), this, true);
     }
     return myPreferredProducers;
   }
 
   public @Nullable List<ConfigurationFromContext> getConfigurationsFromContext() {
     if (myConfigurationsFromContext == null) {
-      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, true);
+      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(getLocation(), this, true, true);
     }
     return myConfigurationsFromContext;
   }
@@ -425,7 +425,7 @@ public class ConfigurationContext {
    */
   public @Unmodifiable @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
     // At the moment of writing, caching is not needed here, the result is cached outside.
-    return PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, false);
+    return PreferredProducerFind.getConfigurationsFromContext(getLocation(), this, true, false);
   }
 
   private static final class ExistingConfiguration {

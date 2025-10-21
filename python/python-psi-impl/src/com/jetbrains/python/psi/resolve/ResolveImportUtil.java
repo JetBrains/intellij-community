@@ -10,10 +10,9 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -27,6 +26,8 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
 import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -252,8 +253,8 @@ public final class ResolveImportUtil {
       return resolveInPackageModule((PyFile)parent, referencedName, containingFile, fileOnly, checkForPackage, withoutStubs,
                                     withoutForeign);
     }
-    else if (parent instanceof PsiDirectory) {
-      return resolveInPackageDirectory(parent, referencedName, containingFile, fileOnly, checkForPackage, withoutStubs, withoutForeign);
+    else if (parent instanceof PsiDirectory parentDir) {
+      return resolveInPackageDirectory(parentDir, referencedName, containingFile, fileOnly, checkForPackage, withoutStubs, withoutForeign);
     }
     else {
       return resolveMemberFromReferenceTypeProviders(parent, referencedName);
@@ -305,7 +306,7 @@ public final class ResolveImportUtil {
     return Lists.newArrayList(results);
   }
 
-  private static @NotNull List<RatedResolveResult> resolveInPackageDirectory(@Nullable PsiElement parent, @NotNull String referencedName,
+  private static @NotNull List<RatedResolveResult> resolveInPackageDirectory(@NotNull PsiFileSystemItem parent, @NotNull String referencedName,
                                                                              @Nullable PsiFile containingFile, boolean fileOnly,
                                                                              boolean checkForPackage, boolean withoutStubs, boolean withoutForeign) {
     final PsiElement parentDir = PyUtil.turnInitIntoDir(parent);
@@ -319,13 +320,22 @@ public final class ResolveImportUtil {
           }
         }
       }
-      if (!withoutForeign && parent instanceof PsiFile) {
-        final PsiElement foreign = resolveForeignImports((PsiFile)parent, referencedName);
-        if (foreign != null) {
-          final ResolveResultList results = new ResolveResultList();
-          results.addAll(resolved);
-          results.poke(foreign, RatedResolveResult.RATE_NORMAL);
-          return results;
+      if (!withoutForeign) {
+        if (parent instanceof PsiFile) {
+          final PsiElement foreign = resolveForeignImports((PsiFile)parent, referencedName);
+          if (foreign != null) {
+            final ResolveResultList results = new ResolveResultList();
+            results.addAll(resolved);
+            results.poke(foreign, RatedResolveResult.RATE_NORMAL);
+            return results;
+          }
+        }
+        else if (parent instanceof PsiDirectory dir) {
+          PsiDirectory skeletonsDir = findCorrespondingSkeletonsDir(dir);
+          if (skeletonsDir != null) {
+            return ContainerUtil.concat(resolved, resolveInDirectory(referencedName, containingFile, skeletonsDir, fileOnly,
+                                                                     checkForPackage, withoutStubs));
+          }
         }
       }
       return resolved;
@@ -337,6 +347,28 @@ public final class ResolveImportUtil {
     final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(foothold).copyWithoutRoots();
     final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(referencedName), context);
     return !results.isEmpty() ? results.get(0) : null;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PsiDirectory findCorrespondingSkeletonsDir(@NotNull PsiDirectory packageDir) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(packageDir);
+    if (sdk == null) return null;
+
+    VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);
+    if (skeletonsDir == null) return null;
+
+    boolean isInSkeletons = VfsUtilCore.isAncestor(skeletonsDir, packageDir.getVirtualFile(), false);
+    if (isInSkeletons) return null;
+
+    PsiDirectory skeletonsPsiDir = packageDir.getManager().findDirectory(skeletonsDir);
+    if (skeletonsPsiDir == null) return null;
+
+    QualifiedName packageName = QualifiedNameFinder.findShortestImportableQName(packageDir);
+    if (packageName == null) return null;
+
+    List<@NotNull PsiElement> elements =
+      PyResolveImportUtil.resolveModuleAt(packageName, skeletonsPsiDir, PyResolveImportUtil.fromFoothold(skeletonsPsiDir));
+    return ContainerUtil.getFirstItem(elements) instanceof PsiDirectory dir ? dir : null;
   }
 
   private static @NotNull List<RatedResolveResult> resolveMemberFromReferenceTypeProviders(@NotNull PsiElement parent,

@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class AddNewLineAfterAnnotationsFix(element: KtAnnotatedExpression) : KotlinQuickFixAction<KtAnnotatedExpression>(element) {
-    override fun getText() = KotlinBundle.message("fix.add.new.line.after.annotations")
-    override fun getFamilyName() = text
+    override fun getText(): String = KotlinBundle.message("fix.add.new.line.after.annotations")
+    override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
@@ -25,6 +25,6 @@ class AddNewLineAfterAnnotationsFix(element: KtAnnotatedExpression) : KotlinQuic
     }
 
     companion object Factory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic) = diagnostic.createIntentionForFirstParentOfType(::AddNewLineAfterAnnotationsFix)
+        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtAnnotatedExpression>? = diagnostic.createIntentionForFirstParentOfType(::AddNewLineAfterAnnotationsFix)
     }
 }

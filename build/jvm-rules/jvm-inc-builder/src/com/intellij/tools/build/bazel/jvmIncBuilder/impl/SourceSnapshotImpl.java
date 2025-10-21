@@ -10,8 +10,11 @@ import org.jetbrains.jps.dependency.NodeSource;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static org.jetbrains.jps.util.Iterators.count;
 
 public class SourceSnapshotImpl implements NodeSourceSnapshot {
   private final Map<NodeSource, String> mySources;
@@ -48,5 +51,21 @@ public class SourceSnapshotImpl implements NodeSourceSnapshot {
       out.writeUTF(entry.getValue());
       entry.getKey().write(out);
     }
+  }
+
+  public static NodeSourceSnapshot composite(Iterable<? extends NodeSourceSnapshot> groups) {
+
+    if (count(groups) <= 1) {
+      Iterator<? extends NodeSourceSnapshot> it = groups.iterator();
+      return it.hasNext()? it.next() : EMPTY;
+    }
+
+    Map<NodeSource, String> data = new LinkedHashMap<>();
+    for (NodeSourceSnapshot group : groups) {
+      for (NodeSource element : group.getElements()) {
+        data.put(element, group.getDigest(element));
+      }
+    }
+    return new SourceSnapshotImpl(data);
   }
 }

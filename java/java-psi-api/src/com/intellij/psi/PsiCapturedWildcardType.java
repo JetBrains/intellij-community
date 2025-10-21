@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.RecursionGuard;
@@ -92,7 +95,19 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   @Override
   public @NotNull TypeNullability getNullability() {
     if (myNullability == null) {
-      myNullability = myExistential.getNullability();
+      TypeNullability nullability = TypeNullability.UNKNOWN;
+      if (myExistential.isExtends()) {
+        nullability = myExistential.getNullability();
+      } else {
+        NullableNotNullManager manager = NullableNotNullManager.getInstance(myContext.getProject());
+        if (manager != null) {
+          NullabilityAnnotationInfo defaultNullability = manager.findDefaultTypeUseNullability(myContext);
+          if (defaultNullability != null && defaultNullability.getNullability() == Nullability.NOT_NULL) {
+            nullability = getUpperBound().getNullability().inherited();
+          }
+        }
+      }
+      myNullability = nullability;
     }
     return myNullability;
   }

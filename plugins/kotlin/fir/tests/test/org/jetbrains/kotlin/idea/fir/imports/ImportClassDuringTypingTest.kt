@@ -51,7 +51,7 @@ class ImportClassDuringTypingTest: KotlinLightCodeInsightFixtureTestCase() {
         assertTrue(errDesc!!.getAction().isAvailable(getProject(), getEditor(), getFile()))
         for (i in error.getActualStartOffset()..<error.getActualEndOffset()) {
             getEditor().getCaretModel().moveToOffset(i)
-            val errDescriptors = ReadAction.nonBlocking<MutableList<IntentionActionDescriptor?>?>(Callable {
+            val errDescriptors = ReadAction.nonBlocking(Callable {
                 ShowIntentionsPass.getActionsToShow(getEditor(), getFile()).errorFixesToShow
             }).submit(AppExecutorUtil.getAppExecutorService()).get()
             val importDesc = errDescriptors.find{ descriptor ->

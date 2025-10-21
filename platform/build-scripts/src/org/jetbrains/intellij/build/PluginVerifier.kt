@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.telemetry.block
 import java.nio.file.Path
 import kotlin.io.path.appendText
 import kotlin.io.path.exists
@@ -12,7 +13,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 
-private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.381"
+private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.396"
 
 suspend fun createPluginVerifier(
   pluginVerifierVersion: String = DEFAULT_PLUGIN_VERIFIER_VERSION,
@@ -54,14 +55,17 @@ class PluginVerifier internal constructor(
     reportDir: Path,
     plugin: VerifierPluginInfo,
     ide: VerifierIdeInfo,
-    errFile: Path?,
-    outFile: Path?,
-  ): Boolean {
+    errFile: Path? = null,
+    outFile: Path? = null,
+    runtimeDir: Path? = null,
+    mute: List<String> = emptyList(),
+  ): Boolean = block("Checking compatibility of $plugin with $ide") {
     val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHomeAndLog(COMMUNITY_ROOT))
 
     runProcess(
       args = listOf(
         java.pathString,
+        "-Xmx4g",
         "-Dplugin.verifier.home.dir=${homeDir.pathString}",
         "-jar",
         verifierJar.pathString,
@@ -70,12 +74,16 @@ class PluginVerifier internal constructor(
         ide.installationPath.pathString,
         "-verification-reports-dir",
         reportDir.pathString,
-        "-offline"
+        "-offline",
+        "-mute",
+        mute.joinToString(","),
+      ).plus(
+        if (runtimeDir != null) listOf("-runtime-dir", runtimeDir.pathString) else emptyList()
       ),
       workingDir = reportDir,
       additionalEnvVariables = emptyMap(),
-      inheritOut = false,
-      inheritErrToOut = false,
+      inheritOut = outFile == null,
+      inheritErrToOut = errFile == null,
       stdErrConsumer = {
         errFile?.appendText("$it\n")
         println("Plugin verifier error: $it")
@@ -85,7 +93,7 @@ class PluginVerifier internal constructor(
       }
     )
 
-    return reportVerifierIssues(
+    reportVerifierIssues(
       plugin,
       reportDir,
       ide

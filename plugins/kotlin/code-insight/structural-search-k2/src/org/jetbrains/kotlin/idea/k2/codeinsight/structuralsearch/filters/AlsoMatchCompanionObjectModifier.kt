@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class AlsoMatchCompanionObjectModifier : OneStateFilter(
-    KotlinBundle.lazyMessage("ssr.modifier.match.companion.object"),
+    KotlinBundle.messagePointer("ssr.modifier.match.companion.object"),
     KotlinBundle.message("ssr.modifier.match.companion.object"),
     CONSTRAINT_NAME
 ) {

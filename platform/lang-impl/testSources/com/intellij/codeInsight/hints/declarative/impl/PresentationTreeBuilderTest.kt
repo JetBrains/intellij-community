@@ -4,6 +4,8 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeInsight.hints.declarative.CollapseState
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.impl.views.PresentationEntryBuilder
+import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.junit.Assert

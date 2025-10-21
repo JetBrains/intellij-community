@@ -46,6 +46,9 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testSeeTag16() { doTest(true); }
   public void testSeeTag17() { doTest(true); }
   public void testSeeTag18() { doTest(true); }
+  public void testSeeTag19() { doTest(true); }
+  public void testSeeTag20() { doTest(true); }
+  public void testSeeTag21() { doTest(true); }
 
   public void testLinkTag0() { doTest(true); }
   public void testLinkTag1() { doTest(true); }
@@ -56,6 +59,8 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testLinkTag6() { doTest(true); }
   public void testLinkTag7() { doTest(true); }
   public void testLinkTag8() { doTest(true); }
+  public void testLinkTag9() { doTest(true); }
+  public void testLinkTag10() { doTest(true); }
 
   public void testParamTag0() { doTest(true); }
   public void testParamTag1() { doTest(true); }
@@ -139,6 +144,8 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testLinkTag4Markdown() { doTest(true); }
   public void testLinkTag5Markdown() { doTest(true); }
   public void testLinkTag6Markdown() { doTest(true); }
+  public void testLinkTag9Markdown() { doTest(true); }
+  public void testLinkTag10Markdown() { doTest(true); }
 
   public void testLiteralTagMarkdown() { doTest(true); }
   public void testMultilineCodeTagMarkdown() { doTest(true); }
@@ -164,6 +171,9 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testSeeTag14Markdown() { doTest(true); }
   public void testSeeTag15Markdown() { doTest(true); }
   public void testSeeTag16Markdown() { doTest(true); }
+  public void testSeeTag19Markdown() { doTest(true); }
+  public void testSeeTag20Markdown() { doTest(true); }
+  public void testSeeTag21Markdown() { doTest(true); }
 
   public void testSeparated01Markdown() { doTest(true); }
 

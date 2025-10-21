@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
+import org.jetbrains.idea.maven.importing.MavenProjectModelModifierUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
@@ -29,7 +29,7 @@ public class LanguageLevelPluginQuickFix extends LanguageLevelQuickFix {
   protected void runLiveTemplate(@NotNull Document document,
                                  @NotNull MavenDomProjectModel model,
                                  @NotNull LanguageLevel level) {
-    XmlTag tag = MavenProjectModelModifier.getCompilerPlugin(model).getConfiguration().ensureTagExists();
+    XmlTag tag = MavenProjectModelModifierUtil.getCompilerPlugin(model).getConfiguration().ensureTagExists();
     String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
     String prevSourceValue = setChildTagIfAbsent(tag, COMPILER_SOURCE, option);
     String prevTargetValue = setChildTagIfAbsent(tag, COMPILER_TARGET, option);
@@ -37,7 +37,7 @@ public class LanguageLevelPluginQuickFix extends LanguageLevelQuickFix {
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     FileDocumentManager.getInstance().saveDocument(document);
 
-    tag = MavenProjectModelModifier.getCompilerPlugin(model).getConfiguration().ensureTagExists();
+    tag = MavenProjectModelModifierUtil.getCompilerPlugin(model).getConfiguration().ensureTagExists();
     Template template = getTemplate(tag, prevSourceValue, prevTargetValue, option);
     runTemplate(template, tag);
   }

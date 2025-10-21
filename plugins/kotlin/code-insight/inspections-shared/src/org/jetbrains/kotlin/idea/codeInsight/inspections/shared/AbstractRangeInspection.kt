@@ -46,15 +46,6 @@ abstract class AbstractRangeInspection<C : Any> : KotlinApplicableInspectionBase
             }
     }
 
-    fun rangeExpressionByPsi(expression: KtExpression): RangeExpression? {
-        val expressionType = getRangeBinaryExpressionType(expression) ?: return null
-        return when (expression) {
-            is KtBinaryExpression -> BinaryRangeExpression(expression, expressionType)
-            is KtDotQualifiedExpression -> DotQualifiedRangeExpression(expression, expressionType)
-            else -> null
-        }
-    }
-
     fun KaSession.rangeExpressionByAnalyze(expression: KtExpression): RangeExpression? =
         rangeExpressionByPsi(expression)?.takeIf {
             val call = expression.resolveToCall()?.singleFunctionCallOrNull()
@@ -117,6 +108,17 @@ abstract class AbstractRangeInspection<C : Any> : KotlinApplicableInspectionBase
 
         override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
             visitTargetElement(expression, holder, isOnTheFly)
+        }
+    }
+
+    companion object {
+        fun rangeExpressionByPsi(expression: KtExpression): RangeExpression? {
+            val expressionType = getRangeBinaryExpressionType(expression) ?: return null
+            return when (expression) {
+                is KtBinaryExpression -> BinaryRangeExpression(expression, expressionType)
+                is KtDotQualifiedExpression -> DotQualifiedRangeExpression(expression, expressionType)
+                else -> null
+            }
         }
     }
 }

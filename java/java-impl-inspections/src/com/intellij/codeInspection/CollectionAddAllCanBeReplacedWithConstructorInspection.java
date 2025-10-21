@@ -249,13 +249,11 @@ public final class CollectionAddAllCanBeReplacedWithConstructorInspection extend
       final PsiNewExpression newExpression = updater.getWritable(myNewExpression.getElement());
       if (newExpression == null) return;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(newExpression.getParent());
-      PsiVariable variable = null;
-      if (parent instanceof PsiVariable) {
-        variable = (PsiVariable)parent;
-      }
-      else if (parent instanceof PsiAssignmentExpression) {
-        variable = ExpressionUtils.resolveLocalVariable(((PsiAssignmentExpression)parent).getLExpression());
-      }
+      PsiVariable variable = switch (parent) {
+        case PsiVariable psiVariable -> psiVariable;
+        case PsiAssignmentExpression expression -> ExpressionUtils.resolveLocalVariable(expression.getLExpression());
+        case null, default -> null;
+      };
       if (variable == null) return;
       PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
       if (reference == null) return;

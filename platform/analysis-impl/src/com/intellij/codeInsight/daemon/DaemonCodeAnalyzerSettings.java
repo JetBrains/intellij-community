@@ -7,6 +7,8 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class DaemonCodeAnalyzerSettings {
   public static final int AUTOREPARSE_DELAY_DEFAULT = 300;
 
@@ -17,7 +19,7 @@ public class DaemonCodeAnalyzerSettings {
   private boolean mySuppressWarnings = true;
 
   @Transient
-  private volatile boolean myForceZeroAutoReparseDelay = false;
+  private final AtomicInteger myForceZeroAutoReparseDelay = new AtomicInteger();
 
   public static DaemonCodeAnalyzerSettings getInstance() {
     return ApplicationManager.getApplication().getService(DaemonCodeAnalyzerSettings.class);
@@ -44,13 +46,18 @@ public class DaemonCodeAnalyzerSettings {
 
   @ApiStatus.Internal
   public void forceUseZeroAutoReparseDelay(boolean useZeroAutoReparseDelay) {
-    myForceZeroAutoReparseDelay = useZeroAutoReparseDelay;
+    if (useZeroAutoReparseDelay) {
+      myForceZeroAutoReparseDelay.incrementAndGet();
+    }
+    else {
+      myForceZeroAutoReparseDelay.decrementAndGet();
+    }
   }
 
   @Transient
   @ApiStatus.Internal
   public int getEffectiveAutoReparseDelay() {
-    if (myForceZeroAutoReparseDelay) return 0;
+    if (myForceZeroAutoReparseDelay.get() > 0) return 0;
 
     return myAutoReparseDelay;
   }

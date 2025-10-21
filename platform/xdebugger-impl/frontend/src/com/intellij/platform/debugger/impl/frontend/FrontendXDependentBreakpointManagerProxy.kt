@@ -2,10 +2,10 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.projectId
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDependencyDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDependencyEvent
 import com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi
+import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManagerProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
@@ -24,21 +24,26 @@ internal class FrontendXDependentBreakpointManagerProxy(
 
   init {
     cs.launch {
-      val breakpointsDependencies = XDependentBreakpointManagerApi.getInstance().breakpointDependencies(project.projectId())
-      for (dto in breakpointsDependencies.initialDependencies) {
-        dependantBreakpoints[dto.child] = dto
-      }
+      durableWithStateReset(block = {
+        val breakpointsDependencies = XDependentBreakpointManagerApi.getInstance().breakpointDependencies(project.projectId())
 
-      breakpointsDependencies.dependencyEvents.toFlow().collect {
-        when (it) {
-          is XBreakpointDependencyEvent.Add -> {
-            dependantBreakpoints[it.dependency.child] = it.dependency
-          }
-          is XBreakpointDependencyEvent.Remove -> {
-            dependantBreakpoints.remove(it.child)
+        for (dto in breakpointsDependencies.initialDependencies) {
+          dependantBreakpoints[dto.child] = dto
+        }
+
+        breakpointsDependencies.dependencyEvents.toFlow().collect {
+          when (it) {
+            is XBreakpointDependencyEvent.Add -> {
+              dependantBreakpoints[it.dependency.child] = it.dependency
+            }
+            is XBreakpointDependencyEvent.Remove -> {
+              dependantBreakpoints.remove(it.child)
+            }
           }
         }
-      }
+      }, stateReset = {
+        dependantBreakpoints.clear()
+      })
     }
 
     cs.launch {

@@ -28,7 +28,7 @@ public class TwoStepConfirmationDialog extends MessageDialog {
     myChecked = checked;
     myExitFunc = exitFunc;
 
-    _init(title, message, options, defaultOptionIndexed, focusedOptionIndex, icon, null, null);
+    _init(title, message, options, defaultOptionIndexed, focusedOptionIndex, icon, (com.intellij.openapi.ui.DoNotAskOption)null, null);
   }
 
   @Override

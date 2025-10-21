@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.lang.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "lang-core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "lang-core",
   module_name = "intellij.platform.lang.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":lang-core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/ide-core",
@@ -32,7 +33,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/usageView",
     "//platform/eel-provider",
-  ],
-  runtime_deps = [":lang-core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.lang.core` end

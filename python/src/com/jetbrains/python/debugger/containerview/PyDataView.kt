@@ -40,7 +40,6 @@ class PyDataView(private val project: Project) : DumbAware {
   private lateinit var contentManager: ContentManager
 
   fun init(toolWindow: ToolWindow) {
-    toolWindow.stripeTitle = PyBundle.message("debugger.data.view.title")
     toolWindow.helpId = HELP_ID
     toolWindow.isAvailable = true
 

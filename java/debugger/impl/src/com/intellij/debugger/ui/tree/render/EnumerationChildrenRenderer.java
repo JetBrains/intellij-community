@@ -15,7 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;

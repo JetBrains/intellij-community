@@ -35,4 +35,6 @@ abstract class LogicalModelPresentationProvider<T>: PresentationProvider<T>() {
     return CompletableFuture.completedFuture(false)
   }
 
+  open fun getTooltipText(t: T): String? = null
+
 }

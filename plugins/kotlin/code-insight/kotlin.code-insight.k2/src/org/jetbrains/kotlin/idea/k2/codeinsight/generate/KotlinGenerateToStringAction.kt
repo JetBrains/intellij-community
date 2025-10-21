@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject.Companion.getKotlinMemberChooserObject
@@ -46,7 +47,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         val (preInfo, existsToString) = analyzeInModalWindow(klass, KotlinBundle.message("fix.change.signature.prepare")) {
             val classSymbol = klass.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
             val toStringMethod = findToStringMethodForClass(classSymbol)
-            val existsToString = toStringMethod?.containingSymbol == classSymbol
+            val existsToString = toStringMethod?.containingSymbol == classSymbol && toStringMethod.origin == KaSymbolOrigin.SOURCE
 
             val properties = getPropertiesToUseInGeneratedMember(klass)
             val info = Info(klass, properties.map { getKotlinMemberChooserObject(it) })

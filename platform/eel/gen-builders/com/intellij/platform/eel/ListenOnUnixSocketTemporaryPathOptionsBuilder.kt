@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
-class ListenOnUnixSocketTemporaryPathOptionsBuilder() {
+class ListenOnUnixSocketTemporaryPathOptionsBuilder {
   private var parentDirectory: EelPath? = null
 
   private var prefix: String = ""

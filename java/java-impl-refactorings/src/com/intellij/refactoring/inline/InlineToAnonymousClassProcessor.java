@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineToAnonymousClassProcessor.class);
 
@@ -42,10 +40,10 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   public InlineToAnonymousClassProcessor(Project project,
                                          PsiClass psiClass,
-                                         final @Nullable PsiCall callToInline,
+                                         @Nullable PsiCall callToInline,
                                          boolean inlineThisOnly,
-                                         final boolean searchInComments,
-                                         final boolean searchInNonJavaFiles) {
+                                         boolean searchInComments,
+                                         boolean searchInNonJavaFiles) {
     super(project);
     myClass = psiClass;
     myCallToInline = callToInline;
@@ -78,9 +76,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
                                                           new NonCodeUsageInfoFactory(myClass, qName));
       }
 
-      if (mySearchInNonJavaFiles && myRefactoringScope instanceof GlobalSearchScope) {
-        TextOccurrencesUtil.addTextOccurrences(myClass, qName, (GlobalSearchScope)myRefactoringScope,
-                                               nonCodeUsages, new NonCodeUsageInfoFactory(myClass, qName));
+      if (mySearchInNonJavaFiles && myRefactoringScope instanceof GlobalSearchScope scope) {
+        TextOccurrencesUtil.addTextOccurrences(myClass, qName, scope, nonCodeUsages, new NonCodeUsageInfoFactory(myClass, qName));
       }
       usages.addAll(nonCodeUsages);
     }
@@ -105,7 +102,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     if (super.isPreviewUsages(usages)) return true;
-    for(UsageInfo usage: usages) {
+    for (UsageInfo usage: usages) {
       if (isForcePreview(usage)) {
         WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
         return true;
@@ -114,20 +111,14 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private static boolean isForcePreview(final UsageInfo usage) {
+  private static boolean isForcePreview(UsageInfo usage) {
     if (usage.isNonCodeUsage) return true;
     PsiElement element = usage.getElement();
-    if (element != null) {
-      PsiFile file = element.getContainingFile();
-      if (!(file instanceof PsiJavaFile)) {
-        return true;
-      }
-    }
-    return false;
+    return element != null && !(element.getContainingFile() instanceof PsiJavaFile);
   }
 
   @Override
-  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
       return showConflicts(conflicts, refUsages.get());
@@ -135,11 +126,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return super.preprocessUsages(refUsages);
   }
 
-  public MultiMap<PsiElement, String> getConflicts(final UsageInfo[] usages) {
+  public MultiMap<PsiElement, String> getConflicts(UsageInfo[] usages) {
     final MultiMap<PsiElement, String> result = new MultiMap<>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       @Override
-      protected void checkAddMember(final @NotNull PsiMember member) {
+      protected void checkAddMember(@NotNull PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {
           return;
         }
@@ -153,7 +144,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
     };
     addInaccessibleMemberConflicts(usages, collector, result);
-    myClass.accept(new JavaRecursiveElementVisitor(){
+    myClass.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitParameter(@NotNull PsiParameter parameter) {
         super.visitParameter(parameter);
@@ -166,10 +157,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
             if (referenceExpression != null && referenceExpression.getQualifierExpression() == refElement) {
               final PsiElement resolvedMember = referenceExpression.resolve();
               if (resolvedMember != null && PsiTreeUtil.isAncestor(myClass, resolvedMember, false)) {
-                if (resolvedMember instanceof PsiMethod) {
-                  if (myClass.findMethodsBySignature((PsiMethod)resolvedMember, true).length > 1) { //skip inherited methods
-                    continue;
-                  }
+                if (resolvedMember instanceof PsiMethod method && myClass.findMethodsBySignature(method, true).length > 1) { 
+                  //skip inherited methods
+                  continue;
                 }
                 result.putValue(refElement, JavaRefactoringBundle.message("inline.to.anonymous.no.method.calls"));
               }
@@ -229,17 +219,16 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(superType != null);
     List<PsiElement> elementsToDelete = new ArrayList<>();
     List<PsiNewExpression> newExpressions = new ArrayList<>();
-    for(UsageInfo info: usages) {
+    for (UsageInfo info : usages) {
       final PsiElement element = info.getElement();
-      if (element instanceof PsiNewExpression) {
-        newExpressions.add((PsiNewExpression)element);
+      if (element instanceof PsiNewExpression exp) {
+        newExpressions.add(exp);
       }
-      else if (element != null && element.getParent() instanceof PsiNewExpression) {
-        newExpressions.add((PsiNewExpression) element.getParent());
+      else if (element != null && element.getParent() instanceof PsiNewExpression exp) {
+        newExpressions.add(exp);
       }
       else if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiReferenceList refList) {
-        PsiClass parentClass = tryCast(refList.getParent(), PsiClass.class);
-        if (parentClass != null && refList == parentClass.getPermitsList()) {
+        if (refList.getParent() instanceof PsiClass parentClass && refList == parentClass.getPermitsList()) {
           SealedUtils.removeFromPermitsList(parentClass, myClass);
         }
       }
@@ -255,11 +244,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
 
     newExpressions.sort(PsiUtil.BY_POSITION);
-    for(PsiNewExpression newExpression: newExpressions) {
+    for (PsiNewExpression newExpression : newExpressions) {
       replaceNewOrType(newExpression, superType);
     }
 
-    for(PsiElement element: elementsToDelete) {
+    for (PsiElement element : elementsToDelete) {
       try {
         if (element.isValid()) {
           element.delete();
@@ -279,7 +268,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void replaceNewOrType(final PsiNewExpression psiNewExpression, final PsiClassType superType) {
+  private void replaceNewOrType(PsiNewExpression psiNewExpression, PsiClassType superType) {
     try {
       if (!psiNewExpression.isArrayCreation()) {
         new InlineToAnonymousConstructorProcessor(myClass, psiNewExpression, superType).run();
@@ -318,7 +307,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public static @Nullable PsiClassType getSuperType(final PsiClass aClass) {
+  public static @Nullable PsiClassType getSuperType(PsiClass aClass) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
     PsiClassType superType;

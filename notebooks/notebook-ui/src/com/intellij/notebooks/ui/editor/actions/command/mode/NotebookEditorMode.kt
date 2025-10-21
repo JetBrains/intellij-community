@@ -3,10 +3,8 @@ package com.intellij.notebooks.ui.editor.actions.command.mode
 
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
-import com.intellij.ui.Gray
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -31,15 +29,15 @@ val NOTEBOOK_EDITOR_MODE: Topic<NotebookEditorModeListener> = Topic.create("Note
                                                                            NotebookEditorModeListener::class.java)
 
 @FunctionalInterface
-interface NotebookEditorModeListener {
+fun interface NotebookEditorModeListener {
   fun onModeChange(editor: Editor, mode: NotebookEditorMode)
 }
 
-private val key = Key<NotebookEditorMode>("Jupyter Notebook Editor Mode")
+private val NOTEBOOK_EDITOR_MODE_KEY = Key<NotebookEditorMode>("Jupyter Notebook Editor Mode")
 
 val Editor.currentMode: NotebookEditorMode
   get() {
-    return getEditor().getUserData(key) ?: NotebookEditorMode.COMMAND
+    return getEditor().getUserData(NOTEBOOK_EDITOR_MODE_KEY) ?: NotebookEditorMode.COMMAND
   }
 
 private fun Editor.getEditor(): Editor {
@@ -56,12 +54,9 @@ fun Editor.setMode(mode: NotebookEditorMode) {
   ThreadingAssertions.assertEventDispatchThread()
 
   val modeChanged = mode != currentMode
-  getEditor().putUserData(key, mode)
+  getEditor().putUserData(NOTEBOOK_EDITOR_MODE_KEY, mode)
 
   if (modeChanged) {
     ApplicationManager.getApplication().messageBus.syncPublisher(NOTEBOOK_EDITOR_MODE).onModeChange(this, mode)
   }
 }
-
-internal val INVISIBLE_CARET = CaretVisualAttributes(Gray.TRANSPARENT,
-                                                     CaretVisualAttributes.Weight.NORMAL)

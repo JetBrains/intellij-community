@@ -1,40 +1,44 @@
 import datetime
 import sys
-from typing import Any
+import winreg
+from _typeshed import Incomplete
+from typing import Any, SupportsIndex
 
 if sys.platform == "win32":
-    handle: Any
-    tzparent: Any
-    parentsize: Any
-    localkey: Any
-    WEEKS: Any
-    def list_timezones(): ...
+    handle: winreg.HKEYType
+    tzparent: winreg.HKEYType
+    parentsize: int
+    localkey: winreg.HKEYType
+    WEEKS: datetime.timedelta
+    def list_timezones() -> list[str]: ...
 
     class win32tz(datetime.tzinfo):
-        data: Any
-        def __init__(self, name) -> None: ...
-        def utcoffset(self, dt): ...
-        def dst(self, dt): ...
-        def tzname(self, dt): ...
+        data: win32tz_data
+        def __init__(self, name: str | None) -> None: ...
+        def utcoffset(self, dt: datetime.datetime) -> datetime.timedelta: ...  # type: ignore[override]
+        def dst(self, dt: datetime.datetime) -> datetime.timedelta: ...  # type: ignore[override]
+        def tzname(self, dt: datetime.datetime) -> str | None: ...  # type: ignore[override]
 
-    def pickNthWeekday(year, month, dayofweek, hour, minute, whichweek): ...
+    def pickNthWeekday(
+        year: SupportsIndex, month: SupportsIndex, dayofweek: int, hour: SupportsIndex, minute: SupportsIndex, whichweek: int
+    ) -> datetime.datetime | None: ...
 
     class win32tz_data:
-        display: Any
-        dstname: Any
-        stdname: Any
-        stdoffset: Any
-        dstoffset: Any
-        stdmonth: Any
-        stddayofweek: Any
-        stdweeknumber: Any
-        stdhour: Any
-        stdminute: Any
-        dstmonth: Any
-        dstdayofweek: Any
-        dstweeknumber: Any
-        dsthour: Any
-        dstminute: Any
-        def __init__(self, path) -> None: ...
+        display: Incomplete
+        dstname: Incomplete
+        stdname: Incomplete
+        stdoffset: Incomplete
+        dstoffset: Incomplete
+        stdmonth: Incomplete
+        stddayofweek: Incomplete
+        stdweeknumber: Incomplete
+        stdhour: Incomplete
+        stdminute: Incomplete
+        dstmonth: Incomplete
+        dstdayofweek: Incomplete
+        dstweeknumber: Incomplete
+        dsthour: Incomplete
+        dstminute: Incomplete
+        def __init__(self, path: str | None) -> None: ...
 
-    def valuesToDict(key): ...
+    def valuesToDict(key: winreg._KeyType) -> dict[str, Any]: ...

@@ -319,6 +319,7 @@ public final class CharsetToolkit {
         highOrderBit = true;
         // a two-bytes sequence was encountered
         if (isTwoBytesSequence(b0)) {
+          if (i+1 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be one continuation byte of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
           if (!isContinuationChar(b1)) {
@@ -330,6 +331,7 @@ public final class CharsetToolkit {
         }
         // a three-bytes sequence was encountered
         else if (isThreeBytesSequence(b0)) {
+          if (i+2 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be two continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
           if (!(isContinuationChar(b1) && isContinuationChar(b2))) {
@@ -341,6 +343,7 @@ public final class CharsetToolkit {
         }
         // a four-bytes sequence was encountered
         else if (isFourBytesSequence(b0)) {
+          if (i+3 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be three continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
           if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3))) {
@@ -352,6 +355,7 @@ public final class CharsetToolkit {
         }
         // a five-bytes sequence was encountered
         else if (isFiveBytesSequence(b0)) {
+          if (i+4 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be four continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
           if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3) && isContinuationChar(b4))) {
@@ -363,6 +367,7 @@ public final class CharsetToolkit {
         }
         // a six-bytes sequence was encountered
         else if (isSixBytesSequence(b0)) {
+          if (i+5 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be five continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
           if (!(isContinuationChar(b1) &&
@@ -384,16 +389,19 @@ public final class CharsetToolkit {
         hasBinary = true;
         break;
       }
-      if (!validU8Char) break;
       i++;
     }
 
-    if (!highOrderBit && !hasBinary) {
+    if (hasBinary) {
+      return GuessedEncoding.BINARY;
+    }
+    if (!highOrderBit) {
       return GuessedEncoding.SEVEN_BIT;
     }
     // finally, if it's not UTF-8 nor US-ASCII
-    if (!validU8Char) return GuessedEncoding.INVALID_UTF8;
-    if (hasBinary) return GuessedEncoding.BINARY;
+    if (!validU8Char) {
+      return GuessedEncoding.INVALID_UTF8;
+    }
 
     // if no invalid UTF-8 were encountered, we can assume the encoding is UTF-8,
     // otherwise the file would not be human readable

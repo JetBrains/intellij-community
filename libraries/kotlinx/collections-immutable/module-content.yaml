@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.kotlinx.collections.immutable
+  library: kotlinx-collections-immutable
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0/kotlinx-collections-immutable-jvm-0.jar

@@ -31,7 +31,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
   /**
    * @deprecated Use {@link InlineWatchesRootNode#InlineWatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
                                @NotNull XWatchesView watchesView,
                                @NotNull List<XExpression> regularWatchesExpressions,

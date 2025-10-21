@@ -67,10 +67,6 @@ class IjentNioFileSystem internal constructor(
     }
 
   override fun getPath(first: String, vararg more: String): IjentNioPath {
-    val os = when (ijentFs) {
-      is IjentFileSystemPosixApi -> EelPath.OS.UNIX
-      is IjentFileSystemWindowsApi -> EelPath.OS.WINDOWS
-    }
     return try {
       more.fold(EelPath.parse(first, ijentFs.descriptor)) { path, newPart -> path.resolve(newPart) }.toNioPath()
     }
@@ -90,6 +86,15 @@ class IjentNioFileSystem internal constructor(
   override fun newWatchService(): WatchService {
     TODO("Not yet implemented")
   }
+
+  override fun equals(other: Any?): Boolean =
+    other is IjentNioFileSystem && other.uri == uri && other.fsProvider == fsProvider
+
+  override fun hashCode(): Int =
+    fsProvider.hashCode() * 31 + uri.hashCode()
+
+  override fun toString(): String =
+    "IjentNioFileSystem(uri=$uri)"
 
   private fun EelPath.toNioPath(): IjentNioPath =
     AbsoluteIjentNioPath(

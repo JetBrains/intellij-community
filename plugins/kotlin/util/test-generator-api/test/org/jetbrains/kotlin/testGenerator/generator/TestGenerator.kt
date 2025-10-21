@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -6,8 +6,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestIndexingModeSupporter
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import junit.framework.ComparisonFailure
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
@@ -50,7 +50,7 @@ object TestGenerator {
             appendGeneratedComment()
             appendAnnotation(TAnnotation<SuppressWarnings>("all"))
             appendAnnotation(TAnnotation<TestRoot>(group.modulePath))
-            appendAnnotation(TAnnotation<TestDataPath>("\$CONTENT_ROOT"))
+            appendAnnotation(TAnnotation<TestDataPath>($$"$CONTENT_ROOT"))
 
             val singleModel = suite.models.singleOrNull()
             if (singleModel != null) {
@@ -123,7 +123,7 @@ internal fun getImports(suite: TSuite, group: TGroup, platform: KMPTestPlatform)
 internal fun postProcessContent(text: String): String {
     return text.lineSequence()
         .map { it.trimEnd() }
-        .joinToString(System.getProperty("line.separator"))
+        .joinToString(System.lineSeparator())
 }
 
 internal fun Code.appendImports(imports: Collection<String>) {
@@ -152,13 +152,15 @@ internal fun write(file: File, content: String, isUpToDateCheck: Boolean) {
 
     if (normalizeContent(content) != normalizeContent(oldContent)) {
         if (isUpToDateCheck) {
+            val tmpFile = Files.createTempFile(file.name, null).toFile()
+            tmpFile.writeText(content)
             if (file.exists()) {
                 throw FileComparisonFailedError(
                     message = "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
                     expected = oldContent,
                     actual = content,
                     expectedFilePath = file.absolutePath,
-                    actualFilePath = file.absolutePath
+                    actualFilePath = tmpFile.absolutePath
                 )
             } else {
                 throw ComparisonFailure(

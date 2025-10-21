@@ -12,85 +12,46 @@ import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.*
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.GuiUtils
 import com.intellij.ui.ScrollableContentBorder.Companion.setup
+import com.intellij.ui.Side
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
-import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.JBIterable
-import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.LoadingDetails
-import com.intellij.vcs.log.data.index.IndexedDetails
-import com.intellij.vcs.log.history.FileHistoryUtil
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.MergedChange
-import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider
-import com.intellij.vcs.log.impl.VcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
-import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.VcsLogActionIds
-import com.intellij.vcs.log.util.VcsLogUtil
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import com.intellij.vcs.log.ui.frame.VcsLogAsyncChangesTreeModel.Companion.createDiffRequestProducer
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import java.util.*
-import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JScrollPane
-import javax.swing.tree.DefaultTreeModel
 
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
-class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
-                                                           private val uiProperties: VcsLogUiProperties,
-                                                           private val dataGetter: (CommitId) -> VcsShortCommitDetails,
-                                                           parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
-  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
+@ApiStatus.Internal
+class VcsLogChangesBrowser(
+  project: Project,
+  private val model: VcsLogAsyncChangesTreeModel,
+  parent: Disposable,
+) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val toolbarWrapper: Wrapper
 
-  private val unprocessedSelection = AtomicReference<Selection?>(null)
-
-  private var commitModel = CommitModel.createEmpty()
-  private var isShowChangesFromParents = false
-  private var isShowOnlyAffectedSelected = false
-
-  private var affectedPaths: Collection<FilePath>? = null
-
   init {
-    val propertiesChangeListener = object : PropertiesChangeListener {
-      override fun <T> onPropertyChanged(property: VcsLogUiProperty<T>) {
-        updateUiSettings()
-        if (MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS == property || MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES == property) {
-          myViewer.rebuildTree()
-          updateStatusText()
-        }
-      }
-    }
-    uiProperties.addChangeListener(propertiesChangeListener, this)
-    updateUiSettings()
-
     Disposer.register(parent, this)
 
     toolbar.component.also { toolbarComponent ->
@@ -107,6 +68,12 @@ class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
 
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
     myViewer.rebuildTree()
+
+    model.addListener(this) {
+      viewer.requestRefresh {
+        VcsLogChangesTreeComponents.updateStatusText(model, viewer.emptyText)
+      }
+    }
   }
 
   override fun createToolbarComponent(): JComponent = toolbarWrapper
@@ -122,10 +89,6 @@ class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
 
   fun setToolbarHeightReferent(referent: JComponent) {
     toolbarWrapper.setVerticalSizeReferent(referent)
-  }
-
-  fun addListener(listener: Listener, disposable: Disposable) {
-    eventDispatcher.addListener(listener, disposable)
   }
 
   override fun createToolbarActions(): List<AnAction> {
@@ -146,156 +109,17 @@ class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
     )
   }
 
-  fun setSelectedDetails(detailsList: List<VcsFullCommitDetails>) {
-    unprocessedSelection.set(Selection(detailsList, null))
-    updateModel()
-  }
-
-  fun setEmpty() {
-    setEmptyWithText { it.setText("") }
-  }
-
-  fun setEmptyWithText(statusTextConsumer: Consumer<in StatusText>) {
-    unprocessedSelection.set(Selection(emptyList(), statusTextConsumer))
-    updateModel()
-  }
-
-  fun setAffectedPaths(paths: Collection<FilePath>?) {
-    affectedPaths = paths
-    updateStatusText()
-    myViewer.rebuildTree()
-  }
-
-  private fun updateModel() {
-    viewer.requestRefresh {
-      updateStatusText()
-      eventDispatcher.multicaster.onModelUpdated()
-    }
-  }
-
-  private fun updateStatusText() {
-    val emptyText = myViewer.emptyText
-    val model = commitModel
-
-    val customStatus = model.customEmptyTextStatus
-    if (customStatus != null) {
-      customStatus.accept(emptyText)
-      return
-    }
-    if (model.roots.isEmpty()) {
-      emptyText.setText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
-    }
-    else if (!model.changesToParents.isEmpty()) {
-      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).appendSecondaryText(
-        VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
-        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-      ) { uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS] = true }
-    }
-    else if (isShowOnlyAffectedSelected && affectedPaths != null) {
-      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
-        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
-                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-        ) { uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = false }
-    }
-    else {
-      emptyText.setText("")
-    }
-  }
-
   override val changesTreeModel: AsyncChangesTreeModel
-    get() = MyVcsLogAsyncChangesTreeModel()
+    get() = model
 
   override fun dispose() {
     shutdown()
-    unprocessedSelection.set(null)
   }
-
-  private inner class MyVcsLogAsyncChangesTreeModel : SimpleAsyncChangesTreeModel() {
-    override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
-      val selection = unprocessedSelection.getAndSet(null)
-      if (selection != null) {
-        try {
-          commitModel = selection.createCommitModel()
-        }
-        catch (e: ProcessCanceledException) {
-          unprocessedSelection.compareAndSet(null, selection)
-          throw e
-        }
-      }
-      return buildTreeModelSync(commitModel, affectedPaths, isShowOnlyAffectedSelected, isShowChangesFromParents, grouping)
-    }
-
-    private fun buildTreeModelSync(commitModel: CommitModel,
-                                   affectedPaths: Collection<FilePath>?,
-                                   showOnlyAffectedSelected: Boolean,
-                                   showChangesFromParents: Boolean,
-                                   grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
-      val changes = collectAffectedChanges(commitModel.changes, affectedPaths, showOnlyAffectedSelected)
-      val changesToParents = commitModel.changesToParents.mapValues {
-        collectAffectedChanges(it.value, affectedPaths, showOnlyAffectedSelected)
-      }
-
-      val builder = TreeModelBuilder(myProject, grouping)
-      builder.setChanges(changes, null)
-
-      if (showChangesFromParents && !changesToParents.isEmpty()) {
-        if (changes.isEmpty()) {
-          builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"))
-        }
-        for ((commitId, changesFromParent) in changesToParents) {
-          if (changesFromParent.isEmpty()) continue
-
-          val parentNode: ChangesBrowserNode<*> = TagChangesBrowserNode(ParentTag(commitId.hash, getText(commitId)),
-                                                                        SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
-          parentNode.markAsHelperNode()
-          builder.insertSubtreeRoot(parentNode)
-          builder.insertChanges(changesFromParent, parentNode)
-        }
-      }
-      return builder.build()
-    }
-  }
-
-  private fun updateUiSettings() {
-    isShowChangesFromParents = uiProperties.exists(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS) &&
-                               uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS]
-    isShowOnlyAffectedSelected = uiProperties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-                                 uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES]
-  }
-
-  val directChanges: List<Change>
-    get() = commitModel.changes
-  val selectedChanges: List<Change>
-    get() = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
-    sink[HAS_AFFECTED_FILES] = affectedPaths != null
     sink[QuickActionProvider.KEY] = ComponentQuickActionProvider(this@VcsLogChangesBrowser)
-
-    val roots = HashSet(commitModel.roots)
-    val selectedData = VcsTreeModelData.selected(myViewer)
-    sink.lazy(VcsDataKeys.VCS) {
-      getSelectedVcs(roots, selectedData)?.keyInstanceMethod
-    }
-  }
-
-  private fun getSelectedVcs(
-    roots: Set<VirtualFile>,
-    selectedData: VcsTreeModelData,
-  ): AbstractVcs? {
-    val rootsVcs = JBIterable.from(roots)
-      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-      .unique()
-      .single()
-    if (rootsVcs != null) return rootsVcs
-
-    val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
-      .map { change -> ChangesUtil.getFilePath(change) }
-      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-      .unique()
-      .single()
-    return selectionVcs
+    VcsLogChangesTreeComponents.uiDataSnapshot(sink, model, viewer)
   }
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
@@ -323,9 +147,9 @@ class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
       processor.context.putUserData(DISABLE_LOADING_BLOCKS, true)
     }
     else {
-      processor = VcsLogChangeProcessor(place, this, handler, true)
+      processor = VcsLogChangeProcessor(place, viewer, handler, true)
     }
-    VcsLogTreeChangeProcessorTracker(this, processor, handler, !isInEditor).track()
+    VcsLogTreeChangeProcessorTracker(viewer, processor, handler, !isInEditor).track()
     processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CombinedDiffToggle.DEFAULT)
     return processor
   }
@@ -338,95 +162,5 @@ class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
     viewer.invokeAfterRefresh { viewer.selectFile(toSelect) }
   }
 
-  fun getTag(change: Change): ChangesBrowserNode.Tag? {
-    val changesToParents = commitModel.changesToParents
-    val parentId = changesToParents.entries.firstOrNull { it.value.contains(change) }?.key ?: return null
-    return ParentTag(parentId.hash, getText(parentId))
-  }
-
-  private fun getText(commitId: CommitId): @Nls String {
-    var text = VcsLogBundle.message("vcs.log.changes.changes.to.parent.node", commitId.hash.toShortString())
-    val detail = dataGetter(commitId)
-    if (detail !is LoadingDetails || detail is IndexedDetails) {
-      text += " " + StringUtil.shortenTextWithEllipsis(detail.subject, 50, 0)
-    }
-    return text
-  }
-
-  fun interface Listener : EventListener {
-    fun onModelUpdated()
-  }
-
-  private class ParentTag(commit: Hash, private val text: @Nls String) : ValueTag<Hash>(commit) {
-    override fun toString() = text
-  }
-
-  private data class Selection(val details: List<VcsFullCommitDetails>, val emptyText: Consumer<in StatusText>? = null)
-
-  private class CommitModel(val roots: Set<VirtualFile>,
-                            val changes: List<Change>,
-                            val changesToParents: Map<CommitId, Set<Change>>,
-                            val customEmptyTextStatus: Consumer<in StatusText>?) {
-    companion object {
-      fun createEmpty(): CommitModel {
-        return CommitModel(emptySet(), emptyList(), emptyMap(), null)
-      }
-
-      fun createText(statusTextConsumer: Consumer<in StatusText>?): CommitModel {
-        return CommitModel(emptySet(), emptyList(), emptyMap(), statusTextConsumer)
-      }
-    }
-  }
-
-  companion object {
-    @JvmField
-    val HAS_AFFECTED_FILES = DataKey.create<Boolean>("VcsLogChangesBrowser.HasAffectedFiles")
-
-    private fun Selection.createCommitModel(): CommitModel {
-      if (details.isEmpty()) return CommitModel.createText(emptyText)
-
-      val roots = details.map(VcsFullCommitDetails::getRoot).toSet()
-
-      val singleCommitDetail = details.singleOrNull()
-      if (singleCommitDetail == null) {
-        return CommitModel(roots, VcsLogUtil.collectChanges(details), emptyMap(), null)
-      }
-
-      val changesToParents = if (singleCommitDetail.parents.size > 1) {
-        singleCommitDetail.parents.indices.associate { i ->
-          CommitId(singleCommitDetail.parents[i], singleCommitDetail.root) to ReferenceOpenHashSet(singleCommitDetail.getChanges(i))
-        }
-      }
-      else emptyMap()
-
-      return CommitModel(roots, singleCommitDetail.changes.toList(), changesToParents, null)
-    }
-
-    private fun collectAffectedChanges(changes: Collection<Change>,
-                                       affectedPaths: Collection<FilePath>?,
-                                       showOnlyAffectedSelected: Boolean): List<Change> {
-      return if (!showOnlyAffectedSelected || affectedPaths == null) ArrayList(changes)
-      else changes.filter { change: Change ->
-        affectedPaths.any { filePath: FilePath ->
-          if (filePath.isDirectory) {
-            return@any FileHistoryUtil.affectsDirectory(change, filePath)
-          }
-          else {
-            return@any FileHistoryUtil.affectsFile(change, filePath, false) ||
-                       FileHistoryUtil.affectsFile(change, filePath, true)
-          }
-        }
-      }
-    }
-
-    fun createDiffRequestProducer(
-      project: Project,
-      change: Change,
-      context: MutableMap<Key<*>, Any>,
-    ): ChangeDiffRequestChain.Producer? =
-      if (change is MergedChange && change.sourceChanges.size == 2)
-        MergedChangeDiffRequestProvider.MyProducer(project, change, context)
-      else
-        ChangeDiffRequestProducer.create(project, change, context)
-  }
+  fun getTag(change: Change): ChangesBrowserNode.Tag? = VcsLogChangesTreeComponents.getTag(model, change)
 }

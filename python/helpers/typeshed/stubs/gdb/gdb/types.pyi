@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import Protocol
+from typing import Protocol, type_check_only
 
 import gdb
 
@@ -10,13 +10,14 @@ def deep_items(type_: gdb.Type) -> Iterator[tuple[str, gdb.Field]]: ...
 def get_type_recognizers() -> list[_TypeRecognizer]: ...
 def apply_type_recognizers(recognizers: list[_TypeRecognizer], type_obj: gdb.Type) -> str | None: ...
 def register_type_printer(locus: gdb.Objfile | gdb.Progspace | None, printer: _TypePrinter) -> None: ...
-
+@type_check_only
 class _TypePrinter(Protocol):
     enabled: bool
     name: str
 
     def instantiate(self) -> _TypeRecognizer | None: ...
 
+@type_check_only
 class _TypeRecognizer(Protocol):
     def recognize(self, type: gdb.Type, /) -> str | None: ...
 

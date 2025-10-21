@@ -27,16 +27,32 @@ object FrontendApplicationInfo {
  * Enum representing different types of IntelliJ Platform Frontends.
  * Namely:
  * - Monolith: Represents a single process IDE.
- * - RemoteDev: Represents a frontend in a remote development and Code With Me client.
+ * - Remote: Represents a frontend in a remote development and Code With Me client.
  */
 @ApiStatus.Internal
 sealed interface FrontendType {
   object Monolith : FrontendType
 
   /**
-   * Represents a frontend in a remote development and Code With Me client.
+   * Represents a frontend in a remote mode, whether it's a Code With Me guest or Remote Development controller
    *
-   * @property isLuxSupported Indicates whether the frontend supports LUX (transferring UI from host to the client).
+   * @property type a type of remote frontend
    */
-  data class RemoteDev(val isLuxSupported: Boolean) : FrontendType
+  data class Remote(val type: RemoteFrontendType) : FrontendType {
+    fun isController(): Boolean = type == RemoteFrontendType.Controller
+    fun isGuest(): Boolean = type == RemoteFrontendType.Guest
+  }
+
+
+  enum class RemoteFrontendType {
+    /**
+     * if the frontend is connected as a guest to Code With Me Session
+     */
+    Guest,
+
+    /**
+     * if the frontend is connected as a controller to a Remote Development session
+     */
+    Controller,
+  }
 }

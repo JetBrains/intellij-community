@@ -19,6 +19,7 @@ data class FileEditorOpenOptions(
   @Internal @JvmField val waitForCompositeOpen: Boolean = true,
   // it makes sense only if openMode == NEW_WINDOW
   @Internal @JvmField val isSingletonEditorInWindow: Boolean = false,
+  @Internal @JvmField val forceFocus: Boolean = false,
   /**
     * **DO NOT USE!**
     *

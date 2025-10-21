@@ -1,11 +1,12 @@
 *:com.intellij.platform.syntax.CancellationProvider
 - a:checkCancelled():V
 *:com.intellij.platform.syntax.LanguageSyntaxDefinition
-- a:getCommentTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
-- a:getLexer():com.intellij.platform.syntax.lexer.Lexer
+- a:createLexer():com.intellij.platform.syntax.lexer.Lexer
+- a:getComments():com.intellij.platform.syntax.SyntaxElementTypeSet
 - getOpaqueElementPolicy():com.intellij.platform.syntax.parser.OpaqueElementPolicy
 - getWhitespaceOrCommentBindingPolicy():com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
-- getWhitespaceTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
+- getWhitespaces():com.intellij.platform.syntax.SyntaxElementTypeSet
+- a:parse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):V
 *f:com.intellij.platform.syntax.LazyLexingContext
 - <init>(com.intellij.platform.syntax.tree.SyntaxNode,com.intellij.platform.syntax.CancellationProvider):V
 - f:getCancellationProvider():com.intellij.platform.syntax.CancellationProvider
@@ -16,6 +17,7 @@
 - a:parse(com.intellij.platform.syntax.LazyParsingContext):com.intellij.platform.syntax.parser.ProductionResult
 *f:com.intellij.platform.syntax.LazyParserKt
 - *sf:canLazyNodeBeReparsedIncrementally(com.intellij.platform.syntax.LazyParsingContext):Z
+- sf:createLexer(com.intellij.platform.syntax.LazyLexingContext):com.intellij.platform.syntax.lexer.Lexer
 - *sf:parseLazyNode(com.intellij.platform.syntax.LazyParsingContext):com.intellij.platform.syntax.parser.ProductionResult
 *f:com.intellij.platform.syntax.LazyParsingContext
 - <init>(com.intellij.platform.syntax.tree.SyntaxNode,com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.CancellationProvider):V
@@ -43,12 +45,15 @@
 *f:com.intellij.platform.syntax.SyntaxElementType
 - equals(java.lang.Object):Z
 - f:getIndex():I
+- f:getUserData():java.lang.Object
 - hashCode():I
 - f:isLazyParseable():Z
 *f:com.intellij.platform.syntax.SyntaxElementTypeKt
 - *sf:SyntaxElementType(java.lang.String):com.intellij.platform.syntax.SyntaxElementType
 - *sf:SyntaxElementType(java.lang.String,com.intellij.platform.syntax.LazyParser):com.intellij.platform.syntax.SyntaxElementType
-- *bs:SyntaxElementType$default(java.lang.String,com.intellij.platform.syntax.LazyParser,I,java.lang.Object):com.intellij.platform.syntax.SyntaxElementType
+- *sf:SyntaxElementType(java.lang.String,com.intellij.platform.syntax.LazyParser,java.lang.Object):com.intellij.platform.syntax.SyntaxElementType
+- *sf:SyntaxElementType(java.lang.String,com.intellij.platform.syntax.LazyParser,java.lang.Object,Z):com.intellij.platform.syntax.SyntaxElementType
+- *bs:SyntaxElementType$default(java.lang.String,com.intellij.platform.syntax.LazyParser,java.lang.Object,Z,I,java.lang.Object):com.intellij.platform.syntax.SyntaxElementType
 *f:com.intellij.platform.syntax.SyntaxElementTypeSet
 - java.util.Set
 - kotlin.jvm.internal.markers.KMappedMarker
@@ -123,6 +128,8 @@
 - a:getTokenizedText():java.lang.CharSequence
 - a:remap(I,com.intellij.platform.syntax.SyntaxElementType):V
 - a:slice(I,I):com.intellij.platform.syntax.lexer.TokenList
+*f:com.intellij.platform.syntax.lexer.TokenListBuilder
+- f:token(java.lang.String,com.intellij.platform.syntax.SyntaxElementType):V
 *f:com.intellij.platform.syntax.lexer.TokenListUtil
 - sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
 - sf:backWhile(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):I
@@ -134,8 +141,15 @@
 - sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.lexer.TokenList
 - sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.lexer.Lexer
 - bs:tokenListLexer$default(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.Logger,I,java.lang.Object):com.intellij.platform.syntax.lexer.Lexer
+*f:com.intellij.platform.syntax.lexer.UtilsKt
+- sf:buildTokenList(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.lexer.TokenList
+- sf:tokenIndexAtOffset(com.intellij.platform.syntax.lexer.TokenList,I):I
 *f:com.intellij.platform.syntax.logger.NoopLogger
 - *sf:noopLogger():com.intellij.platform.syntax.Logger
+*f:com.intellij.platform.syntax.parser.DefaultWhitespaceBindingPolicy
+- com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
+- sf:INSTANCE:com.intellij.platform.syntax.parser.DefaultWhitespaceBindingPolicy
+- isLeftBound(com.intellij.platform.syntax.SyntaxElementType):Z
 *:com.intellij.platform.syntax.parser.OpaqueElementPolicy
 - a:getTextOfOpaqueElement(com.intellij.platform.syntax.SyntaxElementType):java.lang.String
 *:com.intellij.platform.syntax.parser.ProductionMarkerList
@@ -154,6 +168,7 @@
 *:com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - a:advanceLexer():V
 - a:enforceCommentTokens(com.intellij.platform.syntax.SyntaxElementTypeSet):V
+- a:enforceCommentTokensInside(com.intellij.platform.syntax.SyntaxElementTypeSet,kotlin.jvm.functions.Function0):java.lang.Object
 - a:eof():Z
 - a:error(java.lang.String):V
 - a:getCurrentOffset():I
@@ -224,15 +239,98 @@
 - f:defaultRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 - f:greedyLeftBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 - f:greedyRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+*:com.intellij.platform.syntax.tree.ASTMarkers
+- a:chameleonAt(I):com.intellij.platform.syntax.tree.ChameleonRef
+- a:chameleons():java.util.List
+- a:collapsed(I):Z
+- a:elementType(I):com.intellij.platform.syntax.SyntaxElementType
+- a:errorMessage(I):java.lang.String
+- a:getSize():I
+- a:kind(I):com.intellij.platform.syntax.tree.MarkerKind
+- a:lexemeCount(I):I
+- a:lexemeRelOffset(I):I
+- a:markersCount(I):I
+- a:mutate(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.tree.ASTMarkers
+*:com.intellij.platform.syntax.tree.ASTMarkers$MutableContext
+- a:changeChameleons(java.util.List):V
+- a:changeLexCount(I,I,I):V
+- a:changeMarkerCount(I,I,I):V
+- a:substitute(I,I,com.intellij.platform.syntax.tree.ASTMarkers):V
+*f:com.intellij.platform.syntax.tree.ASTMarkersKt
+- sf:firstChild(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+- sf:lastChild(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+- sf:newChameleonRef():com.intellij.platform.syntax.tree.ChameleonRef
+- sf:newChameleonRef(com.intellij.platform.syntax.tree.AstMarkersChameleon):com.intellij.platform.syntax.tree.ChameleonRef
+- sf:nextSibling(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+- sf:prevSibling(com.intellij.platform.syntax.tree.ASTMarkers,I):I
+*f:com.intellij.platform.syntax.tree.AstMarkersChameleon
+- <init>(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.tree.ASTMarkers):V
+- f:component1():com.intellij.platform.syntax.lexer.TokenList
+- f:component2():com.intellij.platform.syntax.tree.ASTMarkers
+- f:copy(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.tree.ASTMarkers):com.intellij.platform.syntax.tree.AstMarkersChameleon
+- bs:copy$default(com.intellij.platform.syntax.tree.AstMarkersChameleon,com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.tree.ASTMarkers,I,java.lang.Object):com.intellij.platform.syntax.tree.AstMarkersChameleon
+- equals(java.lang.Object):Z
+- f:getAst():com.intellij.platform.syntax.tree.ASTMarkers
+- f:getCustomLexemeStore():com.intellij.platform.syntax.lexer.TokenList
+- hashCode():I
+*:com.intellij.platform.syntax.tree.ChameleonRef
+- a:getValue():com.intellij.platform.syntax.tree.AstMarkersChameleon
+- a:realize(kotlin.jvm.functions.Function0):com.intellij.platform.syntax.tree.AstMarkersChameleon
+- a:set(com.intellij.platform.syntax.tree.AstMarkersChameleon):V
+*e:com.intellij.platform.syntax.tree.MarkerKind
+- java.lang.Enum
+- sf:End:com.intellij.platform.syntax.tree.MarkerKind
+- sf:Error:com.intellij.platform.syntax.tree.MarkerKind
+- sf:Start:com.intellij.platform.syntax.tree.MarkerKind
+- sf:Undone:com.intellij.platform.syntax.tree.MarkerKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.syntax.tree.MarkerKind
+- s:values():com.intellij.platform.syntax.tree.MarkerKind[]
 *:com.intellij.platform.syntax.tree.SyntaxNode
+- a:childByOffset(I):com.intellij.platform.syntax.tree.SyntaxNode
+- a:firstChild():com.intellij.platform.syntax.tree.SyntaxNode
 - a:getEndOffset():I
 - a:getErrorMessage():java.lang.String
-- a:getFirstChild():com.intellij.platform.syntax.tree.SyntaxNode
 - a:getLanguage():com.intellij.platform.syntax.SyntaxLanguage
-- a:getLastChild():com.intellij.platform.syntax.tree.SyntaxNode
-- a:getNextSibling():com.intellij.platform.syntax.tree.SyntaxNode
-- a:getParent():com.intellij.platform.syntax.tree.SyntaxNode
-- a:getPrevSibling():com.intellij.platform.syntax.tree.SyntaxNode
 - a:getStartOffset():I
 - a:getText():java.lang.CharSequence
 - a:getType():com.intellij.platform.syntax.SyntaxElementType
+- a:lastChild():com.intellij.platform.syntax.tree.SyntaxNode
+- a:nextSibling():com.intellij.platform.syntax.tree.SyntaxNode
+- a:parent():com.intellij.platform.syntax.tree.SyntaxNode
+- a:prevSibling():com.intellij.platform.syntax.tree.SyntaxNode
+*f:com.intellij.platform.syntax.tree.SyntaxNodeExt
+- sf:ancestorWithType(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.Object):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:ancestors(com.intellij.platform.syntax.tree.SyntaxNode,Z):kotlin.sequences.Sequence
+- bs:ancestors$default(com.intellij.platform.syntax.tree.SyntaxNode,Z,I,java.lang.Object):kotlin.sequences.Sequence
+- sf:children(com.intellij.platform.syntax.tree.SyntaxNode):kotlin.sequences.Sequence
+- sf:childrenBackward(com.intellij.platform.syntax.tree.SyntaxNode):kotlin.sequences.Sequence
+- sf:descendants(com.intellij.platform.syntax.tree.SyntaxNode,kotlin.jvm.functions.Function1):kotlin.sequences.Sequence
+- bs:descendants$default(com.intellij.platform.syntax.tree.SyntaxNode,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlin.sequences.Sequence
+- sf:descendantsByOffset(com.intellij.platform.syntax.tree.SyntaxNode,I):kotlin.sequences.Sequence
+- sf:descendantsReversed(com.intellij.platform.syntax.tree.SyntaxNode,kotlin.jvm.functions.Function1):kotlin.sequences.Sequence
+- bs:descendantsReversed$default(com.intellij.platform.syntax.tree.SyntaxNode,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlin.sequences.Sequence
+- sf:findFirstChild(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.Object):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:findFirstChild(com.intellij.platform.syntax.tree.SyntaxNode,kotlin.jvm.functions.Function1):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:findLastChild(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.Object):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:findLastChild(com.intellij.platform.syntax.tree.SyntaxNode,kotlin.jvm.functions.Function1):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:firstLeaf(com.intellij.platform.syntax.tree.SyntaxNode):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:getLength(com.intellij.platform.syntax.tree.SyntaxNode):I
+- sf:lastLeaf(com.intellij.platform.syntax.tree.SyntaxNode):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:leafByOffset(com.intellij.platform.syntax.tree.SyntaxNode,I):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:leafLeft(com.intellij.platform.syntax.tree.SyntaxNode):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:leafRight(com.intellij.platform.syntax.tree.SyntaxNode):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:next(com.intellij.platform.syntax.tree.SyntaxNode):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:pp(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.String):java.lang.String
+- bs:pp$default(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.String,I,java.lang.Object):java.lang.String
+- sf:sequenceLeft(com.intellij.platform.syntax.tree.SyntaxNode,Z):kotlin.sequences.Sequence
+- bs:sequenceLeft$default(com.intellij.platform.syntax.tree.SyntaxNode,Z,I,java.lang.Object):kotlin.sequences.Sequence
+- sf:sequenceRight(com.intellij.platform.syntax.tree.SyntaxNode,Z):kotlin.sequences.Sequence
+- bs:sequenceRight$default(com.intellij.platform.syntax.tree.SyntaxNode,Z,I,java.lang.Object):kotlin.sequences.Sequence
+- sf:siblings(com.intellij.platform.syntax.tree.SyntaxNode,Z,Z):kotlin.sequences.Sequence
+- bs:siblings$default(com.intellij.platform.syntax.tree.SyntaxNode,Z,Z,I,java.lang.Object):kotlin.sequences.Sequence
+- sf:skip(com.intellij.platform.syntax.tree.SyntaxNode):com.intellij.platform.syntax.tree.SyntaxNode
+- sf:skipForward(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.Object,Z):com.intellij.platform.syntax.tree.SyntaxNode
+- bs:skipForward$default(com.intellij.platform.syntax.tree.SyntaxNode,java.lang.Object,Z,I,java.lang.Object):com.intellij.platform.syntax.tree.SyntaxNode
+*f:com.intellij.platform.syntax.tree.ToAstMarkersKt
+- sf:toAstMarkers(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):com.intellij.platform.syntax.tree.ASTMarkers

@@ -5,6 +5,7 @@ from antlr4.Token import CommonToken as CommonToken
 class TokenFactory: ...
 
 class CommonTokenFactory(TokenFactory):
+    __slots__ = "copyText"
     DEFAULT: Incomplete
     copyText: Incomplete
     def __init__(self, copyText: bool = False) -> None: ...

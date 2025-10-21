@@ -7,9 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -48,6 +46,11 @@ public final class TestSources {
   public @NotNull PsiClass createClass(@NotNull String className, @NotNull @Language("JAVA") String code) {
     VfsTestUtil.createFile(mySrc, className + ".java", code + System.lineSeparator());
     return JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
+  }
+
+  public @NotNull PsiFile createFile(@NotNull String fileName, @NotNull @Language("JAVA") String code) {
+    VirtualFile file = VfsTestUtil.createFile(mySrc, fileName, code + System.lineSeparator());
+    return PsiManager.getInstance(myProject).findFile(file);
   }
 
   public void initModule() {

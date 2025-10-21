@@ -43,10 +43,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.invokeLater;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refreshProject;
+import static com.intellij.workspaceModel.ide.ProjectRootEntityKt.registerProjectRootBlocking;
 
 /**
  * GoF builder for external system backed projects.
@@ -205,6 +207,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                               final List<Module> modules,
                               IdeModifiableModelsProvider modelsProvider, final ExternalProjectSettings projectSettings) {
     myExternalProjectNode = null;
+
+    registerProjectRootBlocking(project, Paths.get(projectSettings.getExternalProjectPath()));
 
     // resolve dependencies
     final Runnable resolveDependenciesTask = () -> refreshProject(projectSettings.getExternalProjectPath(),

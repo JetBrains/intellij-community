@@ -7,6 +7,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isClassType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.createKeywordElementWithSpace
@@ -18,6 +22,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -28,7 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
  * Implementation in K1: [org.jetbrains.kotlin.idea.completion.returnExpressionItems]
  */
 internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTokens.RETURN_KEYWORD) {
-    context(KaSession)
+    context(_: KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -39,7 +44,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         val result = mutableListOf<LookupElement>()
 
         for (parent in expression.parentsWithSelf.filterIsInstance<KtDeclarationWithBody>()) {
-            val returnType = parent.returnType
+            val returnType = (parent as? KtDeclarationWithReturnType)?.returnType ?: continue
             if (parent is KtFunctionLiteral) {
                 val (label, call) = parent.findLabelAndCall()
                 if (label != null) {
@@ -66,7 +71,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         return result
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun addAllReturnVariants(
         result: MutableList<LookupElement>,
         returnType: KaType,
@@ -88,9 +93,9 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getExpressionsToReturnByType(returnType: KaType): List<ExpressionTarget> = buildList {
-        if (returnType.canBeNull) {
+        if (returnType.isNullable) {
             add(ExpressionTarget("null", addToLookupElementTail = false))
         }
 

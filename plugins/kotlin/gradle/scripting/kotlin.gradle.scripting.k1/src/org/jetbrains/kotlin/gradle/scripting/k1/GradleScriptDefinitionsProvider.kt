@@ -3,18 +3,18 @@
 package org.jetbrains.kotlin.gradle.scripting.k1
 
 import KotlinGradleScriptingBundle
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.gradle.scripting.shared.ErrorGradleScriptDefinition
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleDefinitionsParams
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.WithoutScriptModels
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
+import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.ConcurrentHashMap
 
-@InternalIgnoreDependencyViolation
 class GradleScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionsSource {
     companion object {
         fun getInstance(project: Project): GradleScriptDefinitionsContributor? =
@@ -76,7 +75,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
     private val definitionsByRoots = ConcurrentHashMap<LightGradleBuildRoot, List<ScriptDefinition>>()
 
     private fun LightGradleBuildRoot.markAsError() {
-        definitionsByRoots[this] = listOf(ErrorGradleScriptDefinition(project))
+        definitionsByRoots[this] = listOf(ErrorGradleScriptDefinition())
     }
 
     private fun LightGradleBuildRoot.isError(): Boolean {
@@ -119,8 +118,13 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             }
         }
 
+        if (root.gradleHome == null) {
+            scriptingWarnLog(KotlinGradleScriptingBundle.message("error.text.unable.to.get.gradle.home.directory"))
+            return emptyList()
+        }
+
         return org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions(
-            project, GradleDefinitionsParams(
+            GradleDefinitionsParams(
                 workingDir = root.workingDir,
                 gradleHome = root.gradleHome,
                 javaHome = root.javaHome,
@@ -189,6 +193,6 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             if (definitionsByRoots.isNotEmpty()) {
                 return definitionsByRoots.flatMap { it.value }.asSequence()
             }
-            return sequenceOf(ErrorGradleScriptDefinition(project))
+            return sequenceOf(ErrorGradleScriptDefinition())
         }
 }

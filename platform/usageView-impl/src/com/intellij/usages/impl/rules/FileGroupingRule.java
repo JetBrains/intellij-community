@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -31,16 +32,18 @@ import javax.swing.*;
 
 public class FileGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   private final Project myProject;
+  private final boolean myShowShortFilePath;
 
-  public FileGroupingRule(Project project) {
+  public FileGroupingRule(Project project, boolean showShortFilePath) {
     myProject = project;
+    myShowShortFilePath = showShortFilePath;
   }
 
   @Override
   public @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     VirtualFile virtualFile;
     if (usage instanceof UsageInFile && (virtualFile = ((UsageInFile)usage).getFile()) != null) {
-      return new FileUsageGroup(myProject, virtualFile);
+      return new FileUsageGroup(myProject, virtualFile, myShowShortFilePath);
     }
     return null;
   }
@@ -65,11 +68,13 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     private final VirtualFile myFile;
     private @NlsSafe String myPresentableName;
     private Icon myIcon;
+    private final boolean myShowShortFilePath;
 
-    public FileUsageGroup(@NotNull Project project, @NotNull VirtualFile file) {
+    public FileUsageGroup(@NotNull Project project, @NotNull VirtualFile file, boolean showShortFilePath) {
       myProject = project;
       myFile = file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
-      myPresentableName = myFile.getName();
+      myShowShortFilePath = showShortFilePath;
+      myPresentableName = getAdjustedName();
       update();
     }
 
@@ -81,8 +86,12 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     public void update() {
       if (isValid()) {
         myIcon = getIconImpl();
-        myPresentableName = myFile.getName();
+        myPresentableName = getAdjustedName();
       }
+    }
+
+    private @NlsSafe String getAdjustedName() {
+      return myShowShortFilePath ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, myFile) : myFile.getName();
     }
 
     @Override

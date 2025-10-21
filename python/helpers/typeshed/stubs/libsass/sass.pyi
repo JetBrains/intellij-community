@@ -183,3 +183,20 @@ class SassMap(Mapping[_KT, _VT_co]):
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...
     def __hash__(self) -> int: ...
+
+__all__ = (
+    "MODES",
+    "OUTPUT_STYLES",
+    "SOURCE_COMMENTS",
+    "CompileError",
+    "SassColor",
+    "SassError",
+    "SassFunction",
+    "SassList",
+    "SassMap",
+    "SassNumber",
+    "SassWarning",
+    "and_join",
+    "compile",
+    "libsass_version",
+)

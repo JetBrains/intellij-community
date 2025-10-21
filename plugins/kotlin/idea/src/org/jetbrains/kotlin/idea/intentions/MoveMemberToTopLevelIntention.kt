@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyPackageDescriptor
 import org.jetbrains.kotlin.util.descriptorsEqualWithSubstitution
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
-class MoveMemberToTopLevelIntention : MoveMemberOutOfObjectIntention(KotlinBundle.lazyMessage("move.to.top.level")) {
+internal class MoveMemberToTopLevelIntention : MoveMemberOutOfObjectIntention(KotlinBundle.messagePointer("move.to.top.level")) {
     override fun addConflicts(element: KtNamedDeclaration, conflicts: MultiMap<PsiElement, String>) {
         val packageViewDescriptor = element.findModuleDescriptor().getPackage(element.containingKtFile.packageFqName)
         val packageDescriptor = packageViewDescriptor.fragments.firstIsInstance<LazyPackageDescriptor>()

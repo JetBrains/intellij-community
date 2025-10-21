@@ -2,8 +2,8 @@ import sys
 from _typeshed import FileDescriptor
 from collections.abc import Sequence
 
-import gevent.libev.watcher as watcher
 from gevent._ffi.loop import AbstractLoop
+from gevent.libev import watcher
 
 def get_version() -> str: ...
 def get_header_version() -> str: ...
@@ -34,3 +34,13 @@ class loop(AbstractLoop):
         def reset_sigchld(self) -> None: ...
 
     def stat(self, path: str, interval: float = 0.0, ref: bool = True, priority: bool | None = None) -> watcher.stat: ...
+
+__all__ = [
+    "get_version",
+    "get_header_version",
+    "supported_backends",
+    "recommended_backends",
+    "embeddable_backends",
+    "time",
+    "loop",
+]

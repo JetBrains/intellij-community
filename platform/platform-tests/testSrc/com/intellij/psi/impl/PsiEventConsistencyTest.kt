@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
@@ -12,17 +15,25 @@ import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.*
 import com.intellij.psi.tree.IElementType
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.IntDistribution
 import org.jetbrains.jetCheck.PropertyChecker
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
-class PsiEventConsistencyTest : BasePlatformTestCase() {
+@TestApplication
+class PsiEventConsistencyTest {
+  private companion object {
+  val project = projectFixture()
+    }
 
+  @Test
   fun `test replacing child after changing its subtree`() {
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(project.get()) {
       // prepare
       val root = createEmptyFile().node
       root.replaceChild(root.firstChildNode, composite(compositeTypes[0], leaf(leafTypes[0], "d")))
@@ -32,13 +43,14 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
         root.firstChildNode.removeChild(root.firstChildNode.firstChildNode) // remove "d" leaf
         root.replaceChild(root.firstChildNode, composite(compositeTypes[0])) // replace now empty composite with another one 
       }, root as FileElement)
-      assertEquals("", root.text)
+      Assertions.assertEquals("", root.text)
     }
   }
 
+  @Test
   fun `test no excessive change merging between transactions if the second one has also a change higher in the tree`() {
     val file = createEmptyFile()
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(project.get()) {
       //prepare
       val root = file.node as FileElement
       root.addChild(composite(compositeTypes[0], leaf(leafTypes[0], "a")), root.firstChildNode)
@@ -53,14 +65,15 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
           root.firstChildNode.addChild(leaf(leafTypes[0], "c"), null)
         }, root)
       }, root)
-      assertEquals("bc", root.text)
-      assertEquals(root.text, file.viewProvider.document!!.text)
+      Assertions.assertEquals("bc", root.text)
+      Assertions.assertEquals(root.text, file.viewProvider.document!!.text)
     }
   }
 
+  @Test
   fun `test replace then delete in different AST parents at the same final offset`() {
     val file = createEmptyFile()
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(project.get()) {
       //prepare
       val root = file.node as FileElement
       root.replaceChild(root.firstChildNode, composite(compositeTypes[0],
@@ -73,14 +86,15 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
         bComposite.replaceChild(bComposite.firstChildNode, leaf(leafTypes[0], "B"))
         aComposite.removeChild(aComposite.firstChildNode)
       }, root)
-      assertEquals("B", root.text)
-      assertEquals(root.text, file.viewProvider.document!!.text)
+      Assertions.assertEquals("B", root.text)
+      Assertions.assertEquals(root.text, file.viewProvider.document!!.text)
     }
   }
-  
+
+  @Test
   fun `test changes in different AST parents at the same initial offset`() {
     val file = createEmptyFile()
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(project.get()) {
       //prepare
       val root = file.node as FileElement
       root.replaceChild(root.firstChildNode, composite(compositeTypes[0],
@@ -98,14 +112,15 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
           xComposite.removeChild(xComposite.firstChildNode)
         }, root)
       }, root)
-      assertEquals("ph", root.text)
-      assertEquals(root.text, file.viewProvider.document!!.text)
+      Assertions.assertEquals("ph", root.text)
+      Assertions.assertEquals(root.text, file.viewProvider.document!!.text)
     }
   }
 
+  @Test
   fun `test another case of changes in different AST parents at the same initial offset`() {
     val file = createEmptyFile()
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(project.get()) {
       //prepare
       val root = file.node as FileElement
       root.replaceChild(root.firstChildNode, composite(compositeTypes[0],
@@ -120,36 +135,40 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
           hComposite.replaceChild(hComposite.firstChildNode, composite(compositeTypes[0]))
         }, root)
       }, root)
-      assertEquals("v", root.text)
-      assertEquals(root.text, file.viewProvider.document!!.text)
-    }
-  }
-  
-  fun `test changes on AST without PSI`() {
-    val file = createEmptyFile()
-    WriteCommandAction.runWriteCommandAction(project) {
-      val root = file.node as FileElement
-      root.replaceChild(root.firstChildNode, leaf(leafTypes[0], "A"))
-      
-      assertEquals("A", root.text)
-      assertEquals(root.text, file.viewProvider.document!!.text)
+      Assertions.assertEquals("v", root.text)
+      Assertions.assertEquals(root.text, file.viewProvider.document!!.text)
     }
   }
 
+  @Test
+  fun `test changes on AST without PSI`() {
+    val file = createEmptyFile()
+    WriteCommandAction.runWriteCommandAction(project.get()) {
+      val root = file.node as FileElement
+      root.replaceChild(root.firstChildNode, leaf(leafTypes[0], "A"))
+
+      Assertions.assertEquals("A", root.text)
+      Assertions.assertEquals(root.text, file.viewProvider.document!!.text)
+    }
+  }
+
+  @Test
   fun testPsiDocSynchronization() {
     PropertyChecker.checkScenarios { assertNoErrorLoggedIn(RandomAstChanges()) }
   }
 
   private inner class RandomAstChanges: ImperativeCommand {
-    val file = PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true,
+    val file = PsiFileFactory.getInstance(project.get()).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true,
                                                                       false)!!
-    val document = file.viewProvider.document!!
+    val document: Document = ApplicationManager.getApplication().runReadAction(Computable {
+      file.viewProvider.document!!
+    })
 
     override fun performCommand(env: ImperativeCommand.Environment) {
-      WriteCommandAction.runWriteCommandAction(project) {
+      WriteCommandAction.runWriteCommandAction(project.get()) {
         env.executeCommands(commands)
-        assertEquals(document.text, file.text)
-        assertEquals(document.text, file.node.text)
+        Assertions.assertEquals(document.text, file.text)
+        Assertions.assertEquals(document.text, file.node.text)
       }
     }
 
@@ -198,7 +217,7 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
   }
 
   private fun createEmptyFile() : PsiFile =
-    PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
+    PsiFileFactory.getInstance(project.get()).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
 
   private val leafTypes = (1..5).map { i -> IElementType("Leaf$i", null) }
   private val compositeTypes = (1..5).map { i -> IElementType("Composite$i", null) }
@@ -237,11 +256,10 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
   private val nodes = Generator.frequency(4, leaves, 2, composites)
 
   private fun withDummyHolder(e: TreeElement): TreeElement {
-    DummyHolder(PsiManager.getInstance(project), e, null, CharTableImpl())
+    DummyHolder(PsiManager.getInstance(project.get()), e, null, CharTableImpl())
     CodeEditUtil.setNodeGenerated(e, true)
     return e
   }
-
 }
 
 

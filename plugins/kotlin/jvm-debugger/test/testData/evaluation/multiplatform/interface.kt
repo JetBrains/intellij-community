@@ -40,3 +40,6 @@ fun main() {
     val d = 0
 
 }
+
+// IGNORE_K1
+// SKIP_WRONG_DIRECTIVE_CHECK

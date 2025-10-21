@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -11,6 +12,8 @@ public class MavenServerConsoleIndicatorImpl implements MavenServerConsoleIndica
   private final ConcurrentLinkedQueue<MavenArtifactEvent> myPullingQueue = new ConcurrentLinkedQueue<>();
 
   private final ConcurrentLinkedQueue<MavenServerConsoleEvent> myConsoleEventsQueue = new ConcurrentLinkedQueue<>();
+
+  private final ConcurrentLinkedQueue<DownloadArtifactEvent> myDowLoadArtifactEventsQueue = new ConcurrentLinkedQueue<>();
 
   private boolean myCancelled = false;
 
@@ -55,6 +58,11 @@ public class MavenServerConsoleIndicatorImpl implements MavenServerConsoleIndica
   }
 
   @Override
+  public @NotNull List<DownloadArtifactEvent> pullDownloadArtifactEvents() {
+    return MavenRemotePullUtil.pull(myDowLoadArtifactEventsQueue);
+  }
+
+  @Override
   public @NotNull List<MavenServerConsoleEvent> pullConsoleEvents() {
     return MavenRemotePullUtil.pull(myConsoleEventsQueue);
   }
@@ -81,5 +89,9 @@ public class MavenServerConsoleIndicatorImpl implements MavenServerConsoleIndica
 
   public void error(String message) {
     printMessage(MavenServerConsoleIndicator.LEVEL_ERROR, message);
+  }
+
+  public void artifactDownloaded(File file) {
+    myDowLoadArtifactEventsQueue.add(new DownloadArtifactEvent(file.getAbsolutePath()));
   }
 }

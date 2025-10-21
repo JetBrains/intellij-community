@@ -6,17 +6,20 @@ from .encryption import StandardSecurityHandler
 from .syntax import PDFArray, PDFObject, PDFString
 
 class NumberTree(PDFObject):
+    __slots__ = ("_id", "nums")
     nums: defaultdict[Incomplete, list[Incomplete]]
     def __init__(self) -> None: ...
     def serialize(self, obj_dict: Unused = None, _security_handler: StandardSecurityHandler | None = None) -> str: ...
 
 class StructTreeRoot(PDFObject):
+    __slots__ = ("_id", "type", "parent_tree", "k")
     type: str
     parent_tree: NumberTree
     k: PDFArray[Incomplete]
     def __init__(self) -> None: ...
 
 class StructElem(PDFObject):
+    __slots__ = ("_id", "type", "s", "p", "k", "t", "alt", "pg", "_page_number")
     type: str
     s: str
     p: PDFObject

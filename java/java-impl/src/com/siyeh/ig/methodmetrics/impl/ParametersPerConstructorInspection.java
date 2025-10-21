@@ -62,7 +62,7 @@ public final class ParametersPerConstructorInspection extends MethodMetricInspec
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ParametersPerConstructorVisitor();
   }
 

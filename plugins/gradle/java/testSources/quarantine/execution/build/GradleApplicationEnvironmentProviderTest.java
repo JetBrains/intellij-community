@@ -21,7 +21,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
 
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
-    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
     String appClass = """
       package my;
@@ -58,7 +58,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
     );
 
     assertModules("moduleName", "moduleName.main", "moduleName.test");
-    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
     ApplicationConfiguration configuration = (ApplicationConfiguration)configurationSettings.getConfiguration();
 
     String appArgs = "Passed arguments: [foo, --bar, baz]";
@@ -70,7 +70,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
     configuration.setShortenCommandLine(ShortenCommandLine.MANIFEST);
     assertAppRunOutput(configurationSettings, appArgs);
 
-    Sdk jdk = JavaParametersUtil.createProjectJdk(myProject, configuration.getAlternativeJrePath());
+    Sdk jdk = JavaParametersUtil.createProjectJdk(getMyProject(), configuration.getAlternativeJrePath());
     if (JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
       System.out.println("Check ShortenCommandLine.ARGS_FILE");
       configuration.setShortenCommandLine(ShortenCommandLine.ARGS_FILE);
@@ -84,8 +84,8 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
-  public void testJavaModuleRunConfiguration() throws Exception {
-    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+  public void testJavaModuleRunConfigurationWithResources() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
     String appClass = """
       package my;
@@ -142,13 +142,71 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
         .generate()
     );
 
-    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
     assertAppRunOutput(configurationSettings, "File Content: content");
   }
 
   @Test
+  public void testJavaModuleRunConfigurationWithProvider() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
+    @Language("Java") String appClass = """
+      package serviceloader;
+      
+      import java.util.ServiceLoader;
+      
+      public class App {
+          public static void main(String[] args) {
+              var greeter = ServiceLoader.load(GreeterService.class).findFirst().orElseThrow();
+              greeter.greet();
+          }
+      
+          public static class DefaultGreeterService implements GreeterService {
+              @Override
+              public void greet() { System.err.println("I'm from the provider!"); }
+          }
+      
+          public interface GreeterService {
+              void greet();
+          }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/App.java", appClass);
+    @Language("Java") final String module = """
+      module my.test {
+      	uses serviceloader.App.GreeterService;
+      	provides serviceloader.App.GreeterService with serviceloader.App.DefaultGreeterService;
+      }
+      """;
+    createProjectSubFile("src/main/java/module-info.java", module);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'serviceloader.App'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .generate()
+    );
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "I'm from the provider!");
+  }
+
+  @Test
   public void testRunApplicationInnerStaticClass() throws Exception {
-    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
     String appClass = """
       package my;
@@ -184,13 +242,13 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
         .generate()
     );
 
-    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
     assertAppRunOutput(configurationSettings, "Hello expected world");
   }
 
   @Test
   public void testRunApplicationInNestedComposite() throws Exception {
-    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
     String appClass = """
       package my;
@@ -226,7 +284,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
       .generate());
     importProject();
 
-    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
     assertAppRunOutput(configurationSettings, "Hello expected world");
   }
 }

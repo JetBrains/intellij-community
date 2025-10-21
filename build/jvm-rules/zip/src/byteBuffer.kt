@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.AdaptiveByteBufAllocator
 import io.netty.buffer.ByteBufAllocator
+import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.ByteBuffer
@@ -51,19 +52,33 @@ internal class SingleByteBufferAllocator() : AutoCloseable {
   }
 }
 
-private val unmap by lazy {
-  val unsafeClass = ClassLoader.getPlatformClassLoader().loadClass("sun.misc.Unsafe")
-  val lookup = MethodHandles.privateLookupIn(unsafeClass, MethodHandles.lookup())
-  val unsafe = lookup.findStaticGetter(unsafeClass, "theUnsafe", unsafeClass).invoke()
-  lookup.findVirtual(unsafeClass, "invokeCleaner", MethodType.methodType(Void.TYPE, ByteBuffer::class.java)).bindTo(unsafe)
-}
-
 fun unmapBuffer(buffer: ByteBuffer) {
-  if (buffer.isDirect) {
-    unmap.invokeExact(buffer)
-  }
+  ByteBufferCleaner.unmapBuffer(buffer)
 }
 
 internal fun roundUpInt(x: Int, blockSizePowerOf2: Int): Int {
   return x + blockSizePowerOf2 - 1 and -blockSizePowerOf2
+}
+
+private object ByteBufferCleaner {
+  val cleanerHandle: MethodHandle
+  val cleanerCleanHandle: MethodHandle
+
+  fun unmapBuffer(buffer: ByteBuffer) {
+    if (!buffer.isDirect) {
+      return
+    }
+    val cleaner = cleanerHandle.invoke(buffer)
+    if (cleaner != null) {
+      cleanerCleanHandle.invoke(cleaner)
+    }
+  }
+
+  init {
+    val lookup = MethodHandles.lookup()
+    val directBufferClass = Class.forName("sun.nio.ch.DirectBuffer")
+    val cleanerClass = directBufferClass.getDeclaredMethod("cleaner").returnType
+    cleanerHandle = lookup.findVirtual(directBufferClass, "cleaner", MethodType.methodType(cleanerClass))
+    cleanerCleanHandle = lookup.findVirtual(cleanerClass, "clean", MethodType.methodType(Void.TYPE))
+  }
 }

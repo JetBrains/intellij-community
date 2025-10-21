@@ -393,3 +393,34 @@ class Key {
 
   private static final int count = <error descr="Variable 'COUNT' might not have been initialized">COUNT</error>++;
 }
+// don't report initialization error when all correctly named constructors assign -> badly named constructor is probably method without type declared
+// don't report initialization error when no correctly named constructor present and all badly named constructors assign -> class name edited manually?
+// report initialization error when not all badly named constructors assign
+class Definitely {
+  // intentionally no "might not have been initialized" error reporting here, because probably only the constructor name is incorrect
+  private final int x; 
+
+  <error descr="Method return type missing or constructor name does not match class name">Unquestionably</error>() {
+    x = 1;
+  }
+  
+  class One {
+    // intentionally no error reporting here, because probably only the type is missing from the method
+    private final int x;
+    One() {
+      x = 1;
+    }
+    <error descr="Method return type missing or constructor name does not match class name">run</error> () {
+      
+    }
+  }
+  class Two {
+    <error descr="Field 'x' might not have been initialized">private final int x</error>;
+    <error descr="Method return type missing or constructor name does not match class name">TwoPrime</error>() {
+      x = 1;
+    }
+    <error descr="Method return type missing or constructor name does not match class name">TwoPrime</error>(int i) {
+      // no assgnment to x
+    }
+  }
+}

@@ -59,11 +59,11 @@ class SheetProtection(Serialisable, _Protected):
         sort: _ConvertibleToBool = True,
         autoFilter: _ConvertibleToBool = True,
         pivotTables: _ConvertibleToBool = True,
-        password: Incomplete | None = None,
+        password=None,
         algorithmName: str | None = None,
-        saltValue: Incomplete | None = None,
+        saltValue=None,
         spinCount: ConvertibleToInt | None = None,
-        hashValue: Incomplete | None = None,
+        hashValue=None,
     ) -> None: ...
     @overload
     def set_password(self, value: str = "", already_hashed: Literal[False] = False) -> None: ...

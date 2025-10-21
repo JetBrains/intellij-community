@@ -6,8 +6,11 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lang.xml.XmlSyntaxDefinitionExtension;
 import com.intellij.lexer.EmbeddedTokenTypesProvider;
 import com.intellij.lexer.Lexer;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -50,6 +53,8 @@ public abstract class XmlParsingTestBase extends ParsingTestCase {
     registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
     registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
+    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), XMLLanguage.INSTANCE, new XmlSyntaxDefinitionExtension());
+    addExplicitExtension(ElementTypeConverters.getInstance(), XMLLanguage.INSTANCE, new XmlElementTypeConverterExtension());
   }
 
   protected void doTestXml(@NonNls String text) throws Exception {

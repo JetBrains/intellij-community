@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.util.Java11Shim
-import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.concurrency.VarHandleWrapperImpl
+import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -11,6 +10,10 @@ import org.jetbrains.annotations.VisibleForTesting
 @VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 class Java11ShimImpl : Java11Shim() {
+  init {
+    VarHandleWrapperImpl.useVarHandlesInConcurrentCollections()
+  }
+
   private val walker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 5)
 
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
@@ -24,10 +27,6 @@ class Java11ShimImpl : Java11Shim() {
   override fun <K : Any, V> mapOf(): Map<K, V> = java.util.Map.of()
 
   override fun <K : Any, V> mapOf(k: K, v: V, k2: K, v2: V): Map<K, V> = java.util.Map.of(k, v, k2, v2)
-
-  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
-    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
-  }
 
   override fun <E> listOf(): List<E> = java.util.List.of()
 

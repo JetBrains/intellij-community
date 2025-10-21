@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use {@link WriteAction#run(ThrowableRunnable)} or {@link ReadAction#run(ThrowableRunnable)} or similar method instead
  */
+@ApiStatus.Internal
 @Deprecated
 @ApiStatus.ScheduledForRemoval
 public abstract class BaseActionRunnable<T> {

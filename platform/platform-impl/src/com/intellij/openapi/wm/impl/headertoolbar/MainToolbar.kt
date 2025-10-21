@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -23,15 +25,16 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.UiDispatcherKind
-import com.intellij.openapi.application.ui
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.impl.BorderPainterHolder
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -45,6 +48,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
@@ -74,11 +78,11 @@ private sealed interface MainToolbarFlavor {
   }
 }
 
-private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
-                                                   private val headerContent: JComponent,
-                                                   frame: JFrame, toolbar: MainToolbar) : MainToolbarFlavor {
-
-
+private class MenuButtonInToolbarMainToolbarFlavor(
+  coroutineScope: CoroutineScope,
+  private val headerContent: JComponent,
+  frame: JFrame, toolbar: MainToolbar,
+) : MainToolbarFlavor {
   private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
   private val mainMenuButton = mainMenuWithButton.mainMenuButton
 
@@ -110,12 +114,12 @@ class MainToolbar(
   isOpaque: Boolean = false,
   background: Color? = null,
   private val isFullScreen: () -> Boolean,
-) : JPanel(HorizontalLayout(layoutGap)) {
+) : JPanel(HorizontalLayout(layoutGap)), BorderPainterHolder {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
-  private val cachedWidths by lazy { ConcurrentHashMap<String?, Int>() }
+  private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
 
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     this.background = background
@@ -126,7 +130,6 @@ class MainToolbar(
     else {
       DefaultMainToolbarFlavor
     }
-    ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
     showingScope("Main toolbar update") {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(LafManagerListener.TOPIC, LafManagerListener {
         updateToolbarActions()
@@ -178,7 +181,7 @@ class MainToolbar(
     }
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
+  override fun getComponentGraphics(g: Graphics): Graphics = JBSwingUtilities.runGlobalCGTransform(this, g)
 
   suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
@@ -188,7 +191,7 @@ class MainToolbar(
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
     }
 
-    val widgets = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    val widgets = withContext(Dispatchers.EDT) {
       removeAll()
 
       flavor.addWidget()
@@ -206,7 +209,7 @@ class MainToolbar(
 
     for (widget in widgets) {
       // separate EDT action - avoid long-running update
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UiWithModelAccess) {
         widget.first.updateActions()
       }
     }
@@ -294,7 +297,7 @@ class MainToolbar(
     super.paintComponent(g)
     if (!CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen())) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
-      InternalUICustomization.getInstance()?.paintFrameBackground(frame, this, g)
+      InternalUICustomization.getInstance()?.paintFrameBackground(frame as IdeFrame, this, g)
     }
   }
 
@@ -347,7 +350,6 @@ class MainToolbar(
     widthCalculationListeners.forEach { it.onToolbarCompressed(event) }
   }
 
-
   override fun removeNotify() {
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
@@ -368,6 +370,7 @@ class MainToolbar(
     return accessibleContext
   }
 
+  @Suppress("RedundantInnerClassModifier")
   private inner class AccessibleMainToolbar : AccessibleJPanel() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
@@ -429,7 +432,7 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   fun updateActions() {
-    updateActionsWithoutLoadingIcon(/* includeInvisible = */ false)
+    updateActionsWithoutLoadingIcon(includeInvisible = false)
   }
 
   override fun getChildPreferredSize(index: Int): Dimension {

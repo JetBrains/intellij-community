@@ -1,2 +1,10 @@
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
+
 # doesn't exist on linux
+_msi
 msilib(.[a-z]+)?
+
+# doesn't exist in all installations
+(nis)?

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
@@ -122,7 +123,7 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
   @Override
   public @NotNull OptPane getOptionsPane() {
     String autoStaticImportMessage =
-      JavaBundle.message("auto.static.import.comment");
+      JavaBundle.message("auto.static.import.comment.project");
     String excludeStaticImportMessage =
       JavaBundle.message("exclude.from.imports.no.exclusions");
     return OptPane.pane(
@@ -137,7 +138,11 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
   public static final class Provider implements OptionControllerProvider {
     @Override
     public @NotNull OptionController forContext(@NotNull PsiElement context) {
-      return getSettings(context.getProject()).getOptionController();
+      Project project = context.getProject();
+      return getSettings(context.getProject()).getOptionController()
+        .onValueSet((bindId, value) ->
+                      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("JavaProjectCodeInsightSettings.Provider.forContext")
+        );
     }
 
     @Override

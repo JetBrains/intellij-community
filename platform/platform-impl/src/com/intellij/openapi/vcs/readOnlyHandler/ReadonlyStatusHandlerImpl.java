@@ -45,9 +45,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
 
       State state = (State)o;
 
-      if (SHOW_DIALOG != state.SHOW_DIALOG) return false;
-
-      return true;
+      return SHOW_DIALOG == state.SHOW_DIALOG;
     }
 
     @Override
@@ -107,7 +105,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     }
 
     // This event count hack is necessary to allow actions that called this stuff could still get data from their data contexts.
-    // Otherwise data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
+    // Otherwise, data manager stuff will fire up an assertion saying that event count has been changed (due to modal dialog show-up)
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
     final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
     if (myState.SHOW_DIALOG && !ApplicationManager.getApplication().isHeadlessEnvironment()) {

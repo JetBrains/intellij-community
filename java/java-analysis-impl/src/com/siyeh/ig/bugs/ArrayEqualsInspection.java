@@ -103,7 +103,7 @@ public final class ArrayEqualsInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ArrayEqualsVisitor();
   }
 

@@ -27,7 +27,8 @@ public final class CoverageHelper {
   }
 
   public static void resetCoverageSuit(RunConfigurationBase configuration) {
-    final CoverageEnabledConfiguration covConfig = CoverageEnabledConfiguration.getOrCreate(configuration);
+    final CoverageEnabledConfiguration covConfig = CoverageEnabledConfiguration.getOrCreateIfApplicable(configuration);
+    if (covConfig == null) return;
 
     // reset coverage suite
     covConfig.setCurrentCoverageSuite(null);
@@ -40,13 +41,16 @@ public final class CoverageHelper {
 
   @ApiStatus.Internal
   public static void doReadExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
-    final CoverageEnabledConfiguration covConf = CoverageEnabledConfiguration.getOrCreate(runConfiguration);
+    final CoverageEnabledConfiguration covConf = CoverageEnabledConfiguration.getOrCreateIfApplicable(runConfiguration);
+    if (covConf == null) return;
 
     covConf.readExternal(element);
   }
 
   @ApiStatus.Internal
   public static void doWriteExternal(RunConfigurationBase runConfiguration, Element element) {
-    CoverageEnabledConfiguration.getOrCreate(runConfiguration).writeExternal(element);
+    CoverageEnabledConfiguration configuration = CoverageEnabledConfiguration.getOrCreateIfApplicable(runConfiguration);
+    if (configuration == null) return;
+    configuration.writeExternal(element);
   }
 }

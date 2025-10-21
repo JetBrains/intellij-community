@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitNotificationIdsHolder
@@ -87,7 +86,7 @@ internal class GitForcePushedBranchUpdateExecutor(private val project: Project, 
 
         try {
           for ((repository, branchPair) in toUpdate) {
-            val result = coroutineToIndicator { updateRepository(repository, branchPair) }
+            val result = updateRepository(repository, branchPair)
             updateResults[repository] = result
           }
         }
@@ -102,72 +101,77 @@ internal class GitForcePushedBranchUpdateExecutor(private val project: Project, 
     }
   }
 
-  @RequiresBackgroundThread
-  private fun updateRepository(repository: GitRepository, branchPair: GitBranchPair): GitUpdateResult {
+  private suspend fun updateRepository(repository: GitRepository, branchPair: GitBranchPair): GitUpdateResult {
     val branch = branchPair.source
     val trackedBranch = (branchPair.target as? GitRemoteBranch) ?: return GitUpdateResult.NOTHING_TO_UPDATE
 
-    val indicator = ProgressManager.getInstance().progressIndicator
-    val localCommits = GitLogUtil.collectMetadata(project, repository.root,
-                                                  "${trackedBranch.nameForLocalOperations}..${branch.name}").commits
+    val localCommits = coroutineToIndicator {
+      GitLogUtil.collectMetadata(project, repository.root,
+                                 "${trackedBranch.nameForLocalOperations}..${branch.name}").commits
+    }
     val updateConfig = mapOf(repository to branchPair)
     if (localCommits.containsMergeCommits()) { //merge commits cannot be cherry-picked as is
-      GitUpdateExecutionProcess(project,
-                                listOf(repository),
-                                updateConfig,
-                                GitVcsSettings.getInstance(project).updateMethod,
-                                false).execute()
+      GitUpdateExecutionProcess.update(project,
+                                       listOf(repository),
+                                       updateConfig,
+                                       GitVcsSettings.getInstance(project).updateMethod,
+                                       false)
       return GitUpdateResult.SUCCESS
     }
 
-    val updateProcess = GitUpdateProcess(project, indicator, listOf(repository), UpdatedFiles.create(), updateConfig, false, false)
-    if (updateProcess.isUpdateNotReady) {
+    val updateNotReady = coroutineToIndicator {
+      GitUpdateProcess(project, it, listOf(repository), UpdatedFiles.create(), updateConfig, false, false).isUpdateNotReady
+    }
+    if (updateNotReady) {
       return GitUpdateResult.NOT_READY
     }
 
     val needBackup = localCommits.isNotEmpty()
 
     val backupBranchName = branch.name + "-" + UUID.randomUUID()
-    val branchWorker = GitBranchWorker(project, Git.getInstance(), GitBranchUiHandlerImpl(project, indicator))
-    if (needBackup) {
-      branchWorker.createBranch(backupBranchName, mapOf(repository to HEAD))
-    }
-
-    val fetchSuccessful = GitFetchSupport.fetchSupport(project)
-      .fetch(repository, trackedBranch.remote, trackedBranch.nameForRemoteOperations)
-      .showNotificationIfFailed(GitBundle.message("notification.title.update.failed"))
-
-    if (!fetchSuccessful) {
-      return GitUpdateResult.NOT_READY
-    }
-
-    return updateWithPreserveChanges(repository) {
-      val resetSuccess = GitResetOperation(project, mapOf(repository to trackedBranch.nameForLocalOperations),
-                                           GitResetMode.HARD, indicator, GitResetOperation.OperationPresentation()).execute()
-      if (!resetSuccess) {
-        return@updateWithPreserveChanges GitUpdateResult.ERROR
-      }
-
+    return coroutineToIndicator { indicator ->
+      val branchWorker = GitBranchWorker(project, Git.getInstance(), GitBranchUiHandlerImpl(project, indicator))
       if (needBackup) {
-        val gitCherryPick = VcsCherryPickManager.getInstance(project).getCherryPickerFor(GitVcs.getKey())
-        if (gitCherryPick == null) {
-          return@updateWithPreserveChanges GitUpdateResult.NOT_READY
-        }
-
-        val allCherryPicked = gitCherryPick.cherryPick(localCommits.reversed())
-
-        if (allCherryPicked) {
-          branchWorker.deleteBranch(backupBranchName, listOf(repository))
-        }
-        else {
-          VcsNotifier.getInstance(project)
-            .notifyImportantWarning(GitNotificationIdsHolder.BRANCH_UPDATE_FORCE_PUSHED_BRANCH_NOT_ALL_CHERRY_PICKED, "",
-                                    GitBundle.message("action.git.update.force.pushed.branch.not.all.local.commits.chery.picked", backupBranchName))
-          return@updateWithPreserveChanges GitUpdateResult.INCOMPLETE
-        }
+        branchWorker.createBranch(backupBranchName, mapOf(repository to HEAD))
       }
 
-      return@updateWithPreserveChanges GitUpdateResult.SUCCESS
+      val fetchSuccessful =
+        GitFetchSupport.fetchSupport(project)
+          .fetch(repository, trackedBranch.remote, trackedBranch.nameForRemoteOperations)
+          .showNotificationIfFailed(GitBundle.message("notification.title.update.failed"))
+
+      if (!fetchSuccessful) {
+        return@coroutineToIndicator GitUpdateResult.NOT_READY
+      }
+
+      updateWithPreserveChanges(repository) {
+        val resetSuccess = GitResetOperation(project, mapOf(repository to trackedBranch.nameForLocalOperations),
+                                             GitResetMode.HARD, indicator, GitResetOperation.OperationPresentation()).execute()
+        if (!resetSuccess) {
+          return@updateWithPreserveChanges GitUpdateResult.ERROR
+        }
+
+        if (needBackup) {
+          val gitCherryPick = VcsCherryPickManager.getInstance(project).getCherryPickerFor(GitVcs.getKey())
+          if (gitCherryPick == null) {
+            return@updateWithPreserveChanges GitUpdateResult.NOT_READY
+          }
+
+          val allCherryPicked = gitCherryPick.cherryPick(localCommits.reversed())
+
+          if (allCherryPicked) {
+            branchWorker.deleteBranch(backupBranchName, listOf(repository))
+          }
+          else {
+            VcsNotifier.getInstance(project)
+              .notifyImportantWarning(GitNotificationIdsHolder.BRANCH_UPDATE_FORCE_PUSHED_BRANCH_NOT_ALL_CHERRY_PICKED, "",
+                                      GitBundle.message("action.git.update.force.pushed.branch.not.all.local.commits.chery.picked", backupBranchName))
+            return@updateWithPreserveChanges GitUpdateResult.INCOMPLETE
+          }
+        }
+
+        return@updateWithPreserveChanges GitUpdateResult.SUCCESS
+      }
     }
   }
 

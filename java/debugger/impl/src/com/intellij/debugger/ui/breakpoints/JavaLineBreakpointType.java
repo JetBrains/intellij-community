@@ -166,7 +166,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
           PsiElement body = lambda.getBody();
           LOG.assertTrue(body != null, "if we got an element, there must be a body");
           if (startMethodIsOuterLambda && lambda == startMethod) {
-            res.add(0, new LineJavaBreakpointVariant(elementPosition, body, ordinal));
+            res.addFirst(new LineJavaBreakpointVariant(elementPosition, body, ordinal));
             mainMethodAdded = true;
           }
           else if (lambda != outerMethod) {
@@ -338,7 +338,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (visitor.lastAddedReturnIsLastInstruction && visitor.returnOffsets.size() >= 2) {
       // Return at the end of the method is likely to be implicitly generated,
       // it is not the conditional return we were looking for, drop it.
-      visitor.returnOffsets.remove(visitor.returnOffsets.size() - 1);
+      visitor.returnOffsets.removeLast();
     }
     return visitor.returnOffsets.stream().map(offs -> method.locationOfCodeIndex(offs));
   }
@@ -583,20 +583,23 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         return true;
       }
 
-      if (element instanceof PsiField) {
-        PsiExpression initializer = ((PsiField)element).getInitializer();
+      if (element instanceof PsiField psiField) {
+        PsiExpression initializer = psiField.getInitializer();
         if (initializer != null && !PsiTypes.nullType().equals(initializer.getType())) {
           Object value = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(initializer);
           return value == null;
         }
         return false;
       }
-      else if (element instanceof PsiMethod) {
-        PsiCodeBlock body = ((PsiMethod)element).getBody();
+      else if (element instanceof PsiMethod psiMethod) {
+        PsiCodeBlock body = psiMethod.getBody();
         if (body != null) {
           PsiStatement[] statements = body.getStatements();
-          if (statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == line) {
-            return true;
+          if (statements.length > 0) {
+            int offset = statements[0].getTextOffset();
+            if (DocumentUtil.isValidOffset(offset, document) && document.getLineNumber(offset) == line) {
+              return true;
+            }
           }
         }
         return false;

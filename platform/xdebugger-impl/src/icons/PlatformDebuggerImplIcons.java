@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
+
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -17,7 +19,12 @@ public final class PlatformDebuggerImplIcons {
   }
 
   public static final class Actions {
-    /** 16x16 */ public static final @NotNull Icon DebuggerSync = load("icons/actions/debuggerSync.svg", -370007676, 2);
+
+    /** @deprecated to be removed (Use AllIcons.Debugger.DebuggerSync instead) */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    public static final @NotNull Icon DebuggerSync = load("icons/actions/debuggerSync.svg", 0, 0);
   }
 
   public static final class MemoryView {

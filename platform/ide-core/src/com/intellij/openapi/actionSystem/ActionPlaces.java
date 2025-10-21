@@ -95,6 +95,7 @@ public abstract class ActionPlaces {
   public static final String RUNNER_TOOLBAR = "RunnerToolbar";
   public static final String RUNNER_LAYOUT_BUTTON_TOOLBAR = "RunnerLayoutButtonToolbar";
   public static final String DEBUGGER_TOOLBAR = "DebuggerToolbar";
+  public static final String XDEBUGGER_TREE_POPUP = "XDebuggerTreePopup";
   public static final String ATTACH_DIALOG_TOOLBAR = "AttachDialogToolbar";
   public static final String USAGE_VIEW_POPUP = "UsageViewPopup";
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
@@ -142,8 +143,6 @@ public abstract class ActionPlaces {
 
   public static final String WELCOME_SCREEN = "WelcomeScreen";
   public static final String WELCOME_SCREEN_QUICK_PANEL = "WelcomeScreen.QuickPanel";
-  @ApiStatus.Internal
-  public static final String WELCOME_SCREEN_NON_MODAL = "WelcomeScreen.NonModal";
 
   public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
   public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";

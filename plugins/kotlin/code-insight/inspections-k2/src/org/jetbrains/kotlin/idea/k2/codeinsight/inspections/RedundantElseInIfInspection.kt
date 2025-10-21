@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -107,7 +108,7 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
         return ifExpression.elseKeyword
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtIfExpression.hasRedundantElse(): Boolean {
         var ifExpression = this
         if (ifExpression.isUsedAsExpression) {

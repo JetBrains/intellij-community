@@ -26,13 +26,12 @@ concurrency:
 
 jobs:
   stubtest-stdlib:
-    name: Check stdlib with stubtest
+    name: "stubtest: stdlib"
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # various modules aren't available on macos-13 and higher
-        os: ["ubuntu-latest", "windows-latest", "macos-12"]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14-dev"]
       fail-fast: false
 
     steps:
@@ -47,7 +46,5 @@ jobs:
           check-latest: true
       - name: Install dependencies
         run: pip install -r requirements-tests.txt
-      - name: Install mypy from git
-        run: pip install git+https://github.com/python/mypy@e8a26308d5d06925cf769b62f41ef2e4bc546ada
       - name: Run stubtest
         run: python tests/stubtest_stdlib.py

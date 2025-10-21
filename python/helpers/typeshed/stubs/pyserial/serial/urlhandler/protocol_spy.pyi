@@ -1,11 +1,11 @@
 from collections.abc import Generator
-from typing import TextIO
+from typing import TextIO, type_check_only
 
 import serial
 
 def sixteen(data: bytes) -> Generator[tuple[str, str] | tuple[None, None], None, None]: ...
 def hexdump(data: bytes) -> Generator[tuple[int, str], None, None]: ...
-
+@type_check_only
 class _Formatter:
     def rx(self, data: bytes) -> None: ...
     def tx(self, data: bytes) -> None: ...

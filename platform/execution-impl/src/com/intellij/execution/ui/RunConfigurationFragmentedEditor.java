@@ -34,6 +34,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * A {@link FragmentedSettingsEditor} for a run configuration,
+ * where the {@code Settings} type parameter is a subclass of {@link RunConfigurationBase}.
+ */
 public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfigurationBase<?>> extends FragmentedSettingsEditor<Settings> {
   private static final Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
   private final @Nullable RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
@@ -147,6 +151,9 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     }
   }
 
+  /**
+   * @return a list of {@link SettingsEditorFragment} instances representing particular settings fragments that users can enable and configure.
+   */
   protected abstract List<SettingsEditorFragment<Settings, ?>> createRunFragments();
 
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {

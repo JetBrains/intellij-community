@@ -306,5 +306,5 @@ private fun hasEmptyTrailingBlock(segments: List<UrlPath.PathSegment>) =
   segments.size > 1 && segments.last().isEmpty()
 
 interface UrlPathContextHolder {
-  val urlPathContext: UrlPathContext
+  val urlPathContext: UrlPathContext?
 }

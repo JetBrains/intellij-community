@@ -73,7 +73,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager implements Dispo
         connection.subscribe(ProjectTaskListener.TOPIC, new ProjectTaskListener() {
           @Override
           public void started(@NotNull ProjectTaskContext context) {
-            context.enableCollectionOfGeneratedFiles();
+            context.setCollectionOfGeneratedFilesEnabled(true);
           }
 
           @Override

@@ -2,10 +2,11 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.psi.PsiType.*;
 
@@ -22,6 +23,10 @@ public final class PsiTypes {
     floatType(),
     doubleType()
   ));
+
+  private static final Map<String, PsiPrimitiveType> PRIMITIVE_TYPES_BY_NAME =
+    Collections.unmodifiableMap(PRIMITIVE_TYPES.stream()
+                                  .collect(Collectors.toMap(PsiPrimitiveType::getName, Function.identity())));
 
   /**
    * Returns instance corresponding to {@code byte} type. 
@@ -92,6 +97,22 @@ public final class PsiTypes {
    */
   public static @NotNull List<PsiPrimitiveType> primitiveTypes() {
     return PRIMITIVE_TYPES;
+  }
+
+  /**
+   * Returns a primitive type by its name.
+   * @param name name of a primitive type.
+   * @return primitive type instance or null if there is no such type.
+   */
+  public static @Nullable PsiPrimitiveType primitiveTypeByName(@NotNull String name) {
+    return PRIMITIVE_TYPES_BY_NAME.get(name);
+  }
+
+  /**
+   * @return a set of names of primitive types.
+   */
+  public static @NotNull Set<String> primitiveTypeNames() {
+    return PRIMITIVE_TYPES_BY_NAME.keySet();
   }
 
   /** 

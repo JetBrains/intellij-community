@@ -64,6 +64,9 @@ public interface Notifications {
       notification.assertHasTitleOrContent();
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isDispatchThread()) {
+        if (project != null && project.isDisposed()) {
+          return;
+        }
         doNotify(notification, project);
       }
       else if (project == null) {

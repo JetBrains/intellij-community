@@ -15,7 +15,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
@@ -41,7 +41,7 @@ data class UvRunConfigurationOptions(
   var uvArgs: List<String> = listOf()
 ) {
   val uvSdk: Sdk?
-    get() = uvSdkKey?.let {PythonSdkUtil.findSdkByKey(it)}
+    get() = uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it)}
 
   val workingDirectory: Path?
     get() = (uvSdk?.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory

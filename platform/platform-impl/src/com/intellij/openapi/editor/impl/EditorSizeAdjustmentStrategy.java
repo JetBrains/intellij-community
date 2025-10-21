@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SingleEdtTaskScheduler;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -34,7 +35,7 @@ final class EditorSizeAdjustmentStrategy {
   /**
    * The minimum number of preferred size changes per target amount of time that is considered to be frequent.
    */
-  private static final int FREQUENT_SIZE_CHANGES_NUMBER = 10;
+  private static final int FREQUENT_SIZE_CHANGES_NUMBER = getFrequentSizeChangesNumber();
 
   /**
    * Default number of columns to reserve during frequent typing at the end of the longest document line.
@@ -110,6 +111,16 @@ final class EditorSizeAdjustmentStrategy {
 
   private void scheduleSizeUpdate(@NotNull EditorImpl editor) {
     alarm.cancelAndRequest(1000, new UpdateSizeTask(editor));
+  }
+
+  /**
+   * It is a hot fix for IJPL-155997 (editor does not scroll horizontally while typing).
+   * Since it is a pretty annoying bug that you cannot see chars you just typed the freq value is increased to {@code 200}.
+   * The old value is {@code 10}.
+   * A proper fix should be implemented in the future.
+   */
+  private static int getFrequentSizeChangesNumber() {
+    return Registry.intValue("editor.viewport.width.update.frequency", 200);
   }
 
   private final class UpdateSizeTask implements Runnable {

@@ -1,7 +1,9 @@
-from typing import Any
+import re
+from collections.abc import Callable
+from types import ModuleType
 
-tag_regexp: Any
+tag_regexp: re.Pattern[str]
 
 def getETreeBuilder(ElementTreeImplementation): ...
 
-getETreeModule: Any
+getETreeModule: Callable[..., ModuleType]

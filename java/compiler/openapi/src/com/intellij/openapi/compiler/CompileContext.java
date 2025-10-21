@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ import java.util.Collections;
 /**
  * An interface allowing access and modification of the data associated with the current compile session.
  */
+@ApiStatus.NonExtendable
 public interface CompileContext extends UserDataHolder {
   /**
    * Allows adding a message to be shown in `Compiler` message view.
@@ -111,13 +113,32 @@ public interface CompileContext extends UserDataHolder {
   /**
    * A compiler may call this method to request complete project rebuild.
    * This may be necessary, for example, when compiler caches are corrupted.
+   * @deprecated calls of this method don't affect the behavior of the compilation engine; code which performs compilation should be 
+   * migrated to be run in a separate JPS build process, see {@link Compiler} for details. 
    */
-  void requestRebuildNextTime(String message);
+  @Deprecated(forRemoval = true)
+  default void requestRebuildNextTime(String message) {
+  }
 
-  boolean isRebuildRequested();
+  /**
+   * @deprecated the compilation engine doesn't support triggering rebuild from the IDE process; code which performs compilation should be 
+   * migrated to be run in a separate JPS build process, see {@link Compiler} for details. 
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isRebuildRequested() {
+    return false;
+  }
 
+
+  /**
+   * @deprecated the compilation engine doesn't support triggering rebuild from the IDE process; code which performs compilation should be
+   * migrated to be run in a separate JPS build process, see {@link Compiler} for details.
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
-  String getRebuildReason();
+  default String getRebuildReason() {
+    return null;
+  }
 
   /**
    * Returns the module to which the specified file belongs. This method is aware of the file->module mapping

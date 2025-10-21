@@ -5,17 +5,17 @@ import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.serialization.PropertyMapping
 
-class JavaManifestData {
+public class JavaManifestData {
 
-  val manifestAttributes: Map<String, String>
+  public val manifestAttributes: Map<String, String>
 
   @PropertyMapping("manifestAttributes")
-  constructor(manifestAttributes: Map<String, String>) {
+  public constructor(manifestAttributes: Map<String, String>) {
     this.manifestAttributes = manifestAttributes
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val KEY = Key.create(JavaManifestData::class.java, ProjectKeys.TASK.processingWeight + 1)
+    public val KEY: Key<JavaManifestData> = Key.create(JavaManifestData::class.java, ProjectKeys.TASK.processingWeight + 1)
   }
 }

@@ -37,56 +37,89 @@ interface IntersectionSupertype {
 
   <T extends @Nullable Object & @Nullable Lib> void x8(T t);
 
-  default void useLib(Lib lib) {
-    x0(lib);
-    x1(lib);
-    x2(lib);
-    x3(lib);
-    x4(lib);
-    x5(lib);
-    x6(lib);
-    x7(lib);
-    x8(lib);
+  default void useLib(Lib lib, int i) {
+    switch (i) {
+      case 0:
+        x0(lib);
+      case 1:
+        x1(lib);
+      case 2:
+        x2(lib);
+      case 3:
+        x3(lib);
+      case 4:
+        x4(lib);
+      case 5:
+        x5(lib);
+      case 6:
+        x6(lib);
+      case 7:
+        x7(lib);
+      case 8:
+        x8(lib);
+    }
   }
 
-  default void useLibUnspec(@NullnessUnspecified Lib lib) {
-    // jspecify_nullness_not_enough_information
-    x0(lib);
-    // jspecify_nullness_not_enough_information
-    x1(lib);
-    // jspecify_nullness_not_enough_information
-    x2(lib);
-    // jspecify_nullness_not_enough_information
-    x3(lib);
-    // jspecify_nullness_not_enough_information
-    x4(lib);
-    // jspecify_nullness_not_enough_information
-    x5(lib);
-    // jspecify_nullness_not_enough_information
-    x6(lib);
-    // jspecify_nullness_not_enough_information
-    x7(lib);
-    this.<@Nullable Lib>x8(lib);
+  default void useLibUnspec(@NullnessUnspecified Lib lib, int i) {
+    switch (i) {
+      case 0:
+        // jspecify_nullness_not_enough_information
+        x0(lib);
+      case 1:
+        // jspecify_nullness_not_enough_information
+        x1(lib);
+      case 2:
+        // jspecify_nullness_not_enough_information
+        x2(lib);
+      case 3:
+        // jspecify_nullness_not_enough_information
+        x3(lib);
+      case 4:
+        // jspecify_nullness_not_enough_information
+        x4(lib);
+      case 5:
+        // jspecify_nullness_not_enough_information
+        x5(lib);
+      case 6:
+        // jspecify_nullness_not_enough_information
+        x6(lib);
+      case 7:
+        // jspecify_nullness_not_enough_information
+        x7(lib);
+      case 8:
+        this.<@Nullable Lib>x8(lib);
+    }
   }
 
-  default void useLibUnionNull(@Nullable Lib lib) {
-    // jspecify_nullness_mismatch
-    x0(lib);
-    // jspecify_nullness_mismatch
-    x1(lib);
-    // jspecify_nullness_mismatch
-    x2(lib);
-    // jspecify_nullness_mismatch
-    x3(lib);
-    // jspecify_nullness_not_enough_information
-    x4(lib);
-    // jspecify_nullness_not_enough_information
-    x5(lib);
-    // jspecify_nullness_mismatch
-    x6(lib);
-    // jspecify_nullness_not_enough_information
-    x7(lib);
-    x8(lib);
+  default void useLibUnionNull(@Nullable Lib lib, int i) {
+    switch (i) {
+      case 0:
+        // jspecify_nullness_mismatch
+        x0(lib);
+      case 1:
+        // jspecify_nullness_mismatch
+        x1(lib);
+      case 2:
+        // jspecify_nullness_mismatch
+        x2(lib);
+      case 3:
+        // jspecify_nullness_mismatch
+        x3(lib);
+      case 4:
+        // jspecify_nullness_not_enough_information
+        x4(lib);
+      case 5:
+        // jspecify_nullness_not_enough_information
+        x5(lib);
+      case 6:
+        // jspecify_nullness_mismatch
+        x6(lib);
+      case 7:
+        // jspecify_nullness_not_enough_information
+        x7(lib);
+      case 8:
+        x8(lib);
+    }
   }
 
   interface Lib {}

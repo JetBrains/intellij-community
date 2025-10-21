@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
@@ -29,18 +28,27 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
   val underlyingFacet: FacetEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsFacetBridgeEntity.Builder<FacetEntity> {
-    override var entitySource: EntitySource
-    override var moduleId: ModuleId
-    override var name: String
-    var typeId: FacetEntityTypeId
-    var configurationXmlTag: String?
-    var module: ModuleEntity.Builder
-    var underlyingFacet: FacetEntity.Builder?
+  @Deprecated(message = "Use FacetEntityBuilder instead")
+  interface Builder : FacetEntityBuilder {
+    @Deprecated(message = "Use new API instead")
+    fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setModule(value: ModuleEntity.Builder) {
+      module = value
+    }
+
+    @Deprecated(message = "Use new API instead")
+    fun getUnderlyingFacet(): FacetEntity.Builder? = underlyingFacet as FacetEntity.Builder?
+
+    @Deprecated(message = "Use new API instead")
+    fun setUnderlyingFacet(value: FacetEntity.Builder?) {
+      underlyingFacet = value
+    }
   }
 
-  companion object : EntityType<FacetEntity, Builder>(ModuleSettingsFacetBridgeEntity) {
+  companion object : EntityType<FacetEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -50,16 +58,9 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
       typeId: FacetEntityTypeId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.moduleId = moduleId
-      builder.name = name
-      builder.typeId = typeId
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = FacetEntityType.compatibilityInvoke(moduleId, name, typeId, entitySource, init)
 
+    //region compatibility generated code
     @Deprecated(
       message = "This method is deprecated and will be removed in next major release",
       replaceWith = ReplaceWith("invoke(moduleId, name, typeId, entitySource, init)"),
@@ -74,11 +75,13 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder = invoke(moduleId, name, typeId, entitySource, init)
+    //endregion compatibility generated code
   }
   //endregion
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyFacetEntity(
   entity: FacetEntity,
   modification: FacetEntity.Builder.() -> Unit,
@@ -86,8 +89,12 @@ fun MutableEntityStorage.modifyFacetEntity(
   return modifyEntity(FacetEntity.Builder::class.java, entity, modification)
 }
 
+@Deprecated(message = "Use new API instead")
 var FacetEntity.Builder.childrenFacets: List<FacetEntity.Builder>
-  by WorkspaceEntity.extensionBuilder(FacetEntity::class.java)
+  get() = (this as FacetEntityBuilder).childrenFacets as List<FacetEntity.Builder>
+  set(value) {
+    (this as FacetEntityBuilder).childrenFacets = value
+  }
 //endregion
 
 val FacetEntity.childrenFacets: List<FacetEntity>

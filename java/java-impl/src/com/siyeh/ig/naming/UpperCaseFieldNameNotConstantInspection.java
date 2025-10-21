@@ -49,7 +49,7 @@ public final class UpperCaseFieldNameNotConstantInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UpperCaseFieldNameNotConstantVisitor();
   }
 

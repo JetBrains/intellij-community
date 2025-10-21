@@ -253,6 +253,8 @@ internal class MutableParameter(
     private val originalType: KotlinType,
     private val possibleTypes: Set<KotlinType>
 ) : Parameter, IMutableParameter<KotlinType> {
+    override val contextParameter: Boolean = false
+
     // All modifications happen in the same thread
     private var writable: Boolean = true
     private val defaultTypes = LinkedHashSet<KotlinType>()

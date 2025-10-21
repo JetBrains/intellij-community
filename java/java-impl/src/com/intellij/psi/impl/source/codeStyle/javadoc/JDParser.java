@@ -48,13 +48,6 @@ public class JDParser {
   private static final Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
 
   // Markdown tokens
-  private static final String CODE_FENCE_BACKTICK = "```";
-  private static final String CODE_FENCE_TILDE = "~~~";
-  private static final String CODE_FENCE_BACKTICK_REGEXP = "`{3,}";
-  private static final String CODE_FENCE_TILDE_REGEXP = "~{3,}";
-  private static final Pattern CODE_FENCE_TILDE_PATTERN = Pattern.compile(CODE_FENCE_TILDE_REGEXP);
-  private static final Pattern CODE_FENCE_BACKTICK_PATTERN = Pattern.compile(CODE_FENCE_BACKTICK_REGEXP);
-
   private static final String LIST_ITEM_REGEXP = "^\\d+?[).]";
   private static final Pattern LIST_ITEM_PATTERN = Pattern.compile(LIST_ITEM_REGEXP);
 
@@ -228,11 +221,12 @@ public class JDParser {
     StringBuilder sb = new StringBuilder();
     String tag = null;
     boolean isInsidePreTag = false;
+    FenceInfo currentCodeFence = null;
 
     for (int i = 0; i <= size; i++) {
       String line = i == size ? null : l.get(i);
       if (i == size || !line.isEmpty()) {
-        if (i == size || line.charAt(0) == '@' && !isInsidePreTag) {
+        if (i == size || line.charAt(0) == '@' && !isInsidePreTag && currentCodeFence == null) {
           if (tag == null) {
             comment.setDescription(sb.toString());
           }
@@ -282,6 +276,11 @@ public class JDParser {
         isInsidePreTag = isInsidePreTag
                          ? !lineHasClosingPreTag(line)
                          : lineHasUnclosedPreTag(line);
+        if (currentCodeFence == null) {
+          currentCodeFence = findCodeFence(line, true);
+        } else if (currentCodeFence.isClosedBy(line)) {
+          currentCodeFence = null;
+        }
       }
     }
   }
@@ -306,6 +305,7 @@ public class JDParser {
   }
 
   private static void preprocessLines(List<String> l, List<Boolean> markers, boolean isMarkdown) {
+    FenceInfo currentCodeFence = null;
     // preprocess strings - removes leading token
     for (int i = 0; i < l.size(); i++) {
       String line = l.get(i);
@@ -329,13 +329,18 @@ public class JDParser {
           // Note: Markdown comments are not trimmed like html ones, except for javadoc tags
           String newLine;
           int tagStart = CharArrayUtil.shiftForward(line, 3, " \t");
-          if (tagStart != line.length() && line.charAt(tagStart) == '@') {
+          if (tagStart != line.length() && line.charAt(tagStart) == '@' && currentCodeFence == null) {
             newLine = line.substring(tagStart);
           } else {
             newLine = StringUtil.trimStart(line, "/// ");
             if (Strings.areSameInstance(newLine, line)) {
               newLine = StringUtil.trimStart(line, "///");
             }
+          }
+          if (currentCodeFence == null) {
+            currentCodeFence = findCodeFence(newLine, true);
+          } else if (currentCodeFence.isClosedBy(newLine)) {
+            currentCodeFence = null;
           }
           line = newLine;
         }
@@ -366,9 +371,9 @@ public class JDParser {
     int firstLineToKeepIndents = -1;
     int minIndentWhitespaces = Integer.MAX_VALUE;
     boolean isInMultilineTodo = false;
-    boolean isInSnippet = false;
     int snippetBraceBalance = 0;
-    String codeblockType = null;
+    FenceInfo fenceInfo = null;
+    boolean fenceFound;
 
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
@@ -391,7 +396,7 @@ public class JDParser {
       if ("\n".equals(token)) {
         if (!first) {
           list.add("");
-          if (markers != null) markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo);
+          if (markers != null) markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo || fenceInfo != null);
         }
         first = false;
       }
@@ -402,7 +407,7 @@ public class JDParser {
         }
         if (p2nl && isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
           list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
-          markers.add(preCount > 0 || firstLineToKeepIndents >= 0);
+          markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || fenceInfo != null);
           continue;
         }
 
@@ -419,23 +424,26 @@ public class JDParser {
             snippetBraceBalance += getLineSnippetTagBraceBalance(token);
           }
           if (lineHasUnclosedPreTag(token)) preCount++;
-          if (markdownComment && codeblockType == null) {
-            codeblockType = lineGetStartCodeFence(token);
-            if (codeblockType != null) preCount++;
+
+          fenceFound = false;
+          if (markdownComment && fenceInfo == null) {
+            fenceInfo = findCodeFence(lineWithoutAsterisk, true);
+            if (fenceInfo != null) {
+              fenceFound = true; // code fences must open and close on different lines
+            }
           }
 
           markers.add(preCount > 0
+                      || fenceInfo != null
                       || firstLineToKeepIndents >= 0
                       || isInMultilineTodo
                       || snippetBraceBalance != 0
                       || (markdownComment && isStartOfMarkdownHeader(token)) /* Markdown titles cannot be split */);
 
           if (lineHasClosingPreTag(token)) preCount--;
-          if (markdownComment && codeblockType != null) {
-            if (Strings.areSameInstance(codeblockType, CODE_FENCE_BACKTICK) && token.contains(CODE_FENCE_BACKTICK)
-                || Strings.areSameInstance(codeblockType, CODE_FENCE_TILDE) && token.contains(CODE_FENCE_TILDE)) {
-              preCount--;
-              codeblockType = null;
+          if (markdownComment && fenceInfo != null && !fenceFound) {
+            if (fenceInfo.isClosedBy(lineWithoutAsterisk)) {
+              fenceInfo = null;
             }
           }
         }
@@ -648,7 +656,7 @@ public class JDParser {
   @Contract("null, _ -> null")
   private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s, boolean markdownComment) {
     if (s == null) return null;
-    s = markdownComment ? s : s.trim();
+    s = trimIfNecessary(s, markdownComment);
     if (s.isEmpty()) return null;
 
     List<Pair<String, Boolean>> result = new ArrayList<>();
@@ -690,6 +698,19 @@ public class JDParser {
       result.add(new Pair<>(sb.toString(), false));
     }
     return result;
+  }
+
+  private static @NotNull String trimIfNecessary(@NotNull String text, boolean markdownComment) {
+    if (markdownComment) {
+      boolean shouldTrim = true;
+      for (char c : text.toCharArray()) {
+        if (c == ' ') continue;
+        shouldTrim = c != '|';
+        break;
+      }
+      if (!shouldTrim) { return text; }
+    }
+    return text.trim();
   }
 
   private boolean isKeepLineFeedsIn(@NotNull String line) {
@@ -861,37 +882,72 @@ public class JDParser {
     return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > getOccurenceCount(line, PRE_TAG_START_PATTERN);
   }
 
+  /**
+   * @param fenceChar the character used in the code fence delimiter, {@code `} or {@code ~}.
+   * @param fenceLen the length of the code fence delimiter (3+)
+   */
+  public record FenceInfo(char fenceChar, int fenceLen) {
+    public boolean isClosedBy(@NotNull String line) {
+      return isClosedBy(findCodeFence(line, false));
+    }
+
+    public boolean isClosedBy(@Nullable FenceInfo closing) {
+      return closing != null && fenceChar == closing.fenceChar && closing.fenceLen >= fenceLen;
+    }
+  }
 
   /**
-   * Detects a stating code block fence in a given line
-   *
-   * @return The code fence type, or null if none are found
+   * Detects an opening or closing code block fence in a given line.
+   * <ul>
+   *   <li>A code fence opens with at least 3 {@code `} or {@code ~}</li>
+   *   <li>A code fence can be preceded by at most 3 spaces</li>
+   *   <li>An opening code fence can be followed by an info string, but if the code fence is of {@code `} type, the info string cannot contain {@code `} chars (this makes it possible to recognize inline code fences)</li>
+   *   <li>A closing code fence can only be followed by spaces and tabs</li>
+   * </ul>
    */
-  private static String lineGetStartCodeFence(@NotNull String line) {
-    int backticks = getOccurenceCount(line, CODE_FENCE_BACKTICK_PATTERN);
-    int tildes = getOccurenceCount(line, CODE_FENCE_TILDE_PATTERN);
+  public static @Nullable FenceInfo findCodeFence(@NotNull String line, boolean opening) {
+    if (line.length() < 3) return null;
 
-    boolean hasBacktickStart = backticks % 2 != 0;
-    boolean hasTildeStart = tildes % 2 != 0;
+    boolean fenceFound = false;
+    boolean infoString = false;
+    int fenceLen = 0;
+    char fenceChar = 0;
 
-    if (hasBacktickStart && hasTildeStart) {
-      if (backticks == tildes) {
-        // find the first fence
-        int backtickIndex = line.lastIndexOf(CODE_FENCE_BACKTICK);
-        int tildeIndex = line.lastIndexOf(CODE_FENCE_TILDE);
-        return backtickIndex > tildeIndex ? CODE_FENCE_TILDE : CODE_FENCE_BACKTICK;
+    for (int i = 0; i < line.length(); i++) {
+      var ch = line.charAt(i);
+
+      if (!fenceFound) {
+        switch (ch) {
+          case ' ' -> {
+            // up to 3 spaces are allowed
+            if (i > 2) return null;
+          }
+          case '`', '~' -> {
+            fenceFound = true;
+            fenceChar = ch;
+            fenceLen += 1;
+          }
+          default -> {
+            return null;
+          }
+        }
+      } else {
+        if (!infoString && ch == fenceChar) {
+          fenceLen += 1;
+          continue;
+        }
+
+        if (fenceLen < 3) return null;
+        infoString = true;
+
+        // forbidden: non-space/tabs for closing fences, and '`' for '`' opening fences
+        if (!opening && ch != ' ' && ch != '\t' || opening && fenceChar == '`' && ch == '`') {
+          return null;
+        }
       }
-      else {
-        // give back whoever has the least amount of occurrences
-        return backticks > tildes ? CODE_FENCE_TILDE : CODE_FENCE_BACKTICK;
-      }
     }
-    else if (hasTildeStart) {
-      return CODE_FENCE_BACKTICK;
-    }
-    else if (hasBacktickStart) {
-      return CODE_FENCE_TILDE;
-    }
+
+    if (fenceLen >= 3) return new FenceInfo(fenceChar, fenceLen);
     return null;
   }
 
@@ -976,11 +1032,12 @@ public class JDParser {
     else {
       int snippetBraceBalance = 0;
       boolean insidePreTag = false;
+      FenceInfo fenceInfo = null;
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(continuationPrefix);
-        if (!markdownComment && line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i) && snippetBraceBalance == 0) {
+        if (!markdownComment && line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && fenceInfo == null && !isFollowedByTagLine(list, i) && snippetBraceBalance == 0) {
           sb.append(P_START_TAG);
         }
         else {
@@ -992,6 +1049,12 @@ public class JDParser {
           }
           else if (lineHasClosingPreTag(line)) {
             insidePreTag = false;
+          }
+
+          if (fenceInfo == null) {
+            fenceInfo = findCodeFence(line, true);
+          } else if (fenceInfo.isClosedBy(line)) {
+            fenceInfo = null;
           }
 
           if (snippetBraceBalance == 0) {

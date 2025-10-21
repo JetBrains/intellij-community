@@ -303,7 +303,9 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       else ActionPopupOptions.mnemonicsAndDisabled())
     val defaultSelection = if (toSelect != null) Condition<AnAction> { mapping[it] == toSelect } else null
     val step = OptionButtonPopupStep(actionItems, place, defaultSelection, dataContext, presentationFactory)
-    return OptionButtonPopup(step, dataContext, toSelect != null || ensureSelection)
+    val popup = OptionButtonPopup(step, dataContext, toSelect != null || ensureSelection)
+    optionButton.optionAdText?.let { popup.setAdText(it) }
+    return popup
   }
 
   protected open fun createActionDataContext(): DataContext = DataManager.getInstance().getDataContext(optionButton)

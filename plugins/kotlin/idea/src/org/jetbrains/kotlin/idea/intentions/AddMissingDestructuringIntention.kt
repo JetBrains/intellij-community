@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 
 class AddMissingDestructuringIntention : SelfTargetingIntention<KtDestructuringDeclaration>(
     KtDestructuringDeclaration::class.java,
-    KotlinBundle.lazyMessage("add.missing.component")
+    KotlinBundle.messagePointer("add.missing.component")
 ) {
     override fun isApplicableTo(element: KtDestructuringDeclaration, caretOffset: Int): Boolean {
         val entriesCount = element.entries.size

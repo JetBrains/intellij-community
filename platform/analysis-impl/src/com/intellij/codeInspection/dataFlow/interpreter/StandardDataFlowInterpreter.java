@@ -203,7 +203,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
       .remove(Instruction::isLinear)
       .flatMap(inst -> IntStreamEx.of(inst.getSuccessorIndexes()).elements(myInstructions))
       .into(joinInstructions);
-    for (int index = 0; index < myInstructions.length; index++) {
+    for (int index = 0; index < myInstructions.length - 1; index++) {
       Instruction instruction = myInstructions[index];
       if (instruction instanceof FinishElementInstruction finishInstruction && !finishInstruction.mayFlushSomething()) {
         // Good chances to squash something after some vars are flushed

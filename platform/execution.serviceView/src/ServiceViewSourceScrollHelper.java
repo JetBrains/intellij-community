@@ -91,12 +91,12 @@ final class ServiceViewSourceScrollHelper {
       select(editor);
     }
 
-    private Promise<Void> select(@NotNull FileEditor editor) {
+    private void select(@NotNull FileEditor editor) {
       VirtualFile virtualFile = editor.getFile();
       if (virtualFile == null) {
-        return Promises.rejectedPromise("Virtual file is null");
+        Promises.rejectedPromise("Virtual file is null");
       }
-      return ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject)).select(virtualFile);
+      ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject)).select(virtualFile);
     }
   }
 
@@ -139,7 +139,7 @@ final class ServiceViewSourceScrollHelper {
       if (!editors.hasNext()) return;
 
       FileEditor editor = editors.next();
-      myScrollFromHandler.select(editor).onError(r -> select(editors));
+      myScrollFromHandler.select(editor);
     }
   }
 }

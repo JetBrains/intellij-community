@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.core.action
 
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.shared.ChainStatus
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -14,12 +15,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
-enum class ChainStatus {
-  LANGUAGE_NOT_SUPPORTED,
-  COMPUTING,
-  FOUND,
-  NOT_FOUND
-}
 /**
  * Helps [TraceStreamAction] understand if there is a suitable chain under the debugger position or not.
  */

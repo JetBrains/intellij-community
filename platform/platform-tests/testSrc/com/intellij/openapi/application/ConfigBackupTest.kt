@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.application.ConfigBackup.Companion.MAX_BACKUPS_NUMBER
 import com.intellij.util.io.write
 import org.junit.Assert.*
 import org.junit.Before
@@ -18,37 +17,33 @@ class ConfigBackupTest : ConfigImportHelperBaseTest() {
   private lateinit var configDir: Path
   private lateinit var backupDir: Path
 
-  @Before
-  fun setup() {
-    dirToBackup = createConfigDirToBackup()
-    configDir = localTempDir.rootPath.resolve(CONFIG_PREFIX)
-    backupDir = configDir.resolveSibling("$CONFIG_PREFIX-backup")
+  @Before fun setup() {
+    dirToBackup = newTempDir("temp-settings").apply { resolve("options/config.xml").write("config data") }
+    configDir = dirToBackup.resolveSibling(CONFIG_PREFIX)
+    backupDir = dirToBackup.resolveSibling("${CONFIG_PREFIX}-backup")
   }
 
-  @Test
-  fun `next backup path`() {
+  @Test fun `next backup path`() {
     val now = LocalDateTime.now()
     val date = getDateFormattedForBackupDir(now)
-    val dir = memoryFs.fs.getPath("${PathManager.getConfigPath()}-backup").resolve(date)
+    val dir = memoryFs.fs.getPath("${PathManager.getConfigDir()}-backup").resolve(date)
 
-    val path = ConfigBackup.getNextBackupPath(memoryFs.fs.getPath(PathManager.getConfigPath()), now)
+    val path = ConfigBackup.getNextBackupPath(memoryFs.fs.getPath(PathManager.getConfigDir().toString()), now)
     assertEquals("Next backup path is incorrect", dir, path)
   }
 
-  @Test
-  fun `make simple backup`() {
+  @Test fun `make simple backup`() {
     moveDirToBackup()
 
     assertTrue("Backup dir doesn't exist", backupDir.exists())
     val child = backupDir.getSingleChild()
-    val backedupDir = child.getSingleChild()
-    assertEquals("Wrong backed up dir", "options", backedupDir.name)
-    val backedupFile = backedupDir.getSingleChild()
-    assertFile(backedupFile, "config.xml", "config data")
+    val backedUpDir = child.getSingleChild()
+    assertEquals("Wrong backed up dir", "options", backedUpDir.name)
+    val backedUpFile = backedUpDir.getSingleChild()
+    assertFile(backedUpFile, "config.xml", "config data")
   }
 
-  @Test
-  fun `migrate previous backup format`() {
+  @Test fun `migrate previous backup format`() {
     val optionsDir = backupDir.resolve("options").createDirectories()
     optionsDir.resolve("other.xml").createFile().writeText("old content")
     val inspectionsDir = backupDir.resolve("inspections").createDirectories()
@@ -71,16 +66,15 @@ class ConfigBackupTest : ConfigImportHelperBaseTest() {
     val migratedOptionsFile = migratedOptions.getSingleChild()
     assertFile(migratedOptionsFile, "other.xml", "old content")
 
-    val backedupDir = children[1].getSingleChild()
-    assertEquals("Wrong backed up dir", "options", backedupDir.name)
-    val backedupFile = backedupDir.getSingleChild()
-    assertFile(backedupFile, "config.xml", "config data")
+    val backedUpDir = children[1].getSingleChild()
+    assertEquals("Wrong backed up dir", "options", backedUpDir.name)
+    val backedUpFile = backedUpDir.getSingleChild()
+    assertFile(backedUpFile, "config.xml", "config data")
   }
 
-  @Test
-  fun `cleanup backups if there are too many of them`() {
+  @Test fun `cleanup backups if there are too many of them`() {
     val now = LocalDateTime.now()
-    for (i in 1..MAX_BACKUPS_NUMBER) {
+    for (i in 1..ConfigBackup.MAX_BACKUPS_NUMBER) {
       val date = getDateFormattedForBackupDir(now.minusDays(i.toLong()))
       createBackupDirForDate(date)
     }
@@ -88,13 +82,12 @@ class ConfigBackupTest : ConfigImportHelperBaseTest() {
     moveDirToBackup()
 
     val children = backupDir.listDirectoryEntries().sortedBy { it.name }
-    assertEquals("Unexpected number of entries inside $backupDir: $children", MAX_BACKUPS_NUMBER, children.size)
-    val oldestDate = getDateFormattedForBackupDir(now.minusDays(MAX_BACKUPS_NUMBER.toLong()))
+    assertEquals("Unexpected number of entries inside $backupDir: $children", ConfigBackup.MAX_BACKUPS_NUMBER, children.size)
+    val oldestDate = getDateFormattedForBackupDir(now.minusDays(ConfigBackup.MAX_BACKUPS_NUMBER.toLong()))
     assertFalse("The oldest dir should have been deleted", children.any { it.name == oldestDate })
   }
 
-  @Test
-  fun `create backup with index if there is already folder with current date`() {
+  @Test fun `create backup with index if there is already folder with current date`() {
     // during the test this date can become not now, i.e. non-conflicting with the next backup, effectively making the test useless,
     // however, it is ok if the test will be useful
     val now = LocalDateTime.now()
@@ -111,10 +104,10 @@ class ConfigBackupTest : ConfigImportHelperBaseTest() {
     val children = backupDir.listDirectoryEntries().sortedBy { it.name }
     assertEquals("Unexpected number of entries inside $backupDir: $children", 4, children.size)
     val createdDir = children.find { it.name !in dates }!!
-    val backedupDir = createdDir.getSingleChild()
-    assertEquals("Wrong backed up dir", "options", backedupDir.name)
-    val backedupFile = backedupDir.getSingleChild()
-    assertFile(backedupFile, "config.xml", "config data")
+    val backedUpDir = createdDir.getSingleChild()
+    assertEquals("Wrong backed up dir", "options", backedUpDir.name)
+    val backedUpFile = backedUpDir.getSingleChild()
+    assertFile(backedUpFile, "config.xml", "config data")
   }
 
   private fun moveDirToBackup() {
@@ -122,12 +115,6 @@ class ConfigBackupTest : ConfigImportHelperBaseTest() {
   }
 
   private fun createBackupDirForDate(date1: String): Path = backupDir.resolve(date1).createDirectories()
-
-  private fun createConfigDirToBackup(): Path {
-    val configDir = localTempDir.newDirectoryPath("temp-settings")
-    configDir.resolve("options/config.xml").write("config data")
-    return configDir
-  }
 
   private fun getDateFormattedForBackupDir(dateTime: LocalDateTime): String =
     dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"))

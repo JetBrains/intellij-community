@@ -2,6 +2,9 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationEntry
+import com.intellij.codeInsight.hints.declarative.impl.views.PresentationEntryBuilder
+import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
 import com.intellij.testFramework.UsefulTestCase
 
 class PresentationEntryBuildingTest : UsefulTestCase() {

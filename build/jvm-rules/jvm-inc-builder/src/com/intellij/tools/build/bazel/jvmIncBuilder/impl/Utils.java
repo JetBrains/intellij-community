@@ -4,10 +4,13 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.util.SystemInfo;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -57,4 +60,37 @@ public class Utils {
     }
   }
 
+  private static final String WINDOWS_ERROR_TOO_MANY_LINKS;
+  static {
+    // sun.nio.fs.WindowsNativeDispatcher.FormatMessage(1142)
+    String errorMessage = "An attempt was made to create more links on a file than the file system supports"; // default
+    if (SystemInfo.isWindows) {
+      try {
+        // attempt to get the locate specific error message
+        Method requestMethod = Class.forName("sun.nio.fs.WindowsNativeDispatcher").getDeclaredMethod("FormatMessage", int.class);
+        requestMethod.setAccessible(true);
+        errorMessage = (String)requestMethod.invoke(null, 1142 /*the code for 'too many hardlinks' error*/);
+      }
+      catch (Throwable err) {
+        throw new RuntimeException(err);
+      }
+    }
+    WINDOWS_ERROR_TOO_MANY_LINKS = errorMessage;
+  }
+
+  public static boolean tryCreateLink(Path link, Path existing) throws IOException {
+    try {
+      Files.createLink(link, existing);
+      return true;
+    }
+    catch (FileSystemException e) {
+      String message = e.getMessage();
+      if (message != null && message.endsWith(WINDOWS_ERROR_TOO_MANY_LINKS)) {
+        return false;
+      }
+      else {
+        throw e;
+      }
+    }
+  }
 }

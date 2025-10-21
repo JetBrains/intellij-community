@@ -22,45 +22,107 @@ import org.junit.runner.RunWith;
 public abstract class K1CodeFragmentCompletionTestGenerated extends AbstractK1CodeFragmentCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType")
-    public static class RuntimeType extends AbstractK1CodeFragmentCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
+    public abstract static class RuntimeType extends AbstractK1CodeFragmentCompletionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType/k1")
+        public static class K1 extends AbstractK1CodeFragmentCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("argumentType.kt")
+            public void testArgumentType() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k1/argumentType.kt");
+            }
+
+            @TestMetadata("notImportedExtension.kt")
+            public void testNotImportedExtension() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k1/notImportedExtension.kt");
+            }
+
+            @TestMetadata("runtimeCast.kt")
+            public void testRuntimeCast() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k1/runtimeCast.kt");
+            }
+
+            @TestMetadata("smartCompletion.kt")
+            public void testSmartCompletion() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k1/smartCompletion.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType/k2")
+        public static class K2 extends AbstractK1CodeFragmentCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("argumentType.kt")
+            public void testArgumentType() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k2/argumentType.kt");
+            }
+
+            @TestMetadata("notImportedExtension.kt")
+            public void testNotImportedExtension() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k2/notImportedExtension.kt");
+            }
+
+            @TestMetadata("runtimeCast.kt")
+            public void testRuntimeCast() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k2/runtimeCast.kt");
+            }
         }
 
-        @TestMetadata("castWithGenerics.kt")
-        public void testCastWithGenerics() throws Exception {
-            runTest("../../completion/testData/basic/codeFragments/runtimeType/castWithGenerics.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType")
+        public static class Uncategorized extends AbstractK1CodeFragmentCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
 
-        @TestMetadata("complexHierarchy.kt")
-        public void testComplexHierarchy() throws Exception {
-            runTest("../../completion/testData/basic/codeFragments/runtimeType/complexHierarchy.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("extensionMethod.kt")
-        public void testExtensionMethod() throws Exception {
-            runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethod.kt");
-        }
+            @TestMetadata("castWithGenerics.kt")
+            public void testCastWithGenerics() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/castWithGenerics.kt");
+            }
 
-        @TestMetadata("notImportedExtension.kt")
-        public void testNotImportedExtension() throws Exception {
-            runTest("../../completion/testData/basic/codeFragments/runtimeType/notImportedExtension.kt");
-        }
+            @TestMetadata("complexHierarchy.kt")
+            public void testComplexHierarchy() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/complexHierarchy.kt");
+            }
 
-        @TestMetadata("runtimeCast.kt")
-        public void testRuntimeCast() throws Exception {
-            runTest("../../completion/testData/basic/codeFragments/runtimeType/runtimeCast.kt");
-        }
+            @TestMetadata("extensionMethod.kt")
+            public void testExtensionMethod() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethod.kt");
+            }
 
-        @TestMetadata("smartCompletion.kt")
-        public void testSmartCompletion() throws Exception {
-            runTest("../../completion/testData/basic/codeFragments/runtimeType/smartCompletion.kt");
+            @TestMetadata("extensionMethodForParameterizedType.kt")
+            public void testExtensionMethodForParameterizedType() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethodForParameterizedType.kt");
+            }
+
+            @TestMetadata("extensionMethodForParameterizedTypeN.kt")
+            public void testExtensionMethodForParameterizedTypeN() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/extensionMethodForParameterizedTypeN.kt");
+            }
         }
     }
 

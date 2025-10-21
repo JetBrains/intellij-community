@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,6 +82,7 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
    */
   @NotNull
   @Contract(pure = true)
+  @ApiStatus.Internal
   @Deprecated
   AppUIExecutor withDocumentsCommitted(@NotNull Project project);
 

@@ -23,7 +23,6 @@ import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesToken
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ScanningType
-import com.intellij.util.indexing.events.FileIndexingRequest.Companion.updateRequest
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder
 import com.intellij.util.indexing.projectFilter.usePersistentFilesFilter
 import kotlinx.coroutines.*
@@ -148,7 +147,7 @@ private fun scheduleFullScanning(
   val parameters = CompletableDeferred(ScanningIterators(indexingReason, null, null, fullScanningType))
   UnindexedFilesScanner(project, true, isFilterUpToDate,
                         someDirtyFilesScheduledForIndexing.asCompletableFuture(),
-                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
+                        forceCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
                         scanningParameters = parameters)
     .queue()
   return someDirtyFilesScheduledForIndexing
@@ -277,7 +276,9 @@ private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection
 private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<VirtualFile>, project: Project, fileBasedIndex: FileBasedIndexImpl, limit: Int) {
   readActionBlocking {
     for (file in someProjectDirtyFilesFiles.run { if (limit > 0) take(limit) else this }) {
-      fileBasedIndex.filesToUpdateCollector.scheduleForUpdate(updateRequest(file), setOf(project), emptyList())
+      if (file is VirtualFileWithId) {
+        fileBasedIndex.scheduleFileForIncrementalIndexing(file.id, file, false, listOf(project))
+      }
     }
   }
 }

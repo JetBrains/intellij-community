@@ -1,8 +1,9 @@
 // "Add missing actual declarations" "true"
-// TOOL: org.jetbrains.kotlin.idea.inspections.OptionalExpectationInspection
-// IGNORE_K2
+// K2_ACTION: "Create actual in 'testModule_JVM'" "true"
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.OptionalExpectationInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection
 
-package kotlin
+package testpkg
 
 annotation class ExperimentalMultiplatform
 annotation class OptionalExpectation

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.*
 
 class FoldIfToReturnAsymmetricallyIntention : SelfTargetingRangeIntention<KtIfExpression>(
     KtIfExpression::class.java,
-    KotlinBundle.lazyMessage("replace.if.expression.with.return")
+    KotlinBundle.messagePointer("replace.if.expression.with.return")
 ) {
     override fun applicabilityRange(element: KtIfExpression): TextRange? {
         if (BranchedFoldingUtils.getFoldableBranchedReturn(element.then) == null || element.`else` != null) {

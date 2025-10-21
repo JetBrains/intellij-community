@@ -9,9 +9,9 @@ import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicati
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
 import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger;
 import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser;
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

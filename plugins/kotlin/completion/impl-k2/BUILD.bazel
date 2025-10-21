@@ -1,28 +1,31 @@
-### auto-generated section `build kotlin.completion.impl.k2` start
+### auto-generated section `build intellij.kotlin.completion.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_kotlin-completion-impl",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-  ]
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
 )
 
-jvm_resources(
-  name = "kotlin-completion-impl-k2_resources",
-  files = glob(["resources/**/*"]),
+resourcegroup(
+  name = "kotlin-completion-impl_resources",
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-completion-impl-k2",
-  module_name = "kotlin.completion.impl.k2",
+  name = "kotlin-completion-impl",
+  module_name = "intellij.kotlin.completion.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-completion-impl_resources"],
+  kotlinc_opts = ":custom_kotlin-completion-impl",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -42,26 +45,29 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/analysis",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/base/fir/code-insight",
+    "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
     "//plugins/kotlin/completion/api",
     "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//platform/core-ui",
     "//java/java-psi-api:psi",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/text-matching",
     "//plugins/kotlin/code-insight/utils",
     "//java/java-psi-impl:psi-impl",
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-platform-interface",
-  ],
-  runtime_deps = [":kotlin-completion-impl-k2_resources"]
+    "//plugins/kotlin/jvm-debugger/evaluation",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//plugins/kotlin/base/kotlin.base.serialization",
+  ]
 )
-### auto-generated section `build kotlin.completion.impl.k2` end
+### auto-generated section `build intellij.kotlin.completion.impl` end

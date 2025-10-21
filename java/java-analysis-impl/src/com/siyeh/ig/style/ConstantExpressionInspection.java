@@ -162,7 +162,7 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
       newExpression = '"' + StringUtil.escapeStringCharacters(string) + '"';
     }
     else if (value instanceof Character) {
-      newExpression = '\'' + StringUtil.escapeStringCharacters(value.toString()) + '\'';
+      newExpression = '\'' + StringUtil.escapeCharCharacters(value.toString()) + '\'';
     }
     else if (value instanceof Long) {
       newExpression = value.toString() + 'L';

@@ -1,3 +1,5 @@
+import java.util.*;
+
 class AssignmentInsideLamda {
 
   private final List<Comparator<String>> comparators = new ArrayList<>();

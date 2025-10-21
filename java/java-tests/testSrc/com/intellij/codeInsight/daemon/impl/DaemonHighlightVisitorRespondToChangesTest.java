@@ -659,7 +659,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     HighlightingSettingsPerFile.getInstance(myProject).setHighlightingSettingForRoot(myFile, FileHighlightingSetting.SKIP_HIGHLIGHTING);
     MyCheckingCallsVisitor.VISIT_CALLED = false;
     MyCheckingCallsVisitor.ANALYZE_CALLED = false;
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(this);
     doHighlighting();
     assertFalse(MyCheckingCallsVisitor.VISIT_CALLED);
     assertFalse(MyCheckingCallsVisitor.ANALYZE_CALLED);

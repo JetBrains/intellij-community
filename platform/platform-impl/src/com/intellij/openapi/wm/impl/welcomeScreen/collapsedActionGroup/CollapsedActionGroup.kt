@@ -10,4 +10,6 @@ import org.jetbrains.annotations.Nls
  * aren't displayed until user clicks on it.
  * this logic is part  [com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper]
  */
-class CollapsedActionGroup(name: @Nls String, actions: List<AnAction>) : DefaultActionGroup(name, actions)
+class CollapsedActionGroup(name: @Nls String, actions: List<AnAction>) : DefaultActionGroup(name, actions) {
+  var collapsed: Boolean = true
+}

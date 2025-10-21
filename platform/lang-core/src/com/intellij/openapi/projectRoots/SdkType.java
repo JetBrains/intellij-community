@@ -12,13 +12,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -28,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 
 /**
@@ -347,7 +344,7 @@ public abstract class SdkType implements SdkTypeId {
 
   /**
    * If this method returns true, instead of showing the standard file path chooser when a new SDK of the type is created,
-   * the {@link #showCustomCreateUI} method is called.
+   * the {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method is called.
    *
    * @return true if the custom create UI is supported, false otherwise.
    */
@@ -368,10 +365,24 @@ public abstract class SdkType implements SdkTypeId {
    *
    * @see #supportsCustomCreateUI()
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @ApiStatus.OverrideOnly
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
+    showCustomCreateUI(sdkModel, parentComponent, selectedSdk, (com.intellij.util.Consumer<? super Sdk>) (sdk) -> sdkCreatedCallback.accept(sdk));
+  }
+
+  /**
+   * @deprecated override {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} instead
+   */
+  @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "DeprecatedIsStillUsed"})
+  @Deprecated
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
+                                 @NotNull JComponent parentComponent,
+                                 @Nullable Sdk selectedSdk,
+                                 @NotNull com.intellij.util.Consumer<? super Sdk> sdkCreatedCallback) {
   }
 
   /**

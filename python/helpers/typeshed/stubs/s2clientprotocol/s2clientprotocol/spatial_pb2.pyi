@@ -36,12 +36,11 @@ class ObservationFeatureLayer(google.protobuf.message.Message):
     @property
     def minimap_renders(self) -> global___FeatureLayersMinimap: ...
     def __init__(
-        self,
-        *,
-        renders: global___FeatureLayers | None = ...,
-        minimap_renders: global___FeatureLayersMinimap | None = ...,
+        self, *, renders: global___FeatureLayers | None = ..., minimap_renders: global___FeatureLayersMinimap | None = ...
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["minimap_renders", b"minimap_renders", "renders", b"renders"]) -> builtins.bool: ...
+    def HasField(
+        self, field_name: typing.Literal["minimap_renders", b"minimap_renders", "renders", b"renders"]
+    ) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["minimap_renders", b"minimap_renders", "renders", b"renders"]) -> None: ...
 
 global___ObservationFeatureLayer = ObservationFeatureLayer
@@ -216,8 +215,124 @@ class FeatureLayers(google.protobuf.message.Message):
         pathable: s2clientprotocol.common_pb2.ImageData | None = ...,
         placeholder: s2clientprotocol.common_pb2.ImageData | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["active", b"active", "blip", b"blip", "buff_duration", b"buff_duration", "buffs", b"buffs", "build_progress", b"build_progress", "buildable", b"buildable", "cloaked", b"cloaked", "creep", b"creep", "effects", b"effects", "hallucinations", b"hallucinations", "height_map", b"height_map", "pathable", b"pathable", "placeholder", b"placeholder", "player_id", b"player_id", "player_relative", b"player_relative", "power", b"power", "selected", b"selected", "unit_density", b"unit_density", "unit_density_aa", b"unit_density_aa", "unit_energy", b"unit_energy", "unit_energy_ratio", b"unit_energy_ratio", "unit_hit_points", b"unit_hit_points", "unit_hit_points_ratio", b"unit_hit_points_ratio", "unit_shields", b"unit_shields", "unit_shields_ratio", b"unit_shields_ratio", "unit_type", b"unit_type", "visibility_map", b"visibility_map"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["active", b"active", "blip", b"blip", "buff_duration", b"buff_duration", "buffs", b"buffs", "build_progress", b"build_progress", "buildable", b"buildable", "cloaked", b"cloaked", "creep", b"creep", "effects", b"effects", "hallucinations", b"hallucinations", "height_map", b"height_map", "pathable", b"pathable", "placeholder", b"placeholder", "player_id", b"player_id", "player_relative", b"player_relative", "power", b"power", "selected", b"selected", "unit_density", b"unit_density", "unit_density_aa", b"unit_density_aa", "unit_energy", b"unit_energy", "unit_energy_ratio", b"unit_energy_ratio", "unit_hit_points", b"unit_hit_points", "unit_hit_points_ratio", b"unit_hit_points_ratio", "unit_shields", b"unit_shields", "unit_shields_ratio", b"unit_shields_ratio", "unit_type", b"unit_type", "visibility_map", b"visibility_map"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "active",
+            b"active",
+            "blip",
+            b"blip",
+            "buff_duration",
+            b"buff_duration",
+            "buffs",
+            b"buffs",
+            "build_progress",
+            b"build_progress",
+            "buildable",
+            b"buildable",
+            "cloaked",
+            b"cloaked",
+            "creep",
+            b"creep",
+            "effects",
+            b"effects",
+            "hallucinations",
+            b"hallucinations",
+            "height_map",
+            b"height_map",
+            "pathable",
+            b"pathable",
+            "placeholder",
+            b"placeholder",
+            "player_id",
+            b"player_id",
+            "player_relative",
+            b"player_relative",
+            "power",
+            b"power",
+            "selected",
+            b"selected",
+            "unit_density",
+            b"unit_density",
+            "unit_density_aa",
+            b"unit_density_aa",
+            "unit_energy",
+            b"unit_energy",
+            "unit_energy_ratio",
+            b"unit_energy_ratio",
+            "unit_hit_points",
+            b"unit_hit_points",
+            "unit_hit_points_ratio",
+            b"unit_hit_points_ratio",
+            "unit_shields",
+            b"unit_shields",
+            "unit_shields_ratio",
+            b"unit_shields_ratio",
+            "unit_type",
+            b"unit_type",
+            "visibility_map",
+            b"visibility_map",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "active",
+            b"active",
+            "blip",
+            b"blip",
+            "buff_duration",
+            b"buff_duration",
+            "buffs",
+            b"buffs",
+            "build_progress",
+            b"build_progress",
+            "buildable",
+            b"buildable",
+            "cloaked",
+            b"cloaked",
+            "creep",
+            b"creep",
+            "effects",
+            b"effects",
+            "hallucinations",
+            b"hallucinations",
+            "height_map",
+            b"height_map",
+            "pathable",
+            b"pathable",
+            "placeholder",
+            b"placeholder",
+            "player_id",
+            b"player_id",
+            "player_relative",
+            b"player_relative",
+            "power",
+            b"power",
+            "selected",
+            b"selected",
+            "unit_density",
+            b"unit_density",
+            "unit_density_aa",
+            b"unit_density_aa",
+            "unit_energy",
+            b"unit_energy",
+            "unit_energy_ratio",
+            b"unit_energy_ratio",
+            "unit_hit_points",
+            b"unit_hit_points",
+            "unit_hit_points_ratio",
+            b"unit_hit_points_ratio",
+            "unit_shields",
+            b"unit_shields",
+            "unit_shields_ratio",
+            b"unit_shields_ratio",
+            "unit_type",
+            b"unit_type",
+            "visibility_map",
+            b"visibility_map",
+        ],
+    ) -> None: ...
 
 global___FeatureLayers = FeatureLayers
 
@@ -297,8 +412,60 @@ class FeatureLayersMinimap(google.protobuf.message.Message):
         pathable: s2clientprotocol.common_pb2.ImageData | None = ...,
         unit_type: s2clientprotocol.common_pb2.ImageData | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["alerts", b"alerts", "buildable", b"buildable", "camera", b"camera", "creep", b"creep", "height_map", b"height_map", "pathable", b"pathable", "player_id", b"player_id", "player_relative", b"player_relative", "selected", b"selected", "unit_type", b"unit_type", "visibility_map", b"visibility_map"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["alerts", b"alerts", "buildable", b"buildable", "camera", b"camera", "creep", b"creep", "height_map", b"height_map", "pathable", b"pathable", "player_id", b"player_id", "player_relative", b"player_relative", "selected", b"selected", "unit_type", b"unit_type", "visibility_map", b"visibility_map"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "alerts",
+            b"alerts",
+            "buildable",
+            b"buildable",
+            "camera",
+            b"camera",
+            "creep",
+            b"creep",
+            "height_map",
+            b"height_map",
+            "pathable",
+            b"pathable",
+            "player_id",
+            b"player_id",
+            "player_relative",
+            b"player_relative",
+            "selected",
+            b"selected",
+            "unit_type",
+            b"unit_type",
+            "visibility_map",
+            b"visibility_map",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "alerts",
+            b"alerts",
+            "buildable",
+            b"buildable",
+            "camera",
+            b"camera",
+            "creep",
+            b"creep",
+            "height_map",
+            b"height_map",
+            "pathable",
+            b"pathable",
+            "player_id",
+            b"player_id",
+            "player_relative",
+            b"player_relative",
+            "selected",
+            b"selected",
+            "unit_type",
+            b"unit_type",
+            "visibility_map",
+            b"visibility_map",
+        ],
+    ) -> None: ...
 
 global___FeatureLayersMinimap = FeatureLayersMinimap
 
@@ -355,9 +522,39 @@ class ActionSpatial(google.protobuf.message.Message):
         unit_selection_point: global___ActionSpatialUnitSelectionPoint | None = ...,
         unit_selection_rect: global___ActionSpatialUnitSelectionRect | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action", b"action", "camera_move", b"camera_move", "unit_command", b"unit_command", "unit_selection_point", b"unit_selection_point", "unit_selection_rect", b"unit_selection_rect"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action", b"action", "camera_move", b"camera_move", "unit_command", b"unit_command", "unit_selection_point", b"unit_selection_point", "unit_selection_rect", b"unit_selection_rect"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["action", b"action"]) -> typing.Literal["unit_command", "camera_move", "unit_selection_point", "unit_selection_rect"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "camera_move",
+            b"camera_move",
+            "unit_command",
+            b"unit_command",
+            "unit_selection_point",
+            b"unit_selection_point",
+            "unit_selection_rect",
+            b"unit_selection_rect",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "camera_move",
+            b"camera_move",
+            "unit_command",
+            b"unit_command",
+            "unit_selection_point",
+            b"unit_selection_point",
+            "unit_selection_rect",
+            b"unit_selection_rect",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["action", b"action"]
+    ) -> typing.Literal["unit_command", "camera_move", "unit_selection_point", "unit_selection_rect"] | None: ...
 
 global___ActionSpatial = ActionSpatial
 
@@ -384,9 +581,39 @@ class ActionSpatialUnitCommand(google.protobuf.message.Message):
         target_minimap_coord: s2clientprotocol.common_pb2.PointI | None = ...,
         queue_command: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "queue_command", b"queue_command", "target", b"target", "target_minimap_coord", b"target_minimap_coord", "target_screen_coord", b"target_screen_coord"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "queue_command", b"queue_command", "target", b"target", "target_minimap_coord", b"target_minimap_coord", "target_screen_coord", b"target_screen_coord"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["target", b"target"]) -> typing.Literal["target_screen_coord", "target_minimap_coord"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "queue_command",
+            b"queue_command",
+            "target",
+            b"target",
+            "target_minimap_coord",
+            b"target_minimap_coord",
+            "target_screen_coord",
+            b"target_screen_coord",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "queue_command",
+            b"queue_command",
+            "target",
+            b"target",
+            "target_minimap_coord",
+            b"target_minimap_coord",
+            "target_screen_coord",
+            b"target_screen_coord",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["target", b"target"]
+    ) -> typing.Literal["target_screen_coord", "target_minimap_coord"] | None: ...
 
 global___ActionSpatialUnitCommand = ActionSpatialUnitCommand
 
@@ -399,11 +626,7 @@ class ActionSpatialCameraMove(google.protobuf.message.Message):
     def center_minimap(self) -> s2clientprotocol.common_pb2.PointI:
         """Simulates a click on the minimap to move the camera."""
 
-    def __init__(
-        self,
-        *,
-        center_minimap: s2clientprotocol.common_pb2.PointI | None = ...,
-    ) -> None: ...
+    def __init__(self, *, center_minimap: s2clientprotocol.common_pb2.PointI | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["center_minimap", b"center_minimap"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["center_minimap", b"center_minimap"]) -> None: ...
 
@@ -417,7 +640,10 @@ class ActionSpatialUnitSelectionPoint(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _TypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionSpatialUnitSelectionPoint._Type.ValueType], builtins.type):
+    class _TypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionSpatialUnitSelectionPoint._Type.ValueType],
+        builtins.type,
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Select: ActionSpatialUnitSelectionPoint._Type.ValueType  # 1
         """Equivalent to normal click. Changes selection to unit."""
@@ -449,8 +675,12 @@ class ActionSpatialUnitSelectionPoint(google.protobuf.message.Message):
         selection_screen_coord: s2clientprotocol.common_pb2.PointI | None = ...,
         type: global___ActionSpatialUnitSelectionPoint.Type.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["selection_screen_coord", b"selection_screen_coord", "type", b"type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["selection_screen_coord", b"selection_screen_coord", "type", b"type"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["selection_screen_coord", b"selection_screen_coord", "type", b"type"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["selection_screen_coord", b"selection_screen_coord", "type", b"type"]
+    ) -> None: ...
 
 global___ActionSpatialUnitSelectionPoint = ActionSpatialUnitSelectionPoint
 
@@ -463,7 +693,9 @@ class ActionSpatialUnitSelectionRect(google.protobuf.message.Message):
     selection_add: builtins.bool
     """Equivalent to shift+drag. Adds units to selection."""
     @property
-    def selection_screen_coord(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.common_pb2.RectangleI]:
+    def selection_screen_coord(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.common_pb2.RectangleI]:
         """Eventually this should not be an array, but a single field (multiple would be cheating)."""
 
     def __init__(
@@ -473,6 +705,8 @@ class ActionSpatialUnitSelectionRect(google.protobuf.message.Message):
         selection_add: builtins.bool | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["selection_add", b"selection_add"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["selection_add", b"selection_add", "selection_screen_coord", b"selection_screen_coord"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["selection_add", b"selection_add", "selection_screen_coord", b"selection_screen_coord"]
+    ) -> None: ...
 
 global___ActionSpatialUnitSelectionRect = ActionSpatialUnitSelectionRect

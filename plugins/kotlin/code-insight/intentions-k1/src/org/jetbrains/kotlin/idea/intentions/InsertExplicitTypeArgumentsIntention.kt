@@ -30,12 +30,12 @@ import org.jetbrains.kotlin.types.error.ErrorUtils
 
 class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java,
-    KotlinBundle.lazyMessage("add.explicit.type.arguments")
+    KotlinBundle.messagePointer("add.explicit.type.arguments")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtCallExpression): TextRange? =
         if (isApplicableTo(element)) element.calleeExpression?.textRange else null
 
-    override fun applyTo(element: KtCallExpression, editor: Editor?) = applyTo(element)
+    override fun applyTo(element: KtCallExpression, editor: Editor?): Unit = applyTo(element)
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction = InsertExplicitTypeArgumentsIntention()

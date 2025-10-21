@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -48,17 +49,41 @@ public abstract class DaemonCodeAnalyzer {
 
   /**
    * Force re-highlighting for all files.
-   *
-   * @see #restart(PsiFile)
+   * @deprecated use {@link #restart(Object)}
    */
-  public abstract void restart();
+  @Deprecated
+  public void restart() {
+    restart("Global restart");
+  }
+
+  /**
+   * Force re-highlighting for all files, for the {@code reason}.
+   * @param reason some object which {@code .toString()} will be written to the log file, to identify the source of the daemon restart.
+   *               E.g. it could be a string {@code "project roots changed"}, or an instance of quick fix class, etc.
+   */
+  public void restart(@NotNull @NonNls Object reason) {
+    throw new AbstractMethodError();
+  }
 
   /**
    * Force re-highlighting for a specific file.
    *
-   * @param psiFile the file to rehighlight.
+   * @deprecated use {@link #restart(PsiFile, Object)}
    */
-  public abstract void restart(@NotNull PsiFile psiFile);
+  @Deprecated
+  public void restart(@NotNull PsiFile psiFile) {
+    restart(psiFile, "Global restart");
+  }
+  /**
+   * Force re-highlighting of this particular {@code psiFile}.
+   *
+   * @param psiFile the file to rehighlight.
+   * @param reason some object which {@code .toString()} will be written to the log file, to identify the source of the daemon restart.
+   *               E.g. it could be a string {@code "project roots changed"}, or an instance of quick fix class, etc.
+   */
+  public void restart(@NotNull PsiFile psiFile, @NotNull @NonNls Object reason) {
+    throw new AbstractMethodError();
+  }
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile psiFile);
 

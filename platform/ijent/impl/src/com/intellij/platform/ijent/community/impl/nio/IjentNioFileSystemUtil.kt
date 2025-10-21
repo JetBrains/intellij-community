@@ -5,6 +5,7 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.*
 
 internal fun Path.toEelPath(): EelPath =
@@ -22,7 +23,8 @@ internal fun Path.toEelPath(): EelPath =
  * In addition, we suppress work stealing in this `runBlocking`, as it should return as fast as it can on its own.
  */
 @Suppress("SSBasedInspection")
-internal fun <T> fsBlocking(body: suspend () -> T): T {
+@ApiStatus.Internal
+fun <T> fsBlocking(body: suspend () -> T): T {
   return runBlocking(NestedBlockingEventLoop(Thread.currentThread())) {
     body()
   }

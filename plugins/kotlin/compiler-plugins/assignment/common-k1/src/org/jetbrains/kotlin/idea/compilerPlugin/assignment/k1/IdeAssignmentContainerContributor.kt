@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 class IdeAssignmentContainerContributor(private val project: Project) : StorageComponentContainerContributor {

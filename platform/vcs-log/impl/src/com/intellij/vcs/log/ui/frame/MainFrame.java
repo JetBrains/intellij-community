@@ -5,18 +5,19 @@ import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.navigation.History;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -56,7 +57,6 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
   private static final @NonNls String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
   private static final @NonNls String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
-  private final @NotNull VcsLogData myLogData;
   private final @NotNull MainVcsLogUiProperties myUiProperties;
 
   private final @NotNull JComponent myToolbar;
@@ -64,6 +64,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
   private final @NotNull VcsLogFilterUiEx myFilterUi;
 
+  private final @NotNull VcsLogAsyncChangesTreeModel myChangesTreeModel;
   private final @NotNull VcsLogChangesBrowser myChangesBrowser;
   private final @NotNull Splitter myChangesBrowserSplitter;
 
@@ -85,7 +86,6 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
                    @NotNull VcsLogColorManager colorManager,
                    boolean withEditorDiffPreview,
                    @NotNull Disposable disposable) {
-    myLogData = logData;
     myUiProperties = uiProperties;
 
     myFilterUi = filterUi;
@@ -105,14 +105,11 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
       new VcsLogCommitSelectionListenerForDetails(logData, colorManager, myDetailsPanel, this);
     commitDetailsLoader.addListener(listenerForDetails);
 
-    myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
-      int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
-      return myLogData.getMiniDetailsGetter().getCachedDataOrPlaceholder(index);
-    }, this);
+    myChangesTreeModel = new VcsLogAsyncChangesTreeModel(logData, myUiProperties, this);
+    myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myChangesTreeModel, this);
     myChangesBrowser.setShowDiffActionPreview(withEditorDiffPreview ? new VcsLogEditorDiffPreview(myChangesBrowser) : null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
-    JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
-                                                           ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+    JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS) {
       @Override
       public Dimension getMinimumSize() {
         return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), myChangesBrowser.getToolbar().getComponent());
@@ -124,7 +121,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
     VcsLogCommitSelectionListenerForDiff commitSelectionListener =
-      new VcsLogCommitSelectionListenerForDiff(changesLoadingPane, myChangesBrowser) {
+      new VcsLogCommitSelectionListenerForDiff(changesLoadingPane, myChangesTreeModel) {
         @Override
         public void onLoadingStopped() {
           super.onLoadingStopped();
@@ -210,7 +207,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-    myChangesBrowser.setAffectedPaths(VcsLogUtil.getAffectedPaths(dataPack));
+    myChangesTreeModel.setAffectedPaths(VcsLogUtil.getAffectedPaths(dataPack));
   }
 
   public @NotNull VcsLogGraphTable getGraphTable() {
@@ -227,7 +224,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    Change[] changes = myChangesBrowser.getDirectChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
+    Change[] changes = myChangesTreeModel.getChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
     sink.set(VcsDataKeys.CHANGES, changes);
     sink.set(VcsDataKeys.SELECTED_CHANGES, changes);
     VcsLogComponents.collectLogKeys(sink, myUiProperties, myGraphTable, myHistory, myFilterUi, myToolbar, this);
@@ -237,7 +234,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     return myToolbar;
   }
 
-  public @NotNull VcsLogChangesBrowser getChangesBrowser() {
+  public @NotNull ChangesBrowserBase getChangesBrowser() {
     return myChangesBrowser;
   }
 

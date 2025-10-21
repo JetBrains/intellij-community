@@ -6,14 +6,20 @@ import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getSamConstructorValueArgument
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -29,7 +35,7 @@ fun KaSymbolOrigin.isJavaSourceOrLibrary(): Boolean = this == KaSymbolOrigin.JAV
  * but includes the original symbol ([this]) at the beginning of the
  * resulting [Sequence].
  */
-context(KaSession)
+context(_: KaSession)
 val KaCallableSymbol.allOverriddenSymbolsWithSelf: Sequence<KaCallableSymbol>
     get() {
         val originalSymbol = this
@@ -40,7 +46,13 @@ val KaCallableSymbol.allOverriddenSymbolsWithSelf: Sequence<KaCallableSymbol>
         }
     }
 
-context(KaSession)
+context(_: KaSession)
+@ApiStatus.Internal
+fun KaCallableSymbol.hasOrOverridesCallableId(callableId: CallableId): Boolean {
+    return allOverriddenSymbolsWithSelf.any { it.callableId == callableId }
+}
+
+context(_: KaSession)
 fun KaNamedClassSymbol.findSamSymbolOrNull(useDeclaredMemberScope: Boolean = true): KaNamedFunctionSymbol? {
     if (classKind != KaClassKind.INTERFACE) return null
     val scope = if (useDeclaredMemberScope) declaredMemberScope else memberScope
@@ -83,7 +95,7 @@ private fun createAnalyzableExpression(
 
     return copied to newCall
 }
-context(KaSession)
+context(_: KaSession)
 private fun canBeReplaced(
     parentCall: KtCallExpression,
     samConstructorCallArgumentMap: Map<KtValueArgument, KtCallExpression>
@@ -120,7 +132,7 @@ fun KaSymbol?.equalsOrEqualsByPsi(other: KaSymbol?): Boolean {
     return other != null && thisPsi == other.psi
 }
 
-context(KaSession)
+context(_: KaSession)
 @ApiStatus.Internal
 fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection<KtCallExpression> {
     val valueArguments = functionCall.valueArguments
@@ -154,7 +166,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
         val signature = resolvedFunctionCall.argumentMapping[argumentExpression]
             ?: return false
 
-        val signatureReturnType = signature.symbol.returnType.withNullability(KaTypeNullability.NON_NULLABLE)
+        val signatureReturnType = signature.symbol.returnType.withNullability(false)
         // for `testData/inspectionsLocal/redundantSamConstructor/genericParameter.kt`
         // signatureReturnType is `T`, while originalParameterType is `java/lang/Runnable`
         // target function parameter could not be generic parameter
@@ -162,7 +174,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
             return false
 
         val originalParameterType =
-            signature.returnType.withNullability(KaTypeNullability.NON_NULLABLE)
+            signature.returnType.withNullability(false)
         return samConstructorReturnType.semanticallyEquals(originalParameterType)
     }
 

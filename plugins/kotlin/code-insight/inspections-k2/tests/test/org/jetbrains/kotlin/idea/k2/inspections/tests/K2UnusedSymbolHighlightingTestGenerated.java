@@ -202,6 +202,16 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/annotationWithUseSiteTarget.kt");
         }
 
+        @TestMetadata("anonymousFunction.kt")
+        public void testAnonymousFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/anonymousFunction.kt");
+        }
+
+        @TestMetadata("anonymousFunction1.kt")
+        public void testAnonymousFunction1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/anonymousFunction1.kt");
+        }
+
         @TestMetadata("arrayAccessOperator.kt")
         public void testArrayAccessOperator() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/arrayAccessOperator.kt");
@@ -342,9 +352,19 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/expectFunctionParameter.kt");
         }
 
+        @TestMetadata("externalConstructor.kt")
+        public void testExternalConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/externalConstructor.kt");
+        }
+
         @TestMetadata("externalFunWithUnusedParameter.kt")
         public void testExternalFunWithUnusedParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/externalFunWithUnusedParameter.kt");
+        }
+
+        @TestMetadata("externalMembers.kt")
+        public void testExternalMembers() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/externalMembers.kt");
         }
 
         @TestMetadata("functionCall.kt")
@@ -395,6 +415,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
         @TestMetadata("functionalLiteral.kt")
         public void testFunctionalLiteral() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionalLiteral.kt");
+        }
+
+        @TestMetadata("implicitExpectFunction.kt")
+        public void testImplicitExpectFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/implicitExpectFunction.kt");
         }
 
         @TestMetadata("inAnonymous.kt")
@@ -647,6 +672,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledFromSubclassSecondaryConstructor.kt");
         }
 
+        @TestMetadata("secondaryConstructorInCompanionObject.kt")
+        public void testSecondaryConstructorInCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorInCompanionObject.kt");
+        }
+
         @TestMetadata("secondaryConstructorUnused.kt")
         public void testSecondaryConstructorUnused() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorUnused.kt");
@@ -702,11 +732,6 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries5.kt");
         }
 
-        @TestMetadata("unusedEnumEntries6.kt")
-        public void testUnusedEnumEntries6() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries6.kt");
-        }
-
         @TestMetadata("unusedEnumEntry.kt")
         public void testUnusedEnumEntry() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntry.kt");
@@ -750,6 +775,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
         @TestMetadata("unusedPublicMembers.kt")
         public void testUnusedPublicMembers() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
+        }
+
+        @TestMetadata("usedEnumEntries.kt")
+        public void testUsedEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumEntries.kt");
         }
 
         @TestMetadata("usedEnumFunction.kt")

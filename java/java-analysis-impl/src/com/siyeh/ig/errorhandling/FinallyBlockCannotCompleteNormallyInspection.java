@@ -46,7 +46,7 @@ public final class FinallyBlockCannotCompleteNormallyInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FinallyBlockCannotCompleteNormallyVisitor();
   }
 

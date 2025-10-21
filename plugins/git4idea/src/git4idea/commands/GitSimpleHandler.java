@@ -30,7 +30,7 @@ import java.util.HashSet;
  *
  * @deprecated use {@link Git} and {@link GitLineHandler}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitSimpleHandler extends GitTextHandler {
   /**
    * Stderr output

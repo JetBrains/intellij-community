@@ -1,6 +1,0 @@
-// RUNTIME_WITH_FULL_JDK
-
-/**
- * [kotlin.time.measureTimedValue]
- */
-fun aaa(){}

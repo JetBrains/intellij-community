@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -284,6 +284,14 @@ public final class Int2IntMultimap {
       //oldValue is not exist -> do nothing
       return false;
     }
+  }
+
+  public void clear() {
+    aliveValues = 0;
+    filledSlots = 0;
+    int[] newTable = new int[MIN_CAPACITY * 2];
+    Arrays.fill(newTable, NO_VALUE);
+    this.table = newTable;
   }
 
   @FunctionalInterface

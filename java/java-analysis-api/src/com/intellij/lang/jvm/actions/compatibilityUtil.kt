@@ -16,7 +16,7 @@ internal fun getParameters(expectedParameters: List<ExpectedParameter>): List<Pa
   }
 }
 
-fun getParameters(expectedParameters: List<ExpectedParameter>, project: Project): List<Pair<SuggestedNameInfo, List<ExpectedType>>> {
+public fun getParameters(expectedParameters: List<ExpectedParameter>, project: Project): List<Pair<SuggestedNameInfo, List<ExpectedType>>> {
   val styleManager = JavaCodeStyleManager.getInstance(project)
   return expectedParameters.map {
     val expectedTypes = it.expectedTypes

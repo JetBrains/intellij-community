@@ -40,4 +40,9 @@ open class OptionButton @JvmOverloads constructor(
     myBaseline.size = size
     return myBaseline.getBaseline(width, height)
   }
+
+  override fun setEnabled(b: Boolean) {
+    super.setEnabled(b)
+    action?.isEnabled = b
+  }
 }

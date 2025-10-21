@@ -18,7 +18,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -509,6 +512,12 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
         if (result != null) return result;
       }
       catch (IndexNotReadyException ignore) {
+      }
+      catch (Throwable e) {
+        if (Logger.shouldRethrow(e)) {
+          throw e;
+        }
+        LOG.error(e);
       }
     }
     return null;

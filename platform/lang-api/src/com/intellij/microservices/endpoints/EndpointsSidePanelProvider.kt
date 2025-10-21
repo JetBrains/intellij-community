@@ -31,7 +31,7 @@ interface EndpointsSidePanel {
    *
    * The update will be canceled if the selected endpoints (@param selectedItems) change or if there are psi changes.
    * The update will not be called if the tab has already been updated.
-   * The update may also be called when [com.intellij.microservices.ui.flat.EndpointsView.forgetData] is invoked.
+   * The update may also be called when [com.intellij.microservices.backend.flat.EndpointsView.forgetData] is invoked.
    */
   suspend fun update(selectedItems: List<EndpointsListItem>)
 

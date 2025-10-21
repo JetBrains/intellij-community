@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package com.intellij.ui.icons
@@ -11,7 +11,7 @@ import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.ui.drawImage
+import com.intellij.util.ui.StartupUiUtil
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
 import java.awt.*
 import java.lang.ref.SoftReference
@@ -102,7 +102,7 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
                                 private val original: CachedImageIcon,
                                 private val objectScale: Float) : Icon, ReplaceableIcon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = c)
+    StartupUiUtil.drawImage(g, image, x, y, sourceBounds = null, op = null, observer = c)
   }
 
   override fun getIconWidth(): Int = image.getWidth(null)

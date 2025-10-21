@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
-    KotlinBundle.lazyMessage("add.full.qualifier")
+    KotlinBundle.messagePointer("add.full.qualifier")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtNameReferenceExpression, caretOffset: Int): Boolean = Holder.isApplicableTo(
         referenceExpression = element,

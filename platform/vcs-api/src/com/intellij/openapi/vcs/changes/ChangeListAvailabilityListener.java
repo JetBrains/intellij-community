@@ -13,8 +13,8 @@ public interface ChangeListAvailabilityListener extends EventListener {
   Topic<ChangeListAvailabilityListener> TOPIC = Topic.create("VCS changelists availability changed", ChangeListAvailabilityListener.class);
 
   @RequiresEdt
-  default void onBefore() {}
+  default void onBefore(boolean currentState) {}
 
   @RequiresEdt
-  default void onAfter() {}
+  default void onAfter(boolean newState) {}
 }

@@ -18,6 +18,9 @@ import org.jsoup.nodes.Comment
 import org.jsoup.nodes.DataNode
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import org.jsoup.parser.Parser
+import org.jsoup.parser.Tag
+import org.jsoup.parser.TagSet
 import java.net.URLDecoder
 import java.nio.charset.Charset
 
@@ -29,7 +32,7 @@ class IncrementalDOMBuilder(
   private val fileSchemeResourceProcessor: ResourceProvider? = null,
 ) {
 
-  private val document = Jsoup.parse(html)
+  private val document = Jsoup.parse(html, createSelfClosingSpanAwareParser())
   private val builder = StringBuilder()
 
   fun generateRenderClosure(): String {
@@ -162,4 +165,12 @@ class IncrementalDOMBuilder(
       }
     }
   }
+}
+
+// https://jsoup.org/news/release-1.20.1
+private fun createSelfClosingSpanAwareParser(): Parser {
+  val tags = TagSet.Html()
+  val span = tags.valueOf("span", Parser.NamespaceHtml)
+  span.set(Tag.SelfClose)
+  return Parser.htmlParser().tagSet(tags)
 }

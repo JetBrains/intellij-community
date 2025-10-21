@@ -5,7 +5,7 @@ jvm_library(
   name = "kotlin-code-insight-override-implement-shared",
   module_name = "kotlin.code-insight.override-implement.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",

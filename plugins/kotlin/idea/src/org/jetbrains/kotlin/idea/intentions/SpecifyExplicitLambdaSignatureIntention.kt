@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
 
 open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndependentIntention<KtLambdaExpression>(
-    KtLambdaExpression::class.java, KotlinBundle.lazyMessage("specify.explicit.lambda.signature")
+    KtLambdaExpression::class.java, KotlinBundle.messagePointer("specify.explicit.lambda.signature")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtLambdaExpression): Boolean {
         if (element.functionLiteral.arrow != null && element.valueParameters.all { it.typeReference != null }) return false

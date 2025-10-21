@@ -1,5 +1,4 @@
-
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.CommonBundle;
@@ -35,16 +34,16 @@ import java.util.function.Supplier;
 
 public final class InlineMethodHandler extends JavaInlineActionHandler {
 
-  private InlineMethodHandler() {
-  }
+  private InlineMethodHandler() {}
 
   @Override
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && element.getLanguage() == JavaLanguage.INSTANCE;
+    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && 
+           element.getLanguage() == JavaLanguage.INSTANCE;
   }
 
   @Override
-  public void inlineElement(final Project project, Editor editor, PsiElement element) {
+  public void inlineElement(Project project, Editor editor, PsiElement element) {
     performInline(project, editor, (PsiMethod)element.getNavigationElement(), false);
   }
 
@@ -70,7 +69,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
       methodBody = specialization.get();
     }
 
-    if (methodBody == null){
+    if (methodBody == null) {
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName());
@@ -100,13 +99,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
 
     if (method.isConstructor()) {
-      if (method.isVarArgs()) {
-        String message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", getRefactoringName());
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
-        return;
-      }
-      final boolean chainingConstructor = InlineUtil.isChainingConstructor(method);
-      if (!chainingConstructor) {
+      if (!InlineUtil.isChainingConstructor(method)) {
         InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
         if (processor != null) {
           if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("inline.method.object.suggestion.message"),
@@ -119,8 +112,8 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
           return;
         }
         if (!isThisReference(reference)) {
-          String message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors",
-                                                     getRefactoringName());
+          String message = 
+            JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", getRefactoringName());
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
           return;
         }
@@ -128,7 +121,8 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
       }
       if (reference != null) {
         final PsiElement refElement = reference.getElement();
-        PsiCall constructorCall = refElement instanceof PsiJavaCodeReferenceElement ? RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)refElement) : null;
+        PsiCall constructorCall = 
+          refElement instanceof PsiJavaCodeReferenceElement ref ? RefactoringUtil.getEnclosingConstructorCall(ref) : null;
         if (constructorCall == null || !method.equals(constructorCall.resolveMethod())) reference = null;
       }
     }
@@ -150,8 +144,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
 
     if (reference != null) {
       final PsiElement referenceElement = reference.getElement();
-      if (referenceElement.getLanguage() == JavaLanguage.INSTANCE &&
-          !(referenceElement instanceof PsiJavaCodeReferenceElement)) {
+      if (referenceElement.getLanguage() == JavaLanguage.INSTANCE && !(referenceElement instanceof PsiJavaCodeReferenceElement)) {
         reference = null;
       }
     }
@@ -200,16 +193,15 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
   }
 
   private static boolean checkCalls(PsiElement scope, PsiMethod method) {
-    if (scope instanceof PsiMethodCallExpression){
-      PsiMethod refMethod = (PsiMethod)((PsiMethodCallExpression)scope).getMethodExpression().resolve();
-      if (method.equals(refMethod)) return true;
+    if (scope instanceof PsiMethodCallExpression call) {
+      if (method.equals(call.getMethodExpression().resolve())) return true;
     }
 
-    if (scope instanceof PsiMethodReferenceExpression) {
-      if (method.equals(((PsiMethodReferenceExpression)scope).resolve())) return true;
+    if (scope instanceof PsiMethodReferenceExpression ref) {
+      if (method.equals(ref.resolve())) return true;
     }
 
-    for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
+    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (checkCalls(child, method)) return true;
     }
 

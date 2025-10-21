@@ -4,9 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
@@ -24,12 +22,6 @@ constructor(
   localHistoryActionName: @Nls String,
   isDefaultChangeListFullyIncluded: Boolean
 ) : LocalChangesCommitter(project, commitState, commitContext, localHistoryActionName) {
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Prefer using CommitterResultHandler")
-  fun addResultHandler(resultHandler: CommitResultHandler) {
-    addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
-  }
 
   companion object {
     @JvmStatic

@@ -37,7 +37,7 @@ public final class FeatureEnvyInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FeatureEnvyVisitor();
   }
 

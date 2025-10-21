@@ -8,7 +8,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.childrenOfType
 import com.intellij.util.asSafely
@@ -33,7 +36,7 @@ internal fun getLibraries(context: PsiElement): List<TomlKeySegment> = getTableE
 
 internal fun String.getVersionCatalogParts() : List<String> = split("_", "-")
 
-internal fun findTomlFile(context: PsiElement, name: String) : TomlFile? {
+internal fun findTomlFile(context: PsiElement, name: String): TomlFile? {
   val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
   val file = getVersionCatalogFiles(module)[name] ?: return null
   return context.manager.findFile(file)?.asSafely<TomlFile>()

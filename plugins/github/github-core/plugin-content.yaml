@@ -1,0 +1,24 @@
+- name: lib/modules/intellij.vcs.github.git.jar
+  contentModules:
+  - name: intellij.vcs.github.git
+- name: lib/modules/intellij.vcs.github.json.jar
+  contentModules:
+  - name: intellij.vcs.github.json
+- name: lib/modules/intellij.vcs.github.tracker.jar
+  contentModules:
+  - name: intellij.vcs.github.tracker
+- name: lib/modules/intellij.vcs.github.ultimate.cron.jar
+  contentModules:
+  - name: intellij.vcs.github.ultimate.cron
+- name: lib/modules/intellij.vcs.github.ultimate.docker.jar
+  contentModules:
+  - name: intellij.vcs.github.ultimate.docker
+- name: lib/modules/intellij.vcs.github.ultimate.features.jar
+  contentModules:
+  - name: intellij.vcs.github.ultimate.features
+- name: lib/modules/intellij.vcs.github.ultimatePromo.jar
+  contentModules:
+  - name: intellij.vcs.github.ultimatePromo
+- name: lib/vcs-github.jar
+  contentModules:
+  - name: intellij.vcs.github

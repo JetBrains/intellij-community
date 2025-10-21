@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -9,11 +9,17 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 public interface LookupEx extends Lookup {
-  boolean performGuardedChange(Runnable change);
+  /**
+   * Performs the given change and tries to preserve the lookup alive.
+   *
+   * @param change the change to perform.
+   * @return true if the lookup has survived, false if the lookup was disposed.
+   */
+  boolean performGuardedChange(@NotNull Runnable change);
 
-  void setCurrentItem(LookupElement item);
+  void setCurrentItem(@Nullable LookupElement item);
 
-  Component getComponent();
+  @NotNull Component getComponent();
 
   void showElementActions(@Nullable InputEvent event);
 

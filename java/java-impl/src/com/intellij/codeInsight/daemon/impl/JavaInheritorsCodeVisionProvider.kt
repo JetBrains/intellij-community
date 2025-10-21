@@ -15,9 +15,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiUtil
 import java.awt.event.MouseEvent
 
-class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
-  companion object {
-    const val ID: String = "java.inheritors"
+public class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
+  public companion object {
+    public const val ID: String = "java.inheritors"
   }
 
   override fun acceptsFile(file: PsiFile): Boolean = file.language == JavaLanguage.INSTANCE

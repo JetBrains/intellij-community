@@ -19,8 +19,10 @@ internal sealed class GitCommitEditingOperationResult {
     private val base: GitRebaseParams.RebaseUpstream,
     private val oldHead: String,
     private val newHead: String,
+    val commitToFocus: Hash? = null,
+    val commitToFocusOnUndo: Hash? = null,
   ) : GitCommitEditingOperationResult() {
-    private val firstChangedHash = findFirstChangedHash()
+    val firstChangedHash = findFirstChangedHash()
 
     private fun findFirstChangedHash(): Hash? {
       val changedCommitsRange = getCommitsRangeToRebase(base, newHead)
@@ -54,6 +56,13 @@ internal sealed class GitCommitEditingOperationResult {
       else {
         UndoResult.Error(res.errorOutputAsHtmlString)
       }
+    }
+
+    fun withFocusCommits(
+      newCommitToFocus: Hash? = this.commitToFocus,
+      newCommitToFocusOnUndo: Hash? = this.commitToFocusOnUndo
+    ): Complete {
+      return Complete(repository, base, oldHead, newHead, newCommitToFocus, newCommitToFocusOnUndo)
     }
 
     sealed class UndoResult {

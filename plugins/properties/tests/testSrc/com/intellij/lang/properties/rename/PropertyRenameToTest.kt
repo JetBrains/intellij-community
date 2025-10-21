@@ -1,7 +1,7 @@
 package com.intellij.lang.properties.rename
 
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ProcessingContext
 
@@ -21,8 +21,8 @@ class PropertyRenameToTest : BasePlatformTestCase() {
 
   fun `test rename action is enabled and visible`() {
     myFixture.configureByText("a.properties", "<TYPO descr=\"Typo: In word 'helloworld'\">hellow<caret>orld</TYPO>=value")
-    myFixture.enableInspections(SpellCheckingInspection())
+    myFixture.enableInspections(GrazieSpellCheckingInspection())
     myFixture.checkHighlighting()
-    myFixture.getAvailableIntention("Typo: Rename to…") ?: error("RenameTo intention is not available")
+    myFixture.getAvailableIntention("Typo: Rename to 'hello-world'") ?: error("RenameTo intention is not available")
   }
 }

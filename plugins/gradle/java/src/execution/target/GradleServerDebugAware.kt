@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironment.TargetPortBinding
 import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.registry.Registry
@@ -21,9 +20,11 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class GradleServerDebugAware : GradleTargetEnvironmentAware {
-  override fun prepareTargetEnvironmentRequest(request: TargetEnvironmentRequest,
-                                               environmentSetup: GradleServerEnvironmentSetup,
-                                               progressIndicator: TargetProgressIndicator) {
+
+  override fun prepareTargetEnvironmentRequest(
+    request: TargetEnvironmentRequest,
+    environmentSetup: GradleServerEnvironmentSetup,
+  ) {
     val targetServerDebugPort = Registry.intValue("gradle.execution.target.server.debug.port", -1)
     if (targetServerDebugPort == -1) return
     val java9plus: Boolean = environmentSetup.getEnvironmentConfiguration().runtimes
@@ -47,7 +48,8 @@ class GradleServerDebugAware : GradleTargetEnvironmentAware {
     request.targetPortBindings += TargetPortBinding(null, targetServerDebugPort)
   }
 
-  override fun handleCreatedTargetEnvironment(targetEnvironment: TargetEnvironment,
-                                              environmentSetup: GradleServerEnvironmentSetup,
-                                              targetProgressIndicator: TargetProgressIndicator) = Unit
+  override fun handleCreatedTargetEnvironment(
+    targetEnvironment: TargetEnvironment,
+    environmentSetup: GradleServerEnvironmentSetup,
+  ): Unit = Unit
 }

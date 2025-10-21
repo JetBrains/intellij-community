@@ -105,7 +105,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Override
-  public @Nullable String getClassQName() {
+  public @Nullable @NlsSafe String getClassQName() {
     return myClass.getQualifiedName();
   }
 

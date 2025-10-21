@@ -6,12 +6,15 @@ import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
+import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertContains
+import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.seconds
 
 private const val REPETITIONS: Int = 100
@@ -94,11 +97,11 @@ class SuspendingReadAndWriteActionTest {
         application.assertReadAccessAllowed()
       }
 
-      fun assertWriteActionWithoutCurrentJob() {
+      fun assertNoWriteActionWithoutCurrentJob() {
         Assertions.assertTrue(EDT.isCurrentThreadEdt())
         Assertions.assertNotNull(Cancellation.currentJob())
         Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
-        application.assertWriteAccessAllowed()
+        Assertions.assertTrue(application.isWriteAccessAllowed)
       }
 
       assertEmptyContext()
@@ -116,11 +119,11 @@ class SuspendingReadAndWriteActionTest {
         writeAction {
           assertWriteActionWithCurrentJob();
           runBlockingCancellable {
-            assertWriteActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
+            assertNoWriteActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
             withContext(Dispatchers.Default) {
               assertNestedContext()
             }
-            assertWriteActionWithoutCurrentJob()
+            assertNoWriteActionWithoutCurrentJob()
           }
           assertWriteActionWithCurrentJob();
           42
@@ -210,6 +213,36 @@ class SuspendingReadAndWriteActionTest {
     }
   }
 
+  @Test
+  fun `readAndWriteActionUndispatched do not run in default dispatcher`(): Unit = timeoutRunBlocking {
+    val name = "Test executor for undispatched test"
+    val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(name)
+    try {
+      val dispatcher = executor.asCoroutineDispatcher()
+
+      withContext(dispatcher) {
+        readAndEdtWriteActionUndispatched {
+          // contains because in debug mode coroutines append coroutine id
+          assertContains(Thread.currentThread().name, name)
+          writeAction {
+            EDT.assertIsEdt()
+          }
+        }
+        readAndBackgroundWriteActionUndispatched {
+          // contains because in debug mode coroutines append coroutine id
+          assertContains(Thread.currentThread().name, name)
+          writeAction {
+            // DO NOT run write action in the inherited dispatcher; causes issues like `com.intellij.openapi.application.impl.ReadWriteActionPerformanceTest.readWriteActionBenchmark`
+            assertFalse { Thread.currentThread().name.contains(name) }
+          }
+        }
+      }
+    }
+    finally {
+      executor.shutdown()
+    }
+  }
+
   fun `readAndWriteAction contention test`(bg: Boolean): Unit = timeoutRunBlocking(timeout = 10.seconds, context = Dispatchers.Default) {
     val numberOfCoroutines = 500
     val counter = runReadAction { AsyncExecutionServiceImpl.getWriteActionCounter() }
@@ -237,4 +270,7 @@ class SuspendingReadAndWriteActionTest {
 
   @Test
   fun `number of write actions grows linearly with contention of read and edt write actions`() = `readAndWriteAction contention test`(false)
+
+  @Test
+  fun `number of write actions grows linearly with contention of read and bg write actions`() = `readAndWriteAction contention test`(true)
 }

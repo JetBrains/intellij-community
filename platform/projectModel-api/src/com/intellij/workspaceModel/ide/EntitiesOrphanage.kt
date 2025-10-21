@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -38,7 +38,7 @@ interface EntitiesOrphanage {
   fun update(updater: (MutableEntityStorage) -> Unit)
 
   companion object {
-    fun getInstance(project: Project): EntitiesOrphanage = project.service()
+    suspend fun getInstance(project: Project): EntitiesOrphanage = project.serviceAsync()
   }
 }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,6 +65,10 @@ public class MockFileIndexFacade extends FileIndexFacade {
   public boolean isUnderIgnored(@NotNull VirtualFile file) {
     return false;
   }
+
+  @ApiStatus.Experimental
+  @Override
+  public boolean isIndexable(@NotNull VirtualFile file) { return true; }
 
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {

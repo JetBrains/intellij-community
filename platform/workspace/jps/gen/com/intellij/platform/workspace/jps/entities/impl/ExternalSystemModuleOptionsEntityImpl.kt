@@ -1,24 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ModuleExtensions")
 
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
@@ -26,19 +25,18 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 
 @Internal
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) :
-  ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(dataSource) {
+internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
-    )
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
+                                                                          ExternalSystemModuleOptionsEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -102,9 +100,8 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
   }
 
 
-  internal class Builder(result: ExternalSystemModuleOptionsEntityData?) :
-    ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(result),
-    ExternalSystemModuleOptionsEntity.Builder {
+  internal class Builder(result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(
+    result), ExternalSystemModuleOptionsEntity.Builder {
     internal constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -156,15 +153,12 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
       dataSource as ExternalSystemModuleOptionsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.externalSystem != dataSource?.externalSystem) this.externalSystem = dataSource.externalSystem
-      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion =
-        dataSource.externalSystemModuleVersion
+      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
       if (this.linkedProjectPath != dataSource?.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
       if (this.linkedProjectId != dataSource?.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
       if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
-      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup =
-        dataSource.externalSystemModuleGroup
-      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType =
-        dataSource.externalSystemModuleType
+      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
+      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType = dataSource.externalSystemModuleType
       updateChildToParentReferences(parents)
     }
 
@@ -178,16 +172,16 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
 
       }
 
-    override var module: ModuleEntity.Builder
+    override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder
         }
       }
       set(value) {
@@ -285,7 +279,7 @@ internal class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<Exter
   var externalSystemModuleType: String? = null
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExternalSystemModuleOptionsEntity> {
     val modifiable = ExternalSystemModuleOptionsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -305,15 +299,14 @@ internal class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<Exter
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ExternalSystemModuleOptionsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ExternalSystemModuleOptionsEntity(entitySource) {
       this.externalSystem = this@ExternalSystemModuleOptionsEntityData.externalSystem
       this.externalSystemModuleVersion = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleVersion
@@ -322,7 +315,7 @@ internal class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<Exter
       this.rootProjectPath = this@ExternalSystemModuleOptionsEntityData.rootProjectPath
       this.externalSystemModuleGroup = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleGroup
       this.externalSystemModuleType = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleType
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
 

@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class SplitPropertyDeclarationIntention : SelfTargetingRangeIntention<KtProperty>(
+internal class SplitPropertyDeclarationIntention : SelfTargetingRangeIntention<KtProperty>(
     KtProperty::class.java,
-    KotlinBundle.lazyMessage("split.property.declaration")
+    KotlinBundle.messagePointer("split.property.declaration")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtProperty): TextRange? {
         if (!element.isLocal || element.parent is KtWhenExpression) return null

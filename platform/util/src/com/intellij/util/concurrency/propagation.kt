@@ -229,8 +229,8 @@ fun createChildContextWithContextJob(debugName: @NonNls String) : ChildContext =
 @Internal
 fun createChildContextIgnoreStructuredConcurrency(debugName: @NonNls String) : ChildContext {
   // probably we need to exclude some elements like PlatformActivityTrackerService.ObservationTracker
-  installThreadContext(currentThreadContext().minusKey(BlockingJob), true).use {
-    return createChildContext(debugName)
+  return installThreadContext(currentThreadContext().minusKey(BlockingJob), true) {
+    createChildContext(debugName)
   }
 }
 
@@ -544,7 +544,7 @@ internal fun capturePropagationContext(
   val capturedRunnable1 = captureClientIdInRunnable(runnable)
   val capturedRunnable2 = Runnable {
     // no cancellation tracker here: this is a periodic runnable that is restarted
-    installThreadContext(childContext.context, false).use {
+    installThreadContext(childContext.context, false) {
       childContext.applyContextActions(false).use {
         capturedRunnable1.run()
       }

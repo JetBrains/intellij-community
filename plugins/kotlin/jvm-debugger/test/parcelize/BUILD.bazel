@@ -1,24 +1,26 @@
-### auto-generated section `build kotlin.jvm-debugger.test.parcelize.k2` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
-  name = "kotlin-jvm-debugger-test-parcelize-k2",
-  visibility = ["//visibility:public"]
+jvm_library(
+  name = "parcelize",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-test-parcelize-k2_test_lib",
+  name = "parcelize_test_lib",
+  module_name = "intellij.kotlin.jvm.debugger.test.parcelize",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/jvm-debugger/test/k2:k2_test_lib",
+    "//plugins/kotlin/jvm-debugger/test/k2:kotlin-jvm-debugger-test_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/lang-core",
     "//plugins/kotlin/jvm-debugger/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/base/plugin",
@@ -29,9 +31,16 @@ jvm_library(
     "//android/streaming",
   ]
 )
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize` end
 
-jvm_test(
-  name = "kotlin-jvm-debugger-test-parcelize-k2_test",
-  runtime_deps = [":kotlin-jvm-debugger-test-parcelize-k2_test_lib"]
+### auto-generated section `test intellij.kotlin.jvm.debugger.test.parcelize` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "parcelize_test",
+  runtime_deps = [
+    ":parcelize_test_lib",
+    "//:main_test_lib",
+  ]
 )
-### auto-generated section `build kotlin.jvm-debugger.test.parcelize.k2` end
+### auto-generated section `test intellij.kotlin.jvm.debugger.test.parcelize` end

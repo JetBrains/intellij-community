@@ -18,8 +18,10 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
-import kotlin.jvm.functions.Function0;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +87,7 @@ final class PainterHelper implements Painter.Listener {
     painterToComponent.clear();
   }
 
-  public void paint(Graphics g) {
+  public void paint(@NotNull Graphics g) {
     runAllPainters(g, computeOffsets(g, rootComponent));
   }
 
@@ -188,7 +190,7 @@ final class PainterHelper implements Painter.Listener {
       }
 
       @Override
-      public void executePaint(Component component, Graphics2D g) {
+      public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
         executePaint(g, component, image, fillType, anchor, alpha, insets);
       }
     };
@@ -316,7 +318,7 @@ final class PainterHelper implements Painter.Listener {
       }
 
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
-      StartupUiUtilKt.drawImage(g, scaled, dst, src, null, null);
+      StartupUiUtil.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
     }
 
@@ -471,7 +473,7 @@ final class PainterHelper implements Painter.Listener {
     }
 
     @Override
-    public void executePaint(Component component, Graphics2D g) {
+    public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
       if (image == null) {
         // covered by needsRepaint()
         return;
@@ -496,7 +498,8 @@ final class PainterHelper implements Painter.Listener {
       Image newImage,
       float newAlpha,
       IdeBackgroundUtil.Fill newFill,
-      IdeBackgroundUtil.Anchor newAnchor
+      IdeBackgroundUtil.Anchor newAnchor,
+      boolean invokeRepaintAllLater
     ) {
       if (!Objects.equals(current, value)) {
         return;
@@ -516,6 +519,9 @@ final class PainterHelper implements Painter.Listener {
         if (!modalityState.accepts(ModalityState.nonModal())) {
           ComponentUtil.getActiveWindow().repaint();
         }
+        else if (invokeRepaintAllLater) {
+          ApplicationManager.getApplication().invokeLater(IdeBackgroundUtil::repaintAllWindows, modalityState);
+        }
         else {
           IdeBackgroundUtil.repaintAllWindows();
         }
@@ -534,18 +540,18 @@ final class PainterHelper implements Painter.Listener {
       ImageLoadSettings newLoadSettings = new ImageLoadSettings(filePath, flipH, flipV);
 
       if (Strings.isEmpty(filePath)) {
-        resetImage(propertyValue, newLoadSettings, null, newAlpha, newFillType, newAnchor);
+        resetImage(propertyValue, newLoadSettings, null, newAlpha, newFillType, newAnchor, true);
         return;
       }
 
       if (Objects.equals(imageLoadSettings, newLoadSettings)) {
-        resetImage(propertyValue, newLoadSettings, image, newAlpha, newFillType, newAnchor);
+        resetImage(propertyValue, newLoadSettings, image, newAlpha, newFillType, newAnchor, true);
         return;
       }
 
       Image cachedImage = ourImageCache.get(newLoadSettings);
       if (cachedImage != null) {
-        resetImage(propertyValue, newLoadSettings, cachedImage, newAlpha, newFillType, newAnchor);
+        resetImage(propertyValue, newLoadSettings, cachedImage, newAlpha, newFillType, newAnchor, true);
         return;
       }
 
@@ -554,7 +560,7 @@ final class PainterHelper implements Painter.Listener {
         Image newImage = filterImage(loadImage(newLoadSettings), newLoadSettings);
         ourImageCache.put(newLoadSettings, newImage);
         ApplicationManager.getApplication().invokeLater(() -> {
-          resetImage(propertyValue, newLoadSettings, newImage, newAlpha, newFillType, newAnchor);
+          resetImage(propertyValue, newLoadSettings, newImage, newAlpha, newFillType, newAnchor, false);
         }, modalityState);
       });
     }

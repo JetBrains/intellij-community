@@ -36,6 +36,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
 import kotlin.Unit;
@@ -54,10 +55,10 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
+import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.MavenEelUtil;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -100,7 +101,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   @Override
   public MavenProjectsNavigatorState getState() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myStructure != null) {
       try {
         myState.treeState = new Element("root");

@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
@@ -33,6 +32,7 @@ import org.assertj.swing.fixture.JListFixture
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
+import training.dsl.LessonUtil.isMainEditorComponent
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
@@ -44,7 +44,6 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiHighlightingManager.HighlightingOptions
 import training.ui.LearningUiUtil
 import training.util.LessonEndInfo
-import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 
@@ -289,10 +288,6 @@ class LocalHistoryLesson(
       }
     }
     else null
-  }
-
-  private fun isMainEditorComponent(component: Component?): Boolean {
-    return component is EditorComponentImpl && component.editor.editorKind == EditorKind.MAIN_EDITOR
   }
 
   // If message is null it will remove the existing hint and allow file modification

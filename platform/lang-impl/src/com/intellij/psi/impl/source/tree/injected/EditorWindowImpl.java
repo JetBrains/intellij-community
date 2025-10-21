@@ -12,6 +12,7 @@ import com.intellij.injected.editor.MarkupModelWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -648,6 +650,8 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   }
 
   @Override
+  @Nullable
+  @ApiStatus.Obsolete
   public VirtualFile getVirtualFile() {
     return myDelegate.getVirtualFile();
   }
@@ -795,7 +799,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public String toString() {
-    return super.toString() + "[disposed=" + myDisposed + "; valid=" + isValid() + "]";
+    return super.toString() + "[disposed=" + myDisposed + "; valid=" + ReadAction.compute(()->isValid()) + "]";
   }
 
   @Override

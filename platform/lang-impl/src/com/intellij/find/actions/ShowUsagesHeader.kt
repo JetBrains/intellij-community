@@ -1,19 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.ExperimentalUI
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -22,8 +27,22 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
   val panel: DialogPanel
 
   private lateinit var titleLabel: JLabel
-  private lateinit var processIcon: AsyncProcessIcon
+  private lateinit var searchProcessIcon: AsyncProcessIcon
   private lateinit var statusLabel: JLabel
+  private lateinit var analyzingProgressLabel: JLabel
+
+
+  private val analyzingText = TextIcon(
+    IdeBundle.message("dumb.mode.results.might.be.incomplete"),
+    JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(),
+    Gray.TRANSPARENT,
+    0
+  )
+
+  private val analyzingIcon: Icon = RowIcon(2, com.intellij.ui.icons.RowIcon.Alignment.CENTER).apply {
+    setIcon(AnimatedIcon.Default.INSTANCE, 0)
+    setIcon(analyzingText, 1)
+  }
 
   init {
     panel = panel {
@@ -39,11 +58,22 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
             .gap(RightGap.SMALL)
           titleLabel = titleCell.component
 
-          processIcon = cell(AsyncProcessIcon("xxx"))
+          searchProcessIcon = cell(AsyncProcessIcon("xxx"))
             .gap(RightGap.SMALL)
             .component
           val statusCell = label("")
           statusLabel = statusCell.component
+
+          analyzingText.setFont(statusLabel.font)
+          analyzingText.fontTransform = FontInfo.getFontRenderContext(statusLabel).transform
+          analyzingText.setInsets(scale(3), scale(1), 0, 0)
+
+          val projectAnalyzingCell = icon(analyzingIcon)
+          analyzingProgressLabel = projectAnalyzingCell.component.apply {
+            toolTipText = IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis")
+            isVisible = false
+          }
+
           val pinCell = cell(pinButton)
 
           if (ExperimentalUI.isNewUI()) {
@@ -51,6 +81,8 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
             titleCell.customize(UnscaledGaps(top = headerInsets.top, bottom = headerInsets.bottom, right = 12))
             statusCell.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             statusCell.customize(UnscaledGaps(right = 8))
+            projectAnalyzingCell.customize(UnscaledGaps(right = 8))
+            projectAnalyzingCell.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             // Fix vertical alignment for the pin icon
             pinCell.customize(UnscaledGaps(top = 2))
           }
@@ -63,15 +95,35 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
   }
 
   fun setStatusText(hasMore: Boolean, visibleCount: Int, totalCount: Int) {
-    statusLabel.text = getStatusString(!processIcon.isDisposed, hasMore, visibleCount, totalCount)
+    statusLabel.text = getStatusString(!searchProcessIcon.isDisposed, hasMore, visibleCount, totalCount)
   }
 
-  fun disposeProcessIcon() {
-    Disposer.dispose(processIcon)
-    processIcon.parent?.apply {
-      remove(processIcon)
+  fun disposeSearchProcessIcon() {
+    Disposer.dispose(searchProcessIcon)
+    searchProcessIcon.parent?.apply {
+      remove(searchProcessIcon)
       repaint()
     }
+  }
+
+  fun disposeAnalyzingIcon() {
+    if (!Registry.`is`("ide.usages.popup.analyzing.indicator.enable")) return
+
+    analyzingProgressLabel.removeAll()
+    if (!searchProcessIcon.isDisposed) {
+      searchProcessIcon.isVisible = true
+    }
+    analyzingProgressLabel.parent?.apply {
+      remove(analyzingProgressLabel)
+      repaint()
+    }
+  }
+
+  fun showAnalyzingIcon() {
+    if (!Registry.`is`("ide.usages.popup.analyzing.indicator.enable")) return
+
+    analyzingProgressLabel.isVisible = true
+    searchProcessIcon.isVisible = false
   }
 
   @NlsContexts.PopupTitle

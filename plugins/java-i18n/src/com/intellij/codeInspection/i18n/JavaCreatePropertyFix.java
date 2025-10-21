@@ -27,7 +27,7 @@ public class JavaCreatePropertyFix extends CreatePropertyFix {
 
   public JavaCreatePropertyFix() {}
 
-  public JavaCreatePropertyFix(PsiElement element, String key, final List<PropertiesFile> propertiesFiles) {
+  JavaCreatePropertyFix(PsiElement element, String key, final List<PropertiesFile> propertiesFiles) {
     super(element, key, propertiesFiles);
   }
 

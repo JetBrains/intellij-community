@@ -10,7 +10,7 @@ internal class PsiExternalResourceChangeListener(val project: Project) : Externa
   override fun externalResourceChanged() {
     if (!project.isDisposed) {
       PsiManagerEx.getInstanceEx(project).beforeChange(true)
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart(this)
     }
   }
 }

@@ -43,7 +43,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
-import icons.RemoteServersIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,8 +225,8 @@ public final class ServersTreeStructure {
 
     private static @Nullable Icon getStatusIcon(final ConnectionStatus status) {
       return switch (status) {
-        case CONNECTED -> RemoteServersIcons.ResumeScaled;
-        case DISCONNECTED -> RemoteServersIcons.SuspendScaled;
+        case CONNECTED -> AllIcons.RemoteServers.ResumeScaled;
+        case DISCONNECTED -> AllIcons.RemoteServers.SuspendScaled;
         default -> null;
       };
     }

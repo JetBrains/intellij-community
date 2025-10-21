@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -70,6 +71,6 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
     calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol

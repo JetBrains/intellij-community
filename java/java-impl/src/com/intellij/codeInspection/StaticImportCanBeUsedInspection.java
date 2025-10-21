@@ -1,9 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.JavaIdeCodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -53,9 +56,47 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
         if (context == null) return;
         holder.registerProblem(qualifierReference,
                                JavaBundle.message("inspection.static.import.can.be.used.display.name"),
-                               new StaticImportFix());
+                               new StaticImportFix(),
+                               new DeleteSettingsFromAutoImportTable(context.fqn));
       }
     };
+  }
+
+  private static class DeleteSettingsFromAutoImportTable extends ModCommandQuickFix {
+    private final String myFqn;
+
+    private DeleteSettingsFromAutoImportTable(String fqn) { myFqn = fqn; }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return ModCommand.nop();
+      JavaIdeCodeInsightSettings settings = JavaIdeCodeInsightSettings.getInstance();
+      if (settings.includedAutoStaticNames.contains(myFqn) || settings.includedAutoStaticNames.contains(StringUtil.getPackageName(myFqn))) {
+        return ModCommand.updateOptionList(element,
+                                           "JavaIdeCodeInsightSettings.includedAutoStaticNames",
+                                           strings -> {
+                                             strings.remove(myFqn);
+                                             strings.remove(StringUtil.getPackageName(myFqn));
+                                           });
+      }
+      return ModCommand.updateOptionList(element,
+                                         "JavaProjectCodeInsightSettings.includedAutoStaticNames",
+                                         strings -> {
+                                           strings.remove(myFqn);
+                                           strings.remove(StringUtil.getPackageName(myFqn));
+                                         });
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", myFqn);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.family.name");
+    }
   }
 
   private static class StaticImportFix extends PsiUpdateModCommandQuickFix {
@@ -96,7 +137,8 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
     if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) return null;
     if (!(qualifier.resolve() instanceof PsiClass psiClass)) return null;
     String classQualifiedName = psiClass.getQualifiedName();
-    if (!javaCodeStyleManager.isStaticAutoImportName(classQualifiedName + "." + memberName)) return null;
+    String fqn = classQualifiedName + "." + memberName;
+    if (!javaCodeStyleManager.isStaticAutoImportName(fqn)) return null;
     PsiElement referenceNameElement = qualifier.getReferenceNameElement();
     if (referenceNameElement == null) return null;
     PsiClass anImport = AddOnDemandStaticImportAction.getClassToPerformStaticImport(referenceNameElement);
@@ -104,9 +146,12 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
     if (javaCodeStyleManager.hasConflictingOnDemandImport(javaFile, anImport, memberName)) return null;
     PsiImportList importList = javaFile.getImportList();
     if (importList == null) return null;
-    return new StaticImportContext(anImport, memberName, importList);
+    return new StaticImportContext(anImport, memberName, importList, fqn);
   }
 
-  public record StaticImportContext(@NotNull PsiClass psiClass, @NotNull String memberName, @NotNull PsiImportList importList) {
+  public record StaticImportContext(@NotNull PsiClass psiClass,
+                                    @NotNull String memberName,
+                                    @NotNull PsiImportList importList,
+                                    @NotNull String fqn) {
   }
 }

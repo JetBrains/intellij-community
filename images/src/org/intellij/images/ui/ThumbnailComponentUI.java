@@ -21,6 +21,7 @@ import java.awt.image.BufferedImage;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@Deprecated(forRemoval = true)
 public class ThumbnailComponentUI extends ComponentUI {
   private static final @NonNls String DOTS = "...";
 

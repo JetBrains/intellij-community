@@ -4,11 +4,13 @@
  */
 package org.jetbrains.kotlin.idea.completion.implCommon.handlers
 
-import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiWhiteSpace
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -17,7 +19,10 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-class NamedArgumentInsertHandler(private val parameterName: Name) : InsertHandler<LookupElement> {
+@Serializable
+data class NamedArgumentInsertHandler(
+    @Serializable(with = KotlinNameSerializer::class) private val parameterName: Name
+) : SerializableInsertHandler {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val editor = context.editor
 

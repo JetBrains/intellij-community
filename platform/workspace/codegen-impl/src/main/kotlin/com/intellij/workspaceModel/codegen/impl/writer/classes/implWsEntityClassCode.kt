@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -18,7 +18,9 @@ fun ObjClass<*>.implWsEntityCode(): String {
   }
 
   return """
-package ${module.implPackage}    
+package ${module.implPackage}   
+ 
+import $module.${defaultJavaBuilderName}
 
 ${implWsEntityAnnotations}
 @OptIn($WorkspaceEntityInternalApi::class)

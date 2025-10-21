@@ -22,6 +22,7 @@ import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame

@@ -4,6 +4,7 @@ package com.intellij.diff.impl;
 import com.intellij.CommonBundle;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.lang.DiffLanguage;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffTaskQueue;
@@ -14,10 +15,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -110,6 +111,9 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     myQueue.executeAndTryWait(
       indicator -> {
         final DiffRequest request = doLoadRequest(requestProvider, indicator);
+        if (request instanceof ContentDiffRequest contentDiffRequest) {
+          contentDiffRequest.getContents().forEach(content -> DiffLanguage.computeAndCacheLanguage(content, getProject()));
+        }
         return () -> finishRequestLoading(request, force, scrollToChangePolicy, requestProvider);
       },
       () -> applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy),
@@ -139,8 +143,8 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     applyRequest(request, force, scrollToChangePolicy);
   }
 
-  protected int getFastLoadingTimeMillis() {
-    return ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  protected long getFastLoadingTimeMillis() {
+    return ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS;
   }
 
   /**

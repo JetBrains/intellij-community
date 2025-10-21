@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.ColorModel;
 
 /**
  * @author Konstantin Bulenkov
@@ -200,8 +201,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       int amountFull = getAmountFull(i, r.width, r.height);
 
       Shape fullShape, coloredShape;
-      int orientation = progressBar.getOrientation();
-      if (orientation == SwingConstants.HORIZONTAL) {
+      boolean horizontalOrientation = progressBar.getOrientation() == SwingConstants.HORIZONTAL;
+      if (horizontalOrientation) {
         int pHeight = progressBar.getPreferredSize().height;
         int yOffset = r.y + (r.height - pHeight) / 2;
 
@@ -220,7 +221,11 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
       Color foreground = progressBar.getForeground();
       Object statusProperty = progressBar.getClientProperty(ProgressBarUtil.STATUS_KEY);
-      if (ProgressBarUtil.FAILED_VALUE.equals(statusProperty) || foreground == ColorProgressBar.RED) {
+      if (progressBar.getClientProperty(ProgressBarUtil.PROGRESS_PAINT_KEY) instanceof Paint progressPaint) {
+        PaintTransformer paint = new PaintTransformer(progressPaint, horizontalOrientation, horizontalOrientation ? r.x : r.y, amountFull);
+        g2.setPaint(paint);
+      }
+      else if (ProgressBarUtil.FAILED_VALUE.equals(statusProperty) || foreground == ColorProgressBar.RED) {
         g2.setColor(JBUI.CurrentTheme.ProgressBar.FAILED);
       }
       else if (ProgressBarUtil.PASSED_VALUE.equals(statusProperty) || foreground == ColorProgressBar.GREEN) {
@@ -298,5 +303,54 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     // TODO improve user experience based on System.properties
     // Avoid using Services directly to make UI code independent.
     return false;
+  }
+
+  private static class PaintTransformer implements Paint {
+
+    private final Paint originalPaint;
+    private final boolean isHorizontal;
+    private final int start;
+    private final int size;
+
+    private PaintTransformer(Paint paint, boolean isHorizontal, int start, int size) {
+      originalPaint = paint;
+      this.isHorizontal = isHorizontal;
+      this.start = start;
+      this.size = size;
+    }
+
+    @Override
+    public PaintContext createContext(ColorModel cm,
+                                      Rectangle deviceBounds,
+                                      Rectangle2D userBounds,
+                                      AffineTransform xform,
+                                      RenderingHints hints) {
+
+      AffineTransform transform = xform == null ? new AffineTransform() : (AffineTransform)xform.clone();
+
+      if (start != 0) {
+        if (isHorizontal) {
+          transform.translate(start, 0);
+        }
+        else {
+          transform.translate(0, start);
+        }
+      }
+
+      if (size > 0) {
+        transform.scale(size, size);
+      }
+
+      if (!isHorizontal) {
+        transform.rotate(Math.toRadians(90), 0, 0);
+      }
+
+      return originalPaint.createContext(cm, deviceBounds, userBounds, transform, hints);
+    }
+
+    @Override
+    public int getTransparency() {
+      return originalPaint.getTransparency();
+    }
   }
 }

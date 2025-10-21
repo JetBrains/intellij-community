@@ -9,11 +9,11 @@ script_dir="$(cd "$(dirname "$0")"; pwd)"
 root="$script_dir/../../../.."
 
 cd "$script_dir"
-exec /bin/bash "$root/bazel.cmd" run "$@" //:jps-to-bazel
+exec /bin/bash "$root/bazel.cmd" run //:jps-to-bazel -- "$@"
 :CMDSCRIPT
 
 pushd "%~dp0"
-call "%~dp0\..\..\..\..\bazel.cmd" run //:jps-to-bazel <nul
+call "%~dp0\..\..\..\..\bazel.cmd" run //:jps-to-bazel -- %* <nul
 set _exit_code=%ERRORLEVEL%
 popd
 EXIT /B %_exit_code%

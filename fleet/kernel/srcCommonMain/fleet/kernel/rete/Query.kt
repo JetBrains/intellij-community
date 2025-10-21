@@ -14,12 +14,44 @@ data class Token<out T>(val added: Boolean, val match: Match<T>) {
 }
 
 /**
+ * Generic query assumes multiple matches because a query can produces multiple values
+ * for a single db snapsthot and then this set changes with time which leads to appearance of new matches.
+ *
+ * Cardinality allows to distinguish these two dimensions. This is usefull if you need to assume cardinality in your logic.
+ * E.g. converting an arbitrary query into a StateFlow by collecting all its matches would make sense
+ * if you know that the query in question produces a single value
+ * ```
+ * val stateQuery = query { ... }
+ * stateQuery.asValuesFlow().stateIn(this)  // single value that changes in time
+ * ```
+ * but not if it is a set
+ * ```
+ * val setQuery = queryMany { ... }
+ * setQuery.asValuesFlow().stateIn(this) // each snapshot might produce multiple values, the last one will win, definitely a bug
+ * ```
+ * Having cardinality expressed in types allows to write utility functions that explicitly declare their assumptions.
+ *
+ * Of course the generic is erased on runtime so you wouldn't be able to check these properties on runtime,
+ * the goal is to provide information to reason about the execution, not to introduce a new control flow mechanism.
+ */
+sealed interface Cardinality
+sealed interface Many : Cardinality
+sealed interface Maybe : Many
+sealed interface Single : Maybe
+
+typealias StateQuery<T> = Query<Single, T>
+
+typealias OptionalQuery<T> = Query<Maybe, T>
+
+typealias SetQuery<T> = Query<Many, T>
+
+/**
  * [Query] is a stateful function, which is supposed to initialize it's state (memory) and return a [Producer]
  * One may think of it as a reducer
  * [Producer] is invoked for every new subscriber, which could be another [Query] or [QueryObserver]
  * It must provide [Collector] with accumulated set of matches, and call it again with any new ones
  * */
-fun interface Query<out T> {
+fun interface Query<out C : Cardinality, out T> {
   fun QueryScope.producerImpl(): Producer<T>
 }
 
@@ -57,7 +89,7 @@ annotation class ReteDsl
  * */
 @ReteDsl
 interface QueryScope : SubscriptionScope {
-  fun <T> Query<T>.producer(): Producer<T>
+  fun <C : Cardinality, T> Query<C, T>.producer(): Producer<T>
   val performAdditionalChecks: Boolean
 }
 
@@ -144,19 +176,23 @@ fun interface QueryObserver<in T> {
  * */
 internal interface ReteNetwork {
   companion object {
-    fun new(dbState: MutableStateFlow<ReteState>,
-            failWhenPropagationFailed: Boolean,
-            performAdditionalChecks: Boolean): ReteNetwork =
-      ReteNetworkImpl(lastKnownDb = dbState,
-                      failWhenPropagationFailed = failWhenPropagationFailed,
-                      performAdditionalChecks = performAdditionalChecks)
+    fun new(
+      dbState: MutableStateFlow<ReteState>,
+      failWhenPropagationFailed: Boolean,
+      performAdditionalChecks: Boolean,
+    ): ReteNetwork =
+      ReteNetworkImpl(
+        lastKnownDb = dbState,
+        failWhenPropagationFailed = failWhenPropagationFailed,
+        performAdditionalChecks = performAdditionalChecks,
+      )
   }
 
   fun <T> observeQuery(
-    query: Query<T>,
+    query: Query<*, T>,
     tracingKey: QueryTracingKey?,
     dependencies: Collection<ObservableMatch<*>>,
-    observer: QueryObserver<T>
+    observer: QueryObserver<T>,
   ): Subscription
 
   fun propagateChange(change: Change)
@@ -171,8 +207,10 @@ fun <T> Broadcaster(): Broadcaster<T> = BroadcasterImpl()
 /**
  * Represents a set of asserted and retracted tokens produced by a single [Change]
  * */
-data class TokenSet<out T>(val asserted: Set<Match<T>>,
-                           val retracted: Set<Match<T>>) : Iterable<Token<T>> {
+data class TokenSet<out T>(
+  val asserted: Set<Match<T>>,
+  val retracted: Set<Match<T>>,
+) : Iterable<Token<T>> {
   override fun iterator(): Iterator<Token<T>> =
     iterator {
       retracted.forEach { m ->

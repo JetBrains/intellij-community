@@ -12,6 +12,8 @@ public class DivideByZeroInspectionTest extends LightJavaInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new DivideByZeroInspection();
+    DivideByZeroInspection inspection = new DivideByZeroInspection();
+    inspection.reportMayBeZero = true;
+    return inspection;
   }
 }

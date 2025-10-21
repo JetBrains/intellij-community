@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -48,5 +49,13 @@ fun <T> CoroutineScope.suspendingLazy(
   initializerContext: CoroutineContext = EmptyCoroutineContext,
   initializer: suspend CoroutineScope.() -> T,
 ): SuspendingLazy<T> {
-  return SuspendingLazyImpl(this, initializerContext, initializer)
+  return SuspendingLazyImpl(this, initializerContext, initializer, true)
+}
+
+@ApiStatus.Internal
+fun <T> CoroutineScope.suspendingLazyNoRecursionCheck(
+  initializerContext: CoroutineContext = EmptyCoroutineContext,
+  initializer: suspend CoroutineScope.() -> T,
+): SuspendingLazy<T> {
+  return SuspendingLazyImpl(this, initializerContext, initializer, false)
 }

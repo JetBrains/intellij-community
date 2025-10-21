@@ -21,7 +21,7 @@ internal fun KtExpression.getArguments() = when (this) {
 
 class ReplaceUntilWithRangeToIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
-    KotlinBundle.lazyMessage("replace.with.0.operator", "..")
+    KotlinBundle.messagePointer("replace.with.0.operator", "..")
 ) {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         if (element !is KtBinaryExpression && element !is KtDotQualifiedExpression) return false

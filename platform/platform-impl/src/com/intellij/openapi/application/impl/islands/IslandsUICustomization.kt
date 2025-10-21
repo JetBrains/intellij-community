@@ -2,50 +2,56 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.impl.EditorHeaderComponent
+import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
-import com.intellij.openapi.ui.Divider
-import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
+import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.content.ContentLayout
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
-import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBSwingUtilities
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.tabs.impl.TabPainterAdapter
+import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
@@ -53,25 +59,46 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
-import javax.swing.JComponent
-import javax.swing.JFrame
-import javax.swing.SwingUtilities
+import java.util.function.Predicate
+import java.util.function.Supplier
+import javax.swing.*
 import javax.swing.border.Border
 
+private data class WindowBackgroundComponentData(val origOpaque: Boolean, val origBackground: Color?)
+
+private val WINDOW_BACKGROUND_COMPONENT_KEY: Key<WindowBackgroundComponentData> = Key.create("Islands.WINDOW_BACKGROUND_COMPONENT_KEY")
+
 internal class IslandsUICustomization : InternalUICustomization() {
-  private val isIslandsAvailable = !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()
+  private val isIslandsAvailable = ExperimentalUI.isNewUI()
 
   private var isManyIslandEnabledCache: Boolean? = null
+
+  private var isManyIslandCustomTheme = false
 
   private val isManyIslandEnabled: Boolean
     get() {
       var value = isManyIslandEnabledCache
       if (value == null) {
-        value = isIslandsAvailable && JBUI.getInt("Islands", 0) == 1
+        if (isIslandsAvailable) {
+          val themeValue = JBUI.getInt("Islands", 0)
+          isManyIslandCustomTheme = themeValue == 0 && !isDefaultTheme() && AdvancedSettings.getBoolean("ide.ui.theme.custom.islands")
+          value = isManyIslandCustomTheme || themeValue == 1
+        }
+        else {
+          value = false
+          isManyIslandCustomTheme = false
+        }
         isManyIslandEnabledCache = value
       }
       return value
     }
+
+  private fun isDefaultTheme(): Boolean {
+    val id = LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false
+
+    return id == "ExperimentalDark" || id == "ExperimentalLight" || id == "ExperimentalLightWithLightHeader" ||
+           id == "JetBrainsHighContrastTheme" || id == "Darcula"
+  }
 
   private var isIslandsGradientEnabledCache: Boolean? = null
 
@@ -79,10 +106,18 @@ internal class IslandsUICustomization : InternalUICustomization() {
     get() {
       var value = isIslandsGradientEnabledCache
       if (value == null) {
-        value = Registry.`is`("idea.islands.gradient.enabled", true) && UISettings.getInstance().differentiateProjects
+        value = UISettings.getInstance().differentiateProjects && !isBackgroundImageSet()
         isIslandsGradientEnabledCache = value
       }
       return value
+    }
+
+  private fun isBackgroundImageSet(): Boolean =
+    IdeBackgroundUtil.isEditorBackgroundImageSet(null) ||
+    IdeBackgroundUtil.isFrameBackgroundImageSet(null) ||
+    ProjectUtil.getOpenProjects().any {
+      IdeBackgroundUtil.isEditorBackgroundImageSet(it) ||
+      IdeBackgroundUtil.isFrameBackgroundImageSet(it)
     }
 
   override fun updateBackgroundPainter() {
@@ -94,15 +129,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return !isManyIslandEnabled
     }
 
-  override val shouldPaintEditorFadeout: Boolean
-    get() {
-      return !isManyIslandEnabled
-    }
-
   override val isMainMenuBottomBorder: Boolean
     get() {
       return !isManyIslandEnabled
     }
+
+  override val isTabOccupiesWholeHeight: Boolean
+    get() = !isManyIslandEnabled
 
   override val toolWindowUIDecorator: ToolWindowUIDecorator = object : ToolWindowUIDecorator() {
     override fun decorateAndReturnHolder(divider: JComponent, child: JComponent, toolWindow: ToolWindow, originalBorderBuilder: () -> Border): JComponent {
@@ -116,7 +149,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         if (isManyIslandEnabled) {
           background = JBUI.CurrentTheme.ToolWindow.background()
           createToolWindowBorderPainter(toolWindow, this)
-          child.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
+          configureBackgroundPainting(child, recursive = false)
         }
         else {
           border = originalBorderBuilder()
@@ -125,22 +158,60 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  private var forcedBackground = false
+
+  private val noBackground: Predicate<JComponent> = Predicate<JComponent> { component ->
+    if (forcedBackground) {
+      false
+    }
+    else {
+      val explicitlySetValue = component.getClientProperty(IdeBackgroundUtil.NO_BACKGROUND)
+      if (explicitlySetValue is Boolean) {
+        explicitlySetValue
+      }
+      else {
+        isManyIslandEnabled && isIslandsGradientEnabled
+      }
+    }
+  }
+
+  private fun configureBackgroundPainting(component: JComponent, recursive: Boolean) {
+    if (recursive) {
+      ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE, noBackground)
+    }
+    else {
+      component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND_PREDICATE, noBackground)
+    }
+  }
+
+  private var isBrightCached = false
+
+  private val uiSettings by lazy { UISettings.getInstance() }
+
   private val awtListener = AWTEventListener { event ->
     val component = (event as HierarchyEvent).component
-    val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
+    if (
+      (!isBrightCached && !uiSettings.differentToolwindowBackground) ||
+      (event.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) == 0L ||
+      !component.isShowing
+    ) {
+      return@AWTEventListener
+    }
+
+    val isToolWindow = UIUtil.getGeneralizedParentOfType(InternalDecorator::class.java, component) != null
 
     if (isToolWindow) {
-      UIUtil.forEachComponentInHierarchy(component) {
-        if (it.background == JBColor.PanelBackground) {
-          it.background = JBUI.CurrentTheme.ToolWindow.background()
-        }
+      if (component.background == JBColor.PanelBackground) {
+        component.background = JBUI.CurrentTheme.ToolWindow.background()
       }
     }
   }
 
   init {
-    if (isManyIslandEnabled && JBColor.isBright()) {
+    if (isManyIslandEnabled) {
+      isBrightCached = JBColor.isBright()
       Toolkit.getDefaultToolkit().addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+      applyMissingKeys()
     }
 
     var oldManyIsland = isManyIslandEnabled
@@ -154,8 +225,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       val newManyIsland = isManyIslandEnabled
 
-      if (newManyIsland && JBColor.isBright()) {
+      if (newManyIsland) {
+        isBrightCached = JBColor.isBright()
         toolkit.addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+        applyMissingKeys()
       }
 
       if (oldManyIsland == newManyIsland) {
@@ -170,6 +243,35 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       oldManyIsland = newManyIsland
     })
+
+    connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+      override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+        if (id == "ide.ui.theme.custom.islands") {
+          RegistryBooleanOptionDescriptor.suggestRestart(null)
+        }
+      }
+    })
+  }
+
+  private fun applyMissingKeys() {
+    if (isManyIslandCustomTheme) {
+      val uiDefaults = UIManager.getLookAndFeelDefaults()
+
+      uiDefaults["MainToolbar.borderColor"] = Gray.TRANSPARENT
+      uiDefaults["ToolWindow.borderColor"] = Gray.TRANSPARENT
+      uiDefaults["ToolWindow.Stripe.borderColor"] = Gray.TRANSPARENT
+      uiDefaults["StatusBar.borderColor"] = Gray.TRANSPARENT
+
+      val background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+
+      uiDefaults["ToolWindow.background"] = background
+      uiDefaults["ToolWindow.Header.background"] = background
+      uiDefaults["ToolWindow.Header.inactiveBackground"] = background
+      uiDefaults["EditorTabs.background"] = background
+      uiDefaults["Island.borderColor"] = background
+
+      uiDefaults["Island.arc"] = 20
+    }
   }
 
   private fun enableManyIslands() {
@@ -194,11 +296,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
           }
           is JBEditorTabs -> {
             if (it.parent is EditorsSplitters) {
-              ClientProperty.putRecursive(it, IdeBackgroundUtil.NO_BACKGROUND, true)
+              configureBackgroundPainting(it, recursive = true)
             }
           }
           is ManyIslandDivider -> {
             it.configure(true)
+          }
+          is SearchReplaceFacade -> {
+            configureSearchReplaceComponent(it as EditorHeaderComponent, true)
           }
         }
       }
@@ -238,7 +343,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         configureMainFrameChildren(it, false)
 
         if (it is JComponent) {
-          ClientProperty.removeRecursive(it, IdeBackgroundUtil.NO_BACKGROUND)
+          ClientProperty.removeRecursive(it, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE)
         }
 
         when (it) {
@@ -248,6 +353,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
           }
           is ManyIslandDivider -> {
             it.configure(false)
+          }
+          is SearchReplaceFacade -> {
+            configureSearchReplaceComponent(it as EditorHeaderComponent, false)
           }
         }
       }
@@ -289,15 +397,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
     clearParentNoBackground(holder)
 
     for (child in holder.components) {
-      ClientProperty.putRecursive(child as JComponent, IdeBackgroundUtil.NO_BACKGROUND, true)
+      configureBackgroundPainting(child as JComponent, recursive = true)
     }
   }
 
   private fun clearParentNoBackground(component: JComponent) {
     var nextComponent: JComponent? = component
 
-    while (nextComponent != null && ClientProperty.get(nextComponent, IdeBackgroundUtil.NO_BACKGROUND) != null) {
-      ClientProperty.removeRecursive(nextComponent, IdeBackgroundUtil.NO_BACKGROUND)
+    while (nextComponent != null && ClientProperty.get(nextComponent, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE) != null) {
+      ClientProperty.removeRecursive(nextComponent, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE)
       nextComponent = nextComponent.parent as JComponent?
     }
   }
@@ -306,16 +414,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (buttonManager is ToolWindowPaneNewButtonManager) {
       buttonManager.addVisibleToolbarsListener { leftVisible, rightVisible ->
         val isIslands = isManyIslandEnabled
-        val gap = JBUI.unscale(JBUI.getInt("Islands.emptyGap", JBUI.scale(4)))
+        val gap = JBUI.getInt("Islands.emptyGap", 4)
 
         if (SystemInfo.isMac) {
           UIUtil.getRootPane(toolWindowPaneParent)?.let { rootPane ->
             val tabContainer = rootPane.getClientProperty("WINDOW_TABS_CONTAINER_KEY")
             if (tabContainer is JComponent) {
               if (isIslands) {
-                val left = if (leftVisible) JBUI.unscale(buttonManager.left.width) + 1 else gap
-                val right = if (rightVisible) JBUI.unscale(buttonManager.right.width) + 2 else gap + 1
-
                 val frame = rootPane.parent
                 if (frame is IdeFrame) {
                   val project = frame.project
@@ -324,7 +429,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
                   }
                 }
 
-                tabContainer.border = JBUI.Borders.empty(0, left, 2, right)
+                if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+                  tabContainer.border = JBUI.Borders.emptyBottom(2)
+                }
+                else {
+                  val left = if (leftVisible) JBUI.unscale(buttonManager.left.width) + 1 else gap
+                  val right = if (rightVisible) JBUI.unscale(buttonManager.right.width) + 2 else gap + 1
+
+                  tabContainer.border = JBUI.Borders.empty(0, left, 2, right)
+                }
               }
               else if (tabContainer.border != null) {
                 tabContainer.border = null
@@ -340,7 +453,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           return@addVisibleToolbarsListener
         }
 
-        if (leftVisible && rightVisible) {
+        if (leftVisible && rightVisible || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
           if (toolWindowPaneParent.border != null) {
             toolWindowPaneParent.border = null
           }
@@ -420,6 +533,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  override fun registerWindowBackgroundComponent(component: JComponent) {
+    component.putUserData(WINDOW_BACKGROUND_COMPONENT_KEY, WindowBackgroundComponentData(component.isOpaque, component.background))
+
+    if (isManyIslandEnabled) {
+      configureMainFrameChildren(component, true)
+    }
+  }
+
   private fun configureMainFrame(frame: IdeFrameImpl, install: Boolean) {
     if (install) {
       frame.addWindowListener(frameActiveListener)
@@ -431,23 +552,25 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   private fun configureMainFrameChildren(component: Component, install: Boolean) {
     when (component) {
-      is ToolWindowToolbar -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
-      is CustomHeader -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
-      is MacToolbarFrameHeader -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
       is IdeStatusBarImpl -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
-      is MainToolbar -> {
+      is BorderPainterHolder -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
-      is ToolWindowPane -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+    }
+
+    if (component is JComponent) {
+      val data = component.getUserData(WINDOW_BACKGROUND_COMPONENT_KEY)
+      if (data != null) {
+        if (install) {
+          component.isOpaque = true
+          component.background = getMainBackgroundColor()
+        }
+        else {
+          component.isOpaque = data.origOpaque
+          component.background = data.origBackground
+        }
       }
     }
   }
@@ -459,15 +582,95 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   override fun configureRendererComponent(component: JComponent) {
-    if (isManyIslandEnabled) {
-      ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
-    }
+    configureBackgroundPainting(component, recursive = true)
   }
 
   override fun installEditorBackground(component: JComponent) {
+    configureBackgroundPainting(component, recursive = true)
+  }
+
+  override fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent {
+    component.putClientProperty("originalBorder", component.border)
+
+    val wrapper = SearchReplaceWrapper(component)
+    wrapper.background = JBUI.CurrentTheme.EditorTabs.background()
+    wrapper.isOpaque = true
+
     if (isManyIslandEnabled) {
-      ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+      configureSearchReplaceComponent(component, true)
     }
+
+    return wrapper
+  }
+
+  private inner class SearchReplaceWrapper(private val component: EditorHeaderComponent) : Wrapper(component), UiDataProvider {
+    val fillColor = JBColor.namedColor("Editor.SearchField.background")
+    val borderColor = JBColor.namedColor("Editor.SearchField.borderColor")
+
+    override fun paintComponent(g: Graphics) {
+      super.paintComponent(g)
+
+      if (isManyIslandEnabled) {
+        val isTop = UISettings.getInstance().editorTabPlacement == SwingConstants.TOP
+
+        val rect = Rectangle(size)
+        JBInsets.removeFrom(rect, if (isTop) JBInsets.create(0, 7) else JBInsets(6, 7, 2, 7))
+
+        g as Graphics2D
+
+        g.color = fillColor
+
+        RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
+                                      12.0, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+
+        g.color = borderColor
+
+        RectanglePainter2D.DRAW.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
+                                      12.0, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+      }
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      (component as UiDataProvider).uiDataSnapshot(sink)
+    }
+  }
+
+  private fun configureSearchReplaceComponent(component: EditorHeaderComponent, enabled: Boolean) {
+    val originalBorder = component.getClientProperty("originalBorder")
+    val parent = component.parent
+
+    if (originalBorder !is Border || parent !is JComponent) {
+      return
+    }
+
+    if (enabled) {
+      component.border = null
+
+      @Suppress("UseDPIAwareInsets")
+      val supplier = Supplier {
+        if (UISettings.getInstance().editorTabPlacement == SwingConstants.TOP) {
+          Insets(2, 10, 2, 10)
+        }
+        else {
+          Insets(8, 10, 4, 10)
+        }
+      }
+      @Suppress("UNCHECKED_CAST")
+      parent.border = JBUI.Borders.empty(JBInsets.create(supplier as Supplier<Insets?>, supplier.get()))
+    }
+    else {
+      component.border = originalBorder
+      parent.border = null
+    }
+
+    (component as SearchReplaceFacade).configureUI(enabled)
+  }
+
+  override fun shouldPaintEditorTabsBottomBorder(editorCompositePanel: JComponent): Boolean {
+    if (isManyIslandEnabled) {
+      return UIUtil.findComponentOfType(editorCompositePanel, SearchReplaceWrapper::class.java) == null
+    }
+    return true
   }
 
   override fun configureEditorsSplitters(component: EditorsSplitters) {
@@ -491,27 +694,40 @@ internal class IslandsUICustomization : InternalUICustomization() {
   private fun createEditorBorderPainter(component: EditorsSplitters) {
     component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(2)))
 
-    ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+    configureBackgroundPainting(component, recursive = true)
 
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
-        val fileEditorManager = ProjectUtil.getProjectForComponent(component)?.getServiceIfCreated(FileEditorManager::class.java)
+        val project = ProjectUtil.getProjectForComponent(component)
+        val fileEditorManager = project?.getServiceIfCreated(FileEditorManager::class.java)
 
+        // A bit special handling of the "empty frame" background.
+        // The editor empty text consists of the editor itself and the surrounding island.
+        // Both are technically parts of the same component (EditorsSplitters),
+        // but must use different backgrounds because the border is visually a part of the "editor and tools" background,
+        // and the empty text must use the "empty frame" background.
+        val frameBG = IdeBackgroundUtil.withFrameBackground(g, component)
+        val editorBG = IdeBackgroundUtil.withEditorBackground(g, component)
         if (fileEditorManager?.openFiles?.isEmpty() == true) {
-          IslandsRoundedBorder.paintBeforeEditorEmptyText(component, g, editorTabPainterAdapter)
+          paintBeforeEditorEmptyText(component, frameBG, editorTabPainterAdapter)
 
           val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
           val glassPane = IdeGlassPaneUtil.find(component) as JComponent
           val shift = SwingUtilities.convertPoint(component, 0, 0, glassPane)
 
-          g.translate(-shift.x, -shift.y)
-          editorEmptyTextPainter.doPaintEmptyText(glassPane, g)
-          g.translate(shift.x, shift.y)
+          frameBG.translate(-shift.x, -shift.y)
+          editorEmptyTextPainter.doPaintEmptyText(glassPane, frameBG)
+          frameBG.translate(shift.x, shift.y)
         }
 
-        paintIslandBorder(component, g, true)
+        paintIslandBorder(component, editorBG, true)
       }
     }
+  }
+
+  private fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics, editorTabPainter: TabPainterAdapter) {
+    graphics.color = editorTabPainter.tabPainter.getBackgroundColor()
+    graphics.fillRect(0, 0, component.width, component.height)
   }
 
   private fun paintIslandBorder(component: JComponent, g: Graphics, editor: Boolean) {
@@ -520,7 +736,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     val gg: Graphics2D
 
     if (isGradient) {
-      component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
+      forcedBackground = true
       gg = if (editor) IdeBackgroundUtil.withEditorBackground(g, component) else IdeBackgroundUtil.withFrameBackground(g, component)
     }
     else {
@@ -534,31 +750,47 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val height = component.height
 
       val shape = Area(Rectangle(0, 0, width, height))
-      val cornerRadius = JBUI.getInt("Island.arc", 10).toFloat()
-      val borderWith = JBUI.getInt("Island.borderWidth", 4)
+      val cornerRadius = JBUIScale.scale(JBUI.getInt("Island.arc", 10).toFloat())
+      val borderWith = JBUI.scale(JBUI.getInt("Island.borderWidth", 4))
       val offset = borderWith / 2f
       val offsetWidth = borderWith + 0.5f
       val border = Area(RoundRectangle2D.Float(offset, offset, width.toFloat() - offsetWidth, height.toFloat() - offsetWidth, cornerRadius, cornerRadius))
 
       shape.subtract(border)
 
-      gg.color = getMainBackgroundColor()
-      gg.fill(shape)
+      paintIslandBackground(gg, shape)
 
-      gg.color = JBColor.namedColor("Island.borderColor", getMainBackgroundColor())
-      gg.stroke = BasicStroke(JBUIScale.scale(1f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-      gg.draw(border)
+      if (isIslandBorderLineNeeded(component)) {
+        paintIslandBorderLine(gg, border)
+      }
     }
     finally {
       if (isGradient) {
-        component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
+        forcedBackground = false
       }
     }
   }
 
+  private fun paintIslandBackground(gg: Graphics2D, shape: Area) {
+    gg.color = getMainBackgroundColor()
+    gg.fill(shape)
+  }
+
+  private fun isIslandBorderLineNeeded(component: JComponent): Boolean {
+    if (isIslandsGradientEnabled) return true
+    val project = ProjectUtil.getProjectForComponent(component)
+    return !IdeBackgroundUtil.isEditorBackgroundImageSet(project) // the border looks ugly with a background image
+  }
+
+  private fun paintIslandBorderLine(gg: Graphics2D, border: Area) {
+    gg.color = JBColor.namedColor("Island.borderColor", getMainBackgroundColor())
+    gg.stroke = BasicStroke(JBUIScale.scale(1f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+    gg.draw(border)
+  }
+
   override val editorTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(false, false, isManyIslandEnabled)
 
-  override val toolWindowTabPainter: IslandsTabPainter = object : IslandsTabPainter(false) {
+  override val toolWindowTabPainter: IslandsTabPainter = object : IslandsTabPainter(false, false) {
     private val defaultPainter = JBTabPainter.TOOL_WINDOW
 
     override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
@@ -627,17 +859,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  override fun paintFrameBackground(frame: Window, component: Component, g: Graphics2D) {
+  override fun paintFrameBackground(frame: IdeFrame, component: Component, g: Graphics2D) {
     if (isManyIslandEnabled && isIslandsGradientEnabled) {
-      islandsGradientPaint(frame as IdeFrame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
-    }
-  }
+      val point = SwingUtilities.convertPoint(component, 0, 0, frame.component)
+      g.translate(-point.x, -point.y)
 
-  override fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? {
-    if (isManyIslandEnabled && isIslandsGradientEnabled && look is SquareStripeButtonLook) {
-      return IdeBackgroundUtil.getOriginalGraphics(g)
+      islandsGradientPaint(frame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
+
+      g.translate(point.x, point.y)
     }
-    return null
   }
 
   override fun transformGraphics(component: JComponent, graphics: Graphics): Graphics {
@@ -659,8 +889,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   override fun backgroundImageGraphics(component: JComponent, graphics: Graphics): Graphics {
-    if (isManyIslandEnabled) {
-      return IdeBackgroundUtil.getOriginalGraphics(graphics) // not supported for island themes yet
+    if (isManyIslandEnabled && isIslandsGradientEnabled) {
+      return IdeBackgroundUtil.getOriginalGraphics(graphics) // not supported for island themes with gradients yet
     }
     return JBSwingUtilities.runGlobalCGTransform(component, graphics)
   }
@@ -688,16 +918,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return null
   }
 
-  override fun paintProjectTabsContainer(component: JComponent, g: Graphics): Boolean {
-    if (isManyIslandEnabled) {
-      val gg = IdeBackgroundUtil.withFrameBackground(g, component)
-      gg.color = getMainBackgroundColor()
-      gg.fillRect(0, 0, component.width, component.height)
-      return true
-    }
-    return false
-  }
-
   private val PROJECT_TAB_SELECTED_BACKGROUND = JBColor.namedColor("MainWindow.Tab.selectedBackground", JBUI.CurrentTheme.ToolWindow.background())
   private val PROJECT_TAB_HOVER_BACKGROUND = JBColor.namedColor("MainWindow.Tab.hoverBackground", JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground"))
   private val PROJECT_TAB_SEPARATOR_COLOR = JBColor.namedColor("MainWindow.Tab.separatorColor", 0xD3D5DB, 0x43454A)
@@ -710,11 +930,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return true
   }
 
-  override fun createProjectTab(frame: JFrame) {
-    if (frame is IdeFrame) {
-      frame.project?.also { project ->
-        updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+  override fun createProjectTab(frame: JFrame, tabsComponent: WindowTabsComponent) {
+    if (isManyIslandEnabled) {
+      if (frame is IdeFrame) {
+        frame.project?.also { project ->
+          updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+        }
       }
+      configureMainFrameChildren(tabsComponent, true)
     }
   }
 
@@ -737,14 +960,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     val isGradient = isIslandsGradientEnabled && !CustomWindowHeaderUtil.isCompactHeader() && isColorfulToolbar(frame)
     val rect = Rectangle(label.width, label.height)
 
-    if (!isGradient) {
-      g.color = getMainBackgroundColor()
-      g.fillRect(0, 0, rect.width, rect.height)
-    }
+    g.color = getMainBackgroundColor()
+    g.fillRect(0, 0, rect.width, rect.height)
 
     if (selected || hovered) {
       val gg = if (isGradient) IdeBackgroundUtil.getOriginalGraphics(g) else g
-      val cornerRadius = JBUI.getInt("Island.arc", 10)
+      val cornerRadius = JBUI.scale(JBUI.getInt("Island.arc", 10))
 
       rect.x += JBUI.scale(1)
       rect.width -= rect.x * 2

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -67,8 +67,9 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
   }
 
   private static void processChildrenWithLocalName(DomElement parent, String localName, Processor<? super DomElement> processor) {
-    parent.acceptChildren(element -> {
-      if (element.getXmlElementName().equals(localName)) {
+    parent.acceptChildren(new DomInvocationHandler.DomLocalNameElementVisitor(localName) {
+      @Override
+      public void visitDomElement(DomElement element) {
         processor.process(element);
       }
     });

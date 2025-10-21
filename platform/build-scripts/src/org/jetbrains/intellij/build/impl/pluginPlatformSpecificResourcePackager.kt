@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CustomAssetShimSource
-import org.jetbrains.intellij.build.UnpackedZipSource
 import org.jetbrains.intellij.build.FileSource
+import org.jetbrains.intellij.build.UnpackedZipSource
 import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -37,30 +37,36 @@ internal suspend fun buildPlatformSpecificPluginResources(
 
   val distEntries = ArrayList<DistributionFileEntry>()
   for ((platform, targetDir) in targetDirs) {
-    handleCustomPlatformSpecificAssets(
+    distEntries.addAll(handleCustomPlatformSpecificAssets(
       layout = plugin,
       targetPlatform = platform,
       context = context,
       pluginDir = targetDir.resolve(plugin.directoryName),
-      distEntries = distEntries,
       isDevMode = false,
-    )
+    ))
   }
   return distEntries
 }
 
 internal suspend fun handleCustomPlatformSpecificAssets(
   layout: PluginLayout,
-  targetPlatform: SupportedDistribution,
+  targetPlatform: SupportedDistribution?,
   context: BuildContext,
   pluginDir: Path,
-  distEntries: MutableList<DistributionFileEntry>,
   isDevMode: Boolean,
-) {
+): List<DistributionFileEntry> {
+  val distEntries = ArrayList<DistributionFileEntry>()
   for (customAsset in layout.customAssets) {
-    val platformSpecific = customAsset.platformSpecific ?: continue
-    if (platformSpecific != targetPlatform) {
-      continue
+    if (targetPlatform == null) {
+      if (customAsset.platformSpecific != null) {
+        continue
+      }
+    }
+    else {
+      val platformSpecific = customAsset.platformSpecific ?: continue
+      if (platformSpecific != targetPlatform) {
+        continue
+      }
     }
 
     val rootDir = customAsset.relativePath?.let { pluginDir.resolve(it) } ?: pluginDir
@@ -104,4 +110,5 @@ internal suspend fun handleCustomPlatformSpecificAssets(
       }
     }
   }
+  return distEntries
 }

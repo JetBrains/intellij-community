@@ -7,17 +7,18 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public interface InspectionToolPresentation extends InspectionToolResultExporter {
-
   @Override
   @NotNull
   InspectionToolWrapper<?,?> getToolWrapper();
 
+  @ApiStatus.Internal
   default void patchToolNode(@NotNull InspectionTreeNode node,
                              @NotNull InspectionRVContentProvider provider,
                              boolean showStructure,
@@ -25,6 +26,7 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
 
   }
 
+  @ApiStatus.Internal
   default @NotNull RefElementNode createRefNode(@Nullable RefEntity entity,
                                                 @NotNull InspectionTreeModel model,
                                                 @NotNull InspectionTreeNode parent) {

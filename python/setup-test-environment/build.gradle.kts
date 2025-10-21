@@ -6,7 +6,14 @@ import kotlin.io.path.createLinkPointingTo
 import kotlin.io.path.exists
 
 plugins {
-  id("com.jetbrains.python.envs") version "0.0.31"
+  id("java")
+  id("com.jetbrains.python.envs") version "0.0.33"
+}
+
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(21))
+  }
 }
 
 enum class PythonType { PYTHON, CONDA }
@@ -75,7 +82,7 @@ tasks.register<Exec>("kill_python_processes") {
   commandLine("powershell", """"Get-Process | where {${'$'}_.Name -ieq \"python\"} | Stop-Process"""")
 }
 
-tasks.register<Delete>("clean") {
+tasks.named<Delete>("clean") {
   dependsOn("kill_python_processes")
 
   delete(project.layout.buildDirectory)
@@ -83,7 +90,7 @@ tasks.register<Delete>("clean") {
   delete(venvsDirectory)
 }
 
-tasks.register("build") {
+tasks.named("build") {
   dependsOn(tasks.matching { it.name.startsWith("setup_") || it.name == "updateConda" }, "clean", "copy_buildserver_win_fix")
 }
 
@@ -184,15 +191,15 @@ createPython("python3.11", "3.11",
              listOf("python3.11", "black", "poetry", "uv", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
-             listOf("teamcity-messages", "Twisted", "pytest", "poetry", "uv", "hatch", "black>=23.11.0")
+             listOf("teamcity-messages", "Twisted", "pytest", "poetry", "uv", "hatch", "pipenv", "black>=23.11.0")
              // TODO: maybe switch to optional dependency Twisted[windows-platform]
              // https://docs.twisted.org/en/stable/installation/howto/optional.html
              + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
-             listOf("python3", "poetry", "uv", "hatch", "python3.12", "messages", "twisted", "pytest", "black-fragments-formatting"))
+             listOf("python3", "poetry", "uv", "hatch", "pipenv", "python3.12", "messages", "twisted", "pytest", "black-fragments-formatting"))
 
 // set CONDA_PATH to conda binary location to be able to run tests
 createPython("conda", "Miniconda3-py312_25.1.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
 
 createPython("python3.13", "3.13",
-             listOf(),
-             listOf("python3.13", "python3"))
+             listOf("ruff"),
+             listOf("python3.13", "python3", "ruff"))

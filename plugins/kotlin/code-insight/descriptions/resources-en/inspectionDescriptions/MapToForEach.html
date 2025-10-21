@@ -1,0 +1,30 @@
+<html>
+<body>
+<p>Reports <code>map</code> calls whose results are ignored and can be replaced with <code>forEach</code>.</p>
+
+<p>Using <code>map</code> in this way is misleading because <code>map</code> is intended to transform a collection and return the result.
+    When its return value is not used, the call creates unnecessary allocations and reduces code readability.
+    In such cases, <code>forEach</code> should be used instead, as it clearly expresses iteration with side effects.</p>
+
+<p>The quick-fix replaces the <code>map</code> call with a <code>forEach</code> call.</p>
+
+<p>Example:</p>
+<pre><code>
+fun foo(list: List&lt;String&gt;) {
+  list.map { print(it) }      // reported
+
+  val x = list.map { it.length }  // not reported: the result is used
+}
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun foo(list: List&lt;String&gt;) {
+  list.forEach { print(it) }
+
+  val x = list.map { it.length }  // not reported: the result is used
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

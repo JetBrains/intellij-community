@@ -3,11 +3,11 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.system.OS;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings("UsagesOfObsoleteApi")
 public class NioFilesTest {
   @Rule public TempDirectory tempDir = new TempDirectory();  // for platform-specific tests
   @Rule public InMemoryFsRule memoryFs = new InMemoryFsRule();
@@ -221,8 +220,15 @@ public class NioFilesTest {
   }
 
   @Test
+  public void caseOnlyRename() throws IOException {
+    var file = tempDir.newFileNio("dir/test.txt");
+    NioFiles.rename(file, "FILE.txt");
+    assertThat(NioFiles.list(file.getParent()).stream().map(p -> p.getFileName().toString())).containsExactly("FILE.txt");
+  }
+
+  @Test
   public void setReadOnly() throws IOException {
-    var f = tempDir.newFile("f").toPath();
+    var f = tempDir.newFileNio("f");
 
     NioFiles.setReadOnly(f, true);
     assertThatThrownBy(() -> Files.writeString(f, "test"))
@@ -231,11 +237,11 @@ public class NioFilesTest {
     NioFiles.setReadOnly(f, false);
     Files.writeString(f, "test");
 
-    var d = tempDir.newDirectory("d").toPath();
+    var d = tempDir.newDirectoryPath("d");
     var child = d.resolve("f");
 
     NioFiles.setReadOnly(d, true);
-    if (!SystemInfo.isWindows) {
+    if (OS.CURRENT != OS.Windows) {
       assertThatThrownBy(() -> Files.createFile(child))
         .isInstanceOf(AccessDeniedException.class);
     }
@@ -248,7 +254,7 @@ public class NioFilesTest {
   public void setExecutable() throws IOException, InterruptedException {
     assumeUnix();
 
-    var script = Files.writeString(tempDir.newFile("test.sh").toPath(), "#!/bin/sh\nexit 42\n");
+    var script = Files.writeString(tempDir.newFileNio("test.sh"), "#!/bin/sh\nexit 42\n");
     try { runAndGetExitValue(script.toString()); }
     catch (IOException ignored) { }
 
@@ -283,7 +289,6 @@ public class NioFilesTest {
     var symlink = tempDir.getRootPath().resolve("symlink");
     Files.createSymbolicLink(symlink, symlink);
     assertTrue(NioFiles.readAttributes(symlink).isSymbolicLink());
-    assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(symlink.toString()));
   }
 
   @Test
@@ -302,9 +307,6 @@ public class NioFilesTest {
 
       assertSame(NioFiles.BROKEN_SYMLINK, NioFiles.readAttributes(fileLink));
       assertSame(NioFiles.BROKEN_SYMLINK, NioFiles.readAttributes(dirLink));
-
-      assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(fileLink.toString()));
-      assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(dirLink.toString()));
     }
     finally {
       PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "rm", "-rf", tmpPath));

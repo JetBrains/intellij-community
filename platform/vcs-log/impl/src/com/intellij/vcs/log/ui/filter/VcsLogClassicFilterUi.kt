@@ -22,6 +22,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogActionIds
 import com.intellij.vcs.log.ui.VcsLogColorManager
@@ -282,6 +283,10 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
           button.isFocusable = true
           applyToolbarLook(look, presentation, button)
           return button
+        }
+
+        override fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+          return oldActionButton.javaClass == MyActionButton::class.java
         }
       }
 

@@ -2,9 +2,8 @@
 package com.intellij.java.frontback.psi.impl.syntax
 
 import com.intellij.java.syntax.JavaSyntaxDefinition
-import com.intellij.platform.syntax.SyntaxElementTypeSet
-import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.LanguageSyntaxDefinition
-import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.annotations.ApiStatus
 
-internal class JavaSyntaxDefinitionExtension : LanguageSyntaxDefinition by JavaSyntaxDefinition
+@ApiStatus.Internal
+class JavaSyntaxDefinitionExtension : LanguageSyntaxDefinition by JavaSyntaxDefinition

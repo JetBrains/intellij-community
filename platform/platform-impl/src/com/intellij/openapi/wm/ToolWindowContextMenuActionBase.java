@@ -3,11 +3,15 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 public abstract class ToolWindowContextMenuActionBase extends AnAction {
 
@@ -27,7 +31,7 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
     if (toolWindow == null) {
       return;
     }
-    Content content = getContextContent(e, toolWindow);
+    Content content = getContextContent(e);
     actionPerformed(e, toolWindow, content);
   }
 
@@ -38,7 +42,7 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    Content content = getContextContent(e, toolWindow);
+    Content content = getContextContent(e);
     update(e, toolWindow, content);
   }
 
@@ -46,12 +50,21 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content);
 
   @ApiStatus.Internal
-  public static @Nullable Content getContextContent(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow) {
+  public static @Nullable Content getContextContent(@NotNull AnActionEvent e) {
     BaseLabel baseLabel = ObjectUtils.tryCast(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), BaseLabel.class);
     Content selectedContent = baseLabel != null ? baseLabel.getContent() : null;
     if (selectedContent == null) {
-      selectedContent = toolWindow.getContentManager().getSelectedContent();
+      ContentManager contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
+      if (contentManager != null) {
+        selectedContent = contentManager.getSelectedContent();
+      }
     }
     return selectedContent;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable InternalDecoratorImpl findNearestDecorator(@NotNull AnActionEvent e) {
+    Component context = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    return InternalDecoratorImpl.findNearestDecorator(context);
   }
 }

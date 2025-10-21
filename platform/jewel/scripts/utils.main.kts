@@ -1,10 +1,11 @@
 @file:DependsOn("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+@file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.0.3")
 @file:DependsOn("com.github.pgreze:kotlin-process:1.5.1")
 @file:Suppress("RAW_RUN_BLOCKING", "VariableNaming")
 
+import com.github.ajalt.clikt.core.PrintMessage
 import com.github.pgreze.process.Redirect
 import com.github.pgreze.process.process
-import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.runBlocking
@@ -17,6 +18,7 @@ private val COMMUNITY_ROOT_MARKER_FILE_NAME = ".community.root.marker"
 private val COMMUNITY_IML_FILE_NAME = "intellij.idea.community.main.iml"
 
 private val CONTROL_CODE = '\u001b'
+private val CODE_SUCCESS = "$CONTROL_CODE[0;32m"
 private val CODE_ERR = "$CONTROL_CODE[0;31m"
 private val CODE_WARN = "$CONTROL_CODE[0;33m"
 private val CODE_BOLD = "$CONTROL_CODE[1m"
@@ -51,8 +53,7 @@ fun getPrNumber() = checkNotNull(System.getenv("PR_NUMBER")?.trim()) { "PR numbe
 fun requireGhTool() {
     if (checkGhTool()) return
 
-    printlnErr("ERROR: the GitHub CLI tool must be present on the PATH.")
-    exitProcess(1)
+    throw PrintMessage("ERROR: the GitHub CLI tool must be present on the PATH.", printError = true)
 }
 
 /**
@@ -102,8 +103,7 @@ private fun findDir(base: File, isDesiredDir: (File) -> Boolean): File? {
 fun requirePrNumber() {
     if (checkPrNumber()) return
 
-    printlnErr("ERROR: PR_NUMBER environment variable not set.")
-    exitProcess(2)
+    throw PrintMessage("ERROR: PR_NUMBER environment variable not set.", printError = true)
 }
 
 /**
@@ -122,6 +122,15 @@ fun printlnErr(message: String) {
  */
 fun printlnWarn(message: String) {
     System.err.println(message.asWarning())
+}
+
+/**
+ * Prints a success message to the standard output stream with success (green) formatting.
+ *
+ * @param message The success message to print.
+ */
+fun printlnSuccess(message: String) {
+    println(message.asSuccess())
 }
 
 /**
@@ -144,6 +153,13 @@ fun String.asError() = if (stylingSupported) "$CODE_ERR$this$CODE_CLEAR" else th
  * @return The formatted text, or the text itself if the terminal does not support styling.
  */
 fun String.asBold(): String = if (stylingSupported) "$CODE_BOLD$this$CODE_CLEAR" else this
+
+/**
+ * Formats a string as a success (green) text with ANSI escape codes if the terminal supports it.
+ *
+ * @return The formatted text, or the text itself if the terminal does not support styling.
+ */
+fun String.asSuccess(): String = if (stylingSupported) "$CODE_SUCCESS$this$CODE_CLEAR" else this
 
 /**
  * Detects if the current terminal likely supports OSC 8 hyperlinks by checking for known environment variables.
@@ -187,7 +203,7 @@ private val stylingSupported = doesTerminalSupportStyling()
  * @return `true` if a compatible terminal is detected, `false` otherwise.
  */
 private fun doesTerminalSupportStyling(): Boolean =
-    System.getenv("TERM")?.startsWith("xterm") ?: (System.getenv("COLORTERM") != null)
+    System.getenv("TERM")?.contains("color") == true || System.getenv("COLORTERM") == "truecolor"
 
 /**
  * Formats a string as a hyperlink using OSC 8 escape codes if the terminal supports it.
@@ -262,14 +278,14 @@ suspend fun runCommand(
     workingDir: File?,
     timeoutAmount: Duration = 60.seconds,
     exitOnError: Boolean = true,
-    inheritIO: Boolean = false,
+    outputRedirect: Redirect = Redirect.CAPTURE,
 ): CmdResult {
     val result =
         withTimeout(timeoutAmount) {
             process(
                 command = command.split(" ").toTypedArray(),
-                stdout = if (inheritIO) Redirect.PRINT else Redirect.CAPTURE,
-                stderr = if (inheritIO) Redirect.PRINT else Redirect.CAPTURE,
+                stdout = outputRedirect,
+                stderr = outputRedirect,
                 directory = workingDir,
             )
         }
@@ -279,8 +295,19 @@ suspend fun runCommand(
         CmdResult.Success(output)
     } else {
         if (exitOnError) {
-            printlnErr("Command '$command' failed with exit code ${result.resultCode}:\n$output")
-            exitProcess(result.resultCode)
+            throw PrintMessage(
+                buildString {
+                    appendLine()
+                    append("Command '$command' failed with exit code ${result.resultCode}".asError())
+                    if (output.isNotBlank()) {
+                        appendLine(":".asError())
+                        appendLine(output.asError())
+                    } else {
+                        appendLine()
+                    }
+                },
+                printError = true,
+            )
         }
         CmdResult.Failure(output)
     }
@@ -345,3 +372,29 @@ fun getLatestReleaseDate(baseDir: File = File(".").canonicalFile): String? {
     printlnWarn("⚠️ Could not find any release date in RELEASE NOTES.md.")
     return null
 }
+
+/**
+ * Checks whether the given directory is (part of) a git repository.
+ *
+ * @return true if it is, false otherwise.
+ */
+suspend fun isDirectoryGitRepo(directory: File): Boolean =
+    runCommand("git rev-parse --is-inside-work-tree", directory, exitOnError = false).isSuccess
+
+/**
+ * Checks whether the given branch exists in the current git repository.
+ *
+ * @param branch The name of the branch to check.
+ * @return true if the branch exists, false otherwise.
+ */
+suspend fun branchExists(branch: String, directory: File): Boolean =
+    runCommand("git rev-parse --verify $branch", directory).isSuccess
+
+val isWindows = "windows" in System.getProperty("os.name").lowercase()
+
+fun exitWithError(message: String): Nothing {
+    throw PrintMessage(message.asError(), printError = true)
+}
+
+suspend fun getCurrentBranchName(directory: File): String =
+    runCommand("git rev-parse --abbrev-ref HEAD", directory, exitOnError = true).output.trim()

@@ -29,7 +29,7 @@ interface StateStorage {
   /**
    * Get changed component names
    */
-  fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>)
+  suspend fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>)
 
   fun getResolution(
     component: PersistentStateComponent<*>,

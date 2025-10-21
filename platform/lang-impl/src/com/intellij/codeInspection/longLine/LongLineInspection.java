@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,10 +8,12 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -27,7 +29,8 @@ import static com.intellij.codeInspection.options.OptPane.settingLink;
 
 @ApiStatus.Internal
 public final class LongLineInspection extends LocalInspectionTool {
-  private static final ExtensionPointName<LongLineInspectionPolicy> POLICY_EP_NAME = ExtensionPointName.create("com.intellij.longLineInspectionPolicy");
+  private static final ExtensionPointName<LongLineInspectionPolicy> POLICY_EP_NAME = 
+    ExtensionPointName.create("com.intellij.longLineInspectionPolicy");
 
   @Override
   public @NotNull OptPane getOptionsPane() {
@@ -35,23 +38,26 @@ public final class LongLineInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     final PsiFile file = holder.getFile();
     if (InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file) != null) return PsiElementVisitor.EMPTY_VISITOR;
-
-    final Document document = file.getViewProvider().getDocument();
+    FileViewProvider viewProvider = file.getViewProvider();
+    final Document document = viewProvider.getDocument();
     if (document == null) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
-    final int codeStyleRightMargin = codeStyleSettings.getRightMargin(file.getLanguage());
-    final int tabSize = codeStyleSettings.getTabSize(file.getFileType());
-    final TextRange restrictRange = session.getRestrictRange();
-    final CharSequence text = document.getImmutableCharSequence();
-    final int lineCount = document.getLineCount();
     return new PsiElementVisitor() {
 
       @Override
       public void visitFile(@NotNull PsiFile psiFile) {
+        if (viewProvider.getBaseLanguage() != psiFile.getLanguage()) return;
+        final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
+        final int codeStyleRightMargin = codeStyleSettings.getRightMargin(file.getLanguage());
+        final int tabSize = codeStyleSettings.getTabSize(file.getFileType());
+        final TextRange restrictRange = session.getRestrictRange();
+        final CharSequence text = document.getImmutableCharSequence();
+        final int lineCount = document.getLineCount();
         final TextRange range = restrictRange.intersection(psiFile.getTextRange());
         if (range == null || range.isEmpty()) return;
 
@@ -84,9 +90,12 @@ public final class LongLineInspection extends LocalInspectionTool {
   }
 
   private static @Nullable PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
-    PsiElement left = file.findElementAt(range.getStartOffset());
+    final Language language = file.getLanguage();
+    FileViewProvider viewProvider = file.getViewProvider();
+    // Use FileViewProvider because PsiFile.findElementAt() can return elements from different PsiFiles in multi-root languages
+    final PsiElement left = viewProvider.findElementAt(range.getStartOffset(), language);
     if (left == null) return null;
-    PsiElement right = file.findElementAt(range.getEndOffset() - 1);
+    final PsiElement right = viewProvider.findElementAt(range.getEndOffset() - 1, language);
     if (right == null) return null;
     return PsiTreeUtil.findCommonParent(left, right);
   }

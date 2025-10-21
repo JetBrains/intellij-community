@@ -1,18 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.action
 
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import org.jetbrains.plugins.terminal.block.TerminalFrontendEditorAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
-internal class TerminalSelectAllAction : TerminalFrontendEditorAction(SelectAllHandler())
+internal class TerminalSelectAllAction : TerminalPromotedDumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-private class SelectAllHandler : EditorActionHandler() {
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean = editor.isReworkedTerminalEditor
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = e.terminalEditor?.isReworkedTerminalEditor == true
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val editor = e.terminalEditor ?: return
     editor.selectionModel.setSelection(0, editor.document.textLength)
   }
 }

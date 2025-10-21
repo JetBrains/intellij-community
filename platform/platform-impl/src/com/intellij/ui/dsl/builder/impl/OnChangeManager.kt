@@ -10,6 +10,7 @@ import java.awt.event.ItemEvent
 import javax.swing.AbstractButton
 import javax.swing.JComboBox
 import javax.swing.JComponent
+import javax.swing.JSlider
 import javax.swing.JSpinner
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
@@ -39,6 +40,10 @@ internal class OnChangeManager<T : JComponent>(private val component: T) {
           if (it.stateChange == ItemEvent.SELECTED) {
             listener(component, ChangeContext(it, binding))
           }
+        }
+      is JSlider ->
+        interactiveComponent.addChangeListener {
+          listener(component, ChangeContext(it, binding))
         }
       is JSpinner -> throw UiDslException("Hard to support ${component::class.java.name}")
       else -> throw UiDslException("Not yet supported component type ${component::class.java.name}")

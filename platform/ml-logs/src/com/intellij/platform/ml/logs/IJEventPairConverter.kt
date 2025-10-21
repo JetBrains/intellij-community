@@ -1,126 +1,86 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.logs
 
-import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.StringEventField
-import com.intellij.platform.ml.logs.ConverterObjectDescription.Companion.asIJObjectDescription
-import com.intellij.platform.ml.logs.ConverterOfEnum.Companion.toIJConverter
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.platform.ml.logs.IJEventPairConverter.Companion.typedBuild
-import com.intellij.internal.statistic.eventLog.events.BooleanEventField as IJBooleanEventField
-import com.intellij.internal.statistic.eventLog.events.ClassEventField as IJClassEventField
-import com.intellij.internal.statistic.eventLog.events.DoubleEventField as IJDoubleEventField
-import com.intellij.internal.statistic.eventLog.events.EnumEventField as IJEnumEventField
-import com.intellij.internal.statistic.eventLog.events.EventField as IJEventField
-import com.intellij.internal.statistic.eventLog.events.EventPair as IJEventPair
-import com.intellij.internal.statistic.eventLog.events.FloatEventField as IJFloatEventField1
-import com.intellij.internal.statistic.eventLog.events.FloatListEventField as IJFloatListEventField
-import com.intellij.internal.statistic.eventLog.events.IntEventField as IJIntEventField
-import com.intellij.internal.statistic.eventLog.events.IntListEventField as IJIntListEventField
-import com.intellij.internal.statistic.eventLog.events.LongEventField as IJLongEventField
-import com.intellij.internal.statistic.eventLog.events.LongListEventField as IJLongListEventField
-import com.intellij.internal.statistic.eventLog.events.ObjectDescription as IJObjectDescription
-import com.intellij.internal.statistic.eventLog.events.ObjectEventData as IJObjectEventData
-import com.intellij.internal.statistic.eventLog.events.ObjectEventField as IJObjectEventField
-import com.intellij.internal.statistic.eventLog.events.ObjectListEventField as IJObjectListEventField
-import com.jetbrains.ml.api.logs.BooleanEventField as MLBooleanEventField
-import com.jetbrains.ml.api.logs.ClassEventField as MLClassEventField
-import com.jetbrains.ml.api.logs.DoubleEventField as MLDoubleEventField
-import com.jetbrains.ml.api.logs.EnumEventField as MLEnumEventField
-import com.jetbrains.ml.api.logs.EventField as MLEventField
-import com.jetbrains.ml.api.logs.EventPair as MLEventPair
-import com.jetbrains.ml.api.logs.FloatEventField as MLFloatEventField
-import com.jetbrains.ml.api.logs.FloatListEventField as MLFloatListEventField
-import com.jetbrains.ml.api.logs.IntEventField as MLIntEventField
-import com.jetbrains.ml.api.logs.IntListEventField as MLIntListEventField
-import com.jetbrains.ml.api.logs.LongEventField as MLLongEventField
-import com.jetbrains.ml.api.logs.LongListEventField as MLLongListEventField
-import com.jetbrains.ml.api.logs.ObjectDescription as MLObjectDescription
-import com.jetbrains.ml.api.logs.ObjectEventData as MLObjectEventData
-import com.jetbrains.ml.api.logs.ObjectEventField as MLObjectEventField
-import com.jetbrains.ml.api.logs.ObjectListEventField as MLObjectListEventField
-import com.jetbrains.ml.api.logs.StringEventField as MLStringEventField
+import com.jetbrains.mlapi.feature.*
+import com.jetbrains.mlapi.logs.ObjectArrayDeclaration
+import com.jetbrains.mlapi.logs.ObjectDeclaration
+import com.jetbrains.mlapi.logs.ObjectFeatureDeclaration
 
 
-internal interface IJEventPairConverter<M, I> {
-  val ijEventField: IJEventField<I>
+internal interface IJEventPairConverter<FeatureT : Feature, I> {
+  val ijEventField: EventField<I>
 
-  fun buildEventPair(mlEventPair: MLEventPair<M>): IJEventPair<I>
+  fun buildEventPair(feature: FeatureT): EventPair<I>
 
   companion object {
-    fun <M, I> IJEventPairConverter<M, I>.typedBuild(mlEventPair: MLEventPair<*>): IJEventPair<I> {
+    fun <F: Feature, I> IJEventPairConverter<F, I>.typedBuild(feature: Feature): EventPair<I> {
       @Suppress("UNCHECKED_CAST")
-      return buildEventPair(mlEventPair as MLEventPair<M>)
+      return buildEventPair(feature as F)
     }
   }
 }
 
 
-internal class ConverterObjectDescription(mlObjectDescription: MLObjectDescription) : IJObjectDescription() {
-  private val toIJConverters: Map<MLEventField<*>, IJEventPairConverter<*, *>> = mlObjectDescription.getFields().associateWith { mlField ->
-    val converter = createConverter(mlField)
-    checkNotNull(converter) { "Please implement converter for $mlField from ML to IJ event fields" }
+internal class ConverterObjectDescription(signatures: List<FeatureSignature>) : ObjectDescription() {
+  private val toIJConverters: Map<FeatureSignature, IJEventPairConverter<*, *>> = signatures.associateWith { signature ->
+    val converter = createConverter(signature)
+    checkNotNull(converter) { "Please implement converter for $signature from ML to IJ event fields" }
     field(converter.ijEventField)
     converter
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun <L> createConverter(mlEventField: MLEventField<L>): IJEventPairConverter<L, *> = when (mlEventField) {
-    is MLObjectEventField -> ConverterOfObject(
-      mlEventField.name,
-      mlEventField.lazyDescription,
-      mlEventField.objectDescription
-    ) as IJEventPairConverter<L, *>
-    is MLBooleanEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJBooleanEventField(n, d) } as IJEventPairConverter<L, *>
-    is MLIntEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJIntEventField(n, d) } as IJEventPairConverter<L, *>
-    is MLLongEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJLongEventField(n, d) } as IJEventPairConverter<L, *>
-    is MLFloatEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJFloatEventField1(n, d) } as IJEventPairConverter<L, *>
-    is MLEnumEventField<*> -> mlEventField.toIJConverter() as IJEventPairConverter<L, *>
-    is MLClassEventField -> ConverterOfClass(mlEventField) as IJEventPairConverter<L, *>
-    is MLObjectListEventField -> ConvertObjectList(mlEventField) as IJEventPairConverter<L, *>
-    is MLDoubleEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJDoubleEventField(n, d) } as IJEventPairConverter<L, *>
-    is MLStringEventField -> ConverterOfString(mlEventField) as IJEventPairConverter<L, *>
-    is MLFloatListEventField -> object : IJEventPairConverter<List<Float>, List<Float>> {
-      override val ijEventField: IJEventField<List<Float>> = IJFloatListEventField(mlEventField.name, mlEventField.lazyDescription?.invoke())
-      override fun buildEventPair(mlEventPair: MLEventPair<List<Float>>): IJEventPair<List<Float>> = ijEventField with mlEventPair.data
-    } as IJEventPairConverter<L, *>
-    is MLIntListEventField -> object : IJEventPairConverter<List<Int>, List<Int>> {
-      override val ijEventField: IJEventField<List<Int>> = IJIntListEventField(mlEventField.name, mlEventField.lazyDescription?.invoke())
-      override fun buildEventPair(mlEventPair: MLEventPair<List<Int>>): IJEventPair<List<Int>> = ijEventField with mlEventPair.data
-    } as IJEventPairConverter<L, *>
-    is MLLongListEventField -> object : IJEventPairConverter<List<Long>, List<Long>> {
-      override val ijEventField: IJEventField<List<Long>> = IJLongListEventField(mlEventField.name, mlEventField.lazyDescription?.invoke())
-      override fun buildEventPair(mlEventPair: MLEventPair<List<Long>>): IJEventPair<List<Long>> = ijEventField with mlEventPair.data
-    } as IJEventPairConverter<L, *>
+  private fun createConverter(signature: FeatureSignature): IJEventPairConverter<*, *>? = when (signature) {
+    is ObjectFeatureDeclaration -> ConverterOfObject(signature)
+    is ObjectArrayDeclaration -> ConvertObjectList(signature)
+    is PrimitiveFeatureDeclaration<*> -> {
+      when (signature.type) {
+        is PrimitiveType.Boolean -> ConverterOfBoolean(signature)
+        is PrimitiveType.Int32 -> ConverterOfInt32(signature)
+        is PrimitiveType.Int64 -> ConverterOfInt64(signature)
+        is PrimitiveType.Float -> ConverterOfFloat(signature)
+        is PrimitiveType.Double -> ConverterOfDouble(signature)
 
+        is PrimitiveType.String -> ConverterOfString(signature)
 
-    else -> throw NotImplementedError("Please implement converter for $mlEventField from ML to IJ event fields")
+        is PrimitiveType.EmbeddingInt32 -> ConverterOfIntList(signature)
+        is PrimitiveType.EmbeddingInt64 -> ConverterOfLongList(signature)
+        is PrimitiveType.EmbeddingFloat -> ConverterOfFloatList(signature)
+        is PrimitiveType.EmbeddingDouble -> ConverterOfFloatList(signature)
+
+        is PrimitiveType.Null -> null
+      }
+    }
+    is ClassFeatureDeclaration -> ConverterOfClass(signature)
+    is EnumFeatureDeclaration<*> -> ConverterOfEnum(signature)
+    is NullableFeatureDeclaration<*> -> createConverter(signature.asNonNullable)
+
+    else -> throw NotImplementedError("Please implement converter for $signature from ML to IJ event fields")
   }
 
-  fun buildEventPairs(mlEventPairs: List<MLEventPair<*>>): List<IJEventPair<*>> {
-    return mlEventPairs.map { mlEventPair ->
-      require(mlEventPair.field in toIJConverters) {
+  fun buildEventPairs(features: List<Feature>): List<EventPair<*>> {
+    return features.map { feature ->
+      require(feature.signature in toIJConverters) {
         """
-          Field ${mlEventPair.field} (name: ${mlEventPair.field.name}) was not found among
+          Field ${feature.signature} (name: ${feature.signature.name}) was not found among
           the registered ones: ${toIJConverters.keys.map { it.name }}
         """.trimIndent()
       }
-      val converter = requireNotNull(toIJConverters[mlEventPair.field])
-      converter.typedBuild(mlEventPair)
+      val converter = requireNotNull(toIJConverters[feature.signature])
+      converter.typedBuild(feature)
     }
   }
 
-  fun buildObjectEventData(mlObject: MLObjectEventData): IJObjectEventData {
-    return IJObjectEventData(buildEventPairs(mlObject.values))
+  fun buildObjectEventData(features: List<Feature>): ObjectEventData {
+    return ObjectEventData(buildEventPairs(features))
   }
 
-  companion object {
-    fun MLObjectDescription.asIJObjectDescription(): ConverterObjectDescription =
-      ConverterObjectDescription(this)
-  }
 }
 
 
-private class ConverterOfString(mlEventField: MLStringEventField) : IJEventPairConverter<String, String?> {
+private class ConverterOfString(declaration: PrimitiveFeatureDeclaration<*>) : IJEventPairConverter<Feature.String, String?> {
 
   private class SensitiveStringEventField(
     name: String,
@@ -130,89 +90,111 @@ private class ConverterOfString(mlEventField: MLStringEventField) : IJEventPairC
     override val validationRule: List<String> = listOf("{util#${ruleId}}")
   }
 
-  override val ijEventField: IJEventField<String?> =
+  override val ijEventField: EventField<String?> =
     SensitiveStringEventField(
-      mlEventField.name,
-      requireNotNull(mlEventField.ruleId) { "Error for $mlEventField: it must have a validation rule" },
-      mlEventField.lazyDescription?.invoke()
+      declaration.name,
+      requireNotNull(declaration.logsMetadata?.ruleId) { "Error for $declaration: it must have a validation rule" },
+      declaration.logsMetadata?.lazyDescription?.invoke()
     )
 
-  override fun buildEventPair(mlEventPair: MLEventPair<String>): EventPair<String?> =
-    ijEventField with mlEventPair.data
+  override fun buildEventPair(feature: Feature.String): EventPair<String?> =
+    ijEventField with feature.stringValue
 
 }
 
-
-private class ConvertObjectList(mlEventField: MLObjectListEventField) :
-  IJEventPairConverter<List<MLObjectEventData>, List<IJObjectEventData>> {
-  private val innerObjectConverter = ConverterOfObject(mlEventField.name, mlEventField.lazyDescription, mlEventField.internalObjectDescription)
-
-  // FIXME: description is not passed
-  override val ijEventField: IJEventField<List<IJObjectEventData>> = IJObjectListEventField(
-    mlEventField.name,
-    innerObjectConverter.ijObjectDescription
-  )
-
-  override fun buildEventPair(mlEventPair: MLEventPair<List<MLObjectEventData>>): IJEventPair<List<IJObjectEventData>> {
-    return ijEventField with mlEventPair.data.map { innerObjectFieldsValues ->
-      innerObjectConverter.buildObjectEventData(innerObjectFieldsValues)
-    }
-  }
+private abstract class ConverterOfPrimitiveType<FeatureT : Feature, T>(declaration: AbstractPrimitiveDeclaration<*, *>) : IJEventPairConverter<FeatureT, T> {
+  abstract fun createEventField(name: String, description: String?): EventField<T>
+  abstract fun getValue(feature: FeatureT): T
+  
+  override val ijEventField: EventField<T> by lazy { createEventField(declaration.name, declaration.logsMetadata?.lazyDescription?.invoke()) }
+  override fun buildEventPair(feature: FeatureT): EventPair<T> = ijEventField with getValue(feature)
 }
 
+private class ConverterOfBoolean(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.Boolean, Boolean>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<Boolean> = BooleanEventField(name, description)
+  override fun getValue(feature: Feature.Boolean) = feature.booleanValue
+}
 
-private class ConverterOfEnum<T : Enum<*>>(mlEnumField: MLEnumEventField<T>) : IJEventPairConverter<T, T> {
-  override val ijEventField: IJEventField<T> = IJEnumEventField(mlEnumField.name, mlEnumField.enumClass) { it.name }
+private class ConverterOfFloat(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.Float, Float>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<Float> = FloatEventField(name, description)
+  override fun getValue(feature: Feature.Float) = feature.floatValue
+}
 
-  override fun buildEventPair(mlEventPair: MLEventPair<T>): IJEventPair<T> {
-    return ijEventField with mlEventPair.data
-  }
+private class ConverterOfDouble(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.Double, Double>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<Double> = DoubleEventField(name, description)
+  override fun getValue(feature: Feature.Double) = feature.doubleValue
+}
 
-  companion object {
-    fun <T : Enum<*>> MLEnumEventField<T>.toIJConverter(): ConverterOfEnum<T> {
-      return ConverterOfEnum(this)
-    }
-  }
+private class ConverterOfInt32(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.Int32, Int>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<Int> = IntEventField(name, description)
+  override fun getValue(feature: Feature.Int32) = feature.int32Value
+}
+
+private class ConverterOfInt64(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.Int64, Long>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<Long> = LongEventField(name, description)
+  override fun getValue(feature: Feature.Int64) = feature.int64Value
+}
+
+private class ConverterOfIntList(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.Int32Embedding, List<Int>>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<List<Int>> = IntListEventField(name, description)
+  override fun getValue(feature: Feature.Int32Embedding): List<Int> = feature.int32Array.toList()
+}
+
+private class ConverterOfLongList(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.Int64Embedding, List<Long>>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<List<Long>> = LongListEventField(name, description)
+  override fun getValue(feature: Feature.Int64Embedding): List<Long> = feature.int64Array.toList()
+}
+
+private class ConverterOfFloatList(declaration: PrimitiveFeatureDeclaration<*>) : ConverterOfPrimitiveType<Feature.FloatEmbedding, List<Float>>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<List<Float>> = FloatListEventField(name, description)
+  override fun getValue(feature: Feature.FloatEmbedding): List<Float> = feature.floatArray.toList()
+}
+
+private class ConverterOfClass(declaration: ClassFeatureDeclaration) : ConverterOfPrimitiveType<Feature.Class, Class<*>?>(declaration) {
+  override fun createEventField(name: String, description: String?): EventField<Class<*>?> = ClassEventField(name, description)
+  override fun getValue(feature: Feature.Class): Class<*> = feature.classValue
+}
+
+private class ConverterOfEnum<E : Enum<*>>(
+  private val enumDeclaration: EnumFeatureDeclaration<E>
+) : ConverterOfPrimitiveType<Feature.Enum<E>, E>(enumDeclaration) {
+  override fun createEventField(name: String, description: String?): EventField<E> =
+    EnumEventField(name, enumDeclaration.enumClass, description = description, transform = { it.name })
+  override fun getValue(feature: Feature.Enum<E>): E = feature.enumValue
 }
 
 
 private class ConverterOfObject(
-  name: String,
-  lazyDescription: (() -> String)?,
-  mlObjectDescription: MLObjectDescription,
-) : IJEventPairConverter<MLObjectEventData, IJObjectEventData> {
-  val ijObjectDescription = mlObjectDescription.asIJObjectDescription()
+  objectDeclaration: ObjectDeclaration<*>,
+) : IJEventPairConverter<Feature.Object, ObjectEventData> {
+  val ijObjectDescription = ConverterObjectDescription(objectDeclaration.signatures)
 
-  override val ijEventField: IJEventField<IJObjectEventData> = IJObjectEventField(name, lazyDescription?.invoke(), ijObjectDescription)
+  override val ijEventField: EventField<ObjectEventData> =
+    ObjectEventField(objectDeclaration.name, objectDeclaration.logsMetadata?.lazyDescription?.invoke(), ijObjectDescription)
 
-  fun buildObjectEventData(mlObject: MLObjectEventData): IJObjectEventData {
-    return ijObjectDescription.buildObjectEventData(mlObject)
+  fun buildObjectEventData(features: List<Feature>): ObjectEventData {
+    return ijObjectDescription.buildObjectEventData(features)
   }
 
-  override fun buildEventPair(mlEventPair: MLEventPair<MLObjectEventData>): IJEventPair<IJObjectEventData> {
-    return ijEventField with buildObjectEventData(mlEventPair.data)
-  }
-}
-
-
-private class ConverterOfPrimitiveType<T>(
-  mlEventField: MLEventField<T>,
-  createIJField: (String, String?) -> IJEventField<T>
-) : IJEventPairConverter<T, T> {
-  override val ijEventField: IJEventField<T> = createIJField(mlEventField.name, mlEventField.lazyDescription?.invoke())
-
-  override fun buildEventPair(mlEventPair: MLEventPair<T>): IJEventPair<T> {
-    return ijEventField with mlEventPair.data
+  override fun buildEventPair(feature: Feature.Object): EventPair<ObjectEventData> {
+    return ijEventField with buildObjectEventData(feature.values)
   }
 }
 
 
-private class ConverterOfClass(
-  mlEventField: MLClassEventField,
-) : IJEventPairConverter<Class<*>, Class<*>?> {
-  override val ijEventField: IJEventField<Class<*>?> = IJClassEventField(mlEventField.name, mlEventField.lazyDescription?.invoke())
+private class ConvertObjectList(declaration: ObjectArrayDeclaration) : IJEventPairConverter<Feature.ObjectArray, List<ObjectEventData>> {
 
-  override fun buildEventPair(mlEventPair: MLEventPair<Class<*>>): IJEventPair<Class<*>?> {
-    return ijEventField with mlEventPair.data
+  private val innerObjectConverter = ConverterOfObject(declaration.elementSignature)
+
+  // FIXME: description is not passed
+  override val ijEventField: EventField<List<ObjectEventData>> = ObjectListEventField(
+    declaration.name,
+    innerObjectConverter.ijObjectDescription,
+  )
+
+  override fun buildEventPair(feature: Feature.ObjectArray): EventPair<List<ObjectEventData>> {
+    return ijEventField with feature.values.map { objectFeature ->
+      innerObjectConverter.buildObjectEventData(objectFeature.values)
+    }
   }
 }

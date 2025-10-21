@@ -23,6 +23,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public abstract class InspectionRVContentProvider {
   public InspectionRVContentProvider() {
   }

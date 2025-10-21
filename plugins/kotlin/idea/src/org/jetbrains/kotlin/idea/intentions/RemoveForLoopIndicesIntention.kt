@@ -25,7 +25,7 @@ class RemoveForLoopIndicesInspection : IntentionBasedInspection<KtForExpression>
 
 class RemoveForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
-    KotlinBundle.lazyMessage("remove.indices.in.for.loop")
+    KotlinBundle.messagePointer("remove.indices.in.for.loop")
 ) {
     private val WITH_INDEX_NAME = "withIndex"
     private val WITH_INDEX_FQ_NAMES: Set<String> by lazy {

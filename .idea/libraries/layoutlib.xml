@@ -1,4 +1,4 @@
-<component name="libraryTable">
+  <component name="libraryTable">
   <library name="layoutlib" type="repository">
     <properties maven-id="com.android.tools.layoutlib:layoutlib:15.2.3">
       <verification>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -58,7 +58,9 @@ public final class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiMod
   }
 
   @SafeVarargs
-  public static @NotNull <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, @NotNull Class<? extends T> @NotNull ... types) {
+  public static @NotNull <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass,
+                                                                                  @NotNull SearchScope scope,
+                                                                                  @NotNull Class<? extends T> @NotNull ... types) {
     //noinspection unchecked
     return (Query<T>)searchElements(new Parameters(annotationClass, scope, types));
   }

@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom.model.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionService
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
@@ -62,7 +61,8 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
                           completionPrefix: String) {
     result.addAllElements(
       item.items.map { dci: MavenDependencyCompletionItem ->
-        val lookup: LookupElement = MavenDependencyCompletionUtil.lookupElement(dci, dci.version)
+        val version = dci.version ?: return
+        val lookup = MavenDependencyCompletionUtil.lookupElement(dci, version)
         lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
         lookup
       }

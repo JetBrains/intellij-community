@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IndexingTestUtil
 import java.io.File
+import java.nio.file.Path
 
 fun HeavyPlatformTestCase.projectLibrary(
     libraryName: String = "TestLibrary",
@@ -82,5 +83,11 @@ fun moduleLibrary(
 val File.jarRoot: VirtualFile
     get() {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this) ?: error("Cannot find file $this")
+        return JarFileSystem.getInstance().getRootByLocal(virtualFile) ?: error("Can't find root by file $virtualFile")
+    }
+
+val Path.jarRoot: VirtualFile
+    get() {
+        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(this) ?: error("Cannot find file $this")
         return JarFileSystem.getInstance().getRootByLocal(virtualFile) ?: error("Can't find root by file $virtualFile")
     }

@@ -32,7 +32,7 @@ public final class CallToNativeMethodWhileLockedInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new CallToNativeMethodWhileLockedVisitor();
   }
 

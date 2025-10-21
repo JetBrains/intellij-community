@@ -12,7 +12,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.*
@@ -135,7 +135,7 @@ object MavenEelUtil {
       ?: fs.tryMavenRoot("/usr/share/maven")
       ?: fs.tryMavenRoot("/usr/share/maven2")
       ?: tryMavenFromPath()
-    }.getOrLogException {
+    }.getOrHandleException {
       MavenLog.LOG.error("Unable to resolve a Maven distribution. An error occurred", it)
     }
   }

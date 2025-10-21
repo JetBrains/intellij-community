@@ -122,7 +122,7 @@ public class StorageManager implements CloseableExt {
     if (builder == null) {
       Path output = myContext.getOutputZip();
       Path previousOutput = DataPaths.getJarBackupStoreFile(myContext, output);
-      myOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(output.getFileName().toString()), previousOutput, output);
+      myOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(output.getFileName().toString()), previousOutput, output, true);
     }
     return builder;
   }
@@ -134,7 +134,7 @@ public class StorageManager implements CloseableExt {
       Path abiOutputPath = myContext.getAbiOutputZip();
       if (abiOutputPath != null) {
         Path previousAbiOutput = DataPaths.getJarBackupStoreFile(myContext, abiOutputPath);
-        myAbiOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(abiOutputPath.getFileName().toString()), previousAbiOutput, abiOutputPath);
+        myAbiOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(abiOutputPath.getFileName().toString()), previousAbiOutput, abiOutputPath, false);
       }
     }
     return builder;
@@ -169,7 +169,7 @@ public class StorageManager implements CloseableExt {
 
   @Override
   public final void close() {
-    close(!myContext.hasErrors());
+    close(true); // close saving all successfully compiled content
   }
 
   @Override
@@ -178,6 +178,10 @@ public class StorageManager implements CloseableExt {
       closeDataStorages(saveChanges);
     }
     finally {
+      myDataSwapStore.rollback();
+      if (myDataSwapStore.getFileStore() instanceof OffHeapStore store) {
+        store.truncate(0); // forcibly clean byte buffers
+      }
       myDataSwapStore.close();
     }
   }
@@ -189,12 +193,6 @@ public class StorageManager implements CloseableExt {
       safeClose(config.getGraph(), saveChanges);
     }
 
-    InstrumentationClassFinder finder = myInstrumentationClassFinder;
-    if (finder != null) {
-      myInstrumentationClassFinder = null;
-      finder.releaseResources();
-    }
-
     myComposite = null;
 
     safeClose(myOutputBuilder, saveChanges);
@@ -202,6 +200,12 @@ public class StorageManager implements CloseableExt {
 
     safeClose(myAbiOutputBuilder, saveChanges);
     myAbiOutputBuilder = null;
+
+    InstrumentationClassFinder finder = myInstrumentationClassFinder;
+    if (finder != null) {
+      myInstrumentationClassFinder = null;
+      finder.releaseResources();
+    }
   }
 
   private void safeClose(Closeable cl, boolean saveChanges) {
@@ -248,26 +252,6 @@ public class StorageManager implements CloseableExt {
     return null;
   }
 
-  private static final String WINDOWS_ERROR_TOO_MANY_LINKS = "An attempt was made to create more links on a file than the file system supports";
-  private static boolean tryCreateLink(Path link, Path existing) {
-    try {
-      Files.createLink(link, existing);
-      return true;
-    }
-    catch (FileSystemException e) {
-      String message = e.getMessage();
-      if (message != null && e.getMessage().endsWith(WINDOWS_ERROR_TOO_MANY_LINKS)) {
-        return false;
-      }
-      else {
-        throw new UncheckedIOException(e);
-      }
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
   private static void createLinkAfterCopy(Path linkFile, Path originalFile, Path tempDir) throws IOException {
     int index = 1;
     Path copyFile;
@@ -297,7 +281,7 @@ public class StorageManager implements CloseableExt {
           }
         }
       }
-    } while (!tryCreateLink(linkFile, copyFile));
+    } while (!Utils.tryCreateLink(linkFile, copyFile));
   }
 
   public static void backupDependencies(BuildContext context, Iterable<Path> deletedPaths, Iterable<Path> presentPaths) throws IOException {
@@ -315,7 +299,7 @@ public class StorageManager implements CloseableExt {
 
     for (Path presentPath : presentPaths) {
       Path backup = DataPaths.getJarBackupStoreFile(context, presentPath);
-      if (!tryCreateLink(backup, presentPath)) {
+      if (!Utils.tryCreateLink(backup, presentPath)) {
         Path trash = DataPaths.getLibraryTrashDir(context, presentPath);
         Files.createDirectories(trash);
         createLinkAfterCopy(backup, presentPath, trash);

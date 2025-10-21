@@ -6,3 +6,5 @@ class postgres_md5(uh.HasUserContext, uh.StaticHandler):
     name: ClassVar[str]
     checksum_chars: ClassVar[str]
     checksum_size: ClassVar[int]
+
+__all__ = ["postgres_md5"]

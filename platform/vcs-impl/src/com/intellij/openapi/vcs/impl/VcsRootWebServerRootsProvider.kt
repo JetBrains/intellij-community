@@ -26,7 +26,7 @@ import org.jetbrains.builtInWebServer.PrefixlessWebServerRootsProvider
 
 internal class VcsRootWebServerRootsProvider : PrefixlessWebServerRootsProvider() {
   override fun resolve(path: String, project: Project, resolver: FileResolver, pathQuery: PathQuery): PathInfo? {
-    for (vcsRoot in ProjectLevelVcsManager.getInstance(project).allVcsRoots) {
+    for (vcsRoot in ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
       val root = if (vcsRoot.vcs != null) vcsRoot.path else continue
       val virtualFile = resolver.resolve(path, root, pathQuery = pathQuery)
       if (virtualFile != null) return virtualFile
@@ -35,7 +35,7 @@ internal class VcsRootWebServerRootsProvider : PrefixlessWebServerRootsProvider(
   }
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
-    for (vcsRoot in ProjectLevelVcsManager.getInstance(project).allVcsRoots) {
+    for (vcsRoot in ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
       val root = if (vcsRoot.vcs != null) vcsRoot.path else continue
       if (VfsUtilCore.isAncestor(root, file, true)) {
         return PathInfo(null, file, root)

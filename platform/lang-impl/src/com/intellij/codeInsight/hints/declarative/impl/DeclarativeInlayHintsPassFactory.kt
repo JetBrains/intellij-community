@@ -10,10 +10,10 @@ import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarI
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -37,14 +37,8 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       return DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(provider, providerId, optionsToEnabled)), isPreview = true, isProviderDisabled = isDisabled)
     }
 
-    fun getSuitableToFileProviders(file: PsiFile): List<InlayProviderInfo> {
-      val infos = InlayHintsProviderFactory.getProvidersForLanguage(file.language)
-      if (!DumbService.isDumb(file.project)) {
-        return infos
-      }
-
-      return infos.filter { DumbService.isDumbAware(it.provider) }
-    }
+    fun getSuitableToFileProviders(file: PsiFile): List<InlayProviderInfo> =
+      InlayHintsProviderFactory.getProvidersForLanguage(file.language)
 
     private val PSI_MODIFICATION_STAMP: Key<Long> = Key<Long>("declarative.inlays.psi.modification.stamp")
 
@@ -79,7 +73,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
     if (!Registry.`is`("inlays.declarative.hints")) return null
-    if (editor.isOneLineMode) return null
+    if (editor.isOneLineMode || DiffUtil.isDiffEditor(editor)) return null
     if (!HighlightingLevelManager.getInstance(psiFile.project).shouldHighlight(psiFile)) return null
 
     val stamp = editor.getUserData(PSI_MODIFICATION_STAMP)

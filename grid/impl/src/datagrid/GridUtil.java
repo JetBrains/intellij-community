@@ -10,6 +10,7 @@ import com.intellij.database.csv.CsvSettingsService;
 import com.intellij.database.data.types.BaseConversionGraph;
 import com.intellij.database.data.types.DataTypeConversion;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
+import com.intellij.database.editor.DataGridContainer;
 import com.intellij.database.editor.TableEditorBase;
 import com.intellij.database.extractors.*;
 import com.intellij.database.extractors.DatabaseObjectFormatterConfig.DatabaseDisplayObjectFormatterConfig;
@@ -108,6 +109,7 @@ import static com.intellij.database.DatabaseDataKeys.DATA_GRID_SETTINGS_KEY;
 import static com.intellij.database.DatabaseDataKeys.GRID_KEY;
 import static com.intellij.database.run.actions.ShowPaginationActionKt.getSHOW_PAGINATION;
 import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
+import static com.intellij.openapi.actionSystem.ActionPlaces.EDITOR_TOOLBAR;
 
 public class GridUtil extends GridUtilCore {
   public static final int ADDITIONAL_ROWS_COUNT = 5;
@@ -133,7 +135,7 @@ public class GridUtil extends GridUtilCore {
   public static void addBottomHeader(@NotNull DataGrid grid) {
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup actions = (ActionGroup)actionManager.getAction("Console.InEditorTableResult.Horizontal.Group");
-    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actions, true);
+    ActionToolbar toolbar = actionManager.createActionToolbar(EDITOR_TOOLBAR, actions, true);
     toolbar.setTargetComponent(grid.getPanel().getComponent());
     toolbar.getComponent().setOpaque(false);
 
@@ -437,8 +439,8 @@ public class GridUtil extends GridUtilCore {
 
   public static @Nullable DataGrid getDataGrid(DataContext dataContext) {
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
-    if (editor instanceof TableEditorBase) {
-      return ((TableEditorBase)editor).getDataGrid();
+    if (editor instanceof DataGridContainer) {
+      return ((DataGridContainer)editor).getDataGrid();
     }
     DataGrid grid = editor == null ? null : editor.getUserData(GRID_KEY);
     return grid != null ? grid : DatabaseDataKeys.DATA_GRID_KEY.getData(dataContext);
@@ -462,8 +464,8 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static @Nullable CellAttributesKey getMutationCellAttributes(@Nullable MutationType type) {
-    if (type == null) return null;
     return switch (type) {
+      case null -> null;
       case MODIFY -> CellColors.REPLACE;
       case INSERT -> CellColors.INSERT;
       case DELETE -> CellColors.REMOVE;
@@ -802,9 +804,8 @@ public class GridUtil extends GridUtilCore {
   public static @NotNull JComponent addGridHeaderComponent(@NotNull DataGrid dataGrid, boolean transparent,
                                                            ActionGroup actions,
                                                            ActionGroup secondaryActions) {
-    ActionManager actionManager = ActionManager.getInstance();
-    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actions, true);
-    ActionToolbar toolbarSecondary = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, secondaryActions, true);
+    ActionToolbar toolbar = CustomGridToolbarProvider.Companion.createToolbar(dataGrid, EDITOR_TOOLBAR, actions);
+    ActionToolbar toolbarSecondary = CustomGridToolbarProvider.Companion.createToolbar(dataGrid, EDITOR_TOOLBAR, secondaryActions);
     toolbar.setTargetComponent(dataGrid.getPanel().getComponent());
     toolbarSecondary.setTargetComponent(dataGrid.getPanel().getComponent());
     toolbarSecondary.setReservePlaceAutoPopupIcon(false);
@@ -831,7 +832,7 @@ public class GridUtil extends GridUtilCore {
   public static @NotNull JComponent addVerticalGridHeaderComponent(@NotNull DataGrid dataGrid, @Nullable String actionGroupName) {
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup actions = actionGroupName == null ? new EmptyActionGroup() : (ActionGroup)actionManager.getAction(actionGroupName);
-    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actions, false);
+    ActionToolbar toolbar = actionManager.createActionToolbar(EDITOR_TOOLBAR, actions, false);
     toolbar.setTargetComponent(dataGrid.getPanel().getComponent());
 
     toolbar.getComponent().setOpaque(false);

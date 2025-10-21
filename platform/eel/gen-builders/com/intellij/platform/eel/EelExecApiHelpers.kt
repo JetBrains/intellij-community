@@ -9,22 +9,35 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
 
 /**
+ * Gets the same environment variables on the remote machine as the user would get.
+ * 
+ * See also [EelExecPosixApi.PosixEnvironmentVariablesOptions].
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Experimental
+fun EelExecApi.environmentVariables(): EelExecApiHelpers.EnvironmentVariables =
+  EelExecApiHelpers.EnvironmentVariables(
+    owner = this,
+  )
+
+/**
  * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
- *
+ * 
  * stdin, stdout and stderr of the process are always forwarded, if there are.
- *
+ * 
  * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
- *
+ * 
  * See [executeProcessBuilder]
- *
+ * 
  * @param exe An **absolute** path to the executable.
  *  TODO Or do relative paths also work?
- *
+ *  
  *  All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
@@ -42,7 +55,7 @@ fun EelExecApi.execute(
 /**
  * @param exe An **absolute** path to the executable.
  *  TODO Or do relative paths also work?
- *
+ *  
  *  All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
@@ -58,6 +71,40 @@ fun EelExecApi.spawnProcess(
 
 @ApiStatus.Experimental
 object EelExecApiHelpers {
+  /**
+   * Create it via [com.intellij.platform.eel.EelExecApi.environmentVariables].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Experimental
+  class EnvironmentVariables(
+    private val owner: EelExecApi,
+  ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
+    private var onlyActual: Boolean = false
+
+    /**
+     * The implementation MAY cache the environment variables by default because they rarely change in real life.
+     * By setting this value to `true`, the cache will be refreshed, and the result will contain the freshest environment variables.
+     *
+     * Makes sense only for remote Eels (via IJent)
+     * or with such [EelExecPosixApi.PosixEnvironmentVariablesOptions.mode] that invoke a shell.
+     * In other cases this option has no effect.
+     */
+    fun onlyActual(arg: Boolean): EnvironmentVariables = apply {
+      this.onlyActual = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelExecApi.environmentVariables]
+     * with an instance of [com.intellij.platform.eel.EelExecApi.EnvironmentVariablesOptions].
+     */
+    override suspend fun eelIt(): EelExecApi.EnvironmentVariablesDeferred =
+      owner.environmentVariables(
+        EnvironmentVariablesOptionsImpl(
+          onlyActual = onlyActual,
+        )
+      )
+  }
+
   /**
    * Create it via [com.intellij.platform.eel.EelExecApi.execute].
    */
@@ -75,6 +122,8 @@ object EelExecApiHelpers {
     private var interactionOptions: InteractionOptions? = null
 
     private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
+
+    private var scope: CoroutineScope? = null
 
     private var workingDirectory: EelPath? = null
 
@@ -128,6 +177,13 @@ object EelExecApiHelpers {
     }
 
     /**
+     * Scope this process is bound to. Once scope dies -- this process dies as well.
+     */
+    fun scope(arg: CoroutineScope?): Execute = apply {
+      this.scope = arg
+    }
+
+    /**
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
@@ -149,6 +205,7 @@ object EelExecApiHelpers {
           exe = exe,
           interactionOptions = interactionOptions,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
+          scope = scope,
           workingDirectory = workingDirectory,
         )
       )
@@ -170,6 +227,8 @@ object EelExecApiHelpers {
     private var interactionOptions: InteractionOptions? = null
 
     private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
+
+    private var scope: CoroutineScope? = null
 
     private var workingDirectory: EelPath? = null
 
@@ -223,6 +282,13 @@ object EelExecApiHelpers {
     }
 
     /**
+     * Scope this process is bound to. Once scope dies -- this process dies as well.
+     */
+    fun scope(arg: CoroutineScope?): SpawnProcess = apply {
+      this.scope = arg
+    }
+
+    /**
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
@@ -245,6 +311,7 @@ object EelExecApiHelpers {
           exe = exe,
           interactionOptions = interactionOptions,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
+          scope = scope,
           workingDirectory = workingDirectory,
         )
       )

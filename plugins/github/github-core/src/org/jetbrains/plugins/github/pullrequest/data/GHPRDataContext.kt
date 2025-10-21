@@ -6,15 +6,17 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.service.*
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 @ApiStatus.Internal
+@CodeReviewDomainEntity // repository
 class GHPRDataContext internal constructor(
   val scope: CoroutineScope,
   internal val listLoader: GHPRListLoader,

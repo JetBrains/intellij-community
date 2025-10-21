@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.commandInterface">
+<idea-plugin visibility="public" package="com.intellij.commandInterface">
   <dependencies>
     <!-- uses messages.PyBundle -->
     <plugin id="com.intellij.modules.python"/>

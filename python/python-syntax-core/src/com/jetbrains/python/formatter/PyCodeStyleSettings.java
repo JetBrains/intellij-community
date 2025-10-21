@@ -30,7 +30,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
     }
 
     @Override
-    public String getPresentableText() {
+    public @NotNull String getPresentableText() {
       return PySyntaxCoreBundle.message(key);
     }
 

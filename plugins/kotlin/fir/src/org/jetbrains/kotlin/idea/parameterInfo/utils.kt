@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.psi.KtExpression
 
-context(KaSession)
+context(session: KaSession)
 internal val KaCallCandidateInfo.withMapping: CandidateWithMapping
     get() {
         val functionCall = candidate as KaFunctionCall<*>
@@ -21,7 +21,7 @@ internal val KaCallCandidateInfo.withMapping: CandidateWithMapping
             functionCall.partiallyAppliedSymbol.signature,
             functionCall.argumentMapping,
             isApplicableBestCandidate = this is KaApplicableCallCandidateInfo && this.isInBestCandidates,
-            token,
+            this@withMapping.token,
         )
     }
 

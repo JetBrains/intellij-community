@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.base.codeInsight.tooling
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.removeUserData
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
@@ -19,6 +21,7 @@ abstract class AbstractCommonIdePlatformKindTooling : IdePlatformKindTooling() {
     private companion object {
         // TODO: KotlinCommonMavenConfigurator
         private const val MAVEN_COMMON_STDLIB_ID = "kotlin-stdlib-common"
+        private val FAST_COMPUTED_TEST_ICON_KEY: Key<Icon> = Key.create<Icon>("FAST_COMPUTED_TEST_ICON_KEY")
     }
 
     override val kind: CommonIdePlatformKind get() = CommonIdePlatformKind
@@ -29,7 +32,19 @@ abstract class AbstractCommonIdePlatformKindTooling : IdePlatformKindTooling() {
 
     override val libraryKind: KotlinCommonLibraryKind get() = KotlinCommonLibraryKind
 
+    /**
+     * Assume that `!allowSlowOperations` is run first, and only after it's finished,
+     * the `allowSlowOperations` is executed.
+     * See comment on [com.intellij.codeInsight.daemon.LineMarkerProvider.collectSlowLineMarkers]
+     * for reference being the base for this assumption.
+     */
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
+        when {
+            !allowSlowOperations -> declaration.removeUserData(FAST_COMPUTED_TEST_ICON_KEY)
+            // Don't duplicate the icon produced in !allowSlowOperations phase
+            allowSlowOperations && declaration.getUserData(FAST_COMPUTED_TEST_ICON_KEY) != null -> return null
+        }
+
         val platform = declaration.module?.platform
 
         val icons = getInstances()
@@ -37,10 +52,14 @@ abstract class AbstractCommonIdePlatformKindTooling : IdePlatformKindTooling() {
             .mapNotNull { it.getTestIcon(declaration, allowSlowOperations) }
             .distinct()
 
-        return when (icons.size) {
+        val icon = when (icons.size) {
             0 -> null
             else -> icons.singleOrNull() ?: AllIcons.RunConfigurations.TestState.Run
         }
+        if (!allowSlowOperations) {
+            declaration.putUserData(FAST_COMPUTED_TEST_ICON_KEY, icon)
+        }
+        return icon
     }
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {

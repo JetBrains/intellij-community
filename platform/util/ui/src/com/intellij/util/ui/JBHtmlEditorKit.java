@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 
+import static com.intellij.util.ui.html.UtilsKt.patchAttributes;
 import static com.intellij.util.ui.html.UtilsKt.reapplyCss;
 
 @ApiStatus.NonExtendable
@@ -56,7 +57,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   /**
    * @deprecated use {@link HTMLEditorKitBuilder}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
     this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.getDefaultStyleSheet(), false);
     if (noGapsBetweenParagraphs) {
@@ -268,6 +269,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     private JBHtmlDocument(StyleSheet styles) {
       super(styles);
       TextLayoutUtil.disableTextLayoutIfNeeded(this);
+      patchAttributes(styles);
     }
 
     @Override

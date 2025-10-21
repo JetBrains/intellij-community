@@ -521,7 +521,7 @@ public final class JBUI {
 
     public static final class CustomFrameDecorations {
       public static @NotNull Color separatorForeground() {
-        return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
+        return Separator.color();
       }
 
       public static @NotNull Color titlePaneButtonHoverBackground() {
@@ -972,6 +972,10 @@ public final class JBUI {
         return Widget.HOVER_BACKGROUND;
       }
 
+      public static @NotNull Insets hoverInsets() {
+        return insets("StatusBar.Widget.hoverInsets", insets(3, 4, 1, 4));
+      }
+
       public static @NotNull Font font() {
         return getFontWithSizeOffset(fontSizeOffsetKey(), defaultFont());
       }
@@ -1052,10 +1056,6 @@ public final class JBUI {
         static @NotNull String navBarInsetsKey() {
           return "StatusBar.Breadcrumbs.navBarInsets";
         }
-      }
-
-      public interface Progresses {
-        Color COUNTER = JBColor.namedColor("ProgressBar.counterColor", new JBColor(0x3574F0, 0x3574F0));
       }
     }
 
@@ -1325,28 +1325,24 @@ public final class JBUI {
         return 20;
       }
 
-      public static @NotNull Insets stripeToolbarButtonIconPadding(boolean compactMode, boolean showNames) {
-        return insets(stripeToolbarButtonIconPaddingKey(), showNames
-                                                           ? compactMode
-                                                             ? defaultStripeToolbarButtonIconPaddingForCompactMode()
-                                                             : defaultStripeToolbarButtonIconPaddingForNames()
-                                                           : defaultStripeToolbarButtonIconPadding());
+      public static @NotNull Insets stripeToolbarButtonIconPadding(boolean left, boolean showNames) {
+        return insets(stripeToolbarButtonIconPaddingKey(left, showNames), defaultStripeToolbarButtonIconPadding());
       }
 
-      public static @NotNull String stripeToolbarButtonIconPaddingKey() {
-        return "StripeToolbar.Button.iconPadding";
+      private static @NotNull String stripeToolbarButtonIconPaddingKey(boolean left, boolean showNames) {
+        return "StripeToolbar.Button." + (left ? "left" : "right") + "StripeIcon" + (showNames ? "WithName" : "") + ".padding";
       }
 
-      public static @NotNull JBInsets defaultStripeToolbarButtonIconPadding() {
+      private static @NotNull JBInsets defaultStripeToolbarButtonIconPadding() {
         return insets(5);
       }
 
-      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForNames() {
-        return insets(4);
+      public static int stripeToolbarTextOffset(boolean left) {
+        return getInt(stripeToolbarTextOffsetKey(left), 0);
       }
 
-      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForCompactMode() {
-        return insets(3);
+      private static @NotNull String stripeToolbarTextOffsetKey(boolean left) {
+        return "StripeToolbar.Button." + (left ? "left" : "right") + "StripeTextOffset";
       }
     }
 
@@ -1664,6 +1660,13 @@ public final class JBUI {
         }
 
         public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
+      }
+    }
+
+    public static final class Separator {
+      private Separator() { }
+      public static @NotNull Color color() {
+        return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
       }
     }
 
@@ -2617,6 +2620,15 @@ public final class JBUI {
         public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Expiring.hoverBackground");
         public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Expiring.hoverBorderColor");
       }
+
+      public static final class Progress {
+        public static final Color FOREGROUND = JBColor.namedColor("TrialWidget.Progress.foreground");
+        public static final Color BACKGROUND = JBColor.namedColor("TrialWidget.Progress.background");
+        public static final Color BORDER_COLOR = JBColor.namedColor("TrialWidget.Progress.borderColor");
+        public static final Color HOVER_FOREGROUND = JBColor.namedColor("TrialWidget.Progress.hoverForeground");
+        public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Progress.hoverBackground");
+        public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Progress.hoverBorderColor");
+      }
     }
 
     public static final class MainWindow {
@@ -2673,6 +2685,11 @@ public final class JBUI {
       private static final @NotNull Color SEPARATOR_COLOR =
         JBColor.namedColor("LicenseDialog.separatorColor", 0xEBECF0, 0x393B40);
 
+      private static final @NotNull Color FREE_BADGE_FOREGROUND =
+        JBColor.namedColor("LicenseDialog.freeBadgeForeground", 0xFFFFFF, 0x1E1F22);
+      private static final @NotNull Color FREE_BADGE_BACKGROUND =
+        JBColor.namedColor("LicenseDialog.freeBadgeBackground", 0x208A3C, 0x57965C);
+
       public static @NotNull Color getTermsAndConditionsForeground() {
         return TERMS_AND_CONDITIONS_COLOR;
       }
@@ -2683,6 +2700,14 @@ public final class JBUI {
 
       public static @NotNull Color getSeparatorColor() {
         return SEPARATOR_COLOR;
+      }
+
+      public static @NotNull Color getFreeBadgeForeground() {
+        return FREE_BADGE_FOREGROUND;
+      }
+
+      public static @NotNull Color getFreeBadgeBackground() {
+        return FREE_BADGE_BACKGROUND;
       }
 
       public static final class LicenseList {

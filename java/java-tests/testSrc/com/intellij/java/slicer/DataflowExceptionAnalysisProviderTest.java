@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.slicer;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
@@ -22,57 +22,57 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testClassCast() {
     doTest("java.lang.ClassCastException: class X cannot be cast to class java.lang.Number",
-           "Find why 'obj' could be X (not-null)",
+           "Find why 'obj' could be X (non-null)",
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
   }
   
   public void testClassCastUnresolvedTarget() {
     doTest("java.lang.ClassCastException: class X cannot be cast to class foo.Bar",
-           "Find why 'obj' could be X (not-null)",
+           "Find why 'obj' could be X (non-null)",
            "class X {static void test(Object obj) {System.out.println(((Bar) obj).intValue());}}");
   }
   
   public void testClassCastUnknownClass() {
     doTest("java.lang.ClassCastException: class XYZ cannot be cast to class java.lang.Number",
-           "Find why 'obj' could be not instanceof java.lang.Number (not-null)",
+           "Find why 'obj' could be not instanceof java.lang.Number (non-null)",
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
   }
   
   public void testClassCastGenericArray() {
     //noinspection unchecked
     doTest("java.lang.ClassCastException: class java.lang.String cannot be cast to class [Ljava.lang.Object; (java.lang.String and [Ljava.lang.Object; are in module java.base of loader 'bootstrap')",
-           "Find why 'obj' could be java.lang.String (not-null)",
+           "Find why 'obj' could be java.lang.String (non-null)",
            "class X {static <E> E[] asArray(Object obj) {return (E[])obj;}}");
   }
   
   public void testClassCastFromArray() {
     doTest("java.lang.ClassCastException: class [Ljava.lang.String; cannot be cast to class java.lang.String",
-           "Find why 'obj' could be java.lang.String[] (not-null)",
+           "Find why 'obj' could be java.lang.String[] (non-null)",
            "class X {static String cast(Object obj) {return (String)obj;}}");
   }
   
   public void testClassCastFromPrimitiveTwoDimArray() {
     doTest("java.lang.ClassCastException: class [[J cannot be cast to class java.lang.String",
-           "Find why 'obj' could be long[][] (not-null)",
+           "Find why 'obj' could be long[][] (non-null)",
            "class X {static String cast(Object obj) {return (String)obj;}}");
   }
   
   public void testClassCastFromNested() {
     doTest("java.lang.ClassCastException: class MainTest$X cannot be cast to class java.lang.String",
-           "Find why 'obj' could be MainTest.X (not-null)",
+           "Find why 'obj' could be MainTest.X (non-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}static class X {}}");
   }
   
   public void testClassCastFromLocal() {
     doTest("java.lang.ClassCastException: class MainTest$1X cannot be cast to class java.lang.String",
-           "Find why 'obj' could be X (not-null)",
+           "Find why 'obj' could be X (non-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}" +
            "public static void main(String[] args) { class X{}cast(new X()); }}");
   }
   
   public void testClassCastFromAnonymous() {
     doTest("java.lang.ClassCastException: class MainTest$1 cannot be cast to class java.lang.String",
-           "Find why 'obj' could be anonymous java.lang.Object (not-null)",
+           "Find why 'obj' could be anonymous java.lang.Object (non-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}" +
            "public static void main(String[] args) { cast(new Object() {});}}");
   }
@@ -158,7 +158,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   
   public void testStringInEquality() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 's' could be != \"hello\" (not-null)",
+           "Find why 's' could be != \"hello\" (non-null)",
            "class X {static void test(String s) {if (!s.equals(\"hello\")) throw new IllegalArgumentException();}}");
   }
 
@@ -176,7 +176,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testClassInEquality() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 'cls' could be != String (not-null)",
+           "Find why 'cls' could be != String (non-null)",
            "class X {static void test(Class<?> cls) {if (!cls.equals(String.class)) throw new IllegalArgumentException();}}");
   }
 
@@ -206,7 +206,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testIsNotNull() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 'obj' could be not-null",
+           "Find why 'obj' could be non-null",
            "class X {static void test(Object obj) {if (null != obj) {throw new IllegalArgumentException();}}}");
   }
 
@@ -247,7 +247,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testInSwitchDefaultString() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 's' could be != \"BAR\", \"FOO\" (not-null)",
+           "Find why 's' could be != \"BAR\", \"FOO\" (non-null)",
            "class X {static void test(String s) { switch (s) { " +
            "case \"FOO\": break; case \"BAR\": return;" +
            "default: case \"BAZ\": throw new IllegalArgumentException(); } } }");
@@ -296,7 +296,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   }
 
   public void testAssertNull() {
-    doTestIntermediate("Find why 'str' could be not-null",
+    doTestIntermediate("Find why 'str' could be non-null",
                        "class X {static void test(String str) {<caret>assertNull(str);}" +
                        "static void assertNull(Object obj) {if(obj != null) throw new AssertionError();}}");
   }

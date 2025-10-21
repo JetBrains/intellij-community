@@ -31,7 +31,7 @@ internal class SearchEverywhereJavaPsiElementFeatureProvider : SearchEverywhereE
   )
 
   override fun getElementFeatures(element: Any, currentTime: Long, searchQuery: String, elementPriority: Int, cache: FeaturesProviderCache?, correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element) ?: return emptyList()
 
     val file = getContainingFile(psiElement) ?: return emptyList()
 

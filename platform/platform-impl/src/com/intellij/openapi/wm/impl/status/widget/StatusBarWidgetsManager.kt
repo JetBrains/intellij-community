@@ -29,6 +29,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
 
 private val LOG = logger<StatusBarWidgetsManager>()
 
@@ -37,6 +38,7 @@ class StatusBarWidgetsManager(
   private val project: Project,
   private val parentScope: CoroutineScope,
 ) : SimpleModificationTracker(), Disposable {
+  private var wasInitialized = false
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
@@ -74,13 +76,19 @@ class StatusBarWidgetsManager(
     }
   }
 
-  fun updateWidget(factory: StatusBarWidgetFactory) {
+  @JvmOverloads
+  fun updateWidget(factory: StatusBarWidgetFactory, coroutineContext: CoroutineContext = Dispatchers.EDT) {
     if ((factory.isConfigurable && !StatusBarWidgetSettings.getInstance().isEnabled(factory)) || !factory.isAvailable(project)) {
       disableWidget(factory)
       return
     }
 
     synchronized(widgetFactories) {
+      if (!wasInitialized) {
+        // do not initialize widgets too early by eager listeners
+        return
+      }
+
       if (widgetFactories.containsKey(factory)) {
         // this widget is already enabled
         return
@@ -95,7 +103,7 @@ class StatusBarWidgetsManager(
       val widget = createWidget(factory, dataContext, parentScope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
-      parentScope.launch(Dispatchers.EDT) {
+      parentScope.launch(coroutineContext) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
           null -> {
@@ -182,6 +190,8 @@ class StatusBarWidgetsManager(
     }
 
     val widgets = synchronized(widgetFactories) {
+      wasInitialized = true
+      
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
 
       for ((factory, anchor) in pendingFactories) {

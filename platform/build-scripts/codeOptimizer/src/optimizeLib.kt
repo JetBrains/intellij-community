@@ -5,18 +5,22 @@ import org.apache.logging.log4j.core.LoggerContext
 import org.apache.logging.log4j.core.config.ConfigurationFactory
 import org.apache.logging.log4j.core.config.ConfigurationSource
 import org.apache.logging.log4j.core.config.NullConfiguration
-import proguard.*
+import proguard.ClassPath
+import proguard.ClassPathEntry
+import proguard.Configuration
+import proguard.ConfigurationParser
+import proguard.ProGuard
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
+import java.util.Properties
 import kotlin.time.measureTime
 
 internal data class OptimizeLibraryContext(@JvmField val tempDir: Path, @JvmField val javaHome: Path)
 
 private data class LibDescriptor(@JvmField val id: String, @JvmField val version: String, @JvmField val jbVersion: Int)
 
-private val fastUtil = LibDescriptor(id = "fastutil", version = "8.5.15", jbVersion = 1)
+private val fastUtil = LibDescriptor(id = "fastutil", version = "8.5.16", jbVersion = 1)
 
 @Suppress("unused")
 internal object FastutilInstall {

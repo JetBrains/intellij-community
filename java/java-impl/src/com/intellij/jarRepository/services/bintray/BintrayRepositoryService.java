@@ -5,6 +5,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.jarRepository.services.MavenRepositoryService;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -20,6 +21,7 @@ import static java.util.Collections.emptyList;
 /**
  * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@ApiStatus.Internal
 @SuppressWarnings("DeprecatedIsStillUsed") // allow to use it in 2021.1
 @Deprecated(forRemoval = true)
 public class BintrayRepositoryService extends MavenRepositoryService {

@@ -1,8 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.LineSeparator
 import git4idea.stash.GitShelveChangesSaver
 import git4idea.test.*
 import org.assertj.core.api.Assertions.assertThat
@@ -24,6 +33,10 @@ class GitBatchShelveTest: GitShelveTest() {
 abstract class GitShelveTest : GitSingleRepoTest() {
   private lateinit var shelveChangesManager : ShelveChangesManager
   private lateinit var saver: GitShelveChangesSaver
+
+  companion object {
+    private val CRLF = LineSeparator.CRLF.separatorString
+  }
 
   override fun setUp() {
     super.setUp()
@@ -234,6 +247,66 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     assertTrue("There should be the file b.txt on the disk", file2.file.exists())
     repo.assertStatus(file.file, 'A')
     secondRoot.assertStatus(file2.file, 'A')
+  }
+
+  fun `test crlf line separators are preserved after shelve and unshelve`() {
+    val file = file("a.txt")
+    val initialText = "first line${CRLF}second line${CRLF}"
+    file.create(initialText)
+
+    val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.file)
+    if (vFile == null) {
+      assertNotNull("VirtualFile not found for file ${file.file}", vFile)
+      return
+    }
+
+    val document = runReadAction { FileDocumentManager.getInstance().getDocument(vFile) }
+    if (document == null) {
+      assertNotNull("Document not found for file ${file.file}", document)
+      return
+    }
+    assertHasCrlfSeparators(vFile)
+
+    file.addCommit("initial commit file with CRLF line separators")
+
+    runInEdtAndWait {
+      runWriteCommandAction(project) {
+        document.insertString(document.textLength, "appended line\n")
+        FileDocumentManager.getInstance().saveDocument(document)
+      }
+    }
+
+    refresh()
+    updateChangeListManager()
+
+    saver.saveLocalChanges(listOf(repo.root))
+
+    refresh()
+    updateChangeListManager()
+
+    assertThat(ChangeListManager.getInstance(project).allChanges).isEmpty()
+    assertHasCrlfSeparators(vFile)
+
+    val shelvedLists = ShelveChangesManager.getInstance(project).shelvedChangeLists
+    assertThat(shelvedLists).isNotEmpty
+
+    saver.load()
+
+    refresh()
+    updateChangeListManager()
+
+    assertThat(ChangeListManager.getInstance(project).allChanges).isNotEmpty
+    assertHasCrlfSeparators(vFile)
+  }
+
+  private fun assertHasCrlfSeparators(vFile: VirtualFile) {
+    // Read raw bytes and check for CRLF occurrences to avoid re-normalization
+    val bytes = vFile.contentsToByteArray()
+    val text = String(bytes, vFile.charset)
+    assertThat(text).contains(CRLF)
+
+    val detected = LoadTextUtil.detectLineSeparator(vFile, true)
+    assertThat(detected).isEqualTo(CRLF)
   }
 
   private fun `assert single shelvelist`(): ShelvedChangeList {

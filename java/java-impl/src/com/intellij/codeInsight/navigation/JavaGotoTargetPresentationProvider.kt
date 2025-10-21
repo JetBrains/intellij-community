@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFunctionalExpression
 import com.intellij.psi.PsiMethod
 
-class JavaGotoTargetPresentationProvider : GotoTargetPresentationProvider {
+public class JavaGotoTargetPresentationProvider : GotoTargetPresentationProvider {
 
   override fun getTargetPresentation(element: PsiElement, differentNames: Boolean): TargetPresentation? {
     return when (element) {

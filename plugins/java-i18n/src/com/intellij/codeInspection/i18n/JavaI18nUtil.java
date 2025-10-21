@@ -40,7 +40,7 @@ public final class JavaI18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
     (project, propertiesFiles, key, value, parameters) -> I18nUtil.createProperty(project, propertiesFiles, key, value, true);
 
-  public static final PropertyCreationHandler EMPTY_CREATION_HANDLER =
+  static final PropertyCreationHandler EMPTY_CREATION_HANDLER =
     (project, propertiesFiles, key, value, parameters) -> {};
 
   private JavaI18nUtil() {

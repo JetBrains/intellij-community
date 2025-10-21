@@ -20,7 +20,8 @@ public abstract class DfConstantType<T> implements DfType {
 
   @Override
   public boolean isSuperType(@NotNull DfType other) {
-    return other.equals(this) || other == DfType.BOTTOM;
+    return (other instanceof DfConstantType<?> constant && Objects.equals(myValue, constant.myValue)) || 
+           other == DfType.BOTTOM;
   }
 
   @Override

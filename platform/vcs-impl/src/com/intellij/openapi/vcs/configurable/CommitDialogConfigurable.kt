@@ -33,7 +33,7 @@ class CommitDialogConfigurable(private val project: Project)
   private val postCommitConfigurables = mutableSetOf<UnnamedConfigurable>()
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
-    val allVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss.toList()
+    val allVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().toList()
     val checkinPanel = SettingsMockCheckinPanel(project)
     val commitContext = CommitContext()
     val checkinHandlers = AbstractCommitWorkflow.getCommitHandlers(allVcses, checkinPanel, commitContext)

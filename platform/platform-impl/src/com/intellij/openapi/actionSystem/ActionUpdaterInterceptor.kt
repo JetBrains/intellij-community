@@ -15,16 +15,16 @@ interface ActionUpdaterInterceptor {
   suspend fun updateAction(
     action: AnAction,
     event: AnActionEvent,
-    original: suspend () -> Boolean,
-  ): Boolean {
+    original: suspend () -> AnActionResult,
+  ): AnActionResult {
     return original()
   }
 
   suspend fun getGroupChildren(
     group: ActionGroup,
     event: AnActionEvent,
-    original: suspend () -> Array<AnAction>
-  ): Array<AnAction> {
+    original: suspend () -> List<AnAction>
+  ): List<AnAction> {
     return original()
   }
 
@@ -79,8 +79,8 @@ interface ActionUpdaterInterceptor {
     suspend inline fun getGroupChildren(
       group: ActionGroup,
       event: AnActionEvent,
-      noinline original: suspend () -> Array<AnAction>,
-    ): Array<AnAction> = when {
+      noinline original: suspend () -> List<AnAction>,
+    ): List<AnAction> = when {
       isDefaultImpl -> original()
       else -> serviceAsync<ActionUpdaterInterceptor>().getGroupChildren(group, event, original)
     }
@@ -88,8 +88,8 @@ interface ActionUpdaterInterceptor {
     suspend inline fun updateAction(
       action: AnAction,
       event: AnActionEvent,
-      noinline original: suspend () -> Boolean,
-    ): Boolean = when {
+      noinline original: suspend () -> AnActionResult,
+    ): AnActionResult = when {
       isDefaultImpl -> original()
       else -> serviceAsync<ActionUpdaterInterceptor>().updateAction(action, event, original)
     }

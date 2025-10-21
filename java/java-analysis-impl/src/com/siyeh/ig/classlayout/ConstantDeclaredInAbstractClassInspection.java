@@ -32,7 +32,7 @@ public final class ConstantDeclaredInAbstractClassInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConstantDeclaredInAbstractClassVisitor();
   }
 

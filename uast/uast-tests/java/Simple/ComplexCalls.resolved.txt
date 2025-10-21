@@ -14,7 +14,7 @@ UClass (name = A) -> USimpleNameReferenceExpression (identifier = B) -> PsiClass
         UField (name = a) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> PsiMethod:A: null
         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:A: A
         UTypeReferenceExpression (name = C) -> USimpleNameReferenceExpression (identifier = C) -> PsiClass:C: C
-        UField (name = c) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null: null
+        UField (name = c) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> LightDefaultConstructor:C: null
         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> USimpleNameReferenceExpression (identifier = C) -> PsiClass:C: C
         UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:A: A
             UReturnExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> PsiMethod:A: null

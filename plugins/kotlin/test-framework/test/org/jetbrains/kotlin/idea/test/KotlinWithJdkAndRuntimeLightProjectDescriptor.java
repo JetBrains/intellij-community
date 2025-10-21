@@ -6,10 +6,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader;
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndLibraryProjectDescriptor {
@@ -59,28 +58,27 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            @NotNull List<? extends File> libraryFiles,
-            @NotNull List<? extends File> librarySourceFiles
+            @NotNull List<? extends Path> libraryFiles,
+            @NotNull List<? extends Path> librarySourceFiles
     ) {
         this(libraryFiles, librarySourceFiles, null);
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            @NotNull List<? extends File> libraryFiles,
-            @NotNull List<? extends File> librarySourceFiles,
+            @NotNull List<? extends Path> libraryFiles,
+            @NotNull List<? extends Path> librarySourceFiles,
             @Nullable LanguageLevel languageLevel
     ) {
         super(libraryFiles, librarySourceFiles, languageLevel);
     }
 
     public static KotlinWithJdkAndRuntimeLightProjectDescriptor getInstance(@NotNull String version) {
-        KotlinArtifactsDownloader instance = KotlinArtifactsDownloader.INSTANCE;
+        if (!version.equals("1.7.0")) {
+            throw new RuntimeException("Only version 1.7.0 is supported for now");
+        }
         return new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-                List.of(instance.downloadArtifactForIdeFromSources("kotlin-stdlib", version)),
-                List.of(
-                        instance.downloadArtifactForIdeFromSources("kotlin-stdlib", version, "-sources.jar"),
-                        instance.downloadArtifactForIdeFromSources("kotlin-stdlib-common", version, "-sources.jar")
-                )
+                List.of(TestKotlinArtifacts.getKotlinStdlib170()),
+                List.of(TestKotlinArtifacts.getKotlinStdlib170Sources(), TestKotlinArtifacts.getKotlinStdlibCommon170Sources())
         );
     }
 

@@ -11,15 +11,13 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
-import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
-import com.intellij.python.community.services.shared.UICustomization
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
-import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyResult
+import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
+import com.intellij.python.community.services.systemPython.impl.asSysPythonRegisterError
+import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.getOr
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -55,15 +53,18 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
     scope.launch {
       _cacheImpl.complete(getCacheTimeout()?.let { interval ->
         Cache<EelDescriptor, SystemPython>(scope, interval) { eelDescriptor ->
-          searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
+          withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+            searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
+          }
         }
       })
     }
   }
 
-  override suspend fun registerSystemPython(pythonPath: PythonBinary): PyResult<SystemPython> {
-    val pythonWithLangLevel = VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr("Python {$pythonPath} is broken") { return it }
-    val systemPython = SystemPython(pythonWithLangLevel, null)
+  override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, SysPythonRegisterError> {
+    val pythonWithLangLevel = VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonPath)
+      .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken", pythonPath)) { return Result.failure(it.error.asSysPythonRegisterError()) }
+    val systemPython = SystemPython.create(pythonWithLangLevel, null).getOr { return it }
     state.userProvidedPythons.add(pythonPath.pathString)
     cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)
     return Result.success(systemPython)
@@ -104,7 +105,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
 
   private suspend fun searchPythonsPhysicallyNoCache(eelApi: EelApi): List<SystemPython> = withContext(Dispatchers.IO) {
     findPythonsMutex.withLock {
-      val pythonsUi = mutableMapOf<PythonBinary, UICustomization>()
+      val pythonsUi = mutableMapOf<PythonBinary, PyToolUIInfo>()
 
       val pythonsFromExtensions = SystemPythonProvider.EP.extensionList
         .flatMap { provider ->
@@ -119,12 +120,16 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       val badPythons = mutableSetOf<PythonBinary>()
       val pythons = pythonsFromExtensions + state.userProvidedPythonsAsPath.filter { it.getEelDescriptor() == eelApi.descriptor }
 
-      val result = VanillaPythonWithLanguageLevelImpl.createByPythonBinaries(pythons.toSet())
+      val result = VanillaPythonWithPythonInfoImpl.createByPythonBinaries(pythons.toSet())
         .mapNotNull { (python, r) ->
-          when (r) {
-            is Result.Success -> SystemPython(r.result, pythonsUi[r.result.pythonBinary])
+          val sysPython = r.mapSuccessError(
+            onSuccess = { r -> SystemPython.create(r, pythonsUi[r.pythonBinary]) },
+            onErr = { it.asSysPythonRegisterError() }
+          )
+          when (sysPython) {
+            is Result.Success -> sysPython.result
             is Result.Failure -> {
-              fileLogger().warn("Skipping $python : ${r.error}")
+              fileLogger().warn("Skipping $python : ${sysPython.error.asPyError}")
               badPythons.add(python)
               null
             }

@@ -43,6 +43,8 @@ internal class GenerateGetterSetterHandleCompletionCommandProvider : CommandProv
     }
     return result
   }
+
+  override fun supportNewLineCompletion(): Boolean = true
 }
 
 private data class GetterSetterCase(val generateGetter: Boolean, val generateSetter: Boolean, val name: String, val i18nName: String)
@@ -54,7 +56,7 @@ private class BaseGenerateGetterSetterHandleCompletionCommand(
   override val presentableName: String,
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: () -> IntentionPreviewInfo?,
-) : CompletionCommand(), CompletionCommandWithPreview {
+) : CompletionCommand() {
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val element = getCommandContext(offset, psiFile) ?: return
@@ -65,7 +67,7 @@ private class BaseGenerateGetterSetterHandleCompletionCommand(
     ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, action.text)
   }
 
-  override fun getPreview(): IntentionPreviewInfo? {
-    return preview()
+  override fun getPreview(): IntentionPreviewInfo {
+    return preview() ?: IntentionPreviewInfo.EMPTY
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
@@ -34,7 +33,15 @@ public interface ClassDataZipEntry {
     return entryName.endsWith(".class");
   }
 
-  static ClassDataZipEntry create(String entryName, ZipOutputBuilder zipData) {
+  static Iterator<ClassDataZipEntry> fromZipOutputBuilder(ZipOutputBuilder builder) {
+    return map(filter(builder.getEntryNames().iterator(), ClassDataZipEntry::isClassDataEntry), entryName -> create(entryName, builder));
+  }
+
+  static Iterator<ClassDataZipEntry> fromSteam(InputStream is) {
+    return map(filter(new ZipEntryIterator(is), se -> isClassDataEntry(se.getEntry().getName())), se -> create(se.getEntry(), se.getStream()));
+  }
+
+  private static ClassDataZipEntry create(String entryName, ZipOutputBuilder zipData) {
     return new ClassDataZipEntry() {
       private ClassReader reader = null;
 
@@ -58,9 +65,9 @@ public interface ClassDataZipEntry {
     };
   }
 
-  static ClassDataZipEntry create(ZipEntry entry, ZipInputStream in) {
+  private static ClassDataZipEntry create(ZipEntry entry, ZipInputStream in) {
     try {
-      byte[] bytes = RW.readAllBytes(in);
+      byte[] bytes = in.readAllBytes();
       return new ClassDataZipEntry() {
         private final ClassReader reader = new FailSafeClassReader(bytes);
 
@@ -83,13 +90,5 @@ public interface ClassDataZipEntry {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  static Iterator<ClassDataZipEntry> fromZipOutputBuilder(ZipOutputBuilder builder) {
-    return map(filter(builder.getEntryNames().iterator(), ClassDataZipEntry::isClassDataEntry), entryName -> create(entryName, builder));
-  }
-
-  static Iterator<ClassDataZipEntry> fromSteam(InputStream is) {
-    return map(filter(new ZipEntryIterator(is), se -> isClassDataEntry(se.getEntry().getName())), se -> create(se.getEntry(), se.getStream()));
   }
 }

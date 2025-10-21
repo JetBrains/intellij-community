@@ -10,6 +10,9 @@ import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.testPluginSrc.IJPL207058.DefaultService
+import com.intellij.ide.plugins.testPluginSrc.IJPL207058.ServiceInterface
+import com.intellij.ide.plugins.testPluginSrc.IJPL207058.module.OverriddenService
 import com.intellij.ide.plugins.testPluginSrc.bar.BarAction
 import com.intellij.ide.plugins.testPluginSrc.bar.BarService
 import com.intellij.ide.plugins.testPluginSrc.foo.FooAction
@@ -68,9 +71,9 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import org.junit.jupiter.api.assertNull
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
@@ -349,7 +352,7 @@ class DynamicPluginsTest {
       content {
         module("intellij.foo.one.module1") {
           packagePrefix = "org.foo"
-          dependencies { module(pluginTwoBuilder.id!!) } // TODO this shouldn't work o_O
+          dependencies { plugin(pluginTwoBuilder.id!!) }
           extensions("""<barExtension key="foo" implementationClass="y"/>""", "bar")
         }
       }
@@ -1089,6 +1092,7 @@ class DynamicPluginsTest {
     plugin("bar") {}.buildDir(barPluginPath)
     plugin("foo") {
       content {
+        namespace = "test_ns"
         module("foo.a") {
           dependencies {
             plugin("bar")
@@ -1109,7 +1113,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().findEnabledModule("foo.b")).isNull()
+        assertThat(PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId("foo.b", "test_ns"))).isNull()
         assertThat(ActionManager.getInstance().getAction("foo.b.action")).isNull()
       }
     }
@@ -1123,6 +1127,7 @@ class DynamicPluginsTest {
     plugin("bar") {}.buildDir(barPluginPath)
     plugin("foo") {
       implementationDetail = true
+      namespace = "foo"
       content {
         module("foo.a") {
           dependencies {
@@ -1135,9 +1140,33 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains("foo.a")).isTrue
+        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a", "test_ns"))).isTrue
       }
     }
+  }
+
+  @Ignore // FIXME
+  @Test // IJPL-207058
+  fun `dynamic load of a plugin with service overrides is declined`() {
+    plugin("foo") {
+      content {
+        module("foo.module") {
+          extensions("""
+            <applicationService interface="${ServiceInterface::class.qualifiedName}" 
+                                implementation="${OverriddenService::class.qualifiedName}"
+                                overrides="true"/>
+          """.trimIndent())
+          includePackageClassFiles<OverriddenService>()
+        }
+      }
+      extensions("""
+        <applicationService interface="${ServiceInterface::class.qualifiedName}" 
+                            implementation="${DefaultService::class.qualifiedName}"/>
+      """.trimIndent())
+      includePackageClassFiles<DefaultService>()
+    }.buildDir(pluginsDir.resolve("foo"))
+    val foo = loadDescriptorInTest(pluginsDir.resolve("foo"))
+    assertThat(DynamicPlugins.loadPlugin(foo)).isFalse
   }
 }
 
@@ -1271,7 +1300,7 @@ private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
 
 private fun lexicographicallySortedPluginIds() = PluginManagerCore.loadedPlugins.toSortedSet(compareBy { it.pluginId })
 
-private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(id)
+private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(id, "test_ns"))
 
 private fun assertModuleIsNotLoaded(moduleName: String) {
   assertThat(findEnabledModuleByName(moduleName)).isNull()

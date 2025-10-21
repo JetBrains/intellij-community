@@ -115,7 +115,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
 
         val document = FileEditorManager.getInstance(project).selectedTextEditor!!.document
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
-        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+        DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this)
       }
     }
   }

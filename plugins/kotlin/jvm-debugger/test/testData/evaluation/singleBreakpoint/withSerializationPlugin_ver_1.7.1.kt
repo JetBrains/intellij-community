@@ -1,5 +1,6 @@
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.1)
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.1)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-serialization-core-1.7.1.jar)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-serialization-core-jvm-1.7.1.jar)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-serialization-json-jvm-1.7.1.jar)
 package simpleSerializable
 
 import kotlinx.serialization.Serializable

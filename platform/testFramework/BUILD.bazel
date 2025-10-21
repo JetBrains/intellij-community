@@ -1,31 +1,31 @@
 ### auto-generated section `build intellij.platform.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "testFramework_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "testFramework_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
-jvm_resources(
+resourcegroup(
   name = "testFramework_test_resources_1",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
 jvm_provided_library(
-  name = "junit4_provided",
+  name = "libraries_junit4_provided",
   lib = "//libraries/junit4"
 )
 
 jvm_provided_library(
-  name = "junit5-launcher_provided",
+  name = "libraries_junit5-launcher_provided",
   lib = "//libraries/junit5-launcher"
 )
 
@@ -33,7 +33,8 @@ jvm_library(
   name = "testFramework",
   module_name = "intellij.platform.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testFramework_resources"],
   deps = [
     "@lib//:jet_check",
     "@lib//:junit5-provided",
@@ -47,6 +48,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/workspace",
     "//platform/boot",
+    "//platform/code-style-api:codeStyle",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util/concurrency",
     "//platform/core-api:core",
@@ -68,6 +70,7 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-api:lang",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
@@ -76,6 +79,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-util:util",
     "//platform/testFramework/common",
     "//platform/testFramework/core",
     "//platform/todo",
@@ -86,24 +90,21 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "//platform/runtime/product",
-    ":junit4_provided",
-    ":junit5-launcher_provided",
+    ":libraries_junit4_provided",
+    ":libraries_junit5-launcher_provided",
   ],
   exports = [
     "@lib//:jet_check",
     "@lib//:junit5-provided",
     "@lib//:junit5Params-provided",
     "//libraries/junit4",
-    "//platform/execution-impl",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework/common",
     "//platform/testFramework/core",
   ],
   runtime_deps = [
-    ":testFramework_resources",
     "//resources-en:java-resources-en",
     "//images",
     "//RegExpSupport:regexp",
@@ -114,7 +115,11 @@ jvm_library(
 jvm_library(
   name = "testFramework_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [
+    ":testFramework_test_resources",
+    ":testFramework_test_resources_1",
+  ],
   associates = [":testFramework"],
   deps = [
     "@lib//:jet_check",
@@ -123,21 +128,20 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-coroutines-slf4j",
-    "@lib//:http-client",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/kotlinx/coroutines/slf4j",
+    "//libraries/http-client",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:okhttp",
     "//java/java-runtime:rt",
-    "//libraries/junit4",
-    "//libraries/junit5-launcher",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//platform/backend/workspace",
     "//platform/boot",
+    "//platform/code-style-api:codeStyle",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
@@ -152,7 +156,6 @@ jvm_library(
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/observable",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-io-impl:ide-util-io-impl",
@@ -162,6 +165,7 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-api:lang",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
@@ -172,6 +176,7 @@ jvm_library(
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-api:syntax_test_lib",
     "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-util:util",
     "//platform/testFramework/common",
     "//platform/testFramework/core",
     "//platform/testFramework/junit5",
@@ -187,16 +192,27 @@ jvm_library(
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "@lib//:platform-test_framework-okhttp3-mockwebserver",
     "//platform/runtime/product",
+    ":libraries_junit4_provided",
+    ":libraries_junit5-launcher_provided",
   ],
-  runtime_deps = [
-    ":testFramework_resources",
-    ":testFramework_test_resources",
-    ":testFramework_test_resources_1",
+  exports = [
+    "@lib//:jet_check",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
+    "//libraries/junit4",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework/common",
+    "//platform/testFramework/core",
   ]
 )
+### auto-generated section `build intellij.platform.testFramework` end
 
-jvm_test(
+### auto-generated section `test intellij.platform.testFramework` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "testFramework_test",
   runtime_deps = [":testFramework_test_lib"]
 )
-### auto-generated section `build intellij.platform.testFramework` end
+### auto-generated section `test intellij.platform.testFramework` end

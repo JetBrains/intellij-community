@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.featureStatistics.fusCollectors.InspectionWidgetUsageCollector;
@@ -27,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -41,13 +41,11 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
   private static final @NonNls String ROOT_ATT_PREFIX = "root";
   private static final @NonNls String FILE_ATT = "file";
   private final MessageBus messageBus;
-  private final Set<String> vcsIgnoreFileNames;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
 
   public HighlightingSettingsPerFile(@NotNull Project project) {
-    vcsIgnoreFileNames = VcsFacade.getInstance().getVcsIgnoreFileNames(project);
     messageBus = project.getMessageBus();
   }
 
@@ -188,7 +186,10 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
 
-    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !vcsIgnoreFileNames.contains(virtualFile.getName())) {
+    List<HighlightingProjectOrWorkspaceFileOverride> extensionList =
+      HighlightingProjectOrWorkspaceFileOverride.EP_NAME.getExtensionsIfPointIsRegistered();
+    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile) &&
+        !ContainerUtil.exists(extensionList, ep -> ep.shouldInspectFile(virtualFile, project))) {
       return false;
     }
 

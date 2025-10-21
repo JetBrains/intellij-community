@@ -10,10 +10,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.Frontend
 import com.intellij.openapi.project.DumbAware
 
-
-abstract class StatisticsShowAction(private val presentationMode: StatisticsPanelMode) : ToggleAction(), DumbAware {
+abstract class StatisticsShowAction(private val presentationMode: StatisticsPanelMode) : ToggleAction(), DumbAware, Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -49,7 +49,7 @@ abstract class StatisticsShowAction(private val presentationMode: StatisticsPane
  * This class is needed to make the popup close after choosing an option.
  * Because all actions in the group are toggle actions, then this group is considered multi-closable.
  */
-class StatisticsShowActionGroup : DefaultActionGroup(), DumbAware {
+class StatisticsShowActionGroup : DefaultActionGroup(), DumbAware, Frontend {
   init {
     addSeparator(DataGridBundle.message("action.Console.StatisticsShow.separator"))
   }

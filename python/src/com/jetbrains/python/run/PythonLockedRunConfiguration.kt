@@ -11,9 +11,7 @@ import com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAc
 import com.intellij.facet.impl.invalid.FacetIgnorer
 import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.icons.AllIcons
-import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.SettingsEditor
@@ -21,11 +19,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.WriteExternalException
-import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBFont
+import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.createPromoPanel
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -39,29 +36,7 @@ private class PythonLockedRunConfigurationEditor : SettingsEditor<PythonLockedRu
 
   override fun applyEditorTo(s: PythonLockedRunConfiguration) {}
 
-  protected override fun createEditor(): JComponent = panel {
-    row {
-      icon(PythonIcons.Python.Pycharm32).resizableColumn().align(AlignX.RIGHT + AlignY.TOP)
-      panel {
-        row {
-          @Suppress("DialogTitleCapitalization") // PyCharm Pro is literally how we want to see it
-          text(PyBundle.message("pycharm.free.mode.upgrade.title")).align(AlignY.BOTTOM).applyToComponent {
-            font = JBFont.h1()
-          }
-        }
-        row {
-          text(PyBundle.message("pycharm.free.mode.upgrade.body")).align(AlignY.TOP).applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(top = false, bottom = false)) }
-        }
-        row {
-          button(PyBundle.message("pycharm.free.mode.upgrade.button")) {
-            BrowserLauncher.instance.open("https://www.jetbrains.com/pycharm/buy/?utm_source=product&utm_medium=referral&utm_campaign=pycharm&utm_content=pro_upgrade&section=commercial&billing=yearly")
-          }.applyToComponent {
-            putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
-          }
-        }
-      }.resizableColumn().align(AlignX.LEFT)
-    }
-  }
+  protected override fun createEditor(): JComponent = createPromoPanel()
 }
 
 private class PythonLockedRunConfiguration(val configProject: Project, val configFactory: ConfigurationFactory)
@@ -156,7 +131,7 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
   init {
     // Do not enable "lock" configs for non PyCharm or Idea (as it's capable of running the Python plugin) IDEs or if the Python plugin is enabled.
     if ((!PlatformUtils.isPyCharm() && !PlatformUtils.isIntelliJ()) ||
-        PluginManager.getInstance().findEnabledPlugin(PluginId.getId("Pythonid")) != null ||
+        PluginManager.getInstance().findEnabledPlugin(PluginId.getId(PYTHON_PROF_PLUGIN_ID)) != null ||
         PlatformUtils.isDataSpell()) {
       throw ExtensionNotApplicableException.create()
     }
@@ -194,8 +169,8 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
 
 private class DjangoServerLockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.DjangoServer", PyBundle.message("python.run.configuration.django.name"))
 private class FlaskServerLockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FlaskServer", PyBundle.message("flask.name"))
-private class DbtRunLockedConfigurationType : PythonLockedRunConfigurationTypeBase("DbtRunConfiguration", "dbt")
-private class FastAPILockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FastAPI", "FastAPI")
+private class DbtRunLockedConfigurationType : PythonLockedRunConfigurationTypeBase("DbtRunConfiguration", PyBundle.message("python.run.configuration.dbt.name"))
+private class FastAPILockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FastAPI", PyBundle.message("python.run.configuration.fastapi.name"))
 
 private class DjangoFacetIgnorer : FacetIgnorer {
   override fun isIgnored(facet: InvalidFacet): Boolean = facet.name == "Django"

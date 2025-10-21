@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
@@ -53,6 +54,7 @@ import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.remote.TargetAwarePathMappingProvider;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -64,14 +66,20 @@ import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
+import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.run.features.PyRunToolIds;
+import com.jetbrains.python.run.features.PyRunToolParameters;
+import com.jetbrains.python.run.features.PyRunToolProvider;
+import com.jetbrains.python.run.features.PyRunToolUsageCollector;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -88,6 +96,8 @@ import java.util.function.Function;
 
 import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+import static com.jetbrains.python.run.features.PyRunToolExtKt.useRunTool;
+import static com.jetbrains.python.run.features.PyRunToolProviderKt.getEnableRunTool;
 
 /**
  * Since this state is async, any method could be called on any thread
@@ -133,7 +143,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private boolean myRunWithPty = PtyCommandLine.isEnabled();
 
   public boolean isDebug() {
-    return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
+    return getEnvironment().getExecutor() instanceof DefaultDebugExecutor &&
+           getEnvironment().getRunProfile() instanceof AbstractPythonRunConfiguration;
   }
 
   public static ServerSocket createServerSocket() throws ExecutionException {
@@ -166,7 +177,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @Override
   public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    return execute(executor, new CommandLinePatcher[0]);
+    if (runner instanceof PyDebugRunner || runner instanceof PythonRunner) {
+      return execute(executor, new CommandLinePatcher[0]);
+    }
+    return executeWithoutStartProcess(executor);
   }
 
   /**
@@ -191,6 +205,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  private @NotNull ExecutionResult executeWithoutStartProcess(@NotNull Executor executor) throws ExecutionException {
+    ProcessHandler processHandler = new SimpleProcessHandler();
+    ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
+  }
+
   /**
    * <i>To be deprecated. The part of the legacy implementation based on
    * {@link GeneralCommandLine}.</i>
@@ -203,7 +223,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
-  private @NotNull ConsoleView createAndAttachConsoleInEDT(@NotNull Project project, ProcessHandler processHandler, Executor executor)
+  @ApiStatus.Internal
+  public @NotNull ConsoleView createAndAttachConsoleInEDT(@NotNull Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final Ref<Object> consoleRef = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(
@@ -338,10 +359,22 @@ public abstract class PythonCommandLineState extends CommandLineState {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY);
 
     // TODO Detect and discard existing overrides of configured parameters.
-    List<String> allInterpreterParameters = Streams.concat(getConfiguredInterpreterParameters().stream(),
-                                                        realPythonExecution.getAdditionalInterpreterParameters().stream()).toList();
+    List<String> allInterpreterParameters =
+      Streams.concat(getConfiguredInterpreterParameters().stream(), realPythonExecution.getAdditionalInterpreterParameters().stream())
+        .toList();
+
+    PyRunToolParameters runToolParameters = null;
+    if (sdk != null && getEnableRunTool()) {
+      PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
+      if (runToolProvider != null && useRunTool(myConfig, sdk)) {
+        runToolParameters = PythonCommandLineStateExKt.getRunToolParametersForJvm(runToolProvider);
+        PyRunToolUsageCollector.logRun(myConfig.getProject(), PyRunToolIds.idOf(runToolProvider));
+      }
+    }
+
     TargetedCommandLine targetedCommandLine =
-      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, allInterpreterParameters, myRunWithPty);
+      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, allInterpreterParameters, myRunWithPty,
+                                             runToolParameters);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
     ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
@@ -525,14 +558,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   /**
    * Collects deployment paths from suitable mapping providers.
-   *
+   * <p>
    * If the current SDK additional data is not a {@code PyTargetAwareAdditionalData}, then an empty set is returned.
    *
    * @return a set of paths on remote file systems
    */
   private @NotNull Set<String> getDeploymentPaths() {
     Sdk sdk = myConfig.getSdk();
-    Set<String> deploymentPaths = new HashSet<String>();
+    Set<String> deploymentPaths = new HashSet<>();
     if (sdk != null) {
       SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
       if (sdkAdditionalData instanceof PyTargetAwareAdditionalData data) {
@@ -594,6 +627,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @param helpersAwareRequest the request
    * @return the representation of Python script or module execution
    */
+  @RequiresBackgroundThread
   protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
     throw new UnsupportedOperationException("The implementation of Run Configuration based on Targets API is absent");
   }
@@ -819,6 +853,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
       initPythonPath(commandLine, passParentEnvs, pathList, sdkHome);
     }
   }
+
+  @ApiStatus.Internal
+  public static void buildPythonPath(@NotNull AbstractPythonRunConfiguration<?> configuration, boolean isDebug, boolean passParentEnvs) {
+    Module module = configuration.getModule();
+    Sdk sdk = configuration.getSdk();
+    String sdkHome = sdk != null ? sdk.getHomePath() : null;
+
+    if (sdk != null) {
+      List<String> pathList = new ArrayList<>();
+      pathList.addAll(getAddedPaths(sdk));
+      pathList.addAll(collectPythonPath(module, sdkHome, configuration.shouldAddContentRoots(), configuration.shouldAddSourceRoots(), isDebug));
+      PythonEnvUtil.initPythonPath(configuration.getEnvs(), passParentEnvs, pathList);
+    }
+  }
+
 
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,
@@ -1046,22 +1095,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return interpreterPath;
   }
 
-  private @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() {
-    return getPythonTargetInterpreter(myConfig.getProject(), getSdk());
+  private @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
+    Sdk sdk = getSdk();
+    if (sdk == null) {
+      throw new PyExecutionException(PyBundle.message("runcfg.error.message.cannot.find.python.interpreter"));
+    }
+    return getPythonTargetInterpreter(myConfig.getProject(), sdk);
   }
 
-  public static @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @Nullable Sdk sdk) {
-    if (sdk == null) {
-      throw new IllegalStateException("SDK is not defined for Run Configuration");
-    }
-    else {
+  public static @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @NotNull Sdk sdk) {
       HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest =
         PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project);
       if (helpersAwareTargetRequest == null) {
         throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
       }
       return helpersAwareTargetRequest;
-    }
   }
 
   /**

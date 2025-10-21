@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -13,6 +14,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
@@ -166,6 +168,9 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
     CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged();
     if (settingsModificationCount != codeStyleModificationTracker.getModificationCount()) {
       myModel.updateClonedSettings();
+    }
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
   }
 

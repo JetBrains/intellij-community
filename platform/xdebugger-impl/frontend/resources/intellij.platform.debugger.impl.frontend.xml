@@ -1,13 +1,17 @@
-<idea-plugin package="com.intellij.platform.debugger.impl.frontend">
+<idea-plugin visibility="internal" package="com.intellij.platform.debugger.impl.frontend">
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <module name="intellij.platform.rpc.topics"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
                     interface="com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.imageEditorUIProvider"
+                    interface="com.intellij.platform.debugger.impl.frontend.frame.ImageEditorUIProvider" dynamic="true"/>
   </extensionPoints>
   <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
@@ -19,9 +23,11 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
-    <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerEventsListener"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.ShowBreakpointsDialogRemoteTopicListener"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowImagePopupRemoteTopicListener"/>
   </extensions>
 </idea-plugin>

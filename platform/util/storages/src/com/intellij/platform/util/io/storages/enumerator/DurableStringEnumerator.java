@@ -26,8 +26,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * Persistent enumerator for strings.
  * Uses append-only log to store strings, and in-memory Map[string.hash->id*].
- * Suitable for moderately big enumerators that are used very intensively, so
- * increased heap consumption pays off. For general cases use {@link DurableEnumerator}
+ * Suitable for moderately big enumerators that are used very intensively, so increased heap consumption pays off.
+ * <p/>
+ * For general cases use {@link DurableEnumerator} -- benchmarks show it is just ~10-15% slower than
+ * {@link DurableStringEnumerator} for most ops.
  */
 @ApiStatus.Internal
 public final class DurableStringEnumerator implements DurableDataEnumerator<String>,

@@ -121,7 +121,7 @@ internal class CommandRunnerExtension(
   }
 
   private fun getHtmlForLineRunner(insideFence: Boolean, hash: String): String {
-    val cssClass = "run-icon" + if (insideFence) " code-block" else ""
+    val cssClass = "run-icon-line" + if (insideFence) " code-block" else ""
     return "<a class='$cssClass' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
            "<img src='$RUN_LINE_ICON'>" +
            "</a>"

@@ -95,20 +95,6 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   }
 
   @Override
-  public void requestRebuildNextTime(String message) {
-  }
-
-  @Override
-  public boolean isRebuildRequested() {
-    return false;
-  }
-
-  @Override
-  public @Nullable String getRebuildReason() {
-    return null;
-  }
-
-  @Override
   public Module getModuleByFile(@NotNull VirtualFile file) {
     return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
   }

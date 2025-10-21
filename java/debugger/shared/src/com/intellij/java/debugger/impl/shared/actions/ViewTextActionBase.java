@@ -3,7 +3,6 @@ package com.intellij.java.debugger.impl.shared.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -12,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -26,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.java.debugger.impl.shared.engine.JavaValueTextModificationPreparatorKt.convertToJavaStringLiteral;
 
 @ApiStatus.Internal
 public abstract class ViewTextActionBase extends XFetchValueActionBase {
@@ -112,7 +112,7 @@ public abstract class ViewTextActionBase extends XFetchValueActionBase {
       if (myStringNode != null) {
         DebuggerUIUtil.setTreeNodeValue(myStringNode,
                                         XExpressionImpl.fromText(
-                                          StringUtil.wrapWithDoubleQuote(SharedDebuggerUtils.translateStringValue(myTextViewer.getText()))),
+                                          convertToJavaStringLiteral(myTextViewer.getText())),
                                         (@NlsContexts.DialogMessage String errorMessage) -> Messages.showErrorDialog(myStringNode.getTree(),
                                                                                                                      errorMessage));
       }

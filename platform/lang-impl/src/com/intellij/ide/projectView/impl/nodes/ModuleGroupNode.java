@@ -2,7 +2,6 @@
 
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -144,11 +143,6 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   public String getTestPresentation() {
     return "Group: " + getPresentableName();
-  }
-
-  @Override
-  public String getToolTip() {
-    return IdeBundle.message("tooltip.module.group");
   }
 
   @Override

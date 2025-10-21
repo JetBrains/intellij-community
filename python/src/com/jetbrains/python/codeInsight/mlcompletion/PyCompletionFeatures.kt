@@ -18,7 +18,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 
 object PyCompletionFeatures {
   fun isDictKey(element: LookupElement): Boolean {
@@ -90,7 +91,7 @@ object PyCompletionFeatures {
       sdk = PythonSdkUtil.findPythonSdk(containingFile)
     }
     if (vFile != null) {
-      val isFromStdLib = PythonSdkUtil.isStdLib(vFile, sdk)
+      val isFromStdLib = PySkeletonUtil.isStdLib(vFile, sdk)
       val canFindModule = ModuleUtilCore.findModuleForFile(vFile, psiElement.project) != null
       return ElementModuleCompletionFeatures(isFromStdLib, canFindModule)
     }

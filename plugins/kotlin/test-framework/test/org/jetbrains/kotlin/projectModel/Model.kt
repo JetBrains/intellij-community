@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.utils.Printer
-import java.io.File
+import java.nio.file.Path
 
 open class ProjectResolveModel(
     val mode: ProjectResolveMode,
@@ -47,33 +47,33 @@ enum class ProjectResolveMode {
 
 open class ResolveModule(
     val name: String,
-    rootProvider: () -> File,
+    rootProvider: () -> Path,
     val platform: TargetPlatform,
     val dependencies: List<ResolveDependency>,
-    testRootProvider: () -> File? = { null },
+    testRootProvider: () -> Path? = { null },
     val additionalCompilerArgs: String? = null,
-    val sourceRootProvider: () -> File? = { null },
+    val sourceRootProvider: () -> Path? = { null },
 ) {
-    val root: File by lazy {
+    val root: Path by lazy {
         rootProvider()
     }
 
-    val testRoot: File? by lazy {
+    val testRoot: Path? by lazy {
         testRootProvider()
     }
 
-    val sourceRoot: File? by lazy {
+    val sourceRoot: Path? by lazy {
         sourceRootProvider()
     }
 
     constructor(
         name: String,
-        root: File,
+        root: Path,
         platform: TargetPlatform,
         dependencies: List<ResolveDependency>,
-        testRoot: File? = null,
+        testRoot: Path? = null,
         additionalCompilerArgs: String? = null,
-        sourceRoot: File? = null,
+        sourceRoot: Path? = null,
     ) : this(
         name,
         rootProvider = { root },
@@ -91,9 +91,9 @@ open class ResolveModule(
         printer.println("Module $name")
         printer.pushIndent()
         printer.println("platform=$platform")
-        printer.println("root=${root.absolutePath}")
-        sourceRoot?.let { printer.println("sourceRoot=${it.absolutePath}") }
-        testRoot?.let { testRoot -> printer.println("testRoot=${testRoot.absolutePath}") }
+        printer.println("root=$root")
+        sourceRoot?.let { printer.println("sourceRoot=$it") }
+        testRoot?.let { testRoot -> printer.println("testRoot=$testRoot") }
         printer.println("dependencies=${dependencies.joinToString { it.to.name }}")
         if (additionalCompilerArgs != null) printer.println("additionalCompilerArgs=$additionalCompilerArgs")
     }
@@ -115,10 +115,10 @@ open class ResolveModule(
 
         var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
         var name: String? = null
-        var root: File? = null
+        var root: Path? = null
         var platform: TargetPlatform? = null
         val dependencies: MutableList<ResolveDependency.Builder> = mutableListOf()
-        var testRoot: File? = null
+        var testRoot: Path? = null
         var additionalCompilerArgs: String? = null
 
         open fun build(): ResolveModule {
@@ -145,13 +145,13 @@ open class ResolveModule(
 
 sealed class ResolveLibrary(
     name: String,
-    rootProvider: () -> File,
+    rootProvider: () -> Path,
     platform: TargetPlatform,
     val kind: PersistentLibraryKind<*>?,
-    sourceRootProvider: () -> File? = { null },
+    sourceRootProvider: () -> Path? = { null },
 ) : ResolveModule(name, rootProvider = rootProvider, platform, dependencies = emptyList(), sourceRootProvider = sourceRootProvider) {
 
-    constructor(name: String, root: File, platform: TargetPlatform, kind: PersistentLibraryKind<*>?) : this(name, { root }, platform, kind)
+    constructor(name: String, root: Path, platform: TargetPlatform, kind: PersistentLibraryKind<*>?) : this(name, { root }, platform, kind)
 
     class Builder(val target: ResolveLibrary) : ResolveModule.Builder() {
         override fun build(): ResolveModule = target
@@ -160,10 +160,10 @@ sealed class ResolveLibrary(
 
 sealed class Stdlib(
     name: String,
-    rootProvider: () -> File,
+    rootProvider: () -> Path,
     platform: TargetPlatform,
     kind: PersistentLibraryKind<*>?,
-    sourceRootProvider: () -> File? = { null }
+    sourceRootProvider: () -> Path? = { null }
 ) : ResolveLibrary(name, rootProvider, platform, kind, sourceRootProvider = sourceRootProvider) {
 
     object CommonStdlib : Stdlib(
@@ -199,7 +199,7 @@ sealed class Stdlib(
 
 sealed class KotlinTest(
     name: String,
-    rootProvider: () -> File,
+    rootProvider: () -> Path,
     platform: TargetPlatform,
     kind: PersistentLibraryKind<*>?
 ) : ResolveLibrary(name, rootProvider, platform, kind) {
@@ -227,7 +227,7 @@ sealed class KotlinTest(
 
     object Junit : KotlinTest(
         "junit",
-        { File("$IDEA_TEST_DATA_DIR/lib/junit-4.12.jar") },
+        { IDEA_TEST_DATA_DIR.resolve("lib").resolve("junit-4.12.jar").toPath() },
         JvmPlatforms.defaultJvmPlatform,
         null
     )
@@ -237,21 +237,21 @@ interface ResolveSdk
 
 object FullJdk : ResolveLibrary(
     "full-jdk",
-    File("fake file for full jdk"),
+    Path.of("fake file for full jdk"),
     JvmPlatforms.defaultJvmPlatform,
     null
 ), ResolveSdk
 
 object MockJdk : ResolveLibrary(
     "mock-jdk",
-    File("fake file for mock jdk"),
+    Path.of("fake file for mock jdk"),
     JvmPlatforms.defaultJvmPlatform,
     null
 ), ResolveSdk
 
 object KotlinSdk : ResolveLibrary(
     "kotlin-sdk",
-    File("fake file for kotlin sdk"),
+    Path.of("fake file for kotlin sdk"),
     CommonPlatforms.defaultCommonPlatform,
     null,
 ), ResolveSdk

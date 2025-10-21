@@ -107,9 +107,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
 
-    String actionGroupId = areFrontendDebuggerActionsEnabled()
-                           ? XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND
-                           : XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP;
+    String actionGroupId = XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP;
     myTreePanel = new XDebuggerTreePanel(project, editorsProvider, myDisposable, sourcePosition, actionGroupId,
                                          session == null ? null : session.getValueMarkers());
     myResultPanel = JBUI.Panels.simplePanel()

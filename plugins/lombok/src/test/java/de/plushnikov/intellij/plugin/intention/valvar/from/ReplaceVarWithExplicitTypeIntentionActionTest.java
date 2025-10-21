@@ -5,11 +5,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import de.plushnikov.intellij.plugin.intention.LombokIntentionActionTest;
+import org.jetbrains.annotations.NotNull;
 
 import static de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceValWithExplicitTypeGenericsIntentionActionTest.REPLACE_VAL_VAR_WITH_EXPLICIT_TYPE_DIRECTORY;
 
 public class ReplaceVarWithExplicitTypeIntentionActionTest extends LombokIntentionActionTest {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR;
+  }
 
   @Override
   protected String getBasePath() {

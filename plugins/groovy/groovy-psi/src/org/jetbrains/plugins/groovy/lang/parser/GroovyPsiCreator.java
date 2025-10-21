@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrPatternVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -109,6 +110,7 @@ public final class GroovyPsiCreator {
     if (elem == VARIABLE_DECLARATION) return new GrVariableDeclarationImpl(node);
     if (elem == TUPLE) return new GrTupleImpl(node);
     if (elem == VARIABLE) return new GrVariableImpl(node);
+    if (elem == PATTERN_VARIABLE) return new GrPatternVariableImpl(node);
 
     //type definitions
     if (elem == CLASS_TYPE_DEFINITION) return new GrClassDefinitionImpl(node);
@@ -178,6 +180,7 @@ public final class GroovyPsiCreator {
     if (elem == ELVIS_EXPRESSION) return new GrElvisExprImpl(node);
     if (elem == LOR_EXPRESSION) return new GrLogicalExpressionImpl(node);
     if (elem == LAND_EXPRESSION) return new GrLogicalExpressionImpl(node);
+    if (elem == IMPL_EXPRESSION) return new GrLogicalExpressionImpl(node);
     if (elem == XOR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
     if (elem == BOR_EXPRESSION) return new GrBitwiseExpressionImpl(node);
     if (elem == BAND_EXPRESSION) return new GrBitwiseExpressionImpl(node);

@@ -28,7 +28,7 @@ internal class CommandCompletionStateCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val service = ApplicationCommandCompletionService.getInstance()
     return setOf(
-      COMMAND_COMPLETION_STATE_EVENT.metric(service.commandCompletionEnabled(), false)
+      COMMAND_COMPLETION_STATE_EVENT.metric(service.commandCompletionEnabled(), service.useGroupEnabled())
     )
   }
 }

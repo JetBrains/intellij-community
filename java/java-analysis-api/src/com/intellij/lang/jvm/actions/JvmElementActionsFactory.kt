@@ -16,32 +16,32 @@ import com.intellij.lang.jvm.*
  * Every newly added method should return an empty list by default
  * and then be overridden in implementations for each language if it is possible.
  */
-abstract class JvmElementActionsFactory {
-  open fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> = emptyList()
+public abstract class JvmElementActionsFactory {
+  public open fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> = emptyList()
 
-  open fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> = emptyList()
+  public open fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> = emptyList()
 
-  open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
+  public open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
 
-  open fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
+  public open fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
 
-  open fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
-                                                  attributeIndex: Int,
-                                                  request: AnnotationAttributeRequest,
-                                                  @IntentionName text: String,
-                                                  @IntentionFamilyName familyName: String): List<IntentionAction> = emptyList()
+  public open fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                                         attributeIndex: Int,
+                                                         request: AnnotationAttributeRequest,
+                                                         @IntentionName text: String,
+                                                         @IntentionFamilyName familyName: String): List<IntentionAction> = emptyList()
 
-  open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
+  public open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
 
-  open fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> = emptyList()
+  public open fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> = emptyList()
 
-  open fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> = emptyList()
+  public open fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> = emptyList()
 
-  open fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> = emptyList()
+  public open fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> = emptyList()
 
-  open fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
+  public open fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 
-  open fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
+  public open fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 
-  open fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
+  public open fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 }

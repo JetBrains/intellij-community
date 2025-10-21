@@ -13,7 +13,7 @@ import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.migLayout.*
+import com.intellij.ui.layout.migLayout.createLayoutConstraints
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.CC

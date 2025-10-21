@@ -3,7 +3,6 @@ package com.intellij.compiler.server;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
@@ -247,30 +246,34 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
       @Override
       public void buildStarted(@NotNull UUID sessionId) {
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           myCapturedContext.runInChildContext(() -> myDelegate.buildStarted(sessionId));
-        }
+          return null;
+        });
       }
 
       @Override
       public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           myCapturedContext.runInChildContext(() -> myDelegate.handleBuildMessage(channel, sessionId, msg));
-        }
+          return null;
+        });
       }
 
       @Override
       public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           myCapturedContext.runInChildContext(() -> myDelegate.handleFailure(sessionId, failure));
-        }
+          return null;
+        });
       }
 
       @Override
       public void sessionTerminated(@NotNull UUID sessionId) {
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           myCapturedContext.runInChildContext(() -> myDelegate.sessionTerminated(sessionId));
-        }
+          return null;
+        });
       }
     }
   }

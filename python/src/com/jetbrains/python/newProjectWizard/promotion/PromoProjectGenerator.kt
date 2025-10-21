@@ -15,7 +15,7 @@ import javax.swing.JPanel
 abstract class PromoProjectGenerator(val isPython: Boolean) : DirectoryProjectGenerator<PyV3BaseProjectSettings> {
   abstract fun createPromoPanel(): JPanel
 
-  override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) = Unit
+  override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module): Unit = Unit
 
   override fun validate(baseDirPath: String): ValidationResult = ValidationResult.OK
 }

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.sshj` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "sshj_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "sshj",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":sshj_resources"],
+  exports = ["@lib//:libraries-sshj-_s_s_h_j"],
+  runtime_deps = ["@lib//:libraries-sshj-_s_s_h_j"]
+)
+### auto-generated section `build intellij.libraries.sshj` end

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
@@ -21,8 +20,6 @@ public abstract class BuildableRootsChangeRescanningInfo implements RootsChangeR
   public static @NotNull BuildableRootsChangeRescanningInfo newInstance() {
     return EntityIndexingService.getInstance().createBuildableInfoBuilder();
   }
-
-  public abstract @NotNull BuildableRootsChangeRescanningInfo addModule(@NotNull Module module);
 
   public abstract @NotNull BuildableRootsChangeRescanningInfo addInheritedSdk();
 

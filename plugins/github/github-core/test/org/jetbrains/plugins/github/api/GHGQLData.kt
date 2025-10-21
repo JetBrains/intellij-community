@@ -3,11 +3,6 @@ package org.jetbrains.plugins.github.api
 
 import com.apollographql.apollo.annotations.ApolloExperimental
 import com.apollographql.apollo.ast.*
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.stream.Collectors
-import kotlin.io.path.isDirectory
-import kotlin.io.path.name
 
 
 internal object GHGQLTestSchemas {
@@ -58,14 +53,7 @@ internal object GHGQLTestSchemas {
 internal object GHGQLQueryTestData {
   // TODO: Double-check when creating version-restricted queries / re-using in GitLab
   // Names of queries, human-readable, excluding /graphql/query/
-  val queryNames: List<String> = run {
-    val url = GHGQLQueryLoader::class.java.classLoader.getResource("graphql/query")!!
-    val directory = Paths.get(url.toURI())
-    Files.walk(directory)
-      .filter { !it.isDirectory() }
-      .map { it.name }
-      .collect(Collectors.toList())
-  }
+  val queryNames: List<String> = GHGQLQueryLoader.findAllQueries().map { it.removePrefix("graphql/query/") }
 
   fun toPath(queryName: String): String =
     "graphql/query/${queryName}"

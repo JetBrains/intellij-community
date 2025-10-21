@@ -98,18 +98,22 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
     myFixture.addFileToProject("MyBundle.properties", props);
     doTest(false);
     IntentionAction action = myFixture.findSingleIntention("Properly capitalize");
-    assertEquals("""
-       property.lowercase=Hello World
-       property.titlecase=Hello World
-       property.titlecase.html=<html><b>Hello</b> World</html>
-       property.parameterized=Hello {0}
-       property.choice.title=Hello {0,choice,0#World|1#Universe}
-       property.choice.mixed=Hello {0,choice,0#World|1#universe}
-       property.choice.lower=Hello {0,choice,0#world|1#universe}
-       property.choice.sentence.start={0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far
-       property.sentence.with.quote='return' is not allowed here
-       property.with.underscore.mnemonic=Subm_it
-       property.icu4j.title=Generate Code with {0, plural, one {Foo} other {Bar}}""", myFixture.getIntentionPreviewText(action));
+    String expected = """
+      property.lowercase=Hello World
+      property.titlecase=Hello World
+      property.titlecase.html=<html><b>Hello</b> World</html>
+      property.parameterized=Hello {0}
+      property.choice.title=Hello {0,choice,0#World|1#Universe}
+      property.choice.mixed=Hello {0,choice,0#World|1#universe}
+      property.choice.lower=Hello {0,choice,0#world|1#universe}
+      property.choice.sentence.start={0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far
+      property.sentence.with.quote='return' is not allowed here
+      property.with.underscore.mnemonic=Subm_it
+      property.icu4j.title=Generate Code with {0, plural, one {Foo} other {Bar}}""";
+    assertEquals(expected, myFixture.getIntentionPreviewText(action));
+    myFixture.testHighlighting("PropertyTest2.java");
+    action = myFixture.findSingleIntention("Properly capitalize");
+    assertEquals(expected, myFixture.getIntentionPreviewText(action));
   }
 
   public void testRecursiveMethod() {

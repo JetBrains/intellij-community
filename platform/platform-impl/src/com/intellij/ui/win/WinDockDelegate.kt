@@ -40,7 +40,7 @@ internal suspend fun createWinDockDelegate(): SystemDock? {
 
 private class WinDockDelegate(private val wsi: WinShellIntegration) : SystemDock {
   override suspend fun updateRecentProjectsMenu() {
-    val recentProjectActions = serviceAsync<RecentProjectListActionProvider>().getActions()
+    val recentProjectActions = serviceAsync<RecentProjectListActionProvider>().getActionsWithoutGroups()
     val jumpTasks = convertToJumpTasks(recentProjectActions)
     // todo WinShellIntegration should use coroutines
     withContext(Dispatchers.IO) {

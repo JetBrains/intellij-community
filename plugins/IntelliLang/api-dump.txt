@@ -106,26 +106,6 @@ a:org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport
 - ps:showEditInjectionDialog(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel,java.lang.String,java.lang.String):Z
 - useDefaultCommentInjector():Z
 - useDefaultInjector(com.intellij.psi.PsiLanguageInjectionHost):Z
-f:org.intellij.plugins.intelliLang.inject.InjectLanguageAction
-- com.intellij.codeInsight.intention.IntentionAction
-- com.intellij.codeInsight.intention.LowPriorityAction
-- sf:FIX_KEY:com.intellij.openapi.util.Key
-- sf:LAST_INJECTED_LANGUAGE:java.lang.String
-- <init>():V
-- s:addFixer(com.intellij.psi.PsiLanguageInjectionHost,com.intellij.util.Processor,java.lang.String):V
-- s:doChooseLanguageToInject(com.intellij.openapi.editor.Editor,com.intellij.util.Processor):Z
-- generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- s:getAllInjectables():java.util.List
-- getFamilyName():java.lang.String
-- getText():java.lang.String
-- invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-- s:invokeImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.injection.Injectable):V
-- s:invokeImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.injection.Injectable,org.intellij.plugins.intelliLang.inject.InjectLanguageAction$FixPresenter):V
-- isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- startInWriteAction():Z
-- s:withFixName(com.intellij.util.Processor,java.lang.String):com.intellij.util.Processor
-org.intellij.plugins.intelliLang.inject.InjectLanguageAction$FixPresenter
-- a:showFix(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.psi.SmartPsiElementPointer,java.lang.String,com.intellij.util.Processor):V
 f:org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - s:create(java.lang.String):org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - s:create(java.lang.String,java.lang.String,java.lang.String,Z):org.intellij.plugins.intelliLang.inject.InjectedLanguage
@@ -206,17 +186,6 @@ f:org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
 - getLanguageInjectionSupport():org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 - removeHost(com.intellij.psi.PsiLanguageInjectionHost):Z
 - removeHostWithUndo(com.intellij.openapi.project.Project,com.intellij.psi.PsiLanguageInjectionHost):Z
-f:org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
-- com.intellij.codeInsight.intention.IntentionAction
-- com.intellij.codeInsight.intention.LowPriorityAction
-- <init>():V
-- generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- getFamilyName():java.lang.String
-- getText():java.lang.String
-- invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-- s:invokeImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-- isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- startInWriteAction():Z
 c:org.intellij.plugins.intelliLang.inject.config.BaseInjection
 - com.intellij.openapi.components.PersistentStateComponent
 - org.intellij.plugins.intelliLang.inject.config.Injection
@@ -329,6 +298,10 @@ f:org.intellij.plugins.intelliLang.inject.config.ui.ValueRegExpAnnotator
 - sf:KEY:com.intellij.openapi.util.Key
 - <init>():V
 - annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
+f:org.intellij.plugins.intelliLang.references.LanguageInjectionUtil
+- sf:INSTANCE:org.intellij.plugins.intelliLang.references.LanguageInjectionUtil
+f:org.intellij.plugins.intelliLang.references.LanguageInjectionUtilKt
+- sf:LANGUAGE_PREFIX:java.lang.String
 a:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY_PATTERN:org.intellij.plugins.intelliLang.util.StringMatcher

@@ -8,3 +8,11 @@ import org.jetbrains.annotations.NonNls
 interface VcsTelemetrySpan {
   fun getName(): @NonNls String
 }
+
+internal enum class ChangesView(val tag: String) : VcsTelemetrySpan {
+  ChangesViewRefreshBackground("changes-view-refresh-background"),
+
+  ChangesViewRefreshEdt("changes-view-refresh-edt");
+
+  override fun getName(): String = tag
+}

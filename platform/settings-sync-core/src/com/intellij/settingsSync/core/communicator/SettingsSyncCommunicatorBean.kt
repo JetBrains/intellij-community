@@ -40,6 +40,7 @@ fun getAvailableSyncProviders(): List<SettingsSyncCommunicatorProvider> {
       val vendorName = plugin.vendor ?: plugin.organization ?: ""
 
       plugin.isBundled
+      || PluginManagerCore.isUpdatedBundledPlugin(plugin)
       || PluginManagerCore.isDevelopedByJetBrains(plugin)
       || PluginManagerCore.isVendorItemTrusted(vendorName)
     }

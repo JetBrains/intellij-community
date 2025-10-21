@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -27,30 +28,32 @@ import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
 object KotlinFirLookupElementFactory {
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createConstructorCallLookupElement(
         containingSymbol: KaNamedClassSymbol,
         visibleConstructorSymbols: List<KaConstructorSymbol>,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+        aliasName: Name? = null,
     ): LookupElementBuilder? {
         if (visibleConstructorSymbols.isEmpty()) return null
-        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy)
+        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy, aliasName)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createClassifierLookupElement(
         symbol: KaClassifierSymbol,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+        aliasName: Name? = null,
     ): LookupElementBuilder? = when (symbol) {
         is KaClassLikeSymbol ->
-            if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy)
+            if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy, aliasName)
             else null
 
         is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookupElement(
         symbol: KaNamedSymbol,
@@ -69,18 +72,19 @@ object KotlinFirLookupElementFactory {
         else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createCallableLookupElement(
         name: Name,
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
+        aliasName: Name? = null,
     ): LookupElementBuilder = when (signature) {
-        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType)
-        is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options)
+        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType, aliasName)
+        is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options, aliasName)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createBracketOperatorLookupElement(
         operatorName: Name,
         signature: KaCallableSignature<*>,
@@ -97,18 +101,18 @@ object KotlinFirLookupElementFactory {
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
         PackagePartLookupElementFactory.createLookup(packagePartFqName)
 
-    context(KaSession)
+    context(_: KaSession)
     fun createNamedArgumentLookupElement(name: Name, types: List<KaType>): LookupElement =
         NamedArgumentLookupElementFactory.createLookup(name, types)
 
     fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
         NamedArgumentLookupElementFactory.createLookup(name, value)
 
-    context(KaSession)
+    context(_: KaSession)
     fun createTypeLookupElement(type: KaType): LookupElement? =
         TypeLookupElementFactory.createLookup(type)
 
-    context(KaSession)
+    context(_: KaSession)
     fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
         TypeLookupElementFactory.createLookup(classSymbol)
 }

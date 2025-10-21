@@ -104,18 +104,20 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   /**
-   * Do not use project-level or module-level extensions.
+   * Use [extensionList] for application-level extensions and [ProjectExtensionPointName.getExtensions] for project-level extension instead
+   * of using this function.
    */
   @Obsolete
   fun getExtensionList(areaInstance: AreaInstance?): List<T> = getPointImpl(areaInstance).extensionList
 
   /**
-   * Consider using [ProjectExtensionPointName.getExtensions]
+   * Use [extensionList] for application-level extensions and [ProjectExtensionPointName.getExtensions] for project-level extension instead
+   * of using this function.
    */
   @Obsolete
   fun getExtensions(areaInstance: AreaInstance?): Array<T> = getPointImpl(areaInstance).extensions
 
-  @Deprecated("Do not use project-level or module-level extensions.")
+  @Deprecated("Use [point] for application-level extension point and [ProjectExtensionPointName.getPoint] for project-level")
   fun getPoint(areaInstance: AreaInstance?): ExtensionPoint<T> = getPointImpl(areaInstance)
 
   val point: ExtensionPoint<T>
@@ -159,6 +161,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     getRootPoint().processWithPluginDescriptor(consumer = consumer)
   }
 
+  @Deprecated("Pass CoroutineScope to addExtensionPointListener")
   fun addExtensionPointListener(listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
     getRootPoint().addExtensionPointListener(listener = listener,
                                                  invokeForLoadedExtensions = false,
@@ -172,18 +175,13 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
                                                  coroutineScope = coroutineScope)
   }
 
+  @Deprecated("Pass CoroutineScope to addExtensionPointListener")
   fun addExtensionPointListener(listener: ExtensionPointListener<T>) {
     getRootPoint().addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
   fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>) {
     getPointImpl(areaInstance).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Pass CoroutineScope to addChangeListener")
-  fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
-    getRootPoint().removeExtensionPointListener(listener)
   }
 
   @ApiStatus.ScheduledForRemoval

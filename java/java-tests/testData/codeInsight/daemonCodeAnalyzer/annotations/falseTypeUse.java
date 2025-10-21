@@ -15,6 +15,7 @@ class Example {
 
   public static <T> @One Foo.Bar<T> test1(T t) { return null; }
   public static <T> <error descr="Static member qualifying type may not be annotated">@Two</error> Foo.Bar<T> test2(T t) { return null; }
+  public static <T> @One Foo.Bar<T>[][] test3(T t) { return null; }
 
 }
 @Target(ElementType.METHOD)

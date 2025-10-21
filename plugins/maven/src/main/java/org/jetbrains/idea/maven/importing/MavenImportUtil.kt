@@ -13,7 +13,6 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenPlugin
+import org.jetbrains.idea.maven.model.MavenSource
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.MavenProject.ProcMode
 import org.jetbrains.idea.maven.server.MavenDistribution
@@ -148,38 +148,11 @@ object MavenImportUtil {
     return maxLevel
   }
 
-  internal fun hasTestCompilerArgs(project: MavenProject): Boolean {
-    val plugin = project.findCompilerPlugin() ?: return false
-    val executions = plugin.executions
-    if (executions == null || executions.isEmpty()) {
-      return hasTestCompilerArgs(plugin.configurationElement)
-    }
-
-    return executions.any { hasTestCompilerArgs(it.configurationElement) }
-  }
-
-  private fun hasTestCompilerArgs(config: Element?): Boolean {
-    return config != null && (config.getChild("testCompilerArgument") != null ||
-                              config.getChild("testCompilerArguments") != null)
-  }
-
-  internal fun hasExecutionsForTests(project: MavenProject): Boolean {
-    val plugin = project.findCompilerPlugin()
-    if (plugin == null) return false
-    val executions = plugin.executions
-    if (executions == null || executions.isEmpty()) return false
-    val compileExec = executions.find { isCompileExecution(it) }
-    val testExec = executions.find { isTestCompileExecution(it) }
-    if (compileExec == null) return testExec != null
-    if (testExec == null) return true
-    return !JDOMUtil.areElementsEqual(compileExec.configurationElement, testExec.configurationElement)
-  }
-
-  private fun isTestCompileExecution(e: MavenPlugin.Execution): Boolean {
+  internal fun isTestCompileExecution(e: MavenPlugin.Execution): Boolean {
     return checkExecution(e, PHASE_TEST_COMPILE, GOAL_TEST_COMPILE, EXECUTION_TEST_COMPILE)
   }
 
-  private fun isCompileExecution(e: MavenPlugin.Execution): Boolean {
+  internal fun isCompileExecution(e: MavenPlugin.Execution): Boolean {
     return checkExecution(e, PHASE_COMPILE, GOAL_COMPILE, EXECUTION_COMPILE)
   }
 
@@ -191,13 +164,12 @@ object MavenImportUtil {
            )
   }
 
-  internal fun multiReleaseOutputSyncEnabled(): Boolean {
-    return `is`("maven.sync.compileSourceRoots.and.multiReleaseOutput")
+  private fun multiReleaseOutputSyncEnabled(): Boolean {
+    return `is`("maven.import.separate.main.and.test.modules.when.multiReleaseOutput")
   }
 
   private fun compilerExecutions(project: MavenProject): List<MavenPlugin.Execution> {
-    val plugin = project.findCompilerPlugin() ?: return emptyList()
-    return plugin.executions ?: return emptyList()
+    return project.findCompilerPlugin()?.executions ?: return emptyList()
   }
 
   internal fun getNonDefaultCompilerExecutions(project: MavenProject): List<String> {
@@ -233,9 +205,25 @@ object MavenImportUtil {
     val executionId: String? = null,
   ) {
     fun getMavenLanguageLevel(): LanguageLevel? {
+      val scope = if (isTest) MavenSource.TEST_SCOPE else MavenSource.MAIN_SCOPE
+      val resultMaven4Source = mavenProject
+        .mavenSources
+        .filter { it.isFromSourceTag && it.isEnabled }
+        .filter { it.scope == scope }
+        .filter { it.lang == null || it.lang == MavenSource.JAVA_LANG }
+        .firstNotNullOfOrNull { it.targetVersion }
+
+      if (resultMaven4Source != null) {
+        return LanguageLevel.parse(resultMaven4Source)
+      }
+
       val useReleaseCompilerProp = isReleaseCompilerProp(mavenProject)
       val releaseLevel = if (useReleaseCompilerProp) getCompilerLevel("release") else null
       return releaseLevel ?: getCompilerLevel(if (isSource) "source" else "target")
+    }
+
+    private fun useMaven4Sources(mavenProject: MavenProject): Boolean {
+      return mavenProject.mavenSources.any { it.isFromSourceTag }
     }
 
     private fun getConfigs(): List<Element> {
@@ -342,10 +330,6 @@ object MavenImportUtil {
     return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0
   }
 
-  internal fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
-    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
-  }
-
   internal fun isMainOrTestModule(module: Module): Boolean {
     val type = module.getMavenModuleType()
     return type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY
@@ -353,9 +337,13 @@ object MavenImportUtil {
 
   @JvmStatic
   fun findPomXml(module: Module): VirtualFile? {
-    val project = module.project
+    return findPomXml(module.project, module.name)
+  }
+
+  @JvmStatic
+  fun findPomXml(project: Project, moduleName: String): VirtualFile? {
     val storage = project.workspaceModel.currentSnapshot
-    val pomPath = storage.resolve(ModuleId(module.name))?.exModuleOptions?.linkedProjectId?.toNioPathOrNull() ?: return null
+    val pomPath = storage.resolve(ModuleId(moduleName))?.exModuleOptions?.linkedProjectId?.toNioPathOrNull() ?: return null
     return VirtualFileManager.getInstance().findFileByNioPath(pomPath)
   }
 
@@ -379,11 +367,16 @@ object MavenImportUtil {
   }
 
   internal fun getModuleNames(project: Project, pomXml: VirtualFile): List<String> {
+    return getModuleEntities(project, pomXml)
+      .map { it.name }
+      .toList()
+  }
+
+  internal fun getModuleEntities(project: Project, pomXml: VirtualFile): List<ModuleEntity> {
     val storage = project.workspaceModel.currentSnapshot
     val pomXmlPath = pomXml.toNioPath()
     return storage.entities<ModuleEntity>()
       .filter { it.exModuleOptions?.linkedProjectId?.toNioPathOrNull() == pomXmlPath }
-      .map { it.name }
       .toList()
   }
 
@@ -677,7 +670,7 @@ object MavenImportUtil {
       return getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     }
 
-  private fun MavenProject.findCompilerPlugin(): MavenPlugin? {
+  internal fun MavenProject.findCompilerPlugin(): MavenPlugin? {
     return findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
   }
 

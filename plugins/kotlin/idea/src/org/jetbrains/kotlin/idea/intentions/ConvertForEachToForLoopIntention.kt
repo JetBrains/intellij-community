@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 
 class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention<KtSimpleNameExpression>(
-    KtSimpleNameExpression::class.java, KotlinBundle.lazyMessage("replace.with.a.for.loop")
+    KtSimpleNameExpression::class.java, KotlinBundle.messagePointer("replace.with.a.for.loop")
 ) {
     override fun isApplicableTo(element: KtSimpleNameExpression): Boolean {
         val referencedName = element.getReferencedName()

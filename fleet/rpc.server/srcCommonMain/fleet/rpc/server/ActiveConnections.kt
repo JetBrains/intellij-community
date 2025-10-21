@@ -1,5 +1,6 @@
 package fleet.rpc.server
 
+import fleet.rpc.EndpointKind
 import fleet.util.UID
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf

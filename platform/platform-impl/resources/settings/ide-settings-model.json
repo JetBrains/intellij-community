@@ -11741,6 +11741,65 @@
           ]
         }
       ]
+    },
+    {
+      "name": "GestureSettingsService",
+      "scope": "app",
+      "pluginId": "com.intellij.gestures",
+      "classFqn": "com.intellij.gestures.GestureSettingsService",
+      "storage": "gesture-settings.xml",
+      "properties": [
+        {
+          "name": "touchpadFingerCountThreshold",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "countToSwitchThresholdVertical",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "countToSwitchThresholdHorizontal",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "lastEventsBufferSize",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "gestureModifierKey",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "accumulatedMagnitudeThreshold",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "mouseMagnitudeScaling",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "gestureSwipeVerticalMagnitudeAdjustment",
+          "type": "Unsupported",
+          "javaType": "float"
+        },
+        {
+          "name": "gestureSwipeHorizontalMagnitudeAdjustment",
+          "type": "Unsupported",
+          "javaType": "float"
+        },
+        {
+          "name": "toolWindowResizeSensitivity",
+          "type": "Unsupported",
+          "javaType": "float"
+        }
+      ]
     }
   ]
 }

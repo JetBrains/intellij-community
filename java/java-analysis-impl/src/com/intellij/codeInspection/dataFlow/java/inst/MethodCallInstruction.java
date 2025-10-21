@@ -17,7 +17,10 @@ import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -74,7 +77,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       }
       else {
         myType = resolveResult.getSubstitutor().substitute(myTargetMethod.getReturnType());
-        myReturnNullability = DfaPsiUtil.getElementNullability(myType, myTargetMethod);
+        myReturnNullability = DfaPsiUtil.getElementNullabilityForRead(myType, myTargetMethod);
       }
     }
     myArgRequiredNullability = myTargetMethod == null
@@ -105,7 +108,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     }
 
     myMutation = MutationSignature.fromCall(call);
-    myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
+    myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullabilityForRead(myType, myTargetMethod);
   }
 
   /**
@@ -136,7 +139,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
     Nullability[] nullabilities = new Nullability[myArgCount];
     for (int i = 0; i < checkedCount; i++) {
-      nullabilities[i] = DfaPsiUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]);
+      nullabilities[i] = DfaPsiUtil.getElementNullabilityForWrite(substitutor.substitute(parameters[i].getType()), parameters[i]);
     }
     return nullabilities;
   }
@@ -190,13 +193,15 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
-    DfType qualifierDfType = stateBefore.getDfType(callArguments.getQualifier());
+    DfaValue qualifier = callArguments.getQualifier();
+    DfType qualifierDfType = stateBefore.getDfType(qualifier);
     PsiMethod realMethod = findSpecificMethod(DfaPsiUtil.dfTypeToPsiType(factory.getProject(), qualifierDfType));
-    if (realMethod != null && (TypeConstraint.fromDfType(qualifierDfType).isExact() || !PsiUtil.canBeOverridden(realMethod)) && 
-        PropertyUtil.getFieldOfGetter(realMethod) != null) {
+    boolean stable = TypeConstraint.fromDfType(qualifierDfType).isExact();
+    VariableDescriptor precomputed = JavaDfaValueFactory.getAccessedVariableOrGetter(realMethod, stable);
+    if (realMethod != null && precomputed instanceof PlainDescriptor) {
       callArguments = callArguments.makeTransparent();
     }
-    DfaValue defaultResult = getMethodResultValue(callArguments, stateBefore, factory, realMethod);
+    DfaValue defaultResult = getMethodResultValue(callArguments, stateBefore, factory, realMethod, precomputed);
     DfaCallState initialState = new DfaCallState(stateBefore, callArguments, defaultResult);
     Set<DfaCallState> currentStates = Collections.singleton(initialState);
     if (callArguments.getArguments() != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
@@ -301,13 +306,11 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
   private PsiMethod findSpecificMethod(@Nullable PsiType qualifierType) {
     if (myTargetMethod == null || qualifierType == null || !PsiUtil.canBeOverridden(myTargetMethod)) return myTargetMethod;
-    PsiExpression qualifierExpression = null;
-    if (myContext instanceof PsiMethodCallExpression) {
-      qualifierExpression = ((PsiMethodCallExpression)myContext).getMethodExpression().getQualifierExpression();
-    }
-    else if (myContext instanceof PsiMethodReferenceExpression) {
-      qualifierExpression = ((PsiMethodReferenceExpression)myContext).getQualifierExpression();
-    }
+    PsiExpression qualifierExpression = switch (myContext) {
+      case PsiMethodCallExpression expression -> expression.getMethodExpression().getQualifierExpression();
+      case PsiMethodReferenceExpression expression -> expression.getQualifierExpression();
+      default -> null;
+    };
     if (qualifierExpression instanceof PsiSuperExpression) return myTargetMethod; // non-virtual call
     return MethodUtils.findSpecificMethod(myTargetMethod, qualifierType);
   }
@@ -338,13 +341,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   }
 
   private @NotNull DfaValue getMethodResultValue(@NotNull DfaCallArguments callArguments,
-                                                 @NotNull DfaMemoryState state, 
-                                                 @NotNull DfaValueFactory factory, 
-                                                 PsiMethod realMethod) {
+                                                 @NotNull DfaMemoryState state,
+                                                 @NotNull DfaValueFactory factory,
+                                                 PsiMethod realMethod, 
+                                                 @Nullable VariableDescriptor precomputed) {
     DfaValue qualifierValue = callArguments.getQualifier();
-    boolean stable = TypeConstraint.fromDfType(state.getDfType(qualifierValue)).isExact();
-    VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(realMethod, stable);
-    DfaValue precomputedValue = descriptor == null ? null : descriptor.createValue(factory, qualifierValue);
+    DfaValue precomputedValue = precomputed == null ? null : precomputed.createValue(factory, qualifierValue);
 
     if (callArguments.getArguments() != null && myTargetMethod != null) {
       CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(myTargetMethod);
@@ -391,7 +393,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       Mutability mutable = Mutability.UNKNOWN;
       if (myTargetMethod != null) {
         if (realMethod != myTargetMethod) {
-          nullability = DfaPsiUtil.getElementNullability(type, realMethod);
+          nullability = DfaPsiUtil.getElementNullabilityForRead(type, realMethod);
           mutable = Mutability.getMutability(realMethod);
         } else {
           mutable = Mutability.getMutability(myTargetMethod);

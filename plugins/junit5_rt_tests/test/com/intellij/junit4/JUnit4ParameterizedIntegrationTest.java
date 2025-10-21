@@ -35,7 +35,7 @@ public class JUnit4ParameterizedIntegrationTest extends AbstractTestFrameworkCom
     PsiClass psiClass = findClass(myModule, "a.BaseTest");
     assertNotNull(psiClass);
     PsiMethod testMethod = psiClass.findMethodsByName("simple", false)[0];
-    configuration.bePatternConfiguration(Arrays.asList(findClass(myModule, "a.Test1"), 
+    configuration.bePatternConfiguration(Arrays.asList(findClass(myModule, "a.Test1"),
                                                        findClass(myModule, "a.Test2")), testMethod);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     String testOutput = processOutput.out.toString();
@@ -45,5 +45,19 @@ public class JUnit4ParameterizedIntegrationTest extends AbstractTestFrameworkCom
     assertTrue(testOutput, testOutput.contains("Test12"));
     assertTrue(testOutput, testOutput.contains("Test22"));
     assertFalse(testOutput, testOutput.contains("another"));
+  }
+
+  public void testSingleMethod() throws ExecutionException {
+    PsiClass psiClass = findClass(myModule, "a.Test3");
+    assertNotNull(psiClass);
+    PsiMethod testMethod = psiClass.findMethodsByName("simple", false)[0];
+    JUnitConfiguration configuration = createConfiguration(testMethod);
+
+    configuration.setProgramParameters("[0]");
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    String testOutput = processOutput.out.toString();
+    assertEmpty(processOutput.err);
+    assertTrue(testOutput, testOutput.contains("Test3[1]"));
   }
 }

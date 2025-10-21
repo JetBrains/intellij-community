@@ -14,7 +14,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Map;
 
 public class MarkDirtyTest extends IncrementalTestCase {
@@ -47,7 +47,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
       for (String url : library.getRootUrls(JpsOrderRootType.COMPILED)) {
         library.removeUrl(url, JpsOrderRootType.COMPILED);
       }
-      library.addRoot(new File(getAbsolutePath("moduleA/lib/util_new.jar")), JpsOrderRootType.COMPILED);
+      library.addRoot(Path.of(getAbsolutePath("moduleA/lib/util_new.jar")), JpsOrderRootType.COMPILED);
     }
     else {
       super.modify(stage);

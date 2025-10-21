@@ -562,6 +562,7 @@ private fun ClarifiedResolveResult.clarifyConstructorCallType(callSite: PyCallSi
     return initOrNewCallType
   }
   if (initOrNewCallType == null) {
+    // TODO requires weak union. See PyUnresolvedReferencesInspectionTest.testCustomNewReturnInAnotherModule
     return PyUnionType.createWeakType(PyClassTypeImpl(receiverClass, false))
   }
 

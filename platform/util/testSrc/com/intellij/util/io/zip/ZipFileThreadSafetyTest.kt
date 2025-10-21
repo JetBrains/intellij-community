@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip
 
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -11,7 +11,6 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 
 class ZipFileThreadSafetyTest {
-
   fun createTempZipFile(numEntries: Int): Path {
     val dir = directoryContent {
       zip("test.zip") {
@@ -28,7 +27,7 @@ class ZipFileThreadSafetyTest {
   fun `test concurrent access to zip file`(numThreads: Int) = timeoutRunBlocking() {
     val numEntries = 100
     val zipFile = createTempZipFile(numEntries)
-    val zipFileHandle = JBZipFile(zipFile.toFile())
+    val zipFileHandle = JBZipFile(zipFile)
     repeat(numThreads) {
       launch(Dispatchers.Default) {
         repeat(500) {

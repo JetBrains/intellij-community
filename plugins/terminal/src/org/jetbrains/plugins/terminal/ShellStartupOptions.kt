@@ -5,12 +5,16 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.containers.CollectionFactory
 import com.jediterm.core.util.TermSize
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.runner.InitialShellCommand
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.nio.file.Path
 
 class ShellStartupOptions private constructor(builder: Builder) {
   val workingDirectory: String? = builder.workingDirectory
   val shellCommand: List<String>? = builder.shellCommand
+  @ApiStatus.Internal
+  val initialShellCommand: InitialShellCommand? = builder.initialShellCommand
   val commandHistoryFileProvider: (() -> Path?)? = builder.commandHistoryFileProvider
   val initialTermSize: TermSize? = builder.initialTermSize
   val widget: TerminalWidget? = builder.widget
@@ -19,7 +23,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
   internal val startupMoment: TerminalStartupMoment? = builder.startupMoment
 
   fun builder(): Builder {
-    return Builder(workingDirectory, shellCommand, commandHistoryFileProvider, initialTermSize,
+    return Builder(workingDirectory, shellCommand, initialShellCommand, commandHistoryFileProvider, initialTermSize,
                    widget, shellIntegration, envVariables, startupMoment)
   }
 
@@ -35,6 +39,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
 
   class Builder internal constructor(var workingDirectory: String?,
                                      var shellCommand: List<String>?,
+                                     var initialShellCommand: InitialShellCommand?,
                                      var commandHistoryFileProvider: (() -> Path?)?,
                                      var initialTermSize: TermSize?,
                                      var widget: TerminalWidget?,
@@ -42,7 +47,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
                                      var envVariables: Map<String, String> = createEnvVariablesMap(),
                                      internal var startupMoment: TerminalStartupMoment? = null) {
 
-    constructor() : this(null, null, null, null, null)
+    constructor() : this(null, null, null, null, null, null)
 
     fun workingDirectory(workingDirectory: String?) = also { this.workingDirectory = workingDirectory }
     fun shellCommand(shellCommand: List<String>?) = also { this.shellCommand = shellCommand }

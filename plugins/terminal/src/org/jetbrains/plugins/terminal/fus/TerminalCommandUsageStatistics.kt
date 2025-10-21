@@ -19,10 +19,22 @@ object TerminalCommandUsageStatistics {
   private val absolutePathCommand = CommandData("<absolute path>", null)
   val knownCommandToSubCommandsMap: Map<String, Set<String>> = buildKnownCommandToSubCommandMap()
 
-  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command,
-                                                                             emptyCommand.command, whitespacesCommand.command)
-                                                                     + knownCommandToSubCommandsMap.keys)
-  internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
+  fun getKnownCommandValuesList(): List<String> {
+    val cornerCases = listOf(
+      relativePathCommand.command,
+      absolutePathCommand.command,
+      emptyCommand.command,
+      whitespacesCommand.command
+    )
+    return cornerCases + knownCommandToSubCommandsMap.keys
+  }
+
+  fun getKnownSubCommandValuesList(): List<String> {
+    return knownCommandToSubCommandsMap.values.flatten()
+  }
+
+  internal val commandExecutableField = EventFields.String("command", getKnownCommandValuesList())
+  internal val subCommandField = EventFields.String("subCommand", getKnownSubCommandValuesList())
 
   /**
    * Parses the provided [userCommandLine] and returns [CommandData] if command line contains known command or pattern,

@@ -41,7 +41,7 @@ class ControlProperty(Serialisable):
         linkedCell: str | None = None,
         listFillRange: str | None = None,
         cf: str | None = "pict",
-        id: Incomplete | None = None,
+        id=None,
     ) -> None: ...
 
 class Control(Serialisable):

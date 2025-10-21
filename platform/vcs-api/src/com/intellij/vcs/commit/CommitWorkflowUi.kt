@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.ui.TextAccessor
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 interface CommitWorkflowUi : UiCompatibleDataProvider, Disposable {
@@ -19,6 +20,7 @@ interface CommitWorkflowUi : UiCompatibleDataProvider, Disposable {
 
   fun activate(): Boolean
 
+  @ApiStatus.Internal
   @Deprecated("Use UiDataRule instead")
   fun addDataProvider(provider: DataProvider)
 

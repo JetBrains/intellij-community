@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -96,7 +95,6 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     final JBTable table = myFilterTable.getTable();
     table.setTableHeader(new JTableHeader());
     table.setStriped(false);
-    table.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     myFilterPanel = ToolbarDecorator.createDecorator(table)
       .disableUpDownActions()
       .setToolbarPosition(ActionToolbarPosition.RIGHT)

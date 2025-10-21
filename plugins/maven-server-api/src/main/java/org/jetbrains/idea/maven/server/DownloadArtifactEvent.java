@@ -5,18 +5,12 @@ import java.io.Serializable;
 
 public class DownloadArtifactEvent implements Serializable {
   private final String myFile;
-  private final String myPath;
 
-  public DownloadArtifactEvent(String file, String relativePath) {
+  public DownloadArtifactEvent(String file) {
     myFile = file;
-    myPath = relativePath;
   }
 
   public String getFile() {
     return myFile;
-  }
-
-  public String getPath() {
-    return myPath;
   }
 }

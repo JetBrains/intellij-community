@@ -57,14 +57,9 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected XVariablesViewBase(@NotNull Project project,
                                @NotNull XDebuggerEditorsProvider editorsProvider,
                                @Nullable XValueMarkers<?, ?> markers) {
-    boolean isWatchesView = this instanceof XWatchesView;
-    String frontendGroupId = isWatchesView
-                             ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP_FRONTEND
-                             : XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND;
-    String monolithGroupId = isWatchesView
+    String actionGroupId = this instanceof XWatchesView
                              ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP
                              : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP;
-    String actionGroupId = areFrontendDebuggerActionsEnabled() ? frontendGroupId : monolithGroupId;
     myTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, actionGroupId, markers);
     getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
     getTree().addTreeListener(new XDebuggerTreeListener() {

@@ -11,8 +11,11 @@ import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
+import com.intellij.python.pyproject.PY_PROJECT_TOML_TOOL_PREFIX
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.packaging.normalizePackageName
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.toml.lang.psi.*
@@ -114,20 +117,17 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    const val PY_PROJECT_TOML = "pyproject.toml"
-    const val BUILD_SYSTEM = "build-system"
     const val BUILD_REQUIRES = "requires"
-    const val TOOL_PREFIX = "tool."
 
     @JvmStatic
     fun collectTools(file: PsiFile, tools: MutableSet<String>) {
       val collected = file.children.map { element ->
         val key = (element as? TomlTable)?.header?.key?.text ?: ""
-        val name = if (key.startsWith(TOOL_PREFIX))
-          key.substringAfter(TOOL_PREFIX, "").substringBefore(".")
+        val name = if (key.startsWith(PY_PROJECT_TOML_TOOL_PREFIX))
+          key.substringAfter(PY_PROJECT_TOML_TOOL_PREFIX, "").substringBefore(".")
         else ""
 
-        normalizePackageName(name)
+        PyPackageName.normalizePackageName(name)
       }.filter {
         it.isNotEmpty()
       }
@@ -139,7 +139,7 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
     fun collectBuildBackends(file: PsiFile, systems: MutableSet<String>) {
       val collected = file.children
         .filter { element ->
-          (element as? TomlTable)?.header?.key?.text == BUILD_SYSTEM
+          (element as? TomlTable)?.header?.key?.text == PY_PROJECT_TOML_BUILD_SYSTEM
         }.flatMap { it ->
           it.children.filter { line ->
             val kv = (line as? TomlKeyValue)
@@ -151,7 +151,7 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
             }
           }
         }.mapNotNull {
-          val requirement = PyRequirementParser.fromLine(normalizePackageName(it))
+          val requirement = PyRequirementParser.fromLine(PyPackageName.normalizePackageName(it))
           requirement?.name
         }
 

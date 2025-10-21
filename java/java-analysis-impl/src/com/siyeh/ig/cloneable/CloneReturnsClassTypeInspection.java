@@ -100,7 +100,7 @@ public final class CloneReturnsClassTypeInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new CloneReturnsClassTypeVisitor();
   }
 

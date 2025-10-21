@@ -1,8 +1,6 @@
 from _typeshed import Incomplete
 
-from win32com.axdebug import contexts as contexts, documents, gateways as gateways
-from win32com.axdebug.util import trace as trace
-from win32com.axscript import axscript as axscript
+from win32comext.axdebug import documents
 
 currentDebugger: Incomplete
 

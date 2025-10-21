@@ -1,18 +1,21 @@
 package com.intellij.python.community.testFramework.testEnv.conda
 
 import com.intellij.execution.processTools.getResultStdout
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.testFramework.testEnv.PythonType
+import com.intellij.util.io.awaitExit
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
+import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -41,19 +44,36 @@ data object TypeConda : PythonType<PyCondaEnv>("conda") {
 
           for (arg in arrayOf("--name", "-p")) {
             val args = arrayOf(condaPath.toString(), "remove", arg, envName, "--all", "-y")
-            Runtime.getRuntime().exec(args).getResultStdout().getOrElse {
+            val exec = Runtime.getRuntime().exec(args)
+            launch {
+              try {
+                exec.awaitExit()
+              }
+              catch (e: CancellationException) {
+                exec.destroyForcibly()
+                throw e
+              }
+            }
+            exec.getResultStdout().getOrElse {
               logger<TypeConda>().warn(it)
             }
           }
         }
       }
     }
-    return Pair(PyCondaEnv(PyCondaEnvIdentity.UnnamedEnv(envDir.toString(), isBase = true), condaPath.toString()), cleanupCondas)
+    return Pair(
+      PyCondaEnv(
+        envIdentity = PyCondaEnvIdentity.UnnamedEnv(envDir.toString(), isBase = true),
+        fullCondaPathOnTarget = condaPath.toString(),
+      ),
+      cleanupCondas
+    )
   }
 
-  private suspend fun getCondaNames(condaPath: Path) =
-    PyCondaEnv.getEnvs(TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest()),
-                                 condaPath.toString()).getOrThrow()
+  private suspend fun getCondaNames(condaPath: Path): MutableSet<String> {
+    val envs = PyCondaEnv.getEnvs(BinOnEel(condaPath)).getOrThrow()
       .map { it.envIdentity.userReadableName }
       .toMutableSet()
+    return envs
+  }
 }

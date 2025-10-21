@@ -25,11 +25,9 @@ interface Problem {
 
   /**
    * A name used to group problems by context.
-   *
-   * todo IJPL-339 mark experimental
    */
   val contextGroup: CodeInsightContext?
-    @ApiStatus.Internal
+    @ApiStatus.Experimental
     get() = null
 
   /**

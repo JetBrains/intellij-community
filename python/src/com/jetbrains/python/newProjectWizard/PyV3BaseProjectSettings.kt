@@ -8,12 +8,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -27,7 +27,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
-      launch(CoroutineName("Generating git") + Dispatchers.IO) {
+      launch(TraceContext(PyBundle.message("tracecontext.generating.git")) + Dispatchers.IO) {
         withBackgroundProgress(project, PyBundle.message("new.project.git")) {
           GitRepositoryInitializer.getInstance()?.initRepository(project, baseDir, true) ?: error("No git service available")
         }

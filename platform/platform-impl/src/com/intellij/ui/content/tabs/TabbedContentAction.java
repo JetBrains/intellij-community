@@ -1,23 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.tabs;
 
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.wm.impl.content.ContentTabLabel;
-import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 
 public abstract class TabbedContentAction extends AnAction implements DumbAware {
@@ -185,67 +179,6 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getPreviousContentActionName());
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-  }
-
-  @ApiStatus.Experimental
-  public static final class SplitTabAction extends TabbedContentAction {
-    private final boolean myHorizontal;
-
-    public SplitTabAction(@NotNull ContentManager manager, boolean horizontal) {
-      super(manager, EmptyAction.createEmptyAction(ActionsBundle.actionText(horizontal ? "MoveTabRight" : "MoveTabDown"), null, false), manager);
-      myHorizontal = horizontal;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(component);
-      ContentManager manager = ObjectUtils.notNull(e.getData(PlatformDataKeys.CONTENT_MANAGER), myManager);
-      Content content = ObjectUtils.chooseNotNull(ObjectUtils.doIfCast(component, ContentTabLabel.class, o -> o.getContent()),
-                                                  manager.getSelectedContent());
-      if (content != null) {
-        decorator.splitWithContent(content, myHorizontal ? SwingConstants.RIGHT : SwingConstants.BOTTOM, -1);
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      AnAction action = ActionUtil.getAction(myHorizontal ? "SplitVertically" : "SplitHorizontally");
-      if (action != null) {
-        e.getPresentation().setIcon(action.getTemplatePresentation().getIcon());
-      }
-      e.getPresentation().setEnabledAndVisible(myManager.getContents().length > 1);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-  }
-
-  @ApiStatus.Experimental
-  public static final class UnsplitTabAction extends TabbedContentAction {
-    public UnsplitTabAction(@NotNull ContentManager manager) {
-      super(manager, ActionManager.getInstance().getAction("Unsplit"), manager);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-      decorator.unsplit(myManager.getSelectedContent());
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-      e.getPresentation().setEnabledAndVisible(decorator != null && decorator.canUnsplit());
-      e.getPresentation().setText(ActionsBundle.actionText("Unsplit"));
     }
 
     @Override

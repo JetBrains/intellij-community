@@ -7,6 +7,8 @@ import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.VERSION
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.TestOnly
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
  * Handles the machine learning experiments in Search Everywhere.
@@ -104,11 +106,6 @@ object SearchEverywhereMlExperiment {
     object ExperimentalModel : ActiveExperiment(true)
 
     /**
-     * An experiment group in the Actions tab, that enables typo-tolerant search
-     */
-    object Typos : ActiveExperiment(true)
-
-    /**
      * An experiment group that enables semantic search
      */
     object SemanticSearch: ActiveExperiment(true)
@@ -118,5 +115,21 @@ object SearchEverywhereMlExperiment {
      * (see, for example, IJPL-171760 or IJPL-55751)
      */
     object ExactMatchManualFix : ActiveExperiment(true)
+
+    /**
+     * An experiment group that combines both EssentialContributorPrediction and ExperimentalModel
+     * functionality for the All tab.
+     */
+    object CombinedExperiment : ActiveExperiment(true)
   }
+}
+
+@OptIn(ExperimentalContracts::class)
+fun SearchEverywhereMlExperiment.ExperimentType.isActiveExperiment(): Boolean {
+  contract {
+    returns(true) implies(this@isActiveExperiment is SearchEverywhereMlExperiment.ExperimentType.ActiveExperiment)
+    returns(false) implies(this@isActiveExperiment is SearchEverywhereMlExperiment.ExperimentType.NoExperiment)
+  }
+
+  return this is SearchEverywhereMlExperiment.ExperimentType.ActiveExperiment
 }

@@ -2,21 +2,21 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.isAtomic
+import org.jetbrains.kotlin.nj2k.recursivelyContainsNewlineBeforeOperator
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
 import org.jetbrains.kotlin.psi.KtPsiUtil
 
 /**
- * Analogous to `RemoveUnnecessaryParenthesesIntention`.
+ * Analogous to `RemoveUnnecessaryParenthesesInspection`.
  * Removes parentheses (conservatively) added by other steps.
  */
 class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : RecursiveConversion(context) {
 
-    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKParenthesizedExpression) return recurse(element)
         if (areParenthesesNecessary(element)) return recurse(element)
@@ -147,7 +147,7 @@ class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : Recurs
                 null
             }
 
-            val binaryOperationPrecedence = KotlinExpressionParsing.TOKEN_TO_BINARY_PRECEDENCE_MAP[binaryOperation];
+            val binaryOperationPrecedence = BinaryOperationPrecedence.TOKEN_TO_BINARY_PRECEDENCE_MAP[binaryOperation];
             if (binaryOperationPrecedence != null) {
                 return (KtPsiUtil.MAX_PRIORITY - 3) - binaryOperationPrecedence.ordinal;
             }

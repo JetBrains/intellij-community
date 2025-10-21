@@ -1386,7 +1386,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testPropertyInTheManagedModuleDependencyVersionOfPomType() = runBlocking {
-   // Registry.get("maven.server.debug").setValue(true, testRootDisposable)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

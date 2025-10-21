@@ -76,6 +76,7 @@ public final class UIDesignerIcons {
   /** 16x16 */ public static final @NotNull Icon Toolbar = load("com/intellij/uiDesigner/icons/toolbar.svg", -410578243, 0);
   @SuppressWarnings("unused")
   /** 16x16 */ public static final @NotNull Icon ToolbarSeparator = load("com/intellij/uiDesigner/icons/toolbarSeparator.svg", 357181327, 0);
+  /** 13x13 */ public static final @NotNull Icon ToolWindowUIDesigner = load("com/intellij/uiDesigner/icons/toolWindowUIDesigner.svg", 769014876, 2);
   @SuppressWarnings("unused")
   /** 16x16 */ public static final @NotNull Icon Tree = load("com/intellij/uiDesigner/icons/tree.svg", 631289274, 0);
   /** 16x16 */ public static final @NotNull Icon Unknown = load("com/intellij/uiDesigner/icons/unknown.svg", 2093308831, 0);

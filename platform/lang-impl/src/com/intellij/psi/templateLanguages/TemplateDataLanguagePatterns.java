@@ -50,7 +50,7 @@ public final class TemplateDataLanguagePatterns implements PersistentStateCompon
 
   @Override
   public void loadState(@NotNull Element state) {
-    myAssocTable = new FileTypeAssocTable<>();
+    myAssocTable = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
 
     final Map<String, Language> dialectMap = new HashMap<>();
     for (Language dialect : TemplateDataLanguageMappings.getTemplateableLanguages()) {

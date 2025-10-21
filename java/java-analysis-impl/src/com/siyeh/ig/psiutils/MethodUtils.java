@@ -445,29 +445,29 @@ public final class MethodUtils {
    *
    * @param method a base class method
    * @param specificType a specific type (class type or intersection type)
-   * @return more specific method, or base class method if more specific method cannot be found
+   * @return more specific method, or base class method if a more specific method cannot be found
    */
   public static @NotNull PsiMethod findSpecificMethod(@NotNull PsiMethod method, @Nullable PsiType specificType) {
     PsiClass qualifierClass = method.getContainingClass();
     if (qualifierClass == null) return method;
     if (specificType == null || specificType instanceof PsiArrayType) return method;
-    StreamEx<PsiType> types;
-    if (specificType instanceof PsiIntersectionType) {
-      types = StreamEx.of(((PsiIntersectionType)specificType).getConjuncts());
-    } else {
-      types = StreamEx.of(specificType);
+    if (!(specificType instanceof PsiIntersectionType intersectionType)) {
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(specificType);
+      if (psiClass == null || psiClass.isEquivalentTo(qualifierClass)) return method;
+      PsiMethod realMethod = MethodSignatureUtil.findMethodBySuperMethod(psiClass, method, true);
+      return Objects.requireNonNullElse(realMethod, method);
     }
-    List<PsiMethod> methods = types.map(PsiUtil::resolveClassInClassTypeOnly)
+    List<PsiMethod> methods = StreamEx.of(intersectionType.getConjuncts())
+      .map(PsiUtil::resolveClassInClassTypeOnly)
       .nonNull()
       .without(qualifierClass)
       .distinct()
-      .filter(specificClass -> InheritanceUtil.isInheritorOrSelf(specificClass, qualifierClass, true))
       .map(specificClass -> MethodSignatureUtil.findMethodBySuperMethod(specificClass, method, true))
       .nonNull()
       .distinct()
       .toList();
     if (methods.isEmpty()) return method;
-    PsiMethod best = methods.get(0);
+    PsiMethod best = methods.getFirst();
     for (PsiMethod realMethod : methods) {
       if (best.equals(realMethod)) continue;
       if (MethodSignatureUtil.isSuperMethod(best, realMethod)) {

@@ -2,17 +2,13 @@ from _typeshed import Incomplete
 from collections.abc import Iterable
 
 import _win32typing
-from win32.lib.pywintypes import error as error
+import win32api
 
+error = win32api.error
 langid: Incomplete
 
 def AddSourceToRegistry(
-    appName,
-    msgDLL: Incomplete | None = None,
-    eventLogType: str = "Application",
-    eventLogFlags: Incomplete | None = None,
-    categoryDLL: Incomplete | None = None,
-    categoryCount: int = 0,
+    appName, msgDLL=None, eventLogType: str = "Application", eventLogFlags=None, categoryDLL=None, categoryCount: int = 0
 ) -> None: ...
 def RemoveSourceFromRegistry(appName, eventLogType: str = ...) -> None: ...
 def ReportEvent(

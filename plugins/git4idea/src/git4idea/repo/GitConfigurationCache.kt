@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
 import fleet.multiplatform.shims.ConcurrentHashMap
@@ -42,10 +43,10 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
   }
 
   @RequiresBackgroundThread
-  fun readRepositoryConfig(repository: GitRepository, key: String): String? {
-    return computeCachedValue(RepoConfigKey(repository, key)) {
+  fun readRepositoryConfig(root: VirtualFile, key: String): String? {
+    return computeCachedValue(RepositoryConfigKey(root, key)) {
       try {
-        GitConfigUtil.getValue(repository.getProject(), repository.getRoot(), key)
+        GitConfigUtil.getValue(project, root, key)
       }
       catch (e: VcsException) {
         logger<GitProjectConfigurationCache>().warn(e)
@@ -56,17 +57,20 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
 
   fun clearForRepo(repository: GitRepository) {
     cache.keys.removeIf {
-      it is GitRepositoryConfigKey && it.repository == repository
+      it is GitRepositoryConfigKey && it.root == repository.root
     }
   }
 
   private fun clearInvalidKeys() {
+    val gitRepositoryManager = GitRepositoryManager.getInstance(project)
+    val activeRoots = gitRepositoryManager.repositories.mapTo(mutableSetOf()) { it.root }
+
     cache.keys.removeIf {
-      it is GitRepositoryConfigKey && it.repository.isDisposed
+      it is GitRepositoryConfigKey && it.root !in activeRoots
     }
   }
 
-  data class RepoConfigKey(override val repository: GitRepository, val key: String) : GitRepositoryConfigKey<String?>
+  data class RepositoryConfigKey(override val root: VirtualFile, val key: String) : GitRepositoryConfigKey<String?>
 }
 
 abstract class GitConfigurationCacheBase() : Disposable {
@@ -89,5 +93,5 @@ abstract class GitConfigurationCacheBase() : Disposable {
 
 interface GitConfigKey<T>
 interface GitRepositoryConfigKey<T> : GitConfigKey<T> {
-  val repository: GitRepository
+  val root: VirtualFile
 }

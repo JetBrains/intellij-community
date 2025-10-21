@@ -26,7 +26,7 @@ sealed class RpcMessage {
                          val method: String,
                          val args: Map<String, JsonElement>,
                          val meta: Map<String, JsonElement> = emptyMap()) : RpcMessage() {
-    val displayName: String get() = "RPC call ${classMethodDisplayName()}[${requestId}]"
+    val displayName: String get() = "RPC call ${classMethodDisplayName()}[#${requestId}]"
 
     fun classMethodDisplayName(): String {
       return classMethodDisplayName(service.id, method)

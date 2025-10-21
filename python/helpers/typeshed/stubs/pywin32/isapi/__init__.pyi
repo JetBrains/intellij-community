@@ -1,10 +1,8 @@
-from _typeshed import Incomplete
-
 class ISAPIError(Exception):
-    errno: Incomplete
-    strerror: Incomplete
-    funcname: Incomplete
-    def __init__(self, errno, strerror: Incomplete | None = None, funcname: Incomplete | None = None) -> None: ...
+    errno: int
+    strerror: str | None
+    funcname: str | None
+    def __init__(self, errno: int, strerror: str | None = None, funcname: str | None = None) -> None: ...
 
 class FilterError(ISAPIError): ...
 class ExtensionError(ISAPIError): ...

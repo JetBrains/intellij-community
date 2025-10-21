@@ -42,7 +42,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public final class FieldMayBeStaticInspection extends BaseInspection {
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FieldMayBeStaticVisitor();
   }
 

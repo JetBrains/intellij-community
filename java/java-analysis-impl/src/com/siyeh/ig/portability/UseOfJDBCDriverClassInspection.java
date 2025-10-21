@@ -29,7 +29,7 @@ public final class UseOfJDBCDriverClassInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UseOfConcreteInheritorVisitor("java.sql.Driver");
   }
 }

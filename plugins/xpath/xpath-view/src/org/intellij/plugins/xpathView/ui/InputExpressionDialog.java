@@ -112,7 +112,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 if (item != null) {
                     myContextProvider.getNamespaceContext().setMap(asMap(item.namespaces));
                     if (myXPathFile != null) {
-                      analyzer.restart(myXPathFile);
+                      analyzer.restart(myXPathFile, this);
                     }
                 }
             }
@@ -202,7 +202,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
-        analyzer.restart(myXPathFile);
+        analyzer.restart(myXPathFile, this);
     }
 
     private Set<String> findUnresolvedPrefixes() {

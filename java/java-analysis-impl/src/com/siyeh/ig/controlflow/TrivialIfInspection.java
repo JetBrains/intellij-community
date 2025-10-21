@@ -157,7 +157,7 @@ public final class TrivialIfInspection extends BaseInspection implements Cleanup
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {

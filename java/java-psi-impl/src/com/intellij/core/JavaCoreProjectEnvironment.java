@@ -23,6 +23,7 @@ import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -30,6 +31,7 @@ import java.io.File;
 /**
  * Used in Kotlin.
  */
+@Internal
 public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   private final JavaFileManager myFileManager;
   private final PackageIndex myPackageIndex;

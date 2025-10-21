@@ -256,7 +256,7 @@ public fun List.Companion.create(
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-@Deprecated("Please, use the overload with [Ordered.NumberFormatStyles].")
+@Deprecated("Please, use the overload with [Ordered.NumberFormatStyles].", level = DeprecationLevel.HIDDEN)
 public fun Ordered.Companion.create(
     numberStyle: TextStyle = defaultTextStyle,
     numberContentGap: Dp = 4.dp,
@@ -311,7 +311,7 @@ public fun Ordered.Companion.create(
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-@Deprecated("Please, use the overload with [Unordered.BulletCharStyles].")
+@Deprecated("Please, use the overload with [Unordered.BulletCharStyles].", level = DeprecationLevel.HIDDEN)
 public fun Unordered.Companion.create(
     bullet: Char? = '•',
     bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),

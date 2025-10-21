@@ -50,7 +50,7 @@ import javax.swing.ListSelectionModel
 
 abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
-    KotlinBundle.lazyMessage("implement.abstract.member")
+    KotlinBundle.messagePointer("implement.abstract.member")
 ) {
     companion object {
         private val LOG = Logger.getInstance("#${ImplementAbstractMemberIntentionBase::class.java.canonicalName}")

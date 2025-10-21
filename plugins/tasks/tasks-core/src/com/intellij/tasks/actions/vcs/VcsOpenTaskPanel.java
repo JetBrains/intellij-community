@@ -21,6 +21,7 @@ import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,13 +40,14 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   private JPanel myPanel;
   private JTextField myBranchName;
   private JTextField myChangelistName;
-  private JBCheckBox myCreateBranch;
+  private JBRadioButton myCreateBranch;
   private JBCheckBox myCreateChangelist;
   private ComboBox myBranchFrom;
   private JBLabel myFromLabel;
-  private JBCheckBox myUseBranch;
+  private JBRadioButton myUseBranch;
   private ComboBox<VcsTaskHandler.TaskInfo> myUseBranchCombo;
   private JBCheckBox myShelveChanges;
+  private JBRadioButton myDoNotAssociateBranch;
 
   private VcsTaskHandler myVcsTaskHandler;
   private static final String START_FROM_BRANCH = "start.from.branch";
@@ -72,14 +74,18 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     myCreateBranch.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (myCreateBranch.isSelected()) myUseBranch.setSelected(false);
         updateFields(false);
       }
     });
     myUseBranch.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (myUseBranch.isSelected()) myCreateBranch.setSelected(false);
+        updateFields(false);
+      }
+    });
+    myDoNotAssociateBranch.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
         updateFields(false);
       }
     });
@@ -103,6 +109,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myUseBranch.setSelected(false);
       myUseBranch.setVisible(false);
       myUseBranchCombo.setVisible(false);
+      myDoNotAssociateBranch.setVisible(false);
     }
     else {
       String branchName = getBranchName(task);

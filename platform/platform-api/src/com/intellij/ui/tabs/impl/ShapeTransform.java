@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
+
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -103,7 +106,9 @@ public abstract class ShapeTransform {
     return reset(null);
   }
 
-  protected final ShapeTransform reset(Rectangle shapeRec) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public final ShapeTransform reset(Rectangle shapeRec) {
     myPath = new GeneralPath();
     if (shapeRec != null) {
       myShapeRect = shapeRec;

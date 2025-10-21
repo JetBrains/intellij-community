@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
 class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("convert.string.template.to.build.string"),
+    KotlinBundle.messagePointer("convert.string.template.to.build.string"),
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression, caretOffset: Int): Boolean {
         return element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList() && element.interpolationPrefix == null

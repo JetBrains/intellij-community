@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.service
 import com.intellij.driver.model.RdTarget
 
 @Remote("com.intellij.ide.GeneralSettings")
@@ -16,16 +17,27 @@ interface AdvancedSettingsRef {
   fun getDefaultBoolean(id: String): Boolean
 }
 
+@Remote("com.intellij.openapi.updateSettings.impl.UpdateSettings")
+interface UpdateSettings {
+  fun setThirdPartyPluginsAllowed(allowed: Boolean)
+}
+
 fun Driver.setOpenNewProjectsInSameWindow() {
-  service(GeneralSettingsRef::class, rdTarget = RdTarget.BACKEND).setConfirmOpenNewProject(1)
+  service<GeneralSettingsRef>(RdTarget.BACKEND).setConfirmOpenNewProject(1)
 }
 
 fun Driver.setOpenNewProjectsInNewWindow() {
-  service(GeneralSettingsRef::class, rdTarget = RdTarget.BACKEND).setConfirmOpenNewProject(0)
+  service<GeneralSettingsRef>(RdTarget.BACKEND).setConfirmOpenNewProject(0)
 }
 
-fun Driver.advancedSettings(rdTarget: RdTarget = RdTarget.DEFAULT) = service(AdvancedSettingsRef::class, rdTarget)
+fun Driver.advancedSettings(rdTarget: RdTarget = RdTarget.DEFAULT): AdvancedSettingsRef {
+  return service<AdvancedSettingsRef>(rdTarget)
+}
 
 fun Driver.setAdvancedSetting(id: String, value: Boolean, rdTarget: RdTarget = RdTarget.DEFAULT) {
   advancedSettings(rdTarget).setBoolean(id, value)
+}
+
+fun Driver.setThirdPartyPluginsAllowed(allowed: Boolean) {
+  service<UpdateSettings>().setThirdPartyPluginsAllowed(allowed)
 }

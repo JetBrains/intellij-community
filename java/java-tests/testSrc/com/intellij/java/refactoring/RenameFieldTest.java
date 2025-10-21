@@ -6,18 +6,22 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.grazie.spellcheck.suggestion.SpellcheckingNameSuggestionProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RenameFieldTest extends LightRefactoringTestCase {

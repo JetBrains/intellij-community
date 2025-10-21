@@ -19,15 +19,21 @@ abstract class SpellCheckerQuickFixFactory {
 
     @JvmStatic
     @JvmOverloads
-    fun rename(element: PsiElement, tracker: SpellcheckerRateTracker? = null): LocalQuickFix {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createRename(element) } ?: RenameTo(tracker)
+    fun rename(typo: String, range: TextRange, element: PsiElement, tracker: SpellcheckerRateTracker? = null): LocalQuickFix {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createRename(element) } ?: RenameTo(typo, range, element, tracker)
     }
 
     @JvmStatic
     @JvmOverloads
-    fun changeToVariants(element: PsiElement, rangeInElement: TextRange, word: String, tracker: SpellcheckerRateTracker? = null): List<LocalQuickFix> {
+    fun changeToVariants(
+      element: PsiElement,
+      rangeInElement: TextRange,
+      word: String,
+      tracker: SpellcheckerRateTracker? = null,
+      suggestions: Set<String>? = null,
+    ): List<LocalQuickFix> {
       return EP_NAME.extensionList.firstNotNullOfOrNull { it.createChangeToVariantsFixes(element, rangeInElement, word) }
-             ?: ChangeTo(word, element, rangeInElement, tracker).getAllAsFixes()
+             ?: ChangeTo(word, element, rangeInElement, tracker, suggestions).getAllAsFixes()
     }
 
     @JvmStatic

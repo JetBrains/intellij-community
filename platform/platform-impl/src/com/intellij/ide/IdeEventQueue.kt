@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InvocationUtil
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -29,7 +30,6 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
 import com.intellij.openapi.keymap.impl.KeyState
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
@@ -45,9 +45,11 @@ import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.unwrapContextRunnable
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -116,6 +118,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private var lastActiveTime = System.nanoTime()
   private var lastEventTime = System.currentTimeMillis()
   private val dispatchers = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
+  private val nonLockingDispatchers = ContainerUtil.createLockFreeCopyOnWriteList<NonLockedEventDispatcher>()
   private val postProcessors = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
   private val preProcessors = ContainerUtil.createLockFreeCopyOnWriteList<EventDispatcher>()
   private val ready = HashSet<Runnable>()
@@ -138,6 +141,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     assert(isDispatchThread()) { Thread.currentThread() }
     val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
     assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
+    if (useNonBlockingFlushQueue) {
+      LaterInvocator.initializeNonBlockingFlushQueue(threadingSupport)
+    }
     systemEventQueue.push(this)
     EDT.updateEdt()
     replaceDefaultKeyboardFocusManager()
@@ -202,10 +208,16 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  @Deprecated("Use version for NonLockedEventDispatcher")
   fun addDispatcher(dispatcher: EventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, dispatchers)
   }
 
+  fun addDispatcher(dispatcher: NonLockedEventDispatcher, parent: Disposable?) {
+    addProcessor(dispatcher, parent, nonLockingDispatchers)
+  }
+
+  @Deprecated("Use version for NonLockedEventDispatcher")
   fun addDispatcher(dispatcher: EventDispatcher, scope: CoroutineScope) {
     dispatchers.add(dispatcher)
     scope.coroutineContext.job.invokeOnCompletion {
@@ -213,11 +225,23 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  fun addDispatcher(dispatcher: NonLockedEventDispatcher, scope: CoroutineScope) {
+    nonLockingDispatchers.add(dispatcher)
+    scope.coroutineContext.job.invokeOnCompletion {
+      nonLockingDispatchers.remove(dispatcher)
+    }
+  }
+
+  @Deprecated("Use version for NonLockedEventDispatcher")
   fun removeDispatcher(dispatcher: EventDispatcher) {
     dispatchers.remove(dispatcher)
   }
 
-  fun containsDispatcher(dispatcher: EventDispatcher): Boolean = dispatchers.contains(dispatcher)
+  fun removeDispatcher(dispatcher: NonLockedEventDispatcher) {
+    nonLockingDispatchers.remove(dispatcher)
+  }
+
+  fun containsDispatcher(dispatcher: EventDispatcher): Boolean = dispatchers.contains(dispatcher) || nonLockingDispatchers.contains(dispatcher)
 
   fun addPostprocessor(dispatcher: EventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, postProcessors)
@@ -305,7 +329,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           try {
             runCustomProcessors(finalEvent, preProcessors)
             performActivity(finalEvent, !nakedRunnable && isPureSwingEventWilEnabled && !threadingSupport.isInsideUnlockedWriteIntentLock()) {
-              if (progressManager == null) {
+              if (progressManager == null || (runnable != null && useNonBlockingFlushQueue && InvocationUtil.isFlushNow(runnable))) {
                 _dispatchEvent(finalEvent)
               }
               else {
@@ -464,11 +488,16 @@ class IdeEventQueue private constructor() : EventQueue() {
 
     if (e is WindowEvent) {
       // app activation can call methods that need write intent (like project saving)
-      threadingSupport.runPreventiveWriteIntentReadAction { processAppActivationEvent(e) }
+      if (wrapHighLevelFunctionsInWriteIntent) {
+        threadingSupport.runPreventiveWriteIntentReadAction { processAppActivationEvent(e) }
+      }
+      else {
+        processAppActivationEvent(e)
+      }
     }
 
     // IJPL-177735 Remove Write-Intent lock from IdeEventQueue.EventDispatcher
-    if (!shouldSkipListeners(e) && threadingSupport.runPreventiveWriteIntentReadAction { dispatchByCustomDispatchers(e) }) {
+    if (!shouldSkipListeners(e) && dispatchByCustomDispatchers(e)) {
       return
     }
     if (e is InputMethodEvent && SystemInfoRt.isMac && keyEventDispatcher.isWaitingForSecondKeyStroke) {
@@ -491,8 +520,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  // todo: remove when listeners would not acquire WI
   private fun shouldSkipListeners(e: AWTEvent): Boolean {
-    return e is InvocationEvent && SuvorovProgress.ForcedWriteActionRunnable.isMarkedRunnable(e)
+    return e is InvocationEvent && e.toString().contains(ThreadingSupport.RunnableWithTransferredWriteAction.NAME)
   }
 
   private fun isUserActivityEvent(e: AWTEvent): Boolean =
@@ -513,7 +543,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     idleTracker()
     synchronized(lock) {
       lastActiveTime = System.nanoTime()
-      resetThreadContext().use {
+      resetThreadContext {
         for (activityListener in activityListeners) {
           activityListener.run()
         }
@@ -557,7 +587,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private fun dispatchByCustomDispatchers(e: AWTEvent): Boolean {
-    for (eachDispatcher in dispatchers) {
+    for (eachDispatcher in nonLockingDispatchers) {
       try {
         if (eachDispatcher.dispatch(e)) {
           return true
@@ -568,16 +598,55 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
 
-    for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
+    val extensions = DISPATCHER_EP.extensionsIfPointIsRegistered + NON_LOCKED_DISPATCHER_EP.extensionsIfPointIsRegistered
+    var hasOldDispatchers = false
+
+    for (eachDispatcher in extensions) {
       try {
-        if (eachDispatcher.dispatch(e)) {
-          return true
+        if (eachDispatcher is NonLockedEventDispatcher) {
+          if (eachDispatcher.dispatch(e)) {
+            return true
+          }
+        }
+        else {
+          hasOldDispatchers = true
         }
       }
       catch (t: Throwable) {
         processException(t)
       }
     }
+
+    if (dispatchers.isNotEmpty() || hasOldDispatchers) {
+      val result = WriteIntentReadAction.compute<Boolean, Throwable> {
+        for (eachDispatcher in dispatchers) {
+          try {
+            if (eachDispatcher.dispatch(e)) {
+              return@compute true
+            }
+          }
+          catch (t: Throwable) {
+            processException(t)
+          }
+        }
+
+        for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
+          try {
+            if (eachDispatcher !is NonLockedEventDispatcher && eachDispatcher.dispatch(e)) {
+              return@compute true
+            }
+          }
+          catch (t: Throwable) {
+            processException(t)
+          }
+        }
+        false
+      }
+      if (result) {
+        return true
+      }
+    }
+
     return false
   }
 
@@ -606,9 +675,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   @Internal
   fun flushQueue() {
     EDT.assertIsEdt()
-    resetThreadContext().use {
+    resetThreadContext {
       while (true) {
-        peekEvent() ?: return
+        peekEvent() ?: return@resetThreadContext
         try {
           dispatchEvent(nextEvent)
         }
@@ -620,9 +689,11 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) {
-    resetThreadContext().use {
+    resetThreadContext {
       EDT.assertIsEdt()
       Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
+
+      val exceptions = SmartList<Throwable>()
 
       while (!exitCondition.isDone) {
         try {
@@ -634,8 +705,22 @@ class IdeEventQueue private constructor() : EventQueue() {
           eventConsumer.accept(event)
         }
         catch (e: Throwable) {
-          Logs.LOG.error(e)
+          try {
+            Logs.LOG.error(e)
+          }
+          catch (e: Throwable) {
+            // In tests, LOG.error usually throws
+            // This leads to prompt termination of modal progress, and it can cause very confusing errors that are unrelated to actual failures (MPS-38671)
+            // so here we make exception reporting resilient to errors, and allow modal progress to proceed
+            // Below we anyway rethrow the exceptions that were failed to
+            exceptions.add(e)
+          }
         }
+      }
+      when (exceptions.size) {
+        0 -> Unit
+        1 -> Logs.LOG.error(exceptions[0])
+        else -> Logs.LOG.error(CompoundRuntimeException(exceptions))
       }
       Logs.LOG.debug { "pumpEventsForHierarchy.exit($modalComponent, $exitCondition)" }
     }
@@ -644,6 +729,11 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun interface EventDispatcher {
     fun dispatch(e: AWTEvent): Boolean
   }
+
+  /**
+   * Marker interface for [EventDispatcher] which means that the dispatcher can be invoked without the write-intent lock
+   */
+  interface NonLockedEventDispatcher : EventDispatcher
 
   val idleTime: Long
     get() = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastActiveTime)
@@ -694,7 +784,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     get() = popupManager.isPopupActive
 
   //Windows OS doesn't support a Windows+Up/Down shortcut for dialogs, so we provide a workaround
-  private inner class WindowsUpMaximizer : EventDispatcher {
+  private inner class WindowsUpMaximizer : NonLockedEventDispatcher {
     override fun dispatch(e: AWTEvent): Boolean {
       if ((winMetaPressed
            && e is KeyEvent && e.getID() == KeyEvent.KEY_RELEASED) && (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_DOWN)) {
@@ -776,7 +866,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           // the manual call of the former event's dispatch() is required here because EventQueue.invokeAndWait() expects
           // that the invocation event's notifier is signaled and isDispatched() == true.
           // If not dispatch the original event, it hangs forever
-          installThreadContext(captured).use {
+          installThreadContext(captured) {
             event.dispatch()
           }
         })
@@ -872,6 +962,7 @@ private object Logs {
 typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
+private val NON_LOCKED_DISPATCHER_EP = ExtensionPointName<IdeEventQueue.NonLockedEventDispatcher>("com.intellij.nonLockedIdeEventQueueDispatcher")
 
 private const val defaultEventWithWrite = false
 
@@ -897,7 +988,7 @@ private fun skipMoveResizeEvents(event: AWTEvent): Boolean {
   return false
 }
 
-private fun addProcessor(dispatcher: IdeEventQueue.EventDispatcher, parent: Disposable?, set: MutableCollection<IdeEventQueue.EventDispatcher>) {
+private fun <T : IdeEventQueue.EventDispatcher> addProcessor(dispatcher: T, parent: Disposable?, set: MutableCollection<T>) {
   set.add(dispatcher)
   if (parent != null) {
     Disposer.register(parent) { set.remove(dispatcher) }
@@ -1107,7 +1198,7 @@ private object SequencedEventNestedFieldHolder {
 var skipWindowDeactivationEvents: Boolean = false
 
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
-private class EditingCanceller : IdeEventQueue.EventDispatcher {
+private class EditingCanceller : IdeEventQueue.NonLockedEventDispatcher {
   override fun dispatch(e: AWTEvent): Boolean =
     e is KeyEvent &&
     e.getID() == KeyEvent.KEY_PRESSED &&
@@ -1133,7 +1224,7 @@ private fun cancelCellEditing(): Boolean {
   }
 }
 
-private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
+private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
   private var waitingForAltRelease = false
   private var robot: Robot? = null
 
@@ -1242,9 +1333,9 @@ fun IdeEventQueue.flushExistingEvents() {
   EDT.assertIsEdt()
   var stop = false
   EventQueue.invokeLater(ContextAwareRunnable { stop = true })
-  resetThreadContext().use {
+  resetThreadContext {
     while (!stop) {
-      peekEvent() ?: return
+      peekEvent() ?: return@resetThreadContext
       try {
         dispatchEvent(nextEvent)
       }

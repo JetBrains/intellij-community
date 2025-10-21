@@ -3,6 +3,9 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -19,12 +22,17 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @TestApplication
@@ -50,7 +58,7 @@ class BackgroundWriteActionTest {
   }
 
   @Test
-  fun exclusion(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+  fun exclusion(): Unit = timeoutRunBlocking(context = Dispatchers.Default, timeout = 30.seconds) {
     val readCounter = AtomicInteger()
     val writeCounter = AtomicInteger()
 
@@ -70,7 +78,7 @@ class BackgroundWriteActionTest {
       }
     }
 
-    repeat(1000) {
+    repeat(2000) {
       launch {
         backgroundWriteAction {
           assertExclusive(read = false)
@@ -421,7 +429,7 @@ class BackgroundWriteActionTest {
     edtWriteAction {
       runBlockingCancellable {
         assertRead()
-        assertWrite() // since it is invoked on a thread with permission to write
+        assertWrite() // since the lock is parallelized
         assertWil()
       }
     }
@@ -679,6 +687,243 @@ class BackgroundWriteActionTest {
       job.complete()
       application.invokeLater {}
     }
+  }
+
+  @Test
+  fun `runWhenWriteActionIsCompleted is executed when lock is parallelized`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val executed = AtomicBoolean(false)
+    val job = Job(coroutineContext.job)
+    launch(Dispatchers.Default) {
+      readAction {
+        job.asCompletableFuture().join()
+      }
+    }
+    Thread.sleep(50)
+    val waJob = launch(Dispatchers.Default) {
+      backgroundWriteAction {
+      }
+    }
+    Thread.sleep(50)
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+      executed.set(true)
+    }
+    assertThat(executed.get()).isFalse
+    val clenanup = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true).second
+    try {
+      assertThat(executed.get()).isTrue
+    } finally {
+      clenanup()
+    }
+    job.complete()
+    waJob.join()
+  }
+
+
+  @Test
+  fun `no thread starvation because of many suspended read action`(): Unit = timeoutRunBlocking {
+    Assumptions.assumeTrue(useTrueSuspensionForWriteAction) {
+      "Without true suspension, thread starvation is difficult to overcome"
+    }
+    val job = Job(coroutineContext.job)
+    launch(Dispatchers.EDT) {
+      job.asCompletableFuture().join()
+    }
+    delay(50)
+    repeat(1000) {
+      launch(Dispatchers.Default) {
+        backgroundWriteAction {}
+      }
+    }
+    delay(100)
+    withContext(Dispatchers.Default) {
+      // pending background write action should not stop this computation from execution
+    }
+    job.complete()
+  }
+
+  @Test
+  fun `invokeAndWait works in post-write-action listener`() = timeoutRunBlocking {
+    val threadingSupport = getGlobalThreadingSupport()
+    val listener = object : WriteActionListener {
+      override fun afterWriteActionFinished(action: Class<*>) {
+        application.invokeAndWait { }
+      }
+    }
+    try {
+      threadingSupport.addWriteActionListener(listener)
+      backgroundWriteAction {
+      }
+    }
+    finally {
+      threadingSupport.removeWriteActionListener(listener)
+    }
+  }
+
+  @Test
+  fun `rogue read action during reacquisition of write lock of writeAction`(): Unit = timeoutRunBlocking {
+    val job = Job(coroutineContext.job)
+    withContext(Dispatchers.EDT) {
+      edtWriteAction {
+        (application as ApplicationImpl).executeSuspendingWriteAction(null, "") {
+          launch(Dispatchers.Default) {
+            readAction {
+              job.asCompletableFuture().join()
+            }
+          }
+          Thread.sleep(50)
+          launch(Dispatchers.Default) {
+            delay(100)
+            launch {
+              readAction {
+              }
+            }
+            delay(50)
+            job.complete()
+            assertTrue(ApplicationManagerEx.getApplicationEx().isWriteActionPending)
+          }
+        }
+      }
+    }
+  }
+
+  @Suppress("ControlFlowWithEmptyBody")
+  @ParameterizedTest()
+  @ValueSource(booleans = [true, false])
+  fun `no deadlock because of AWT lock on top of read action`(isPlainWrite: Boolean) = concurrencyTest() {
+    val awtLock = (object : Component() {}).treeLock
+    launch(Dispatchers.UiWithModelAccess) {
+      synchronized(awtLock) {
+        checkpoint(1)
+        checkpoint(5)
+        while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
+        }
+        Thread.sleep(1)
+        runReadAction {
+          checkpoint(6)
+        }
+      }
+    }
+    launch(Dispatchers.Default) {
+      readAction {
+        checkpoint(2)
+        while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
+        }
+        Thread.sleep(1)
+        checkpoint(4)
+        synchronized(awtLock) {
+          checkpoint(7)
+        }
+      }
+    }
+    launch(Dispatchers.Default) {
+      checkpoint(3)
+      if (isPlainWrite) {
+        backgroundWriteAction {
+          checkpoint(8)
+        }
+      } else {
+        readAndBackgroundWriteAction {
+          writeAction {
+            checkpoint(8)
+          }
+        }
+      }
+    }
+    checkpoint(9)
+  }
+
+  @ParameterizedTest()
+  @ValueSource(booleans = [true, false])
+  fun `write action cannot be executed multiple times when retried`(isPlainWrite: Boolean) = timeoutRunBlocking {
+    val service = application.service<ReadWriteActionSupport>()
+    Assumptions.assumeTrue { service is PlatformReadWriteActionSupport }
+    service as PlatformReadWriteActionSupport
+    repeat(if (isPlainWrite) 1000 else 500) {
+      launch(Dispatchers.Default) {
+        val counter = AtomicInteger(0)
+        if (isPlainWrite) {
+          backgroundWriteAction {
+            assertEquals(0, counter.getAndIncrement())
+          }
+        } else {
+          readAndBackgroundWriteAction {
+            writeAction {
+              assertEquals(0, counter.getAndIncrement())
+            }
+          }
+        }
+      }
+
+      launch(Dispatchers.Default) {
+        service.signalWriteActionNeedsToBeRetried()
+      }
+    }
+
+  }
+
+  @Test
+  fun `background write action inside parallelized lock is properly cancellable`() = timeoutRunBlocking {
+    modalProgress {
+      val raJob = Job(coroutineContext.job)
+      val raStarted = Job(coroutineContext.job)
+      launch(Dispatchers.Default) {
+        readAction {
+          raStarted.complete()
+          raJob.asCompletableFuture().join()
+        }
+      }
+      raStarted.join()
+      modalProgress {
+        val job = launch(Dispatchers.Default) {
+          backgroundWriteAction {
+          }
+        }
+        Thread.sleep(10)
+        job.cancel()
+        raJob.complete()
+        backgroundWriteAction {  }
+      }
+    }
+  }
+
+  @Test
+  fun `starvation stress test`(): Unit = timeoutRunBlocking(timeout = 30.seconds) {
+    repeat(100) {
+      coroutineScope {
+        val freezeJob = Job(coroutineContext.job)
+        val specialJobFreeze = Job(coroutineContext.job)
+        val specialJob = launch(Dispatchers.Default) {
+          backgroundWriteAction {
+            specialJobFreeze.asCompletableFuture().join()
+          }
+        }
+        launch {
+          backgroundWriteAction {
+          }
+        }
+        delay(10)
+        repeat(Runtime.getRuntime().availableProcessors() * 3) {
+          launch(Dispatchers.Default) {
+            freezeJob.asCompletableFuture().join()
+          }
+        }
+        delay(10) // provoke starvation
+
+        launch(Dispatchers.UiWithModelAccess) {
+          WriteIntentReadAction.run {
+          }
+          freezeJob.complete()
+        }
+        delay(10)
+        specialJob.invokeOnCompletion {
+          launch(Dispatchers.Default) {
+            freezeJob.asCompletableFuture().join()
+          }
+        }
+        specialJobFreeze.complete()
+      }
+    }
+
   }
 
 }

@@ -38,7 +38,7 @@ abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonType<ENV>>(
     val LOG = Logger.getInstance(this::class.java)
   }
 
-  private class ResourceWrapper<ENV : Any>(val env: ENV, val closeable: AutoCloseable) : ExtensionContext.Store.CloseableResource {
+  private class ResourceWrapper<ENV : Any>(val env: ENV, val closeable: AutoCloseable) : java.lang.AutoCloseable {
     override fun close() {
       closeable.close()
     }

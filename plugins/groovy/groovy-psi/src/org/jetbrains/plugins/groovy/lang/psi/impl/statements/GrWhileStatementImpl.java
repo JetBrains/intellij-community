@@ -3,13 +3,20 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrWhileStatementBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind;
 
 public class GrWhileStatementImpl extends GrWhileStatementBase implements GrWhileStatement {
 
@@ -25,6 +32,20 @@ public class GrWhileStatementImpl extends GrWhileStatementBase implements GrWhil
   @Override
   public String toString() {
     return "WHILE statement";
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    GroovyResolveKind.Hint elementClassHint = processor.getHint(GroovyResolveKind.HINT_KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(GroovyResolveKind.VARIABLE)) return true;
+    GrCondition condition = getCondition();
+    if (condition != null && lastParent == getBody()) {
+      return condition.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+    }
+    return true;
   }
 
   @Override

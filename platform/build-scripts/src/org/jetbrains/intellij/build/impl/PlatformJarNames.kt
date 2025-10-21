@@ -11,23 +11,23 @@ object PlatformJarNames {
   /**
    * Used by default for modules and module-level libraries included in the platform part of the distribution.
    */
-  internal const val APP_JAR: String = "app.jar"
+  internal const val APP_BACKEND_JAR: String = "app-backend.jar"
 
   /**
    * Used by default for modules and module-level libraries included in the platform part of the distribution, which are also used by 
    * JetBrains Client.
    */
-  internal const val APP_CLIENT_JAR: String = "app-client.jar"
+  internal const val APP_JAR: String = "app.jar"
 
   /**
    * Returns the name of the default JAR for a platform module.
    */
   internal fun getPlatformModuleJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
-    if (frontendModuleFilter.isModuleIncluded(moduleName)) {
+    if (frontendModuleFilter.isBackendModule(moduleName)) {
       if (moduleName.startsWith("fleet.")) {
-        return LIB_CLIENT_JAR
+        return LIB_BACKEND_JAR
       }
-      return APP_CLIENT_JAR
+      return APP_BACKEND_JAR
     }
     else {
       if (moduleName.startsWith("fleet.")) {
@@ -40,22 +40,22 @@ object PlatformJarNames {
   /**
    * Used by default for project-level libraries included in the platform part of the distribution.
    */
-  internal const val LIB_JAR: String = "lib.jar"
+  internal const val LIB_BACKEND_JAR: String = "lib-backend.jar"
 
   /**
    * Used by default for project-level libraries included in the platform part of the distribution, which are also used by JetBrains Client. 
    */
-  internal const val LIB_CLIENT_JAR: String = "lib-client.jar"
+  internal const val LIB_JAR: String = "lib.jar"
 
   /**
    * Used for modules and libraries included in the platform part which need to be scrambled. 
    */
-  const val PRODUCT_JAR: String = "product.jar"
+  const val PRODUCT_BACKEND_JAR: String = "product-backend.jar"
 
   /**
    * Used for modules and libraries which need to be scrambled and used by JetBrains Client.  
    */
-  const val PRODUCT_CLIENT_JAR: String = "product-client.jar"
+  const val PRODUCT_JAR: String = "product.jar"
   
   /**
    * Used in some IDEs for modules containing classes which are used in tests only and therefore should not be included in the IDE's 

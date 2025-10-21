@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.JvmDebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
@@ -23,6 +24,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Type;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +38,20 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
 
   public CustomFieldInplaceEditor(@NotNull XDebuggerTreeNode node,
                                   @Nullable UserExpressionDescriptorImpl descriptor,
-                                  @Nullable EnumerationChildrenRenderer renderer) {
+                                  @Nullable EnumerationChildrenRenderer renderer,
+                                  @NotNull DebuggerContextImpl debuggerContext) {
     super(node, "customField");
     myDescriptor = descriptor;
     myRenderer = renderer;
     myExpressionEditor.setExpression(descriptor != null ? TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()) : null);
 
-    ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode<?>)node.getParent()).getValueContainer()).getDescriptor();
+    ValueDescriptorImpl parentDescriptor = JvmDebuggerUtils.getDescriptorFromNode(((XValueContainerNode<?>)node.getParent()), debuggerContext);
+
+    if (parentDescriptor == null) {
+      // Likely it is a remote mode, and it is not implemented yet
+      return;
+    }
+
     ReadAction.nonBlocking(() -> DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject()).first)
       .finishOnUiThread(ModalityState.defaultModalityState(), context -> {
         if (context != null) {
@@ -52,11 +61,13 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  public static void editNew(@NotNull XValueNodeImpl parentNode) {
-    ValueDescriptorImpl descriptor = ((JavaValue)parentNode.getValueContainer()).getDescriptor();
+  @ApiStatus.Internal
+  public static void editNew(@NotNull XValueNodeImpl parentNode, DebuggerContextImpl debuggerContext) {
+    ValueDescriptorImpl descriptor = JvmDebuggerUtils.getDescriptorFromNode(parentNode, debuggerContext);
+    if (descriptor == null) return;
     EnumerationChildrenRenderer renderer = EnumerationChildrenRenderer.getCurrent(descriptor);
     XDebuggerTreeNode newNode = parentNode.addTemporaryEditorNode(AllIcons.Debugger.Db_watch, null);
-    DebuggerUIUtil.invokeLater(() -> new CustomFieldInplaceEditor(newNode, null, renderer) {
+    DebuggerUIUtil.invokeLater(() -> new CustomFieldInplaceEditor(newNode, null, renderer, debuggerContext) {
       @Override
       public void cancelEditing() {
         super.cancelEditing();

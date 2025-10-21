@@ -25,7 +25,7 @@ class CreateDirectoryOrPackageActionTest : LightPlatformTestCase() {
     }, testRootDisposable)
     val action = CreateDirectoryOrPackageAction()
     val directory = psiManager.findDirectory(getSourceRoot())!!
-    val items = action.collectSuggestedDirectories(directory)
+    val items = action.collectSuggestedDirectoriesTestAccessor(directory)
     Assert.assertEquals(1, items.size)
   }
 }

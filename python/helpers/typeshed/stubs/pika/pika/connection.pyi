@@ -1,4 +1,5 @@
 import abc
+import ssl
 from _typeshed import Incomplete
 from collections.abc import Callable
 from logging import Logger
@@ -16,15 +17,33 @@ PRODUCT: str
 LOGGER: Logger
 
 class Parameters:
+    __slots__ = (
+        "_blocked_connection_timeout",
+        "_channel_max",
+        "_client_properties",
+        "_connection_attempts",
+        "_credentials",
+        "_frame_max",
+        "_heartbeat",
+        "_host",
+        "_locale",
+        "_port",
+        "_retry_delay",
+        "_socket_timeout",
+        "_stack_timeout",
+        "_ssl_options",
+        "_virtual_host",
+        "_tcp_options",
+    )
     DEFAULT_USERNAME: str
     DEFAULT_PASSWORD: str
-    DEFAULT_BLOCKED_CONNECTION_TIMEOUT: Incomplete
-    DEFAULT_CHANNEL_MAX: Incomplete
-    DEFAULT_CLIENT_PROPERTIES: Incomplete
+    DEFAULT_BLOCKED_CONNECTION_TIMEOUT: None
+    DEFAULT_CHANNEL_MAX: int
+    DEFAULT_CLIENT_PROPERTIES: None
     DEFAULT_CREDENTIALS: Incomplete
     DEFAULT_CONNECTION_ATTEMPTS: int
-    DEFAULT_FRAME_MAX: Incomplete
-    DEFAULT_HEARTBEAT_TIMEOUT: Incomplete
+    DEFAULT_FRAME_MAX: int
+    DEFAULT_HEARTBEAT_TIMEOUT: None
     DEFAULT_HOST: str
     DEFAULT_LOCALE: str
     DEFAULT_PORT: int
@@ -32,10 +51,10 @@ class Parameters:
     DEFAULT_SOCKET_TIMEOUT: float
     DEFAULT_STACK_TIMEOUT: float
     DEFAULT_SSL: bool
-    DEFAULT_SSL_OPTIONS: Incomplete
+    DEFAULT_SSL_OPTIONS: None
     DEFAULT_SSL_PORT: int
     DEFAULT_VIRTUAL_HOST: str
-    DEFAULT_TCP_OPTIONS: Incomplete
+    DEFAULT_TCP_OPTIONS: None
     def __init__(self) -> None: ...
     def __eq__(self, other: object) -> bool: ...
     def __ne__(self, other: object) -> bool: ...
@@ -105,6 +124,7 @@ class Parameters:
     def tcp_options(self, value: dict[Incomplete, Incomplete] | None) -> None: ...
 
 class ConnectionParameters(Parameters):
+    __slots__ = ()
     def __init__(
         self,
         host: str = ...,
@@ -126,12 +146,14 @@ class ConnectionParameters(Parameters):
     ) -> None: ...
 
 class URLParameters(Parameters):
+    __slots__ = ("_all_url_query_values",)
     def __init__(self, url: str) -> None: ...
 
 class SSLOptions:
-    context: Incomplete
-    server_hostname: Incomplete
-    def __init__(self, context, server_hostname: Incomplete | None = None) -> None: ...
+    __slots__ = ("context", "server_hostname")
+    context: ssl.SSLContext
+    server_hostname: str | None
+    def __init__(self, context: ssl.SSLContext, server_hostname: str | None = None) -> None: ...
 
 class Connection(AbstractBase, metaclass=abc.ABCMeta):
     ON_CONNECTION_CLOSED: Final[str]
@@ -170,7 +192,7 @@ class Connection(AbstractBase, metaclass=abc.ABCMeta):
     def channel(
         self, channel_number: int | None = None, on_open_callback: Callable[[Channel], object] | None = None
     ) -> Channel: ...
-    def update_secret(self, new_secret, reason, callback: Incomplete | None = None) -> None: ...
+    def update_secret(self, new_secret, reason, callback=None) -> None: ...
     def close(self, reply_code: int = 200, reply_text: str = "Normal shutdown") -> None: ...
     @property
     def is_closed(self) -> bool: ...

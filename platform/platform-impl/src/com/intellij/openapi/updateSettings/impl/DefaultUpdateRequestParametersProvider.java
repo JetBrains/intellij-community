@@ -4,7 +4,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.PermanentInstallationID;
+import com.intellij.openapi.application.JetBrainsPermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -39,9 +39,9 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
       parameters.put("eap", "");
     }
 
-    parameters.put("uid", PermanentInstallationID.get());
+    parameters.put("uid", JetBrainsPermanentInstallationID.get());
 
-    if (!PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false)) {
+    if (!PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false)) {
       var machineId = ourMachineId.getValue();
       if (machineId != null) {
         parameters.put("mid", machineId);

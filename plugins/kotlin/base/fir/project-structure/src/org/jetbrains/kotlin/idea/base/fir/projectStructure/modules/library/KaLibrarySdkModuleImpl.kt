@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -26,7 +25,7 @@ internal class KaLibrarySdkModuleImpl @InternalKaModuleConstructor constructor(
     override val project: Project,
     override val entityId: SdkId,
     override val creationData: KaEntityBasedModuleCreationData
-) : KaLibraryModuleBase<SdkEntity, SdkId>(), KaModuleWithDebugData {
+) : KaEntityBasedLibraryModuleBase<SdkEntity, SdkId>(), KaModuleWithDebugData {
 
     val sdk: Sdk
         get() = entity.findSdkBridge(currentSnapshot)

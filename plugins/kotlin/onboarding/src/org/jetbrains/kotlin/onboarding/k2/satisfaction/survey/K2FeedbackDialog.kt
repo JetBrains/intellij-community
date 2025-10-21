@@ -2,10 +2,11 @@
 package org.jetbrains.kotlin.onboarding.k2.satisfaction.survey
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.CommonBlockBasedFeedbackDialogWithEmail
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import org.jetbrains.kotlin.onboarding.DescriptionBlockWithHint
 import org.jetbrains.kotlin.onboarding.FeedbackBundle
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.onboarding.FeedbackBundle
 class K2FeedbackDialog(
     project: Project?,
     forTest: Boolean
-) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
+) : CommonBlockBasedFeedbackDialogWithEmail(project, forTest) {
 
     /** Increase the additional number when feedback format is changed */
     override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 2
@@ -24,14 +25,6 @@ class K2FeedbackDialog(
 
     override fun shouldAutoCloseZendeskTicket(): Boolean {
         return false
-    }
-
-    override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-        CommonFeedbackSystemData.getCurrentData()
-    }
-
-    override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-        showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
     }
 
     override val myTitle: String = FeedbackBundle.message("dialog.k2.satisfaction.top.title")

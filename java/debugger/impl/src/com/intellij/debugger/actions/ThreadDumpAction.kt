@@ -512,7 +512,6 @@ private fun getStackTrace(threadReference: ThreadReference): String {
       threadReference.frames()
     }
     catch (e: IncompatibleThreadStateException) {
-      logger<ThreadDumpAction>().error(e)
       return "Incompatible thread state: thread not suspended"
     }
 

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.rpc.backend">
+<idea-plugin visibility="public" package="com.intellij.platform.rpc.backend">
   <dependencies>
     <module name="intellij.platform.backend"/>
     <!--<module name="intellij.platform.rpc"/>-->
@@ -7,6 +7,9 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApiProvider"
                     interface="com.intellij.platform.rpc.backend.RemoteApiProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.documentSync"
+                    interface="com.intellij.platform.rpc.backend.impl.DocumentSync"
                     dynamic="true"/>
   </extensionPoints>
 

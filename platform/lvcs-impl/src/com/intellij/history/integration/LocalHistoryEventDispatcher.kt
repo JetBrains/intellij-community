@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration
 
 import com.intellij.history.ActivityId
@@ -53,7 +53,8 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
     val projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices
     var containingProjectIndex: ProjectFileIndex? = null
     for (projectIndex in projectIndexes) {
-      if (!projectIndex.isInProjectOrExcluded(dir)) continue
+      val isProjectRelated = projectIndex.isInProjectOrExcluded(dir) || projectIndex.isUnderIgnored(dir)
+      if (!isProjectRelated) continue
       if (containingProjectIndex != null) return false // more than 1 project contains this dir
 
       containingProjectIndex = projectIndex
@@ -97,6 +98,7 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
       ?.takeIf { it.modificationStamp == e.modificationStamp }
 
     val content = gateway.acquireActualContentAndForgetSavedContent(f, cachedDocument) ?: return
+    //TODO RC: e.path already contains a path, compute it via f.getPath() is a waste of time
     facade.contentChanged(gateway.getPathOrUrl(f), content.first, content.second)
   }
 

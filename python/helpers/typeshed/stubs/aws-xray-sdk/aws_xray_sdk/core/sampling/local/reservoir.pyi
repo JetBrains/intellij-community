@@ -1,8 +1,6 @@
-from typing import Any
-
 class Reservoir:
-    traces_per_sec: Any
+    traces_per_sec: int
     used_this_sec: int
-    this_sec: Any
+    this_sec: int
     def __init__(self, traces_per_sec: int = 0) -> None: ...
-    def take(self): ...
+    def take(self) -> bool: ...

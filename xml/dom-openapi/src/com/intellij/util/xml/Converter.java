@@ -2,6 +2,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ public abstract class Converter<T> {
   /**
    * @deprecated not necessary for Integer, use {@link com.intellij.util.xml.converters.values.NumberValueConverter}
    */
+  @ApiStatus.Internal
   @Deprecated
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<>() {
     @Override
@@ -59,6 +61,7 @@ public abstract class Converter<T> {
   /**
    * @deprecated unnecessary
    */
+  @ApiStatus.Internal
   @Deprecated
   public static final Converter<String> EMPTY_CONVERTER = new Converter<>() {
     @Override

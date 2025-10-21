@@ -11,12 +11,14 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlEntityDecl;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public final class XmlEntityCache {
-  static final Object LOCK = new Object();
+  @ApiStatus.Internal
+  public static final Object LOCK = new Object();
   private static final Key<Map<String,CachedValue<XmlEntityDecl>>> XML_ENTITY_DECL_MAP = Key.create("XML_ENTITY_DECL_MAP");
 
   public static void cacheParticularEntity(PsiFile file, XmlEntityDecl decl) {
@@ -39,7 +41,8 @@ public final class XmlEntityCache {
     }
   }
 
-  static Map<String, CachedValue<XmlEntityDecl>> getCachingMap(final PsiElement targetElement) {
+  @ApiStatus.Internal
+  public static Map<String, CachedValue<XmlEntityDecl>> getCachingMap(final PsiElement targetElement) {
     Map<String, CachedValue<XmlEntityDecl>> map = targetElement.getUserData(XML_ENTITY_DECL_MAP);
     if (map == null){
       map = new HashMap<>();

@@ -84,7 +84,11 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public String speedSearchText() {
-    return getDisplayText() + " " + StringUtil.notNullize(getUserDescription());
+    var logExpr = myBreakpointProxy.getLogExpressionObjectInt();
+    var condExpr = myBreakpointProxy.getConditionExpressionInt();
+    return getDisplayText() + " " + StringUtil.notNullize(getUserDescription()) + " " +
+           (logExpr != null ? logExpr.getExpression() : "") + " " +
+           (condExpr != null ? condExpr.getExpression() : "");
   }
 
   @Override

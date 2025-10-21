@@ -9,8 +9,10 @@
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in the Python plugin -->
   <module value="com.intellij.platform.ide.provisioner"/>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.debugger.streams.core"/>
+    <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>
@@ -21,12 +23,10 @@
     <module name="intellij.idea.customization.base"/>
     <module name="intellij.idea.customization.backend"/>
     <module name="intellij.platform.tips"/>
-    <module name="intellij.rd.ide.model.generated"/>
-    <module name="intellij.rd.platform"/>
-    <module name="intellij.rd.ui"/>
   </content>
 
-  <xi:include href="/META-INF/common-ide-modules.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="/META-INF/community-extensions.xml">

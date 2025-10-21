@@ -4,11 +4,10 @@ package com.intellij.python.community.execService.python.advancedApi
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.HelperName
-import com.intellij.python.community.execService.python.impl.validatePythonAndGetVersionImpl
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator
-import com.jetbrains.python.errorProcessing.PyExecResult
+import com.intellij.python.community.execService.python.addHelper
+import com.intellij.python.community.execService.python.impl.validatePythonAndGetInfoImpl
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 
 // This in advanced API, most probably you need "api.kt"
@@ -18,15 +17,15 @@ import org.jetbrains.annotations.ApiStatus
  */
 suspend fun <T> ExecService.executePythonAdvanced(
   python: ExecutablePython,
-  argsBuilder: suspend ArgsBuilder.() -> Unit = {},
+  args: Args,
   options: ExecOptions = ExecOptions(),
   processInteractiveHandler: ProcessInteractiveHandler<T>,
-): PyExecResult<T> =
-  executeAdvanced(python.binary, {
-    addArgs(*python.args.toTypedArray())
-    argsBuilder()
+): PyResult<T> =
+  executeAdvanced(
+    binary = python.binary,
+    args = Args(*python.args.toTypedArray()).add(args),
     // TODO: Merge PATH
-  }, options.copy(env = options.env + python.env), processInteractiveHandler)
+    options = options.copy(env = options.env + python.env), processInteractiveHandler)
 
 
 /**
@@ -39,18 +38,17 @@ suspend fun <T> ExecService.executeHelperAdvanced(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyExecResult<T> = executePythonAdvanced(python, {
-  addLocalFile(PythonHelpersLocator.findPathInHelpers(helper))
-  addArgs(*args.toTypedArray())
-
-}, options, transformerToHandler(procListener, processOutputTransformer))
+): PyResult<T> = executePythonAdvanced(
+  python,
+  Args().addHelper(helper).addArgs(args),
+  options, transformerToHandler(procListener, processOutputTransformer))
 
 /**
- * Ensures that this python is executable and returns its version. Error if python is broken.
+ * Ensures that this python is executable and returns its info. Error if python is broken.
  *
  * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
  * As we need workable pythons, we validate it by executing
  */
 @ApiStatus.Internal
-suspend fun ExecService.validatePythonAndGetVersion(python: ExecutablePython): PyResult<LanguageLevel> =
-  validatePythonAndGetVersionImpl(python)
+suspend fun ExecService.validatePythonAndGetInfo(python: ExecutablePython): PyResult<PythonInfo> =
+  validatePythonAndGetInfoImpl(python)

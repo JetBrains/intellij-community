@@ -89,10 +89,10 @@ public open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindin
         get() = isCtrlPressed
 
     override val KeyEvent.isSelectFirstItem: Boolean
-        get() = key == Key.Home && !isContiguousSelectionKeyPressed
+        get() = (key == Key.MoveHome || key == Key.Home) && !isContiguousSelectionKeyPressed
 
     override val KeyEvent.isExtendSelectionToFirstItem: Boolean
-        get() = key == Key.Home && isContiguousSelectionKeyPressed
+        get() = (key == Key.MoveHome || key == Key.Home) && isContiguousSelectionKeyPressed
 
     override val KeyEvent.isSelectLastItem: Boolean
         get() = key == Key.MoveEnd && !isContiguousSelectionKeyPressed

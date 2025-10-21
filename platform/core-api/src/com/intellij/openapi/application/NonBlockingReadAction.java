@@ -17,15 +17,18 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /**
- * A utility for running non-blocking read actions in background thread.
- * "Non-blocking" means that to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
+ * A utility for running non-blocking read actions in a background thread.
+ * <p>
+ * <i>Non-blocking</i> means that to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
  * {@link ProcessCanceledException} and then restarted.
- * Code blocks running inside should be prepared to get this exception at any moment,
- * and they should call {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} frequently enough.
- * They should also be side-effect-free or at least idempotent, to avoid consistency issues when interrupted in the middle and restarted.
- * <p></p>
+ * Code running inside such a non-blocking read action should be prepared to get this exception at any moment, and:
+ * <ul>
+ *   <li>call {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} frequently enough (because our cancellation mechanism is cooperative).</li>
+ *   <li>be side-effect-free or at least idempotent, to avoid consistency issues when interrupted in the middle and restarted.</li>
+ * </ul>
+ * <p>
  * The recommended usage is {@code ReadAction.nonBlocking(...).withXxx()....finishOnUiThread(...).submit(...)}.
- * It's the only way that allows to access the computation result safely. The alternatives
+ * It's the only way that allows accessing the computation result safely. The alternatives
  * (e.g. {@link #executeSynchronously()}, {@link org.jetbrains.concurrency.Promise} methods) mean that you might get the computation result
  * in a background thread after a read action is finished, so a write action can then occur at any time and make the result outdated.
  * <p/>
@@ -108,6 +111,7 @@ public interface NonBlockingReadAction<T> {
    * This can be useful when the results of the previous computation won't make sense anyway in the changed environment.
    * NOTE: current implementation prohibit from using same .coalesceBy key for computations of different origins (see
    * {@link com.intellij.openapi.application.impl.NonBlockingReadActionImpl.Submission#getComputationOrigin()} for details).
+   *
    * @param equality objects that together identify the computation: if they're all equal in two submissions,
    *                 then the computations are merged. Callers should take care to pass something unique there
    *                 (e.g. some {@link com.intellij.openapi.util.Key} or {@code this}.{@code getClass()}),
@@ -116,7 +120,7 @@ public interface NonBlockingReadAction<T> {
    */
   @Contract(pure = true)
   @NotNull
-  NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality);
+  NonBlockingReadAction<T> coalesceBy(@NotNull Object @NotNull ... equality);
 
   /**
    * Submit this computation to be performed in a non-blocking read action on background thread. The returned promise
@@ -140,16 +144,16 @@ public interface NonBlockingReadAction<T> {
    * just computed value obsolete.
    * Therefore, it's advised to use asynchronous {@link #submit} API where possible,
    * preferably coupled with {@link #finishOnUiThread} to ensure result validity.<p></p>
-   *
+   * <p>
    * If the current thread already has read access, the computation is executed as is, without any write-action-cancellability.
    * It's the responsibility of the caller to take care about it.<p></p>
-   *
+   * <p>
    * {@link #finishOnUiThread} and {@link #coalesceBy} are not supported with synchronous non-blocking read actions.
    *
    * @return the result of the computation
    * @throws ProcessCanceledException if the computation got expired due to {@link #expireWhen} or {@link #expireWith} or {@link #wrapProgress}.
-   * @throws IllegalStateException if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
-   * @throws RuntimeException when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
+   * @throws IllegalStateException    if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
+   * @throws RuntimeException         when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
    */
   @RequiresBlockingContext
   T executeSynchronously() throws ProcessCanceledException;

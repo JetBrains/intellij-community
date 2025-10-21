@@ -10,9 +10,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -32,7 +33,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
-  private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
+  private boolean visibleIfFolded;
 
   private final MarkupModelImpl myModel;
   private TextAttributes myForcedTextAttributes;
@@ -128,20 +129,29 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
     return colorScheme.getAttributes(myTextAttributesKey);
   }
 
+  private void runUnderWriteLock(Runnable runnable) {
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+    if (node == null) {
+      runnable.run();
+    }
+    else {
+      node.getTree().runUnderWriteLock(runnable);
+    }
+  }
+
   @Override
   public void setTextAttributes(@Nullable TextAttributes textAttributes) {
     TextAttributes old = myForcedTextAttributes;
     if (old == textAttributes) return;
-
     myForcedTextAttributes = textAttributes;
 
-    if (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER ||
-        old == null && myTextAttributesKey != null) {
-      fireChanged(false, true, true);
-    }
-    else if (!Objects.equals(old, textAttributes)) {
-      fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes),
-                  !Objects.equals(getForegroundColor(old), getForegroundColor(textAttributes)));
+    boolean erasedChanged = old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER ||
+                old == null && myTextAttributesKey != null;
+    boolean attributesChanged = !Objects.equals(old, textAttributes);
+    if (erasedChanged || attributesChanged) {
+      boolean fontStyleChanged = erasedChanged || getFontStyle(old) != getFontStyle(textAttributes);
+      boolean foregroundColorChanged = erasedChanged || !Objects.equals(getForegroundColor(old), getForegroundColor(textAttributes));
+      fireChanged(false, fontStyleChanged, foregroundColorChanged);
     }
   }
 
@@ -157,13 +167,13 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setVisibleIfFolded(boolean value) {
     if (isVisibleIfFolded() != value) {
-      putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+      runUnderWriteLock(() -> visibleIfFolded = value);
     }
   }
 
   @Override
   public boolean isVisibleIfFolded() {
-    return VISIBLE_IF_FOLDED.isIn(this);
+    return visibleIfFolded;
   }
 
   private static int getFontStyle(@Nullable TextAttributes textAttributes) {
@@ -186,12 +196,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
   @Override
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
-    boolean oldRenderedInGutter = isRenderedInGutter();
     LineMarkerRenderer old = myLineMarkerRenderer;
     myLineMarkerRenderer = renderer;
-    if (isRenderedInGutter() != oldRenderedInGutter) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
     if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
     }
@@ -218,12 +224,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
   @Override
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
-    boolean oldRenderedInGutter = isRenderedInGutter();
     GutterMark old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
-    if (isRenderedInGutter() != oldRenderedInGutter) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
     if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
       if (old instanceof Disposable oldDisposableRenderer) {
@@ -361,6 +363,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
   @Override
   public void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+    runUnderWriteLock(EmptyRunnable.getInstance()); // throw exception if changed under read lock
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
       // under IN_BATCH_CHANGE_MASK, do not fire events, just add flags above
       int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;
@@ -373,6 +376,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
     else {
       myModel.fireAttributesChanged(this, renderersChanged, fontStyleChanged, foregroundColorChanged);
     }
+    myNode.attributesChanged();
   }
 
   @Override
@@ -466,12 +470,6 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   public int getLayer() {
     RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)(Object)myNode;
     return node == null ? -1 : node.myLayer;
-  }
-
-  @Override
-  public boolean isRenderedInGutter() {
-    RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)(Object)myNode;
-    return node != null && node.isRenderedInGutter() || RangeHighlighterEx.super.isRenderedInGutter();
   }
 
   @Override

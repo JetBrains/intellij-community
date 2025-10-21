@@ -1,15 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -21,17 +20,19 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChainedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChainedEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ChainedParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChainedParentEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEntityData) : ChainedParentEntity,
-                                                                                          WorkspaceEntityBase(dataSource) {
+internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEntityData) : ChainedParentEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val CHILD_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ChainedParentEntity::class.java, ChainedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ChainedParentEntity::class.java, ChainedEntity::class.java,
+                                                                         ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
@@ -53,8 +54,8 @@ internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEnti
   }
 
 
-  internal class Builder(result: ChainedParentEntityData?) :
-    ModifiableWorkspaceEntityBase<ChainedParentEntity, ChainedParentEntityData>(result), ChainedParentEntity.Builder {
+  internal class Builder(result: ChainedParentEntityData?) : ModifiableWorkspaceEntityBase<ChainedParentEntity, ChainedParentEntityData>(
+    result), ChainedParentEntityBuilder {
     internal constructor() : this(ChainedParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -121,18 +122,18 @@ internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEnti
 
     // List of non-abstract referenced types
     var _child: List<ChainedEntity>? = emptyList()
-    override var child: List<ChainedEntity.Builder>
+    override var child: List<ChainedEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILD_CONNECTION_ID, this)!!
-            .toList() as List<ChainedEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? List<ChainedEntity.Builder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILD_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ChainedEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? List<ChainedEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? List<ChainedEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? List<ChainedEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -174,7 +175,7 @@ internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEnti
 internal class ChainedParentEntityData : WorkspaceEntityData<ChainedParentEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChainedParentEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChainedParentEntity> {
     val modifiable = ChainedParentEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -194,15 +195,14 @@ internal class ChainedParentEntityData : WorkspaceEntityData<ChainedParentEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChainedParentEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChainedParentEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChainedParentEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ChainedParentEntity(entitySource) {
     }
   }

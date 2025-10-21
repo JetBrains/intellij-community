@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.system.OS
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,8 +17,7 @@ import java.util.*
 private const val MARKETPLACE_PLUGIN_DIR: String = "marketplace"
 private const val MARKETPLACE_BOOTSTRAP_JAR: String = "marketplace-bootstrap.jar"
 
-private fun findMarketplaceBootDir(pluginDir: Path): Path =
-  pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot")
+private fun findMarketplaceBootDir(pluginDir: Path): Path = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot")
 
 private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoot: Path): Boolean {
   if (Files.notExists(mpBoot)) {
@@ -32,8 +31,9 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
         ideVersion = parseVersion(reader.readLine())
       }
     }
-    catch (_: IOException) { }
-    if (ideVersion == null && SystemInfoRt.isMac) {
+    catch (_: IOException) {
+    }
+    if (ideVersion == null && OS.CURRENT == OS.macOS) {
       Files.newBufferedReader(homePath.resolve("Resources/build.txt")).use { reader ->
         ideVersion = parseVersion(reader.readLine())
       }
@@ -47,12 +47,14 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
           untilVersion = parseVersion(reader.readLine())
         }
       }
-      catch (_: IOException) { }
+      catch (_: IOException) {
+      }
       @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
       return ideVersion!!.isCompatible(sinceVersion, untilVersion)
     }
   }
-  catch (_: Throwable) { }
+  catch (_: Throwable) {
+  }
   return true
 }
 
@@ -63,7 +65,7 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
  * Currently used in Rider.
  */
 internal fun initMarketplace() {
-  val distDir = Path.of(PathManager.getHomePath())
+  val distDir = PathManager.getHomeDir()
   val preinstalledPluginDir = distDir.resolve("plugins")
 
   var pluginDir = preinstalledPluginDir
@@ -73,7 +75,7 @@ internal fun initMarketplace() {
   var installMarketplace = Files.exists(mpBoot)
 
   if (!installMarketplace) {
-    pluginDir = Path.of(PathManager.getPluginsPath())
+    pluginDir = PathManager.getPluginsDir()
     marketPlaceBootDir = findMarketplaceBootDir(pluginDir)
     mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
     installMarketplace = isMarketplacePluginCompatible(homePath = distDir, pluginDir = pluginDir, mpBoot = mpBoot)
@@ -109,17 +111,16 @@ internal fun initMarketplace() {
 }
 
 private class SimpleVersion(private val major: Int, private val minor: Int) : Comparable<SimpleVersion> {
-  private fun isAtLeast(ver: Comparable<SimpleVersion>) = ver <= this
-
-  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean = when {
-    since != null && until != null -> compareTo(since) >= 0 && compareTo(until) <= 0
-    since != null -> isAtLeast(since)
-    until != null -> until.isAtLeast(this)
-    else -> true  // assume compatible of nothing is specified
+  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean {
+    // assume compatible when no bounds are specified
+    return (since == null || this >= since) && (until == null || this <= until)
   }
 
-  override fun compareTo(other: SimpleVersion): Int =
-    if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
+  override fun compareTo(other: SimpleVersion): Int {
+    return if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
+  }
+
+  override fun toString(): String = "${major}/${minor}"
 }
 
 private fun parseVersion(rawText: String?): SimpleVersion? {
@@ -138,11 +139,12 @@ private fun parseVersion(rawText: String?): SimpleVersion? {
 
     val dot = text.indexOf('.')
     if (dot >= 0) {
-      return SimpleVersion(major = text.substring(0, dot).toInt(), minor = parseMinor(text.substring(dot + 1)))
+      return SimpleVersion(major = text.take(dot).toInt(), minor = parseMinor(text.substring(dot + 1)))
     }
     return SimpleVersion(major = text.toInt(), minor = 0)
   }
-  catch (_: NumberFormatException) { }
+  catch (_: NumberFormatException) {
+  }
   return null
 }
 
@@ -153,16 +155,19 @@ private fun parseMinor(text: String): Int {
     }
 
     val dot = text.indexOf('.')
-    return (if (dot >= 0) text.substring(0, dot) else text).toInt()
+    return (if (dot >= 0) text.take(dot) else text).toInt()
   }
-  catch (_: NumberFormatException) { }
+  catch (_: NumberFormatException) {
+  }
   return 0
 }
 
 private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) : PathClassLoader.BytecodeTransformer {
-  override fun isApplicable(className: String, loader: ClassLoader): Boolean =
-    impl.isApplicable(className, loader, null)
+  override fun isApplicable(className: String, loader: ClassLoader): Boolean {
+    return impl.isApplicable(className, loader, null)
+  }
 
-  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? =
-    impl.transform(loader, className, null, classBytes)
+  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? {
+    return impl.transform(loader, className, null, classBytes)
+  }
 }

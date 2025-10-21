@@ -1,18 +1,27 @@
 import codecs
 import sys
 import threading
-from _typeshed import Unused
+from _typeshed import SupportsFlush, SupportsWrite, Unused
 from collections.abc import Iterable
-from typing import Any, BinaryIO, TextIO
+from typing import Any, Protocol, TypeVar, type_check_only
 from typing_extensions import Self
 
 from serial import Serial
 
+_AnyStrT_contra = TypeVar("_AnyStrT_contra", contravariant=True)
+
+@type_check_only
+class _SupportsWriteAndFlush(SupportsWrite[_AnyStrT_contra], SupportsFlush, Protocol): ...
+
+@type_check_only
+class _SupportsRead(Protocol):
+    def read(self, n: int, /) -> str: ...
+
 def key_description(character: str) -> str: ...
 
 class ConsoleBase:
-    byte_output: BinaryIO
-    output: codecs.StreamWriter | TextIO
+    byte_output: _SupportsWriteAndFlush[bytes]
+    output: _SupportsWriteAndFlush[str]
     def __init__(self) -> None: ...
     def setup(self) -> None: ...
     def cleanup(self) -> None: ...
@@ -39,7 +48,7 @@ else:
     class Console(ConsoleBase):
         fd: int
         old: list[Any]  # return type of termios.tcgetattr()
-        enc_stdin: TextIO
+        enc_stdin: _SupportsRead
 
 class Transform:
     def rx(self, text: str) -> str: ...

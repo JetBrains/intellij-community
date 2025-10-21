@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
     <orderEntry type="module-library">
       <library name="commons-collections" type="repository">
         <properties include-transitive-deps="false" maven-id="commons-collections:commons-collections:3.2.2">

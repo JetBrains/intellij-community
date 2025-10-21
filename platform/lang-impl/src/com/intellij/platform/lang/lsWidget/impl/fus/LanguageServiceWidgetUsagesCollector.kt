@@ -27,8 +27,9 @@ object LanguageServiceWidgetUsagesCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  fun actionInvoked(project: Project, actionKind: LanguageServiceWidgetActionKind, serviceSpecificClass: Class<*>) =
+  fun actionInvoked(project: Project, actionKind: LanguageServiceWidgetActionKind, serviceSpecificClass: Class<*>) {
     ACTION_INVOKED.log(project, actionKind, serviceSpecificClass)
+  }
 }
 
 

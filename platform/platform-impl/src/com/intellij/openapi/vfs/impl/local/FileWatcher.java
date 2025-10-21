@@ -73,7 +73,7 @@ public final class FileWatcher implements AppLifecycleListener {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, this);
 
     myFileWatcherExecutor.execute(() -> {
-      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.initialize(myManagingFS, myNotificationSink));
+      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.initialize(myNotificationSink));
       if (isOperational()) {
         postInitCallback.run();
       }

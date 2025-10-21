@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
+import com.intellij.openapi.vfs.findOrCreateDirectory
+import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.util.GradleVersion
@@ -657,6 +660,12 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
   fun `test Gradle test distribution nodes are hidden by default`(gradleVersion: GradleVersion) {
     assumeThatGradleIsAtLeast(gradleVersion, "7.5")
     testJunit5Project(gradleVersion) {
+      // Project configuration without an existing directory is not allowed
+      runBlocking {
+        edtWriteAction {
+          projectRoot.findOrCreateDirectory("lib")
+        }
+      }
       writeText("settings.gradle", """
         plugins {
             id "com.gradle.enterprise" version "3.15.1"

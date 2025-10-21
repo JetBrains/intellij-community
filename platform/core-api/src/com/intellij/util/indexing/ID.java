@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.Java11Shim;
+import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import org.jetbrains.annotations.*;
 

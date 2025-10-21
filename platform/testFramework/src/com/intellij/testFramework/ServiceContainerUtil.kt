@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ServiceContainerUtil")
 package com.intellij.testFramework
 
@@ -9,12 +9,11 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.TestMutableComponentManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.messages.MessageBusOwner
-import com.intellij.util.messages.impl.PluginListenerDescriptor
 import org.jetbrains.annotations.TestOnly
 
 private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
@@ -60,18 +59,16 @@ fun <T : Any> ComponentManager.registerOrReplaceServiceInstance(serviceInterface
 
 @TestOnly
 fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
-  (this as ComponentManagerEx).replaceServiceInstance(serviceInterface, instance, parentDisposable)
+  getMutableContainer(this).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }
 
 @TestOnly
 fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T, parentDisposable: Disposable?) {
-  (this as ComponentManagerEx).replaceComponentInstance(componentInterface, instance, parentDisposable)
+  getMutableContainer(this).replaceComponentInstance(componentInterface, instance, parentDisposable)
 }
 
-@TestOnly
-@JvmOverloads
-fun ComponentManager.registerComponentImplementation(key: Class<*>, implementation: Class<*>, shouldBeRegistered: Boolean = false) {
-  (this as ComponentManagerEx).registerComponentImplementation(key, implementation, shouldBeRegistered)
+private fun getMutableContainer(componentManager: ComponentManager): TestMutableComponentManager {
+  return ((componentManager as ComponentManagerEx).getMutableComponentContainer() as TestMutableComponentManager)
 }
 
 @TestOnly
@@ -104,15 +101,5 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
         consumer(it)
       }
     }
-  }
-}
-
-fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
-  return object : MessageBusOwner {
-    override fun createListener(descriptor: PluginListenerDescriptor) = throw UnsupportedOperationException()
-
-    override fun isDisposed() = false
-
-    override fun toString() = owner
   }
 }

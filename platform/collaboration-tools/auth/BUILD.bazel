@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.collaborationTools.auth` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "auth_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "auth",
   module_name = "intellij.platform.collaborationTools.auth",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":auth_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",

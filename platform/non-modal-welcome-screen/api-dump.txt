@@ -1,0 +1,21 @@
+com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName
+f:com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$SelectedOption
+- com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$SelectedOption
+- bs:copy$default(com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$SelectedOption,java.util.List,I,java.lang.Object):com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$SelectedOption
+- equals(java.lang.Object):Z
+- f:getOptions():java.util.List
+- hashCode():I
+f:com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$Static
+- com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName
+- sf:$stable:I
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$Static
+- bs:copy$default(com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$Static,java.lang.String,I,java.lang.Object):com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$Static
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I

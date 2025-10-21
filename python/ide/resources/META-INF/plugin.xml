@@ -14,7 +14,7 @@
   </dependencies>
 
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.pycharm.community.ide.impl.promotion"/> <!-- mostly promo of Pro -->
   </content>
 </idea-plugin>

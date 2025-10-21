@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.devkit.apiDump">
+<idea-plugin visibility="internal" package="com.intellij.devkit.apiDump">
 
   <dependencies>
     <plugin id="com.intellij.java"/>

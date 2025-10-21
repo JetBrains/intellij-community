@@ -238,7 +238,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
   private class MavenIndexServerDownloadListener(private val myManager: MavenIndicesManager) : MavenServerDownloadListener {
-    override fun artifactDownloaded(file: File, relativePath: String) {
+    override fun artifactDownloaded(file: File) {
       val localRepository = MavenIndexUtils.getLocalRepository(myManager.myProject)
       localRepository?.url?.let { myManager.scheduleArtifactIndexing(null, file.toPath(), it) }
     }

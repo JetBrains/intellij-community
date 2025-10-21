@@ -39,7 +39,15 @@ private class TreeSwingModelImpl(
   private val nodes = ConcurrentHashMap<TreeNodeViewModel, Node>()
   private val nodeLoadedListeners = CopyOnWriteArrayList<NodeLoadedListener>()
   private var scrollRequest: TreeNodeViewModel? = null
-  private var cachedPresentation: CachedTreePresentation? = null
+
+  override var cachedPresentation: CachedTreePresentation? = null
+    set(value) {
+      field = value
+      if (root == null && value != null) {
+        root = createCachedNode(value, null, value.getRoot())
+        treeStructureChanged(root)
+      }
+    }
 
   override var showLoadingNode: Boolean = true
 
@@ -117,14 +125,6 @@ private class TreeSwingModelImpl(
 
   override fun valueForPathChanged(path: TreePath, newValue: Any) {
     throw UnsupportedOperationException("Not an editable model")
-  }
-
-  override fun setCachedPresentation(presentation: CachedTreePresentation?) {
-    this.cachedPresentation = presentation
-    if (root == null && presentation != null) {
-      root = createCachedNode(presentation, null, presentation.getRoot())
-      treeStructureChanged(root)
-    }
   }
 
   private fun treeStructureChanged(node: Node?) {

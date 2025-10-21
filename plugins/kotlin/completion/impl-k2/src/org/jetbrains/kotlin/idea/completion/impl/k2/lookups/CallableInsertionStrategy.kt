@@ -2,21 +2,29 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.psi.SmartPsiElementPointer
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinClassIdSerializer
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.KtSuperExpression
 
 @ApiStatus.Internal
+@Serializable
 sealed class CallableInsertionStrategy {
+    @Serializable
     object AsCall : CallableInsertionStrategy()
+
+    @Serializable
     object AsIdentifier : CallableInsertionStrategy()
-    class AsIdentifierCustom(val insertionHandlerAction: InsertionContext.() -> Unit) : CallableInsertionStrategy()
-    class WithCallArgs(val args: List<String>) : CallableInsertionStrategy()
-    class WithSuperDisambiguation(
-        val superExpressionPointer: SmartPsiElementPointer<KtSuperExpression>,
-        val superClassId: ClassId,
+
+    @Serializable
+    object InfixCallableInsertionStrategy : CallableInsertionStrategy()
+
+    @Serializable
+    data class WithCallArgs(val args: List<String>) : CallableInsertionStrategy()
+
+    @Serializable
+    data class WithSuperDisambiguation(
+        @Serializable(with = KotlinClassIdSerializer::class) val superClassId: ClassId,
         val subStrategy: CallableInsertionStrategy
     ) : CallableInsertionStrategy()
 }

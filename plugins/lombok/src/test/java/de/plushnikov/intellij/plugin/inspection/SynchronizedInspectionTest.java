@@ -17,12 +17,6 @@ public class SynchronizedInspectionTest extends LombokInspectionTest {
     return new LombokInspection();
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
-  }
-
   public void testSynchronizedTest() {
     doTest();
   }

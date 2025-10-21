@@ -21,9 +21,8 @@ import org.junit.Test
 
 
 class PythonPackageManagerNullAdditionalDataTest : PyEnvTestCase() {
-
   companion object {
-    private val PKG = requireNotNull(PyPIPackageRepository.findPackageSpecification("requests"))
+    private val PKG = PythonRepositoryPackageSpecification(PyPIPackageRepository, "requests")
   }
 
   @EnvTestTagsRequired(tags = ["python3.8"])

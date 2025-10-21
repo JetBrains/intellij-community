@@ -20,7 +20,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.completion.test.CompletionTestUtilKt;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.junit.internal.runners.JUnit38ClassRunner;
@@ -30,7 +33,12 @@ import java.io.File;
 import java.util.List;
 
 @RunWith(JUnit38ClassRunner.class)
-public class KotlinConfidenceTest extends LightCompletionTestCase {
+public class KotlinConfidenceTest extends LightCompletionTestCase implements ExpectedPluginModeProvider {
+    @Override
+    public @NotNull KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private static final String TYPE_DIRECTIVE_PREFIX = "// TYPE:";
     private final ThreadLocal<Boolean> skipComplete = ThreadLocal.withInitial(() -> false);
 
@@ -76,7 +84,8 @@ public class KotlinConfidenceTest extends LightCompletionTestCase {
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
+        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, () -> super.setUp());
+
         TestUtilsKt.invalidateLibraryCache(getProject());
     }
 

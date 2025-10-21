@@ -11,7 +11,7 @@ XmlFile:test.xml
         XmlToken:XML_EQ('=')
         PsiElement(XML_ATTRIBUTE_VALUE)
           XmlToken:XML_ATTRIBUTE_VALUE_START_DELIMITER('"')
-          PsiErrorElement:Unescaped & or nonterminated character/entity reference
+          PsiErrorElement:Unescaped & or unterminated character/entity reference
             XmlToken:XML_BAD_CHARACTER('&')
           XmlToken:XML_ATTRIBUTE_VALUE_TOKEN('n')
           XmlToken:XML_ATTRIBUTE_VALUE_END_DELIMITER('"')

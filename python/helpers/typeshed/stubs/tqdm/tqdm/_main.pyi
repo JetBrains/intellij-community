@@ -1,4 +1,2 @@
 from .cli import *
-
-# Names in __all__ with no definition:
-#   main
+from .cli import __all__ as __all__

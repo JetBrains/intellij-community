@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.engine
 
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
@@ -21,9 +21,9 @@ class CodeGeneratorImpl : CodeGenerator {
       return failedGenerationResult(reporter)
     }
 
-    val objClassToBuilderInterface = module.types.associateWith {
-      val builderInterface = it.generateBuilderCode(reporter)
-      builderInterface
+    val objClassToTopLevelCode = module.types.associateWith {
+      val topLevelCode = it.generateTopLevelCode(reporter)
+      topLevelCode
     }
 
     if (reporter.hasErrors()) {
@@ -31,12 +31,12 @@ class CodeGeneratorImpl : CodeGenerator {
     }
 
 
-    val generatedCode = objClassToBuilderInterface.map { (objClass, builderInterface) ->
+    val generatedCode = objClassToTopLevelCode.map { (objClass, topLevelCode) ->
       ObjClassGeneratedCode(
         target = objClass,
-        builderInterface = builderInterface,
-        companionObject = objClass.generateCompanionObject(),
-        topLevelCode = objClass.generateExtensionCode(),
+        builderInterface = objClass.generateCompatabilityBuilder(),
+        companionObject = objClass.generateCompatibilityCompanion(),
+        topLevelCode = topLevelCode,
         implementationClass = objClass.implWsCode()
       )
     }

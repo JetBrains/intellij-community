@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.ui.CollectionComboBoxModel
@@ -45,8 +46,7 @@ class JdkDownloaderModel(
 
 @Internal
 class JdkVersionItem(
-  @NlsSafe
-  val jdkVersion: String,
+  val jdkVersion: @NlsSafe String,
   /* we should prefer the default selected item from the JDKs.json feed,
    * the list below is sorted by vendor, and default item is not necessarily first
    */
@@ -187,8 +187,14 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
   val versionItems = groups.values
     .sortedWith(Comparator.comparing(Function<JdkVersionItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR).reversed())
 
-  val defaultItem = availableItems.firstOrNull { it.isDefaultItem } /* pick the newest default JDK */
-                    ?: availableItems.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
+  val latestVersion = availableItems.filter { !it.isPreview }.maxByOrNull { it.jdkMajorVersion }?.jdkMajorVersion
+  val defaultItem = availableItems    /* pick the newest OpenJDK */
+                      .filter { it.isDefaultItem }
+                      .maxByOrNull { it.jdkMajorVersion }
+                    ?: availableItems /* pick a "lightweight" non-preview JDK if no default option is available */
+                      .filter { it.jdkMajorVersion == latestVersion && !it.isPreview }
+                      .minByOrNull { it.archiveSize }
+                    ?: availableItems.firstOrNull() /* strange case, e.g., only preview JDKs aren't filtered */
                     ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
   val defaultJdkVersionItem = versionItems.firstOrNull { group -> group.includedItems.any { it.item == defaultItem } }
@@ -360,7 +366,7 @@ internal class JdkDownloadDialog(
 
   private fun onTargetPathChanged(path: String) {
     @Suppress("NAME_SHADOWING")
-    val path = FileUtil.expandUserHome(path)
+    val path = OSAgnosticPathUtil.expandUserHome(path)
     selectedPath = path
 
     setModel(WslPath.isWslUncPath(path))

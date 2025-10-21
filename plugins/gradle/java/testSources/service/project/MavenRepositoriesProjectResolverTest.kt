@@ -30,7 +30,7 @@ class MavenRepositoriesProjectResolverTest {
   @Before
   fun setUp() {
     myResolver = MavenRepositoriesProjectResolver()
-    myResolver.nextResolver = mock(GradleProjectResolverExtension::class.java)
+    myResolver.setNext(mock(GradleProjectResolverExtension::class.java))
 
     myRepoList.clear()
     val fakeModel = TestRepositoryModels(myRepoList)

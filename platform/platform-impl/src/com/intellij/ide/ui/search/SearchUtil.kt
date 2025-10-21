@@ -136,7 +136,8 @@ object SearchUtil {
       }
     }
     else if (rootComponent is JTabbedPane) {
-      val paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option)
+      val optionRegistrar = SearchableOptionsRegistrar.getInstance().takeIf { it.isInitialized }
+      val paths = optionRegistrar?.getInnerPaths(configurable, option) ?: emptySet()
       for (path in paths) {
         val index = getSelection(path, rootComponent.tabCount) { i ->
           rootComponent.getTitleAt(i)

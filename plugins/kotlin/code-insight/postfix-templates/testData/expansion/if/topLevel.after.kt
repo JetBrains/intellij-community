@@ -1,1 +1,3 @@
-val x = true.if
+val x = if (true) {
+
+}

@@ -12,17 +12,14 @@ import javax.swing.Icon
 
 private val CODE_INSIGHT_CONTEXT_PRESENTATION_EP: ExtensionPointName<CodeInsightContextPresentationProvider<out CodeInsightContext>> = ExtensionPointName.create("com.intellij.multiverse.codeInsightContextPresentationProvider")
 
-// todo IJPL-339 mark experimental
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class CodeInsightContextPresentation(
   val context: CodeInsightContext,
   val text: @Nls String, // todo IJPL-339 capitalization???
   val icon: Icon?,
 )
 
-
-// todo IJPL-339 mark experimental
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun createCodeInsightContextPresentation(codeInsightContext: CodeInsightContext, project: Project): CodeInsightContextPresentation {
   val (icon, presentableText) = CODE_INSIGHT_CONTEXT_PRESENTATION_EP.computeSafeIfAny { provider ->
     if (provider.isApplicable(codeInsightContext)) {

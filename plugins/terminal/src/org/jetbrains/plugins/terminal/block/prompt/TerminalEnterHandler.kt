@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
@@ -31,6 +31,6 @@ internal class TerminalEnterHandler(private val originalHandler: EditorActionHan
   }
 
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    return dataContext.editor?.isPromptEditor == true || originalHandler.isEnabled(editor, caret, dataContext)
+    return dataContext.terminalEditor?.isPromptEditor == true || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }

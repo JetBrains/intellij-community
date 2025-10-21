@@ -1,18 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps;
-
-import static com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap.NO_VALUE;
-import static org.junit.jupiter.api.Assertions.*;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.LongStream;
+
+import static com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap.NO_VALUE;
+import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap> {
 
@@ -63,6 +65,14 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
     multimap.put(1, 2);
     assertFalse(multimap.isEmpty(),
                 "(1,2) record was put, map must NOT be empty anymore");
+  }
+
+  @Test
+  public void mapIsEmpty_AfterInsertedValue_AndClear() throws IOException {
+    multimap.put(1, 2);
+    multimap.clear();
+    assertTrue(multimap.isEmpty(),
+                "Map should be empty after .clear()");
   }
 
   @Test
@@ -178,6 +188,31 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
         truthsReturnedFromPut,
         multimap.size(),
         truthsReturnedFromPut + " entries were really put to multimap"
+      );
+    }
+  }
+
+  @Test
+  public void withManyKeyValuesPut_AndCleared_NoneOfPutEntriesAreInMapAnymore() throws IOException {
+    long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
+
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      multimap.put(key, value);
+    }
+
+    multimap.clear();
+
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+
+      assertFalse(
+        multimap.has(key, value),
+        "multimap.has("+key+", "+value+") must return false after .clear()"
       );
     }
   }

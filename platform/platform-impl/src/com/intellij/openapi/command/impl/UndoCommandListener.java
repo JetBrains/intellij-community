@@ -13,11 +13,11 @@ import org.jetbrains.annotations.Nullable;
 final class UndoCommandListener implements CommandListener {
   private final @Nullable Project project;
   private final @NotNull UndoManagerImpl undoManager;
-  private boolean isStarted;
+  private boolean isTransparentActionStarted;
 
   @SuppressWarnings("unused")
-  UndoCommandListener(Project project) {
-    this(project, project.getService(UndoManager.class));
+  UndoCommandListener(@NotNull Project project) {
+    this(project, UndoManager.getInstance(project));
   }
 
   @SuppressWarnings("unused")
@@ -32,14 +32,18 @@ final class UndoCommandListener implements CommandListener {
 
   @Override
   public void commandStarted(@NotNull CommandEvent event) {
-    if (!isStarted && !isProjectDisposed()) {
-      undoManager.onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
+    if (!isTransparentActionStarted && !isProjectDisposed()) {
+      undoManager.onCommandStarted(
+        event.getProject(),
+        event.getUndoConfirmationPolicy(),
+        event.shouldRecordActionForOriginalDocument()
+      );
     }
   }
 
   @Override
   public void commandFinished(@NotNull CommandEvent event) {
-    if (!isStarted && !isProjectDisposed()) {
+    if (!isTransparentActionStarted && !isProjectDisposed()) {
       undoManager.onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
     }
   }
@@ -47,15 +51,15 @@ final class UndoCommandListener implements CommandListener {
   @Override
   public void undoTransparentActionStarted() {
     if (!isProjectDisposed() && !undoManager.isInsideCommand()) {
-      isStarted = true;
+      isTransparentActionStarted = true;
       undoManager.onCommandStarted(project, UndoConfirmationPolicy.DEFAULT, true);
     }
   }
 
   @Override
   public void undoTransparentActionFinished() {
-    if (isStarted && !isProjectDisposed()) {
-      isStarted = false;
+    if (isTransparentActionStarted && !isProjectDisposed()) {
+      isTransparentActionStarted = false;
       undoManager.onCommandFinished(project, "", null);
     }
   }

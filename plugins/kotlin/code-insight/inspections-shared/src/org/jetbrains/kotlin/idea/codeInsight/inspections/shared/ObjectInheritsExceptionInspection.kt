@@ -15,18 +15,19 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtUserType
-import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -35,8 +36,8 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                 val isException = analyze(declaration) {
                     val symbol = declaration.symbol as? KaNamedClassSymbol ?: return
                     symbol.superTypes.any {
-                        it.isClassType(throwableClassId) ||
-                                it.isSubtypeOf(throwableClassId)
+                        it.isClassType(StandardKotlinNames.throwableClassId) ||
+                                it.isSubtypeOf(StandardKotlinNames.throwableClassId)
                     }
                 }
 
@@ -89,14 +90,26 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                     }
 
                     updater.getWritable(expression)
-                }.forEach {
-                    val referencedName = it.getReferencedName()
-                    it.replace(psiFactory.createExpression("$referencedName()"))
+                }.forEach { expression ->
+                    val qualifiedExpression = expression.parent as? KtDotQualifiedExpression
+
+                    if (qualifiedExpression != null) {
+                        if (qualifiedExpression.selectorExpression != expression) {
+                            val functionCallOrVariableAccess = analyze(qualifiedExpression) {
+                                val resolveToCall = qualifiedExpression.resolveToCall()
+                                val call = resolveToCall?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze false
+                                val symbol = call.symbol
+                                symbol !is KaConstructorSymbol && symbol is KaFunctionSymbol || symbol is KaVariableSymbol
+                            }
+                            if (!functionCallOrVariableAccess) return@forEach
+                        }
+                    }
+                    val referencedName = expression.getReferencedName()
+                    expression.replace(psiFactory.createExpression("$referencedName()"))
                 }
 
             objectDeclaration.getObjectKeyword()?.replace(psiFactory.createClassKeyword())
         }
     }
-}
 
-private val throwableClassId = ClassId.topLevel( StandardNames.FqNames.throwable)
+}

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
 import com.intellij.util.messages.Topic
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
@@ -27,7 +29,11 @@ interface FrontendXDebuggerManagerListener {
 }
 
 private class MonolithListenerAdapter : XDebuggerManagerListener {
-  private val shouldTriggerListener get() = !XDebugSessionProxy.useFeProxy()
+  private val shouldTriggerListener: Boolean
+    get() {
+      val frontendType = FrontendApplicationInfo.getFrontendType()
+      return !XDebugSessionProxy.useFeProxy() && frontendType is FrontendType.Monolith
+    }
 
   override fun processStarted(debugProcess: XDebugProcess) {
     if (!shouldTriggerListener) return

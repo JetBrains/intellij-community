@@ -1,0 +1,21 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: javaProperty
+package test
+
+// You cannot import a synthetic property from an object, so no auto import is expected here
+val f = <caret>javaProperty
+
+// FILE: javadep/JavaClassWithGetter.java
+package javadep;
+
+public class JavaClassWithGetter {
+    public String getJavaProperty() { return null; }
+}
+
+// FILE: second.kt
+package second
+
+import javadep.JavaClassWithGetter
+
+object MyObject : JavaClassWithGetter()

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
@@ -15,12 +16,10 @@ import com.intellij.webcore.packaging.PackageVersionComparator
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.packaging.PyPackagingSettings
+import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPackageBackground
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
@@ -29,7 +28,6 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.conda.isConda
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -49,7 +47,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   var useConda: Boolean = true
   val isConda: Boolean
-    get() = sdk.isConda()
+    get() = sdk.isCondaVirtualEnv
 
   override fun getInstalledPackagesList(): List<InstalledPackage> {
     val packages = runWithModalBlockingOrInBackground(project, PyBundle.message("python.packaging.list.packages")) {
@@ -60,14 +58,10 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
 
   override fun getAllPackages(): List<RepoPackage> {
-    val packagesWithRepositories = repositoryManager.packagesByRepository()
-    return packagesWithRepositories
-      .flatMap { (repository, packages) ->
-        packages.asSequence().map { pkg ->
-          createRepoPackage(pkg, repository)
-        }
-      }
-      .toList()
+    runBlockingMaybeCancellable {
+      repositoryManager.initCaches()
+    }
+    return getAllPackagesCached()
   }
 
   private fun createRepoPackage(pkg: String, repository: PyPackageRepository): RepoPackage {
@@ -76,7 +70,10 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
   }
 
   override fun getAllPackagesCached(): List<RepoPackage> {
-    return allPackages
+    val packages = repositoryManager.repositories.flatMap { repo ->
+      repo.getPackages().map { createRepoPackage(it, repo) }
+    }
+    return packages
   }
 
   override fun reloadAllPackages(): List<RepoPackage> {
@@ -110,14 +107,14 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   override fun fetchPackageVersions(packageName: String, consumer: CatchingConsumer<in List<String>, in Exception>) {
     scope.launch {
-      val details = repositoryManager.getPackageDetails(specForPackage(packageName)).getOrThrow()
+      val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
       consumer.consume(details.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
     }
   }
 
   override fun fetchPackageDetails(packageName: String, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch {
-      val details = repositoryManager.getPackageDetails(specForPackage(packageName)).getOrThrow()
+      val details = repositoryManager.getPackageDetails(packageName, null).getOrThrow()
       consumer.consume(buildDescription(details))
     }
   }
@@ -128,8 +125,8 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   override fun fetchLatestVersion(pkg: InstalledPackage, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch {
-      val details = repositoryManager.getPackageDetails(specForPackage(pkg.name, pkg.version)).getOrThrow()
-      consumer.consume(PyPackagingSettings.getInstance(project).selectLatestVersion(details.availableVersions))
+      val latestVersion = repositoryManager.getLatestVersion(pkg.name, null)?.presentableText
+      consumer.consume(latestVersion)
     }
   }
 
@@ -163,22 +160,9 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     }
   }
 
-  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null) = if (repository != null) {
-    repository.findPackageSpecification(packageName, version)
-    ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repository", packageName, repository.name))
-  }
-  else {
-    manager.findPackageSpecification(packageName, version)
-    ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", packageName))
-  }
-
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)
 
   override fun dispose() {
     scope.cancel()
-  }
-
-  companion object {
-    var runningUnderOldUI: Boolean = false
   }
 }

@@ -5,6 +5,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentData;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInsight.lookup.*;
@@ -15,6 +17,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
+import com.intellij.icons.AllIcons;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -130,6 +133,16 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
           }
 
           JavaCompletionContributor.addAllClasses(parameters, result, new JavaCompletionSession(result));
+        }
+        else if (position.getParent() instanceof PsiDocFragmentName docFragmentName) {
+          final PsiElement parent = docFragmentName.getParent();
+          final PsiClass classRef = parent instanceof PsiDocFragmentRef
+                                    ? ((PsiDocFragmentRef)docFragmentName.getParent()).getScope() : null;
+          if (classRef != null) {
+            for (JavaDocFragmentData anchor : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(position.getProject(), classRef)) {
+              result.addElement(LookupElementBuilder.create(anchor.getName()).withIcon(AllIcons.Nodes.Related));
+            }
+          }
         }
 
         if (tag != null && "author".equals(tag.getName())) {
@@ -268,6 +281,12 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
+
+    if (position.getParent() instanceof PsiDocFragmentName) {
+      super.fillCompletionVariants(parameters, result);
+      return;
+    }
+
     if (PsiDocToken.isDocToken(position, JavaDocTokenType.DOC_TAG_VALUE_TOKEN)) {
       PsiElement parent = position.getParent();
       if (parent instanceof PsiDocTagValue && !(parent instanceof PsiDocParamRef) && !(parent instanceof PsiDocMethodOrFieldRef)) {

@@ -15,12 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class TasksStateCollector extends ProjectUsagesCollector {
-
+final class TasksStateCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("tasks.state.collector", 1);
 
-  private static final EventId1<Boolean> TASKS_COMBO_ON_TOOLBAR =
-    GROUP.registerEvent("combo_on_toolbar", EventFields.Boolean("visible"));
+  private static final EventId1<Boolean> TASKS_COMBO_ON_TOOLBAR = GROUP.registerEvent("combo_on_toolbar", EventFields.Boolean("visible"));
 
   @Override
   public EventLogGroup getGroup() {

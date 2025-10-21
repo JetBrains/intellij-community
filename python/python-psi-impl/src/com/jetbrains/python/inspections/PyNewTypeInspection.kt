@@ -7,10 +7,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -23,9 +20,9 @@ class PyNewTypeInspection : PyInspection() {
         val assignedValue = node.findAssignedValue()
         if (assignedValue !is PyCallExpression) return
 
-        val isNewTypeCall = assignedValue
-          .multiResolveCalleeFunction(resolveContext)
-          .any { it.qualifiedName == PyTypingTypeProvider.NEW_TYPE }
+        val callee = assignedValue.callee as? PyReferenceExpression ?: return
+        val resolved = callee.followAssignmentsChain(resolveContext).element ?: return
+        val isNewTypeCall = resolved is PyQualifiedNameOwner && resolved.qualifiedName == PyTypingTypeProvider.NEW_TYPE
 
         if (isNewTypeCall) {
           val newTypeName = PyResolveUtil.resolveStrArgument(assignedValue, 0, "name")

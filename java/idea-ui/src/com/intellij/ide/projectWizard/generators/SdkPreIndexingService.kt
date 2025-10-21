@@ -4,7 +4,7 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -56,7 +56,7 @@ internal class SdkPreIndexingService: Disposable {
 
   @Synchronized
   fun requestPreIndexation(sdk: Sdk) {
-    if (!isEnabled || !ConfigImportHelper.isFirstSession()) {
+    if (!isEnabled || !InitialConfigImportState.isFirstSession()) {
       return
     }
     if (sdk == currentSdk) {

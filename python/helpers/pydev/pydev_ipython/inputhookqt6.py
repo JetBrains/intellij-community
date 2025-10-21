@@ -22,8 +22,7 @@ import signal
 import threading
 
 
-from PyQt6 import QtCore, QtGui
-from pydev_ipython.inputhook import allow_CTRL_C, ignore_CTRL_C, stdin_ready
+from pydev_ipython.inputhook import allow_CTRL_C, ignore_CTRL_C, stdin_ready, GUI_QT6, GUI_PYSIDE
 
 # To minimise future merging complexity, rather than edit the entire code base below
 # we fake InteractiveShell here
@@ -51,7 +50,7 @@ sigint_timer = None
 # Code
 #-----------------------------------------------------------------------------
 
-def create_inputhook_qt6(mgr, app=None):
+def create_inputhook_qt6(mgr, app=None, gui=GUI_QT6):
     """Create an input hook for running the Qt6 application event loop.
 
     Parameters
@@ -79,10 +78,18 @@ def create_inputhook_qt6(mgr, app=None):
     """
 
     if app is None:
-        app = QtCore.QCoreApplication.instance()
-        if app is None:
-            from PyQt6 import QtWidgets
-            app = QtWidgets.QApplication([" "])
+        if gui == GUI_QT6:
+            from PyQt6 import QtCore
+            app = QtCore.QCoreApplication.instance()
+            if app is None:
+                from PyQt6 import QtWidgets
+                app = QtWidgets.QApplication([" "])
+        elif gui == GUI_PYSIDE:
+            from PySide6 import QtCore
+            app = QtCore.QCoreApplication.instance()
+            if app is None:
+                from PySide6 import QtWidgets
+                app = QtWidgets.QApplication([" "])
 
     # Re-use previously created inputhook if any
     ip = InteractiveShell.instance()

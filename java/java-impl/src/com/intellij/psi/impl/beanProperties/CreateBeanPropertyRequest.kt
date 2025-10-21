@@ -11,7 +11,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.PropertyUtilBase.getAccessorName
 
-class CreateBeanPropertyRequest(
+public class CreateBeanPropertyRequest(
   project: Project,
   propertyName: String,
   propertyKind: PropertyKind,

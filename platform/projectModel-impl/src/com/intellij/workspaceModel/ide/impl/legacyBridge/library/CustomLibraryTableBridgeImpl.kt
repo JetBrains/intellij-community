@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -33,7 +33,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   private var tmpEntityStorage: EntityStorage? = null
   private val entitySource = LegacyCustomLibraryEntitySource(tableLevel)
   private val libraryTableId = LibraryTableId.GlobalLibraryTableId(tableLevel)
-  private val libraryTableDelegate = GlobalLibraryTableDelegate(this, getDescriptor(), libraryTableId)
+  private val libraryTableDelegate = GlobalLibraryTableDelegate(this, getMachine(), libraryTableId)
 
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                                     initialEntityStorage: VersionedEntityStorage): () -> Unit {
@@ -80,7 +80,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   override fun getPresentation(): LibraryTablePresentation = presentation
 
   override fun getModifiableModel(): LibraryTable.ModifiableModel {
-    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, getDescriptor(), entitySource)
+    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, getMachine(), entitySource)
   }
 
   override fun isEditable(): Boolean = false
@@ -90,7 +90,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
     Disposer.dispose(libraryTableDelegate)
 
     val runnable: () -> Unit = {
-      GlobalWorkspaceModel.getInstance(getDescriptor()).updateModel("Cleanup custom libraries after dispose") { storage ->
+      GlobalWorkspaceModel.getInstance(getMachine()).updateModel("Cleanup custom libraries after dispose") { storage ->
         storage.entities(LibraryEntity::class.java).filter { it.entitySource == entitySource }.forEach {
           storage.removeEntity(it)
         }
@@ -112,7 +112,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun readExternal(libraryTableTag: Element) {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(getDescriptor())
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(getMachine())
     val mutableEntityStorage = MutableEntityStorage.create()
 
     libraryTableTag.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG).forEach { libraryTag ->
@@ -138,7 +138,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 
       val libraryBridge = actualLibraryEntity.findLibraryBridge(entityStorage) ?: LibraryBridgeImpl(
         libraryTable = this,
-        origin = LibraryOrigin.OfDescriptor(getDescriptor()),
+        origin = LibraryOrigin.OfMachine(getMachine()),
         initialId = libraryEntity.symbolicId,
         initialEntityStorage = storageOnBuilder,
         targetBuilder = null
@@ -170,7 +170,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   }
 
   override fun writeExternal(element: Element) {
-    GlobalWorkspaceModel.getInstance(LocalEelDescriptor).currentSnapshot.entities(LibraryEntity::class.java)
+    GlobalWorkspaceModel.getInstance(LocalEelMachine).currentSnapshot.entities(LibraryEntity::class.java)
       .filter { it.tableId == libraryTableId }
       .sortedBy { it.name }
       .forEach { libraryEntity ->
@@ -189,8 +189,8 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 /**
  * As for now, we permit custom library tables only for local projects. These tables are internal anyway.
  */
-private fun getDescriptor(): EelDescriptor {
-  return LocalEelDescriptor
+private fun getMachine(): EelMachine {
+  return LocalEelMachine
 }
 
 @ApiStatus.Internal

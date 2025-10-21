@@ -15,11 +15,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.isPackageManagementSupported
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
+import com.jetbrains.python.target.ui.TargetPanelExtension
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -32,6 +33,8 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   val canProbablyRunCodeForeignTypes: List<Class<out TargetEnvironmentType<*>>> get() = emptyList()
 
   fun getPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest?
+
+  fun getPythonTargetInterpreter(sdkAdditionalData: PyTargetAwareAdditionalData, project: Project?): HelpersAwareTargetEnvironmentRequest? = null
 
   fun getTargetType(): TargetEnvironmentType<*>
 
@@ -107,6 +110,11 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
           EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
         else -> null
       } ?: HelpersAwareLocalTargetEnvironmentRequest()
+
+    @JvmStatic
+    fun findPythonTargetInterpreter(sdkAdditionalData: PyTargetAwareAdditionalData, project: Project?): HelpersAwareTargetEnvironmentRequest? =
+          EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdkAdditionalData, project) }
+
 
     @JvmStatic
     fun findDefaultSdkName(project: Project?, data: PyTargetAwareAdditionalData, version: String?): String =

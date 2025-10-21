@@ -14,7 +14,8 @@ internal class BuildFile {
   private val targets = mutableListOf<Target>()
   private val lines = mutableListOf<String>()
 
-  @JvmField val nameGuard = HashSet<String>()
+  val loadStatements: List<LoadStatement>
+    get() = loads.toList()
 
   fun load(bzlFile: String, vararg symbols: String) {
     val existing = loads.firstOrNull { it.bzlFile == bzlFile }
@@ -36,18 +37,25 @@ internal class BuildFile {
     addTarget(target)
   }
 
-  fun render(): String {
-    val loadStatements = loads.asSequence().map { it.render() }.sorted().joinToString("\n")
+  fun render(existingLoads: Map<String, Set<String>> = emptyMap()): String {
+    val filteredLoads = loads.mapNotNull { load ->
+      val filteredSymbols = load.symbols.filter { existingLoads[load.bzlFile]?.contains(it) != true }
+      if (filteredSymbols.isEmpty()) {
+        null
+      }
+      else {
+        LoadStatement(load.bzlFile, filteredSymbols)
+      }
+    }
+
+    val loadStatements = filteredLoads
+      .map { it.render() }
+      .sorted()
+      .joinToString("\n")
     val targetStatements = targets.joinToString("\n") { it.render() }
     return sequenceOf(loadStatements, targetStatements, lines.joinToString("\n"))
       .filter { it.isNotEmpty() }
       .joinToString("\n\n")
-  }
-
-  fun reset() {
-    loads.clear()
-    targets.clear()
-    lines.clear()
   }
 }
 
@@ -64,6 +72,8 @@ internal class Target(private val type: String) : Renderable {
 
   // Support for setting key-value pairs with arrays
   fun option(key: String, value: Any) {
+    verifyTypeIsSupported(value)
+
     if (attributes.containsKey(key)) {
       error("Duplicate key: $key. Old value: ${attributes[key]}, new value: $value")
     }
@@ -71,10 +81,30 @@ internal class Target(private val type: String) : Renderable {
     attributes[key] = value
   }
 
+  private fun verifyTypeIsSupported(value: Any) {
+    val klass = value.javaClass
+    when {
+      String::class.java.isAssignableFrom(klass) -> Unit
+      value == true || value == false -> Unit
+      Renderable::class.java.isAssignableFrom(klass) -> Unit
+      List::class.java.isAssignableFrom(klass) -> {
+        for (item in value as List<*>) {
+          verifyTypeIsSupported(item!!)
+        }
+      }
+      LinkedHashSet::class.java.isAssignableFrom(klass) -> {
+        for (item in value as LinkedHashSet<*>) {
+          verifyTypeIsSupported(item!!)
+        }
+      }
+      else -> error("Unsupported type '$klass' for value: $value")
+    }
+  }
+
   fun optionCount(): Int = attributes.size
 
   fun visibility(targets: Array<String>) {
-    option("visibility", targets)
+    option("visibility", targets.toList())
   }
 
   internal fun glob(list: List<String>, exclude: List<String> = emptyList(), allowEmpty: Boolean = true): Renderable {
@@ -82,10 +112,10 @@ internal class Target(private val type: String) : Renderable {
       override fun render(): String {
         val opts = LinkedHashMap<String, Any>()
         if (allowEmpty) {
-          opts.put("allow_empty", true)
+          opts["allow_empty"] = true
         }
         if (exclude.isNotEmpty()) {
-          opts.put("exclude", exclude)
+          opts["exclude"] = exclude
         }
 
         val extra = if (opts.isEmpty()) "" else ", ${opts.entries.joinToString(", ") { "${it.key} = ${formatValue(it.value)}" }}"
@@ -116,7 +146,7 @@ internal class Target(private val type: String) : Renderable {
 
 private fun formatValue(value: Any?): String {
   return when (value) {
-    is List<*> -> {
+    is Collection<*> -> {
       if (value.size > 1) {
         value.joinToString(separator = ",\n    ", prefix = "[\n    ", postfix = ",\n  ]") { formatValue(it) }
       }

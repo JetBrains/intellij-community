@@ -78,7 +78,7 @@ internal class HasPlatformTypeInspection(
             SpecifyExplicitTypeQuickFix(element, CallableReturnTypeUpdaterUtils.getTypeInfo(element, useTemplate = holder.isOnTheFly))
         )
 
-        if (dangerousFlexibleType.canBeNull) {
+        if (dangerousFlexibleType.isNullable) {
             val nonNullableType = dangerousFlexibleType.withNullability(KaTypeNullability.NON_NULLABLE)
             val expression = (element as? KtDeclarationWithInitializer)?.initializer
 

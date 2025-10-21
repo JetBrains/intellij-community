@@ -78,7 +78,7 @@ public final class UnnecessaryInheritDocInspection extends BaseInspection implem
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryInheritDocVisitor();
   }
 

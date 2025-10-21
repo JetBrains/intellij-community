@@ -15,7 +15,7 @@ public class FieldNameConstantsOldTest extends AbstractLombokParsingTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_OLD_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_OLD_JAVA_1_8_DESCRIPTOR;
   }
 
   public void testFieldnameconstants$FieldNameConstantsOldBasic() {

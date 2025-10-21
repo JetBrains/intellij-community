@@ -112,7 +112,7 @@ abstract class GradleTestExecutionTestCase : GradleTestExecutionBaseTestCase() {
         withMavenCentral()
         addImplementationDependency("org.slf4j:slf4j-log4j12:2.0.5")
         addTestImplementationDependency("org.testng:testng:7.5")
-        configureTestTask {
+        test {
           call("useTestNG")
         }
       }

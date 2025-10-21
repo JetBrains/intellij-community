@@ -15,7 +15,7 @@ import java.util.List;
 public final class CompositeX509TrustManager implements X509TrustManager {
   private final List<X509TrustManager> myManagers = new ArrayList<>();
 
-  public CompositeX509TrustManager(@NotNull TrustManager[]... managerSets) {
+  public CompositeX509TrustManager(TrustManager @NotNull []... managerSets) {
     for (TrustManager[] set : managerSets) {
       for (TrustManager manager : set) {
         if (manager instanceof X509TrustManager) {
@@ -43,8 +43,7 @@ public final class CompositeX509TrustManager implements X509TrustManager {
   }
 
   @Override
-  @NotNull
-  public X509Certificate[] getAcceptedIssuers() {
+  public X509Certificate @NotNull [] getAcceptedIssuers() {
     return new X509Certificate[0];
   }
 }

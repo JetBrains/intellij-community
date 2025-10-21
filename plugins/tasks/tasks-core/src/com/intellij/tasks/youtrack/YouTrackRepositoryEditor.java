@@ -39,7 +39,7 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
     super.afterTestConnection(connectionSuccessful);
     // highlight query if connection was successful
     if (connectionSuccessful) {
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
+      DaemonCodeAnalyzer.getInstance(myProject).restart(this);
     }
   }
 

@@ -46,7 +46,7 @@ import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -59,15 +59,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
-public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements ExternalProjectsView, Disposable {
+@ApiStatus.Internal
+public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements ExternalProjectsView {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
+  @NotNull private final Disposable parentDisposable;
   private final @NotNull Project myProject;
   private final @NotNull ExternalProjectsManagerImpl myProjectsManager;
   private final @NotNull ToolWindowEx myToolWindow;
@@ -82,8 +84,14 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
 
   private ExternalProjectsViewState myState = new ExternalProjectsViewState();
 
-  public ExternalProjectsViewImpl(@NotNull Project project, @NotNull ToolWindowEx toolWindow, @NotNull ProjectSystemId externalSystemId) {
+  public ExternalProjectsViewImpl(@NotNull Disposable parentDisposable,
+                                  @NotNull Project project,
+                                  @NotNull ToolWindowEx toolWindow,
+                                  @NotNull ProjectSystemId externalSystemId) {
     super(true, true);
+
+    this.parentDisposable = parentDisposable;
+
     myProject = project;
     myToolWindow = toolWindow;
     myExternalSystemId = externalSystemId;
@@ -98,7 +106,15 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     Condition<ExternalSystemViewContributor> contributorPredicate = c -> {
       return ProjectSystemId.IDE.equals(c.getSystemId()) || myExternalSystemId.equals(c.getSystemId());
     };
-    myViewContributors = new ArrayList<>(ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate));
+    myViewContributors = new ArrayList<>(ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensionList(), contributorPredicate));
+
+    Disposer.register(parentDisposable, () -> {
+      this.listeners.clear();
+      this.myViewContributors.clear();
+      this.myStructure = null;
+      this.myTree = null;
+    });
+
     ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -113,7 +129,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
           myViewContributors.remove(extension);
         }
       }
-    }, this);
+    }, parentDisposable);
 
     setName(myExternalSystemId.getReadableName() + " tool window");
     Touchbar.setActions(this, "ExternalSystem.RefreshAllProjects");
@@ -177,10 +193,9 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
   }
 
   public void init() {
-    Disposer.register(myProject, this);
     initTree();
 
-    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(parentDisposable);
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       boolean wasVisible;
 
@@ -204,9 +219,9 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
       }
     });
 
-    getShortcutsManager().addListener(() -> scheduleTaskAndRunConfigUpdate(), this);
+    getShortcutsManager().addListener(() -> scheduleTaskAndRunConfigUpdate(), parentDisposable);
 
-    getTaskActivator().addListener(() -> scheduleTaskAndRunConfigUpdate(), this);
+    getTaskActivator().addListener(() -> scheduleTaskAndRunConfigUpdate(), parentDisposable);
 
     busConnection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
@@ -232,7 +247,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
       }
     });
 
-    myToolWindow.setAdditionalGearActions(createAdditionalGearActionsGroup());
+    myToolWindow.setAdditionalGearActions(createAdditionalGearActionsGroup(parentDisposable));
 
     scheduleStructureUpdate();
   }
@@ -260,7 +275,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     listeners.add(listener);
   }
 
-  private ActionGroup createAdditionalGearActionsGroup() {
+  private ActionGroup createAdditionalGearActionsGroup(@NotNull Disposable parentDisposable) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
     String[] ids = new String[]{"ExternalSystem.GroupModules", "ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks", "ExternalSystem.ShowIgnored"};
@@ -269,7 +284,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
       if (gearAction instanceof ExternalSystemViewGearAction) {
         ((ExternalSystemViewGearAction)gearAction).setView(this);
         group.add(gearAction);
-        Disposer.register(this, () -> ((ExternalSystemViewGearAction)gearAction).setView(null));
+        Disposer.register(parentDisposable, () -> ((ExternalSystemViewGearAction)gearAction).setView(null));
       }
     }
     return group;
@@ -278,7 +293,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
   @ApiStatus.Internal
   public void initStructure() {
     myStructure = new ExternalProjectsStructure(myProject, myTree);
-    Disposer.register(this, myStructure);
+    Disposer.register(parentDisposable, myStructure);
     myStructure.init(this);
   }
 
@@ -420,7 +435,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     return ref.get();
   }
 
-  @RequiresReadLock
+  @RequiresEdt
   public @Nullable ExternalProjectsViewState getState() {
     if (myStructure != null) {
       try {
@@ -553,7 +568,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
 
     String projectPath = null;
 
-    for (ExternalSystemNode node : selectedNodes) {
+    for (ExternalSystemNode<?> node : selectedNodes) {
       final Object data = node.getData();
       if (data instanceof TaskData taskData) {
         if (projectPath == null) {
@@ -575,13 +590,5 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     taskExecutionInfo.getSettings().setExternalProjectPath(projectPath);
 
     return ExternalSystemTaskLocation.create(myProject, myExternalSystemId, projectPath, taskExecutionInfo);
-  }
-
-  @Override
-  public void dispose() {
-    this.listeners.clear();
-    this.myViewContributors.clear();
-    this.myStructure = null;
-    this.myTree = null;
   }
 }

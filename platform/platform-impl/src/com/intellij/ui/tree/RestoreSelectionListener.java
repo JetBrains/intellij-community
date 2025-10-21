@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
+import com.intellij.ui.LoadingNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,6 +37,13 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
                     Action action = super.visit(path, component);
                     if (action == Action.CONTINUE || action == Action.INTERRUPT) reference.set(path);
                     return action;
+                  }
+
+                  @Override
+                  protected boolean matches(@NotNull Object pathComponent, @NotNull Object thisComponent) {
+                    // If "loading..." was replaced by the real nodes, we should select the first new one.
+                    if (thisComponent instanceof LoadingNode) return true;
+                    return super.matches(pathComponent, thisComponent);
                   }
                 };
                 visitVisibleRows(tree, visitor);

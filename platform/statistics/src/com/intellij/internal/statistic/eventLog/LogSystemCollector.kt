@@ -12,8 +12,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 object LogSystemCollector : CounterUsagesCollector() {
-  private const val id = "system.log"
-  private val GROUP = EventLogGroup(id, 1, "FUS")
+  private const val ID = "system.log"
+  private val GROUP = EventLogGroup(ID, 2, "FUS", "Events related to external FUS log uploader.")
   override fun getGroup(): EventLogGroup = GROUP
 
   val restartField: BooleanEventField = EventFields.Boolean("restart", "Don't start external uploader because there is restarted")
@@ -33,5 +33,4 @@ object LogSystemCollector : CounterUsagesCollector() {
                                                                           updateInProgressField,
                                                                           sendingForAllRecordersDisabledField,
                                                                           failedToStartField)
-
 }

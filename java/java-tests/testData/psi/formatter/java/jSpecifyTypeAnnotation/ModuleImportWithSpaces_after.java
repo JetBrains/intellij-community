@@ -1,7 +1,7 @@
 package org.example;
 
-import module org    .
-   jspecify;
+import module org.
+        jspecify;
 
 public class Formatter {
     @NonNull @Nullable String breakLineBetweenAnnotations() {

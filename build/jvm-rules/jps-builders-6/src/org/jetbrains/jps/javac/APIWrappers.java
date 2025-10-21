@@ -316,13 +316,13 @@ public final class APIWrappers {
 
     @Override
     public JavaFileObject createSourceFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.emptyList());
       return getWrapperDelegate().createSourceFile(name, originatingElements);
     }
 
     @Override
     public JavaFileObject createClassFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.emptyList());
       return getWrapperDelegate().createClassFile(name, originatingElements);
     }
 
@@ -418,7 +418,7 @@ public final class APIWrappers {
               }
             }
             if (pair == null) {
-              pair = Pair.<Method, Object>create(method, delegateTo);
+              pair = Pair.create(method, delegateTo);
             }
           }
           myCallHandlers.put(method, pair);

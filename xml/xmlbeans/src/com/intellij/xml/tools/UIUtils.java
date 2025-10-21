@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.xml.XmlBundle;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,7 +24,7 @@ final class UIUtils {
     @DialogTitle String selectFileDialogTitle,
     boolean multipleFileSelection
   ) {
-    wsdlUrl.getButton().setToolTipText(XmlBundle.message("browse.button.tooltip"));
+    wsdlUrl.getButton().setToolTipText(XmlBeansBundle.message("browse.button.tooltip"));
     wsdlUrl.getButton().addActionListener(
       new ActionListener() {
         @Override

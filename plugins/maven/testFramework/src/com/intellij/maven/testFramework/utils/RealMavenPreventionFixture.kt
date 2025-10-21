@@ -68,11 +68,6 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  @Deprecated("Deprecated in Java")
-  override fun createIndexer(project: Project): MavenIndexerWrapper {
-    noRealMavenAllowed()
-  }
-
   override fun createIndexer(): MavenIndexerWrapper {
     noRealMavenAllowed()
   }

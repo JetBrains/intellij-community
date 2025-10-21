@@ -86,16 +86,7 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
           if (!configurable.isModified()) {
             return;
           }
-          ApplicationManager.getApplication().invokeLater(() -> {
-            try {
-              configurable.apply();
-              WelcomeScreenEventCollector.logPluginsModified();
-              InstalledPluginsState.getInstance().runShutdownCallback();
-            }
-            catch (ConfigurationException exception) {
-              Logger.getInstance(PluginsTabFactory.class).error(exception);
-            }
-          }, ModalityState.nonModal());
+          configurable.scheduleApply();
         }
       });
 

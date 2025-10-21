@@ -50,6 +50,7 @@ __jetbrains_intellij_command_precmd() {
     # So, here it finishes the initialization block, not a user command.
     __jetbrains_intellij_initialized=1
     builtin printf '\e]1341;initialized\a'
+    __jetbrains_intellij_get_aliases
     __jetbrains_intellij_update_prompt
     builtin return
   fi
@@ -77,6 +78,17 @@ __jetbrains_intellij_prompt_started() {
 
 __jetbrains_intellij_prompt_finished() {
   builtin printf '\e]1341;prompt_finished\a'
+}
+
+__jetbrains_intellij_get_aliases() {
+  builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
+  builtin printf '\e]1341;aliases_received;%s\a' "$aliases_mapping"
+}
+
+__jetbrains_intellij_escape_json() {
+  builtin command sed -e 's/\\/\\\\/g'\
+      -e 's/"/\\"/g'\
+      <<< "$1"
 }
 
 builtin autoload -Uz add-zsh-hook

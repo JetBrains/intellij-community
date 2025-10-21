@@ -1,11 +1,12 @@
 from _typeshed import Incomplete
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, type_check_only
 from typing_extensions import Self
 
 __all__ = ["TqdmCallback"]
 
 # dask.callbacks.Callback
+@type_check_only
 class _Callback:
     active: ClassVar[set[tuple[Callable[..., Incomplete] | None, ...]]]
     def __init__(

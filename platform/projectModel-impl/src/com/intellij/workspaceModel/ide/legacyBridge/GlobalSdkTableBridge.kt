@@ -3,17 +3,17 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface GlobalSdkTableBridge: GlobalEntityBridgeAndEventHandler {
   companion object {
-    fun getInstance(descriptor: EelDescriptor): GlobalSdkTableBridge = ApplicationManager.getApplication().service<GlobalSdkTableBridgeRegistry>().getTableBridge(descriptor)
+    fun getInstance(eelMachine: EelMachine): GlobalSdkTableBridge = ApplicationManager.getApplication().service<GlobalSdkTableBridgeRegistry>().getTableBridge(eelMachine)
   }
 }
 
 @ApiStatus.Internal
 interface GlobalSdkTableBridgeRegistry {
-  fun getTableBridge(eelDescriptor: EelDescriptor): GlobalSdkTableBridge
+  fun getTableBridge(eelMachine: EelMachine): GlobalSdkTableBridge
 }

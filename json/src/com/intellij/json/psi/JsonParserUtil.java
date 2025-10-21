@@ -2,10 +2,10 @@
 package com.intellij.json.psi;
 
 import com.intellij.lang.parser.GeneratedParserUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Mikhail Golubev
  */
-public final class JsonParserUtil extends GeneratedParserUtilBase {
-
-}
+@ApiStatus.Obsolete
+public final class JsonParserUtil extends GeneratedParserUtilBase { }

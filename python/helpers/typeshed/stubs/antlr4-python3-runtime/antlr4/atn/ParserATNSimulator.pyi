@@ -34,6 +34,7 @@ from antlr4.Token import Token as Token
 from antlr4.Utils import str_list as str_list
 
 class ParserATNSimulator(ATNSimulator):
+    __slots__ = ("parser", "decisionToDFA", "predictionMode", "_input", "_startIndex", "_outerContext", "_dfa", "mergeCache")
     debug: bool
     trace_atn_sim: bool
     dfa_debug: bool

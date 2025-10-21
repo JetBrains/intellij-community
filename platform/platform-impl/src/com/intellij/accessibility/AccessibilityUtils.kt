@@ -14,6 +14,7 @@ import com.intellij.ui.User32Ex
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.ui.RawSwingDispatcher
 import com.sun.jna.platform.win32.WinDef
 import kotlinx.coroutines.withContext
@@ -33,7 +34,7 @@ suspend fun enableScreenReaderSupportIfNecessary() {
     return
   }
 
-  if (!isScreenReaderDetected()) {
+  if (!isScreenReaderDetected() && !getBooleanProperty("force.screen.reader.detection", false)) {
     return
   }
 

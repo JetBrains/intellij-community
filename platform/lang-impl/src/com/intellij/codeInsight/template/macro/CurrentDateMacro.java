@@ -7,11 +7,13 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-final class CurrentDateMacro extends SimpleMacro {
+@ApiStatus.Internal
+public final class CurrentDateMacro extends SimpleMacro {
   private static final Logger LOG = Logger.getInstance(CurrentDateMacro.class);
   private CurrentDateMacro() {
     super("date");

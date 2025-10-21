@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-class ReplaceCallWithUnaryOperatorIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
+internal class ReplaceCallWithUnaryOperatorIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
-    KotlinBundle.lazyMessage("replace.call.with.unary.operator")
+    KotlinBundle.messagePointer("replace.call.with.unary.operator")
 ), HighPriorityAction {
     override fun applicabilityRange(element: KtDotQualifiedExpression): TextRange? {
         val operation = operation(element.calleeName) ?: return null
@@ -31,7 +31,7 @@ class ReplaceCallWithUnaryOperatorIntention : SelfTargetingRangeIntention<KtDotQ
 
         if (!element.isReceiverExpressionWithValue()) return null
 
-        setTextGetter(KotlinBundle.lazyMessage("replace.with.0.operator", operation.value))
+        setTextGetter(KotlinBundle.messagePointer("replace.with.0.operator", operation.value))
         return call.calleeExpression?.textRange
     }
 

@@ -5,7 +5,7 @@ jvm_library(
   name = "nanoxml",
   module_name = "intellij.platform.util.nanoxml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11"
 )
 ### auto-generated section `build intellij.platform.util.nanoxml` end

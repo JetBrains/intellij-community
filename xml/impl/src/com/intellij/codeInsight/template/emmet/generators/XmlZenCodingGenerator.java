@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.diagnostic.CoreAttachmentFactory;
-import com.intellij.lang.html.HtmlQuotesFormatPreprocessor;
+import com.intellij.lang.html.HtmlQuotesConverter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +54,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-        HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, tag);
+        HtmlQuotesConverter.runOnElement(quoteStyle, tag);
         //hack: formatter change the document, so we have to apply changes from document back to PSI, since events are disables for the file
         Document document = token.getFile().getViewProvider().getDocument();
         token.setTemplateText(document.getText(), token.getFile());
@@ -66,7 +66,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
 
     PsiFile file = token.getFile();
     if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-      HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, file);
+      HtmlQuotesConverter.runOnElement(quoteStyle, file);
     }
     return replaceQuotesIfNeeded(file.getText(), context.getContainingFile());
   }

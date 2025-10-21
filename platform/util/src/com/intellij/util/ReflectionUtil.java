@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,6 +214,30 @@ public final class ReflectionUtil {
       instanceClass = instanceClass.getSuperclass();
     }
     return null;
+  }
+
+  /**
+   * Checks that {@code objectClass} or their super classes and interfaces override
+   * the {@code methodName} method from the defined {@code interfaceClass}.
+   * The implemented or default methods of the {@code interfaceClass} are excluded from this check.
+   * <p>
+   * Requires the {@code methodName} method should be directly declared in the {@code interfaceClass}.
+   * Otherwise, it returns {@code false}.
+   */
+  public static boolean hasOverriddenMethod(
+    @NotNull Class<?> objectClass,
+    @NotNull Class<?> interfaceClass,
+    @NotNull String methodName,
+    @NotNull Class<?> @NotNull ... parameters
+  ) {
+    try {
+      Method objectMethod = objectClass.getMethod(methodName, parameters);
+      Method interfaceMethod = interfaceClass.getDeclaredMethod(methodName, parameters);
+      return !objectMethod.equals(interfaceMethod);
+    }
+    catch (NoSuchMethodException e) {
+      return false;
+    }
   }
 
   public static <T> T getField(@NotNull Class<?> objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
@@ -535,31 +558,6 @@ public final class ReflectionUtil {
       throw new IllegalArgumentException("No (non-static, non-final) field of "+fieldType+" found in the "+ownerClass);
     }
     return found;
-  }
-
-  private static final Object unsafe;
-  static {
-    Class<?> unsafeClass;
-    try {
-      unsafeClass = Class.forName("sun.misc.Unsafe");
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-    unsafe = getStaticFieldValue(unsafeClass, unsafeClass, "theUnsafe");
-    if (unsafe == null) {
-      throw new RuntimeException("Could not find 'theUnsafe' field in the Unsafe class");
-    }
-  }
-
-  /**
-   * @deprecated Use {@link java.lang.invoke.VarHandle} or {@link java.util.concurrent.ConcurrentHashMap} or other standard JDK concurrent facilities
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull Object getUnsafe() {
-    return unsafe;
   }
 
   /**

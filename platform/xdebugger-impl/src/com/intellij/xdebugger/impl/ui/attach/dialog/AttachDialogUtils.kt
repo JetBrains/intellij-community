@@ -4,11 +4,12 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.FontMetrics
 import javax.swing.JComponent
 
-internal fun getProcessName(textToTruncate: String, fontMetrics: FontMetrics, maxWidth: Int): @NlsSafe String {
+internal fun getProcessName(@NlsSafe textToTruncate: String, fontMetrics: FontMetrics, maxWidth: Int): @NlsSafe String {
   if (textToTruncate.isEmpty()) return ""
 
   try {
@@ -24,22 +25,25 @@ internal fun getProcessName(textToTruncate: String, fontMetrics: FontMetrics, ma
 
 internal fun getComponentFont(component: JComponent): Font = component.font ?: StartupUiUtil.labelFont
 
-private fun truncateDescription(initDescription: String, fontMetrics: FontMetrics, maxWidth: Int): String {
+@ApiStatus.Internal
+@NlsSafe
+fun truncateDescription(@NlsSafe initDescription: String, fontMetrics: FontMetrics, maxWidth: Int): String {
   if (fontMetrics.stringWidth(initDescription) <= maxWidth) return initDescription
   val ellipsisWidth = fontMetrics.charWidth('\u2026')
   return "${findBestTruncateLength(initDescription, fontMetrics, maxWidth, 0, initDescription.length - 1, ellipsisWidth)}\u2026"
 }
 
-private fun findBestTruncateLength(initDescription: String, fontMetrics: FontMetrics, maxWidth: Int, minTextBound: Int, maxEndBound: Int, ellipsisWidth: Int): String {
+@NlsSafe
+private fun findBestTruncateLength(@NlsSafe initDescription: String, fontMetrics: FontMetrics, maxWidth: Int, minTextBound: Int, maxEndBound: Int, ellipsisWidth: Int): String {
   if (minTextBound >= maxEndBound) {
-    val truncatedDescription = initDescription.substring(0, minTextBound + 1)
+    val truncatedDescription = initDescription.take(minTextBound + 1)
     if (fontMetrics.stringWidth(truncatedDescription) + ellipsisWidth > maxWidth) {
-      return initDescription.substring(0, minTextBound)
+      return initDescription.take(minTextBound)
     }
     return truncatedDescription
   }
   val middle = (minTextBound + maxEndBound) / 2
-  if (fontMetrics.stringWidth(initDescription.substring(0, middle + 1)) + ellipsisWidth > maxWidth) {
+  if (fontMetrics.stringWidth(initDescription.take(middle + 1)) + ellipsisWidth > maxWidth) {
     return findBestTruncateLength(initDescription, fontMetrics, maxWidth, minTextBound, middle - 1, ellipsisWidth)
   }
   return findBestTruncateLength(initDescription, fontMetrics, maxWidth, middle + 1, maxEndBound, ellipsisWidth)

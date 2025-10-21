@@ -5685,7 +5685,6 @@ setup_pydevd_cython pydevd
 setup_sdist pyjnius
 setup_utils pyls
 setuptest django-setuptest
-setuptools humblesetuptools
 setuptools_continuousintegration setuptools-ci
 setuptools_git setuptools-git
 setuptools_git_versioning setuptools-git-versioning

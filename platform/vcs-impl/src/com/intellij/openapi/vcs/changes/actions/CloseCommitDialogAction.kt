@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.changes.ui.CommitToolWindowUtil
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindow
 
 /**
@@ -26,8 +26,8 @@ internal class CloseCommitDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.getCommitDialog()?.hide()
   }
+}
 
-  private fun AnActionEvent.getCommitDialog(): ToolWindow? = getData(PlatformDataKeys.TOOL_WINDOW)?.takeIf { commitTw: ToolWindow ->
-    CommitToolWindowUtil.isInWindow(commitTw.type)
-  }
+private fun AnActionEvent.getCommitDialog(): ToolWindow? = getData(PlatformDataKeys.TOOL_WINDOW)?.takeIf {
+  getData(ChangesViewContentManager.IS_COMMIT_TOOLWINDOW_WINDOWED_KEY) == true
 }

@@ -100,6 +100,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
                         defaultValueForCall = null,
                         defaultValueAsDefaultParameter = false,
                         defaultValue = null,
+                        modifierList = p.modifierList,
                         context = callable
                     )
                     params.add(parameterInfo)

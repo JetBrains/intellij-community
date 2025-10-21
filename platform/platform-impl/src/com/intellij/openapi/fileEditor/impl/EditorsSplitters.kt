@@ -80,7 +80,6 @@ import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -345,7 +344,7 @@ open class EditorsSplitters internal constructor(
 
   private fun shouldReopenEditorsOnJetBrainsClient(): Boolean {
     val frontendType = FrontendApplicationInfo.getFrontendType()
-    return frontendType is FrontendType.RemoteDev && frontendType.isLuxSupported && Registry.`is`("editor.rd.reopen.editors.on.frontend")
+    return frontendType is FrontendType.Remote && frontendType.isController() && Registry.`is`("editor.rd.reopen.editors.on.frontend")
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
@@ -396,10 +395,6 @@ open class EditorsSplitters internal constructor(
     }
     _currentWindowFlow.value = window
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
-  fun openFilesAsync(): Job = openFilesAsync(requestFocus = true)
 
   fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {
@@ -495,7 +490,7 @@ open class EditorsSplitters internal constructor(
     val frame = getFrame() ?: return
     val file = currentCompositeFlow.value?.file
     if (file == null) {
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UiWithModelAccess) {
         frame.setFileTitle(null, null)
       }
     }
@@ -507,7 +502,7 @@ open class EditorsSplitters internal constructor(
       catch (ignored: InvalidPathException) {
         null
       }
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UiWithModelAccess) {
         frame.setFileTitle(title, ioFile)
       }
     }
@@ -815,9 +810,9 @@ open class EditorsSplitters internal constructor(
 
   @JvmOverloads
   @RequiresEdt
-  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true): EditorWindow? = openInRightSplit(file, requestFocus, null)
+  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false): EditorWindow? = openInRightSplit(file, requestFocus, forceFocus, null)
 
-  internal fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, explicitlySetCompositeProvider: (() -> EditorComposite?)?): EditorWindow? {
+  internal fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false, explicitlySetCompositeProvider: (() -> EditorComposite?)?): EditorWindow? {
     val window = currentWindow ?: return null
     val parent = window.component.parent
     if (parent is Splitter) {
@@ -828,13 +823,13 @@ open class EditorsSplitters internal constructor(
           manager.openFile(
             file = file,
             window = rightSplitWindow,
-            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false, explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
+            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false, forceFocus = forceFocus, explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
           )
           return rightSplitWindow
         }
       }
     }
-    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT, forceSplit = true, virtualFile = file, focusNew = requestFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)
+    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT, forceSplit = true, virtualFile = file, focusNew = requestFocus, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)
   }
 }
 
@@ -981,7 +976,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       )
     }
     else {
-      val splitter = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      val splitter = withContext(Dispatchers.UiWithModelAccess) {
         val splitter = createSplitter(
           isVertical = splitState.isVertical,
           proportion = splitState.proportion,
@@ -1026,7 +1021,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
 
     val windowCoroutineScope = splitters.coroutineScope.childScope("EditorWindow")
 
-    val windowDeferred = windowCoroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    val windowDeferred = windowCoroutineScope.async(Dispatchers.UI + ModalityState.any().asContextElement()) {
       splitters.insideChange++
       val editorWindow = EditorWindow(owner = splitters, coroutineScope = windowCoroutineScope)
       editorWindow.component.isFocusable = false
@@ -1054,7 +1049,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       }
     }.mapNotNull { it.getCompleted() }
 
-    span("file opening in EDT", Dispatchers.EDT) {
+    span("file opening in EDT", Dispatchers.UiWithModelAccess) {
       var window: EditorWindow? = null
       val windowAddedDeferred = CompletableDeferred<Unit>()
       try {

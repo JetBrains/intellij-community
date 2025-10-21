@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 plugins {
   id("maven-publish")
   id("java")
@@ -15,7 +16,7 @@ repositories {
 }
 
 kotlin {
-  jvmToolchain(17)
+  jvmToolchain(21)
 }
 
 tasks.withType(Jar::class) {

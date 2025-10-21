@@ -52,6 +52,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+@Internal
 public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   protected final MockApplication application;
@@ -78,6 +80,8 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
+    boolean wasIgnoredDisabledPlugins = PluginEnabler.HEADLESS.isIgnoredDisabledPlugins();
+    Disposer.register(parentDisposable, () -> PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(wasIgnoredDisabledPlugins));
     PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
     application = createApplication(parentDisposable);
@@ -116,7 +120,7 @@ public class CoreApplicationEnvironment {
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
 
     registerApplicationExtensionPoint(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, StubRegistryExtension.class);
-    registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl());
+    registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl(application.getCoroutineScope()));
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
@@ -241,7 +245,7 @@ public class CoreApplicationEnvironment {
 
   @SuppressWarnings("unused")
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
-    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadAndInitForCoreEnv(pluginRoot, fileName);
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
     if (descriptor == null) {
       PluginManagerCore.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
       return;

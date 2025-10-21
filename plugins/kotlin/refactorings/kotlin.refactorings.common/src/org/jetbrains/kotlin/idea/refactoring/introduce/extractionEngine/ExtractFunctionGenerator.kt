@@ -457,7 +457,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
         if (generatorOptions.inTempFile) return config.createExtractionResult(declaration, Collections.emptyMap())
 
         val replaceInitialOccurrence = {
-            val arguments = descriptor.parameters.map { it.argumentText }
+            val arguments = descriptor.parameters.filter { !it.contextParameter }.map { it.argumentText }
             makeCall(descriptor, declaration, descriptor.controlFlow, descriptor.extractionData.originalRange, arguments)
         }
 
@@ -558,6 +558,17 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
             else -> CallableBuilder.Target.READ_ONLY_PROPERTY
         }
         return CallableBuilder(builderTarget).apply {
+
+            val typeDescriptor = createTypeDescriptor(descriptor.extractionData)
+
+            val contextParameters = descriptor.parameters.filter { it.contextParameter }
+            if (contextParameters.isNotEmpty()) {
+                val contextString = contextParameters.joinToString(prefix = "context(", postfix = ")") {
+                    it.name + ": " + typeDescriptor.renderType(it.parameterType, isReceiver = false, Variance.IN_VARIANCE)
+                }
+                modifier(contextString)
+            }
+
             val visibility = descriptor.visibility?.value ?: ""
 
             fun TypeParameter.isReified() = originalDeclaration.hasModifier(KtTokens.REIFIED_KEYWORD)
@@ -600,7 +611,6 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
                 }
             )
 
-            val typeDescriptor = createTypeDescriptor(descriptor.extractionData)
             descriptor.receiverParameter?.let {
                 val receiverType = it.parameterType
                 val receiverTypeAsString = typeDescriptor.renderType(receiverType, isReceiver = true, Variance.IN_VARIANCE)
@@ -609,7 +619,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
 
             name(descriptor.name)
 
-            descriptor.parameters.forEach { parameter ->
+            descriptor.parameters.filter { !it.contextParameter }.forEach { parameter ->
                 param(parameter.name, typeDescriptor.renderType(parameter.parameterType, isReceiver = false, Variance.IN_VARIANCE))
             }
 

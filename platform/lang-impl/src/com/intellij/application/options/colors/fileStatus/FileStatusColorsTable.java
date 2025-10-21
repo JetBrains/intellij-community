@@ -119,7 +119,7 @@ public final class FileStatusColorsTable extends JBTable implements UiDataProvid
         FileStatusColorDescriptor descriptor = ((FileStatusColorsTableModel)getModel()).getDescriptorByName((String)value);
         if (descriptor != null) {
           myLabel.setText((String)value);
-          myLabel.setForeground(isSelected ? UIUtil.getTableSelectionForeground() : descriptor.getColor());
+          myLabel.setForeground(isSelected ? UIUtil.getTableSelectionForeground(true) : descriptor.getColor());
           myLabel.setBackground(UIUtil.getTableBackground(isSelected));
           return myLabel;
         }
@@ -140,7 +140,7 @@ public final class FileStatusColorsTable extends JBTable implements UiDataProvid
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value instanceof FileStatusColorDescriptor descriptor) {
-        myLabel.setForeground(isSelected ? UIUtil.getTableSelectionForeground() : myLabelColor);
+        myLabel.setForeground(isSelected ? UIUtil.getTableSelectionForeground(true) : myLabelColor);
         myLabel.setBackground(UIUtil.getTableBackground(isSelected));
 
         String text = descriptor.getUiThemeColor() != null ? "!" : descriptor.isDefault() ? "" : "*";

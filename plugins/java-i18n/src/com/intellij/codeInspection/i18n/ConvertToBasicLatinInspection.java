@@ -87,7 +87,7 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
       return buildReplacement(factory, element, sb.toString());
     }
 
-    protected static boolean isBasicLatin(char ch) {
+    static boolean isBasicLatin(char ch) {
       return Character.UnicodeBlock.of(ch) == Character.UnicodeBlock.BASIC_LATIN;
     }
 

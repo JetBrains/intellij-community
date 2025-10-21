@@ -11,6 +11,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade.Companion.createFromTopConcatenation
@@ -22,7 +25,11 @@ private const val i18nizedExpr = "i18nizedExpr"
 /**
  * Analogical Java tests: [com.intellij.java.codeInsight.daemon.quickFix.I18nizeTest]
  */
-class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
+class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
 
   private fun <T : UExpression> doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr) {
     myFixture.configureByText("Test.kt", before)

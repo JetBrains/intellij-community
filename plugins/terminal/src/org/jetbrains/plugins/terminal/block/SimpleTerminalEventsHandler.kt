@@ -212,7 +212,7 @@ internal open class SimpleTerminalEventsHandler(
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
       mousePressed(x, y, event)
     }
-    if (model.useAlternateBuffer && settings.sendArrowKeysInAlternativeMode()) {
+    if (model.useAlternateBuffer && settings.simulateMouseScrollWithArrowKeysInAlternativeScreen()) {
       //Send Arrow keys instead
       val arrowKeys = if (event.wheelRotation < 0) {
         session.controller.getCodeForKey(KeyEvent.VK_UP, 0)

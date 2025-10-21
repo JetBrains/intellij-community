@@ -10,9 +10,9 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.changes.ChangesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
@@ -49,7 +49,7 @@ public class MarkResolvedAction extends BasicAction {
 
     return file.isDirectory()
            ? SvnStatusUtil.isUnderControl(vcs, file)
-           : MergeConflictManager.isMergeConflict(status);
+           : ChangesUtil.isMergeConflict(status);
   }
 
   @Override

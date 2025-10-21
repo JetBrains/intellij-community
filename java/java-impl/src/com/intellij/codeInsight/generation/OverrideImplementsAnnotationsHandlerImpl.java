@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -21,11 +22,11 @@ public final class OverrideImplementsAnnotationsHandlerImpl implements OverrideI
     Project project = source.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     String correctedAnnotation = null;
-    if (manager.getNullables().contains(annotation) && !annotation.equals(manager.getDefaultNullable())) {
-      correctedAnnotation = manager.getDefaultNullable();
+    if (manager.getNullables().contains(annotation)) {
+      correctedAnnotation = manager.getDefaultAnnotation(Nullability.NULLABLE, target);
     }
-    else if (manager.getNotNulls().contains(annotation) && !annotation.equals(manager.getDefaultNotNull())) {
-      correctedAnnotation = manager.getDefaultNotNull();
+    else if (manager.getNotNulls().contains(annotation)) {
+      correctedAnnotation = manager.getDefaultAnnotation(Nullability.NOT_NULL, target);
     }
     if (correctedAnnotation == null || 
         JavaPsiFacade.getInstance(project).findClass(correctedAnnotation, target.getResolveScope()) == null) {

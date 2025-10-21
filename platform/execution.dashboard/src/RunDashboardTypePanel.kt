@@ -2,11 +2,8 @@
 package com.intellij.platform.execution.dashboard
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.RunManager
-import com.intellij.execution.RunManagerListener
-import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.TreeExpander
@@ -14,16 +11,22 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManager
+import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiUtils
+import com.intellij.platform.project.projectId
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckboxTreeListener
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.SmartList
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JCheckBox
 import javax.swing.JEditorPane
@@ -31,14 +34,15 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
-internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(BorderLayout()), UiDataProvider {
+@ApiStatus.Internal
+class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(BorderLayout()), UiDataProvider {
   var type: ConfigurationType? = null
     set(value) {
       field = value
       if (nodeStateChanging) return
 
       if (value != null) {
-        checkBox.isSelected = !(RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).isNewExcluded(value.id)
+        checkBox.isSelected = !RunDashboardManagerProxy.getInstance(project).isNewExcluded(value.id)
         applyLink.isEnabled = hasTypeWithOppositeExclusion(value.id)
       }
       updateTree(value)
@@ -62,10 +66,11 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
       super.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
       if (value is CheckedTreeNode) {
         val userObject = value.userObject
-        if (userObject is RunnerAndConfigurationSettings) {
+        if (userObject is RunDashboardConfigurationDto) {
           val renderer = textRenderer
           renderer.icon = type?.icon
-          renderer.append(userObject.name)
+          @Suppress("HardCodedStringLiteral")
+          renderer.append(userObject.configurationDisplayName)
         }
         else if (userObject is String) {
           val renderer = textRenderer
@@ -78,44 +83,27 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
   private val treeExpander = DefaultTreeExpander(tree)
 
   init {
-    project.getMessageBus().connect(project).subscribe(RunManagerListener.TOPIC, object : RunManagerListener {
-      private var updateInProgress = false
-
-      override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings) {
-        if (!updateInProgress) {
-          updateTree(type)
-        }
-      }
-
-      override fun runConfigurationRemoved(settings: RunnerAndConfigurationSettings) {
-        if (!updateInProgress) {
-          updateTree(type)
-        }
-      }
-
-      override fun beginUpdate() {
-        updateInProgress = true
-      }
-
-      override fun endUpdate() {
-        updateInProgress = false
+    RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+      RunDashboardServiceRpc.getInstance().getRunManagerUpdates(project.projectId()).collect {
         updateTree(type)
       }
-    })
+    }
 
     tree.addCheckboxTreeListener(object : CheckboxTreeListener {
       override fun nodeStateChanged(node: CheckedTreeNode) {
-        val settings = node.userObject as? RunnerAndConfigurationSettings ?: return
-        if (node.userObject is RunnerAndConfigurationSettings) {
+        val settings = node.userObject as? RunDashboardConfigurationDto ?: return
+        if (node.userObject is RunDashboardConfigurationDto) {
           try {
             nodeStateChanging = true
             if (node.isChecked) {
-              (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).restoreConfigurations(
-                SmartList(settings.getConfiguration()))
+              RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+                RunDashboardServiceRpc.getInstance().restoreConfigurations(project.projectId(), listOf(settings.configurationId))
+              }
             }
             else {
-              (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).hideConfigurations(
-                SmartList(settings.getConfiguration()))
+              RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+                RunDashboardServiceRpc.getInstance().hideConfigurations(project.projectId(), listOf(settings.configurationId))
+              }
             }
           }
           finally {
@@ -132,16 +120,16 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
           addActionListener { _ ->
             val type = type
             if (type != null) {
-              (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).setNewExcluded(type.id, !isSelected)
+              RunDashboardManagerProxy.getInstance(project).setNewExcluded(type.id, !isSelected)
               applyLink.isEnabled = hasTypeWithOppositeExclusion(type.id)
             }
           }
         }
           .comment(ExecutionBundle.message("run.dashboard.apply.to.all.types")) {
-            val manager = (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl)
+            val manager = RunDashboardManagerProxy.getInstance(project)
             val isChecked = checkBox.isSelected
             for (typeId in manager.types) {
-              (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).setNewExcluded(typeId, !isChecked)
+              manager.setNewExcluded(typeId, !isChecked)
             }
             val type = type
             if (type != null) {
@@ -161,7 +149,14 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
     wrapper.add(scrollPane, BorderLayout.CENTER)
     add(wrapper, BorderLayout.CENTER)
 
-    RunDashboardManagerImpl.setupToolbar(this, wrapper, project)
+    RunDashboardUiUtils.setupToolbar(this, wrapper, project)
+  }
+
+  private fun shouldShowConfigurationInDashboard(configurationDto: RunDashboardConfigurationDto): Boolean {
+    return FrontendRunDashboardManager.getInstance(project).getServices().any { frontendService ->
+      frontendService.name == configurationDto.configurationDisplayName
+      && frontendService.typeId == configurationDto.configurationTypeId
+    }
   }
 
   private fun updateTree(type: ConfigurationType?) {
@@ -174,11 +169,10 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
 
     val children = ArrayList<CheckedTreeNode>()
     val folders = FactoryMap.create<String, CheckedTreeNode> { CheckedTreeNode(it) }
-    val settingsList = RunManager.getInstance(project).getConfigurationSettingsList(type)
-    val runDashboardManager = RunDashboardManager.getInstance(project)
-    for (settings in settingsList) {
+    val frontendSettingsList = FrontendRunDashboardManager.getInstance(project).getAvailableConfigurations().filter { it.configurationTypeId == type.id }
+    for (settings in frontendSettingsList) {
       val node = CheckedTreeNode(settings)
-      if (!runDashboardManager.isShowInDashboard(settings.configuration)) {
+      if (!shouldShowConfigurationInDashboard(settings)) {
         node.isChecked = false
       }
 
@@ -204,11 +198,11 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
   }
 
   private fun hasTypeWithOppositeExclusion(selectedTypeId: String): Boolean {
-    val runDashboardManager = RunDashboardManager.getInstance(project) as RunDashboardManagerImpl
-    val newExcluded = runDashboardManager.isNewExcluded(selectedTypeId)
+    val manager = RunDashboardManagerProxy.getInstance(project)
+    val newExcluded = manager.isNewExcluded(selectedTypeId)
 
-    return runDashboardManager.types.any { typeId ->
-      typeId != selectedTypeId && runDashboardManager.isNewExcluded(typeId) != newExcluded
+    return manager.types.any { typeId ->
+      typeId != selectedTypeId && manager.isNewExcluded(typeId) != newExcluded
     }
   }
 

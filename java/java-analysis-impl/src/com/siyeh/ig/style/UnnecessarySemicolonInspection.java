@@ -54,7 +54,7 @@ public final class UnnecessarySemicolonInspection extends BaseInspection impleme
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessarySemicolonVisitor();
   }
 

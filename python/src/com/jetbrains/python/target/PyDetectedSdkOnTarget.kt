@@ -11,7 +11,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jdom.Element
 
 /**
- * Allows passing SDK with such additional data [com.jetbrains.python.sdk.PythonSdkUtil.isRemote] check.
+ * Allows passing SDK with such additional data [com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote] check.
  *
  * This class is meant for use in UI and should be used with caution.
  */

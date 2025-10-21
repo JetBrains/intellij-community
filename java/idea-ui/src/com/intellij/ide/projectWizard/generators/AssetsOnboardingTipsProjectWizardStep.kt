@@ -3,8 +3,11 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.ide.projectWizard.generators.prepareOnboardingTips as prepareOnboardingTipsImpl
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use AssetsOnboardingTips util instead")
 abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
   protected fun rawShortcut(shortcut: String) = AssetsOnboardingTips.rawShortcut(shortcut)

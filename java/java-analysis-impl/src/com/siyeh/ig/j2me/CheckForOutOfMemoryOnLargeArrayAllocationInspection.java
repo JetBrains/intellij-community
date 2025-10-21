@@ -49,7 +49,7 @@ public final class CheckForOutOfMemoryOnLargeArrayAllocationInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new CheckForOutOfMemoryOnLargeArrayAllocationVisitor();
   }
 

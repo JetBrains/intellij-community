@@ -55,8 +55,13 @@ class XMixedModeExecutionStack(
   }
 
   override fun getTopFrame(): XStackFrame? {
-    // when we are stopped, the top frame is always from a low-level debugger, so no need to look for a corresponding high-level frame
-    return lowLevelExecutionStack.topFrame
+    return if (!computedFramesMap.isCompleted)
+      lowLevelExecutionStack.topFrame
+    else {
+      val entries = computedFramesMap.getCompleted().entries
+      val topFrame = entries.firstOrNull()
+      return topFrame?.value ?: topFrame?.key ?: lowLevelExecutionStack.topFrame
+    }
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {

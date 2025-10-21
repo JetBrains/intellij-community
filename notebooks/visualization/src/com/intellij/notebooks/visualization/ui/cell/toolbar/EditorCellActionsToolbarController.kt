@@ -2,9 +2,9 @@
 package com.intellij.notebooks.visualization.ui.cell.toolbar
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.ui.DataProviderComponent
@@ -14,7 +14,6 @@ import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
@@ -44,7 +43,7 @@ internal class EditorCellActionsToolbarController(
   }
 
   private val targetComponent: JComponent?
-    get() = (cell.view?.controllers?.firstOrNull { it is DataProviderComponent } as? DataProviderComponent)?.retrieveDataProvider()
+    get() = cell.view?.controllers?.filterIsInstance<DataProviderComponent>()?.firstOrNull()?.retrieveDataProvider()
 
   init {
     coroutineScope.launch {
@@ -123,21 +122,16 @@ internal class EditorCellActionsToolbarController(
     hideToolbar()
   }
 
-  private fun getActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when (cellType) {
-    NotebookCellLines.CellType.CODE -> {
-      val customToolbarActionGroup = DefaultActionGroup()
-      val customActionsGroup = CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_CODE_ACTION_GROUP_ID)
-      if (customActionsGroup != null) {
-        customToolbarActionGroup.add(customActionsGroup)
-      }
+  private fun getActionGroup(cellType: CellType): ActionGroup? = when (cellType) {
+    CellType.CODE -> {
       hideDropdownIcon(ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID)
-      customToolbarActionGroup
+      CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
     }
-    NotebookCellLines.CellType.MARKDOWN -> {
+    CellType.MARKDOWN -> {
       hideDropdownIcon(ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID)
       ActionManager.getInstance().getAction(ADDITIONAL_MARKDOWN_ACTION_GROUP_ID) as? ActionGroup
     }
-    NotebookCellLines.CellType.RAW -> null
+    CellType.RAW -> null
   }
 
   private fun hideDropdownIcon(actionGroupId: String) = ActionManager.getInstance().getAction(actionGroupId)

@@ -26,7 +26,7 @@ public abstract class AbstractKotlinGotoTest extends KotlinLightCodeInsightFixtu
         );
     }
 
-    private static @NotNull Path getExpectedFile(Path nioPath) {
+    protected @NotNull Path getExpectedFile(Path nioPath) {
         return nioPath.getParent().resolve(nioPath.getFileName().toString().replace(".kt", ".result.txt"));
     }
 
@@ -36,6 +36,7 @@ public abstract class AbstractKotlinGotoTest extends KotlinLightCodeInsightFixtu
 
     protected void doClassTest(String path) {
         myFixture.configureByFile(path);
-        checkGotoResult(new GotoClassModel2(getProject()), myFixture.getEditor(), getExpectedFile(Paths.get(path)));
+        Path expectedFile = getExpectedFile(Paths.get(path));
+        checkGotoResult(new GotoClassModel2(getProject()), myFixture.getEditor(), expectedFile);
     }
 }

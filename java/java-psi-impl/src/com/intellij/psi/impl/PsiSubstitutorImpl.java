@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
@@ -15,7 +14,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,17 +143,6 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  private static @NotNull TypeAnnotationProvider getMergedProvider(@NotNull PsiType type1, @NotNull PsiType type2) {
-    if(type1.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type1 instanceof PsiClassReferenceType)) {
-      return type2.getAnnotationProvider();
-    }
-    if(type2.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type2 instanceof PsiClassReferenceType)) {
-      return type1.getAnnotationProvider();
-    }
-    return () -> StreamEx.of(type1.getAnnotations()).append(type2.getAnnotations()).distinct(PsiAnnotation::getText)
-      .toArray(PsiAnnotation.EMPTY_ARRAY);
-  }
-
   private class SubstitutionVisitor extends PsiTypeMapper {
     private final boolean ignoreNullity;
 
@@ -216,17 +203,13 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         if (PsiTypes.voidType().equals(result)) {
           return classType;
         }
-        if (result != null) {
-          if (result instanceof PsiClassType || result instanceof PsiArrayType || result instanceof PsiWildcardType) {
-            // TODO: remove once nullability works better than annotations
-            result = result.annotate(getMergedProvider(classType, result));
-          }
-          if (!ignoreNullity) {
-            TypeNullability origNullability = classType.getNullability();
-            result = origNullability.equals(TypeNullability.UNKNOWN) ? result : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
-          }
+        if (result == null || ignoreNullity) {
+          return result;
         }
-        return result;
+        TypeNullability origNullability = classType.getNullability();
+        return origNullability.equals(TypeNullability.UNKNOWN)
+                   ? result
+                   : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
       }
       PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
       return new PsiImmediateClassType(aClass, resultSubstitutor, classType.getLanguageLevel(),

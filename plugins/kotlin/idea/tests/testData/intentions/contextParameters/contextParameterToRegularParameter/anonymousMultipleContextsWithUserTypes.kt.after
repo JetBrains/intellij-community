@@ -1,0 +1,20 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+class Context
+class MyOtherContext
+
+context(_: Context)
+fun Double.foo(context: MyOtherContext, p: Int, q: String) {
+    useContext()
+    with(context) {
+        useMyClass()
+    }
+}
+
+context(c: Context)
+fun useContext() {
+}
+
+context(c: MyOtherContext)
+fun useMyClass() {
+}

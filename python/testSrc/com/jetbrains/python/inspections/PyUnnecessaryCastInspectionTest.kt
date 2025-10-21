@@ -52,8 +52,7 @@ from typing import cast
         cast(B, C())  # ok
         
         a: int | str
-        # this has a false positive due to unsafe unions
-        # b = cast(str, a)  # ok
+        b = <weak_warning descr="Unnecessary cast; type is already 'str'">cast(str,</weak_warning> a)  # ok
       """.trimIndent()
     )
   }

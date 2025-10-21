@@ -9,13 +9,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.findScratchFileEditorWithPreview
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
@@ -25,15 +21,12 @@ fun Logger.printDebugMessage(str: String) {
     if (isDebugEnabled) debug("SCRATCH: $str")
 }
 
-val VirtualFile.isKotlinWorksheet: Boolean
-    get() = name.endsWith(".$KOTLIN_WORKSHEET_EXTENSION")
-
 val VirtualFile.isKotlinScratch: Boolean
     get() = KotlinParserDefinition.STD_SCRIPT_SUFFIX == this.extension &&
         ScratchFileService.getInstance().getRootType(this) is ScratchRootType
 
 @TestOnly
-fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile: VirtualFile): KtScratchFileEditorWithPreview? {
+fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile: VirtualFile): ScratchFileEditorWithPreview? {
     val editor = fileManager.getSelectedEditor(virtualFile) as? TextEditor ?: return null
     return editor.findScratchFileEditorWithPreview()
 }
@@ -41,11 +34,6 @@ fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile:
 fun TextEditor.getScratchFile(): ScratchFile? {
     return findScratchFileEditorWithPreview()?.scratchFile
 }
-
-fun <L : Any> Project.syncPublisherWithDisposeCheck(topic: Topic<L>): L {
-    return if (isDisposed) throw ProcessCanceledException() else messageBus.syncPublisher(topic)
-}
-
 
 fun ActionToolbar.updateToolbar() {
     ApplicationManager.getApplication().invokeLater {

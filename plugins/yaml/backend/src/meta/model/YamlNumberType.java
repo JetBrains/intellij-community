@@ -28,6 +28,11 @@ public class YamlNumberType extends YamlScalarType {
   }
 
   @Override
+  public boolean isSupportedTag(@NotNull String tag) {
+    return tag.contains("int") || tag.contains("float") || tag.contains("double") || tag.contains("number");
+  }
+
+  @Override
   protected void validateScalarValue(@NotNull YAMLScalar scalarValue, @NotNull ProblemsHolder holder) {
     try {
       if (!myQuotedValuesAllowed && scalarValue instanceof YAMLQuotedText) {

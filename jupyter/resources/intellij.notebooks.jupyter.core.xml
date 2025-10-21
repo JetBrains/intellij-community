@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.notebooks.jupyter.core">
+<idea-plugin visibility="internal" package="com.intellij.notebooks.jupyter.core">
   <!-- Jupyter language -->
     <extensions defaultExtensionNs="com.intellij">
       <fileType name="Jupyter"

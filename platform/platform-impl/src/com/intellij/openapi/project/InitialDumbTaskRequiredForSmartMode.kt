@@ -6,20 +6,26 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
+import com.intellij.serviceContainer.AlreadyDisposedException
 
 internal class InitialDumbTaskRequiredForSmartMode(private val project: Project) : DumbModeTask() {
   override fun performInDumbMode(indicator: ProgressIndicator) {
-    val activities = ExtensionPointName<RequiredForSmartMode>("com.intellij.requiredForSmartModeStartupActivity").extensionList
     val logger = logger<InitialDumbTaskRequiredForSmartMode>()
-    for (activity in activities) {
+    for (activity in ExtensionPointName<RequiredForSmartMode>("com.intellij.requiredForSmartModeStartupActivity").extensionList) {
       ProgressManager.checkCanceled()
-      logger<InitialDumbTaskRequiredForSmartMode>().assertTrue(indicator == ProgressManager.getGlobalProgressIndicator(),
-                                                               "There might be visual inconsistencies: " +
-                                                               "launched activities can only use thread's global indicator.")
+
+      logger.assertTrue(indicator == ProgressManager.getGlobalProgressIndicator(),
+                        "There might be visual inconsistencies: " +
+                        "launched activities can only use thread's global indicator.")
       indicator.pushState()
       try {
         logger.info("Running task required for smart mode: $activity")
         activity.runActivity(project)
+      }
+      catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
+        // we cannot yet make performInDumbMode as suspend, so we cannot make `runActivity` as suspend,
+        // so we cannot handle project disposable correctly
+        return
       }
       finally {
         indicator.popState()

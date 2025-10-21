@@ -59,7 +59,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
     final PsiTypeElement typeElement = myMethod.getReturnTypeElement();
     if (typeElement != null) {
       PsiType type = typeElement.getType();
-      if (type.getAnnotations().length > 0) {
+      if (type.hasAnnotations()) {
         return type.getPresentableText(true);
       }
       return typeElement.getText();

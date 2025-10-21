@@ -1,0 +1,15 @@
+# channels.auth.UserLazyObject metaclass is mismatch
+channels.auth.UserLazyObject
+
+# these one need to be exclude due to mypy error: * is not present at runtime
+channels.auth.UserLazyObject.DoesNotExist
+channels.auth.UserLazyObject.MultipleObjectsReturned
+channels.auth.UserLazyObject@AnnotatedWith
+
+# database_sync_to_async is implemented as a class instance but stubbed as a function
+# for better type inference when used as decorator/function
+channels.db.database_sync_to_async
+
+# Set to None on class, but initialized to non-None value in __init__
+channels.generic.websocket.WebsocketConsumer.groups
+channels.generic.websocket.AsyncWebsocketConsumer.groups

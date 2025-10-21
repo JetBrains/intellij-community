@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,7 +55,7 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   GenerateSchemaFromInstanceDocumentDialog(Project project, VirtualFile file) {
     super(project, true);
 
-    setTitle(XmlBundle.message("generate.schema.from.instance.document.dialog.title"));
+    setTitle(XmlBeansBundle.message("generate.schema.from.instance.document.dialog.title"));
 
     doInitFor(designTypeText, designType);
     configureComboBox(designType,designTypes);
@@ -69,7 +68,7 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     detectEnumerationsLimit.setText("10");
 
 
-    UIUtils.configureBrowseButton(project, generateFromUrl, "xml", XmlBundle.message("select.xml.document.dialog.title"), false);
+    UIUtils.configureBrowseButton(project, generateFromUrl, "xml", XmlBeansBundle.message("select.xml.document.dialog.title"), false);
     doInitFor(generateFromUrlText, generateFromUrl.getTextField());
 
     doInitFor(resultSchemaFileNameText, resultSchemaFileName);
@@ -190,22 +189,22 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
 
   private @InspectionMessage String doValidateWithData() {
     if (! new File(generateFromUrl.getText()).exists()) {
-      return XmlBundle.message("instance.document.file.is.not.exist");
+      return XmlBeansBundle.message("instance.document.file.is.not.exist");
     }
 
     if (!generateFromUrl.getText().endsWith(".xml")) {
-      return XmlBundle.message("instance.document.file.should.have.xml.extension");
+      return XmlBeansBundle.message("instance.document.file.should.have.xml.extension");
     }
 
     try {
       int i = Integer.parseInt(getEnumerationsLimit());
-      if (i < 0) return XmlBundle.message("negative.number.validation.problem");
+      if (i < 0) return XmlBeansBundle.message("negative.number.validation.problem");
     } catch(NumberFormatException ex) {
-      return XmlBundle.message("invalid.number.validation.problem");
+      return XmlBeansBundle.message("invalid.number.validation.problem");
     }
 
     if (getTargetSchemaName() == null || getTargetSchemaName().isEmpty()) {
-      return XmlBundle.message("result.schema.file.name.is.empty.validation.problem");
+      return XmlBeansBundle.message("result.schema.file.name.is.empty.validation.problem");
     }
     return null;
   }
@@ -216,14 +215,14 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   }
 
   static String getLocalElementsGlobalComplexTypes() {
-    return XmlBundle.message("local.elements.global.complex.types.option.name");
+    return XmlBeansBundle.message("local.elements.global.complex.types.option.name");
   }
 
   static String getLocalElementsTypes() {
-    return XmlBundle.message("local.elements.types.option.name");
+    return XmlBeansBundle.message("local.elements.types.option.name");
   }
 
   static String getGlobalElementsLocalTypes() {
-    return XmlBundle.message("global.elements.local.types.option.name");
+    return XmlBeansBundle.message("global.elements.local.types.option.name");
   }
 }

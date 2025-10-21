@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -96,7 +97,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
         return true
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun buildMainParameterType(): KaType {
         return buildClassType(StandardClassIds.Array) {
             val argumentType = buildClassType(StandardClassIds.String) {
@@ -108,7 +109,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaType.isResolvedClassType(): Boolean = when (this) {
         is KaClassType -> typeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
         else -> false

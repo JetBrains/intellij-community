@@ -1,18 +1,18 @@
 ### auto-generated section `build kotlin.highlighting.k1` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_kotlin-highlighting-k1",
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-highlighting-k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -20,8 +20,9 @@ jvm_library(
   name = "kotlin-highlighting-k1",
   module_name = "kotlin.highlighting.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-highlighting-k1_resources"],
+  kotlinc_opts = ":custom_kotlin-highlighting-k1",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -33,10 +34,8 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
-    "//platform/diff-impl",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/lang-impl",
     "//platform/core-ui",
@@ -44,7 +43,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/analysis",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/base/facet",
     "//platform/platform-impl:ide-impl",
@@ -58,7 +57,6 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/openapi:java",
     "@lib//:kotlinc-analysis-api",
-  ],
-  runtime_deps = [":kotlin-highlighting-k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.highlighting.k1` end

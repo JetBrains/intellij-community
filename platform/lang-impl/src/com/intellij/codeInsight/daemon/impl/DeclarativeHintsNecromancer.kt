@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass.PreprocessedInlayData
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
@@ -89,7 +90,7 @@ private class DeclarativeHintsNecromancer(
             //maybe readaction
             writeIntentReadAction {
               inlayDataMap.forEach { (sourceId, preparedInlayData) ->
-                DeclarativeInlayHintsPass.applyInlayData(editor, recipe.project, preparedInlayData, sourceId)
+                DeclarativeInlayHintsPass.applyInlayData(editor, recipe.project, preparedInlayData, emptySet(), sourceId)
               }
               DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
               FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DECLARATIVE_HINTS)

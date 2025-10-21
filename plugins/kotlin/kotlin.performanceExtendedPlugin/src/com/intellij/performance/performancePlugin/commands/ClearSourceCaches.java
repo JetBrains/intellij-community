@@ -30,7 +30,7 @@ public class ClearSourceCaches extends AbstractCommand {
             PsiManager.getInstance(project).dropResolveCaches();
             PsiManager.getInstance(project).dropPsiCaches();
             ProjectStructureProviderService.Companion.getInstance(project).incOutOfBlockModificationCount();
-            if (System.getProperty("idea.kotlin.plugin.use.k2", "false").equals("true")) {
+            if (System.getProperty("idea.kotlin.plugin.use.k1", "false").equals("false")) {
                 UtilsKt.publishGlobalSourceModuleStateModificationEvent(project);
             }
             actionCallback.setDone();

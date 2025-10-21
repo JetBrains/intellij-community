@@ -7,8 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -32,16 +32,18 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
@@ -49,6 +51,7 @@ import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -75,7 +78,9 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
-class IdeaModuleInfoTest8 : JavaModuleTestCase() {
+class IdeaModuleInfoTest8 : JavaModuleTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
     private var vfsDisposable: Ref<Disposable>? = null
 
     private fun getModuleInfoFromIdeaModuleWithJvmPlatformCheck(): List<IdeaModuleInfo> {
@@ -2329,7 +2334,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     }
 
     private fun module(name: String, hasProductionRoot: Boolean = true, hasTestRoot: Boolean = true): Module {
-        return createModuleFromTestData(createTempDirectory().absolutePath, name, StdModuleTypes.JAVA, false).apply {
+        return createModuleFromTestData(createTempDirectory().absolutePath, name, JavaModuleType.getModuleType(), false).apply {
             if (hasProductionRoot)
                 PsiTestUtil.addSourceContentToRoots(this, dir(), false)
             if (hasTestRoot)
@@ -2365,7 +2370,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
         "kotlin-stdlib-js",
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibJs),
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(TestKotlinArtifacts.kotlinStdlibJs),
         kind = KotlinJavaScriptLibraryKind
     )
 
@@ -2405,7 +2410,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     }
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
 
         vfsDisposable = allowProjectRootAccess(this)
     }

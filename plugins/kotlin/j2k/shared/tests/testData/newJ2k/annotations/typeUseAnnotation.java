@@ -23,6 +23,7 @@ public class TEST2 {
     @Anon5(4) @TypeUseAnon2 String bar;
 }
 
+// KTIJ-35460
 public class TEST3 {
     public @Anon5(1)
     @TypeUseAnon3 String foo(@Anon5(2) @TypeUseAnon3 Object o) {

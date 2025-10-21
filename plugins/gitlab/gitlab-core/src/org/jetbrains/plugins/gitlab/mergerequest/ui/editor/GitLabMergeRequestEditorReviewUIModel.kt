@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapModelsToViewModels
+import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
@@ -63,9 +63,9 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     }.stateInNow(cs, null)
 
   override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
-    fileVm.discussions.mapModelsToViewModels { ShiftedDiscussion(it) },
-    fileVm.draftNotes.mapModelsToViewModels { ShiftedDraftNote(it) },
-    fileVm.newDiscussions.mapModelsToViewModels { ShiftedNewDiscussion(it) }
+    fileVm.discussions.mapStatefulToStateful { ShiftedDiscussion(it) },
+    fileVm.draftNotes.mapStatefulToStateful { ShiftedDraftNote(it) },
+    fileVm.newDiscussions.mapStatefulToStateful { ShiftedNewDiscussion(it) }
   ) { discussions, drafts, new ->
     discussions + drafts + new
   }.stateInNow(cs, emptyList())

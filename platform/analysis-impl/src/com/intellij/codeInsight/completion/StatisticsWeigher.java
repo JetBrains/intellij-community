@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -23,26 +22,24 @@ import java.util.*;
 import java.util.function.Function;
 
 public final class StatisticsWeigher extends CompletionWeigher {
-  private static final Logger LOG = Logger.getInstance(StatisticsWeigher.class);
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
   @Override
-  public Comparable weigh(final @NotNull LookupElement item, final @NotNull CompletionLocation location) {
+  public Comparable<?> weigh(@NotNull LookupElement item, @NotNull CompletionLocation location) {
     throw new UnsupportedOperationException();
   }
 
   public static class LookupStatisticsWeigher extends Classifier<LookupElement> {
-    private final CompletionLocation myLocation;
+    private final @NotNull CompletionLocation myLocation;
     private final Map<LookupElement, StatisticsComparable> myWeights = new IdentityHashMap<>();
     private final Set<String> myStringsWithWeights = CollectionFactory.createSmallMemoryFootprintSet();
     private final Set<LookupElement> myNoStats = new ReferenceOpenHashSet<>();
     private final List<Function<@NotNull LookupElement, @Nullable StatisticsInfo>> mySerializers;
 
-    public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
+    public LookupStatisticsWeigher(@NotNull CompletionLocation location, @Nullable Classifier<LookupElement> next) {
       super(next, "stats");
       myLocation = location;
-      mySerializers = myLocation == null ? List.of() :
-                      ContainerUtil.map(StatisticsManager.COLLECTOR.forKey(CompletionService.STATISTICS_KEY),
+      mySerializers = ContainerUtil.map(StatisticsManager.COLLECTOR.forKey(CompletionService.STATISTICS_KEY),
                                         stat -> ((CompletionStatistician)stat).forLocation(myLocation));
     }
 
@@ -63,7 +60,8 @@ public final class StatisticsWeigher extends CompletionWeigher {
     }
 
     @Override
-    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, final @NotNull ProcessingContext context) {
+    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source,
+                                                     @NotNull ProcessingContext context) {
       List<LookupElement> initialList;
       Collection<List<LookupElement>> byWeight;
       synchronized (this) {
@@ -75,12 +73,14 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return JBIterable.from(initialList).append(JBIterable.from(byWeight).flatten(group -> myNext.classify(group, context)));
     }
 
-    private static Iterable<LookupElement> withoutInitial(Iterable<? extends LookupElement> allItems, List<? extends LookupElement> initial) {
+    private static @NotNull Iterable<LookupElement> withoutInitial(@NotNull Iterable<? extends LookupElement> allItems,
+                                                                   @NotNull List<? extends LookupElement> initial) {
       Set<LookupElement> initialSet = new ReferenceOpenHashSet<>(initial);
       return JBIterable.<LookupElement>from(allItems).filter(element -> !initialSet.contains(element));
     }
 
-    private List<LookupElement> getInitialNoStatElements(Iterable<? extends LookupElement> source, ProcessingContext context) {
+    private @NotNull List<LookupElement> getInitialNoStatElements(@NotNull Iterable<? extends LookupElement> source,
+                                                                  @NotNull ProcessingContext context) {
       List<LookupElement> initialList = new ArrayList<>();
       for (LookupElement next : myNext.classify(source, context)) {
         if (myNoStats.contains(next)) {
@@ -93,14 +93,15 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return initialList;
     }
 
-    private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<? extends LookupElement> source) {
+    private @NotNull TreeMap<Integer, List<LookupElement>> buildMapByWeight(@NotNull Iterable<? extends LookupElement> source) {
       MultiMap<String, LookupElement> byName = MultiMap.create();
       List<LookupElement> noStats = new ArrayList<>();
       for (LookupElement element : source) {
         String string = element.getLookupString();
         if (myStringsWithWeights.contains(string)) {
           byName.putValue(string, element);
-        } else {
+        }
+        else {
           noStats.add(element);
         }
       }
@@ -115,7 +116,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return map;
     }
 
-    private int getMaxWeight(List<? extends LookupElement> group) {
+    private int getMaxWeight(@NotNull List<? extends LookupElement> group) {
       int max = 0;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < group.size(); i++) {
@@ -124,12 +125,12 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return max;
     }
 
-    private int getScalarWeight(LookupElement e) {
+    private int getScalarWeight(@NotNull LookupElement e) {
       StatisticsComparable comparable = myWeights.get(e);
       return comparable == null ? 0 : comparable.getScalar();
     }
 
-    private StatisticsComparable getWeight(LookupElement t) {
+    private @NotNull StatisticsComparable getWeight(@NotNull LookupElement t) {
       StatisticsComparable w = myWeights.get(t);
       if (w == null) {
         StatisticsInfo info = getBaseStatisticsInfo(t);
@@ -138,7 +139,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return w;
     }
 
-    private static int weigh(final StatisticsInfo baseInfo) {
+    private static int weigh(@NotNull StatisticsInfo baseInfo) {
       if (baseInfo == StatisticsInfo.EMPTY) {
         return 0;
       }
@@ -148,7 +149,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
 
     @Override
     public @Unmodifiable @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items,
-                                                                                      final @NotNull ProcessingContext context) {
+                                                                                      @NotNull ProcessingContext context) {
       return ContainerUtil.map(items, lookupElement -> new Pair<>(lookupElement, getWeight(lookupElement)));
     }
 
@@ -161,18 +162,15 @@ public final class StatisticsWeigher extends CompletionWeigher {
       super.removeElement(element, context);
     }
 
-    private @NotNull StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
+    private @NotNull StatisticsInfo getBaseStatisticsInfo(@NotNull LookupElement item) {
       StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
       if (info == null) {
-        if (myLocation == null) {
-          return StatisticsInfo.EMPTY;
-        }
         BASE_STATISTICS_INFO.set(item, info = calcBaseInfo(item));
       }
       return info;
     }
 
-    private @NotNull StatisticsInfo calcBaseInfo(LookupElement item) {
+    private @NotNull StatisticsInfo calcBaseInfo(@NotNull LookupElement item) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myLocation.getCompletionParameters().isTestingMode()) {
         ApplicationManager.getApplication().assertIsNonDispatchThread();
       }
@@ -186,11 +184,11 @@ public final class StatisticsWeigher extends CompletionWeigher {
     }
   }
 
-  public static void clearBaseStatisticsInfo(LookupElement item) {
+  public static void clearBaseStatisticsInfo(@NotNull LookupElement item) {
     item.putUserData(BASE_STATISTICS_INFO, null);
   }
 
-  public static @NotNull StatisticsInfo getBaseStatisticsInfo(LookupElement item, @Nullable CompletionLocation location) {
+  public static @NotNull StatisticsInfo getBaseStatisticsInfo(@NotNull LookupElement item, @Nullable CompletionLocation location) {
     StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
     if (info == null) {
       if (location == null) {
@@ -201,12 +199,11 @@ public final class StatisticsWeigher extends CompletionWeigher {
     return info;
   }
 
-  private static @NotNull StatisticsInfo calcBaseInfo(LookupElement item, @NotNull CompletionLocation location) {
+  private static @NotNull StatisticsInfo calcBaseInfo(@NotNull LookupElement item, @NotNull CompletionLocation location) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !location.getCompletionParameters().isTestingMode()) {
       ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
     StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
     return info == null ? StatisticsInfo.EMPTY : info;
   }
-
 }

@@ -2,12 +2,16 @@
 package git4idea.rebase.log
 
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -16,6 +20,7 @@ import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
+import git4idea.rebase.GitSingleCommitEditingAction
 import git4idea.rebase.log.GitCommitEditingActionBase.Companion.findContainingBranches
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -29,6 +34,7 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
   private val originalHEAD = commitEditingData.repository.info.currentRevision
   private val commitEditor = createCommitEditor()
   private var onOk: (String) -> Unit = {}
+  private var repositoryValidationResult: ValidationInfo? = null
 
   init {
     Disposer.register(disposable, commitEditor)
@@ -36,6 +42,21 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     init()
     isModal = false
     this.title = title
+
+    commitEditor.editorField.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(e: DocumentEvent) {
+        updateOkButtonState()
+      }
+    })
+    updateOkButtonState()
+  }
+
+  private fun updateOkButtonState() {
+    if (repositoryValidationResult != null) {
+      return
+    }
+    val isMessageEmpty = commitEditor.comment.isBlank()
+    isOKActionEnabled = !isMessageEmpty
   }
 
   fun show(onOk: (newMessage: String) -> Unit) {
@@ -47,7 +68,7 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     val logData = commitEditingData.logData
     val repository = commitEditingData.repository
     val commits = commitEditingData.selection.commits
-    if (repository.info.currentRevision != originalHEAD || Disposer.isDisposed(logData)) {
+    if (repository.info.currentRevision != originalHEAD || logData.isDisposed) {
       return ValidationInfo(
         GitBundle.message("rebase.log.reword.dialog.failed.repository.changed.message", commits.size)
       )
@@ -84,13 +105,18 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
         sink[VcsLogInternalDataKeys.LOG_DATA] = commitEditingData.logData
       }
     }
+    if (commitEditingData is GitSingleCommitEditingAction.SingleCommitEditingData
+        && commitEditingData.selectedChanges.isNotEmpty()) {
+      editor.setChangesSupplier { commitEditingData.selectedChanges }
+    }
     editor.text = originMessage
     editor.editorField.setCaretPosition(0)
     return editor
   }
 
   override fun doValidate(): ValidationInfo? {
-    return validate(commitEditingData, originalHEAD)
+    repositoryValidationResult = validate(commitEditingData, originalHEAD)
+    return repositoryValidationResult
   }
 
   override fun doOKAction() {

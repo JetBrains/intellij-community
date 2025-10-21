@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("UiUtils")
 @file:Suppress("SameParameterValue")
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
@@ -21,14 +22,18 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.*
+import javax.swing.text.DefaultCaret
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
@@ -186,9 +191,8 @@ fun getPresentablePath(path: @NonNls String): @NlsSafe String {
 }
 
 @JvmOverloads
-fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String {
-  return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
-}
+fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String =
+  FileUtil.toCanonicalPath(OSAgnosticPathUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
 
 /**
  * Injects ellipsis into text if text width is more [maxTextWidth].
@@ -250,6 +254,22 @@ fun shortenText(
   return shortedText
 }
 
+@ApiStatus.Internal
+fun JEditorPane.setCopyable(copyable: Boolean = true) {
+  if (copyable) {
+    if (!focusListeners.contains(CopyableFocusAdapter)) {
+      addFocusListener(CopyableFocusAdapter)
+    }
+    isFocusable = true
+    putClientProperty("caretWidth", 1)
+    (caret as? DefaultCaret)?.setUpdatePolicy(DefaultCaret.NEVER_UPDATE)
+  } else {
+    removeFocusListener(CopyableFocusAdapter)
+    CopyableFocusAdapter.resetSelection(this)
+    isFocusable = false
+  }
+}
+
 private fun shortenText(
   text: String,
   maxTextLength: Int,
@@ -284,5 +304,18 @@ private fun binarySearch(
   return when (condition(rightIndex)) {
     true -> rightIndex
     else -> leftIndex
+  }
+}
+
+private object CopyableFocusAdapter: FocusAdapter() {
+
+  fun resetSelection(editorPane: JEditorPane) {
+    val caretPosition = editorPane.caretPosition
+    editorPane.select(caretPosition, caretPosition)
+  }
+
+  override fun focusLost(e: FocusEvent?) {
+    val editorPane = e?.component as? JEditorPane ?: return
+    resetSelection(editorPane)
   }
 }

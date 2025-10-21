@@ -10,6 +10,10 @@ import com.intellij.psi.PsiFile
 internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
     private val templateSet: Set<PostfixTemplate> by lazy {
         setOf(
+            // shared
+            KtIfExpressionPostfixTemplate(this),
+            KtElseExpressionPostfixTemplate(this),
+            // K2
             KotlinParenthesizedPostfixTemplate(this),
             KotlinAssertPostfixTemplate(this),
             KotlinSystemOutPostfixTemplate(this),

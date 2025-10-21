@@ -149,7 +149,7 @@ class CurrentThreadCoroutineScopeTest {
   fun `blockingContextScope retains only those elements that were present at the moment of invocation`(): Unit = timeoutRunBlocking {
     withContext(E2() + E3()) {
       blockingContextScope {
-        installThreadContext(currentThreadContext() + E1(), true).use {
+        installThreadContext(currentThreadContext() + E1(), true) {
           application.executeOnPooledThread {
             val context = currentThreadContext()
             assertNull(context[E1])
@@ -165,7 +165,7 @@ class CurrentThreadCoroutineScopeTest {
   fun `fixCurrentThreadScope captures the context of its definition`(): Unit = timeoutRunBlocking {
     withContext(E1()) {
       val (_, job) = withCurrentThreadCoroutineScopeBlocking {
-        installThreadContext(currentThreadContext() + E2(), true).use {
+        installThreadContext(currentThreadContext() + E2(), true) {
           currentThreadCoroutineScope().launch {
             val context = currentThreadContext()
             assertNotNull(context[E1])
@@ -205,7 +205,7 @@ class CurrentThreadCoroutineScopeTest {
     val latch = Job(coroutineContext.job)
     val wasCancelled = AtomicBoolean(false)
 
-    installThreadContext(currentThreadContext() + parentJob).use {
+    installThreadContext(currentThreadContext() + parentJob) {
       val (_, job) = withCurrentThreadCoroutineScopeBlocking {
         currentThreadCoroutineScope().launch {
           try {

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FactoryMap;
+import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.parsing.console.PyConsoleHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -48,8 +49,10 @@ public class PySyntaxHighlighterFactoryBase extends SyntaxHighlighterFactory {
     return myMap.get(level);
   }
 
-  protected LanguageLevel getLanguageLevel(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
-    return LanguageLevel.getDefault();
+  private static @NotNull LanguageLevel getLanguageLevel(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+    return project != null && virtualFile != null ?
+           PyLanguageFacade.getINSTANCE().getEffectiveLanguageLevel(project, virtualFile) :
+           LanguageLevel.getDefault();
   }
 
   protected boolean useConsoleLexer(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {

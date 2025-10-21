@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -24,13 +23,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.WRITE_OPEN_OPTION
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
+import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
+import org.jetbrains.intellij.build.io.writeToFileChannelFully
+import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.EnumSet
@@ -40,14 +49,11 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
-internal fun isMacLibrary(name: String): Boolean {
-  return name.endsWith(".jnilib") ||
-         name.endsWith(".dylib") ||
-         name.endsWith(".so") ||
-         name.endsWith(".tbd")
-}
+internal fun isMacLibrary(name: String): Boolean =
+  name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so") || name.endsWith(".tbd")
 
-internal fun CoroutineScope.recursivelySignMacBinaries(
+internal fun recursivelySignMacBinaries(
+  coroutineScope: CoroutineScope,
   root: Path,
   context: BuildContext,
   executableFileMatchers: Collection<PathMatcher> = emptyList(),
@@ -62,23 +68,24 @@ internal fun CoroutineScope.recursivelySignMacBinaries(
       if (name.endsWith(".jar") || name.endsWith(".zip")) {
         archives.add(file)
       }
-      else if (isMacLibrary(name) ||
-               executableFileMatchers.any { it.matches(relativePath) } ||
-               (SystemInfoRt.isUnix && Files.isExecutable(file))) {
+      else if (
+        isMacLibrary(name) ||
+        executableFileMatchers.any { it.matches(relativePath) } ||
+        (SystemInfoRt.isUnix && Files.isExecutable(file))
+      ) {
         binaries.add(file)
       }
       return FileVisitResult.CONTINUE
     }
   })
 
-  launch(CoroutineName("signing macOS binaries")) {
-    signMacBinaries(binaries.filter {
-      isMacBinary(it) && !isSigned(it)
-    }, context)
+  coroutineScope.launch(CoroutineName("signing macOS binaries")) {
+    val binariesToSign = binaries.filter { isMacBinary(it) && !isSigned(it) }
+    signMacBinaries(binariesToSign, context)
   }
 
   for (file in archives) {
-    launch(CoroutineName("signing macOS binaries in ${file.relativeTo(root)}")) {
+    coroutineScope.launch(CoroutineName("signing macOS binaries in ${file.relativeTo(root)}")) {
       signAndRepackZipIfMacSignaturesAreMissing(file, context)
     }
   }
@@ -99,8 +106,10 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
       if (!isSigned(byteChannel, name)) {
         data.reset()
         val fileToBeSigned = Files.createTempFile(context.paths.tempDir, name.replace('/', '-').takeLast(128), "")
-        writeToFile(fileToBeSigned, data)
-        filesToBeSigned.put(name, fileToBeSigned)
+        FileChannel.open(fileToBeSigned, WRITE_OPEN_OPTION).use { fileChannel ->
+          writeToFileChannelFully(fileChannel, data)
+        }
+        filesToBeSigned[name] = fileToBeSigned
       }
     }
   }
@@ -109,9 +118,10 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
     return
   }
 
-  signMacBinaries(files = filesToBeSigned.values.toList(), context = context, checkPermissions = false)
+  signMacBinaries(filesToBeSigned.values.toList(), context, checkPermissions = false)
 
-  copyZipReplacing(origin = zip, entries = filesToBeSigned, context = context)
+  copyZipReplacing(origin = zip, entries = filesToBeSigned, context)
+
   for (file in filesToBeSigned.values) {
     Files.deleteIfExists(file)
   }
@@ -139,20 +149,16 @@ private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, c
     }
 }
 
-internal fun signingOptions(contentType: String, context: BuildContext): PersistentMap<String, String> {
-  val certificateID = context.proprietaryBuildTools.macOsCodesignIdentity?.value
-  check(certificateID != null || context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)) {
-    "Missing certificate ID"
-  }
+internal fun macSigningOptions(contentType: String, context: BuildContext): PersistentMap<String, String> {
+  val certificateID = context.proprietaryBuildTools.signTool.macOsCodesignIdentity?.certificateID
+  check(certificateID != null || context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)) { "Missing certificate ID" }
   val entitlements = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/entitlements.xml")
-  check(entitlements.exists()) {
-    "Missing $entitlements file"
-  }
+  check(entitlements.exists()) { "Missing $entitlements file" }
   return persistentMapOf(
     "mac_codesign_options" to "runtime",
     "mac_codesign_identity" to "$certificateID",
     "mac_codesign_entitlements" to "$entitlements",
-    "mac_codesign_force" to "true", // true if omitted
+    "mac_codesign_force" to "true",
     "contentType" to contentType
   )
 }
@@ -160,8 +166,8 @@ internal fun signingOptions(contentType: String, context: BuildContext): Persist
 internal suspend fun signMacBinaries(
   files: List<Path>,
   context: BuildContext,
-  checkPermissions: Boolean = true,
   additionalOptions: Map<String, String> = emptyMap(),
+  checkPermissions: Boolean = true,
 ) {
   if (files.isEmpty() || !context.isMacCodeSignEnabled) {
     return
@@ -180,9 +186,9 @@ internal suspend fun signMacBinaries(
   val span = spanBuilder("sign binaries for macOS distribution")
   span.setAttribute("contentType", "application/x-mac-app-bin")
   span.setAttribute(AttributeKey.stringArrayKey("files"), files.map { it.name })
-  val options = signingOptions(contentType = "application/x-mac-app-bin", context = context).putAll(m = additionalOptions)
+  val options = macSigningOptions(contentType = "application/x-mac-app-bin", context).putAll(additionalOptions)
   span.use {
-    context.proprietaryBuildTools.signTool.signFiles(files = files, context = context, options = options)
+    context.proprietaryBuildTools.signTool.signFiles(files, context, options)
     if (!permissions.isEmpty()) {
       // SRE-1223 workaround
       files.forEach {
@@ -190,47 +196,28 @@ internal suspend fun signMacBinaries(
       }
     }
 
-    val missingSignature = files.filter { !isSigned(it) }
-    check(missingSignature.isEmpty()) {
-      "Missing signature for:\n" + missingSignature.joinToString(separator = "\n\t")
+    if (!context.options.isInDevelopmentMode) {
+      val missingSignature = files.filter { !isSigned(it) }
+      check(missingSignature.isEmpty()) {
+        "Missing signature for:\n" + missingSignature.joinToString(separator = "\n\t")
+      }
     }
-  }
-}
-
-internal suspend fun signData(data: ByteBuffer, context: BuildContext): Path {
-  val options = signingOptions("application/x-mac-app-bin", context)
-
-  val file = Files.createTempFile(context.paths.tempDir, "", "")
-  writeToFile(file, data)
-  context.proprietaryBuildTools.signTool.signFiles(files = listOf(file), context = context, options = options)
-  check(isSigned(file)) { "Missing signature for $file" }
-  return file
-}
-
-private fun writeToFile(file: Path?, data: ByteBuffer) {
-  FileChannel.open(file, WRITE_OPEN_OPTION).use { fileChannel ->
-    writeToFileChannelFully(channel = fileChannel, data = data)
   }
 }
 
 private fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
 
-internal suspend fun isSigned(path: Path): Boolean {
-  return withContext(Dispatchers.IO) {
-    Files.newByteChannel(path).use {
-      isSigned(byteChannel = it, binaryId = path.toString())
-    }
+internal suspend fun isSigned(path: Path): Boolean = withContext(Dispatchers.IO) {
+  Files.newByteChannel(path).use {
+    isSigned(byteChannel = it, binaryId = path.toString())
   }
 }
 
-internal fun isMacBinary(byteChannel: SeekableByteChannel): Boolean {
-  return detectFileType(byteChannel).first == FileType.MachO
-}
+private fun isMacBinary(byteChannel: SeekableByteChannel): Boolean =
+  detectFileType(byteChannel).first == FileType.MachO
 
-private fun detectFileType(byteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> {
-  return byteChannel.use {
-    it.DetectFileType()
-  }
+private fun detectFileType(byteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> = byteChannel.use {
+  it.DetectFileType()
 }
 
 /**

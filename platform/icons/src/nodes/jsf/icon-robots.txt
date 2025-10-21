@@ -1,1 +1,0 @@
-deprecated: renderer.svg; to be removed (Use AllIcons.Actions.Edit instead)

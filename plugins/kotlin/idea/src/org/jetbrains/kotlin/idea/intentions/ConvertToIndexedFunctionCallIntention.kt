@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.indexed.function.call")
+    KotlinBundle.messagePointer("convert.to.indexed.function.call")
 ) {
     override fun applicabilityRange(element: KtCallExpression): TextRange? {
         val callee = element.calleeExpression ?: return null
@@ -35,7 +35,7 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
         if (element.singleLambdaArgumentExpression() == null) return null
         val context = element.analyze(BodyResolveMode.PARTIAL)
         if (functionFqName != element.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull()) return null
-        setTextGetter(KotlinBundle.lazyMessage("convert.to.0", "'$newFunctionName'"))
+        setTextGetter(KotlinBundle.messagePointer("convert.to.0", "'$newFunctionName'"))
         return callee.textRange
     }
 

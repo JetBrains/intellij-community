@@ -1,9 +1,10 @@
 from _typeshed import FileDescriptorOrPath
 from collections.abc import Iterable
-from typing import BinaryIO
+from typing import BinaryIO, type_check_only
 
 from ..base import AsyncBase, AsyncIndirectBase
 
+@type_check_only
 class _UnknownAsyncTextIO(AsyncBase[str]):
     async def close(self) -> None: ...
     async def flush(self) -> None: ...

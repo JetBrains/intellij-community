@@ -351,12 +351,12 @@ public sealed interface ModCommand
       if (sub instanceof ModUpdateFileText updateFileText && updateFileText.file().equals(virtualFile)) {
         offset = updateFileText.translateOffset(offset, leanRight);
       }
-      if (sub instanceof ModDeleteFile deleteFile && deleteFile.file().equals(virtualFile)) {
+      if (sub instanceof ModDeleteFile(VirtualFile fileToDelete) && fileToDelete.equals(virtualFile)) {
         // Navigation is useless: we are removing the target file
         return command;
       }
-      if (sub instanceof ModMoveFile moveFile && moveFile.file().equals(virtualFile)) {
-        virtualFile = moveFile.targetFile();
+      if (sub instanceof ModMoveFile(VirtualFile fileToMove, FutureVirtualFile targetFile) && fileToMove.equals(virtualFile)) {
+        virtualFile = targetFile;
       }
       if (!(sub instanceof ModNavigate)) {
         finalCommand = finalCommand.andThen(sub);

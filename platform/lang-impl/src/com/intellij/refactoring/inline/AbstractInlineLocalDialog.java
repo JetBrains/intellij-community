@@ -12,7 +12,7 @@ public abstract class AbstractInlineLocalDialog extends InlineOptionsDialog {
   public AbstractInlineLocalDialog(Project project, PsiElement variable, final PsiReference ref, int occurrencesCount) {
     super(project, true, variable);
     if (ref == null || occurrencesCount == 1) {
-      setDoNotAskOption(new DoNotAskOption() {
+      setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog();

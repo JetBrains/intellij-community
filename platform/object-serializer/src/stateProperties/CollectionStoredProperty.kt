@@ -48,9 +48,9 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(
     return this === other || (other is CollectionStoredProperty<*, *> && value == other.value && defaultValue == other.defaultValue)
   }
 
-  override fun hashCode() = value.hashCode()
+  override fun hashCode(): Int = value.hashCode()
 
-  override fun toString() = "$name = ${if (isEqualToDefault()) "" else value.joinToString(" ")}"
+  override fun toString(): String = "$name = ${if (isEqualToDefault()) "" else value.joinToString(" ")}"
 
   override fun setValue(other: StoredProperty<C>): Boolean {
     @Suppress("UNCHECKED_CAST")
@@ -58,7 +58,7 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(
   }
 
   @Suppress("FunctionName")
-  fun __getValue() = value
+  fun __getValue(): C = value
 }
 
 internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, ModCountableList<T>>(ModCountableList(), null) {

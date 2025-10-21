@@ -255,12 +255,53 @@
   </problem>
 
   <problem>
+    <file>unresolvedUnrelatedReference.kt</file>
+    <line>11</line>
+    <module>light_idea_test_case</module>
+    <package>unresolvedUnrelatedReference</package>
+    <entry_point TYPE="method" FQNAME="unresolvedUnrelatedReference.UnresolvedUnrelatedReferenceKt void foo()" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>7</offset>
+    <length>8</length>
+  </problem>
+
+  <problem>
     <file>KTIJ-31286.kt</file>
     <line>9</line>
     <module>light_idea_test_case</module>
     <package>KTIJ-31286</package>
     <entry_point TYPE="method" FQNAME="KTIJ-31286.kt" />
     <problem_class severity="WEAK WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>valueDeclaration.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclaration</package>
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  <problem>
+    <file>valueDeclaration.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclaration</package>
+    <entry_point TYPE="method" FQNAME="valueDeclaration.ValueDeclarationKt void testMe(java.util.List&lt;java.lang.String&gt; list)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  <problem>
+    <file>valueDeclaration.kt</file>
+    <line>10</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclaration</package>
+    <entry_point TYPE="method" FQNAME="valueDeclaration.ValueDeclarationKt void testMe(java.util.List&lt;java.lang.String&gt; list)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
     <description>Explicit type arguments can be inferred</description>
   </problem>
 </problems>

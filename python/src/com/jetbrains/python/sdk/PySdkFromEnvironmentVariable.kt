@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ui.EDT
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<PySdkFromEnvironmentVariable>()

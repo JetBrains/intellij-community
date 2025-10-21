@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -26,10 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.run.CommandLinePatcher
-import com.jetbrains.python.run.PythonScriptExecution
-import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder
+import com.jetbrains.python.run.*
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import java.util.function.Function
 
@@ -90,6 +88,9 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       }
       return super.execute(executor, converter)
     }
+
+    @Throws(ExecutionException::class)
+    override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult = execute(executor, *arrayOfNulls<CommandLinePatcher>(0))
 
     /**
      * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
@@ -165,8 +166,10 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       state.addBeforeParameters(testScriptExecution)
     }
 
-    override fun addAfterParameters(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                    testScriptExecution: PythonScriptExecution) {
+    override fun addAfterParameters(
+      targetEnvironmentRequest: TargetEnvironmentRequest,
+      testScriptExecution: PythonScriptExecution,
+    ) {
       state.addAfterParameters(targetEnvironmentRequest, testScriptExecution)
     }
 
@@ -175,9 +178,11 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       state.customizeEnvironmentVars(envs, passParentEnvs)
     }
 
-    override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
-                                                         envs: Map<String, Function<TargetEnvironment, String>>,
-                                                         passParentEnvs: Boolean) {
+    override fun customizePythonExecutionEnvironmentVars(
+      helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+      envs: Map<String, Function<TargetEnvironment, String>>,
+      passParentEnvs: Boolean,
+    ) {
       super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
       state.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     }

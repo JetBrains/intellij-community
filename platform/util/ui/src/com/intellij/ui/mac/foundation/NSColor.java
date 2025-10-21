@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +17,7 @@ public final class NSColor {
   }
 
   public static @Nullable Color getAccentColor() {
-    if (!SystemInfo.isMac || !SystemInfo.isOsVersionAtLeast("10.14"))
-      return null;
-
-    return _getNSColor("controlAccentColor");
+    return OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(10, 14) ? _getNSColor("controlAccentColor") : null;
   }
 
   private static @Nullable Color _getNSColor(@NotNull String selector) {

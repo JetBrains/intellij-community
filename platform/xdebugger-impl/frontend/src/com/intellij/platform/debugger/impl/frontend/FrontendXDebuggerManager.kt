@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManagerImpl
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
@@ -11,17 +12,18 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.debugger.impl.frontend.editor.BreakpointPromoterEditorListener
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager
+import com.intellij.platform.debugger.impl.frontend.frame.ImageEditorUIUtil
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerSessionEvent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -40,28 +42,57 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   @OptIn(ExperimentalCoroutinesApi::class)
   val currentSession: StateFlow<FrontendXDebuggerSession?> =
     channelFlow {
-      XDebuggerManagerApi.getInstance().currentSession(project.projectId())
-        .combine(sessionsFlow) { currentSessionId, sessions ->
-          currentSessionId to sessions
-        }
-        .collectLatest { (currentSessionId, sessions) ->
-          synchronousExecutor.trySend {
-            this@channelFlow.send(sessions.firstOrNull { it.id == currentSessionId })
+      durableWithStateReset(block = {
+        val currentSessionFlow = XDebuggerManagerApi.getInstance().currentSession(project.projectId())
+        currentSessionFlow
+          .combine(sessionsFlow) { currentSessionId, sessions ->
+            currentSessionId to sessions
           }
-        }
+          .collectLatest { (currentSessionId, sessions) ->
+            synchronousExecutor.trySend {
+              this@channelFlow.send(sessions.firstOrNull { it.id == currentSessionId })
+            }
+          }
+      }, stateReset = {
+        synchronousExecutor.trySend { this@channelFlow.send(null) }
+      })
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   val breakpointsManager: FrontendXBreakpointManager = FrontendXBreakpointManager(project, cs)
   internal val sessions get() = sessionsFlow.value
 
   init {
+    initCapabilities()
+    // TODO: make sure that capabilities are send before anything else
+
     cs.launch {
       for (event in synchronousExecutor) {
         event()
       }
     }
 
-    cs.launch {
+    initSessions()
+
+    installEditorListeners()
+
+    cs.launch(Dispatchers.EDT) {
+      // await listening started on the backend
+      XDebuggerValueLookupHintsRemoteApi.getInstance().getValueLookupListeningFlow(project.projectId()).filter { it }.first()
+      ValueLookupManager.getInstance(project).startListening()
+    }
+  }
+
+  private fun initCapabilities() = cs.launch {
+    XDebuggerManagerApi.getInstance().initialize(project.projectId(), XFrontendDebuggerCapabilities(
+      canShowImages = ImageEditorUIUtil.canCreateImageEditor(),
+    ))
+  }
+
+  private fun initSessions() = cs.launch {
+    // When the registry flag is not set, we would prefer to have XDebugSessionProxy.Monolith in a listener
+    // see com.intellij.xdebugger.impl.MonolithListenerAdapter
+    val shouldTriggerListener = XDebugSessionProxy.useFeProxy()
+    durableWithStateReset(block = {
       val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
       for (sessionDto in sessionsList) {
         synchronousExecutor.trySend {
@@ -69,9 +100,6 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
       }
       eventFlow.toFlow().collect { event ->
-        // When the registry flag is not set, we would prefer to have XDebugSessionProxy.Monolith in a listener
-        // see com.intellij.xdebugger.impl.MonolithListenerAdapter
-        val shouldTriggerListener = XDebugSessionProxy.useFeProxy()
         when (event) {
           is XDebuggerManagerSessionEvent.ProcessStarted -> {
             synchronousExecutor.trySend {
@@ -109,9 +137,18 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
           }
         }
       }
-    }
-
-    installEditorListeners()
+    }, stateReset = {
+      synchronousExecutor.trySend {
+        sessionsFlow.update { currentSessions ->
+          if (shouldTriggerListener) {
+            for (session in currentSessions) {
+              project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStopped(session)
+            }
+          }
+          listOf()
+        }
+      }
+    })
   }
 
   private fun installEditorListeners() {
@@ -121,7 +158,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   }
 
   private fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {
-    return sessionsFlow.value.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
+    return sessions.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
   }
 
   private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto): XDebugSessionProxy {

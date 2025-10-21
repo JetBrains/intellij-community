@@ -123,7 +123,7 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
   /**
    * Add an optional image above the header or description
    */
-  private fun withImage(image: Icon, withBorder: Boolean = true): GotItTooltip {
+  fun withImage(image: Icon, withBorder: Boolean = true): GotItTooltip {
     gotItBuilder.withImage(image, withBorder)
     return this
   }

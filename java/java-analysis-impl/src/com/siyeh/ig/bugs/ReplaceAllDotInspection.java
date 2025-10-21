@@ -101,7 +101,7 @@ public final class ReplaceAllDotInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ReplaceAllDotVisitor();
   }
 

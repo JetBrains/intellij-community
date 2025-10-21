@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.ui.clone.model
 
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.async.collectBatches
-import com.intellij.collaboration.async.mapModelsToViewModels
+import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.components.service
@@ -119,7 +119,7 @@ internal class GitLabCloneRepositoriesListViewModelImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val listsPerAccount = reloadSignal.withInitial(Unit).flatMapLatest { _ ->
-    accountManager.accountsState.mapModelsToViewModels<GitLabAccount, GitLabCloneRepositoriesForAccountViewModel> { account ->
+    accountManager.accountsState.mapStatefulToStateful<GitLabAccount, GitLabCloneRepositoriesForAccountViewModel> { account ->
       GitLabCloneRepositoriesForAccountViewModelImpl(this, accountManager, account)
     }
   }.stateIn(cs, SharingStarted.Eagerly, listOf())

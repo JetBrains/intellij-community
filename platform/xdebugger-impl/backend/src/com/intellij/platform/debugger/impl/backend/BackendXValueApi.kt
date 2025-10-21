@@ -3,20 +3,23 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
-import com.intellij.platform.debugger.impl.rpc.XInlineDebuggerDataDto
-import com.intellij.platform.debugger.impl.rpc.XValueApi
-import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XValueGroupId
+import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
+import com.intellij.xdebugger.impl.rpc.models.toXValueDto
+import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -35,6 +38,11 @@ internal class BackendXValueApi : XValueApi {
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
     return computeContainerChildren(xValueModel.cs, xValueModel.xValue, xValueModel.session)
+  }
+
+  override suspend fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent> {
+    val xValueModel = xValueGroupId.findValue() ?: return emptyFlow()
+    return computeContainerChildren(xValueModel.cs, xValueModel.xValueGroup, xValueModel.session)
   }
 
   override suspend fun disposeXValue(xValueId: XValueId) {
@@ -166,6 +174,7 @@ private class AddNextChildrenCallbackHandler(cs: CoroutineScope) {
   }
 }
 
+@Suppress("OPT_IN_USAGE")
 internal fun computeContainerChildren(
   parentCs: CoroutineScope,
   xValueContainer: XValueContainer,
@@ -174,12 +183,16 @@ internal fun computeContainerChildren(
   val rawEvents = Channel<RawComputeChildrenEvent>(capacity = Int.MAX_VALUE)
 
   return channelFlow {
+    parentCs.awaitCancellationAndInvoke {
+      close()
+    }
     val addNextChildrenCallbackHandler = AddNextChildrenCallbackHandler(this@channelFlow)
 
-    var isObsolete = false
     val xCompositeBridgeNode = object : XCompositeNode {
+      @Volatile
+      var obsolete = false
       override fun isObsolete(): Boolean {
-        return isObsolete
+        return obsolete
       }
 
       override fun addChildren(children: XValueChildrenList, last: Boolean) {
@@ -211,20 +224,18 @@ internal fun computeContainerChildren(
       }
     }
 
-    xValueContainer.computeChildren(xCompositeBridgeNode)
-
-    // mark xCompositeBridgeNode as obsolete when the channel collection is canceled
     launch {
-      try {
-        awaitCancellation()
-      }
-      finally {
-        isObsolete = true
+      for (event in rawEvents) {
+        send(event.convertToRpcEvent(parentCs, session))
       }
     }
 
-    for (event in rawEvents) {
-      send(event.convertToRpcEvent(parentCs, session))
+    try {
+      xValueContainer.computeChildren(xCompositeBridgeNode)
+      awaitClose()
+    }
+    finally {
+      xCompositeBridgeNode.obsolete = true
     }
   }
 }
@@ -246,7 +257,19 @@ private sealed interface RawComputeChildrenEvent {
           }
         }
       }.awaitAll()
-      return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last)
+
+      fun List<XValueGroup>.toDto() = map {
+        it.getOrStoreGlobally(parentCoroutineScope, session).toXValueGroupDto()
+      }
+
+      val topGroups = children.topGroups.toDto()
+      val bottomGroups = children.bottomGroups.toDto()
+
+      val topValues: List<XValueDto> = children.topValues.map {
+        newChildXValueModel(it, parentCoroutineScope, session).toXValueDto()
+      }
+
+      return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last, topGroups, bottomGroups, topValues)
     }
   }
 

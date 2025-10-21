@@ -41,7 +41,7 @@ public final class PythonFacetUtil {
         }
         if (name != null) {
           final ModifiableModelsProvider provider = ModifiableModelsProvider.getInstance();
-          final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
+          final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getGlobalLibraryTableModifiableModel(module.getProject());
           Library library = libraryTableModifiableModel.getLibraryByName(name);
           provider.disposeLibraryTableModifiableModel(libraryTableModifiableModel);
           if (library == null) {

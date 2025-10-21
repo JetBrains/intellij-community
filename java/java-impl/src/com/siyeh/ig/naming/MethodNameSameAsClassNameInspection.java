@@ -66,7 +66,7 @@ public final class MethodNameSameAsClassNameInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MethodNameSameAsClassNameVisitor();
   }
 

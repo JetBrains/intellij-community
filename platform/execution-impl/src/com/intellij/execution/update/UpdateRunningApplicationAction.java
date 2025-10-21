@@ -5,8 +5,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -21,12 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class UpdateRunningApplicationAction extends AnAction {
-  UpdateRunningApplicationAction() {
-    super(ExecutionBundle.messagePointer("action.AnAction.text.update.running.application"),
-          ExecutionBundle.messagePointer("action.AnAction.description.update.running.application"),
-          AllIcons.Javaee.UpdateRunningApplication);
-  }
+final class UpdateRunningApplicationAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

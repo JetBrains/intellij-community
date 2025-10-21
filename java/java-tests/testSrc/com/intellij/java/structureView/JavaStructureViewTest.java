@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structureView;
 
 import com.intellij.ide.structureView.impl.java.*;
@@ -61,8 +61,8 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     JBTreeTraverser<AbstractTreeNode<?>> traverser = JBTreeTraverser.from(AbstractTreeNode::getChildren);
     List<AbstractTreeNode<?>> roots = new ArrayList<>();
     for (Object element : getElements()) {
-      if (element instanceof AbstractTreeNode) {
-        roots.add((AbstractTreeNode<?>)element);
+      if (element instanceof AbstractTreeNode<?> node) {
+        roots.add(node);
       }
     }
     return traverser.withRoots(roots)
@@ -84,7 +84,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     TreeElementWrapper last = (TreeElementWrapper)elements[elements.length - 1];
     Collection<AbstractTreeNode<?>> children = last.getChildren();
     assertEquals(1, children.size());
-    assertEquals(3, ((AbstractTreeNode<?>)((List<?>)children).get(0)).getChildren().size());
+    assertEquals(3, ((AbstractTreeNode<?>)((List<?>)children).getFirst()).getChildren().size());
   }
 
   private Object[] getElements() {
@@ -111,15 +111,29 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   private static int getFieldsCount() {
     return ANNO_FIELD_COUNT + FIELD_COUNT;
   }
+  
+  public void testColons() {
+    doTest("""
+             class X {
+               public static final String colons = "a:b:c:";
+             }""",
+           """
+             -Test.java
+              -X
+               colons: String = "a:b:c:"
+             """);
+  }
 
   public void testSuperTypeGrouping() {
     doTest("""
              abstract class Abstract {
-             abstract void toImplement();
-             void toOverride(){}}
+               abstract void toImplement();
+               void toOverride(){}
+             }
              class aClass extends Abstract {
-             void toImplement(){};
-             void toOverride(){};}""",
+               void toImplement(){};
+               void toOverride(){};
+             }""",
 
            """
              -Test.java
@@ -131,7 +145,77 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                 toImplement(): void
                -Abstract
                 toOverride(): void"""
-      , true, false);
+      , true, false, false);
+  }
+
+  public void testSuperTypeGrouping2() {
+    doTest("""
+             abstract class Abstract {
+               int field;
+               class Inner {}
+             }
+             class aClass extends Abstract {
+               int moreField;
+             }""",
+
+           """
+             -Test.java
+              -Abstract
+               -Inner
+                -Object
+                 getClass(): Class<?>
+                 hashCode(): int
+                 equals(Object): boolean
+                 clone(): Object
+                 toString(): String
+                 notify(): void
+                 notifyAll(): void
+                 wait(long): void
+                 wait(long, int): void
+                 wait(): void
+                 finalize(): void
+               -Object
+                getClass(): Class<?>
+                hashCode(): int
+                equals(Object): boolean
+                clone(): Object
+                toString(): String
+                notify(): void
+                notifyAll(): void
+                wait(long): void
+                wait(long, int): void
+                wait(): void
+                finalize(): void
+               field: int
+              -aClass
+               -Abstract
+                -Inner
+                 getClass(): Class<?>
+                 hashCode(): int
+                 equals(Object): boolean
+                 clone(): Object
+                 toString(): String
+                 notify(): void
+                 notifyAll(): void
+                 wait(long): void
+                 wait(long, int): void
+                 wait(): void
+                 finalize(): void
+                field: int
+               -Object
+                getClass(): Class<?>
+                hashCode(): int
+                equals(Object): boolean
+                clone(): Object
+                toString(): String
+                notify(): void
+                notifyAll(): void
+                wait(long): void
+                wait(long, int): void
+                wait(): void
+                finalize(): void
+               moreField: int"""
+      , true, false, true);
   }
 
   public void testPropertiesGrouping1() {
@@ -368,10 +452,11 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   }
 
   public void testRecursive() {
-    myFixture.configureByText("I.java", "interface I {" +
-                                        "  class Impl implements I {" +
-                                        "  }" +
-                                        "};");
+    myFixture.configureByText("I.java", """
+      interface I {
+        class Impl implements I {
+        }
+      }""");
     myFixture.testStructureView(component -> {
       component.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(component.getTree(),
@@ -385,6 +470,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testVisibilitySorterComparingEqualKnown() {
     init();
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(svc.getTree(),
                                        """
@@ -449,6 +535,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   public void testVisibilitySorterCompareInheritanceGroups() {
     init();
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, true);
       svc.setActionActive(SuperTypesGrouper.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
@@ -487,6 +574,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     myFixture.configureByText("Derived.java", DERIVED);
 
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(FieldsFilter.ID, true);
       svc.setActionActive(Sorter.getAlphaSorterId(), true);
 
@@ -514,6 +602,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     init();
 
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, true);
       svc.setActionActive(SuperTypesGrouper.ID, true);
@@ -540,6 +629,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     init();
 
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
       svc.setActionActive(SuperTypesGrouper.ID, true);
@@ -598,6 +688,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     init();
 
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
       svc.setActionActive(SuperTypesGrouper.ID, true);
@@ -649,6 +740,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     myFixture.configureByText("a.java", "enum F { A,B,C}");
 
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
       svc.setActionActive(SuperTypesGrouper.ID, true);
@@ -690,21 +782,24 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   }
 
   private void doTest(String classText, @Language("TEXT") String expected) {
-    doTest(classText, expected, false, false);
+    doTest(classText, expected, false, false, false);
   }
 
   private void doPropertiesTest(String classText, String expected) {
-    doTest(classText, expected, false, true);
+    doTest(classText, expected, false, true, false);
   }
 
   private void doTest(String classText,
                       String expected,
                       boolean showInterfaces,
-                      boolean showProperties) {
+                      boolean showProperties,
+                      boolean showInherited) {
     myFixture.configureByText("Test.java", classText);
     myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, true);
       svc.setActionActive(SuperTypesGrouper.ID, showInterfaces);
       svc.setActionActive(PropertiesGrouper.ID, showProperties);
+      svc.setActionActive(InheritedMembersNodeProvider.ID, showInherited);
       svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true);
       JTree tree = svc.getTree();
       PlatformTestUtil.waitWhileBusy(tree);

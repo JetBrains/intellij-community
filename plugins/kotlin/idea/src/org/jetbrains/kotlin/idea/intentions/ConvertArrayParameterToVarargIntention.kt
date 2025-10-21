@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 
 class ConvertArrayParameterToVarargIntention : SelfTargetingIntention<KtParameter>(
-    KtParameter::class.java, KotlinBundle.lazyMessage("convert.to.vararg.parameter")
+    KtParameter::class.java, KotlinBundle.messagePointer("convert.to.vararg.parameter")
 ) {
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         val typeReference = element.getChildOfType<KtTypeReference>() ?: return false
@@ -37,7 +37,7 @@ class ConvertArrayParameterToVarargIntention : SelfTargetingIntention<KtParamete
                                 )
                             )
                         ) {
-                            { KotlinBundle.message("0.may.break.code", defaultText) }
+                            KotlinBundle.messagePointer("0.may.break.code", defaultText)
                         } else {
                             defaultTextGetter
                         }

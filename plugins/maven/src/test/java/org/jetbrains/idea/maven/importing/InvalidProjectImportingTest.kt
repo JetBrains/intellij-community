@@ -1008,6 +1008,38 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertProblems(root, "'settings.xml' has syntax errors")
   }
 
+  @Test
+  fun testImportingWithEmptyPath() = runBlocking {
+    importProjectAsync("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <packaging>pom</packaging>
+                              <modules>
+                                  <module></module>
+                              </modules>
+                              """.trimIndent())
+    assertModules("project")
+    val rootProject = projectsManager.findProject(projectPom)
+    assertNotNull("Project should be found", rootProject)
+    val rootOfRoot = projectsManager.findRootProject(rootProject!!)
+    assertNotNull("Root of root should be null", rootOfRoot)
+  }
+
+  @Test
+  fun testImportingWithSelfInclusionInclusion() = runBlocking {
+    importProjectAsync("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <packaging>pom</packaging>
+                              <modules>
+                                  <module>./pom.xml</module>
+                              </modules>
+                              """.trimIndent())
+    assertModules("project")
+  }
+
   private val rootProjects: List<MavenProject>
     get() = projectsTree.rootProjects
 

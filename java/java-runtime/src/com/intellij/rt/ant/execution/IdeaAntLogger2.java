@@ -34,12 +34,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
 
   public static final String OUTPUT_PREFIX = "IDEA_ANT_INTEGRATION";
 
-  private final ThreadLocal<Deque<String>> myCallingTasks = new ThreadLocal<Deque<String>>() {
-    @Override
-    protected Deque<String> initialValue() {
-      return new ArrayDeque<>();
-    }
-  };
+  private final ThreadLocal<Deque<String>> myCallingTasks = ThreadLocal.withInitial(() -> new ArrayDeque<>());
 
   private final Priority myMessagePriority = new MessagePriority();
   private final Priority myTargetPriority = new StatePriority(Project.MSG_INFO);

@@ -34,6 +34,8 @@
     <registryKey defaultValue="true" description="Process lambda and anonymous class separately to collect less features" key="similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class"/>
   </extensions>
   <actions resource-bundle="messages.UsageViewBundle">
+    <action class="com.intellij.usages.impl.actions.ShowShortFilePathAction" id="UsageGrouping.ShortFilePath"/>
+
     <group id="UsageGroupingActionGroup">
       <action class="com.intellij.usages.impl.actions.GroupByModuleTypeAction" id="UsageGrouping.Module"/>
       <action class="com.intellij.usages.impl.actions.GroupByScopeAction" id="UsageGrouping.Scope"/>

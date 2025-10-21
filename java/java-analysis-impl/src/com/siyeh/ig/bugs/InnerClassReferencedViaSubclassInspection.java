@@ -66,7 +66,7 @@ public final class InnerClassReferencedViaSubclassInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new InnerClassReferencedViaSubclassVisitor();
   }
 

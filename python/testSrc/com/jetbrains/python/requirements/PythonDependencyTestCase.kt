@@ -22,16 +22,20 @@ import com.jetbrains.python.sdk.pythonSdk
 
 abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
+  protected fun initTestPackageManager(provider: TestPackageManagerProvider) {
+    ExtensionTestUtil.maskExtensions(PythonPackageManagerProvider.EP_NAME, listOf(provider), testRootDisposable)
+  }
+
   protected fun mockPackageNames(packageNames: List<String>) {
     val packageManagerProvider = TestPackageManagerProvider().withPackageNames(packageNames)
-    ExtensionTestUtil.maskExtensions(PythonPackageManagerProvider.EP_NAME, listOf(packageManagerProvider), testRootDisposable)
+    initTestPackageManager(packageManagerProvider)
   }
 
   protected fun mockPackageDetails(packageName: String, availableVersions: List<String>) {
     val packageManagerProvider = TestPackageManagerProvider()
       .withPackageNames(listOf(packageName))
       .withPackageDetails(PythonSimplePackageDetails(packageName, availableVersions, TestPackageRepository(emptySet())))
-    ExtensionTestUtil.maskExtensions(PythonPackageManagerProvider.EP_NAME, listOf(packageManagerProvider), testRootDisposable)
+    initTestPackageManager(packageManagerProvider)
   }
 
   protected fun checkCompletionResults(vararg expected: String) {
@@ -41,7 +45,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
   protected fun checkCompletionResultsOrdered(vararg expected: String) {
     assertNotEmpty(myFixture.lookupElementStrings)
-    UsefulTestCase.assertContainsOrdered(myFixture.lookupElementStrings!!, *expected)
+    assertContainsOrdered(myFixture.lookupElementStrings!!, *expected)
   }
 
   protected fun completeInTomlFile() {

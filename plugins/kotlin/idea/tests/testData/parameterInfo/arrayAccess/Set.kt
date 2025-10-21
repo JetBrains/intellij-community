@@ -6,7 +6,3 @@ class A {
         this[<caret>] = 1
     }
 }
-
-/*
-Text: (<highlight>x: String</highlight>, y: Int), Disabled: false, Strikeout: false, Green: true
-*/

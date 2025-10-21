@@ -81,7 +81,7 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
   fun <T> trackConfigurationActivityBlocking(kind: ActivityKey, action: () -> T): T {
     val currentContext = currentThreadContext()
     return withObservationTracker(kind) { observationTracker ->
-      installThreadContext(currentContext + observationTracker, true).use {
+      installThreadContext(currentContext + observationTracker, true) {
         action()
       }
     }

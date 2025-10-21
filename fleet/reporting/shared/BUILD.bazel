@@ -3,23 +3,24 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
-  opt_in = ["kotlinx.coroutines.ExperimentalCoroutinesApi"]
+  name = "custom_shared",
+  opt_in = ["kotlinx.coroutines.ExperimentalCoroutinesApi"],
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
 )
 
 jvm_library(
   name = "shared",
   module_name = "fleet.reporting.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  kotlinc_opts = ":custom",
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_shared",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
     "//fleet/reporting/api",
     "//fleet/multiplatform.shims",
   ]

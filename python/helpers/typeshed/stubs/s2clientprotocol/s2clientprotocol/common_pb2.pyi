@@ -47,14 +47,13 @@ class AvailableAbility(google.protobuf.message.Message):
     REQUIRES_POINT_FIELD_NUMBER: builtins.int
     ability_id: builtins.int
     requires_point: builtins.bool
-    def __init__(
-        self,
-        *,
-        ability_id: builtins.int | None = ...,
-        requires_point: builtins.bool | None = ...,
+    def __init__(self, *, ability_id: builtins.int | None = ..., requires_point: builtins.bool | None = ...) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["ability_id", b"ability_id", "requires_point", b"requires_point"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["ability_id", b"ability_id", "requires_point", b"requires_point"]
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "requires_point", b"requires_point"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "requires_point", b"requires_point"]) -> None: ...
 
 global___AvailableAbility = AvailableAbility
 
@@ -74,14 +73,14 @@ class ImageData(google.protobuf.message.Message):
         """Dimension in pixels."""
 
     def __init__(
-        self,
-        *,
-        bits_per_pixel: builtins.int | None = ...,
-        size: global___Size2DI | None = ...,
-        data: builtins.bytes | None = ...,
+        self, *, bits_per_pixel: builtins.int | None = ..., size: global___Size2DI | None = ..., data: builtins.bytes | None = ...
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["bits_per_pixel", b"bits_per_pixel", "data", b"data", "size", b"size"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["bits_per_pixel", b"bits_per_pixel", "data", b"data", "size", b"size"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["bits_per_pixel", b"bits_per_pixel", "data", b"data", "size", b"size"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["bits_per_pixel", b"bits_per_pixel", "data", b"data", "size", b"size"]
+    ) -> None: ...
 
 global___ImageData = ImageData
 
@@ -97,12 +96,7 @@ class PointI(google.protobuf.message.Message):
     Y_FIELD_NUMBER: builtins.int
     x: builtins.int
     y: builtins.int
-    def __init__(
-        self,
-        *,
-        x: builtins.int | None = ...,
-        y: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, x: builtins.int | None = ..., y: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["x", b"x", "y", b"y"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["x", b"x", "y", b"y"]) -> None: ...
 
@@ -120,12 +114,7 @@ class RectangleI(google.protobuf.message.Message):
     def p0(self) -> global___PointI: ...
     @property
     def p1(self) -> global___PointI: ...
-    def __init__(
-        self,
-        *,
-        p0: global___PointI | None = ...,
-        p1: global___PointI | None = ...,
-    ) -> None: ...
+    def __init__(self, *, p0: global___PointI | None = ..., p1: global___PointI | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["p0", b"p0", "p1", b"p1"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["p0", b"p0", "p1", b"p1"]) -> None: ...
 
@@ -143,12 +132,7 @@ class Point2D(google.protobuf.message.Message):
     Y_FIELD_NUMBER: builtins.int
     x: builtins.float
     y: builtins.float
-    def __init__(
-        self,
-        *,
-        x: builtins.float | None = ...,
-        y: builtins.float | None = ...,
-    ) -> None: ...
+    def __init__(self, *, x: builtins.float | None = ..., y: builtins.float | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["x", b"x", "y", b"y"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["x", b"x", "y", b"y"]) -> None: ...
 
@@ -169,11 +153,7 @@ class Point(google.protobuf.message.Message):
     y: builtins.float
     z: builtins.float
     def __init__(
-        self,
-        *,
-        x: builtins.float | None = ...,
-        y: builtins.float | None = ...,
-        z: builtins.float | None = ...,
+        self, *, x: builtins.float | None = ..., y: builtins.float | None = ..., z: builtins.float | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["x", b"x", "y", b"y", "z", b"z"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["x", b"x", "y", b"y", "z", b"z"]) -> None: ...
@@ -190,12 +170,7 @@ class Size2DI(google.protobuf.message.Message):
     Y_FIELD_NUMBER: builtins.int
     x: builtins.int
     y: builtins.int
-    def __init__(
-        self,
-        *,
-        x: builtins.int | None = ...,
-        y: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, x: builtins.int | None = ..., y: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["x", b"x", "y", b"y"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["x", b"x", "y", b"y"]) -> None: ...
 

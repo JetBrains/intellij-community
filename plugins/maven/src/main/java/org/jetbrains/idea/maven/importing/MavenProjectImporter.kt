@@ -2,11 +2,16 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.workspaceModel.StaticWorkspaceProjectImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
@@ -18,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
 interface MavenProjectImporter {
-  fun importProject(): List<MavenProjectsProcessorTask>?
+  suspend fun importProject(): List<MavenProjectsProcessorTask>?
   fun createdModules(): List<Module>
 
   companion object {
@@ -50,11 +55,13 @@ interface MavenProjectImporter {
       return wrapWithFUS(project, parentImportingActivity, importer)
     }
 
-    private fun wrapWithFUS(project: Project,
-                            parentImportingActivity: StructuredIdeActivity,
-                            importer: MavenProjectImporter): MavenProjectImporter {
+    private fun wrapWithFUS(
+      project: Project,
+      parentImportingActivity: StructuredIdeActivity,
+      importer: MavenProjectImporter,
+    ): MavenProjectImporter {
       return object : MavenProjectImporter {
-        override fun importProject(): List<MavenProjectsProcessorTask> {
+        override suspend fun importProject(): List<MavenProjectsProcessorTask> {
           val activity = MavenImportStats.startApplyingModelsActivity(project, parentImportingActivity)
           val startTime = System.currentTimeMillis()
           try {
@@ -121,9 +128,20 @@ interface MavenProjectImporter {
     }
 
     @JvmStatic
-    fun tryUpdateTargetFolders(project: Project) {
-      WorkspaceProjectImporter.updateTargetFolders(project)
+    fun scheduleUpdateTargetFolders(project: Project) {
+      project.service<CoroutineScopeService>().cs.launch {
+        updateTargetFolders(project)
+      }
     }
+
+    @JvmStatic
+    suspend fun updateTargetFolders(project: Project) {
+      WorkspaceProjectImporter.updateTargetFolders(project)
+      VirtualFileManager.getInstance().asyncRefresh()
+    }
+
+    @Service(Service.Level.PROJECT)
+    private class CoroutineScopeService(val cs: CoroutineScope)
 
     private val importingInProgress = AtomicInteger()
   }

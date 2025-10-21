@@ -90,8 +90,13 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         val optionalFields = noRefs.filterNot { it in mandatoryFields }
 
         section("return $javaFullName$constructor") {
-          optionalFields.forEach {
-            line("this.${it.name} = this@$javaDataName.${it.name}")
+          optionalFields.forEach { field ->
+            val toMutable = when (field.valueType) {
+              is ValueType.List<*> -> ".${StorageCollection.toMutableWorkspaceList}()"
+              is ValueType.Set<*> -> ".${StorageCollection.toMutableWorkspaceSet}()"
+              else -> ""
+            }
+            line("this.${field.name} = this@$javaDataName.${field.name}$toMutable")
           }
           allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
             val parentType = it.valueType

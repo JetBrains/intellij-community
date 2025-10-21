@@ -38,13 +38,20 @@ passlib.utils.handlers.HasRounds.rounds
 # Errors in `__all__` at runtime:
 # TODO: change after https://github.com/python/mypy/pull/14217 is released
 passlib.handlers.oracle.__all__
-passlib.handlers.oracle.oracle11g
-passlib.handlers.oracle.oracle10g
 passlib.handlers.mysql.__all__
-passlib.handlers.mysql.mysq41
 
 # Compat tools are ignored:
 passlib.utils.compat.*
 
 # Tests are not included:
 passlib.tests.*
+
+# This is only available when the crypt module is available. This module
+# was dropped from the standard library of Python 3.13, but is still available
+# in some environments.
+passlib.hosts.__all__
+(passlib.hosts.host_context)?
+
+# Fields differs at runtime:
+passlib.apache._CommonFile.encoding
+passlib.apache._CommonFile.return_unicode

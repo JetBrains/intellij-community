@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.*;
@@ -90,8 +91,9 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
   }
 
   private static boolean canUseNativeDialog(FileChooserDescriptor descriptor, @Nullable Project project) {
-    if (project != null) {
-      var eelDescriptor = EelProviderUtil.getEelDescriptor(project);
+    var currProject = project != null ? project : ProjectUtil.getActiveProject();
+    if (currProject != null) {
+      var eelDescriptor = EelProviderUtil.getEelDescriptor(currProject);
 
       if (eelDescriptor instanceof EelDescriptorWithoutNativeFileChooserSupport) {
         return false;

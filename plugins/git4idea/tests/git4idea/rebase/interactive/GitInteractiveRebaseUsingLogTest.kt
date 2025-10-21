@@ -7,20 +7,38 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.branch.GitRebaseParams
 import git4idea.i18n.GitBundle
-import git4idea.log.createLogData
+import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseUtils
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.*
 
 class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
+  private lateinit var testCs: CoroutineScope
   private lateinit var logData: VcsLogData
 
   override fun setUp() {
     super.setUp()
-    logData = createLogData(repo, logProvider, testRootDisposable)
+    @Suppress("RAW_SCOPE_CREATION")
+    testCs = CoroutineScope(SupervisorJob())
+    logData = createLogDataIn(testCs, repo, logProvider)
+  }
+
+  override fun tearDown() {
+    try {
+      runBlocking {
+        testCs.coroutineContext.job.cancelAndJoin()
+      }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test simple commits`() {
@@ -119,8 +137,8 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   fun `test incorrect git-rebase-todo file was generated`() {
     val commit = file("firstFile.txt").create("").addCommit("0").details()
     build {
-        1()
-        2()
+      1()
+      2()
     }
     logData.refreshAndWait(repo, true)
     updateChangeListManager()
@@ -130,7 +148,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
       DialogWrapper.OK_EXIT_CODE
     }
 
-    interactivelyRebaseUsingLog(repo, commit, logData)
+    runBlocking { interactivelyRebaseUsingLog(repo, commit, logData) }
 
     assertErrorNotification("Rebase failed", GitBundle.message("rebase.using.log.couldnt.start.error"))
   }
@@ -171,7 +189,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   private fun assertExceptionDuringEntriesGeneration(
     commit: VcsCommitMetadata,
     reason: CantRebaseUsingLogException.Reason,
-    failMessage: (entries: List<GitRebaseEntry>) -> String
+    failMessage: (entries: List<GitRebaseEntry>) -> String,
   ) {
     logData.refreshAndWait(repo, true)
     try {

@@ -1,9 +1,10 @@
-from typing import Any
+from collections.abc import Callable
+from typing import Final
 
 certifi_available: bool
-certifi_where: Any
+certifi_where: Callable[[], str] | None
 custom_ca_locater_available: bool
-custom_ca_locater_where: Any
-BUILTIN_CA_CERTS: Any
+custom_ca_locater_where: Callable[..., str] | None
+BUILTIN_CA_CERTS: Final[str]
 
-def where(): ...
+def where() -> str: ...

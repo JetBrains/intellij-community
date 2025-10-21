@@ -97,5 +97,5 @@ class PyUnitTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getId(): String = PyUnitTestFactory.id
 
-  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = true
+  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = true
 }

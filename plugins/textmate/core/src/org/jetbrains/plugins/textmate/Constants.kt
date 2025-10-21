@@ -75,7 +75,6 @@ interface Constants {
     // OTHER
     const val BUNDLE_INFO_PLIST_NAME: @NonNls String = "info.plist"
     const val PACKAGE_JSON_NAME: @NonNls String = "package.json"
-    const val TEXTMATE_SNIPPET_EXTENSION: @NonNls String = "tmsnippet"
 
     // SHELL VARIABLES
     const val COMMENT_START_VARIABLE: @NonNls String = "TM_COMMENT_START"

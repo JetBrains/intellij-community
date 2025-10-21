@@ -10,9 +10,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
@@ -45,14 +43,10 @@ public final class GradleResourcesTargetType extends ModuleBasedBuildTargetType<
 
   @Override
   public @NotNull BuildTargetLoader<GradleResourcesTarget> createLoader(@NotNull JpsModel model) {
-    final Map<String, JpsModule> modules = new HashMap<>();
-    for (JpsModule module : model.getProject().getModules()) {
-      modules.put(module.getName(), module);
-    }
     return new BuildTargetLoader<GradleResourcesTarget>() {
       @Override
       public @Nullable GradleResourcesTarget createTarget(@NotNull String targetId) {
-        final JpsModule module = modules.get(targetId);
+        final JpsModule module = model.getProject().findModuleByName(targetId);
         return module != null ? new GradleResourcesTarget(GradleResourcesTargetType.this, module) : null;
       }
     };

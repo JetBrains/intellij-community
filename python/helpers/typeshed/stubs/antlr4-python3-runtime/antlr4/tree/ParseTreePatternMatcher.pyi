@@ -25,6 +25,7 @@ class CannotInvokeStartRule(Exception):
 class StartRuleDoesNotConsumeFullPattern(Exception): ...
 
 class ParseTreePatternMatcher:
+    __slots__ = ("lexer", "parser", "start", "stop", "escape")
     lexer: Incomplete
     parser: Incomplete
     start: str

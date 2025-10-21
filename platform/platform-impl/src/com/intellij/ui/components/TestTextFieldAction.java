@@ -96,6 +96,11 @@ public final class TestTextFieldAction extends DumbAwareAction {
             public boolean isIconBeforeText() {
               return true;
             }
+
+            @Override
+            public boolean isFocusable() {
+              return true;
+            }
           },
           new ExtendableTextComponent.Extension() {
             @Override
@@ -110,6 +115,11 @@ public final class TestTextFieldAction extends DumbAwareAction {
 
             @Override
             public boolean isIconBeforeText() {
+              return true;
+            }
+
+            @Override
+            public boolean isFocusable() {
               return true;
             }
           },

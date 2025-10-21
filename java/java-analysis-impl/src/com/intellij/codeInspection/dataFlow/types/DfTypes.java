@@ -410,6 +410,15 @@ public final class DfTypes {
 
   /**
    * @param type type of the object
+   * @return a type that references given objects of given type (or it subtypes) and has the same nullability as the type
+   */
+  public static @NotNull DfType typedObject(@Nullable PsiType type) {
+    if (type == null) return DfType.TOP;
+    return typedObject(type, type.getNullability().nullability());
+  }
+
+  /**
+   * @param type type of the object
    * @param nullability nullability
    * @return a type that references given objects of given type (or it subtypes) and has given nullability
    */

@@ -37,7 +37,7 @@ final class GutterIconDropAnimator extends AbstractPainter {
   }
 
   @Override
-  public void executePaint(Component component, Graphics2D g) {
+  public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
     if (!nrp.get()) return;
 
     long currentTimeMillis = System.currentTimeMillis();

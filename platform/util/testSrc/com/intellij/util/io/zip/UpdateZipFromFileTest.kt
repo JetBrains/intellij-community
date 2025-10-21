@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip
 
 import com.intellij.util.io.assertMatches
@@ -6,8 +6,7 @@ import com.intellij.util.io.directoryContent
 import org.junit.Test
 
 class UpdateZipFromFileTest {
-  @Test
-  fun `add entry`() {
+  @Test fun `add entry`() {
     val dir = directoryContent {
       zip("a.zip") {
         file("a.txt", text = "a")
@@ -15,10 +14,10 @@ class UpdateZipFromFileTest {
       file("b.txt", text = "b")
     }.generateInTempDir()
 
-    val zip = JBZipFile(dir.resolve("a.zip").toFile())
-    zip.use { zip.getOrCreateEntry("b.txt").setDataFromFile(dir.resolve("b.txt").toFile()) }
+    val zip = JBZipFile(dir.resolve("a.zip"), false)
+    zip.use { zip.getOrCreateEntry("b.txt").setDataFromPath(dir.resolve("b.txt")) }
 
-    dir.toFile().assertMatches(directoryContent {
+    dir.assertMatches(directoryContent {
       zip("a.zip") {
         file("a.txt", text = "a")
         file("b.txt", text = "b")
@@ -27,8 +26,7 @@ class UpdateZipFromFileTest {
     })
   }
 
-  @Test
-  fun `replace entry`() {
+  @Test fun `replace entry`() {
     val dir = directoryContent {
       zip("a.zip") {
         file("a.txt", text = "a")
@@ -36,10 +34,10 @@ class UpdateZipFromFileTest {
       file("b.txt", text = "b")
     }.generateInTempDir()
 
-    val zip = JBZipFile(dir.resolve("a.zip").toFile())
-    zip.use { zip.getOrCreateEntry("a.txt").setDataFromFile(dir.resolve("b.txt").toFile()) }
+    val zip = JBZipFile(dir.resolve("a.zip"), false)
+    zip.use { zip.getOrCreateEntry("a.txt").setDataFromPath(dir.resolve("b.txt")) }
 
-    dir.toFile().assertMatches(directoryContent {
+    dir.assertMatches(directoryContent {
       zip("a.zip") {
         file("a.txt", text = "b")
       }

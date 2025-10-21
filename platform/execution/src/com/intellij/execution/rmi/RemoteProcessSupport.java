@@ -221,7 +221,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  protected int publishPort(int port) {
+  protected int publishPort(int port, @NotNull Target target) {
     return port;
   }
 
@@ -428,7 +428,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
                 String id = data.get(2);
                 String host = getRemoteHost();
                 LOG.info("Started remote process on: " + host + ":" + port + "with service port " + servicesPort + " and id = " + id);
-                result = new RunningInfo(info.handler, host, publishPort(port), id, publishPort(servicesPort));
+                result = new RunningInfo(info.handler, host, publishPort(port, key.first), id, publishPort(servicesPort, key.first));
                 myProcMap.put(key, result);
                 myProcMap.notifyAll();
               }

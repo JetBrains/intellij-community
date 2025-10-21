@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 
-class HierarchyScopeDescriptorProvider : ScopeDescriptorProvider {
+public class HierarchyScopeDescriptorProvider : ScopeDescriptorProvider {
   override fun getScopeDescriptors(project: Project, dataContext: DataContext): Array<ScopeDescriptor> =
     if (dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id == ToolWindowId.TODO_VIEW) {
       ScopeDescriptorProvider.EMPTY

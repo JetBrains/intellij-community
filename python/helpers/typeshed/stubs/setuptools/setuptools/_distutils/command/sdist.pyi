@@ -1,7 +1,6 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Callable
 from typing import ClassVar
-from typing_extensions import deprecated
 
 from ..cmd import Command
 
@@ -19,23 +18,21 @@ class sdist(Command):
     READMES: ClassVar[tuple[str, ...]]
     template: Incomplete
     manifest: Incomplete
-    use_defaults: int
-    prune: int
-    manifest_only: int
-    force_manifest: int
+    use_defaults: bool
+    prune: bool
+    manifest_only: bool
+    force_manifest: bool
     formats: Incomplete
-    keep_temp: int
+    keep_temp: bool
     dist_dir: Incomplete
     archive_files: Incomplete
-    metadata_check: int
+    metadata_check: int  # Soon to be updated to boolean upstream
     owner: Incomplete
     group: Incomplete
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
     filelist: Incomplete
     def run(self) -> None: ...
-    @deprecated("distutils.command.sdist.check_metadata is deprecated, use the check command instead")
-    def check_metadata(self) -> None: ...
     def get_file_list(self) -> None: ...
     def add_defaults(self) -> None: ...
     def read_template(self) -> None: ...

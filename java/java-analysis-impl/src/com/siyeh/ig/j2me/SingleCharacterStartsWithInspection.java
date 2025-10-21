@@ -94,7 +94,7 @@ public final class SingleCharacterStartsWithInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SingleCharacterStartsWithVisitor();
   }
 

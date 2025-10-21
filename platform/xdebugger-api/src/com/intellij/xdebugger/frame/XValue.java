@@ -147,7 +147,7 @@ public abstract class XValue extends XValueContainer {
    * Provides additional information about XValue, which frontend may use.
    */
   @ApiStatus.Internal
-  public @Nullable CompletableFuture<XValueDescriptor> getXValueDescriptorAsync() {
+  public @Nullable CompletableFuture<XDescriptor> getXValueDescriptorAsync() {
     return null;
   }
 }

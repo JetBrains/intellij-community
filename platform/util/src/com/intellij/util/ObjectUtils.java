@@ -105,7 +105,7 @@ public final class ObjectUtils {
    * @deprecated Use {@link Objects#requireNonNull(Object)}
    */
   @Deprecated
-  public static <T> T notNull(@Nullable T value) {
+  public static <T> @NotNull T notNull(@Nullable T value) {
     return Objects.requireNonNull(value);
   }
 
@@ -114,7 +114,7 @@ public final class ObjectUtils {
     return value == null ? defaultValue : value;
   }
 
-  public static @NotNull <T> T notNull(@Nullable T value, @NotNull NotNullFactory<? extends T> defaultValue) {
+  public static @NotNull <T> T notNull(@Nullable T value, @NotNull NotNullFactory<? extends @NotNull T> defaultValue) {
     return value == null ? defaultValue.create() : value;
   }
 
@@ -134,7 +134,7 @@ public final class ObjectUtils {
   }
 
   @Contract("null, _ -> null")
-  public static @Nullable <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
+  public static @Nullable <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super @NotNull T, ? extends S> function) {
     return obj == null ? null : function.fun(obj);
   }
 
@@ -143,7 +143,7 @@ public final class ObjectUtils {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
+  public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super @NotNull T> consumer) {
     if (obj != null) {
       consumer.consume(obj);
     }

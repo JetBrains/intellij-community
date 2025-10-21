@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
-@TestApplication
+@StressTestApplication
 class VFSInitializationBenchmarkTest {
 
   @Test

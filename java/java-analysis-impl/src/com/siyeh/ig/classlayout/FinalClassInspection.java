@@ -34,7 +34,7 @@ public final class FinalClassInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FinalClassVisitor();
   }
 

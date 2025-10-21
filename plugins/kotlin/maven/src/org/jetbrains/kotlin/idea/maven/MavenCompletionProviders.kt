@@ -10,12 +10,12 @@ import org.jetbrains.kotlin.config.isStableOrReadyForPreview
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 
 class MavenLanguageVersionsCompletionProvider : MavenFixedValueReferenceProvider(
-    LanguageVersion.values().filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
+    LanguageVersion.entries.filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
         .toTypedArray()
 )
 
 class MavenApiVersionsCompletionProvider : MavenFixedValueReferenceProvider(
-    LanguageVersion.values().filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
+    LanguageVersion.entries.filter { it.isStableOrReadyForPreview() || isApplicationInternalMode() }.map { it.versionString }
         .toTypedArray()
 )
 

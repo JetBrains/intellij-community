@@ -19,7 +19,7 @@ public class PropertyFoldingEditHandler {
   private final UCallExpression myCallExpression;
   private final IProperty myProperty;
 
-  public PropertyFoldingEditHandler(PsiElement foldedPsiElement) {
+  PropertyFoldingEditHandler(PsiElement foldedPsiElement) {
     UInjectionHost injectionHost = null;
     if (foldedPsiElement != null && foldedPsiElement.isValid()) {
       myCallExpression = findCallExpression(foldedPsiElement);
@@ -75,7 +75,7 @@ public class PropertyFoldingEditHandler {
     myProperty.setValue(newValue);
   }
 
-  public int placeholderToValueOffset(int offset) {
+  int placeholderToValueOffset(int offset) {
     if (myCallExpression == null) return offset - 1;
     List<Couple<Integer>> replacements = PropertyFoldingBuilder.format(myCallExpression).second;
     if (replacements == null) return offset - 1;
@@ -91,7 +91,7 @@ public class PropertyFoldingEditHandler {
     return offset - diff - 1;
   }
 
-  public int valueToPlaceholderOffset(int offset) {
+  int valueToPlaceholderOffset(int offset) {
     offset++;
     if (myCallExpression == null) return offset;
     Pair<String, List<Couple<Integer>>> info = PropertyFoldingBuilder.format(myCallExpression);

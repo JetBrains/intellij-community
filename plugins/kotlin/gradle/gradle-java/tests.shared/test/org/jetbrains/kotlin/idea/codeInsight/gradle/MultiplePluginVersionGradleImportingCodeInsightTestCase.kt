@@ -19,6 +19,6 @@ abstract class MultiplePluginVersionGradleImportingCodeInsightTestCase : Multipl
     override fun tearDownFixtures() = runAll(
         ThrowableRunnable { codeInsightTestFixture.tearDown() },
         ThrowableRunnable { _codeInsightTestFixture = null },
-        ThrowableRunnable { myTestFixture = null },
+        ThrowableRunnable { resetTestFixture() },
     )
 }

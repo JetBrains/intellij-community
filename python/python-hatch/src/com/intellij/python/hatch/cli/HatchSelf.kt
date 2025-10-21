@@ -7,7 +7,7 @@ import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 
 /**
  * Manage environment dependencies
@@ -17,7 +17,7 @@ class HatchSelf(runtime: HatchRuntime) : HatchCommand("self", runtime) {
   /**
    * Generate a pre-populated GitHub issue.
    */
-  suspend fun report(): PyExecResult<Url> {
+  suspend fun report(): PyResult<Url> {
     return executeAndHandleErrors("report", "--no-open") { processOutput ->
       val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString?.trim()
                    ?: return@executeAndHandleErrors Result.failure(null)
@@ -34,10 +34,10 @@ class HatchSelf(runtime: HatchRuntime) : HatchCommand("self", runtime) {
   /**
    * Restore the installation
    */
-  fun restore(): PyExecResult<String> = TODO()
+  fun restore(): PyResult<String> = TODO()
 
   /**
    * Install the latest version
    */
-  fun update(): PyExecResult<String> = TODO()
+  fun update(): PyResult<String> = TODO()
 }

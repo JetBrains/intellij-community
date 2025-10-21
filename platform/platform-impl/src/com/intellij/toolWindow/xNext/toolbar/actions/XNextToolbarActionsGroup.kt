@@ -26,5 +26,5 @@ internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
     }
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = actionList.toTypedArray()
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actionList.toTypedArray()
 }

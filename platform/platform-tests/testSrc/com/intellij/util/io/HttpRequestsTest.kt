@@ -48,6 +48,28 @@ class HttpRequestsTest {
     assertThat(requested.get()).isEqualTo(2)
   }
 
+  @Test fun redirectFollowDisabledLimit() {
+    val requested = AtomicInteger()
+    // infinite redirect, must not be followed
+    server.createContext("/") { ex ->
+      requested.incrementAndGet()
+      ex.responseHeaders.add("Location", server.url)
+      ex.sendResponseHeaders(HttpURLConnection.HTTP_MOVED_TEMP, -1)
+      ex.close()
+    }
+
+    var responseCode: Int? = null
+    var responseLocation: String? = null
+    HttpRequests.request(server.url).followRedirects(false).connect { request: HttpRequests.Request ->
+      val connection = request.connection as HttpURLConnection
+      responseLocation = connection.getHeaderField("Location")
+      responseCode = connection.responseCode
+    }
+    assertThat(responseLocation).isEqualTo(server.url)
+    assertThat(responseCode).isEqualTo(HttpURLConnection.HTTP_MOVED_TEMP)
+    assertThat(requested.get()).isEqualTo(1)
+  }
+
   @Test fun redirectWithSimplifiedLocation() {
     val requested1 = AtomicInteger()
     val requested2 = AtomicInteger()

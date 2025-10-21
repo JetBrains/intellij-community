@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import ClassVar, Literal
 
 from openpyxl.descriptors.base import Alias, Bool, String, Typed, _ConvertibleToBool
@@ -39,7 +38,7 @@ class NonVisualGraphicFrame(Serialisable):
     cNvPr: Typed[ExtensionList, Literal[False]]
     cNvGraphicFramePr: Typed[ExtensionList, Literal[False]]
     __elements__: ClassVar[tuple[str, ...]]
-    def __init__(self, cNvPr: Incomplete | None = None, cNvGraphicFramePr: Incomplete | None = None) -> None: ...
+    def __init__(self, cNvPr=None, cNvGraphicFramePr=None) -> None: ...
 
 class GraphicData(Serialisable):
     tagname: ClassVar[str]

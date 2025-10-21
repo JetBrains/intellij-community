@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
@@ -23,9 +24,10 @@
     <orderEntry type="library" name="memoryfilesystem" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="assertJ" level="project" />
-    <orderEntry type="library" name="snakeyaml" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.snakeyaml" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
   </component>
 </module>

@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.search.DefaultJediTermSearchComponent;
 import com.intellij.terminal.search.JediTermSearchComponentProvider;
-import com.intellij.terminal.session.TerminalSession;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.ui.components.JBScrollBar;
@@ -151,7 +150,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int getFontSize() {
     return Math.round(getSettingsProvider().getTerminalFontSize());
   }
@@ -159,7 +158,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public float getFontSize2D() {
     return getSettingsProvider().getTerminalFontSize();
   }
@@ -167,7 +166,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setFontSize(int fontSize) {
     getSettingsProvider().setTerminalFontSize(fontSize);
   }
@@ -175,7 +174,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setFontSize(float fontSize) {
     getSettingsProvider().setTerminalFontSize(fontSize);
   }
@@ -183,7 +182,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#resetTerminalFontSize()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void resetFontSize() {
     getSettingsProvider().resetTerminalFontSize();
   }
@@ -306,6 +305,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     return false;
   }
 
+  protected @Nullable String getCurrentDirectory() {
+    return null;
+  }
+
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
 
   public @NotNull TerminalWidget asNewWidget() {
@@ -347,16 +350,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       widget().getComponent().revalidate();
       widget().notifyStarted();
       myTtyConnectorAccessor.setTtyConnector(ttyConnector);
-    }
-
-    @Override
-    public @Nullable TerminalSession getSession() {
-      return null;
-    }
-
-    @Override
-    public void connectToSession(@NotNull TerminalSession session) {
-      throw new IllegalStateException("TerminalSession is not supported in TerminalWidgetBridge");
     }
 
     @Override
@@ -442,6 +435,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       catch (IllegalStateException e) {
         return true;
       }
+    }
+
+    @Override
+    public @Nullable String getCurrentDirectory() {
+      return widget().getCurrentDirectory();
     }
 
     @Override

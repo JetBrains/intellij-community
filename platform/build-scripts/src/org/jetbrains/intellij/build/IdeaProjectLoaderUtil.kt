@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.UrlClassLoader
-import com.jetbrains.plugin.structure.base.utils.exists
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.absolute
+import kotlin.io.path.exists
 
 internal object IdeaProjectLoaderUtil {
   private const val JPS_BOOTSTRAP_COMMUNITY_HOME_ENV_NAME = "JPS_BOOTSTRAP_COMMUNITY_HOME"
@@ -50,6 +50,10 @@ internal object IdeaProjectLoaderUtil {
     HomeSource(
       moniker = "current directory",
       path = System.getProperty("user.dir"),
+    ),
+    HomeSource(
+      moniker = "ultimate home directory",
+      path = PathManager.getHomePathFor(javaClass),
     ),
   )
 

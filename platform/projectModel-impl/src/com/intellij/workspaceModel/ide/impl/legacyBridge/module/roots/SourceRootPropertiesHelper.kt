@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.java.workspace.entities.*
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
 import com.intellij.platform.workspace.jps.entities.modifyCustomSourceRootPropertiesEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -114,7 +115,7 @@ object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement> addPropertiesEntity(sourceRootEntity: SourceRootEntity.Builder,
+  internal fun <P : JpsElement> addPropertiesEntity(sourceRootEntity: SourceRootEntityBuilder,
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (serializer.typeId) {

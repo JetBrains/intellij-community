@@ -22,10 +22,9 @@ sealed class GitPullBranchAction(dynamicText: Supplier<@NlsActions.ActionText St
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     if (branch !is GitRemoteBranch) return
-    GitUpdateExecutionProcess(project, repositories,
-                              configureTarget(repositories, branch),
-                              updateMethod, false)
-      .execute()
+    GitUpdateExecutionProcess.launchUpdate(project, repositories,
+                                           configureTarget(repositories, branch),
+                                           updateMethod, false)
   }
 
   companion object {

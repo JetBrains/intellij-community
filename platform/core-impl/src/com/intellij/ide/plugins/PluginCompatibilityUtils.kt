@@ -22,7 +22,7 @@ object PluginCompatibilityUtils {
     for (dependency in descriptor.dependencies) {
       val dependencyPluginId = dependency.pluginId
       if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
-          PluginManagerCore.JAVA_MODULE_ID == dependencyPluginId ||
+          PluginManagerCore.JAVA_PLUGIN_ALIAS_ID == dependencyPluginId ||
           PluginManagerCore.looksLikePlatformPluginAlias(dependencyPluginId)) {
         return true
       }

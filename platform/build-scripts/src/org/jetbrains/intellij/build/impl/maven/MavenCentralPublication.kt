@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.util.io.Compressor
@@ -316,7 +316,8 @@ class MavenCentralPublication(
       check(!dryRun || type == PublishingType.USER_MANAGED) {
         "Automatic publishing is not supported in the dryRun mode"
       }
-      val deploymentName = "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
+      val deploymentName = "teamcity.buildType.id=${System.getProperty("teamcity.buildType.id")}," +
+                           "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
       val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publishingType=$type"
       callSonatype(uri, builder = {
         it.post(
@@ -351,10 +352,10 @@ class MavenCentralPublication(
             span.addEvent(response)
             parseDeploymentState(response)
           })
-          when {
-            deploymentState == DeploymentState.FAILED -> context.messages.error("$deploymentId status is $deploymentState")
-            deploymentState == DeploymentState.VALIDATED && type == PublishingType.USER_MANAGED -> break
-            deploymentState == DeploymentState.PUBLISHED && type == PublishingType.AUTOMATIC -> {
+          when (deploymentState) {
+            DeploymentState.FAILED -> context.messages.logErrorAndThrow("$deploymentId status is $deploymentState")
+            DeploymentState.VALIDATED if type == PublishingType.USER_MANAGED -> break
+            DeploymentState.PUBLISHED if type == PublishingType.AUTOMATIC -> {
               artifacts.forEach {
                 context.messages.info("Expected to be available in https://repo1.maven.org/maven2/${it.coordinates.directoryPath} shortly")
               }

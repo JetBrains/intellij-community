@@ -84,7 +84,7 @@ public final class CollectionsMustHaveInitialCapacityInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new CollectionInitialCapacityVisitor();
   }
 

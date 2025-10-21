@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Callable
 from typing import Any, ClassVar, Final, final
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, deprecated
 
 # _tkinter is meant to be only used internally by tkinter, but some tkinter
 # functions e.g. return _tkinter.Tcl_Obj objects. Tcl_Obj represents a Tcl
@@ -77,13 +77,14 @@ class TkappType:
     def globalgetvar(self, *args, **kwargs): ...
     def globalsetvar(self, *args, **kwargs): ...
     def globalunsetvar(self, *args, **kwargs): ...
-    def interpaddr(self): ...
+    def interpaddr(self) -> int: ...
     def loadtk(self) -> None: ...
     def mainloop(self, threshold: int = 0, /): ...
     def quit(self): ...
     def record(self, script, /): ...
     def setvar(self, *ags, **kwargs): ...
     if sys.version_info < (3, 11):
+        @deprecated("Deprecated since Python 3.9; removed in Python 3.11. Use `splitlist()` instead.")
         def split(self, arg, /): ...
 
     def splitlist(self, arg, /): ...
@@ -106,23 +107,38 @@ EXCEPTION: Final = 8
 READABLE: Final = 2
 WRITABLE: Final = 4
 
-TCL_VERSION: str
-TK_VERSION: str
+TCL_VERSION: Final[str]
+TK_VERSION: Final[str]
 
 @final
 class TkttType:
     def deletetimerhandler(self): ...
 
-def create(
-    screenName: str | None = None,
-    baseName: str = "",
-    className: str = "Tk",
-    interactive: bool = False,
-    wantobjects: bool = False,
-    wantTk: bool = True,
-    sync: bool = False,
-    use: str | None = None,
-    /,
-): ...
+if sys.version_info >= (3, 13):
+    def create(
+        screenName: str | None = None,
+        baseName: str = "",
+        className: str = "Tk",
+        interactive: bool = False,
+        wantobjects: int = 0,
+        wantTk: bool = True,
+        sync: bool = False,
+        use: str | None = None,
+        /,
+    ): ...
+
+else:
+    def create(
+        screenName: str | None = None,
+        baseName: str = "",
+        className: str = "Tk",
+        interactive: bool = False,
+        wantobjects: bool = False,
+        wantTk: bool = True,
+        sync: bool = False,
+        use: str | None = None,
+        /,
+    ): ...
+
 def getbusywaitinterval(): ...
 def setbusywaitinterval(new_val, /): ...

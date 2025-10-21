@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nls
  *
  * @param T type of actions
  */
-abstract class IntentionActionGroup<T : IntentionAction>(private val actions: List<T>) : BaseIntentionAction() {
+public abstract class IntentionActionGroup<T : IntentionAction>(private val actions: List<T>) : BaseIntentionAction() {
 
   final override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
 

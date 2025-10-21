@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -41,6 +42,7 @@ import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcom
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.RunConfigurationResult
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.ScriptResult
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.logWelcomeRunConfiguration
+import com.intellij.python.common.welcomeScreen.PyWelcomeBundle
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.PythonPluginDisposable
@@ -56,7 +58,7 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
     get() = false
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
-    if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir)) {
+    if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir) || WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
       return
     }
 

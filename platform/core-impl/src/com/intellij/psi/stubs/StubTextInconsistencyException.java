@@ -11,12 +11,10 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubInconsistencyReporter.InconsistencyType;
-import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,20 +58,6 @@ public final class StubTextInconsistencyException extends RuntimeException imple
   @SuppressWarnings("unused")
   public static void checkStubTextConsistency(@NotNull PsiFile file) {
     checkStubTextConsistency(file, null);
-  }
-
-  /**
-   * Left for backward compatibility.
-   *
-   * @deprecated Use {@link #checkStubTextConsistency(PsiFile, SourceOfCheck)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static void checkStubTextConsistency(@NotNull PsiFile file,
-                                              @NotNull StubInconsistencyReporter.SourceOfCheck reason,
-                                              @SuppressWarnings("unused")
-                                              @Nullable StubInconsistencyReporter.EnforcedInconsistencyType enforcedInconsistencyType) {
-    checkStubTextConsistency(file, reason);
   }
 
   /**

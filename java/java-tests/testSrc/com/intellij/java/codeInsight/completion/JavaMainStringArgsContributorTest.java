@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -155,4 +155,42 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
       assertNull(item);
     });
   }
+
+  @NeedsIndex.SmartMode(reason = "necessary for rendering other items")
+  public void testNoCompletionAfterErrorElementWithDot() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
+      myFixture.configureByText("Test.java", """
+        void main() {
+            String s = "1";.<caret>
+        }
+        """);
+      LookupElement[] items = myFixture.completeBasic();
+      LookupElement item = ContainerUtil.find(items, it -> {
+        LookupElementPresentation presentation = new LookupElementPresentation();
+        it.renderElement(presentation);
+        return "String[] args".equals(presentation.getTypeText());
+      });
+      assertNull(item);
+    });
+  }
+
+  @NeedsIndex.SmartMode(reason = "necessary for rendering other items")
+  public void testNoCompletionAfterExpressionWithDot() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
+      myFixture.configureByText("Test.java", """
+        void main() {
+            String s = "1".<caret>;
+        }
+        """);
+      LookupElement[] items = myFixture.completeBasic();
+      LookupElement item = ContainerUtil.find(items, it -> {
+        LookupElementPresentation presentation = new LookupElementPresentation();
+        it.renderElement(presentation);
+        return "String[] args".equals(presentation.getTypeText());
+      });
+      assertNull(item);
+    });
+  }
+
+
 }

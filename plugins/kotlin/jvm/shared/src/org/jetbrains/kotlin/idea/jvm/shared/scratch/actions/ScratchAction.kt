@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.fileEditor.TextEditor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.findScratchFileEditorWithPreview
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -25,7 +25,7 @@ abstract class ScratchAction(@Nls message: Supplier<String>, icon: Icon) : AnAct
     protected val AnActionEvent.currentScratchFile: ScratchFile?
         get() = currentScratchEditor?.scratchFile
 
-    protected val AnActionEvent.currentScratchEditor: KtScratchFileEditorWithPreview?
+    protected val AnActionEvent.currentScratchEditor: ScratchFileEditorWithPreview?
         get() {
             val textEditor = getData(PlatformCoreDataKeys.FILE_EDITOR) as? TextEditor
             return textEditor?.findScratchFileEditorWithPreview()

@@ -1,18 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.CurrentJavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class BaseProcessHandler<T extends Process> extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseProcessHandler.class);
@@ -63,6 +68,29 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
 
   public @Nullable Charset getCharset() {
     return myCharset;
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  @ReviseWhenPortedToJDK("9")
+  public @Nullable CompletableFuture<@Nullable Long> getNativePid() {
+    long pid;
+    if (CurrentJavaVersion.currentJavaVersion().feature >= 9) {
+      try {
+        pid = (long)Process.class.getDeclaredMethod("pid").invoke(myProcess);
+      }
+      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        LOG.error("Failed to call Process.pid()", e);
+        return null;
+      }
+      catch (UnsupportedOperationException e) {
+        return null;
+      }
+    }
+    else {
+      return null;
+    }
+    return CompletableFuture.completedFuture(pid);
   }
 
   @Override

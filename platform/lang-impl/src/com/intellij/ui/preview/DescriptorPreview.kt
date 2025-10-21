@@ -13,17 +13,27 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 import kotlin.properties.Delegates.observable
 
-class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val session: ClientProjectSession) {
+@ApiStatus.Experimental
+class DescriptorPreview(private val splitter: Splitter, private val editable: Boolean, private val session: ClientProjectSession) {
 
   fun editor(): Editor? = editor
   fun close(): Unit = open(null)
   fun open(descriptor: OpenFileDescriptor?) {
     this.descriptor = descriptor
+  }
+
+  fun showEmptyText(emptyText: @NlsContexts.StatusText String) {
+    descriptor = null
+    splitter.secondComponent = createEmptyTextPanel(emptyText)
   }
 
   private var editor: Editor? by observable(null) { _, oldEditor, newEditor ->
@@ -78,5 +88,12 @@ class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val sessi
     }
     editor.setBorder(JBUI.Borders.empty())
     return editor
+  }
+}
+
+private fun createEmptyTextPanel(emptyText: @NlsContexts.StatusText String): JComponent = JBPanelWithEmptyText().also { result ->
+  val lines: List<@NlsContexts.StatusText String> = emptyText.lines()
+  for (line in lines) {
+    result.emptyText.appendLine(line)
   }
 }

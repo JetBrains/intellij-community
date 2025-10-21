@@ -1,9 +1,12 @@
-<idea-plugin package="com.intellij.codeInsight.inline.completion">
+<idea-plugin visibility="internal" package="com.intellij.codeInsight.inline.completion">
 
   <extensions defaultExtensionNs="com.intellij">
     <inline.completion.handlerInitializer
       order="last"
       implementation="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializerImpl"/>
+    <inline.completion.editorInsertHandler
+      order="last"
+      implementation="com.intellij.codeInsight.inline.completion.InlineCompletionEditorInsertHandlerImpl"/>
 
     <registryKey key="inline.completion.rem.dev.use.rhizome"
                  description="Use Rhizome DB for inline completion implementation in RemDev"

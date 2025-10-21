@@ -47,7 +47,6 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
 
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
   private val myDebugProcess = WeakReference(debugProcess)
-  internal val dispatchedCommandsCounter get() = debuggerThreadDispatcher.dispatchedCommandsCounter
 
   @ApiStatus.Internal
   var coroutineScope: CoroutineScope = createScope()
@@ -296,7 +295,9 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
    * This is determined by checking if there are no pending events.
    */
   @ApiStatus.Internal
-  fun isIdle(): Boolean = myEvents.isEmpty && dispatchedCommandsCounter.get() == 0
+  fun isIdle(): Boolean = myEvents.isEmpty && !hasDispatchedCommands()
+
+  internal fun hasDispatchedCommands(): Boolean = debuggerThreadDispatcher.hasDispatchedCommands()
 
   fun hasAsyncCommands(): Boolean {
     return myEvents.hasAsyncCommands()
@@ -391,6 +392,14 @@ internal fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.
   return scope.future(Dispatchers.Debugger(managerThread) + provider, block = block)
 }
 
+@ApiStatus.Internal
+@ApiStatus.Experimental
+class VMDisconnectedCancellationException(e: VMDisconnectedException) : CancellationException("VM disconnected") {
+  init {
+    initCause(e)
+  }
+}
+
 /**
  * Schedules [block] execution in the debugger manager thread as a [SuspendContextCommandImpl].
  *
@@ -426,7 +435,7 @@ fun executeOnDMT(
   block: suspend CoroutineScope.() -> Unit,
 ): Job = suspendContext.coroutineScope.launch(
   context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, priority),
-  block = block
+  block = wrapVMDisconnectedException(block)
 )
 
 /**
@@ -464,7 +473,7 @@ fun executeOnDMT(
   block: suspend CoroutineScope.() -> Unit,
 ): Job = managerThread.coroutineScope.launch(
   context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(priority),
-  block = block
+  block = wrapVMDisconnectedException(block)
 )
 
 
@@ -544,6 +553,7 @@ fun executeOnDMT(
  * @param suspendContext context for starting [SuspendContextCommandImpl]
  * @param priority task priority in the manager thread
  * @param block block to execute
+ * @throws VMDisconnectedCancellationException if the debugger is disconnected
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -556,7 +566,7 @@ suspend fun <T> withDebugContext(
   return runWithContext(
     context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, resultPriority),
     parentScope = suspendContext.coroutineScope,
-    block = block
+    block = wrapVMDisconnectedException(block)
   )
 }
 
@@ -593,6 +603,7 @@ suspend fun <T> withDebugContext(
  * @param managerThread debugger manager thread to schedule the task
  * @param priority task priority in the manager thread
  * @param block block to execute
+ * @throws VMDisconnectedCancellationException if the debugger is disconnected
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -605,7 +616,7 @@ suspend fun <T> withDebugContext(
   return runWithContext(
     context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(resultPriority),
     parentScope = managerThread.coroutineScope,
-    block = block
+    block = wrapVMDisconnectedException(block)
   )
 }
 
@@ -644,6 +655,7 @@ suspend fun <T> withDebugContext(
  * @param debuggerContext context for starting [com.intellij.debugger.engine.events.DebuggerContextCommandImpl]
  * @param priority task priority in the manager thread
  * @param block block to execute
+ * @throws VMDisconnectedCancellationException if the debugger is disconnected
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -656,7 +668,8 @@ suspend fun <T> withDebugContext(
   val resultPriority = priority ?: priorityInContextOrDefault()
   val provider = DebuggerContextCommandProvider(debuggerContext, resultPriority)
   val scope = provider.findScope() ?: throw CancellationException()
-  return runWithContext(context = Dispatchers.Debugger(managerThread) + provider, parentScope = scope, block = block)
+  return runWithContext(context = Dispatchers.Debugger(managerThread) + provider, parentScope = scope,
+                        block = wrapVMDisconnectedException(block))
 }
 
 private suspend fun priorityInContextOrDefault(): PrioritizedTask.Priority {
@@ -680,4 +693,15 @@ private suspend fun <T> runWithContext(
   // For example, cancellation of the work performed in Dispatchers.Default within the debugger context
   // is ensured by this scope attachment.
   return parentScope.async(context, block = block).await()
+}
+
+private fun <T> wrapVMDisconnectedException(block: suspend CoroutineScope.() -> T): suspend CoroutineScope.() -> T {
+  return {
+    try {
+      block()
+    }
+    catch (e: VMDisconnectedException) {
+      throw VMDisconnectedCancellationException(e)
+    }
+  }
 }

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.htmlInspections.*;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.htmltools.HtmlToolsTestsUtil;
 import com.intellij.htmltools.codeInspection.htmlInspections.HtmlDeprecatedAttributeInspection;
 import com.intellij.htmltools.codeInspection.htmlInspections.HtmlDeprecatedTagInspection;
@@ -31,7 +32,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.Html5SchemaProvider;
@@ -841,7 +841,7 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
   }
 
   public void testSpelling() {
-    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.enableInspections(new GrazieSpellCheckingInspection());
     doTest();
   }
 

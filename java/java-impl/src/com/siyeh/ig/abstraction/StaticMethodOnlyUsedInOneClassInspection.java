@@ -401,7 +401,7 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
       return new StaticMethodOnlyUsedInOneClassVisitor();
     }
 

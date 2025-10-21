@@ -46,7 +46,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ManualArrayCopyVisitor();
   }
 

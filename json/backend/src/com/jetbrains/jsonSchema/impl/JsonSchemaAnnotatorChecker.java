@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -75,7 +76,10 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
         // we can have several oneOf groups, each about, for instance, a part of properties
         // - then we should allow properties from neighbour schemas (even if additionalProperties=false)
         final List<JsonSchemaAnnotatorChecker> list =
-          ContainerUtil.map(result.myExcludingSchemas, group -> processSchemasVariants(project, group, elementToCheck, true, options).getSecond());
+          ContainerUtil.map(result.myExcludingSchemas, group -> {
+            ProgressManager.checkCanceled();
+            return processSchemasVariants(project, group, elementToCheck, true, options).getSecond();
+          });
         checkers.add(mergeErrors(project, list, options, result.myExcludingSchemas));
       }
     }

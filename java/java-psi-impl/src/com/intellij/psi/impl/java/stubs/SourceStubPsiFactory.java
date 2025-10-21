@@ -63,6 +63,11 @@ public class SourceStubPsiFactory extends StubPsiFactory {
   public PsiModifierList createModifierList(PsiModifierListStub stub) {
     return new PsiModifierListImpl(stub);
   }
+  
+  @Override
+  public PsiPackageStatement createPackageStatement(PsiPackageStatementStub stub) {
+    return new PsiPackageStatementImpl(stub);
+  }
 
   @Override
   public PsiParameter createParameter(PsiParameterStub stub) {

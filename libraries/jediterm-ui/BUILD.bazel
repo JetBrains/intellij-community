@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jediterm.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jediterm-ui_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jediterm-ui",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jediterm-ui_resources"],
+  exports = ["@lib//:libraries-jediterm-ui-jediterm-ui"],
+  runtime_deps = ["@lib//:libraries-jediterm-ui-jediterm-ui"]
+)
+### auto-generated section `build intellij.libraries.jediterm.ui` end

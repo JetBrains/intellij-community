@@ -68,4 +68,11 @@ class HiDPIImage : JBHiDPIScaledImage {
           height = height,
           type = type,
           roundingMode = roundingMode)
+
+  constructor(scale: Double, width: Double, height: Double, type: Int, roundingMode: PaintUtil.RoundingMode) :
+    super(scale = scale,
+          width = width,
+          height = height,
+          type = type,
+          roundingMode = roundingMode)
 }

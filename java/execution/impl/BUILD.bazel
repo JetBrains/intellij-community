@@ -1,19 +1,9 @@
-### auto-generated section `local-libs` start
-load("@rules_java//java:defs.bzl", "java_import")
-
-java_import(
-  name = "jshell-frontend",
-  jars = ["jshell-frontend.jar"],
-  visibility = ["//visibility:public"]
-)
-### auto-generated section `local-libs` end
-
 ### auto-generated section `build intellij.java.execution.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,18 +12,21 @@ jvm_library(
   module_name = "intellij.java.execution.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   deps = [
     "//java/openapi:java",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
     "//java/execution/openapi:java-execution",
     "//java/java-runtime:rt",
     "//java/debugger/impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",
@@ -44,19 +37,18 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
     "//platform/smRunner",
-    "//java/execution/jshell-protocol:java-jshell-protocol",
     "@lib//:intellij-test-discovery",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
-    "@lib//:gson",
-    "@lib//:jackson",
-    "@lib//:miglayout-swing",
+    "//libraries/gson",
+    "//libraries/jackson/jackson",
+    "//libraries/miglayout-swing",
     "//platform/vcs-impl",
     "//platform/vcs-impl/lang",
     "//platform/util/nanoxml",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "//platform/xdebugger-impl:debugger-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/statistics",
     "//platform/util-class-loader:util-classLoader",
     "//platform/diff-api:diff",
@@ -66,16 +58,13 @@ jvm_library(
     "//platform/threadDumpParser",
     "//platform/eel-provider",
     "//java/debugger/shared",
+    "//platform/platform-impl/concurrency",
     "//java/codeserver/core",
   ],
   exports = [
     "//java/execution/openapi:java-execution",
     "//platform/testRunner",
     "//platform/statistics",
-  ],
-  runtime_deps = [
-    ":impl_resources",
-    "//java/execution/impl:jshell-frontend",
   ]
 )
 ### auto-generated section `build intellij.java.execution.impl` end

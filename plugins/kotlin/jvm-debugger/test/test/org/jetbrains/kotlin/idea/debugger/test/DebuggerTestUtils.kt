@@ -5,13 +5,20 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.testFramework.common.BazelTestUtil
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.isStableOrReadyForPreview
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import kotlin.io.path.pathString
 
 @JvmField
 val DEBUGGER_TESTDATA_PATH_BASE: String =
-    KotlinRoot.DIR.resolve("jvm-debugger").resolve("test").resolve("testData").path
+    if (BazelTestUtil.isUnderBazelTest) {
+        TestKotlinArtifacts.kotlinJvmDebuggerTestData.pathString
+    } else {
+        KotlinRoot.DIR.resolve("jvm-debugger").resolve("test").resolve("testData").path
+    }
 
 internal fun chooseLanguageVersionForCompilation(useK2: Boolean): LanguageVersion {
     return if (useK2) {

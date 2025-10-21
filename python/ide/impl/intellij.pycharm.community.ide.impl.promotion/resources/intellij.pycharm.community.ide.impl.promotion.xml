@@ -1,8 +1,8 @@
-<idea-plugin package="com.intellij.pycharm.community.ide.impl.promotion">
+<idea-plugin visibility="internal">
   <!--Customization code for Community Pycharm only. Promotes PyCharm Prof.-->
 
   <dependencies>
-    <plugin id="PythonCore"/>
+    <plugin id="com.intellij.modules.python"/>
     <module name="intellij.pycharm.community.ide.impl"/>
   </dependencies>
 
@@ -44,6 +44,17 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
+    <!--For test only TODO delete later-->
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ShowPyCommunityToUnifiedTooltipAction"
+            id="ShowPyCommunityToUnifiedTooltipAction"
+            internal="true"/>
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ShowPyCommunityToUnifiedPromoDialogAction"
+            id="ShowPyCommunityToUnifiedPromoDialogAction"
+            internal="true"/>
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ResetCommunityToUnifiedPromoStateAction"
+            id="ResetCommunityToUnifiedPromoStateAction"
+            internal="true"/>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -82,6 +93,25 @@
                              bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.jupyter"/>
 
+    <startPagePromoter
+      implementation="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedWelcomeScreenBanner"/>
+    <postStartupActivity
+      implementation="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedShowPromoActivity"/>
+    <!--TODO delete later-->
+    <registryKey key="py.promo.remind.later.interval.seconds"
+                 defaultValue="259200"
+                 description="PyCharm promo remind-later fallback delay in seconds"/>
+    <registryKey key="py.community.to.unified.test.ignore.release.channel"
+                 defaultValue="false"
+                 description="Ignores Release Channel requirement for promo mock update"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmPromoCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector"/>
   </extensions>
+
+  <applicationListeners>
+    <listener
+      class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUpdateReadyNotificationListener"
+      topic="com.intellij.notification.Notifications"/>
+  </applicationListeners>
 </idea-plugin>

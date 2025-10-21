@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil;
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
-import com.jetbrains.fus.reporting.model.http.StatsProxyInfo;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsProxyInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;

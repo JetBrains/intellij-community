@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -46,8 +46,8 @@ public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> 
   protected Map<String, Void> performIndexing(IdeaPlugin plugin) {
     List<String> ids = new ArrayList<>();
     ids.add(StringUtil.notNullize(plugin.getPluginId()));
-    for (DomElement module : getChildrenWithoutIncludes(plugin, "module")) {
-      ContainerUtil.addIfNotNull(ids, ((PluginModule)module).getValue().getStringValue());
+    for (PluginModule module : plugin.getModules()) {
+      ContainerUtil.addIfNotNull(ids, module.getValue().getStringValue());
     }
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }

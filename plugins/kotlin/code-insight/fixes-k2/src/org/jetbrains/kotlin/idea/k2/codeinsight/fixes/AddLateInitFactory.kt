@@ -15,7 +15,7 @@ internal object AddLateInitFactory {
 
         val type = property.returnType
 
-        if (type.isPrimitive || type.canBeNull) return@ModCommandBased emptyList()
+        if (type.isPrimitive || type.isNullable) return@ModCommandBased emptyList()
 
         listOf(AddModifierFix(property, KtTokens.LATEINIT_KEYWORD))
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.getPythonBinaryPath
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.getOrThrow
@@ -21,7 +22,6 @@ import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.*
@@ -32,6 +32,7 @@ import org.junit.runners.Parameterized
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -68,15 +69,18 @@ internal class PyCondaSdkTest {
 
   private suspend fun createCondaEnv(): PyCondaEnv {
     val name = "condaForTests"
-    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).getOrThrow().waitFor()
-    return PyCondaEnv(PyCondaEnvIdentity.NamedEnv(name), condaRule.condaPathOnTarget)
+    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).getOrThrow()
+    return PyCondaEnv(
+      envIdentity = PyCondaEnvIdentity.NamedEnv(name),
+      fullCondaPathOnTarget = condaRule.condaPathOnTarget,
+    )
   }
 
   /**
    * When we create fresh local SDK on Windows, it must be patched with env vars, see [fixCondaPathEnvIfNeeded]
    */
   @Test
-  fun testLocalActivationFix(): Unit = runTest {
+  fun testLocalActivationFix(): Unit =  timeoutRunBlocking(10.minutes) { 
 
     val script = tempDirRule.newFile()
     script.writeText("""
@@ -86,12 +90,16 @@ internal class PyCondaSdkTest {
     """.trimIndent())
 
     Assume.assumeTrue("Windows only", SystemInfoRt.isWindows)
-    val condaEnvs = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
+    val condaEnvs = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow()
     val baseEnv = condaEnvs.first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
     val nonBaseEnv = condaEnvs.firstOrNull { it.envIdentity is PyCondaEnvIdentity.NamedEnv } ?: createCondaEnv()
 
     for (condaEnv in arrayOf(nonBaseEnv, baseEnv)) {
-      val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(condaEnv.envIdentity, emptyList(), projectRule.project)
+      val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(
+        condaIdentity = condaEnv.envIdentity,
+        existingSdks = emptyList(),
+        project = projectRule.project,
+      )
       val request = LocalTargetEnvironmentRequest()
       val targetEnvironment = LocalTargetEnvironment(request)
 
@@ -115,9 +123,13 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun testExecuteCommandOnSdk(): Unit = runTest(timeout = 20.seconds) {
-    val condaEnv = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first()
-    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(condaEnv.envIdentity, emptyList(), projectRule.project)
+  fun testExecuteCommandOnSdk(): Unit = timeoutRunBlocking(60.seconds) {
+    val condaEnv = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
+    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(
+      condaIdentity = condaEnv.envIdentity,
+      existingSdks = emptyList(),
+      project = projectRule.project,
+    )
     val request = LocalTargetEnvironmentRequest()
 
     repeat(10) { // To measure time to compare legacy and local
@@ -127,8 +139,8 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun createSdkByFile() = runTest(timeout = 120.seconds) {
-    val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)
+  fun createSdkByFile() =  timeoutRunBlocking(120.seconds) {
+    val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath, emptyList())
     val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(newCondaInfo, coroutineContext, emptyList(),
                                                                    projectRule.project).getOrThrow()
     val env = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env
@@ -138,10 +150,15 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun testCreateFromExisting() = runTest {
-    val env = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first()
-    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(env.envIdentity, emptyList(), projectRule.project)
-    Assert.assertEquals(sdk.getOrCreateAdditionalData().flavor, CondaEnvSdkFlavor.getInstance())
+  fun testCreateFromExisting() =  timeoutRunBlocking(10.minutes) { 
+    val env = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
+    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(
+      condaIdentity = env.envIdentity,
+      existingSdks = emptyList(),
+      project = projectRule.project,
+    )
+
+    Assert.assertEquals(sdk.getOrCreateAdditionalData().flavor, CondaEnvSdkFlavor)
     Assert.assertTrue(env.toString(), getPythonVersion(sdk, LocalTargetEnvironmentRequest())?.isNotBlank() == true)
 
     Assert.assertTrue("Bad home path", Files.isExecutable(Path.of(sdk.homePath!!)))

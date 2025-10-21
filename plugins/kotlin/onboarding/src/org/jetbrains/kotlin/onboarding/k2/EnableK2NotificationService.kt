@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinPluginKindSwitcherController
-import org.jetbrains.kotlin.idea.configuration.ui.USE_K2_PLUGIN_VM_OPTION_PREFIX
+import org.jetbrains.kotlin.idea.configuration.ui.USE_K1_PLUGIN_VM_OPTION_PREFIX
 import org.jetbrains.kotlin.onboarding.FeedbackBundle
 import org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2UserTracker
 import org.jetbrains.kotlin.onboarding.k2.satisfaction.survey.K2UserTrackerState
@@ -95,7 +95,7 @@ class EnableK2NotificationService {
                 content = FeedbackBundle.message("enable.k2.mode.notification.text"),
                 type = NotificationType.INFORMATION,
             ).addAction(NotificationAction.createExpiring(FeedbackBundle.message("enable.action.name")) { _, _ ->
-                VMOptions.setOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, true.toString())
+                VMOptions.setOption(USE_K1_PLUGIN_VM_OPTION_PREFIX, false.toString())
                 KotlinPluginKindSwitcherController.suggestRestart(productName)
             })
             .setIcon(KotlinIcons.SMALL_LOGO)

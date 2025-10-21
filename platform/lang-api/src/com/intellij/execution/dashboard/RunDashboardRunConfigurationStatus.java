@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.WeighedItem;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +56,7 @@ public class RunDashboardRunConfigurationStatus implements WeighedItem {
     return myWeight;
   }
 
-  public static @NotNull RunDashboardRunConfigurationStatus getStatus(RunDashboardRunConfigurationNode node) {
-    RunContentDescriptor descriptor = node.getDescriptor();
+  public static @NotNull RunDashboardRunConfigurationStatus getStatus(@Nullable RunContentDescriptor descriptor) {
     if (descriptor == null) {
       return CONFIGURED;
     }
@@ -75,7 +75,10 @@ public class RunDashboardRunConfigurationStatus implements WeighedItem {
     return FAILED;
   }
 
-  public static @Nullable RunDashboardRunConfigurationStatus getStatusById(@NotNull String id) {
+  @Contract("null -> null")
+  public static @Nullable RunDashboardRunConfigurationStatus getStatusById(@Nullable String id) {
+    if (id == null) return null;
+
     return switch (id) {
       case "STARTED" -> STARTED;
       case "FAILED" -> FAILED;

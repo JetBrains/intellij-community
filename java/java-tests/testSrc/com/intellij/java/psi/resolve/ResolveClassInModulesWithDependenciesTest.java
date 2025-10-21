@@ -44,7 +44,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
   public void testTwoModulesJavadocRef() throws Exception {
     Module unrelated = WriteAction.compute(() -> {
       ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-      Module module = modifiableModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
+      Module module = modifiableModel.newModule("b.iml", JavaModuleType.getModuleType().getId());
       modifiableModel.commit();
       return module;
     });
@@ -88,7 +88,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
   private void configureDependency() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-      Module module = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
+      Module module = modifiableModel.newModule("a.iml", JavaModuleType.getModuleType().getId());
       modifiableModel.commit();
 
       VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + "/class/dependentModule");

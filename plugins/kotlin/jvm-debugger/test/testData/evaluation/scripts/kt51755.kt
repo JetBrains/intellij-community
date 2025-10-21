@@ -1,4 +1,4 @@
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlin:kotlin-script-runtime:1.6.21)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlin-script-runtime-1.6.21.jar)
 // FILE: kt51755.kts
 package kt51755
 

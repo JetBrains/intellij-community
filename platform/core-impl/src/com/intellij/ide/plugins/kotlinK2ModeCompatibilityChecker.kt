@@ -62,7 +62,7 @@ private fun getSupportKotlinPluginModeEPs(plugin: IdeaPluginDescriptorImpl): Lis
 
 
 internal fun isKotlinPluginK2Mode(): Boolean {
-  return System.getProperty("idea.kotlin.plugin.use.k2", "false").toBoolean()
+  return System.getProperty("idea.kotlin.plugin.use.k1", "false").toBoolean().not()
 }
 
 @ApiStatus.Internal
@@ -103,7 +103,7 @@ fun isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin: 
 
 private fun nonOptionallyDependsOnKotlinPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
   return plugin.dependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
-         plugin.moduleDependencies.plugins.any { isKotlinPlugin(it.id) }
+         plugin.moduleDependencies.plugins.any { isKotlinPlugin(it) }
 }
 
 private const val SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME = "org.jetbrains.kotlin.supportsKotlinPluginMode"

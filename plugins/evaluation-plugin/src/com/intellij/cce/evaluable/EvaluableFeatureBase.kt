@@ -9,8 +9,9 @@ import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.SetupSdkPreferences
 import com.intellij.cce.evaluation.SetupSdkStepFactory
 import com.intellij.cce.evaluation.step.CheckProjectSdkStep
-import com.intellij.cce.interpreter.FeatureInvoker
-import com.intellij.cce.processor.GenerateActionsProcessor
+import com.intellij.cce.evaluation.step.DropProjectSdkStep
+import com.intellij.cce.interpreter.AsyncFeatureInvoker
+import com.intellij.cce.processor.ActionGenerator
 import com.intellij.cce.report.BasicFileReportGenerator
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
@@ -29,17 +30,17 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
   /**
    * how to prepare the context before the feature invocation
    */
-  abstract fun getGenerateActionsProcessor(strategy: T, project: Project): GenerateActionsProcessor
+  abstract fun getGenerateActionsProcessor(strategy: T, project: Project): ActionGenerator
 
   /**
    * how to call the feature
    */
-  abstract fun getFeatureInvoker(project: Project, language: Language, strategy: T): FeatureInvoker
+  abstract fun getFeatureInvoker(project: Project, language: Language, strategy: T): AsyncFeatureInvoker
 
   abstract fun getEvaluationSteps(language: Language, strategy: T): List<EvaluationStep>
 
   override fun getEvaluationSteps(config: Config): List<EvaluationStep> =
-    getEvaluationSteps(Language.resolve(actions(config).language), config.strategy())
+    getEvaluationSteps(actions(config).language?.let { Language.resolve(it) } ?: Language.ANOTHER, config.strategy())
 
   open fun getSetupSteps(project: Project, language: Language, strategy: T): List<EvaluationStep> =
     defaultSetupSteps(project, language, setupSdkPreferences)
@@ -69,6 +70,8 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
   override fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): EvaluationEnvironment {
     val actions = actions(config)
     val strategy = config.strategy<T>()
+    val language = actions.language?.let { Language.resolve(it) } ?: Language.ANOTHER
+
     return ProjectActionsEnvironment.open(actions.projectPath) { project ->
       ProjectActionsEnvironment(
         strategy,
@@ -78,9 +81,9 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
         EvaluationRootInfo(true),
         project,
         getGenerateActionsProcessor(strategy, project),
-        getSetupSteps(project, Language.resolve(actions.language), strategy),
+        getSetupSteps(project, language, strategy),
         name,
-        featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)
+        featureInvoker = getFeatureInvoker(project, language, strategy)
       )
     }
   }
@@ -90,7 +93,8 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
 }
 
 fun defaultSetupSteps(project: Project, language: Language, preferences: SetupSdkPreferences): List<EvaluationStep> {
+  val dropStep = listOf(DropProjectSdkStep(project)).filter { System.getenv("EVALUATION_PROJECT_SDK_DROP") == "true" }
   val setupSteps = SetupSdkStepFactory.forLanguage(project, language)?.steps(preferences) ?: emptyList()
   val checkStep = CheckProjectSdkStep(project, language.displayName).takeUnless { Registry.`is`("evaluation.plugin.disable.sdk.check") }
-  return setupSteps + listOfNotNull(checkStep)
+  return dropStep + setupSteps + listOfNotNull(checkStep)
 }

@@ -154,7 +154,7 @@ public fun ChipColors.Companion.dark(
         borderSelectedHovered = borderSelectedHovered,
     )
 
-@Deprecated("Use the version with 'minSize' instead")
+@Deprecated("Use the version with 'minSize' instead", level = DeprecationLevel.HIDDEN)
 public fun ChipMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(100),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),

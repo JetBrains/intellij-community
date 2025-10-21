@@ -70,7 +70,11 @@ public interface UsageView extends Disposable {
    * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @Nullable String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                 @Nullable String commandName,
+                                 @NotNull String cannotMakeString,
+                                 @NotNull String shortDescription,
+                                 boolean checkReadOnlyStatus);
 
   @NotNull
   UsageViewPresentation getPresentation();

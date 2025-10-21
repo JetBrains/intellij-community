@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanc
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -62,6 +63,11 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
 
   fun executeAction(editor: Editor, action: AnAction) {
     val event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor))
+    ActionUtil.updateAction(action, event)
+    if (!event.presentation.isEnabled) {
+      Logger.getInstance(action::class.java).info("${action.javaClass.name} is disabled")
+      return
+    }
     val result = ActionUtil.performAction(action, event)
     if (!result.isPerformed) {
       throw IllegalStateException("Cant execute action $action")

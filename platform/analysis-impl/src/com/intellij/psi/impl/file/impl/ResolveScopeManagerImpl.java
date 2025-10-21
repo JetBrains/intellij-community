@@ -2,8 +2,8 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -153,7 +153,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     if (!psiFile.getOriginalFile().isPhysical() && !psiFile.getViewProvider().isPhysical()) {
       return withFile(psiFile, GlobalSearchScope.allScope(myProject));
     }
-    return getResolveScopeFromProviders(psiFile.getViewProvider().getVirtualFile(), FileViewProviderUtil.getCodeInsightContext(psiFile));
+    return getResolveScopeFromProviders(psiFile.getViewProvider().getVirtualFile(), CodeInsightContextUtil.getCodeInsightContext(psiFile));
   }
 
   private GlobalSearchScope withFile(PsiFile containingFile, GlobalSearchScope scope) {
@@ -225,7 +225,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
   private @Nullable Module findModule(@Nullable FileViewProvider fileViewProvider, @NotNull VirtualFile notNullVFile) {
     if (fileViewProvider != null && CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
-      CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(fileViewProvider);
+      CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(fileViewProvider);
       if (context instanceof ModuleContext moduleContext) {
         return moduleContext.getModule();
       }

@@ -53,10 +53,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
 import com.intellij.rt.junit.JUnitStarter;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,6 +72,11 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   private Sdk myJdk;
   private static final String INNER_TEST_NAME = "test1.InnerTest.Inner";
   private static final String RT_INNER_TEST_NAME = "test1.InnerTest$Inner";
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk21();
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -123,7 +125,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
 
     PsiMethod mainMethod = innerTest.findMethodsByName("main", false)[0];
     ApplicationConfiguration appConfiguration = createConfiguration(mainMethod);
-    assertEquals(RT_INNER_TEST_NAME, appConfiguration.getMainClassName());
+    assertEquals(INNER_TEST_NAME, appConfiguration.getMainClassName());
     checkCanRun(configuration);
   }
 
@@ -443,7 +445,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     PsiClass psiClass = findClass(getModule1(), "test2.NotATest.InnerApplication");
     assertNotNull(psiClass);
     ApplicationConfiguration configuration = createConfiguration(psiClass);
-    assertEquals("test2.NotATest$InnerApplication", configuration.getMainClassName());
+    assertEquals("test2.NotATest.InnerApplication", configuration.getMainClassName());
     checkCanRun(configuration);
   }
 
@@ -481,6 +483,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   }
 
   public void testRunThirdPartyApplication() throws ExecutionException {
+    assertNotNull(findClass(getModule1(), "third.party.Main"));
     ApplicationConfiguration configuration = new ApplicationConfiguration("Third party", myProject);
     configuration.setModule(getModule1());
     configuration.setMainClassName("third.party.Main");

@@ -85,7 +85,7 @@ fun canExplicitTypeBeRemoved(element: KtDeclaration): Boolean {
 val KtDeclaration.typeReference: KtTypeReference?
     get() = when (this) {
         is KtCallableDeclaration -> typeReference
-        is KtPropertyAccessor -> returnTypeReference
+        is KtPropertyAccessor -> typeReference
         else -> null
     }
 

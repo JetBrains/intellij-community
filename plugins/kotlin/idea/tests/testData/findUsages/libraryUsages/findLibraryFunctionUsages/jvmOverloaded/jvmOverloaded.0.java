@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightMethodForDecompiledDeclaration
 // OPTIONS: overloadUsages
-// PSI_ELEMENT_AS_TITLE: "fun foo(Int, Double, String): Unit"
+// PSI_ELEMENT_AS_TITLE: "fun foo(Int = ..., Double = ..., String = ...): Unit"
 package usages;
 
 import library.Foo

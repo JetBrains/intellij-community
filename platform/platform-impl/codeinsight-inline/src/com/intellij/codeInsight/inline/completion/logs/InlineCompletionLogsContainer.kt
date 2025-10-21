@@ -120,9 +120,10 @@ class InlineCompletionLogsContainer() {
   fun logCurrent(extraLogger: CustomRequestIdLogger? = null) {
     cancelAsyncAdds()
 
+    val shouldSendFullLogs = getShouldSendFullLogs()
     val filteredEvents = logs.filter { it.value.isNotEmpty() }.mapValues { (_, logs) ->
       // for release, log only basic fields for most of the requests and very rarely log everything.
-      if (getShouldSendFullLogs()) {
+      if (shouldSendFullLogs) {
         logs
       } else {
         logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
@@ -133,7 +134,13 @@ class InlineCompletionLogsContainer() {
     InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, filteredEvents.mapNotNull { (phase, events) ->
       val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
       if (logPhaseObject != null) {
-        logPhaseObject.with(ObjectEventData(events.toList()))
+        val eventData = if (shouldSendFullLogs && phase == Phase.INLINE_API_FINISHING) {
+          // save the sampling indicator to have an easier time understanding why some fields are empty
+          events.toList() + FinishingLogs.FULL_LOGS.with(true)
+        } else {
+          events.toList()
+        }
+        logPhaseObject.with(ObjectEventData(eventData))
       } else {
         logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
         null

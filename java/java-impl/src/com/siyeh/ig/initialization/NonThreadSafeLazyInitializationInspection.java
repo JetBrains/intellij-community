@@ -30,7 +30,7 @@ public final class NonThreadSafeLazyInitializationInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnsafeSafeLazyInitializationVisitor();
   }
 

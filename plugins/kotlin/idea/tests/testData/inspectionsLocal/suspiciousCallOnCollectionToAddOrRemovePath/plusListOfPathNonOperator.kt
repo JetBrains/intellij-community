@@ -1,0 +1,11 @@
+// PROBLEM: 'plus' call appends Path elements
+// FIX: Convert to 'plusElement' call (changes semantics)
+// IGNORE_K1
+// WITH_STDLIB
+package java.nio.file
+
+class Path
+
+fun test(list: List<Path>, path: Path) {
+    list.plus<caret>(path)
+}

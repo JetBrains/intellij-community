@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Java11Shim;
+import com.intellij.util.containers.Java11Shim;
 import kotlinx.collections.immutable.PersistentList;
 import kotlinx.collections.immutable.PersistentSet;
 import org.jetbrains.annotations.*;
@@ -102,7 +102,11 @@ public abstract class Language extends UserDataHolderBase {
 
       existing = registeredIds.get(ID);
       if (existing != null) {
-        throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + existing.getClass(), null, existing, this);
+        throw new ImplementationConflictException(
+          "Language with ID '" + ID + "' is already registered: "
+          + existing.getClass() + "; " + existing.getClass().getClassLoader()
+          + " current is " + getClass() + "; " + getClass().getClassLoader(),
+          null, existing, this);
       }
 
       registeredLanguages = with(registeredLanguages, langClass, this);

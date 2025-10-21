@@ -12,7 +12,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -36,7 +36,7 @@ internal class McpClientDetectionSettings : SimplePersistentStateComponent<McpCl
 
 internal class McpClientDetectionActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (ConfigImportHelper.isNewUser()) return // not just yet, next time
+    if (InitialConfigImportState.isNewUser()) return // not just yet, next time
 
     val detectedClients = McpClientDetector.detectMcpClients(project)
     suggestToChangePortIfNeeded(detectedClients, project)
@@ -76,6 +76,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       notification
         .addAction(AutoconfigureAction(project, notMatchingPort, notification))
         .addAction(ShowSettingsAction(project)).notify(project)
+      notification.notify(project)
     }
   }
 

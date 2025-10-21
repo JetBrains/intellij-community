@@ -22,6 +22,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.core.util.TermSize;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.windows.winpty.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
@@ -59,12 +60,16 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    * Used to calculate or adjust the options (like startup command, env variables and so on)
    * that will be used to configure the process and display the terminal.
    *
-   * @return options that will be supplied to {@link #createProcess(ShellStartupOptions)}
+   * @return options that will be supplied to {@link #createTtyConnector(ShellStartupOptions)}
    */
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     return baseOptions;
   }
 
+  /**
+   * @deprecated override {@link #createTtyConnector(ShellStartupOptions)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull T createProcess(@NotNull ShellStartupOptions startupOptions) throws ExecutionException {
     //noinspection removal
     return createProcess(new TerminalProcessOptions(startupOptions.getWorkingDirectory(), startupOptions.getInitialTermSize()), null);
@@ -164,7 +169,18 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return getDefaultTabTitle();
   }
 
-  public abstract @NotNull TtyConnector createTtyConnector(@NotNull T process);
+  public @NotNull TtyConnector createTtyConnector(@NotNull ShellStartupOptions startupOptions) throws ExecutionException {
+    T process = createProcess(startupOptions);
+    return createTtyConnector(process);
+  }
+
+  /**
+   * @deprecated use {@link #createTtyConnector(ShellStartupOptions)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull TtyConnector createTtyConnector(@NotNull T process) {
+    throw new AssertionError("Implement " + getClass().getName() + ".createTtyConnector(ShellStartupOptions)");
+  }
 
   protected @NotNull Project getProject() {
     return myProject;
@@ -223,10 +239,17 @@ public abstract class AbstractTerminalRunner<T extends Process> {
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             if (myProject.isDisposed() || widgetDisposable.isDisposed()) return;
             try {
-              T process = createProcess(configuredOptions.builder().initialTermSize(resultInitialTermSize).build());
-              TtyConnector connector = createTtyConnector(process);
+              ShellStartupOptions optionsWithTermSize = configuredOptions.builder().initialTermSize(resultInitialTermSize).build();
+              TtyConnector connector = createTtyConnector(optionsWithTermSize);
               Duration durationBetweenStartupAndConnectorCreated = startupMoment.elapsedNow();
-              logCommonStartupInfo(connector, process, durationBetweenStartupAndComponentResized, durationBetweenStartupAndConnectorCreated);
+              if (connector instanceof ProcessTtyConnector processTtyConnector) {
+                logCommonStartupInfo(
+                  connector,
+                  processTtyConnector.getProcess(),
+                  durationBetweenStartupAndComponentResized,
+                  durationBetweenStartupAndConnectorCreated
+                );
+              }
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (widgetDisposable.isDisposed()) return;
                 try {
@@ -286,7 +309,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
+   * @deprecated use {@link #createTtyConnector(ShellStartupOptions)} instead
    */
   @SuppressWarnings({"removal", "unused"})
   @Deprecated(forRemoval = true)
@@ -295,7 +318,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
+   * @deprecated use {@link #createTtyConnector(ShellStartupOptions)} instead
    */
   @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
@@ -304,7 +327,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link #createProcess(ShellStartupOptions)} instead
+   * @deprecated use {@link #createTtyConnector(ShellStartupOptions)} instead
    */
   @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)

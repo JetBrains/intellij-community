@@ -13,24 +13,25 @@ import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.XValueMarkerProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.BothRunning
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.BothStopped
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.Exited
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelPositionReached
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelRunToAddress
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighRun
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighStarted
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelPositionReached
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelRunToAddress
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowRun
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.MixedStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.MixedStepType
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.PauseRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.ResumeRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.StepType
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.Stop
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.BothRunningBase
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.BothStopped
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Exited
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelDebuggerStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighStarted
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.MixedStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.MixedStepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.PauseRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.ResumeRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.StepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Stop
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelSetNextStatementRequested
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
@@ -57,12 +58,12 @@ class XMixedModeCombinedDebugProcess(
   val high: XDebugProcess,
   val session: XDebugSessionImpl,
   val config: XMixedModeProcessesConfiguration,
+  private val stateMachine: MixedModeStateMachineBase
 ) : XDebugProcess(session), XDebugSessionTabCustomizer {
   private val processes = listOf(low, high)
   private var myProcessHandler: XMixedModeProcessHandler? = null
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
   private val coroutineScope get() = session.coroutineScope
-  private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
   private var myAttract : Boolean = false // being accessed on EDT
   private var highLevelDebugProcessReady : Boolean = false
   private val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
@@ -85,7 +86,7 @@ class XMixedModeCombinedDebugProcess(
               }
             }
           }
-          is BothRunning -> {
+          is BothRunningBase -> {
             highLevelDebugProcessReady = true
             withContext(Dispatchers.EDT) { session.sessionResumed() }
           }
@@ -114,6 +115,11 @@ class XMixedModeCombinedDebugProcess(
   }
 
   override fun startPausing() {
+    if (!session.isMixedModeHighProcessReady) {
+      low.startPausing()
+      return
+    }
+
     stateMachine.set(PauseRequested)
   }
 
@@ -199,7 +205,8 @@ class XMixedModeCombinedDebugProcess(
   override fun checkCanInitBreakpoints(): Boolean = processes.all { it.checkCanInitBreakpoints() }
 
   override fun doGetProcessHandler(): ProcessHandler? {
-    return myProcessHandler ?: XMixedModeProcessHandler(high.processHandler, low.processHandler, config).also { myProcessHandler = it }
+    return myProcessHandler
+           ?: XMixedModeProcessHandler(high.processHandler, low.processHandler, config, { stateMachine.set(MixedModeStateMachineBase.ExitingStarted) }).also { myProcessHandler = it }
   }
 
   override fun createConsole(): ExecutionConsole {
@@ -225,10 +232,10 @@ class XMixedModeCombinedDebugProcess(
 
 
   override fun isValuesCustomSorted(): Boolean {
-    if (!processes.all { it.isValuesCustomSorted })
-      error("Custom values sorting only for one debug process is not yet supported")
+    if (processes.groupBy { it.isValuesCustomSorted }.count() != 1)
+      error("Different custom values sorting of the debug processes is not supported")
 
-    return super.isValuesCustomSorted()
+    return processes.first().isValuesCustomSorted
   }
 
   override fun isLibraryFrameFilterSupported(): Boolean = processes.all { it.isLibraryFrameFilterSupported }
@@ -311,6 +318,6 @@ class XMixedModeCombinedDebugProcess(
 
   fun setNextStatement(position: XSourcePosition) {
     assert(highExtension.belongsToMe(position.file)) // this operation isn't implemented for a low-level debug process
-    stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelSetNextStatementRequested(position))
+    stateMachine.set(HighLevelSetNextStatementRequested(position))
   }
 }

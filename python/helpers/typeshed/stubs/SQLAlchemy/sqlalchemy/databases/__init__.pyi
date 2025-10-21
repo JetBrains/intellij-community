@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from ..dialects.firebird import base as firebird_base
 from ..dialects.mssql import base as mssql_base
 from ..dialects.mysql import base as mysql_base

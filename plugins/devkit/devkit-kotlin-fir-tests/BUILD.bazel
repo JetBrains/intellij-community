@@ -1,11 +1,17 @@
 ### auto-generated section `build intellij.devkit.kotlin.fir.tests` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-fir-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
 
 jvm_library(
   name = "kotlin-fir-tests_test_lib",
+  module_name = "intellij.devkit.kotlin.fir.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -14,8 +20,8 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
     "//xml/xml-psi-api:psi",
-    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
-    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
     "//plugins/devkit",
     "//plugins/devkit/devkit-core:core",
     "//java/openapi:java",
@@ -28,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//xml/dom-openapi:dom",
+    "//xml/xml-analysis-api:analysis",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "@lib//:jetbrains-annotations",
@@ -40,9 +47,13 @@ jvm_library(
     "//plugins/devkit/intellij.kotlin.devkit/k2",
   ]
 )
+### auto-generated section `build intellij.devkit.kotlin.fir.tests` end
 
-jvm_test(
+### auto-generated section `test intellij.devkit.kotlin.fir.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "kotlin-fir-tests_test",
   runtime_deps = [":kotlin-fir-tests_test_lib"]
 )
-### auto-generated section `build intellij.devkit.kotlin.fir.tests` end
+### auto-generated section `test intellij.devkit.kotlin.fir.tests` end

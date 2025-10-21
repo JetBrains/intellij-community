@@ -1,4 +1,5 @@
 // K2_AFTER_ERROR: Unresolved reference 'Foo'.
+// NO_TEMPLATE_TESTING
 import foo.Bar
 import foo.Foo
 

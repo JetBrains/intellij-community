@@ -97,6 +97,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
 
     /**
      * @return true if the sync is already enqueued or actually in progress by the underlying external system.
+     * Note: For Gradle projects, use [isSyncInProgress] instead because it operates with fewer sync state levels.
      */
     fun isSyncing(): Boolean {
         return syncState.get().run {

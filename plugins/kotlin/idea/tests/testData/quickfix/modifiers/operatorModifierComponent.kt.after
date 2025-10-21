@@ -1,6 +1,6 @@
 // "Add 'operator' modifier" "true"
 // ERROR: 'operator' modifier is required on 'component2' in 'A'
-// K2_AFTER_ERROR: 'operator' modifier is required on 'FirNamedFunctionSymbol /A.component2' in 'component2'.
+// K2_AFTER_ERROR: 'operator' modifier is required on 'fun component2(): Int' defined in 'A'.
 
 class A {
     operator fun component1(): Int = 0

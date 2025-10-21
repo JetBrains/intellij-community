@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.collaboration.ui.util.bindIn
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -9,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
@@ -39,7 +41,7 @@ internal object GitLabCreateSnippetComponentFactory {
              createSnippetVm: GitLabCreateSnippetViewModel): DialogWrapper =
     object : DialogWrapper(project, false) {
       private lateinit var titleField: JTextField
-      private val cs: CoroutineScope = parentCs.childScope(ModalityState.stateForComponent(window).asContextElement())
+      private val cs: CoroutineScope = parentCs.childScope(this::class, ModalityState.stateForComponent(window).asContextElement())
 
       init {
         title = message("snippet.create.dialog.title")
@@ -124,20 +126,20 @@ internal object GitLabCreateSnippetComponentFactory {
               }
           }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
-          row(message("snippet.create.path-mode")) {
+          row(CollaborationToolsBundle.message("snippet.create.path-mode")) {
             comboBox(PathHandlingMode.entries,
                      ListCellRenderer { _, value, _, _, _ ->
                        val selectable = value in createSnippetVm.availablePathModes
                        object : JLabel(value?.displayName), ComboBox.SelectableItem {
                          init {
-                           toolTipText = if (selectable) value?.tooltip else message("snippet.create.path-mode.unavailable.tooltip")
+                           toolTipText = if (selectable) value?.tooltip else CollaborationToolsBundle.message("snippet.create.path-mode.unavailable.tooltip")
                            isEnabled = selectable
                          }
 
                          override fun isSelectable(): Boolean = selectable
                        }
                      }).applyToComponent {
-              toolTipText = message("snippet.create.path-mode.tooltip")
+              toolTipText = CollaborationToolsBundle.message("snippet.create.path-mode.tooltip")
               isSwingPopup = false
             }
               .align(Align.FILL)

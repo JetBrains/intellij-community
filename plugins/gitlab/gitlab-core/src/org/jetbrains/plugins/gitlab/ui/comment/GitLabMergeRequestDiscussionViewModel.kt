@@ -6,9 +6,7 @@ import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolv
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -45,7 +43,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   private val discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestDiscussionViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
@@ -54,7 +52,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   private val expandRequested = MutableStateFlow(false)
 
   override val isResolved: StateFlow<Boolean> = discussion.resolved
-  override val canChangeResolvedState: StateFlow<Boolean> = MutableStateFlow(discussion.canResolve)
+  override val canChangeResolvedState: StateFlow<Boolean> = discussion.resolvable.mapState { it && discussion.resolveAllowed }
 
   override val replyVm: StateFlow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
@@ -63,7 +61,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
     }.stateInNow(cs, null)
 
   private val initialNotesSize: Int = discussion.notes.value.size
-  private val notesVms = discussion.notes.mapModelsToViewModels { note ->
+  private val notesVms = discussion.notes.mapStatefulToStateful { note ->
     GitLabNoteViewModelImpl(project, this, projectData, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, currentUser)
   }.stateInNow(cs, emptyList())
   override val notes: StateFlow<List<NoteItem>> =
@@ -106,7 +104,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   mr: GitLabMergeRequest
 ) : GitLabNoteViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   override val id: GitLabId = note.id
   override val author: GitLabUserDTO = note.author

@@ -16,7 +16,7 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCo
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   protected PsiFile loadToPsiFile(String fileName) {

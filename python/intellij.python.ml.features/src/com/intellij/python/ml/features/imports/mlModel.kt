@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.ml.models.PythonImportsRankingModelHolder
-import com.jetbrains.ml.tools.model.MLModel
-import com.jetbrains.ml.tools.model.catboost.prediction.CatBoostRegressionResult
-import com.jetbrains.ml.tools.model.pipeline.ModelPipeline
-import com.jetbrains.ml.tools.model.pipeline.ModelPipelineLoader
+import com.jetbrains.mlapi.bundle.ModelPipelineLoader
+import com.jetbrains.mlapi.model.pipeline.ModelPipeline
+import com.jetbrains.mlapi.model.prediction.RegressionResult
+import com.jetbrains.mlapi.model.prediction.predicting
 import java.util.concurrent.CompletableFuture
 
 
@@ -24,23 +24,24 @@ internal class ImportsRankingModelService {
 
   private var modelFuture: CompletableFuture<Void>? = null
 
-  var model: ModelPipeline<MLModel<CatBoostRegressionResult>, CatBoostRegressionResult>? = null
+  var model: ModelPipeline<RegressionResult>? = null
     private set
 
   private fun loadModel() {
     modelFuture?.cancel(true)
 
     LOG.info("Loading CatBoost Imports Ranking model")
-    modelFuture = ModelPipelineLoader.load(
+    modelFuture = ModelPipelineLoader(this::class.java.classLoader).load(
       PythonImportsRankingModelHolder.getStream(),
       AppExecutorUtil.getAppExecutorService()
     ).thenAccept { model ->
       LOG.info("Successfully loaded imports ranking model")
-      this.model = model.predicting<CatBoostRegressionResult>()
+      this.model = model.predicting<RegressionResult>()
     }.exceptionally { e ->
       LOG.warn("Failed to load CatBoost imports ranking model", e)
       null
     }
+
   }
 
   companion object {

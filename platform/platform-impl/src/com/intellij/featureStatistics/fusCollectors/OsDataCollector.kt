@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -9,16 +9,16 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.UnixUtil
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.system.OS
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.io.path.name
 
 internal class OsDataCollector : ApplicationUsagesCollector() {
-  private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Solaris", "Other")
+  private val GROUP = EventLogGroup("system.os", 20)
+
+  private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Other")
 
   private val LOCALES = listOf(
     "am", "ar", "as", "az", "bn", "cs", "da", "de", "el", "en", "es", "fa", "fr", "gu", "ha", "hi", "hu", "ig", "in", "it", "ja", "kk",
@@ -26,7 +26,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "te", "th", "tr", "uk", "ur", "uz", "vi", "yo", "zh", "zu")
 
   @Suppress("SpellCheckingInspection")
-  private val SHELLS = listOf("sh", "ash", "bash", "csh", "dash", "fish", "ksh", "tcsh", "xonsh", "zsh", "nu", "other", "unknown")
+  private val SHELLS = listOf("sh", "ash", "bash", "csh", "dash", "fish", "ksh", "pwsh", "tcsh", "xonsh", "zsh", "nu", "other", "unknown")
 
   @Suppress("SpellCheckingInspection")
   private val DISTROS = listOf(
@@ -35,7 +35,6 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon",
     "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 18)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexpReference("time_zone", "time_zone")
@@ -45,10 +44,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private val UNDER_WSL = EventFields.Boolean("wsl")
   private val GLIBC = StringValidatedByRegexpReference("glibc", "version")
 
-  private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
-  @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi", "ScheduledForRemovalWithVersion")
-  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexpReference("value", "time_zone"))  // backward compatibility
+  private val OS_EVENT = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
   private val LINUX = GROUP.registerVarargEvent("linux", DISTRO, RELEASE, UNDER_WSL, GLIBC)
   private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
 
@@ -57,48 +53,45 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val tz = getTimeZone()
     val metrics = mutableSetOf(
-      OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell())),
-      TIMEZONE.metric(tz))
-    when {
-      SystemInfo.isLinux -> {
-        val distroInfo = UnixUtil.getOsInfo()
-        val linuxMetrics = mutableListOf<EventPair<*>>(DISTRO.with(DISTROS.coerce(distroInfo.distro)),
-                                                       RELEASE.with(distroInfo.release),
-                                                       UNDER_WSL.with(distroInfo.isUnderWsl))
-        if (distroInfo.glibcVersion != null) {
-          linuxMetrics.add(GLIBC.with(distroInfo.glibcVersion.toString()))
-        }
-        metrics += LINUX.metric(*linuxMetrics.toTypedArray())
+      OS_EVENT.metric(OS_NAME.with(getOSName()), Version.with(OS.CURRENT.version()), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell()))
+    )
+    if (OS.CURRENT == OS.Linux) {
+      val osInfo = OS.CURRENT.osInfo as OS.LinuxInfo
+      val linuxMetrics = mutableListOf<EventPair<*>>(
+        DISTRO.with(DISTROS.coerce(osInfo.distro)),
+        RELEASE.with(osInfo.release),
+        UNDER_WSL.with(osInfo.isUnderWsl())
+      )
+      osInfo.glibcVersion?.let {
+        linuxMetrics.add(GLIBC.with(it))
       }
-      SystemInfo.isWin10OrNewer -> {
-        metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)  // `-1` is unknown
-      }
+      metrics += LINUX.metric(*linuxMetrics.toTypedArray())
+    }
+    else if (OS.CURRENT == OS.Windows) {
+      metrics += WINDOWS.metric((OS.CURRENT.osInfo as OS.WindowsInfo).buildNumber ?: -1)  // `-1` is unknown
     }
     return metrics
   }
 
-  private fun getOSName(): String =
-    when {
-      SystemInfo.isWindows -> "Windows"
-      SystemInfo.isMac -> "Mac"
-      SystemInfo.isLinux -> "Linux"
-      SystemInfo.isFreeBSD -> "FreeBSD"
-      SystemInfo.isSolaris -> "Solaris"
-      else -> "Other"
-    }
+  private fun getOSName(): String = when (OS.CURRENT) {
+    OS.Windows -> "Windows"
+    OS.macOS -> "Mac"
+    OS.Linux -> "Linux"
+    OS.FreeBSD -> "FreeBSD"
+    OS.Other -> "Other"
+  }
 
   private fun getLanguage(): String = Locale.getDefault().language
 
   private fun getTimeZone(): String = OffsetDateTime.now().offset.toString()
 
   private fun getShell(): String? =
-    if (SystemInfo.isWindows) null
+    if (OS.CURRENT == OS.Windows) null
     else SHELLS.coerce(runCatching { System.getenv("SHELL")?.let { Path.of(it).name } }.getOrNull())
 
-  private fun List<String>.coerce(value: String?): String =
-    when (value) {
-      null -> "unknown"
-      in this -> value
-      else -> "other"
-    }
+  private fun List<String>.coerce(value: String?): String = when (value) {
+    null -> "unknown"
+    in this -> value
+    else -> "other"
+  }
 }

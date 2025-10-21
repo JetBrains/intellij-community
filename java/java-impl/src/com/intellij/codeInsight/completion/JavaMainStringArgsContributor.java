@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -15,15 +16,21 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
 @ApiStatus.Experimental
 public final class JavaMainStringArgsContributor extends CompletionContributor implements DumbAware {
+  private static final PsiJavaElementPattern.@NotNull Capture<PsiElement> AFTER_DOT_FILTER =
+    psiElement().andNot(
+      psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(PsiErrorElement.class))
+    );
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     CompletionType completionType = parameters.getCompletionType();
     if (completionType != CompletionType.BASIC && completionType != CompletionType.SMART) return;
     FileType fileType = parameters.getOriginalFile().getFileType();
-    if (!(fileType instanceof JavaFileType)) {
+    if (!(fileType instanceof JavaFileType) || !AFTER_DOT_FILTER.accepts(parameters.getPosition())) {
       return;
     }
     tryAddArgsParameter(parameters, result);

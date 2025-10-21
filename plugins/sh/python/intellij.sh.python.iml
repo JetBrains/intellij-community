@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.sh.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
   </component>
 </module>

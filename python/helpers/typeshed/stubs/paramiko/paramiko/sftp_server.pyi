@@ -19,7 +19,13 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
     server: SFTPServerInterface
     sock: Channel | None
     def __init__(
-        self, channel: Channel, name: str, server: ServerInterface, sftp_si: type[SFTPServerInterface], *largs: Any, **kwargs: Any
+        self,
+        channel: Channel,
+        name: str,
+        server: ServerInterface,
+        sftp_si: type[SFTPServerInterface] = ...,
+        *args: Any,
+        **kwargs: Any,
     ) -> None: ...
     def start_subsystem(self, name: str, transport: Transport, channel: Channel) -> None: ...
     def finish_subsystem(self) -> None: ...

@@ -19,10 +19,6 @@ import javax.swing.*;
 @Deprecated(forRemoval = true)
 public class ScratchFileType extends LanguageFileType {
 
-  /** @deprecated use {@link ScratchFileService#findRootType(VirtualFile)} or {@link ScratchUtil#isScratch(VirtualFile)}. */
-  @Deprecated(forRemoval = true)
-  public static final LanguageFileType INSTANCE = new ScratchFileType();
-
   private ScratchFileType() {
     super(PlainTextLanguage.INSTANCE, true);
   }

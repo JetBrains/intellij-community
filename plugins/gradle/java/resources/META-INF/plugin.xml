@@ -21,7 +21,7 @@
   <depends optional="true" config-file="gradle-toml-integration.xml">org.toml.lang</depends>
   <depends optional="true" config-file="gradle-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.gradle.profiler"/>
     <!-- Android Studio: b/428768878
     <module name="intellij.gradle.java.maven"/>
@@ -65,6 +65,8 @@
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
     <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
+
+    <externallyHandledExtensions implementation="org.jetbrains.plugins.gradle.service.resolve.GradleWsmVersionCatalogHandler" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

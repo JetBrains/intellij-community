@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -23,14 +24,14 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerExtension
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.venvReader.VirtualEnvReader
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
 import kotlinx.coroutines.async
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasItem
@@ -54,11 +55,11 @@ class SystemPythonServiceShowCaseTest {
       val eelApi = systemPython.pythonBinary.getEelDescriptor().toEelApi()
       val process = eelApi.exec.spawnProcess(systemPython.pythonBinary.pathString, "--version").eelIt()
       val output = async {
-        (if (systemPython.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText()
+        (if (systemPython.pythonInfo.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText()
       }
-      Assertions.assertEquals(0, process.exitCode.await(), "Wrong exit code")
+      Assertions.assertTrue(process.exitCode.await() == 0)
       val versionString = PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(output.await())!!
-      Assertions.assertEquals(systemPython.languageLevel, versionString, "Wrong version")
+      Assertions.assertEquals(systemPython.pythonInfo.languageLevel, versionString, "Wrong version")
     }
   }
 
@@ -68,55 +69,41 @@ class SystemPythonServiceShowCaseTest {
   }
 
   @Test
-  fun testCustomPythonSunnyDay(@PythonBinaryPath python: Path, @TempDir venvPath: Path): Unit = timeoutRunBlocking(10.minutes) {
-    createVenv(python, venvPath).getOrThrow()
-    val python = VirtualEnvReader.Instance.findPythonInPythonRoot(venvPath) ?: error("no python in $venvPath")
-    val newPython = SystemPythonService().registerSystemPython(python).orThrow()
-    var allPythons = SystemPythonService().findSystemPythons()
-    assertThat("No newly registered python returned", allPythons, hasItem(newPython))
-    if (SystemInfo.isWindows) {
-      deleteCheckLocking(python)
-    }
-    else {
-      python.deleteExisting()
-    }
-
-    allPythons = SystemPythonService().findSystemPythons(forceRefresh = true)
-    assertThat("Broken python returned", allPythons, not(hasItem(newPython)))
-
-    if (SystemInfo.isWindows) {
-      deleteCheckLocking(venvPath)
-    }
-  }
-
-  @Test
   fun testRefresh(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(10.minutes) {
-    val mockProvider = mockk<SystemPythonProvider>()
-    coEvery { mockProvider.findSystemPythons(any()) } returns Result.failure(MessageError("..."))
-    coEvery { mockProvider.uiCustomization } returns null
+    val provider = CountingTestProvider(Result.failure(MessageError("...")))
     val sut = SystemPythonService()
+    // Warm up cache before registering test provider
     sut.findSystemPythons()
-    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, mockProvider, disposable)
+    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
     repeat(10) {
       sut.findSystemPythons()
     }
-    coVerify(exactly = 0) { mockProvider.findSystemPythons(any()) }
+    Assertions.assertTrue(provider.calls == 0, "Provider should not be called while cache is valid")
     sut.findSystemPythons(forceRefresh = true)
-    coVerify(atLeast = 1) { mockProvider.findSystemPythons(any()) }
+    Assertions.assertTrue(provider.calls >= 1, "Provider should be called after force refresh")
   }
 
   @RegistryKey("python.system.refresh.minutes", "0")
   @Test
   fun testDisableCache(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(10.minutes) {
     val timesToRepeat = 5
-    val mockProvider = mockk<SystemPythonProvider>()
-    coEvery { mockProvider.findSystemPythons(any()) } returns Result.success(emptySet())
-    coEvery { mockProvider.uiCustomization } returns null
+    val provider = CountingTestProvider(Result.success(emptySet()))
     val sut = SystemPythonServiceImpl(this)
-    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, mockProvider, disposable)
+    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
     repeat(timesToRepeat) {
       sut.findSystemPythons()
     }
-    coVerify(exactly = timesToRepeat) { mockProvider.findSystemPythons(any()) }
+    Assertions.assertTrue(provider.calls == timesToRepeat)
+  }
+
+  private class CountingTestProvider(
+    private val result: PyResult<Set<PythonBinary>>,
+    override val uiCustomization: PyToolUIInfo? = null,
+  ) : SystemPythonProvider {
+    var calls: Int = 0
+    override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
+      calls++
+      return result
+    }
   }
 }

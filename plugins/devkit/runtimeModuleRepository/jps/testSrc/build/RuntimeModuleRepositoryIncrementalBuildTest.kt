@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import org.jetbrains.jps.builders.BuildResult
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -83,7 +84,7 @@ class RuntimeModuleRepositoryIncrementalBuildTest : RuntimeModuleRepositoryTestC
       descriptor("a")
     }
 
-    deleteFile("out/${RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME}")
+    deleteFile("out/${RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME}")
     buildAndCheck {
       descriptor("a")
     }

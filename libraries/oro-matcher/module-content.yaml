@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.oro.matcher
+  library: OroMatcher
+  files:
+  - name: $MAVEN_REPOSITORY$/oro/oro/2/oro-2.jar

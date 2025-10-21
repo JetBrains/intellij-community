@@ -28,7 +28,6 @@ interface NavigationRequests {
   @RequiresBackgroundThread
   fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int, elementRange: TextRange?): NavigationRequest?
 
-  // todo IJPL-339 design request
   @RequiresReadLock
   @RequiresBackgroundThread
   fun sharedSourceNavigationRequest(project: Project, file: VirtualFile, context: CodeInsightContext, offset: Int, elementRange: TextRange?): NavigationRequest?

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.commons.lang3` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "lang3_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lang3",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":lang3_resources"],
+  exports = ["@lib//:commons-lang3"],
+  runtime_deps = ["@lib//:commons-lang3"]
+)
+### auto-generated section `build intellij.libraries.commons.lang3` end

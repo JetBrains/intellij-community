@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
+import com.intellij.lexer.XmlLexerKt;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +14,6 @@ public class XmlIdIndexer extends LexerBasedIdIndexer {
   }
 
   static XmlFilterLexer createIndexingLexer(OccurrenceConsumer consumer) {
-    return new XmlFilterLexer(new XmlLexer(), consumer);
+    return new XmlFilterLexer(XmlLexerKt.createXmlLexer(), consumer);
   }
 }

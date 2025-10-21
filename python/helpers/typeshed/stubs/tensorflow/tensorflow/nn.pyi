@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Sequence
 from typing import Any, Literal, overload
 
@@ -192,4 +191,4 @@ def safe_embedding_lookup_sparse(
     name: str | None = None,
     allow_fast_lookup: bool = False,
 ) -> Tensor: ...
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

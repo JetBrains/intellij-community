@@ -19,6 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.wm.impl.ExpandableComboAction;
+import com.intellij.openapi.wm.impl.ToolbarComboButton;
+import com.intellij.openapi.wm.impl.ToolbarComboButtonModel;
 import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
@@ -92,6 +94,13 @@ public class SwitchTaskAction extends ExpandableComboAction implements DumbAware
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public @NotNull ToolbarComboButton createToolbarComboButton(@NotNull ToolbarComboButtonModel model) {
+    ToolbarComboButton button = super.createToolbarComboButton(model);
+    button.setAccessibleNamePrefix(TaskBundle.message("tasks.widget.accessible.name.prefix"));
+    return button;
   }
 
   private static boolean isOriginalDefault(LocalTask activeTask) {

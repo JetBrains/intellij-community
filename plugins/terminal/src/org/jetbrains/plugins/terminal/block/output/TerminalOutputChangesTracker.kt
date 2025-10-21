@@ -10,7 +10,6 @@ import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.ui.withLock
-import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
@@ -23,7 +22,6 @@ import kotlin.math.min
  */
 internal class TerminalOutputChangesTracker(
   private val textBuffer: TerminalTextBuffer,
-  private val shellIntegration: ShellIntegration,
   parentDisposable: Disposable,
   onUpdateStart: () -> Unit,
 ) {
@@ -168,7 +166,6 @@ internal class TerminalOutputChangesTracker(
 
     val output: StyledCommandOutput = ShellCommandOutputScraperImpl.scrapeOutput(
       textBuffer,
-      shellIntegration.commandBlockIntegration?.commandEndMarker,
       startLine
     )
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -89,7 +89,7 @@ public final class MethodTags {
     }
 
     @Override
-    public Set<String> getAllLookupStrings() {
+    public @NotNull Set<String> getAllLookupStrings() {
       Set<String> all = new HashSet<>(super.getAllLookupStrings());
       all.addAll(myTags);
       return all;
@@ -139,7 +139,7 @@ public final class MethodTags {
 
     private void highlightLast(@NotNull LookupElementPresentation presentation, int start) {
       List<LookupElementPresentation.TextFragment> fragments = presentation.getTailFragments();
-      LookupElementPresentation.TextFragment lastFragment = fragments.get(fragments.size() - 1);
+      LookupElementPresentation.TextFragment lastFragment = fragments.getLast();
       Iterable<TextRange> ranges = LookupCellRenderer.getMatchingFragments(myPrefix, lastFragment.text);
       if (ranges != null) {
         for (TextRange nextHighlightedRange : ranges) {

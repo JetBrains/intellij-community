@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
@@ -13,7 +13,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -100,7 +99,7 @@ public final class EditorUtil {
     }
 
 
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Document document = editor.getDocument();
       int lastLine = document.getLineCount() - 1;
       if (lastLine < 0) {
@@ -205,14 +204,14 @@ public final class EditorUtil {
   }
 
   public static int getVisualLineEndOffset(@NotNull Editor editor, int line) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       VisualPosition endLineVisualPosition = new VisualPosition(line, getLastVisualLineColumnNumber(editor, line));
       return editor.visualPositionToOffset(endLineVisualPosition);
     });
   }
 
   public static float calcVerticalScrollProportion(@NotNull Editor editor) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Rectangle viewArea = editor.getScrollingModel().getVisibleAreaOnScrollingFinished();
       if (viewArea.height == 0) {
         return 0f;
@@ -224,7 +223,7 @@ public final class EditorUtil {
   }
 
   public static void setVerticalScrollProportion(@NotNull Editor editor, float proportion) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       Rectangle viewArea = editor.getScrollingModel().getVisibleArea();
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);
@@ -235,7 +234,7 @@ public final class EditorUtil {
   }
 
   public static int calcRelativeCaretPosition(@NotNull Editor editor) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       int caretY = editor.visualLineToY(editor.getCaretModel().getVisualPosition().line);
       int viewAreaPosition = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
       return caretY - viewAreaPosition;
@@ -243,7 +242,7 @@ public final class EditorUtil {
   }
 
   public static void setRelativeCaretPosition(@NotNull Editor editor, int position) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       int caretY = editor.visualLineToY(editor.getCaretModel().getVisualPosition().line);
       editor.getScrollingModel().scrollVertically(caretY - position);
     });
@@ -331,7 +330,7 @@ public final class EditorUtil {
   }
 
   public static @NotNull FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       EditorColorsScheme colorsScheme = editor.getColorsScheme();
       return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences(),
                                                              FontInfo.getFontRenderContext(editor.getContentComponent()));
@@ -374,7 +373,7 @@ public final class EditorUtil {
   }
 
   public static int nextTabStop(int x, @NotNull Editor editor, int tabSize) {
-    int leftInset = ReadAction.compute(() -> editor.getContentComponent().getInsets().left);
+    int leftInset = EditorThreading.compute(() -> editor.getContentComponent().getInsets().left);
     return nextTabStop(x - leftInset, getSpaceWidth(Font.PLAIN, editor), tabSize) + leftInset;
   }
 
@@ -585,7 +584,7 @@ public final class EditorUtil {
   public static @NotNull Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
                                                                                      @NotNull VisualPosition start,
                                                                                      @NotNull VisualPosition end) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       final Document document = editor.getDocument();
       final FoldingModel foldingModel = editor.getFoldingModel();
 
@@ -647,7 +646,7 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return ReadAction.compute(() -> getNotFoldedLineStartOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+    return EditorThreading.compute(() -> getNotFoldedLineStartOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
   }
 
   @ApiStatus.Internal
@@ -674,7 +673,7 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return ReadAction.compute(() -> getNotFoldedLineEndOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+    return EditorThreading.compute(() -> getNotFoldedLineEndOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
   }
 
   @ApiStatus.Internal
@@ -754,14 +753,14 @@ public final class EditorUtil {
   }
 
   public static @NotNull TextRange getSelectionInAnyMode(Editor editor) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       List<Caret> carets = editor.getCaretModel().getAllCarets();
       return carets.get(0).getSelectionRange().union(carets.get(carets.size() - 1).getSelectionRange());
     });
   }
 
   public static int logicalToVisualLine(@NotNull Editor editor, int logicalLine) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       LogicalPosition logicalPosition = new LogicalPosition(logicalLine, 0);
       VisualPosition visualPosition = editor.logicalToVisualPosition(logicalPosition);
       return visualPosition.line;
@@ -783,7 +782,7 @@ public final class EditorUtil {
    */
   public static @NotNull Pair<@NotNull Interval, @Nullable Interval> logicalLineToYRange(@NotNull Editor editor, int logicalLine) {
     if (logicalLine < 0) throw new IllegalArgumentException("Logical line is negative: " + logicalLine);
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Document document = editor.getDocument();
       int startVisualLine;
       int endVisualLine;
@@ -828,7 +827,7 @@ public final class EditorUtil {
    * @see #logicalLineToYRange(Editor, int)
    */
   public static @NotNull Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       int visualLine = editor.yToVisualLine(y);
       if (editor instanceof EditorImpl) {
         VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
@@ -851,7 +850,7 @@ public final class EditorUtil {
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       int line = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
       return editor.visualToLogicalPosition(new VisualPosition(line, 0)).line;
     });
@@ -862,7 +861,7 @@ public final class EditorUtil {
    * coordinates, corresponding to block inlay or custom fold region locations, {@code -1} is returned.
    */
   public static int yToLogicalLineNoCustomRenderers(@NotNull Editor editor, int y) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       int visualLine = editor.yToVisualLine(y);
       int visualLineStartY = editor.visualLineToY(visualLine);
       if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
@@ -880,7 +879,7 @@ public final class EditorUtil {
   }
 
   public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Document document = editor.getDocument();
       if (offset < 0 || offset > document.getTextLength()) {
         return false;
@@ -897,7 +896,7 @@ public final class EditorUtil {
    * requested.
    */
   public static void setSelectionExpandingFoldedRegionsIfNeeded(@NotNull Editor editor, int startOffset, int endOffset) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion startFoldRegion = foldingModel.getCollapsedRegionAtOffset(startOffset);
       if (startFoldRegion != null && (startFoldRegion.getStartOffset() == startOffset || startFoldRegion.isExpanded())) {
@@ -929,7 +928,7 @@ public final class EditorUtil {
    * because of presentation mode adjustment and because of per-editor font size scaling.
    */
   public static Font getEditorFont() {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       float fontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
       if (UISettings.getInstance().getPresentationMode()) {
         fontSize -= 4f;
@@ -945,7 +944,7 @@ public final class EditorUtil {
   }
 
   public static Font getEditorFont(int size) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       Font font = scheme.getFont(EditorFontType.PLAIN).deriveFont((float)size);
       return UIUtil.getFontWithFallback(font);
@@ -961,7 +960,7 @@ public final class EditorUtil {
    * to the current logical position.
    */
   public static int getSoftWrapCountAfterLineStart(@NotNull Editor editor, @NotNull LogicalPosition position) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       int startOffset = editor.getDocument().getLineStartOffset(position.line);
       int endOffset = editor.logicalPositionToOffset(position);
       return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();
@@ -986,7 +985,7 @@ public final class EditorUtil {
   }
 
   public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       if (editor.isDisposed()) {
         Disposer.dispose(disposable);
         return;
@@ -1056,7 +1055,7 @@ public final class EditorUtil {
    * @see InlayProperties#relatesToPrecedingText(boolean)
    */
   public static @NotNull VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Editor e = editor;
       LogicalPosition logicalPosition = e.offsetToLogicalPosition(offset);
       if (e instanceof EditorWindow) {
@@ -1097,7 +1096,7 @@ public final class EditorUtil {
     if (showWhenFolded(inlay)) {
       return false;
     }
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Editor editor = inlay.getEditor();
       Inlay.Placement placement = inlay.getPlacement();
       int offset = inlay.getOffset();
@@ -1118,14 +1117,14 @@ public final class EditorUtil {
    * Returns top Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
    */
   public static int getVisualLineAreaStartY(@NotNull Editor editor, int visualLine) {
-    return ReadAction.compute(() -> editor.visualLineToY(visualLine) - getInlaysHeight(editor, visualLine, true));
+    return EditorThreading.compute(() -> editor.visualLineToY(visualLine) - getInlaysHeight(editor, visualLine, true));
   }
 
   /**
    * Returns bottom Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
    */
   public static int getVisualLineAreaEndY(@NotNull Editor editor, int visualLine) {
-    return ReadAction.compute(() -> editor.visualLineToYRange(visualLine)[1] + getInlaysHeight(editor, visualLine, false));
+    return EditorThreading.compute(() -> editor.visualLineToYRange(visualLine)[1] + getInlaysHeight(editor, visualLine, false));
   }
 
   /**
@@ -1175,7 +1174,7 @@ public final class EditorUtil {
    * command (so that it becomes part of it), otherwise does nothing.
    */
   public static void performBeforeCommandEnd(@NotNull Runnable task) {
-    if (CommandProcessor.getInstance().getCurrentCommand() == null) return;
+    if (!CommandProcessor.getInstance().isCommandInProgress()) return;
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
@@ -1191,7 +1190,7 @@ public final class EditorUtil {
   }
 
   public static boolean isPrimaryCaretVisible(@NotNull Editor editor) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
       Caret caret = editor.getCaretModel().getPrimaryCaret();
       Point caretPoint = editor.visualPositionToXY(caret.getVisualPosition());
@@ -1204,7 +1203,7 @@ public final class EditorUtil {
    * as well as custom fold regions, are excluded.
    */
   public static boolean isPointOverText(@NotNull Editor editor, @NotNull Point point) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       VisualPosition visualPosition = editor.xyToVisualPosition(point);
       int visualLineStartY = editor.visualLineToY(visualPosition.line);
       if (point.y < visualLineStartY || point.y >= visualLineStartY + editor.getLineHeight()) return false; // block inlay space
@@ -1244,7 +1243,7 @@ public final class EditorUtil {
    * Tells whether maximum allowed number of carets is reached in editor. If it's the case, notification is shown
    */
   public static boolean checkMaxCarets(@NotNull Editor editor) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       CaretModel caretModel = editor.getCaretModel();
       if (caretModel.getCaretCount() >= caretModel.getMaxCaretCount()) {
         notifyMaxCarets(editor);
@@ -1255,14 +1254,14 @@ public final class EditorUtil {
   }
 
   public static boolean isCaretInsideSelection(@Nullable Caret caret) {
-    return ReadAction.compute(() -> caret != null &&
+    return EditorThreading.compute(() -> caret != null &&
            caret.hasSelection() &&
            caret.getOffset() >= caret.getSelectionStart() &&
            caret.getOffset() <= caret.getSelectionEnd());
   }
 
   public static boolean contextMenuInvokedOutsideOfSelection(@NotNull AnActionEvent e) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       if (!ActionPlaces.EDITOR_POPUP.equals(e.getPlace())) return false;
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       return editor != null && editor.getSelectionModel().hasSelection() &&

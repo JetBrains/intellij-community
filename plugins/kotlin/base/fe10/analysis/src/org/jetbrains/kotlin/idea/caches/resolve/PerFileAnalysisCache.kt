@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.google.common.collect.ImmutableMap
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.DumbService
@@ -651,6 +652,7 @@ private object KotlinResolveDataProvider {
         } catch (e: IndexNotReadyException) {
             throw e
         } catch (e: Throwable) {
+            if (Logger.shouldRethrow(e)) throw e
             e.throwAsInvalidModuleException()
 
             DiagnosticUtils.throwIfRunningOnServer(e)

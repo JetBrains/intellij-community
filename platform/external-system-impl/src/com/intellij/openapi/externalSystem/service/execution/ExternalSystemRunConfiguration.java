@@ -53,6 +53,7 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler.SOFT_PROCESS_KILL_ENABLED_KEY;
 
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
 
@@ -74,9 +77,17 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
   private static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
   private static final String REATTACH_DEBUG_PROCESS_NAME = "ExternalSystemReattachDebugProcess";
+  private static final String DEBUG_DISABLED = "ExternalSystemDebugDisabled";
 
   private boolean isDebugServerProcess = true;
   private boolean isReattachDebugProcess = false;
+
+  /**
+   * Determines if debugging should be disabled for this run configuration.
+   * @see com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
+   * When true, this will cause the debug action to be hidden in the IDE unless another debug runner accepts the run configuration.
+   */
+  private boolean isDebuggingDisabled = false;
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
                                         Project project,
@@ -106,6 +117,23 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   public void setDebugServerProcess(boolean debugServerProcess) {
     isDebugServerProcess = debugServerProcess;
     putUserData(DEBUG_SERVER_PROCESS_KEY, debugServerProcess);
+  }
+
+  public boolean isDebuggingDisabled() {
+    return isDebuggingDisabled;
+  }
+
+  public void setDebuggingDisabled(boolean debuggingDisabled) {
+    this.isDebuggingDisabled = debuggingDisabled;
+  }
+
+  /**
+   * This setting will be delivered with user data to {@link ExternalSystemProcessHandler} and used there.
+   * @see com.intellij.execution.process.SoftlyKillableProcessHandler#shouldKillProcessSoftly()
+   */
+  @ApiStatus.Experimental
+  protected void setSoftProcessKillEnabled(boolean softProcessKillEnabled) {
+    putUserData(SOFT_PROCESS_KILL_ENABLED_KEY, softProcessKillEnabled);
   }
 
   @Override
@@ -156,6 +184,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
       readExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, this::setDebugServerProcess);
       readExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, this::setReattachDebugProcess);
+      readExternalBoolean(element, DEBUG_DISABLED, this::setDebuggingDisabled);
     }
     ExternalSystemRunConfigurationExtensionManager.getInstance().readExternal(this, element);
   }
@@ -176,6 +205,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }));
     writeExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, isDebugServerProcess());
     writeExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, isReattachDebugProcess());
+    writeExternalBoolean(element, DEBUG_DISABLED, isDebuggingDisabled());
     ExternalSystemRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 

@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFi
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
+import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -35,10 +38,12 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull EventLogMetadataLoader myMetadataLoader;
   private final @NotNull AtomicBoolean myIsInitialized;
+  private final @NotNull AtomicBoolean myIsDictionaryStorageInitialized;
   private final @NotNull EventLogSystemCollector eventLogSystemCollector;
 
   ValidationRulesPersistedStorage(@NotNull String recorderId) {
     myIsInitialized = new AtomicBoolean(false);
+    myIsDictionaryStorageInitialized = new AtomicBoolean(false);
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
@@ -52,6 +57,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
                                             @NotNull EventLogMetadataPersistence persistence,
                                             @NotNull EventLogMetadataLoader loader) {
     myIsInitialized = new AtomicBoolean(false);
+    myIsDictionaryStorageInitialized = new AtomicBoolean(false);
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = persistence;
@@ -102,6 +108,11 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   public void update() {
     EventLogConfigOptionsService.getInstance().updateOptions(myRecorderId, myMetadataLoader);
 
+    updateMetadata();
+    updateDictionaries();
+  }
+
+  private void updateMetadata() {
     long lastModifiedLocally = myMetadataPersistence.getLastModified();
     long lastModifiedOnServer = myMetadataLoader.getLastModifiedOnServer();
     if (LOG.isTraceEnabled()) {
@@ -131,6 +142,64 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     }
   }
 
+  private Map<String, Long> getDictionariesModifiedOnServer() {
+    try {
+      return myMetadataLoader.getDictionariesLastModifiedOnServer(myRecorderId);
+    }
+    catch (EventLogMetadataLoadException e) {
+      eventLogSystemCollector.logDictionaryUpdateFailed(e);
+    }
+    return null;
+  }
+
+  private void updateDictionaries() {
+    var dictionariesLastModifiedLocally = myMetadataPersistence.getDictionariesLastModified();
+    Map<String, Long> dictionariesLastModifiedOnServer = getDictionariesModifiedOnServer();
+
+    if (dictionariesLastModifiedOnServer == null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Error occurred loading dictionaries list from server");
+      }
+      return;
+    }
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+        "Loading dictionaries, last modified cached=" + dictionariesLastModifiedLocally +
+        ", last modified on the server=" + dictionariesLastModifiedOnServer
+      );
+    }
+
+    DictionaryStorage dictionaryStorage = getDictionaryStorage();
+    if (dictionaryStorage == null) {
+      // no need to log error here because error has been logged in getDictionaryStorage()
+      return;
+    }
+
+    for(Map.Entry<String, Long> dictionarylastModifiedOnServerEntry : dictionariesLastModifiedOnServer.entrySet()) {
+      try {
+        String dictionaryName = dictionarylastModifiedOnServerEntry.getKey();
+        Long dictionaryLastModifiedLocally = dictionariesLastModifiedLocally.getOrDefault(dictionaryName, 0L);
+        Long dictionaryLastModifiedOnServer = dictionarylastModifiedOnServerEntry.getValue();
+        if (dictionaryLastModifiedOnServer <= 0 || dictionaryLastModifiedOnServer > dictionaryLastModifiedLocally || !myMetadataPersistence.dictionaryAvailable(dictionaryName)) {
+          String rawDictionary = myMetadataLoader.loadDictionaryFromServer(myRecorderId, dictionaryName);
+          dictionaryStorage.updateDictionaryByName(dictionaryName, rawDictionary.getBytes(StandardCharsets.UTF_8));
+          myMetadataPersistence.setDictionaryLastModified(dictionarylastModifiedOnServerEntry.getKey(), dictionaryLastModifiedOnServer);
+
+          eventLogSystemCollector.logDictionaryUpdated(dictionaryLastModifiedOnServer);
+        }
+      } catch(Exception e) {
+        if (e instanceof EventLogMetadataLoadException) {
+          eventLogSystemCollector.logDictionaryUpdateFailed((EventLogMetadataLoadException)e);
+        } else {
+          eventLogSystemCollector.logDictionaryUpdateFailed(new EventLogMetadataLoadException(
+            EventLogMetadataLoadException.EventLogMetadataLoadErrorType.UNKNOWN_IO_ERROR, e
+          ));
+        }
+      }
+    }
+  }
+
   @Override
   public void reload() {
     myVersion = loadValidatorsFromLocalCache();
@@ -143,18 +212,35 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
 
   protected @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
-    return createValidators(build, groups, globalRulesHolder, myRecorderId);
+    return createValidators(build, groups, globalRulesHolder, myRecorderId, getDictionaryStorage());
+  }
+
+  @Override
+  public @Nullable DictionaryStorage getDictionaryStorage() {
+    if (!myIsDictionaryStorageInitialized.getAndSet(true)) {
+      eventLogSystemCollector.logDictionariesLoaded();
+    }
+
+    try {
+      return myMetadataPersistence.getDictionaryStorage();
+    } catch (IOException e) {
+      eventLogSystemCollector.logDictionariesLoadFailed(new EventLogMetadataLoadException(
+        EventLogMetadataLoadException.EventLogMetadataLoadErrorType.UNKNOWN_IO_ERROR, e)
+      );
+      return null;
+    }
   }
 
   public static @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
                                                                        @NotNull EventGroupRemoteDescriptors groups,
                                                                        @NotNull GlobalRulesHolder globalRulesHolder,
-                                                                       @NotNull String recorderId) {
+                                                                       @NotNull String recorderId,
+                                                                       DictionaryStorage dictionaryStorage) {
     ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer(recorderId));
     return groups.groups.stream()
       .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))
       .collect(Collectors.toMap(group -> group.id, group -> {
-        return EventGroupRules.create(group, globalRulesHolder, ruleFactory, FeatureUsageData.Companion.getPlatformDataKeys());
+        return EventGroupRules.create(group, globalRulesHolder, ruleFactory, FeatureUsageData.Companion.getPlatformDataKeys(), dictionaryStorage);
       }));
   }
 }

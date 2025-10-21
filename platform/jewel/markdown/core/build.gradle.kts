@@ -8,6 +8,7 @@ plugins {
 dependencies {
     api(projects.ui)
     api(libs.commonmark.core)
+    api(libs.jsoup)
 
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(projects.ui)

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,24 +39,19 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
   private JCheckBox myMakeChangeListActive;
   private List<PresentableFileInfo> myFiles;
 
-  public ReadOnlyStatusDialog(Project project, @NotNull List<PresentableFileInfo> files) {
+  ReadOnlyStatusDialog(Project project, @NotNull List<PresentableFileInfo> files) {
     super(project);
     setTitle(IdeBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
     myFileList.setPreferredSize(getDialogPreferredSize());
     initFileList();
 
-    ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
-      }
-    };
+    ActionListener listener = __ -> myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
     myUsingVcsRadioButton.addActionListener(listener);
     myUsingFileSystemRadioButton.addActionListener(listener);
     (myUsingVcsRadioButton.isEnabled() ? myUsingVcsRadioButton : myUsingFileSystemRadioButton).setSelected(true);
     myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
-    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer(PresentableFileInfo::getPresentation));
+    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer(t -> t.getPresentation()));
     init();
   }
 

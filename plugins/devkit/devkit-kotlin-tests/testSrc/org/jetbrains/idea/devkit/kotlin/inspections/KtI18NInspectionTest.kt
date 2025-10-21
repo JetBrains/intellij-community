@@ -8,8 +8,16 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
+class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
+
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return JAVA_8
   }

@@ -16,7 +16,7 @@ import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.*
 
-class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
+public class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
   private val group = EventLogGroup("java.language", 6)
 
   private val feature = EventFields.Int("feature")

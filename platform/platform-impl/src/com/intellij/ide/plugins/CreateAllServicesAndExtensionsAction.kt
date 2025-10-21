@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -50,7 +51,7 @@ private class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
 }
 
 private fun checkLightServices(
-  application: ComponentManagerImpl,
+  application: ComponentManagerEx,
   project: ComponentManagerImpl?,
   errors: MutableList<Throwable>,
 ) {
@@ -234,8 +235,8 @@ private fun scanClassLoader(pluginClassLoader: PluginClassLoader): ScanResult {
 
 private fun checkLightServices(
   classInfo: ClassInfo,
-  mainDescriptor: IdeaPluginDescriptorImpl,
-  application: ComponentManagerImpl,
+  mainDescriptor: PluginMainDescriptor,
+  application: ComponentManagerEx,
   project: ComponentManagerImpl?,
   onThrowable: (Throwable) -> Unit,
 ) {
@@ -303,10 +304,11 @@ private fun levelsByAnnotations(annotationParameterValue: AnnotationParameterVal
 
 private fun loadLightServiceClass(
   className: String,
-  mainDescriptor: IdeaPluginDescriptorImpl,
+  mainDescriptor: PluginMainDescriptor,
 ): Class<*>? {
-  fun loadClass(descriptor: IdeaPluginDescriptorImpl) =
-    (descriptor.pluginClassLoader as? PluginClassLoader)?.loadClass(className, true)
+  fun loadClass(descriptor: IdeaPluginDescriptorImpl): Class<*>? {
+    return (descriptor.pluginClassLoader as? PluginClassLoader)?.loadClass(className, true)
+  }
 
   for (moduleItem in mainDescriptor.contentModules) {
     try {

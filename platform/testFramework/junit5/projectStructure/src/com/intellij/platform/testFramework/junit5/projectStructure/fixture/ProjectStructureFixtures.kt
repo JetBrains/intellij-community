@@ -13,7 +13,12 @@ import org.jetbrains.annotations.TestOnly
  * This fixture allows setting up the project structure via a simple DSL
  */
 @TestOnly
-fun multiverseProjectFixture(withSharedSourceEnabled: Boolean = true, openProjectTask: OpenProjectTask = OpenProjectTask.build(), openAfterCreation: Boolean = false, init: ProjectBuilder.() -> Unit): TestFixture<Project> {
+fun multiverseProjectFixture(
+  withSharedSourceEnabled: Boolean = true,
+  openProjectTask: OpenProjectTask = OpenProjectTask.build(),
+  openAfterCreation: Boolean = false,
+  init: ProjectBuilder.() -> Unit,
+): TestFixture<Project> {
   val fixture = testFixture("multiverse-project-fixture") {
     val project = with(MultiverseFixtureInitializer(init)) {
       initializeProjectModel(openProjectTask, openAfterCreation)

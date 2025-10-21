@@ -291,7 +291,8 @@ class RecursionUtils {
     }
     final IElementType tokenType = expression.getOperationTokenType();
     if (GroovyTokenTypes.mLAND.equals(tokenType) ||
-        GroovyTokenTypes.mLOR.equals(tokenType)) {
+        GroovyTokenTypes.mLOR.equals(tokenType) ||
+        GroovyTokenTypes.mIMPL.equals(tokenType)) {
       return false;
     }
     final GrExpression rhs = expression.getRightOperand();

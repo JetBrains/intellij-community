@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.keymap.impl
@@ -13,10 +13,11 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.ResourceUtil
+import com.intellij.util.system.OS
+import com.intellij.util.ui.UnixDesktopEnv
 import org.jdom.Element
 
 open class DefaultKeymap {
@@ -106,10 +107,10 @@ open class DefaultKeymap {
 
   open val defaultKeymapName: String
     get() = when {
-      SystemInfoRt.isMac -> KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
-      SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
-      SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
-      SystemInfo.isUnix -> KeymapManager.X_WINDOW_KEYMAP
+      OS.CURRENT == OS.macOS -> KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
+      UnixDesktopEnv.CURRENT == UnixDesktopEnv.GNOME -> KeymapManager.GNOME_KEYMAP
+      UnixDesktopEnv.CURRENT == UnixDesktopEnv.KDE -> KeymapManager.KDE_KEYMAP
+      OS.isGenericUnix() -> KeymapManager.X_WINDOW_KEYMAP
       else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 

@@ -117,7 +117,7 @@ public final class UnnecessaryJavaDocLinkInspection extends BaseInspection imple
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryJavaDocLinkVisitor();
   }
 

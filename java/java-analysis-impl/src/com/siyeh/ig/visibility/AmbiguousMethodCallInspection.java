@@ -47,7 +47,7 @@ public final class AmbiguousMethodCallInspection extends BaseInspection implemen
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AmbiguousMethodCallVisitor();
   }
 

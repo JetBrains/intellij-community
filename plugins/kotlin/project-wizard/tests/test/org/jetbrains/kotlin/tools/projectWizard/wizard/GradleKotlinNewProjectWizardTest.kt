@@ -22,6 +22,10 @@ import kotlin.io.path.pathString
 import kotlin.io.path.walk
 
 class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() {
+    @Test
+    fun testK1PluginIsUsed() {
+        Assertions.assertTrue(System.getProperty("idea.kotlin.plugin.use.k1").toBoolean())
+    }
 
     @ParameterizedTest
     @EnumSource(GradleDsl::class)
@@ -51,8 +55,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     }
 
     @ParameterizedTest
-    @CsvCrossProductSource("GROOVY", "true,false")
-    //@CsvCrossProductSource("KOTLIN,GROOVY", "true,false") See KTIJ-34593
+    @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
     fun testMultiModuleProject(gradleDsl: GradleDsl, addSampleCode: Boolean): Unit = runBlocking {
         createProjectByWizard(KOTLIN) {
             setGradleWizardData("project", gradleDsl = gradleDsl, addSampleCode = addSampleCode, generateMultipleModules = true)
@@ -206,7 +209,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     @ParameterizedTest
     @EnumSource(GradleDsl::class)
     fun testOtherKotlinModule(gradleDsl: GradleDsl): Unit = runBlocking {
-        val kotlinJvmPluginVersion = "1.8.0"
+        val kotlinJvmPluginVersion = "1.9.25"
         initProject(projectInfo("project", gradleDsl) {
             withJavaBuildFile()
             withKotlinSettingsFile {
@@ -241,7 +244,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     @ParameterizedTest
     @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
     fun testNewModuleWithVersionCatalog(gradleDsl: GradleDsl, addBuildSrcVersionCatalogDependency: Boolean): Unit = runBlocking {
-        val kotlinJvmPluginVersion = "2.0.21"
+        val kotlinJvmPluginVersion = "2.2.0"
         val versionTomlContent = """
             |[versions]
             |kotlin = "$kotlinJvmPluginVersion"

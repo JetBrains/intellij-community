@@ -1,18 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildDiagnosticCollector;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SnapshotDeltaImpl;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 
-import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public final class GraphUpdater {
   private static final String MODULE_INFO_FILE_NAME = "module-info.java";
@@ -23,15 +27,41 @@ public final class GraphUpdater {
     myTargetName = targetName;
   }
 
-  public NodeSourceSnapshotDelta updateBeforeCompilation(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, List<Graph> extParts) {
-    return updateDependencyGraph(depGraph, snapshotDelta, delta, false, extParts, false);
+  public NodeSourceSnapshotDelta updateBeforeCompilation(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, List<Graph> extParts, @Nullable BuildDiagnosticCollector diagnosticBuilder) {
+    Set<NodeSource> modifiedBefore = diagnosticBuilder == null? Set.of() : collect(snapshotDelta.getModified(), new HashSet<>());
+    StringBuilder logData = diagnosticBuilder == null? null : new StringBuilder();
+    NodeSourceSnapshotDelta nextSnapshotDelta = null;
+    try {
+      return nextSnapshotDelta = updateDependencyGraph(depGraph, snapshotDelta, delta, false, extParts, false, logData == null? LogConsumer.EMPTY : LogConsumer.memory(logData));
+    }
+    finally {
+      if (diagnosticBuilder != null) {
+        List<NodeSource> affected = nextSnapshotDelta == null? List.of() : collect(filter(nextSnapshotDelta.getModified(), src -> !modifiedBefore.contains(src)), new ArrayList<>());
+        String decisionLog = logData.toString();
+        if (delta.isSourceOnly()) {
+          diagnosticBuilder.setSourcesDifferentiateLog(affected, decisionLog);
+        }
+        else {
+          diagnosticBuilder.setLibrariesDifferentiateLog(affected, decisionLog);
+        }
+      }
+    }
   }
 
-  public NodeSourceSnapshotDelta updateAfterCompilation(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected) {
-    return updateDependencyGraph(depGraph, snapshotDelta, delta, errorsDetected, List.of(), true);
+  public NodeSourceSnapshotDelta updateAfterCompilation(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected, @Nullable BuildDiagnosticCollector diagnosticBuilder) {
+    List<NodeSource> modifiedBefore = diagnosticBuilder == null? List.of() : collect(snapshotDelta.getModified(), new ArrayList<>());
+    StringBuilder logData = diagnosticBuilder == null? null : new StringBuilder();
+    try {
+      return updateDependencyGraph(depGraph, snapshotDelta, delta, errorsDetected, List.of(), true, logData == null? LogConsumer.EMPTY : LogConsumer.memory(logData));
+    }
+    finally {
+      if (diagnosticBuilder != null) {
+        diagnosticBuilder.addRoundData(modifiedBefore, logData.toString());
+      }
+    }
   }
   
-  private NodeSourceSnapshotDelta updateDependencyGraph(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected, List<Graph> extParts, boolean isAfterCompilation) {
+  private NodeSourceSnapshotDelta updateDependencyGraph(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected, List<Graph> extParts, boolean isAfterCompilation, LogConsumer logConsumer) {
     if (snapshotDelta.isRecompileAll()) {
       if (isAfterCompilation) {
         if (errorsDetected) {
@@ -53,7 +83,9 @@ public final class GraphUpdater {
       .calculateAffected(!snapshotDelta.isRecompileAll())
       .processConstantsIncrementally(true)
       .withAffectionFilter(currentChunkScopeFilter)
-      .withChunkStructureFilter(currentChunkScopeFilter).get();
+      .withChunkStructureFilter(currentChunkScopeFilter)
+      .withLogConsumer(LogConsumer.composite(LogConsumer.createJULogConsumer(Level.FINE), logConsumer)) 
+      .get();
 
     DifferentiateResult diffResult = depGraph.differentiate(delta, params, extParts);
 
@@ -82,7 +114,7 @@ public final class GraphUpdater {
       // some compilers (and compiler plugins) may produce different outputs for the same set of inputs.
       // This might cause corresponding graph Nodes to be considered as always 'changed'. In some scenarios this may lead to endless build loops
       // This fallback logic detects such loops and recompiles the whole module chunk instead.
-      Set<NodeSource> affectedForChunk = Iterators.collect(Iterators.filter(diffResult.getAffectedSources(), params.belongsToCurrentCompilationChunk()::test), new HashSet<>());
+      Set<NodeSource> affectedForChunk = Iterators.collect(filter(diffResult.getAffectedSources(), params.belongsToCurrentCompilationChunk()::test), new HashSet<>());
       if (!affectedForChunk.isEmpty() && !myAllAffectedSources.addAll(affectedForChunk)) {
         // all affected files in this round have already been affected in previous rounds. This might indicate a build cycle => recompiling whole chunk
         // todo: diagnostic

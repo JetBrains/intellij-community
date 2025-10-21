@@ -17,6 +17,8 @@ import javax.swing.JTabbedPane
 
 @Experimental
 fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, coroutineScope: CoroutineScope) {
+  selectedIndex = selectedTabState.value
+
   val changeListener = javax.swing.event.ChangeListener {
     val selectedIndex = selectedIndex
     if (selectedTabState.value != selectedIndex) {
@@ -26,7 +28,7 @@ fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, corou
 
   addChangeListener(changeListener)
 
-  coroutineScope.launch {
+  val job = coroutineScope.launch {
     selectedTabState.collectLatest { tabIndex ->
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         if (selectedIndex != tabIndex) {
@@ -36,7 +38,9 @@ fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, corou
         }
       }
     }
-  }.invokeOnCompletion {
+  }
+
+  job.invokeOnCompletion {
     removeChangeListener(changeListener)
   }
 }

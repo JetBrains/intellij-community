@@ -83,7 +83,7 @@ public final class BooleanExpressionMayBeConditionalInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BooleanExpressionMayBeConditionalVisitor();
   }
 

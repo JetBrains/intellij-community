@@ -29,7 +29,7 @@ class PyInvalidCastInspection : PyInspection() {
         val targetType = Ref.deref(targetTypeRef)
         val actualType = myTypeEvalContext.getType(args[1])
 
-        if (PyTypeChecker.overlappingTypes(targetType, actualType, myTypeEvalContext)) return
+        if (PyTypeUtil.isOverlappingWith(targetType, actualType, myTypeEvalContext)) return
         val fromName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
         val toName = PythonDocumentationProvider.getVerboseTypeName(targetType, myTypeEvalContext)
 

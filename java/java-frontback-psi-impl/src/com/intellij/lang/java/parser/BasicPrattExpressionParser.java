@@ -28,8 +28,11 @@ import static com.intellij.psi.impl.source.BasicElementTypes.*;
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link PrattExpressionParser}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 @SuppressWarnings("UnnecessarilyQualifiedStaticUsage") //suppress to be clear, what type is used
 @ApiStatus.Experimental
 public class BasicPrattExpressionParser {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 
 package com.intellij.util.lang.test
@@ -41,5 +41,38 @@ class PathClassLoaderTest {
     val classPath = ClassPath(listOf(jarRelativePath), UrlClassLoader.build(), PathClassLoader.getResourceFileFactory(), false)
     val resource = checkNotNull(classPath.findResource("resource.txt"))
     assertThat(resource.url.toString()).isEqualTo("jar:file:${jarAbsolutePath.invariantSeparatorsPathString}!/resource.txt")
+  }
+
+  @Test
+  fun `single jar with manifest`(@TempDir dir: Path) {
+    val jarAbsolutePath = dir.resolve("lib-wth-classpath-as-manifest.jar")
+    Compressor.Zip(jarAbsolutePath).use { compressor ->
+      compressor.addFile("META-INF/MANIFEST.MF", """
+          Manifest-Version: 1.0
+          Class-Path: file:lib%2b/core.jar file:lib%2b/utils.jar file:lib%2b/plugi
+           n.jar
+          Created-By: Bazel
+        """.trimIndent().toByteArray())
+    }
+
+    // Test that the system property functionality works
+    try {
+      System.setProperty(PathClassLoader.RESET_CLASSPATH_FROM_MANIFEST_PROPERTY, "true")
+
+      val classLoader = PathClassLoader(UrlClassLoader.build().files(listOf(jarAbsolutePath)).parent(null))
+      val files = classLoader.getFiles()
+
+      // Should have 3 files now from the manifest classpath
+      assertThat(files.size).isEqualTo(3)
+      assertThat(files[0].fileName.toString()).isEqualTo("core.jar")
+      assertThat(files[0].parent.fileName.toString()).isEqualTo("lib+")
+      assertThat(files[1].fileName.toString()).isEqualTo("utils.jar")
+      assertThat(files[1].parent.fileName.toString()).isEqualTo("lib+")
+      assertThat(files[2].fileName.toString()).isEqualTo("plugin.jar")
+      assertThat(files[2].parent.fileName.toString()).isEqualTo("lib+")
+    }
+    finally {
+      System.clearProperty(PathClassLoader.RESET_CLASSPATH_FROM_MANIFEST_PROPERTY)
+    }
   }
 }

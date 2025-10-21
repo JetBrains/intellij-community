@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
 import org.jetbrains.annotations.NotNull;
 
 public final class StatsHttpRequests {

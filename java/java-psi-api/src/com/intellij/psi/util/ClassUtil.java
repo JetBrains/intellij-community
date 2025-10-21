@@ -217,10 +217,9 @@ public final class ClassUtil {
 
   /**
    * Returns the binary class name for top-level and nested classes.
-   *
-   * @deprecated Does not work for anonymous classes and local classes. Use {@link #getBinaryClassName} instead.
+   * <p>
+   * Does not work for anonymous classes and local classes – if you need this, use {@link #getBinaryClassName} instead.
    */
-  @Deprecated
   public static @Nullable @NlsSafe String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {

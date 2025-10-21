@@ -20,14 +20,18 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.asDisposable
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.inspections.PyInterpreterInspection
+import com.jetbrains.python.TraceContext
+import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.modules.PyPackagesSdkController
@@ -42,21 +46,27 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
-import java.awt.Dimension
+import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
 
-  private val packageSearchController = PyPackageSearchTextField(project)
+  private val packageSearchController = PyPackageSearchTextField(project).also {
+    Disposer.register(this, it)
+  }
   internal val packageListController = PyPackagesListController(project, controller = this)
   private val moduleController = PyPackagesSdkController(project)
   private val descriptionController = PyPackageInfoPanel(project)
-  private val packagingScope = PyPackageCoroutine.getIoScope(project)
+  private val packagingScope = PyPackageCoroutine.getScope(project)
+    .childScope("Packaging tool window", TraceContext(message("tracecontext.packaging.tool.window"), null)).also {
+      Disposer.register(this, it.asDisposable())
+    }
 
   private lateinit var contentPanel: JPanel
   private lateinit var contentSplitter: OnePixelSplitter
@@ -83,7 +93,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     @Suppress("DialogTitleCapitalization")
     emptyText.appendLine(message("python.sdk.popup.interpreter.settings"), SimpleTextAttributes.LINK_ATTRIBUTES, object : ActionListener {
       override fun actionPerformed(e: ActionEvent?) {
-        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, null)
+        InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, null)
       }
     })
   }
@@ -170,13 +180,10 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       targetComponent = this@PyPackagingToolWindowPanel
     }
 
-    return PyPackagesUiComponents.boxPanel {
-      border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
-      preferredSize = Dimension(preferredSize.width, 30)
-      minimumSize = Dimension(minimumSize.width, 30)
-      maximumSize = Dimension(maximumSize.width, 30)
-      add(packageSearchController)
-      add(actionToolbar.component)
+    return JPanel(BorderLayout()).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+      add(packageSearchController, BorderLayout.CENTER)
+      add(actionToolbar.component, BorderLayout.LINE_END)
     }
   }
 
@@ -232,6 +239,10 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.showSearchResult(installed, repoData)
   }
 
+  fun showErrorResult(errorNode: ErrorNode) {
+    packageListController.showErrorResult(errorNode)
+  }
+
   fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
     packageListController.resetSearch(installed, repos, currentSdk)
   }
@@ -248,6 +259,14 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   fun startLoadingSdk() {
     this.descriptionController.setPackage(null)
     packageListController.startSdkInit()
+  }
+
+  fun clearFocus() {
+    val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    val owner = kfm.focusOwner
+    if (owner != null && SwingUtilities.isDescendingFrom(owner, this)) {
+      kfm.clearGlobalFocusOwner()
+    }
   }
 
   override fun dispose() {

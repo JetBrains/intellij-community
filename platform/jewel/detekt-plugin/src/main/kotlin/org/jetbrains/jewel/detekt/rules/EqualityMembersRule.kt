@@ -47,6 +47,8 @@ class EqualityMembersRule(config: Config) : Rule(config) {
     override fun visitClass(klass: KtClass) {
         super.visitClass(klass)
 
+        if (!klass.isJewelSymbol()) return
+
         if (annotated.isNotEmpty() && !hasAnnotations(klass, annotated.toSet())) {
             return
         }

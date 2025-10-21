@@ -221,18 +221,17 @@ class Fixture(
             }
             DaemonAnalyzerTestCase.assertTrue(
                 "side effect: to load extensions",
-                ProblemHighlightFilter.EP_NAME.extensions.toMutableList()
+                ProblemHighlightFilter.EP_NAME.extensions.asSequence()
                     .plus(ImplicitUsageProvider.EP_NAME.extensions)
                     .plus(XmlSchemaProvider.EP_NAME.extensions)
                     .plus(XmlFileNSInfoProvider.EP_NAME.extensions)
                     .plus(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME.extensions)
-                    .plus(IndexPatternBuilder.EP_NAME.extensions).isNotEmpty()
+                    .plus(IndexPatternBuilder.EP_NAME.extensions).toList().isNotEmpty()
             )
 
-            // side effect: to load script definitions"
-            val scriptDefinitionsManager = ScriptDefinitionsManager.getInstance(project)
-            scriptDefinitionsManager.getDefinitions()
-            dispatchAllInvocationEvents()
+          // side effect: to load script definitions"
+            ScriptDefinitionsManager.getInstance(project).currentDefinitions.toList()
+          dispatchAllInvocationEvents()
 
             //assertFalse(KotlinScriptingSettings.getInstance(project).isAutoReloadEnabled)
         }

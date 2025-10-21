@@ -137,7 +137,7 @@ suspend fun <T> withEntities(vararg entities: Entity, body: suspend CoroutineSco
 suspend fun <T> tryWithEntities(vararg entities: Entity, body: suspend CoroutineScope.() -> T): WithMatchResult<T> =
   when {
     entities.isEmpty() -> coroutineScope { WithMatchResult.Success(body()) }
-    else -> entities.map(Entity::existence).reduce(Query<Unit>::and).withPredicate(body)
+    else -> entities.map(Entity::existence).reduce(PredicateQuery::and).withPredicate(body)
   }
 
 /**

@@ -545,7 +545,8 @@ class JKCodeBuilder(private val context: ConverterContext) {
 
             val methodName = callExpression.identifier.fqName
             if (isK1Mode() ||
-                (methodName != "java.util.stream.Stream.collect" && !methodName.startsWith("java.util.stream.Collectors"))) {
+                (methodName != "java.util.stream.Stream.collect" && !methodName.startsWith("java.util.stream.Collectors"))
+            ) {
                 // Type arguments for Stream.collect calls cannot be explicitly specified in Kotlin.
                 // This is a K2 counterpart to the K1 `RemoveJavaStreamsCollectCallTypeArgumentsProcessing`.
                 callExpression.typeArgumentList.accept(this)

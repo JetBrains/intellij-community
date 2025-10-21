@@ -10,7 +10,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
@@ -55,7 +58,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isRecursiveCall(target: CallTarget, targetDeclaration: PsiElement): Boolean {
         for (parent in target.caller.parents) {
             when (parent) {
@@ -73,7 +76,8 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         return false
     }
 
-    context(KaSession)
+    @OptIn(KaContextParameterApi::class)
+    context(_: KaSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
         var dispatchReceiver = target.partiallyAppliedSymbol.dispatchReceiver ?: return true
         while (dispatchReceiver is KaSmartCastedReceiverValue) {

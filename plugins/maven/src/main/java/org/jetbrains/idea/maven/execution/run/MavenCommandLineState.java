@@ -11,7 +11,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
+import com.intellij.execution.target.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
@@ -198,7 +198,7 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
       buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4(), false));
     }
 
-    AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
+    AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(buildView))};
     DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
     List<AnAction> restartActions = new ArrayList<>();
     restartActions.add(new JvmToggleAutoTestAction());

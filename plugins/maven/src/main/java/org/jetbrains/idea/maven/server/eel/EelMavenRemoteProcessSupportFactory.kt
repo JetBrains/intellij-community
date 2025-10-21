@@ -55,7 +55,7 @@ class EelRemotePathTransformFactory : RemotePathTransformerFactory {
         val canonicalPath = Paths.get(remotePath).toCanonicalPath()
         return runCatching {
           val eelPath = eel.fs.getPath(canonicalPath)
-          val fullyQualifiedPath = eelPath.asNioPath(project)
+          val fullyQualifiedPath = eelPath.asNioPath()
           return@runCatching fullyQualifiedPath.toString()
         }.getOrNull() ?: remotePath
       }

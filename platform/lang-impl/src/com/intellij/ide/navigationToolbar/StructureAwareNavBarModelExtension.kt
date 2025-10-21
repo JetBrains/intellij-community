@@ -39,11 +39,15 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
           || !isAcceptableLanguage(psiFile)) {
         return null
       }
+
       val psiElement = psiFile.findElementAt(editor.caretModel.offset)
       if (isAcceptableLanguage(psiElement)) {
         try {
           buildStructureViewModel(psiFile, editor)?.let { model ->
-            return (model.currentEditorElement as? PsiElement)?.originalElement
+            val element = model.currentEditorElement as? PsiElement
+            return element
+              ?.takeIf { it.isValid }
+              ?.originalElement
           }
         }
         catch (_: IndexNotReadyException) {

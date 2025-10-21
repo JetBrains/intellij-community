@@ -5,7 +5,7 @@ import com.intellij.util.messages.Topic
 import git4idea.repo.GitRepository
 
 /**
- * Notifies about repo-related events inside the [com.intellij.vcs.git.shared.rpc.GitRepositoryApi.getRepositoriesEvents] subscription
+ * Notifies about repo-related events inside the [com.intellij.vcs.git.rpc.GitRepositoryApi.getRepositoriesEvents] subscription
  */
 internal interface GitRepositoryFrontendSynchronizer {
   fun repositoryCreated(repository: GitRepository)

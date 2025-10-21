@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.testFramework.PlatformTestUtil;
@@ -89,7 +89,7 @@ public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCas
 
   private void doTest(String text, final String extension, final String expected) {
     String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
-    PlatformTestUtil.withEncoding("UTF-8", () -> {
+    PlatformTestUtil.withEncoding(StandardCharsets.UTF_8, () -> {
       myFixture.configureByText(getTestName(true) + "." + extension, finalText);
       myFixture.performEditorAction("EscapeEntities");
       myFixture.checkResult(expected);

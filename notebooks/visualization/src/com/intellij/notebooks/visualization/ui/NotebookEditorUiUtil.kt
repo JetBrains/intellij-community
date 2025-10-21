@@ -24,10 +24,10 @@ fun EditorEx.addComponentInlay(
   showWhenFolded: Boolean = true,
   priority: Int,
   offset: Int,
-  rendererFactory: RendererFactory? = null
+  rendererFactory: RendererFactory? = null,
 ): Inlay<*> {
   // see DS-5614
-  val fullWidthArg: Boolean = this.editorKind != EditorKind.DIFF
+  val fullWidthArg: Boolean = editorKind != EditorKind.DIFF
   val inlay = EditorEmbeddedComponentManager.getInstance().addComponent(
     this,
     component,
@@ -111,39 +111,42 @@ fun registerEditorSizeWatcher(
 }
 
 val EditorEx.textEditingAreaWidth: Int
-  get() = scrollingModel.visibleArea.width - scrollPane.verticalScrollBar.width
+  get() = contentComponent.visibleRect.width
 
-fun EditorEx.getFirstFullyVisibleLogicalLine(): Int? {
-  val visibleArea = this.scrollingModel.visibleArea
+private fun EditorEx.getFirstFullyVisibleLogicalLine(): Int? {
+  val visibleArea = contentComponent.visibleRect
   val startY = visibleArea.y
   val endY = visibleArea.y + visibleArea.height
 
-  val firstVisibleLine = this.xyToLogicalPosition(Point(0, startY)).line
-  val lastVisibleLine = this.xyToLogicalPosition(Point(0, endY)).line
+  val visibleLine = xyToLogicalPosition(Point(0, startY)).line
+  val lineStartY = logicalPositionToXY(LogicalPosition(visibleLine, 0)).y
 
-  for (line in firstVisibleLine..lastVisibleLine) {
-    val lineStartY = this.logicalPositionToXY(LogicalPosition(line, 0)).y
-    val lineEndY = lineStartY + this.lineHeight
-    if (lineStartY >= startY && lineEndY <= endY) {
-      return line
-    }
+  return if (lineStartY >= startY && lineStartY + lineHeight <= endY) {
+    visibleLine
   }
-  return null
+  else if (lineStartY + lineHeight >= startY && lineStartY + lineHeight * 2 <= endY) {
+    visibleLine + 1
+  }
+  else {
+    null
+  }
 }
 
 fun NotebookCellLines.Interval.computeFirstLineForHighlighter(
-  editor: EditorEx, gutterIconStickToFirstVisibleLine: Boolean = true
+  editor: EditorEx, gutterIconStickToFirstVisibleLine: Boolean = true,
 ): Int {
   return if (gutterIconStickToFirstVisibleLine) {
     val firstFullyVisibleLine = editor.getFirstFullyVisibleLogicalLine()
-    val startLine = if (firstFullyVisibleLine != null && firstFullyVisibleLine in this.lines) {
+    val startLine = if (firstFullyVisibleLine != null && firstFullyVisibleLine in lines) {
       firstFullyVisibleLine
-    } else {
-      this.lines.first
     }
-    val fullyVisibleCell = firstFullyVisibleLine == this.lines.first
-    if (fullyVisibleCell) this.lines.first else startLine
-  } else {
-    this.lines.first
+    else {
+      lines.first
+    }
+    val fullyVisibleCell = firstFullyVisibleLine == lines.first
+    if (fullyVisibleCell) lines.first else startLine
+  }
+  else {
+    lines.first
   }
 }

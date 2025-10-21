@@ -3,19 +3,19 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.write
-import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.AtomicMoveNotSupportedException
@@ -73,7 +73,6 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
   internal fun saveCacheToFile(
     storage: ImmutableEntityStorage,
     file: Path,
-    userPreProcessor: Boolean = false,
   ): SaveInfo = saveCacheToFileTimeMs.addMeasuredTime {
     val start = System.currentTimeMillis()
 
@@ -83,7 +82,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     var cacheSize: Long? = null
     val tmpFile = Files.createTempFile(dir, "cache", ".tmp")
     try {
-      val serializationResult = serializer.serializeCache(tmpFile, if (userPreProcessor) cachePreProcess(storage) else storage)
+      val serializationResult = serializer.serializeCache(tmpFile, storage)
       when (serializationResult) {
         is SerializationResult.Fail -> LOG.warn("Workspace model cache was not serialized", serializationResult.problem)
         is SerializationResult.Success -> cacheSize = serializationResult.size
@@ -110,17 +109,6 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     @JvmField val loadedSize: Long?,
   )
 
-  private fun cachePreProcess(storage: ImmutableEntityStorage): ImmutableEntityStorage {
-    val builder = MutableEntityStorage.from(storage)
-    val nonPersistentModules = builder.entities(ModuleEntity::class.java)
-      .filter { it.entitySource == NonPersistentEntitySource }
-      .toList()
-    nonPersistentModules.forEach {
-      builder.removeEntity(it)
-    }
-    return builder.toSnapshot()
-  }
-
   object PluginAwareEntityTypesResolver : EntityTypesResolver {
     override fun getPluginIdAndModuleId(clazz: Class<*>): Pair<String?, String?> {
       val pluginAwareClassLoader = clazz.classLoader as? PluginAwareClassLoader
@@ -136,15 +124,15 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     }
 
     override fun getClassLoader(pluginId: String?, moduleId: String?): ClassLoader? {
-      if (moduleId != null) {
-        return PluginManagerCore.getPluginSet().findEnabledModule(moduleId)!!.classLoader
-      }
       val id = pluginId?.let { PluginId.getId(it) }
       if (id != null && !PluginManagerCore.isPluginInstalled(id)) {
          return null
       }
 
       val plugin = PluginManagerCore.getPlugin(id)
+      if (plugin != null && moduleId != null) {
+        plugin.contentModules.find { it.contentModuleName == moduleId }?.let { return it.pluginClassLoader }
+      }
       return plugin?.pluginClassLoader ?: ApplicationManager::class.java.classLoader
     }
   }

@@ -33,6 +33,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.util.getTextWidth
 import com.intellij.util.applyIf
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -141,6 +142,9 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   }
 
   override fun setupProject(project: Project) {
+    setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.directory", context.isCreatingNewProjectInt)) {
+      Files.createDirectories(Path.of(path).resolve(name))
+    }
     if (context.isCreatingNewProject) {
       invokeAndWaitIfNeeded {
         runWriteAction {

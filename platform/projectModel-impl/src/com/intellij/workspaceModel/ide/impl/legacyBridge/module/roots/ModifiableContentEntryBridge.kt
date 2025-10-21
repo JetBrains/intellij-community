@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.java.workspace.entities.asJavaResourceRoot
@@ -155,7 +155,7 @@ internal class ModifiableContentEntryBridge(
     }
   }
 
-  private fun updateContentEntry(updater: ContentRootEntity.Builder.() -> Unit) {
+  private fun updateContentEntry(updater: ContentRootEntityBuilder.() -> Unit) {
     diff.modifyContentRootEntity(currentContentEntry.value.entity, updater)
   }
 

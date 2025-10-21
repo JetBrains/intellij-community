@@ -9,6 +9,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
@@ -23,6 +26,7 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -30,7 +34,6 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
-import com.intellij.workspaceModel.ide.isCaseSensitive
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -60,16 +63,19 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
 
   /** replay = 1 is needed to send the very first state when the subscription fo the flow happens.
-       otherwise, the flow won't be emitted till the first update. Since we don't update the workspace model really often,
-       this may cause some unwanted delays for subscribers.
-     This is used in the [eventLog] method, where we send the first version of the storage
-       right after the subscription.
-     However, this means that this flow will keep two storages in the flow: the old and the new. This should be okay
-       since the storage is an effective structure, however, if this causes memory problems, we can switch to
-       replay = 0. In this case, no extra storage will be saved, but the event will be emitted after the first
-       update of the WorkspaceModel, what is probably also okay.
-  */
+  otherwise, the flow won't be emitted till the first update. Since we don't update the workspace model really often,
+  this may cause some unwanted delays for subscribers.
+  This is used in the [eventLog] method, where we send the first version of the storage
+  right after the subscription.
+  However, this means that this flow will keep two storages in the flow: the old and the new. This should be okay
+  since the storage is an effective structure, however, if this causes memory problems, we can switch to
+  replay = 0. In this case, no extra storage will be saved, but the event will be emitted after the first
+  update of the WorkspaceModel, what is probably also okay.
+   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
+
+  // stored property
+  override val modificationTracker: ModificationTracker = ModificationTracker { entityStorage.version }
 
   val virtualFileManager: VirtualFileUrlManager
 
@@ -84,7 +90,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val updateModelMethodName = WorkspaceModelImpl::updateProjectModel.name
   private val updateModelSilentMethodName = WorkspaceModelImpl::updateProjectModelSilent.name
   private val onChangedMethodName = WorkspaceModelImpl::onChanged.name
-  
+
   constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage, virtualFileUrlManager: VirtualFileUrlManager) {
     this.project = project
     this.coroutineScope = cs
@@ -97,7 +103,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   constructor(project: Project, cs: CoroutineScope) {
     this.project = project
     this.coroutineScope = cs
-    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
+    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(isProjectCaseSensitive(project))
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
@@ -188,6 +194,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       collectChangesTimeMillis = measureTimeMillis {
         changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
       }
+      val symbolicEntityIdsChanges = (builder as MutableEntityStorageInstrumentation).collectSymbolicEntityIdsChanges()
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
       }
@@ -200,7 +207,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
+      entityStorage.replace(newStorage, changes, symbolicEntityIdsChanges, this::onBeforeChanged, this::onChanged)
     }.apply {
       updateTimePreciseMs.duration.addAndGet(updateTimeMillis)
       preHandlersTimeMs.duration.addAndGet(preHandlersTimeMillis)
@@ -267,7 +274,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, {}, {})
+      entityStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(), {}, {})
     }.apply {
       updateTimePreciseMs.duration.addAndGet(updateTimeMillis)
       toSnapshotTimeMs.duration.addAndGet(toSnapshotTimeMillis)
@@ -354,7 +361,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       startPreUpdateHandlers(before, builder)
       val changes = builder.collectChanges()
       val newStorage = builder.toSnapshot()
-      unloadedEntitiesStorage.replace(newStorage, changes, {}, ::onUnloadedEntitiesChanged)
+      unloadedEntitiesStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(), {}, ::onUnloadedEntitiesChanged)
     }.apply { updateUnloadedEntitiesTimeMs.duration.addAndGet(this) }
 
     log.info("Unloaded entity storage updated in $time ms: $description")
@@ -379,7 +386,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     replaceProjectModelTimeMs.addMeasuredTime {
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
-      entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+      entityStorage.replace(builder.toSnapshot(), replacement.changes, replacement.symbolicEntityIdChanges, this::onBeforeChanged, this::onChanged)
       log.info("Project model updated to version ${entityStorage.pointer.version}: $description")
     }
     return true
@@ -396,10 +403,10 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     fullReplaceProjectModelTimeMs.addMeasuredTime {
       val builder = mainStorageReplacement.builder
       this.initializeBridges(mainStorageReplacement.changes, builder)
-      entityStorage.replace(builder.toSnapshot(), mainStorageReplacement.changes, this::onBeforeChanged, this::onChanged)
+      entityStorage.replace(builder.toSnapshot(), mainStorageReplacement.changes, mainStorageReplacement.symbolicEntityIdChanges, this::onBeforeChanged, this::onChanged)
 
       val unloadBuilder = unloadStorageReplacement.builder
-      unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, {}, ::onUnloadedEntitiesChanged)
+      unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, unloadStorageReplacement.symbolicEntityIdChanges, {}, ::onUnloadedEntitiesChanged)
       log.info("Project model updated to version ${entityStorage.pointer.version}")
     }
     return true
@@ -592,4 +599,21 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       setupOpenTelemetryReporting(workspaceModelMetrics.meter)
     }
   }
+}
+
+private fun isProjectCaseSensitive(project: Project): Boolean {
+  if (project !is ProjectStoreOwner) {
+    return false
+  }
+
+  val historicalProjectBasePath = project.componentStore.storeDescriptor.historicalProjectBasePath
+  val ioFile = try {
+    @Suppress("IO_FILE_USAGE")
+    historicalProjectBasePath.toFile()
+  }
+  catch (_: UnsupportedOperationException) {
+    // memory file system does not support #toFile()
+    return false
+  }
+  return FileSystemUtil.readParentCaseSensitivity(ioFile) == FileAttributes.CaseSensitivity.SENSITIVE
 }

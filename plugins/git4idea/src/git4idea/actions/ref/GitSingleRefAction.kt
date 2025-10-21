@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import com.intellij.vcs.git.shared.actions.GitSingleRefActions
+import com.intellij.vcs.git.actions.GitSingleRefActions
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitTag

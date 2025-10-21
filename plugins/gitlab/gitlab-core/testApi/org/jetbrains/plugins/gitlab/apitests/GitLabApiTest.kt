@@ -3,10 +3,8 @@ package org.jetbrains.plugins.gitlab.apitests
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
-import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.withInitial
 import com.intellij.openapi.components.service
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.fold
@@ -297,10 +295,9 @@ class GitLabApiTest : GitLabApiTestCase() {
   fun `GQL getMergeRequestStateEvents works`() = runTest {
     checkVersion(after(v(13, 2)))
 
-    val cs = childScope()
     requiresAuthentication { api ->
       val reloadRequest = MutableSharedFlow<Unit>(1).withInitial(Unit)
-      val loader = startGitLabRestETagListLoaderIn(cs,
+      val loader = startGitLabRestETagListLoaderIn(backgroundScope,
                                                    getMergeRequestStateEventsUri(glTest1Coordinates, "1"),
                                                    { it.id },
                                                    reloadRequest) { uri, eTag ->
@@ -313,17 +310,15 @@ class GitLabApiTest : GitLabApiTestCase() {
       assertNotNull(result)
       assertEquals(listOf(1), result?.map { it.id })
     }
-    cs.cancelAndJoinSilently()
   }
 
   @Test
   fun `GQL getMergeRequestLabelEvents works`() = runTest {
     checkVersion(after(v(11, 4)))
 
-    val cs = childScope()
     requiresAuthentication { api ->
       val reloadRequest = MutableSharedFlow<Unit>(1).withInitial(Unit)
-      val loader = startGitLabRestETagListLoaderIn(cs,
+      val loader = startGitLabRestETagListLoaderIn(backgroundScope,
                                                    getMergeRequestLabelEventsUri(glTest1Coordinates, "1"),
                                                    { it.id },
                                                    reloadRequest) { uri, eTag ->
@@ -336,17 +331,15 @@ class GitLabApiTest : GitLabApiTestCase() {
       assertNotNull(result)
       assertEquals(listOf(3, 4, 5), result?.map { it.id })
     }
-    cs.cancelAndJoinSilently()
   }
 
   @Test
   fun `GQL getMergeRequestMilestoneEvents works`() = runTest {
     checkVersion(after(v(13, 1)))
 
-    val cs = childScope()
     requiresAuthentication { api ->
       val reloadRequest = MutableSharedFlow<Unit>(1).withInitial(Unit)
-      val loader = startGitLabRestETagListLoaderIn(cs,
+      val loader = startGitLabRestETagListLoaderIn(backgroundScope,
                                                    getMergeRequestMilestoneEventsUri(glTest1Coordinates, "1"),
                                                    { it.id },
                                                    reloadRequest) { uri, eTag ->
@@ -359,7 +352,6 @@ class GitLabApiTest : GitLabApiTestCase() {
       assertNotNull(result)
       assertEquals(listOf(3, 4), result?.map { it.id })
     }
-    cs.cancelAndJoinSilently()
   }
 
   @Test

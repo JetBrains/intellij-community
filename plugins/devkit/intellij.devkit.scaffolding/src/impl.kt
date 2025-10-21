@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.serviceContainer.instance
 import com.intellij.util.Consumer
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
@@ -102,8 +101,7 @@ internal suspend fun suggestModuleNamePrefix(parentDir: VirtualFile, project: Pr
   }
 }
 
-internal suspend fun createIjModule(vRoot: VirtualFile, moduleName: String) {
-  val project = instance<Project>()
+internal suspend fun createIjModule(project: Project, vRoot: VirtualFile, moduleName: String) {
   val directoryName = computeDirectoryNameForModule(moduleName, vRoot, project)
   val files = prepareFiles(vRoot.toNioPath(), moduleName, directoryName)
   val vFiles = files.toVFiles()

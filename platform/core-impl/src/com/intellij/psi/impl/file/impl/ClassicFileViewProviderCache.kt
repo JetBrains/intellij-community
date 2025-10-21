@@ -12,6 +12,11 @@ import com.intellij.util.containers.CollectionFactory
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Consumer
 
+/**
+ * Stores mapping (file -> Weak(FileViewProvider)).
+ * Thread-safe.
+ * Does not take [CodeInsightContext] into account.
+ */
 internal class ClassicFileViewProviderCache : FileViewProviderCache {
 
   private val cache = AtomicMapCache<VirtualFile, FileViewProvider, ConcurrentMap<VirtualFile, FileViewProvider>> {
@@ -35,7 +40,7 @@ internal class ClassicFileViewProviderCache : FileViewProviderCache {
     cache.cache.keys.forEach(block)
   }
 
-  override fun forEach(block: FileViewProviderCache.Consumer) {
+  override fun forEach(block: FileViewProviderCache.CacheEntryConsumer) {
     if (!(cache.isInitialized)) return
     val map = cache.cache
     map.forEach { (file: VirtualFile, provider: FileViewProvider?) -> // provider might be collected

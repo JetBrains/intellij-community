@@ -1,7 +1,7 @@
 // "Replace method reference with lambda" "true-preview"
 class Test {
   {
-      Runnable runnable1 = new Runnable() {
+      var runnable1 = new Runnable() {
           {
           }
 

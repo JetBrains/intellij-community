@@ -92,6 +92,11 @@ fun performLexing(
 
 /**
  * Creates a TokenList from the given arrays.
+ *
+ * @param lexStarts the start offsets of the tokens, also `lexStarts[tokenCount]` should be the end offset of the last token. Can be longer than `[tokenCount] + 1`.
+ * @param lexTypes the types of the tokens. Can be longer than `[tokenCount]`.
+ * @param tokenCount the number of tokens.
+ * @param tokenizedText the full text that was split into the tokens.
  */
 fun TokenList(
   lexStarts: IntArray,

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
@@ -60,9 +61,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       ids.add(PLUGIN_ID_KEY_PREFIX + pluginId);
     }
 
-    //noinspection unchecked
-    final List<Dependency> dependencies = (List<Dependency>)getChildrenWithoutIncludes(plugin, "depends");
-    for (Dependency dependency : dependencies) {
+    for (Dependency dependency : plugin.getDepends()) {
       ContainerUtil.addIfNotNull(ids, dependency.getStringValue());
 
       final String configFile = dependency.getConfigFile().getStringValue();
@@ -82,11 +81,13 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
     }
 
     // new model: content
-    for (ContentDescriptor.ModuleDescriptor descriptor : plugin.getContent().getModuleEntry()) {
-      final String value = descriptor.getName().getStringValue();
-      if (StringUtil.isNotEmpty(value)) {
-        final String escapeSubDescriptorValue = value.replace('/', '.');
-        ids.add(getContentIndexingKey(escapeSubDescriptorValue));
+    for (ContentDescriptor content : plugin.getContent()) {
+      for (ContentDescriptor.ModuleDescriptor module : content.getModuleEntry()) {
+        final String value = module.getName().getStringValue();
+        if (StringUtil.isNotEmpty(value)) {
+          final String escapeSubDescriptorValue = value.replace('/', '.');
+          ids.add(getContentIndexingKey(escapeSubDescriptorValue));
+        }
       }
     }
 
@@ -95,7 +96,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
 
   @Override
   public int getVersion() {
-    return BASE_INDEX_VERSION + 5;
+    return BASE_INDEX_VERSION + 6;
   }
 
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
@@ -127,13 +128,19 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       FileBasedIndex.getInstance().getContainingFiles(NAME, getDependsIndexingKey(file.getName()),
                                                       GlobalSearchScopesCore.projectProductionScope(project));
 
-    final Collection<VirtualFile> contentFiles =
-      FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()),
-                                                      GlobalSearchScopesCore.projectProductionScope(project));
+    final Collection<VirtualFile> contentFiles = findFilesIncludingContentModule(project, file);
 
     Collection<VirtualFile> allFiles = new ArrayList<>(dependsFiles);
     allFiles.addAll(contentFiles);
     return allFiles;
+  }
+
+  public static Collection<VirtualFile> findFilesIncludingContentModule(Project project, VirtualFile file) {
+    return findFilesIncludingContentModule(file, GlobalSearchScopesCore.projectProductionScope(project));
+  }
+
+  public static Collection<VirtualFile> findFilesIncludingContentModule(VirtualFile file, GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()), scope);
   }
 
   private static String getDependsIndexingKey(@NotNull String filename) {

@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentOfType
@@ -19,43 +21,69 @@ import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallTargetProcessor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 
 private val COROUTINE_CONTEXT_FQ_NAME =
     StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))
 
 internal class KotlinSuspendFunctionWrapper(
-  private val executionContext: ExecutionContext,
-  private val psiContext: PsiElement?,
-  isCoroutineScopeAvailable: Boolean
-) : KotlinExpressionWrapper {
+    private val stats: CodeFragmentCompilationStats,
+    private val executionContext: ExecutionContext,
+    private val psiContext: PsiElement?,
+    isCoroutineScopeAvailable: Boolean
+) : KotlinCodeFragmentWrapper {
+
     private val coroutineContextKeyword =
         if (isCoroutineScopeAvailable)
             COROUTINE_CONTEXT_FQ_NAME.shortName().asString()
         else
             COROUTINE_CONTEXT_FQ_NAME.asString()
 
-    override fun createWrappedExpressionText(expressionText: String): String {
-        checkIfKotlinxCoroutinesIsAvailable()
-        return wrapInRunBlocking(expressionText, psiContext?.let { isCoroutineContextAvailable(it) } ?: false)
-    }
+    private val KtCodeFragment.needsTransforming: Boolean
+        @RequiresReadLock
+        get() {
+            if (this !is KtBlockCodeFragment && this !is KtExpressionCodeFragment) return false
+            return analyze(this) {
+                var result = false
+                accept(object : PsiRecursiveElementVisitor() {
+                    override fun visitElement(element: PsiElement) {
+                        if (result) return
+                        result = isSuspendCall(element) && !isCoroutineContextAvailable(element)
+                        super.visitElement(element)
+                    }
+                })
+                result
+            }
+        }
 
     @RequiresReadLock
-    override fun isApplicable(expression: KtExpression): Boolean {
-        return analyze(expression) {
-            var result = false
-            expression.accept(object : PsiRecursiveElementVisitor() {
-                override fun visitElement(element: PsiElement) {
-                    if (result) return
-                    result = isSuspendCall(element) && !isCoroutineContextAvailable(element)
-                    super.visitElement(element)
+    override fun transformIfNeeded(codeFragment: KtCodeFragment) {
+        if (stats.startAndMeasureAnalysisUnderReadAction { codeFragment.needsTransforming }.getOrNull() != true) return
+
+        checkIfKotlinxCoroutinesIsAvailable()
+
+        val wrappedInRunBlocking =
+            wrapInRunBlocking(
+                codeFragment.text,
+                psiContext?.let {
+                    runReadAction { isCoroutineContextAvailable(it) }
+                } == true)
+
+        val wrappedExpr = runReadAction { KtPsiFactory(codeFragment.project).createExpression(wrappedInRunBlocking) }
+
+        invokeAndWaitIfNeeded {
+            codeFragment.project.executeWriteCommand(KotlinDebuggerEvaluationBundle.message("wrap.expression")) {
+                when (codeFragment) {
+                    is KtBlockCodeFragment -> {
+                        codeFragment.getContentElement().removeAllChildren()
+                        codeFragment.getContentElement().addChild(wrappedExpr.node)
+                    }
+                    is KtExpressionCodeFragment -> codeFragment.getContentElement()?.replace(wrappedExpr)
                 }
-            })
-            result
+            }
         }
     }
 
@@ -105,12 +133,13 @@ internal class KotlinSuspendFunctionWrapper(
             append("\n}")
         }
 
+    @RequiresReadLock
     private fun isCoroutineContextAvailable(from: PsiElement): Boolean {
         return analyze(from.parentOfType<KtElement>(withSelf = true) ?: return false) {
             from.parentsOfType<KtNamedFunction>().any {
                 (it.symbol as? KaNamedFunctionSymbol)?.isSuspend ?: false
             } || from.parentsOfType<KtLambdaExpression>().any {
-              (it.expressionType as? KaFunctionType)?.isSuspend ?: false
+                (it.expressionType as? KaFunctionType)?.isSuspend ?: false
             }
         }
     }

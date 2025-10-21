@@ -1,0 +1,6 @@
+// IGNORE_K1
+// FIX: Remove unreachable code
+fun f(): Int {
+    val x = 1
+    return 42
+}

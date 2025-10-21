@@ -14,12 +14,12 @@ abstract class Parent {
 class Child extends Parent {
 
   @Override
-  @Nullable <warning descr="Overriding a collection of not-null elements with a collection of nullable elements">String @NotNull []</warning> getStrings() {
+  @Nullable <warning descr="Overriding a collection of non-null elements with a collection of nullable elements">String @NotNull []</warning> getStrings() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  @NotNull <warning descr="Overriding a collection of not-null elements with a collection of nullable elements">List<@Nullable String></warning> getStringList() {
+  @NotNull <warning descr="Overriding a collection of non-null elements with a collection of nullable elements">List<@Nullable String></warning> getStringList() {
     throw new UnsupportedOperationException();
   }
 

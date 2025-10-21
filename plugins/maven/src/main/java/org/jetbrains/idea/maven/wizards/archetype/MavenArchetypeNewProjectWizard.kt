@@ -113,6 +113,7 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
           .applyToComponent { icon = AllIcons.General.ContextHelp }
           .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.tooltip") }
+          .applyToComponent { labelFor = catalogComboBox }
         cell(catalogComboBox)
           .applyToComponent { renderer = CatalogRenderer() }
           .applyToComponent { setSwingPopup(false) }
@@ -133,6 +134,7 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
           .applyToComponent { icon = AllIcons.General.ContextHelp }
           .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.tooltip") }
+          .applyToComponent { labelFor = archetypeComboBox }
         cell(archetypeComboBox)
           .applyToComponent { bindSelectedItem(archetypeItemProperty) }
           .align(AlignX.FILL)

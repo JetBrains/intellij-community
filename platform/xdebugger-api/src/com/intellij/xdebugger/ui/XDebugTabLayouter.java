@@ -6,8 +6,11 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * Allows to customize xdebug layout for 'Debug' tool window.
@@ -25,7 +28,10 @@ public class XDebugTabLayouter {
    * @return registered {@code Content} instance
    */
   public @NotNull Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
-    Content content = ui.createContent(DebuggerContentInfo.CONSOLE_CONTENT, console.getComponent(),
+    JComponent component = console.getComponent();
+    // remove the left border from console view
+    UIUtil.removeScrollBorder(component);
+    Content content = ui.createContent(DebuggerContentInfo.CONSOLE_CONTENT, component,
                                        XDebuggerBundle.message("debugger.session.tab.console.content.name"),
                                        null,
                                        console.getPreferredFocusableComponent());

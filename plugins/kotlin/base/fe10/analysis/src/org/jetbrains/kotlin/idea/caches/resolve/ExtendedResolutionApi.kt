@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -132,7 +132,7 @@ fun KtElement.analyze(
 fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult = try {
     AnalysisResult.success(resolutionFacade.analyze(this), resolutionFacade.moduleDescriptor)
 } catch (e: Exception) {
-    if (e is ControlFlowException) throw e
+    if (Logger.shouldRethrow(e)) throw e
     AnalysisResult.internalError(BindingContext.EMPTY, e)
 }
 

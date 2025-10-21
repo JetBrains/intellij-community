@@ -19,7 +19,7 @@ import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
@@ -87,7 +87,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
       String notificationText =
         IdeBundle.message(ScreenReader.isActive() ? "whats.new.notification.text.regular.language" : "whats.new.notification.text", name,
                           version);
-      UpdateChecker.getNotificationGroupForIdeUpdateResults()
+      ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForIdeUpdateResults()
         .createNotification(notificationText, NotificationType.INFORMATION)
         .setIcon(AllIcons.Nodes.PpWeb)
         .setDisplayId("ide.whats.new")

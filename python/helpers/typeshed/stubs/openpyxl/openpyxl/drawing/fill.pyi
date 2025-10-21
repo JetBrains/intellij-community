@@ -118,9 +118,7 @@ class RelativeRect(Serialisable):
     right: Alias
     b: Incomplete
     bottom: Alias
-    def __init__(
-        self, l: Incomplete | None = None, t: Incomplete | None = None, r: Incomplete | None = None, b: Incomplete | None = None
-    ) -> None: ...
+    def __init__(self, l=None, t=None, r=None, b=None) -> None: ...
 
 class StretchInfoProperties(Serialisable):
     tagname: ClassVar[str]
@@ -247,8 +245,8 @@ class Blip(Serialisable):
     def __init__(
         self,
         cstate: _BlipCstate | Literal["none"] | None = None,
-        embed: Incomplete | None = None,
-        link: Incomplete | None = None,
+        embed=None,
+        link=None,
         noGrp: _ConvertibleToBool | None = None,
         noSelect: _ConvertibleToBool | None = None,
         noRot: _ConvertibleToBool | None = None,

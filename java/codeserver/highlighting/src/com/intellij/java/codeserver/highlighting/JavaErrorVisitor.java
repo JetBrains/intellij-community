@@ -827,14 +827,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (parent instanceof PsiMethodCallExpression methodCallExpression &&
         methodCallExpression.getMethodExpression() == expression &&
         (!result.isAccessible() || !result.isStaticsScopeCorrect())) {
-      PsiExpressionList list = methodCallExpression.getArgumentList();
-      if (!myExpressionChecker.isDummyConstructorCall(methodCallExpression, list, expression)) {
-        myExpressionChecker.checkAmbiguousMethodCallIdentifier(results, result, methodCallExpression);
-        if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
-          PsiElement nameElement = expression.getReferenceNameElement();
-          if (nameElement != null) {
-            myExpressionChecker.checkAmbiguousMethodCallArguments(results, result, methodCallExpression);
-          }
+      myExpressionChecker.checkAmbiguousMethodCallIdentifier(results, result, methodCallExpression);
+      if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
+        PsiElement nameElement = expression.getReferenceNameElement();
+        if (nameElement != null) {
+          myExpressionChecker.checkAmbiguousMethodCallArguments(results, result, methodCallExpression);
         }
       }
     }
@@ -1221,7 +1218,6 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
 
       if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
-          !myExpressionChecker.isDummyConstructorCall(expression, list, referenceExpression) &&
           // this check is for fake expression from JspMethodCallImpl
           referenceExpression.getParent() == expression &&
           PsiTreeUtil.findChildrenOfType(expression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {

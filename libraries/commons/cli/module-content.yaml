@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.commons.cli
+  library: commons-cli
+  files:
+  - name: $MAVEN_REPOSITORY$/commons-cli/commons-cli/1/commons-cli-1.jar

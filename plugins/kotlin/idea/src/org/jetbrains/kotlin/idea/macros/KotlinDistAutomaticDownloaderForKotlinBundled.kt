@@ -48,7 +48,7 @@ internal class KotlinDistAutomaticDownloaderForKotlinBundled(
 private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries: Boolean, @NlsSafe version: String, project: Project) {
     if (version.isNotBlank() && isKotlinBundledPotentiallyUsedInLibraries && !KotlinArtifactsDownloader.isKotlinDistInitialized(version)) {
         ProgressManager.getInstance().run(
-            object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
+            object : Task.Backgroundable(project, KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist"), true) {
                 override fun run(indicator: ProgressIndicator) {
                     val dist = KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(project, version, indicator)
                     if (dist == null) {

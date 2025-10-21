@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -26,16 +25,19 @@ import java.util.function.UnaryOperator;
  * (Note that it is not advisable to use {@link java.util.concurrent.CopyOnWriteArrayList}
  *  in high write-contention code anyway, consider using {@link java.util.concurrent.ConcurrentHashMap} instead).
  */
-final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotNull []> implements List<E>, RandomAccess, ConcurrentList<E> {
+final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
+  @SuppressWarnings({"FieldMayBeFinal"})
+  private volatile Object @NotNull [] array;
+  private static final VarHandleWrapper ARRAY_HANDLE = VarHandleWrapper.getFactory().create(LockFreeCopyOnWriteArrayList.class, "array", Object[].class);
   LockFreeCopyOnWriteArrayList() {
-    clear();
+    array = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
   LockFreeCopyOnWriteArrayList(@NotNull Collection<? extends E> c) {
-    set(c.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : c.toArray());
+    array = c.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : c.toArray();
   }
 
   private boolean replaceArray(Object @NotNull [] oldArray, Object @NotNull [] newArray) {
-    return compareAndSet(oldArray, newArray);
+    return ARRAY_HANDLE.compareAndSet(this, oldArray, newArray);
   }
 
   /**
@@ -109,6 +111,10 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   public boolean contains(Object o) {
     Object[] elements = get();
     return indexOf(o, elements, 0, elements.length) >= 0;
+  }
+
+  private Object[] get() {
+    return array;
   }
 
   /**
@@ -449,11 +455,11 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   }
 
   /**
-   * Returns <tt>true</tt> if this list contains all of the elements of the
+   * Returns <tt>true</tt> if this list contains all the elements of the
    * specified collection.
    *
    * @param c collection to be checked for containment in this list
-   * @return <tt>true</tt> if this list contains all of the elements of the
+   * @return <tt>true</tt> if this list contains all the elements of the
    *         specified collection
    * @throws NullPointerException if the specified collection is null
    * @see #contains(Object)
@@ -592,16 +598,16 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   }
 
   /**
-   * Removes all of the elements from this list.
+   * Removes all the elements from this list.
    * The list will be empty after this call returns.
    */
   @Override
   public void clear() {
-    set(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+    array = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   /**
-   * Appends all of the elements in the specified collection to the end
+   * Appends all the elements in the specified collection to the end
    * of this list, in the order that they are returned by the specified
    * collection's iterator.
    *
@@ -632,7 +638,7 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
     return newElements;
   }
   /**
-   * Inserts all of the elements in the specified collection into this
+   * Inserts all the elements in the specified collection into this
    * list, starting at the specified position.  Shifts the element
    * currently at that position (if any) and any subsequent elements to
    * the right (increases their indices).  The new elements will appear
@@ -884,7 +890,7 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   }
 
   @Override
-  public Spliterator<E> spliterator() {
+  public @NotNull Spliterator<E> spliterator() {
     //noinspection unchecked
     return (Spliterator<E>)Arrays.spliterator(get());
   }
@@ -919,7 +925,7 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
     return changeAndReplace(elements -> createArrayRemoveIf(elements, filter));
   }
 
-  boolean changeAndReplace(@NotNull UnaryOperator<Object[]> change) {
+  private boolean changeAndReplace(@NotNull UnaryOperator<Object[]> change) {
     while (true) {
       Object[] elements = get();
       Object[] newArray = change.apply(elements);

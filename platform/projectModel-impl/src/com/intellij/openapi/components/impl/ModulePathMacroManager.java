@@ -7,7 +7,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.serviceContainer.NonInjectable;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -16,21 +16,25 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ModulePathMacroManager extends PathMacroManager {
-  private final @NotNull Supplier<@Nullable @SystemIndependent String> myProjectFilePathPointer;
+public final class ModulePathMacroManager extends PathMacroManager {
+  private final @NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer;
   private final @NotNull Supplier<@NotNull @SystemIndependent String> myModuleDirPointer;
 
-  public ModulePathMacroManager(@NotNull Module module) {
-    super(PathMacros.getInstance());
-    myProjectFilePathPointer = module.getProject()::getProjectFilePath;
+  public ModulePathMacroManager(@NotNull Module module, @NotNull PathMacros globalPathMacros) {
+    super(globalPathMacros);
+
+    projectFilePathPointer = module.getProject()::getProjectFilePath;
     myModuleDirPointer = module::getModuleFilePath;
   }
 
   @NonInjectable
-  private ModulePathMacroManager(@NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
-                                 @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
-    super(PathMacros.getInstance());
-    myProjectFilePathPointer = projectFilePathPointer;
+  @Internal
+  public ModulePathMacroManager(@NotNull PathMacros globalPathMacros,
+                                @NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
+                                @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
+    super(globalPathMacros);
+
+    this.projectFilePathPointer = projectFilePathPointer;
     myModuleDirPointer = moduleDirPointer;
   }
 
@@ -38,7 +42,7 @@ public class ModulePathMacroManager extends PathMacroManager {
   public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = super.getExpandMacroMap();
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModuleDirPointer.get()));
-    String projectFile = myProjectFilePathPointer.get();
+    String projectFile = projectFilePathPointer.get();
     if (projectFile != null) {
       for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectFile).entrySet()) {
         result.addMacroExpand(entry.getKey(), entry.getValue());
@@ -51,7 +55,7 @@ public class ModulePathMacroManager extends PathMacroManager {
   public @NotNull ReplacePathToMacroMap computeReplacePathMap() {
     ReplacePathToMacroMap result = super.computeReplacePathMap();
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModuleDirPointer.get()), PathMacroUtil.getUserHomePath());
-    String projectFile = myProjectFilePathPointer.get();
+    String projectFile = projectFilePathPointer.get();
     if (projectFile != null) {
       for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectFile).entrySet()) {
         result.addMacroReplacement(entry.getValue(), entry.getKey());
@@ -60,13 +64,13 @@ public class ModulePathMacroManager extends PathMacroManager {
     return result;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public void onImlFileMoved() {
     resetCachedReplacePathMap();
   }
 
   public static ModulePathMacroManager createInstance(@NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
                                                       @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
-    return new ModulePathMacroManager(projectFilePathPointer, moduleDirPointer);
+    return new ModulePathMacroManager(PathMacros.getInstance(), projectFilePathPointer, moduleDirPointer);
   }
 }

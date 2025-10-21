@@ -11,11 +11,15 @@
   <module value="myModule"/>
 
   <content>
-    <module name="module.name" package="module.package"/>
+    <module name="module.name"/>
+    <module name="optional.module" loading="optional"/>
+    <module name="required.module" loading="required"/>
+    <module name="ondemand.module" loading="on-demand"/>
+    <module name="required.in.frontend" required-if-available="intellij.platform.frontend"/>
   </content>
 
   <dependencies>
-    <module name="dependencies.module" package="dependencies.module.package"/>
+    <module name="dependencies.module" namespace="custom"/>
     <plugin id="dependencies.plugin.id"/>
   </dependencies>
 

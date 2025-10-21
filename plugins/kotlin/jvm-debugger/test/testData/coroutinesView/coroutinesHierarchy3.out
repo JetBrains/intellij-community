@@ -1,7 +1,7 @@
-LineBreakpoint created at coroutinesHierarchy3.kt:18
+LineBreakpoint created at coroutinesHierarchy3.kt:19
 Run Java
 Connected to the target VM
-coroutinesHierarchy3.kt:18
+coroutinesHierarchy3.kt:19
 ==== Hierarchy of coroutines =====
 root
 	childAsync1

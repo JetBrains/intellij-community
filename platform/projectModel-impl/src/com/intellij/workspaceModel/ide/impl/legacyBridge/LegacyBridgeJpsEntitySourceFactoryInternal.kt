@@ -27,4 +27,12 @@ interface LegacyBridgeJpsEntitySourceFactoryInternal : LegacyBridgeJpsEntitySour
     fileInDirectoryNames: FileInDirectorySourceNames? = null,
     fileName: String? = null,
   ): EntitySource
+
+  /**
+   * @return
+   *  1. [EntitySource] eligible for saving ProjectSettings or
+   *  2. `null` for default project or
+   *  3. [com.intellij.platform.workspace.storage.DummyParentEntitySource] for projects without storage
+   */
+  fun createEntitySourceForProjectSettings(): EntitySource?
 }

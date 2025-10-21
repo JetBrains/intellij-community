@@ -37,6 +37,21 @@ public abstract class PushDownTestGenerated extends AbstractPushDownTest {
             runTest("testData/refactoring/pushDown/k2k/accidentalOverrides.kt");
         }
 
+        @TestMetadata("caretOnDeepestFinalClassInInterface.kt")
+        public void testCaretOnDeepestFinalClassInInterface() throws Exception {
+            runTest("testData/refactoring/pushDown/k2k/caretOnDeepestFinalClassInInterface.kt");
+        }
+
+        @TestMetadata("caretOnFinalClassInOpenClass.kt")
+        public void testCaretOnFinalClassInOpenClass() throws Exception {
+            runTest("testData/refactoring/pushDown/k2k/caretOnFinalClassInOpenClass.kt");
+        }
+
+        @TestMetadata("caretOnObjectInFinalClass.kt")
+        public void testCaretOnObjectInFinalClass() throws Exception {
+            runTest("testData/refactoring/pushDown/k2k/caretOnObjectInFinalClass.kt");
+        }
+
         @TestMetadata("clashingMembers.kt")
         public void testClashingMembers() throws Exception {
             runTest("testData/refactoring/pushDown/k2k/clashingMembers.kt");

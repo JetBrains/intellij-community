@@ -30,7 +30,7 @@ class VcsToolset : McpToolset {
   suspend fun get_repositories(): VcsRoots {
     val project = currentCoroutineContext().project
     val projectDirectory = project.projectDirectory
-    val vcs = ProjectLevelVcsManager.getInstance(project).allVcsRoots
+    val vcs = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()
       .mapNotNull { VcsRoot(projectDirectory.relativizeIfPossible(it.path), it.vcs?.name ?: "<Unknown VCS>") }
     return VcsRoots(vcs.toTypedArray())
   }

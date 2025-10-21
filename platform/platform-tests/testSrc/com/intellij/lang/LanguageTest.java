@@ -4,6 +4,7 @@ package com.intellij.lang;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 public class LanguageTest {
@@ -18,6 +19,11 @@ public class LanguageTest {
     class MyLangDialect1 extends Language {
       private MyLangDialect1() {
         super(MY_LANG, "MyLangDialect1");
+      }
+
+      @Override
+      public void registerDialect(@NotNull Language dialect) {
+        super.registerDialect(dialect);
       }
     }
     MyLangDialect1 MY_LANG_DIALECT1 = new MyLangDialect1();

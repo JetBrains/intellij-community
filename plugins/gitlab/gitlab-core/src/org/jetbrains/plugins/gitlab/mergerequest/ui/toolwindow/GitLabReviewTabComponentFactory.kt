@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.openapi.project.Project
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
@@ -33,7 +34,9 @@ internal class GitLabReviewTabComponentFactory(
     projectVm: GitLabToolWindowConnectedProjectViewModel,
   ): JComponent {
     GitLabStatistics.logTwTabOpened(project, ToolWindowTabType.LIST, ToolWindowOpenTabActionPlace.TOOLWINDOW)
-    return GitLabMergeRequestsPanelFactory.create(cs, projectVm.accountVm, projectVm.listVm)
+    return GitLabMergeRequestsPanelFactory.create(cs, projectVm.accountVm, projectVm.listVm).apply {
+      border = JBUI.Borders.emptyTop(8)
+    }
   }
 
   override fun createTabComponent(
@@ -62,7 +65,7 @@ internal class GitLabReviewTabComponentFactory(
       launchOnShow("SelectorsComponent") {
         bindChildIn(this, vm.selectorVm, BorderLayout.NORTH) { selectorVm ->
           if (selectorVm == null) return@bindChildIn null
-          GitLabMergeRequestSelectorsComponentFactory.createSelectorsComponent(this, selectorVm, GitLabLoginSource.MR_TW)
+          GitLabMergeRequestSelectorsComponentFactory.createSelectorsComponent(this, project, selectorVm, GitLabLoginSource.MR_TW)
         }
       }
     }

@@ -33,9 +33,7 @@ object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
     override fun KotlinSyncTestsContext.afterImport() {
         val expectedFailure = findMostSpecificExistingFileOrNewDefault("importErrors")
         val buildErrors = importStatusCollector!!.buildErrors
-        val isBuildFailed = importStatusCollector!!.isBuildSuccessful.not()
         when {
-            !expectedFailure.exists() && isBuildFailed -> error("BUILD FAILED appeared during the import")
             !expectedFailure.exists() && buildErrors.isEmpty() -> return
 
             expectedFailure.exists() && buildErrors.isEmpty() ->

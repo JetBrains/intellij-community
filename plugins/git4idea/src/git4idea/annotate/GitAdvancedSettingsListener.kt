@@ -18,7 +18,7 @@ object GitAdvancedSettingsListener {
   private class SettingsListener(val project: Project) : AdvancedSettingsChangeListener {
     override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
       if (id == GitFileUtils.READ_CONTENT_WITH) {
-        ProjectLevelVcsManager.getInstance(project).getContentRevisionCache().clearConstantCache()
+        ProjectLevelVcsManager.getInstance(project).contentRevisionCache.clearConstantCache()
       }
     }
   }

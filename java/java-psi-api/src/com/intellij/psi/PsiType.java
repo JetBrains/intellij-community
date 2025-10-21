@@ -334,6 +334,11 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   @Override
+  public boolean hasAnnotations() {
+    return myAnnotationProvider.hasAnnotations();
+  }
+
+  @Override
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     for (PsiAnnotation annotation : getAnnotations()) {
       if (qualifiedName.equals(annotation.getQualifiedName())) {

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 
 class DoubleBangToIfThenIntention : SelfTargetingRangeIntention<KtPostfixExpression>(
     KtPostfixExpression::class.java,
-    KotlinBundle.lazyMessage("replace.expression.with.if.expression")
+    KotlinBundle.messagePointer("replace.expression.with.if.expression")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtPostfixExpression): TextRange? =
         if (element.operationToken == KtTokens.EXCLEXCL && element.baseExpression != null)

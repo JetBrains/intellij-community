@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.ide.startup.importSettings
+  library: sqlite
+  files:
+  - name: $MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar

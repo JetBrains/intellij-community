@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
@@ -9,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.ProjectJdkTable.Listener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.startup.ProjectActivity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 
@@ -30,11 +32,12 @@ private class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActiv
       sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
     }
 
-    val connection = ApplicationManager.getApplication().messageBus.connect(sdkAnnotationsUpdater.coroutineScope)
+    val coroutineScope = project.serviceAsync<IntelliJSdkExternalAnnotationsUpdaterProjectScopeHolder>().coroutineScope
+    val connection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : Listener {
       override fun jdkAdded(jdk: Sdk) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          sdkAnnotationsUpdater.coroutineScope.launch {
+          coroutineScope.launch {
             sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, jdk)
           }
         }
@@ -42,7 +45,7 @@ private class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActiv
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          sdkAnnotationsUpdater.coroutineScope.launch {
+          coroutineScope.launch {
             sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, jdk)
           }
         }
@@ -50,3 +53,6 @@ private class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActiv
     })
   }
 }
+
+@Service(Service.Level.PROJECT)
+internal class IntelliJSdkExternalAnnotationsUpdaterProjectScopeHolder(val coroutineScope: CoroutineScope)

@@ -26,12 +26,7 @@ public final class VersionComparatorUtil {
   private static final Pattern DIGITS_PATTERN = Pattern.compile("\\d+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
 
-  public static final Comparator<String> COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String s1, String s2) {
-      return VersionComparatorUtil.compare(s1, s2);
-    }
-  };
+  public static final Comparator<String> COMPARATOR = VersionComparatorUtil::compare;
 
   private static final TokenPrioritizer DEFAULT_TOKEN_PRIORITIZER = new TokenPrioritizer() {
     @Override

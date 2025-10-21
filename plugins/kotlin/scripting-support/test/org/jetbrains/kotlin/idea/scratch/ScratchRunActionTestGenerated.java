@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scratch;
 
@@ -228,68 +228,6 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
         @TestMetadata("javaDep")
         public void testJavaDep() throws Exception {
             runTest("testData/scratch/multiFile/javaDep/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/worksheet")
-    public static class WorksheetCompiling extends AbstractScratchRunActionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doWorksheetCompilingTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("simpleScriptRuntime.ws.kts")
-        public void testSimpleScriptRuntime() throws Exception {
-            runTest("testData/worksheet/simpleScriptRuntime.ws.kts");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/worksheet")
-    public static class WorksheetRepl extends AbstractScratchRunActionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doWorksheetReplTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("simpleScriptRuntime.ws.kts")
-        public void testSimpleScriptRuntime() throws Exception {
-            runTest("testData/worksheet/simpleScriptRuntime.ws.kts");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/worksheet/multiFile")
-    public static class WorksheetMultiFile extends AbstractScratchRunActionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doWorksheetMultiFileTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("inlineFunScriptRuntime")
-        public void testInlineFunScriptRuntime() throws Exception {
-            runTest("testData/worksheet/multiFile/inlineFunScriptRuntime/");
-        }
-
-        @TestMetadata("javaDepScriptRuntime")
-        public void testJavaDepScriptRuntime() throws Exception {
-            runTest("testData/worksheet/multiFile/javaDepScriptRuntime/");
         }
     }
 

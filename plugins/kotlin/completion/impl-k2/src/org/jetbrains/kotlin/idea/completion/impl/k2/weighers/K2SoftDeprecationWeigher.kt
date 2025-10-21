@@ -18,7 +18,7 @@ internal object K2SoftDeprecationWeigher {
     private var LookupElement.isSoftDeprecated: Boolean
             by NotNullableUserDataProperty(Key("KOTLIN_SOFT_DEPRECATED"), false)
 
-    context(KaSession)
+    context(_: KaSession)
     fun addWeight(
         lookupElement: LookupElement,
         symbol: KaCallableSymbol,
@@ -40,7 +40,7 @@ internal object K2SoftDeprecationWeigher {
      * Lower soft-deprecated `Enum.values()` method in completion.
      * See [KT-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun isEnumValuesSoftDeprecatedMethod(
         symbol: KaCallableSymbol,
         languageVersionSettings: LanguageVersionSettings,

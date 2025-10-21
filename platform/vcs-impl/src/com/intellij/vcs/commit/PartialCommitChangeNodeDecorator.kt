@@ -18,14 +18,14 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
   private val project: Project,
-  private val baseDecorator: ChangeNodeDecorator,
+  private val baseDecorator: ChangeNodeDecorator?,
   private val isVisible: () -> Boolean = { true }
 ) : ChangeNodeDecorator {
 
   override fun decorate(change: Change, renderer: SimpleColoredComponent, isShowFlatten: Boolean) {
     if (project.isDisposed) return
     if (isVisible()) runReadAction { appendPartialCommitState(change, renderer) }
-    baseDecorator.decorate(change, renderer, isShowFlatten)
+    baseDecorator?.decorate(change, renderer, isShowFlatten)
   }
 
   private fun appendPartialCommitState(change: Change, renderer: SimpleColoredComponent) {
@@ -40,6 +40,7 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
     }
   }
 
-  override fun preDecorate(change: Change, renderer: ChangesBrowserNodeRenderer, isShowFlatten: Boolean) =
-    baseDecorator.preDecorate(change, renderer, isShowFlatten)
+  override fun preDecorate(change: Change, renderer: ChangesBrowserNodeRenderer, isShowFlatten: Boolean) {
+    baseDecorator?.preDecorate(change, renderer, isShowFlatten)
+  }
 }

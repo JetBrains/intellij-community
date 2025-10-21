@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.statistics.PyProjectTomlUsageCollector
 
 class PyProjectTomlStatsTest : PyTestCase() {
   fun doTest(text: String, toolNames: Set<String>, backendNames: Set<String>) {
-    val psiFile = myFixture.configureByText(PyProjectTomlUsageCollector.PY_PROJECT_TOML, text)
+    val psiFile = myFixture.configureByText(PY_PROJECT_TOML, text)
 
     val tools = mutableSetOf<String>()
     val backends = mutableSetOf<String>()

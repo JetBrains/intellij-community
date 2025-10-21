@@ -118,7 +118,6 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
   @Override
   public void setActiveTarget(@NotNull ExecutionTarget target) {
-    ThreadingAssertions.assertEventDispatchThread();
     synchronized (myActiveTargetLock) {
       updateActiveTarget(getRunManager().getSelectedConfiguration(), target);
     }

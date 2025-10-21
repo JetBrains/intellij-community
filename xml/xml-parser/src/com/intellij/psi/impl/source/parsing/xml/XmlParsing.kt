@@ -46,10 +46,14 @@ import com.intellij.psi.xml.XmlTokenType.XML_TAG_CHARACTERS
 import com.intellij.psi.xml.XmlTokenType.XML_TAG_END
 import com.intellij.util.containers.Stack
 import com.intellij.xml.parsing.XmlParserBundle.message
+import org.jetbrains.annotations.ApiStatus
 
-/*
+/**
+ * Use [com.intellij.xml.syntax.XmlParsing] instead.
+ *
  * @author max
  */
+@ApiStatus.Obsolete
 open class XmlParsing(
   @JvmField
   protected val myBuilder: PsiBuilder,

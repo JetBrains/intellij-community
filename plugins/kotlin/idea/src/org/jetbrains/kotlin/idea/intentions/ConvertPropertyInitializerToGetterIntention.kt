@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.isError
 
 class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<KtProperty>(
-    KtProperty::class.java, KotlinBundle.lazyMessage("convert.property.initializer.to.getter")
+    KtProperty::class.java, KotlinBundle.messagePointer("convert.property.initializer.to.getter")
 ) {
     override fun applicabilityRange(element: KtProperty): TextRange? {
         val initializer = element.initializer ?: return null

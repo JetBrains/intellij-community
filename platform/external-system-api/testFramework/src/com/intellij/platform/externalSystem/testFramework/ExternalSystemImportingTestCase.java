@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.externalSystem.testFramework;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
@@ -51,6 +52,7 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +76,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 /**
  * @author Vladislav.Soroka
  */
-public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
+public abstract class ExternalSystemImportingTestCase extends NioExternalSystemTestCase {
 
   private @Nullable Disposable myTestDisposable = null;
 
@@ -112,8 +114,8 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       }
 
       @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        if (stdOut) {
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
+        if (processOutputType.isStdout()) {
           stdOutput.append(id, text.replace("\n", "\\n").replace("\r", "\\r"));
         }
         else {
@@ -156,20 +158,20 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertModulesContains(String... expectedNames) {
-    ModuleAssertions.assertModulesContains(myProject, expectedNames);
+    ModuleAssertions.assertModulesContains(getMyProject(), expectedNames);
   }
 
   protected void assertModules(String... expectedNames) {
-    ModuleAssertions.assertModules(myProject, expectedNames);
+    ModuleAssertions.assertModules(getMyProject(), expectedNames);
   }
 
   protected void assertModules(List<String> expectedNames) {
-    ModuleAssertions.assertModules(myProject, expectedNames);
+    ModuleAssertions.assertModules(getMyProject(), expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
     var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
-    ContentRootAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
+    ContentRootAssertions.assertContentRoots(getMyProject(), moduleName, expectedRootPaths);
   }
 
   protected void assertNoSourceRoots(String moduleName) {
@@ -184,7 +186,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertSourceRoots(String moduleName, ExternalSystemSourceType type, List<String> expectedRoots) {
     var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
-    SourceRootAssertions.assertSourceRoots(myProject, moduleName, it -> type.equals(getExType(it)), expectedRootPaths, () ->
+    SourceRootAssertions.assertSourceRoots(getMyProject(), moduleName, it -> type.equals(getExType(it)), expectedRootPaths, () ->
       "%s source root of type %s".formatted(moduleName, type)
     );
   }
@@ -373,7 +375,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private void assertModuleDeps(String moduleName, Class clazz, String... expectedDeps) {
-    assertModuleDeps(equalsPredicate(), moduleName, clazz, expectedDeps);
+    assertModuleDeps((o1, o2) -> Objects.equals(o1, o2), moduleName, clazz, expectedDeps);
   }
 
   private void assertModuleDeps(BiPredicate<? super String, ? super String> predicate, String moduleName, Class clazz, String... expectedDeps) {
@@ -424,7 +426,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   public void assertProjectLibraries(String... expectedNames) {
     List<String> actualNames = new ArrayList<>();
-    for (Library each : LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraries()) {
+    for (Library each : LibraryTablesRegistrar.getInstance().getLibraryTable(getMyProject()).getLibraries()) {
       String name = each.getName();
       actualNames.add(name == null ? "<unnamed>" : name);
     }
@@ -432,7 +434,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
-    String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(getModule(moduleName));
+    String[] path = ModuleManager.getInstance(getMyProject()).getModuleGroupPath(getModule(moduleName));
 
     if (expected.length == 0) {
       assertNull(path);
@@ -473,7 +475,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void ignoreData(Predicate<? super DataNode<?>> booleanFunction, final boolean ignored) {
     final ExternalProjectInfo externalProjectInfo = ProjectDataManagerImpl.getInstance().getExternalProjectData(
-      myProject, getExternalSystemId(), getCurrentExternalProjectSettings().getExternalProjectPath());
+      getMyProject(), getExternalSystemId(), getCurrentExternalProjectSettings().getExternalProjectPath());
     assertNotNull(externalProjectInfo);
 
     final DataNode<ProjectData> projectDataNode = externalProjectInfo.getExternalProjectStructure();
@@ -484,7 +486,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       node.visit(dataNode -> dataNode.setIgnored(ignored));
     }
 
-    ExternalSystemTestUtilKt.importData(projectDataNode, myProject);
+    ExternalSystemTestUtilKt.importData(projectDataNode, getMyProject());
   }
 
   protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
@@ -502,7 +504,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void importProject() {
-    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(myProject, getExternalSystemId());
+    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(getMyProject(), getExternalSystemId());
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
     projectSettings.setExternalProjectPath(getProjectPath());
     //noinspection unchecked
@@ -524,7 +526,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             return;
           }
           try {
-            ProjectDataManager.getInstance().importData(externalProject, myProject);
+            ProjectDataManager.getInstance().importData(externalProject, getMyProject());
           } catch (Throwable ex) {
             ex.printStackTrace(System.err);
             error.set(Couple.of("Exception occurred in `ProjectDataManager.importData` (see output for the details)", null));
@@ -547,7 +549,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     // allow all the invokeLater to pass through the queue, before waiting for indexes to be ready
     // (specifically, all the invokeLater that schedule indexing after language level change performed by import)
     runInEdtAndWait(() -> PlatformTestUtil.dispatchAllEventsInIdeEventQueue());
-    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+    IndexingTestUtil.waitUntilIndexesAreReady(getMyProject());
   }
 
   protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
@@ -559,7 +561,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected ImportSpec createImportSpec() {
-    ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(myProject, getExternalSystemId())
+    ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(getMyProject(), getExternalSystemId())
       .use(ProgressExecutionMode.MODAL_SYNC);
     return importSpecBuilder.build();
   }
@@ -608,25 +610,86 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return null;
   }
 
-  //protected void assertProblems(String... expectedProblems) {
-  //  final List<String> actualProblems = new ArrayList<String>();
-  //  UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-  //    @Override
-  //    public void run() {
-  //      final NewErrorTreeViewPanel messagesView = ExternalSystemNotificationManager.getInstance(myProject)
-  //        .prepareMessagesView(getExternalSystemId(), NotificationSource.PROJECT_SYNC, false);
-  //      final ErrorViewStructure treeStructure = messagesView.getErrorViewStructure();
-  //
-  //      ErrorTreeElement[] elements = treeStructure.getChildElements(treeStructure.getRootElement());
-  //      for (ErrorTreeElement element : elements) {
-  //        if (element.getKind() == ErrorTreeElementKind.ERROR ||
-  //            element.getKind() == ErrorTreeElementKind.WARNING) {
-  //          actualProblems.add(StringUtil.join(element.getText(), "\n"));
-  //        }
-  //      }
-  //    }
-  //  });
-  //
-  //  assertOrderedElementsAreEqual(actualProblems, expectedProblems);
-  //}
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, Collection<? extends T> expected) {
+    assertOrderedElementsAreEqual(actual, expected.toArray());
+  }
+
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, Collection<? extends T> expected) {
+    assertEquals(new HashSet<>(expected), new HashSet<>(actual));
+  }
+
+  protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
+    assertEquals(new SetWithToString<>(CollectionFactory.createFilePathSet(expected)),
+                 new SetWithToString<>(CollectionFactory.createFilePathSet(actual)));
+  }
+
+  protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
+    assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
+  }
+
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, T... expected) {
+    assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
+  }
+
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, T... expected) {
+    assertOrderedElementsAreEqual(Objects::equals, actual, expected);
+  }
+
+  protected static <T, U> void assertOrderedElementsAreEqual(BiPredicate<? super U, ? super T> predicate,
+                                                          Collection<? extends U> actual,
+                                                          T... expected) {
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<>(actual);
+    assertEquals(s, expected.length, actual.size());
+
+    List<U> actualList = new ArrayList<>(actual);
+    for (int i = 0; i < expected.length; i++) {
+      T expectedElement = expected[i];
+      U actualElement = actualList.get(i);
+      assertTrue(s, predicate.test(actualElement, expectedElement));
+    }
+  }
+
+  protected static <T> void assertContain(java.util.List<? extends T> actual, T... expected) {
+    List<T> expectedList = Arrays.asList(expected);
+    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
+  }
+
+  private static class SetWithToString<T> extends AbstractSet<T> {
+
+    private final Set<T> myDelegate;
+
+    SetWithToString(@NotNull Set<T> delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public int size() {
+      return myDelegate.size();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+      return myDelegate.contains(o);
+    }
+
+    @Override
+    public @NotNull Iterator<T> iterator() {
+      return myDelegate.iterator();
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+      return myDelegate.containsAll(c);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return myDelegate.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+      return myDelegate.hashCode();
+    }
+  }
 }

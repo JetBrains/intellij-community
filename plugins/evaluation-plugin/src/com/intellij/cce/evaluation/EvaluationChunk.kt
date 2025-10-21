@@ -14,7 +14,7 @@ interface EvaluationChunk {
 
   val sessionsExist: Boolean get() = true
 
-  fun evaluate(
+  suspend fun evaluate(
     handler: InterpretationHandler,
     filter: InterpretFilter,
     order: InterpretationOrder,

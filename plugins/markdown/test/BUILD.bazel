@@ -1,22 +1,24 @@
 ### auto-generated section `build intellij.markdown.tests` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "tests_test_resources",
-  files = glob(["data/**/*"]),
+  srcs = glob(["data/**/*"]),
   strip_prefix = "data"
 )
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.markdown.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
   deps = [
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/fenceInjection",
@@ -24,6 +26,7 @@ jvm_library(
     "//plugins/markdown/frontmatter/toml",
     "//plugins/markdown/frontmatter/yaml",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/markdown/images",
@@ -36,6 +39,7 @@ jvm_library(
     "//platform/usageView",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//xml/xml-psi-api:psi",
     "//plugins/yaml",
     "//plugins/yaml:yaml_test_lib",
@@ -48,13 +52,13 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//xml/tests:tests_test_lib",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//xml/langInjection",
     "//platform/platform-tests:tests_test_lib",
-    "@lib//:jsoup",
-    "@lib//:jcef",
+    "//libraries/jsoup",
+    "//libraries/jcef",
     "@lib//:assert_j",
     "//platform/util-ex",
-    "@lib//:jetbrains-markdown",
+    "//libraries/markdown",
     "//plugins/toml",
     "//plugins/toml/core",
     "//plugins/yaml/backend",
@@ -62,12 +66,15 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//xml/testFramework",
-  ],
-  runtime_deps = [":tests_test_resources"]
+  ]
 )
+### auto-generated section `build intellij.markdown.tests` end
 
-jvm_test(
+### auto-generated section `test intellij.markdown.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.markdown.tests` end
+### auto-generated section `test intellij.markdown.tests` end

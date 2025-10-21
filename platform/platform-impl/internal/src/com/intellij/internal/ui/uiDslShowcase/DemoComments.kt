@@ -8,44 +8,59 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
 
 @Demo(title = "Comments",
-      description = "Comment is a gray (depends on color scheme) text which can be assigned to cell (placed under cell), rows or placed in any cell directly")
+      description = "Comment is a gray (depends on color scheme) small text. There are three types of comments",
+      scrollbar = true)
 fun demoComments(): DialogPanel {
   return panel {
-    row("Row1:") {
-      textField()
-        .comment("Comment to textField1")
-        .text("textField1")
-      textField()
-        .text("textField2")
-      textField()
-        .comment("Comment to textField3")
-        .text("textField3")
-    }
+    group("Cell Comment") {
+      row {
+        text("Comments related to a cell must be assigned directly to that cell. This ensures proper layout placement and improves support for the accessibility framework")
+      }
 
-    row("Row2:") {
-      textField()
-    }.rowComment("Row2 comment is placed under the row")
-
-    row("Row3:") {
-      comment(
-        "Comments can be an html text with some clickable <a href='link'>link</a> and even <a href='several links'>several links</a>.<br><icon src='AllIcons.General.Information'>&nbsp;It's possible to use line breaks and bundled icons") {
-        Messages.showMessageDialog("Link '${it.description}' is clicked", "Message", null)
+      row {
+        textField()
+          .text("textField1")
+          .commentRight("Right comment to textField1")
+        textField()
+          .text("textField2")
+          .comment("Bottom comment to textField2")
       }
     }
 
-    val longString = (1..8).joinToString { "A very long string" }
-
-    row("Row4:") {
-      comment("Comments use MAX_LINE_LENGTH_WORD_WRAP by default<br>$longString")
+    group("Row Comment") {
+      row("Label:") {
+        textField()
+      }.rowComment("A row comment is placed below the row")
     }
 
-
-    row("Row5:") {
-      comment("Long comments can deny word wrapping by MAX_LINE_LENGTH_NO_WRAP<br>$longString", maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+    group("Arbitrary Comment") {
+      row {
+        comment("Arbitrary comments can be placed anywhere. They are not related to any cell or row")
+      }
     }
 
-    row("Row6:") {
-      comment("Long comments can use maxLineLength, here it is 100<br>$longString", maxLineLength = 100)
+    group("Common Info") {
+      row {
+        comment(
+          "Comments can be an html text with some clickable <a href='link'>link</a> and even <a href='several links'>several links</a>.<br><icon src='AllIcons.General.Information'>&nbsp;It's possible to use line breaks and bundled icons") {
+          Messages.showMessageDialog("Link '${it.description}' is clicked", "Message", null)
+        }
+      }
+
+      val longString = (1..8).joinToString { "A very long string" }
+
+      row {
+        comment("Comments with MAX_LINE_LENGTH_WORD_WRAP are wrapped automatically<br>$longString")
+      }
+
+
+      row {
+        comment("Comments can deny word wrapping by MAX_LINE_LENGTH_NO_WRAP", maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+      }
+
+      row {
+        comment("Long comments can use maxLineLength, here it is 60<br>$longString", maxLineLength = 60)
+      }
     }
   }
 }

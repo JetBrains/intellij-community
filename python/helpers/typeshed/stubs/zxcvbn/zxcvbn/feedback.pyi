@@ -1,8 +1,9 @@
 from collections.abc import Sequence
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, type_check_only
 
 from .matching import _Match
 
+@type_check_only
 class _Feedback(TypedDict):
     warning: str
     suggestions: list[str]

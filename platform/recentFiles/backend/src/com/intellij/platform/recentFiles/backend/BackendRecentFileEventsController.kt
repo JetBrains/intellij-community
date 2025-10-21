@@ -20,24 +20,15 @@ internal object BackendRecentFileEventsController {
     val filesWithoutDirectories = files.filter { !it.isDirectory }
     thisLogger().debug("Trying to apply changes for ${filesWithoutDirectories.size} files out of total ${files.size} virtual files to the model, change kind: $changeKind")
     thisLogger().trace { "Files to apply changes for: ${filesWithoutDirectories.joinToString { it.name }}" }
-    when (changeKind) {
-      FileChangeKind.ADDED, FileChangeKind.REMOVED -> {
-        BackendRecentFileEventsModel.getInstance(project).scheduleApplyBackendChangesToAllFileKinds(changeKind, filesWithoutDirectories)
-      }
-      FileChangeKind.UPDATED, FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
-        for (filesKind in RecentFileKind.entries) {
-          val knownFilesByKind = BackendRecentFilesModel.getInstance(project).getFilesByKind(filesKind).toSet()
-          val relevantUpdates = filesWithoutDirectories.filter { it in knownFilesByKind }
-          BackendRecentFileEventsModel.getInstance(project).scheduleApplyBackendChanges(filesKind, changeKind, relevantUpdates)
-        }
-      }
-    }
+
+    BackendRecentFileEventsModel.getInstance(project).scheduleApplyBackendChanges(changeKind, filesWithoutDirectories)
   }
 
   fun updateAllExistingFilesInModel(project: Project) {
+    val filesToUpdate = mutableSetOf<VirtualFile>()
     for (filesKind in RecentFileKind.entries) {
-      val knownFilesByKind = BackendRecentFilesModel.getInstance(project).getFilesByKind(filesKind).takeIf { it.isNotEmpty() } ?: continue
-      BackendRecentFileEventsModel.getInstance(project).scheduleApplyBackendChanges(filesKind, FileChangeKind.UPDATED, knownFilesByKind)
+      filesToUpdate += BackendRecentFilesModel.getInstance(project).getFilesByKind(filesKind)
     }
+    BackendRecentFileEventsModel.getInstance(project).scheduleApplyBackendChanges(FileChangeKind.UPDATED, filesToUpdate)
   }
 }

@@ -5,7 +5,3 @@ fun test() {
 }
 
 // TYPE: "1"
-
-/*
-Text: (<highlight>t1: Int</highlight>, t2: Int), Disabled: false, Strikeout: false, Green: true
-*/

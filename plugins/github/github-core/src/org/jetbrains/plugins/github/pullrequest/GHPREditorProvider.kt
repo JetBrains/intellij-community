@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
@@ -10,7 +11,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -30,7 +30,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
 @Service(Service.Level.PROJECT)
 private class GHPREditorProviderService(parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope(this::class, Dispatchers.Main)
 
   fun createTimelineEditor(file: GHPRTimelineVirtualFile): FileEditor {
     val projectVm = file.findProjectVm() ?: throw ProcessCanceledException()

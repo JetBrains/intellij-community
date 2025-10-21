@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory.highlightName
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -19,8 +21,16 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
     }
 
     override fun visitIntersectionType(intersectionType: KtIntersectionType) {
-        val typeReference = intersectionType.parent as? KtTypeReference ?: return
-        highlight(typeReference, KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER)
+        for (element in intersectionType.children) {
+            val typeReference = element as? KtTypeReference ?: continue
+            val infoType = with(session) {
+                when(val type = typeReference.type) {
+                    is KaTypeParameterType -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
+                    else -> type.symbol?.toInfoType()
+                }
+            } ?: continue
+            highlight(typeReference, infoType)
+        }
     }
 
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = with(session) {
@@ -49,33 +59,35 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
             return
         }
 
-        val color = when (symbol) {
-            is KaAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
-            is KaNamedClassSymbol -> when (symbol.classKind) {
-                KaClassKind.CLASS -> if (symbol.isData) {
-                    KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
-                } else {
-                    when (symbol.modality) {
-                        KaSymbolModality.FINAL, KaSymbolModality.SEALED, KaSymbolModality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
-                        KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
-                    }
-                }
-
-                KaClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
-                KaClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
-                KaClassKind.OBJECT ->
-                    if (symbol.isData) KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT else KotlinHighlightInfoTypeSemanticNames.OBJECT
-
-                KaClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
-                KaClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
-                KaClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
-            }
-
-            is KaTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
-            is KaTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
-        }
+        val color = symbol.toInfoType()
 
         highlight(expression, color)
+    }
+
+    private fun KaClassifierSymbol.toInfoType(): HighlightInfoType = when (this) {
+        is KaAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
+        is KaNamedClassSymbol -> when (this.classKind) {
+            KaClassKind.CLASS -> if (this.isData) {
+                KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
+            } else {
+                when (this.modality) {
+                    KaSymbolModality.FINAL, KaSymbolModality.SEALED, KaSymbolModality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
+                    KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+                }
+            }
+
+            KaClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
+            KaClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+            KaClassKind.OBJECT ->
+                if (this.isData) KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT else KotlinHighlightInfoTypeSemanticNames.OBJECT
+
+            KaClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+            KaClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+            KaClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
+        }
+
+        is KaTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
+        is KaTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
     }
 
     private fun highlight(element: PsiElement, color: HighlightInfoType) {
@@ -88,9 +100,9 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
                 && (target.containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS
 
         if (!isKotlinAnnotation) {
-            val targetIsAnnotation = when (val targePsi = target.psi) {
-                is KtClass -> targePsi.isAnnotation()
-                is PsiClass -> targePsi.isAnnotationType
+            val targetIsAnnotation = when (val targetPsi = target.psi) {
+                is KtClass -> targetPsi.isAnnotation()
+                is PsiClass -> targetPsi.isAnnotationType
                 else -> false
             }
 

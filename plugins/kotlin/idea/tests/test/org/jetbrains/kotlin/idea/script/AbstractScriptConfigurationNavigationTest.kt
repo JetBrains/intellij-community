@@ -14,6 +14,11 @@ abstract class AbstractScriptConfigurationNavigationTest : AbstractScriptConfigu
         val testDir = testDataFile()
         val text = findMainScript(testDir).readText()
 
+        InTextDirectivesUtils.findStringWithPrefixes(text, "// IGNORE: ")?.let {
+            println("test $file is ignored")
+            return
+        }
+
         InTextDirectivesUtils.getPrefixedBoolean(text, "// INDEX_DEPENDENCIES_SOURCES:")?.let {
             Registry.get("kotlin.scripting.index.dependencies.sources").setValue(it)
         }

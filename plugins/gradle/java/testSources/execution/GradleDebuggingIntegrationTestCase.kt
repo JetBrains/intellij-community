@@ -154,18 +154,16 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     isDebugAllEnabled: Boolean = false,
     runnerSettings: RunnerSettings? = null
   ): String {
-    val runConfiguration = createEmptyGradleRunConfiguration("run-configuration")
-    runConfiguration.isDebugServerProcess = isDebugServerProcess
-    runConfiguration.isDebugAllEnabled = isDebugAllEnabled
-    runConfiguration.settings.externalProjectPath = FileUtil.toCanonicalPath("$projectPath/$modulePath")
-    runConfiguration.settings.taskNames = taskNames.toList()
-    runConfiguration.settings.scriptParameters = scriptParameters
-
-    val tracker = ExternalSystemExecutionTracer()
-    tracker.traceExecution {
+    val runConfiguration = createEmptyGradleRunConfiguration("run-configuration").apply {
+      this.isDebugServerProcess = isDebugServerProcess
+      this.isDebugAllEnabled = isDebugAllEnabled
+      this.settings.externalProjectPath = FileUtil.toCanonicalPath("$projectPath/$modulePath")
+      this.settings.taskNames = taskNames.toList()
+      this.settings.scriptParameters = scriptParameters
+    }
+    return ExternalSystemExecutionTracer.traceExecutionOutput {
       executeRunConfiguration(runConfiguration, runnerSettings)
     }
-    return tracker.output.joinToString("")
   }
 
   private fun executeRunConfiguration(runConfiguration: GradleRunConfiguration, runnerSettings: RunnerSettings?) {

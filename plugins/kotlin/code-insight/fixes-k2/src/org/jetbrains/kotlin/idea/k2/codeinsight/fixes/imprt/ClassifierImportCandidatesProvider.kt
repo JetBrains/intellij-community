@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -26,16 +28,16 @@ internal open class ClassifierImportCandidatesProvider(
     protected open fun acceptsJavaClass(javaClass: PsiClass): Boolean =
         !javaClass.isImported() && javaClass.canBeImported()
 
-    context(KaSession)
+    context(_: KaSession)
     protected open fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean = true
 
-    context(KaSession)
+    context(_: KaSession)
     protected fun KaClassLikeSymbol.getExpandedClassSymbol(): KaClassSymbol? = when (this) {
         is KaTypeAliasSymbol -> expandedType.expandedSymbol
         is KaClassSymbol -> this
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(
         name: Name,
@@ -76,7 +78,7 @@ internal class AnnotationImportCandidatesProvider(
     override fun acceptsJavaClass(javaClass: PsiClass): Boolean =
         javaClass.isAnnotationType && super.acceptsJavaClass(javaClass)
 
-    context(KaSession)
+    context(_: KaSession)
     override fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean =
         symbol.getExpandedClassSymbol()?.classKind == KaClassKind.ANNOTATION_CLASS
 }
@@ -103,7 +105,7 @@ internal class ConstructorReferenceImportCandidatesProvider(
         !(javaClass.isEnum || javaClass.isInterface || javaClass.isAnnotationType) && super.acceptsJavaClass(javaClass)
 
 
-    context(KaSession)
+    context(_: KaSession)
     override fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean =
         symbol.getExpandedClassSymbol()?.classKind == KaClassKind.CLASS
 }

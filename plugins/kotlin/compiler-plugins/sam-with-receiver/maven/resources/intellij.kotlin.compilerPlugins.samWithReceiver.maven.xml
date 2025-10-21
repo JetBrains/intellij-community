@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven">
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.support.maven"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven.SamWithReceiverMavenProjectImportHandler"/>
+  </extensions>
+</idea-plugin>

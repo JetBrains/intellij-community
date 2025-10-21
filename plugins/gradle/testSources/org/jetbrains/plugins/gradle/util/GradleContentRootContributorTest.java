@@ -65,12 +65,12 @@ public class GradleContentRootContributorTest extends GradleImportingTestCase {
   private void check(@NotNull String moduleName,
                      Collection<ExternalSystemSourceType> sourceTypes,
                      Pair<String, ExternalSystemSourceType>... expected) {
-    Module module = ReadAction.compute(() -> ModuleManager.getInstance(myProject).findModuleByName(moduleName));
+    Module module = ReadAction.compute(() -> ModuleManager.getInstance(getMyProject()).findModuleByName(moduleName));
     assertNotNull(moduleName, module);
     Collection<ExternalSystemContentRootContributor.ExternalContentRoot> contentRoots =
       ExternalSystemApiUtil.getExternalProjectContentRoots(module, sourceTypes);
 
-    String projectRootPath = myProjectRoot.getPath();
+    String projectRootPath = getMyProjectRoot().getPath();
     List<Pair<String, ExternalSystemSourceType>> map = ContainerUtil.map(
       contentRoots,
       it -> Pair.create(FileUtil.getRelativePath(projectRootPath, FileUtil.toSystemIndependentName(it.getPath().toString()), '/'),

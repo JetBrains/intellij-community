@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.util.indexing.FileContent
-import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetadataStubBuilder
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
@@ -77,8 +77,8 @@ internal fun FileContent.toKotlinJvmBinaryClass(): KotlinJvmBinaryClass? {
 internal val KotlinJvmBinaryClass.packageName: FqName
     get() = classHeader.packageName?.let(::FqName) ?: classId.packageFqName
 
-internal fun FileContent.toCompatibleFileWithMetadata(): FileWithMetadata.Compatible? =
-    FileWithMetadata.forPackageFragment(file) as? FileWithMetadata.Compatible
+internal fun FileContent.toKlibMetadataCompatibleFileWithMetadata(): CompatibleMetadata? =
+    KlibMetadataStubBuilder.readFileSafely(file) as? CompatibleMetadata
 
 /**
  * Returns the JRT module root (e.g. `jrt://jdk_home!/module.name`) for the given [VirtualFile].

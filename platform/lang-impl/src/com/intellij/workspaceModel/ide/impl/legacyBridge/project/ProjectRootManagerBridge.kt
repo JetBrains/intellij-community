@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
@@ -19,23 +20,14 @@ import kotlinx.coroutines.CoroutineScope
 class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope) : ProjectRootManagerComponent(project, coroutineScope) {
   init {
     if (!project.isDefault) {
-      moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+        moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      }
     }
   }
 
   private val moduleDependencyIndex
     get() = ModuleDependencyIndex.getInstance(project)
-
-  override val actionToRunWhenProjectJdkChanges: Runnable
-    get() {
-      return Runnable {
-        super.actionToRunWhenProjectJdkChanges.run()
-        if (moduleDependencyIndex.hasProjectSdkDependency()) {
-          val info = BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk().buildInfo()
-          fireRootsChanged(info)
-        }
-      }
-    }
 
   override fun getOrderRootsCache(project: Project): OrderRootsCache {
     return OrderRootsCacheBridge(project, project)

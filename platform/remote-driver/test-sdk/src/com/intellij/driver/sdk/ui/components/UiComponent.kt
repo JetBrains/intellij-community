@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
+import com.intellij.driver.sdk.ui.keyboard.RemoteKeyboard
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
@@ -16,6 +17,7 @@ import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import com.intellij.openapi.diagnostic.logger
+import org.intellij.lang.annotations.Language
 import java.awt.Color
 import java.awt.IllegalComponentStateException
 import java.awt.Point
@@ -69,13 +71,18 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
+  override fun keyboard(keyboardActions: RemoteKeyboard.() -> Unit) {
+    component // making sure the component is found
+    super.keyboard(keyboardActions)
+  }
+
   /**
    * Waits until the element specified is not found within the parent search context.
    *
    * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
    */
   fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+    waitFor(message = "There should be no ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
             timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
             interval = 1.seconds) {
       !present()
@@ -401,6 +408,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                                      data.parentSearchContext, parent))
   }
 
+  fun findInParentContext(@Language("XPath") xpath: String): UiComponent? {
+    val parentSearchContext = data.parentSearchContext
+    val foundComponent = parentSearchContext.findAll(xpath).firstOrNull() ?: return null
+    val componentPath = "${parentSearchContext.contextAsString}/$xpath"
+
+    return UiComponent(ComponentData(componentPath, driver, searchService, robotProvider,
+                                     parentSearchContext, foundComponent))
+  }
+
   fun getColor(point: Point?, moveMouse: Boolean = true): Color {
     if (moveMouse) moveMouse(point)
     return withComponent {
@@ -409,13 +425,23 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   // Mouse
-  fun click(point: Point? = null) {
+  fun click(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
     LOG.info("Click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      withComponent { robot.click(it, point) }
+      withComponent { robot.click(it, point,  mouseButton) }
     }
     else {
-      withComponent { robot.click(it) }
+      withComponent { robot.click(it, mouseButton) }
+    }
+  }
+
+  fun strictClick(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
+    LOG.info("strictClick at $this${point?.let { ": $it" } ?: ""}")
+    if (point != null) {
+      withComponent { robot.strictClick(it, point) }
+    }
+    else {
+      withComponent { robot.strictClick(it, null) }
     }
   }
 
@@ -429,11 +455,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
-  fun tripleClick(point: Point) {
+  fun tripleClick(point: Point? = null) {
     LOG.info("Triple click at $this${point?.let { ": $it" } ?: ""}")
-    withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
+    if (point != null) {
+      withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
+    }
+    else {
+      withComponent { robot.tripleClick(it) }
+    }
   }
-
   fun rightClick(point: Point? = null) {
     LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
@@ -462,6 +492,24 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       withComponent { moveMouse(it, to) }
       releaseMouse(RemoteMouseButton.LEFT)
     }
+  }
+
+  fun mousePressAndRelease(from: Point, to: Point) {
+    with(robot) {
+      withComponent { moveMouse(it, from) }
+      pressMouse(RemoteMouseButton.LEFT)
+      releaseMouse(RemoteMouseButton.LEFT)
+    }
+  }
+
+  fun press(point: Point? = null) {
+    LOG.info("Press at $this${point?.let { ": $it" } ?: ""}")
+    withComponent { robot.moveMouseAndPress(it, point) }
+  }
+
+  fun mouseRelease() {
+    LOG.info("Release at $this")
+    withComponent { robot.releaseMouse(RemoteMouseButton.LEFT) }
   }
 
   fun getBackgroundColor(): Color {

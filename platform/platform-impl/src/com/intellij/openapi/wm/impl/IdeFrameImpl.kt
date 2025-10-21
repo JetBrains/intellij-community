@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -9,10 +10,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
@@ -21,11 +24,17 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.DisposableWindow
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -33,14 +42,16 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
 import java.awt.event.WindowEvent
+import java.awt.image.BufferStrategy
+import java.awt.image.VolatileImage
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
-import javax.swing.JPanel
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
-import javax.swing.ToolTipManager
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
@@ -50,7 +61,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
       get() = getFrames().firstOrNull { it.isActive }
   }
 
-  private val mouseActivationWatcher = object : IdeEventQueue.EventDispatcher, Disposable {
+  private val mouseActivationWatcher = object : IdeEventQueue.NonLockedEventDispatcher, Disposable {
     override fun dispatch(e: AWTEvent): Boolean {
       detectWindowActivationByMousePressed(e)
       return false
@@ -59,11 +70,18 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     override fun dispose() { }
   }
 
+  private val restoreBoundsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   init {
     if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
       addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
     IdeEventQueue.getInstance().addDispatcher(mouseActivationWatcher, mouseActivationWatcher)
+    launchOnShow("IdeFrameImpl.restoreBoundsRequests") {
+      restoreBoundsRequests.collectLatest {
+        tryToRestoreValidBounds()
+      }
+    }
   }
 
   var frameHelper: FrameHelper? = null
@@ -74,6 +92,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   var normalBounds: Rectangle? = null
   var screenBounds: Rectangle? = null
   private var boundsInitialized = false
+  private var lastValidBounds: Rectangle? = null
 
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
@@ -113,6 +132,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   // which holds its own client properties in a root pane
   fun setFrameHelper(frameHelper: FrameHelper?) {
     this.frameHelper = frameHelper
+    if (frameHelper == null) {
+      fixSwingLeaks()
+    }
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -141,8 +163,124 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
       setupAntialiasing(g)
     }
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("paint must be called on EDT", Throwable())
+    }
     super.paint(g)
   }
+
+  override fun revalidate() {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("revalidate must be called on EDT", Throwable())
+    }
+    super.revalidate()
+  }
+
+  override fun getBufferStrategy(): BufferStrategy? {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("getBufferStrategy must be called on EDT", Throwable())
+    }
+    return super.getBufferStrategy()
+  }
+
+  override fun createBufferStrategy(numBuffers: Int) {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createBufferStrategy must be called on EDT", Throwable())
+    }
+    super.createBufferStrategy(numBuffers)
+    tryReplaceBufferStrategy()
+  }
+
+  override fun createBufferStrategy(numBuffers: Int, caps: BufferCapabilities?) {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createBufferStrategy must be called on EDT", Throwable())
+    }
+    super.createBufferStrategy(numBuffers, caps)
+    tryReplaceBufferStrategy()
+  }
+
+  private fun tryReplaceBufferStrategy() {
+    if (!System.getProperty("idea.check.swing.threading").toBoolean()) {
+      return
+    }
+    try {
+      val bufferStrategyField = Component::class.java.getDeclaredField("bufferStrategy").apply {
+        isAccessible = true
+      }
+      val originalStrategy = bufferStrategyField.get(this) as BufferStrategy
+      val wrappedStrategy = AssertiveBufferStrategy(originalStrategy)
+      bufferStrategyField.set(this, wrappedStrategy)
+    }
+    catch (e: Exception) {
+      logger<IdeFrameImpl>().warn("Failed to wrap buffer strategy", e)
+    }
+  }
+
+  class AssertiveBufferStrategy internal constructor(private val delegate: BufferStrategy) : BufferStrategy() {
+    init {
+      if (!EDT.isCurrentThreadEdt()) {
+        logger<IdeFrameImpl>().error("BufferStrategy should be used only from EDT", Throwable())
+      }
+    }
+
+    override fun getCapabilities(): BufferCapabilities? {
+      if (!EDT.isCurrentThreadEdt()) {
+        logger<IdeFrameImpl>().error("BufferStrategy should be used only from EDT", Throwable())
+      }
+      return delegate.getCapabilities()
+    }
+
+    override fun getDrawGraphics(): Graphics? {
+      if (!EDT.isCurrentThreadEdt()) {
+        logger<IdeFrameImpl>().error("BufferStrategy should be used only from EDT", Throwable())
+      }
+      return delegate.getDrawGraphics()
+    }
+
+    override fun contentsLost(): Boolean {
+      if (!EDT.isCurrentThreadEdt()) {
+        logger<IdeFrameImpl>().error("BufferStrategy should be used only from EDT", Throwable())
+      }
+      return delegate.contentsLost()
+    }
+
+    override fun contentsRestored(): Boolean {
+      if (!EDT.isCurrentThreadEdt()) {
+        logger<IdeFrameImpl>().error("BufferStrategy should be used only from EDT", Throwable())
+      }
+      return delegate.contentsRestored()
+    }
+
+    override fun show() {
+      if (!EDT.isCurrentThreadEdt()) {
+        logger<IdeFrameImpl>().error("BufferStrategy should be used only from EDT", Throwable())
+      }
+      delegate.show()
+    }
+
+    override fun dispose() {
+      if (!EDT.isCurrentThreadEdt()) {
+        logger<IdeFrameImpl>().error("BufferStrategy should be used only from EDT", Throwable())
+      }
+      delegate.dispose()
+    }
+  }
+
+  override fun createVolatileImage(width: Int, height: Int): VolatileImage? {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createVolatileImage must be called on EDT", Throwable())
+    }
+    return super.createVolatileImage(width, height)
+  }
+
+  override fun createVolatileImage(width: Int, height: Int, caps: ImageCapabilities?): VolatileImage? {
+    if (!EDT.isCurrentThreadEdt()) {
+      logger<IdeFrameImpl>().error("createVolatileImage must be called on EDT", Throwable())
+    }
+    return super.createVolatileImage(width, height, caps)
+  }
+
+
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
@@ -257,7 +395,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     }
   }
 
-  @Suppress("OVERRIDE_DEPRECATION") // just for debugging, because all other methods delegate to this one
+  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION") // just for debugging, because all other methods delegate to this one
   override fun reshape(x: Int, y: Int, width: Int, height: Int) {
     super.reshape(x, y, width, height)
     // Only start checking bounds after they first become sensible,
@@ -273,7 +411,99 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
       Throwable("IdeFrameImpl.reshape(x=$x, y=$y, width=$width, height=$height)")
     }
   }
+
+  /**
+   * Fixes the Windows-specific issue with the window suddenly becoming too small.
+   */
+  internal fun ensureSensibleSize() {
+    if (
+      !SystemInfoRt.isWindows ||
+      !boundsInitialized ||
+      // The default value is hardcoded to false here regardless of the default value in registry.properties,
+      // because it makes exactly zero sense for this functionality to work before the registry is loaded.
+      !Registry.`is`("ide.project.frame.auto.fix.size.windows", false) ||
+      !isShowing
+    ) {
+      return
+    }
+    val currentBounds = bounds
+    if (isValidSize(currentBounds.size)) {
+      lastValidBounds = currentBounds
+    }
+    else {
+      check(restoreBoundsRequests.tryEmit(Unit))
+    }
+  }
+
+  /**
+   * Tries to restore the last valid bounds of the frame.
+   *
+   * Makes several attempts with some delays between them,
+   * to account for various exotic cases
+   * like the monitor configuration being temporarily unavailable after waking up from sleep/hibernation.
+   */
+  private suspend fun tryToRestoreValidBounds() {
+    val delays = listOf(
+      // The first attempt: let all pending move/resize events pass through the queue before restoring.
+      10.milliseconds,
+      // The second attempt: slow enough for the user to notice the issue, but not to start wondering what's going on.
+      100.milliseconds,
+      // The last attempt: let's hope that if the issue was caused by a monitor configuration change, the monitor is detected now.
+      5.seconds,
+    )
+    for (delay in delays) {
+      delay(delay)
+      if (restoreValidBoundsAttempt()) break
+    }
+  }
+
+  private fun restoreValidBoundsAttempt(): Boolean {
+    val currentBounds = bounds
+    if (isValidSize(currentBounds.size)) return true // already restored for some reason
+    val newBounds = Rectangle(lastValidBounds ?: return false)
+    val newBoundsFit = Rectangle(newBounds)
+    ScreenUtil.moveRectangleToFitTheScreen(newBoundsFit) // location
+    ScreenUtil.fitToScreen(newBoundsFit) // size
+    val result = when {
+      !isValidSize(newBoundsFit.size) -> {
+        IDE_FRAME_EVENT_LOG.warn(
+          "The IDE window was externally resized to ${currentBounds.width}x${currentBounds.height}, which is too small." +
+          " Restoring the size is impossible because an attempt to fit the last valid bounds ($newBounds) to the screens resulted in $newBoundsFit"
+        )
+        false
+      }
+      newBoundsFit == newBounds -> {
+        IDE_FRAME_EVENT_LOG.warn(
+          "The IDE window was externally resized to ${currentBounds.width}x${currentBounds.height}, which is too small." +
+          " Restoring the size to the last valid size: ${newBounds.width}x${newBounds.height}"
+        )
+        this.bounds = newBounds
+        true
+      }
+      else -> {
+        IDE_FRAME_EVENT_LOG.warn(
+          "The IDE window was externally resized to ${currentBounds.width}x${currentBounds.height}, which is too small." +
+          " Also the last valid bounds are outside the screens now (possibly due to a monitor configuration change): $newBounds." +
+          " Moving and resizing to fit the screens, the new bounds will be $newBoundsFit"
+        )
+        this.bounds = newBoundsFit
+        true
+      }
+    }
+    logMonitorConfiguration()
+    return result
+  }
+
+  private fun logMonitorConfiguration() {
+    IDE_FRAME_EVENT_LOG.warn("The current monitor configuration is:")
+    for (message in ScreenUtil.loggableMonitorConfiguration(this)) {
+      IDE_FRAME_EVENT_LOG.warn(message)
+    }
+  }
 }
+
+private fun isValidSize(size: Dimension): Boolean =
+  size.width >= FrameBoundsConverter.MIN_WIDTH && size.height >= FrameBoundsConverter.MIN_HEIGHT
 
 private fun isClose(x1: Int, y1: Int, x2: Int, y2: Int): Boolean {
   val threshold = 3
@@ -310,38 +540,3 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
     )
   }
 }
-
-private fun fixSwingLeaks() {
-  fixDragRecognitionSupportLeak()
-  fixTooltipManagerLeak()
-}
-
-private fun fixDragRecognitionSupportLeak() {
-  // sending a "mouse release" event to any DnD-supporting component indirectly calls javax.swing.plaf.basic.DragRecognitionSupport.clearState,
-  // cleaning up the potential leak (that can happen if the user started dragging something and released the mouse outside the component)
-  val fakeTree = object : Tree() {
-    fun releaseDND() {
-      processMouseEvent(mouseEvent(this, MouseEvent.MOUSE_RELEASED))
-    }
-  }
-  fakeTree.dragEnabled = true
-  fakeTree.releaseDND()
-}
-
-private fun fixTooltipManagerLeak() {
-  val fakeComponent = JPanel()
-  ToolTipManager.sharedInstance().mousePressed(mouseEvent(fakeComponent, MouseEvent.MOUSE_PRESSED))
-}
-
-private fun mouseEvent(source: Component, id: Int) = MouseEvent(
-  source,
-  id,
-  System.currentTimeMillis(),
-  0,
-  0,
-  0,
-  1,
-  false,
-  MouseEvent.BUTTON1
-)
-

@@ -19,6 +19,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
+public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator, DumbAware {
 
   private AnnotationHolder myHolder;
 

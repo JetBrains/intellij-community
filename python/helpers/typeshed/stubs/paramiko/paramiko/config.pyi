@@ -6,6 +6,7 @@ from typing_extensions import Self
 
 from paramiko.ssh_exception import ConfigParseError as ConfigParseError, CouldNotCanonicalize as CouldNotCanonicalize
 
+invoke_import_error: ImportError | None
 SSH_PORT: int
 
 class SSHConfig:

@@ -4,8 +4,6 @@ package com.intellij.tasks.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.binding.BindControl;
-import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -36,7 +34,6 @@ public class OpenTaskDialog extends DialogWrapper {
   private static final String UPDATE_STATE_ENABLED = "tasks.open.task.update.state.enabled";
 
   private JPanel myPanel;
-  @BindControl(value = "clearContext", instant = true)
   private JCheckBox myClearContext;
   private JBCheckBox myUpdateState;
   private TaskStateCombo myTaskStateCombo;
@@ -59,9 +56,6 @@ public class OpenTaskDialog extends DialogWrapper {
     myNameField.setEnabled(!task.isIssue());
 
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
-    ControlBinder binder = new ControlBinder(taskManager.getState());
-    binder.bindAnnotations(this);
-    binder.reset();
 
     if (!TaskStateCombo.stateUpdatesSupportedFor(task)) {
       myUpdateState.setVisible(false);
@@ -83,6 +77,9 @@ public class OpenTaskDialog extends DialogWrapper {
 
     TaskManagerImpl.Config state = taskManager.getState();
     myClearContext.setSelected(state.clearContext);
+    myClearContext.addActionListener(e -> {
+      state.clearContext = myClearContext.isSelected();
+    });
 
     updateFields();
     if (myUpdateState.isSelected()) {

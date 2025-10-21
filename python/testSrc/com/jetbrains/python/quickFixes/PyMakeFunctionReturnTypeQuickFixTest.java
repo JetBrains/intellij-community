@@ -61,7 +61,7 @@ public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
   // PY-27128 PY-48466
   public void testLambda() {
     doQuickFixTest(PyTypeCheckerInspection.class,
-                   PyPsiBundle.message("QFIX.make.function.return.type", "func", "Callable[[Any], int]"),
+                   PyPsiBundle.message("QFIX.make.function.return.type", "func", "Callable[..., int]"),
                    LanguageLevel.getLatest());
   }
 

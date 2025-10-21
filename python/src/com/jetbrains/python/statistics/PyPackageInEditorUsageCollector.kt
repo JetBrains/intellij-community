@@ -8,13 +8,13 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.packaging.normalizePackageName
+import com.jetbrains.python.packaging.PyPackageName
 
 class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val keys = PyPackageUsageStatistics.getInstance(project).getStatisticsAndResetState().keys
     return keys.map { packageUsage ->
-      PYTHON_PACKAGES_IN_EDITOR.metric(PACKAGE_FIELD.with(packageUsage.name?.let { normalizePackageName(it) }),
+      PYTHON_PACKAGES_IN_EDITOR.metric(PACKAGE_FIELD.with(packageUsage.name?.let { PyPackageName.normalizePackageName(it) }),
                                        PACKAGE_VERSION_FIELD.with(packageUsage.version),
                                        INTERPRETER_TYPE.with(packageUsage.interpreterTypeValue),
                                        EXECUTION_TYPE.with(packageUsage.targetTypeValue),
@@ -31,7 +31,7 @@ class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages.in.editor", 5)
+  private val GROUP = EventLogGroup("python.packages.in.editor", 6)
   private val HAS_SDK = EventFields.Boolean("has_sdk")
   private val PYTHON_PACKAGES_IN_EDITOR = GROUP.registerVarargEvent("python.packages.used",
                                                                     PACKAGE_FIELD,

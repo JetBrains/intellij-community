@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.SoftlyKillableProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
@@ -22,9 +23,10 @@ import java.nio.channels.Pipe;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemProcessHandler extends BuildProcessHandler implements Disposable {
+public class ExternalSystemProcessHandler extends BuildProcessHandler implements SoftlyKillableProcessHandler, Disposable {
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemProcessHandler.class);
+  static final Key<Boolean> SOFT_PROCESS_KILL_ENABLED_KEY = Key.create("SOFT_PROCESS_KILL_ENABLED_KEY");
 
   private final @NotNull String myExecutionName;
   private @Nullable ExternalSystemTask myTask;
@@ -85,6 +87,12 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     else {
       super.notifyTextAvailable(text, outputType);
     }
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public boolean shouldKillProcessSoftly() {
+    return myDataHolder != null && myDataHolder.getUserData(SOFT_PROCESS_KILL_ENABLED_KEY) == Boolean.TRUE;
   }
 
   @Override

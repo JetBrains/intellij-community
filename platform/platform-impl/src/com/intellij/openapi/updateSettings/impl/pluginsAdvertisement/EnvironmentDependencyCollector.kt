@@ -5,10 +5,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.ide.plugins.DependencyInformation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -16,6 +16,8 @@ import java.nio.file.Path
 import kotlin.io.path.isExecutable
 import kotlin.io.path.isRegularFile
 
+@ApiStatus.Internal
+@IntellijInternalApi
 internal class EnvironmentDependencyCollector : DependencyCollector {
   private val ALLOWED_EXECUTABLES: List<String> = listOf(
     "docker",
@@ -38,11 +40,12 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
   }
 }
 
+@IntellijInternalApi
 @ApiStatus.Internal
 object EnvironmentScanner {
   fun getPathNames(): List<Path> {
     val fs = FileSystems.getDefault()
-    val pathNames = EnvironmentUtil.getEnvironmentMap()["PATH"]?.split(File.pathSeparatorChar)
+    val pathNames = EnvironmentUtil.getEnvironmentMap()["PATH"]?.split(fs.separator)
       ?.mapNotNull {
         try {
           fs.getPath(it)

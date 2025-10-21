@@ -8,6 +8,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -172,6 +173,12 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `resolve a delegate in exec Closure`(gradleVersion: GradleVersion, decorator: String) {
+    assumeThatGradleIsOlderThan(gradleVersion, "9.0") {
+      """
+      Project.exec and Project.javaexec were removed in Gradle 9.0.
+      See gradle/pull/33141 for more information. 
+      """.trimIndent()
+    }
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "exec{<caret>}") {
         closureDelegateTest(GRADLE_PROCESS_EXEC_SPEC, DELEGATE_FIRST)

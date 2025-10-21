@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -72,11 +72,12 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                            @NotNull PsiClass instantiatedClass,
                                            @Nullable PsiMethod constructor,
                                            @Nullable UClass subclassDeclaration) {
-    if (constructor != null) {
-      if (JavaDeprecationUtils.isDeprecated(constructor, sourceNode.getSourcePsi()) && myForRemoval == isForRemovalAttributeSet(constructor)) {
-        checkTargetDeprecated(sourceNode, constructor);
-        return;
-      }
+    if (constructor != null
+        && !constructor.isDefaultConstructor()
+        && JavaDeprecationUtils.isDeprecated(constructor, sourceNode.getSourcePsi())
+        && myForRemoval == isForRemovalAttributeSet(constructor)) {
+      checkTargetDeprecated(sourceNode, constructor);
+      return;
     }
 
     if (isDefaultConstructorDeprecated(instantiatedClass)) {
@@ -85,8 +86,8 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
         return;
       }
       String description = JavaErrorBundle.message(myForRemoval
-                                                     ? "marked.for.removal.default.constructor"
-                                                     : "deprecated.default.constructor",
+                                                   ? "marked.for.removal.default.constructor"
+                                                   : "deprecated.default.constructor",
                                                    instantiatedClass.getQualifiedName());
 
       myHolder.registerProblem(elementToHighlight, description);

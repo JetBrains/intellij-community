@@ -698,11 +698,6 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     return if (StartupUiUtil.isDarkTheme) "/general/mdot-white.png" else "/general/mdot.png"
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.")
-  fun getBorderColor(@Suppress("unused") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Tooltip.borderColor()
-
   fun isOwnBorderAllowed(awtTooltip: Boolean): Boolean = !awtTooltip
 
   fun isOpaqueAllowed(awtTooltip: Boolean): Boolean = !awtTooltip

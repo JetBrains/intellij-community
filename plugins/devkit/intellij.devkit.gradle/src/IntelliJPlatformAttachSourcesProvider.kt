@@ -194,8 +194,8 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         fun downloadAndAttach(artifactNotation: String, onFailure: () -> Unit) {
           GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, externalProjectPath)
             .whenComplete { path, error ->
-              when (error) {
-                null -> attachSources(path, orderEntries) { executionResult.setDone() }
+              when {
+                error == null && path != null -> attachSources(path, orderEntries) { executionResult.setDone() }
                 else -> onFailure()
               }
             }

@@ -9,9 +9,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class MavenAnnotationProcessorTargetType extends ModuleBasedBuildTargetType<MavenAnnotationProcessorTarget> {
   public static final MavenAnnotationProcessorTargetType PRODUCTION = new MavenAnnotationProcessorTargetType("maven-annotations-production", false);
@@ -39,15 +37,11 @@ public final class MavenAnnotationProcessorTargetType extends ModuleBasedBuildTa
 
   @Override
   public @NotNull BuildTargetLoader<MavenAnnotationProcessorTarget> createLoader(@NotNull JpsModel model) {
-    final Map<String, JpsModule> modules = new HashMap<>();
-    for (JpsModule module : model.getProject().getModules()) {
-      modules.put(module.getName(), module);
-    }
     return new BuildTargetLoader<MavenAnnotationProcessorTarget>() {
 
       @Override
       public @Nullable MavenAnnotationProcessorTarget createTarget(@NotNull String targetId) {
-        JpsModule module = modules.get(targetId);
+        JpsModule module = model.getProject().findModuleByName(targetId);
         return module == null ? null : new MavenAnnotationProcessorTarget(MavenAnnotationProcessorTargetType.this, module);
       }
     };

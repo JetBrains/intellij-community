@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +24,9 @@ public interface PyTypeCheckerExtension {
                                            @NotNull TypeEvalContext context,
                                            @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
     Map<PyGenericType, PyType> legacyTypeVarSubs = new HashMap<>();
-    for (Map.Entry<PyTypeVarType, PyType> entry : substitutions.getTypeVars().entrySet()) {
+    for (Map.Entry<PyTypeVarType, Ref<PyType>> entry : substitutions.getTypeVars().entrySet()) {
       if (entry.getKey() instanceof PyGenericType legacyTypeVar) {
-        legacyTypeVarSubs.put(legacyTypeVar, entry.getValue());
+        legacyTypeVarSubs.put(legacyTypeVar, Ref.deref(entry.getValue()));
       }
     }
     return match(expected, actual, context, legacyTypeVarSubs);

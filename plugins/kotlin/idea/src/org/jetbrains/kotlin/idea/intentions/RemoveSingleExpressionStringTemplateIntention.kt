@@ -24,14 +24,14 @@ class RemoveSingleExpressionStringTemplateInspection : IntentionBasedInspection<
         } ?: false
     }
 ) {
-    override val problemText = KotlinBundle.message("redundant.string.template")
+    override val problemText: String = KotlinBundle.message("redundant.string.template")
 }
 
 class RemoveSingleExpressionStringTemplateIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("remove.single.expression.string.template")
+    KotlinBundle.messagePointer("remove.single.expression.string.template")
 ) {
-    override fun isApplicableTo(element: KtStringTemplateExpression) = element.singleExpressionOrNull() != null
+    override fun isApplicableTo(element: KtStringTemplateExpression): Boolean = element.singleExpressionOrNull() != null
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {
         val expression = element.singleExpressionOrNull() ?: return

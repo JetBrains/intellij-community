@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
-class KotlinGoToImplementationCommandCompletionProvider : AbstractGoToImplementationCompletionCommandProvider() {
+internal class KotlinGoToImplementationCommandCompletionProvider : AbstractGoToImplementationCompletionCommandProvider() {
     override fun canGoToImplementation(element: PsiElement, offset: Int): Boolean {
         if (element.tokenType != KtTokens.IDENTIFIER) return false
         val member = element.parentOfType<KtNamedDeclaration>()

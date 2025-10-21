@@ -190,7 +190,7 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof TooltipProvider other && Arrays.equals(actions, other.actions);
+      return obj instanceof TooltipProvider(AnAction[] otherActions) && Arrays.equals(actions, otherActions);
     }
   }
 }

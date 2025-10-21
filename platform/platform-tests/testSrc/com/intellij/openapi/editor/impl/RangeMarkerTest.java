@@ -996,7 +996,6 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     deleteString(document, 4, 5);
     DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerImpl.getInstanceEx(getProject());
     myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
-    myDaemonCodeAnalyzer.getFileStatusMap().disposeDirtyDocumentRangeStorage(document);
     assertTrue(m1.isValid());
     assertTrue(m2.isValid());
     assertTrue(m3.isValid());
@@ -1391,9 +1390,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
   }
 
-  public void testRMInsertPerformance() {
+  public void testRMInsertDisposePerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
-    int N = 100_000;
+    int N = 1_000_000;
     List<RangeMarker> markers = new ArrayList<>(N);
     Benchmark.newBenchmark("createRM", ()->{
       for (int i = 0; i < N; i++) {
@@ -1463,7 +1462,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document = null;
     TestTimeOut t = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
     GCUtil.tryGcSoftlyReachableObjects(() -> {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       return ref.get() == null || t.isTimedOut();
     });
     Document d = ref.get();

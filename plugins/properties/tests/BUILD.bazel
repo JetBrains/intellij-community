@@ -1,18 +1,20 @@
 ### auto-generated section `build intellij.properties.tests` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.properties.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
@@ -20,6 +22,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/platform-api:ide",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
@@ -31,6 +34,7 @@ jvm_library(
     "//platform/util/diff",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//java/openapi:java",
     "//xml/impl",
     "//plugins/properties:properties-backend",
@@ -45,12 +49,17 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/diff-impl",
     "//xml/xml-psi-api:psi",
-    "@lib//:fastutil-min",
-  ]
+    "//libraries/fastutil",
+  ],
+  exports = ["//plugins/properties:properties-backend"]
 )
+### auto-generated section `build intellij.properties.tests` end
 
-jvm_test(
+### auto-generated section `test intellij.properties.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.properties.tests` end
+### auto-generated section `test intellij.properties.tests` end

@@ -8,20 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public final class PySyntaxHighlighterFactory extends PySyntaxHighlighterFactoryBase {
-  @Override
-  protected @NotNull LanguageLevel getLanguageLevel(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
-    return project != null && virtualFile != null ?
-           PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(project, virtualFile) :
-           LanguageLevel.getDefault();
-  }
-
   @Override
   protected boolean useConsoleLexer(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
     if (virtualFile == null || project == null || virtualFile instanceof VirtualFileWindow) {

@@ -8,6 +8,13 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
+import org.jetbrains.kotlin.analysis.api.components.asSignature
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.scope
+import org.jetbrains.kotlin.analysis.api.components.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -16,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
@@ -26,6 +34,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositio
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtFile
 
 object KtOutsideTowerScopeKinds {
 
@@ -38,14 +47,14 @@ object KtOutsideTowerScopeKinds {
     val StaticMemberScope: KaScopeKinds.StaticMemberScope = KaScopeKinds.StaticMemberScope(INDEX_IN_TOWER)
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KotlinRawPositionContext.resolveReceiverToSymbols(): Sequence<KaSymbol> =
     when (this) {
         is KotlinNameReferencePositionContext -> resolveReceiverToSymbols()
         else -> sequenceOf(rootPackageSymbol)
     }
 
-context(KaSession)
+context(_: KaSession)
 internal fun KotlinNameReferencePositionContext.resolveReceiverToSymbols(): Sequence<KaSymbol> =
     when (val explicitReceiver = explicitReceiver) {
         null -> sequenceOf(rootPackageSymbol)
@@ -62,7 +71,7 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
         ""
     }
 
-context(KaSession)
+context(_: KaSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     parameters: KotlinFirCompletionParameters,
     positionContext: KotlinNameReferencePositionContext,
@@ -109,7 +118,7 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsForType(
     parameters: KotlinFirCompletionParameters,
@@ -149,7 +158,7 @@ internal fun collectNonExtensionsForType(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
     positionContext: KotlinNameReferencePositionContext,
@@ -177,7 +186,7 @@ private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
  * Returns non-extensions from [KtScope]. Resulting callables do not include synthetic Java properties and constructors of inner classes.
  * To get them use [collectNonExtensionsForType].
  */
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsFromScope(
     parameters: KotlinFirCompletionParameters,
@@ -193,7 +202,7 @@ internal fun collectNonExtensionsFromScope(
         filterNot { isEnumEntriesProperty(it.symbol) }
     }
 
-context(KaSession)
+context(_: KaSession)
 private fun Sequence<KaCallableSignature<*>>.filterNonExtensions(
     positionContext: KotlinNameReferencePositionContext,
     visibilityChecker: CompletionVisibilityChecker,
@@ -216,7 +225,7 @@ private fun ((Name) -> Boolean).getAndSetAware(): (Name) -> Boolean = { property
     ).any(this)
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
     return symbol is KaPropertySymbol &&
             symbol.isStatic &&
@@ -231,3 +240,13 @@ private fun LanguageVersionSettings.excludeSyntheticJavaProperties(
     positionContext: KotlinNameReferencePositionContext,
 ): Boolean = positionContext is KDocNameReferencePositionContext
         || positionContext is KotlinCallableReferencePositionContext && !supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
+
+/**
+ * Checks if the scope contains an alias for the [symbol] and returns the name of the alias.
+ */
+context(_: KaSession)
+internal fun KtFile.getAliasNameIfExists(symbol: KaSymbol): Name? {
+    val fqName = symbol.getFqNameIfPackageOrNonLocal() ?: return null
+    // TODO: It's possible to optimize this by using a map for the aliases if it turns out to be a bottleneck.
+    return findAliasByFqName(fqName)?.name?.let { Name.identifier(it) }
+}

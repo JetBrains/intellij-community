@@ -194,7 +194,7 @@ public fun TabStrip(
     }
 }
 
-@Deprecated("Use the TabStrip function with a interactionSource parameter")
+@Deprecated("Use the TabStrip function with a interactionSource parameter", level = DeprecationLevel.HIDDEN)
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable

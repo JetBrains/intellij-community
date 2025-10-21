@@ -27,7 +27,7 @@ object ChangeListRemoveConfirmation {
   fun checkCanDeleteChangelist(project: Project,
                                list: LocalChangeList,
                                explicitly: Boolean): ThreeState {
-    val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    val activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()
 
     var confirmationAsked = false
     var removeVetoed = false

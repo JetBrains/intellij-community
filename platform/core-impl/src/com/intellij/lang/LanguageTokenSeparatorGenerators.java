@@ -4,7 +4,6 @@ package com.intellij.lang;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,12 +42,12 @@ public final class LanguageTokenSeparatorGenerators extends LanguageExtension<To
       return null;
     }
 
-    protected @NotNull LeafElement createNewLine(@Nullable ASTNode left, @NotNull ASTNode right) {
+    protected @NotNull ASTNode createNewLine(@Nullable ASTNode left, @NotNull ASTNode right) {
       PsiManager manager = right.getTreeParent().getPsi().getManager();
       return Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n", 0, 1, null, manager);
     }
 
-    protected @NotNull LeafElement createWhiteSpace(@Nullable ASTNode left, @NotNull ASTNode right) {
+    protected @NotNull ASTNode createWhiteSpace(@Nullable ASTNode left, @NotNull ASTNode right) {
       PsiManager manager = right.getTreeParent().getPsi().getManager();
       return Factory.createSingleLeafElement(TokenType.WHITE_SPACE, " ", 0, 1, null, manager);
     }

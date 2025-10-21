@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiWhiteSpace
@@ -17,11 +18,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import java.util.function.Supplier
 
 internal abstract class AbstractChopListIntention<TList : KtElement, TElement : KtElement>(
     listClass: Class<TList>,
     private val elementClass: Class<TElement>,
-    textGetter: () -> String
+    textGetter: Supplier<@IntentionName String>
 ) : SelfTargetingIntention<TList>(listClass, textGetter) {
     override fun visitTargetTypeOnlyOnce() = true
 
@@ -93,7 +95,7 @@ internal abstract class AbstractChopListIntention<TList : KtElement, TElement : 
 internal class ChopParameterListIntention : AbstractChopListIntention<KtParameterList, KtParameter>(
     KtParameterList::class.java,
     KtParameter::class.java,
-    KotlinBundle.lazyMessage("put.parameters.on.separate.lines")
+    KotlinBundle.messagePointer("put.parameters.on.separate.lines")
 ) {
     override fun isApplicableTo(element: KtParameterList, caretOffset: Int): Boolean {
         if (element.parent is KtFunctionLiteral) return false
@@ -112,7 +114,7 @@ internal class ChopParameterListIntention : AbstractChopListIntention<KtParamete
 internal class ChopArgumentListIntention : AbstractChopListIntention<KtValueArgumentList, KtValueArgument>(
     KtValueArgumentList::class.java,
     KtValueArgument::class.java,
-    KotlinBundle.lazyMessage("put.arguments.on.separate.lines")
+    KotlinBundle.messagePointer("put.arguments.on.separate.lines")
 ) {
     override fun leftParOnNewLine(commonCodeStyleSettings: CommonCodeStyleSettings): Boolean {
         return commonCodeStyleSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE

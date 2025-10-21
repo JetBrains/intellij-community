@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core
 
+import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 
@@ -23,9 +23,17 @@ class VariableWithLocation(
     val variable: LocalVariable,
     val location: Location,
 ) : Comparable<VariableWithLocation> {
-    override fun compareTo(other: VariableWithLocation): Int =
-        location.compareTo(other.location).takeIf { it != 0 }
-            ?: name.compareTo(other.name)
+    override fun compareTo(other: VariableWithLocation): Int {
+        val locationComparison = location compareTo other.location
+        if (locationComparison != 0) return locationComparison
+        if (isInlineMarkerVariable && other.isInlineMarkerVariable) {
+            // When comparing marker variables and location is the same, make the inline function variable come first.
+            // $i$f$foo should come before $i$a$-foo because lambda is included into the function call.
+            val inlineMarkerComparison = name.isInlineLambdaMarkerVariableName compareTo other.name.isInlineLambdaMarkerVariableName
+            if (inlineMarkerComparison != 0) return inlineMarkerComparison
+        }
+        return name compareTo other.name
+    }
 
     override fun equals(other: Any?): Boolean =
         (other is VariableWithLocation) && (this compareTo other == 0)
@@ -35,6 +43,9 @@ class VariableWithLocation(
 
     val name: String
         get() = variable.name()
+
+    private val isInlineMarkerVariable: Boolean
+        get() = name.isInlineFunctionMarkerVariableName || name.isInlineLambdaMarkerVariableName
 
     override fun toString(): String = "$name at $location"
 }

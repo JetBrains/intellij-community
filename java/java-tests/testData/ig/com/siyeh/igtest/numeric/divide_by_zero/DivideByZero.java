@@ -54,4 +54,16 @@ public class DivideByZero {
       }
     }
   }
+
+  void testMayBe(String[] args) {
+    int x = 0;
+    if (args.length==1) x = 100;
+    System.out.println(10 / <warning descr="Possible division by zero">x</warning>);
+  }
+
+  void testMayBe2(String[] args) {
+    int x = 0;
+    if (args.length==1) x = 1;
+    System.out.println(10 / <warning descr="Possible division by zero">x</warning>);
+  }
 }

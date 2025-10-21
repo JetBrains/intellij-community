@@ -90,7 +90,7 @@ internal class IncomingChangesViewProvider(private val project: Project) : Chang
 
   internal class VisibilityPredicate : Predicate<Project> {
     override fun test(project: Project): Boolean {
-      return ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isIncomingChangesAvailable(it) }
+      return ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().any { isIncomingChangesAvailable(it) }
     }
   }
 

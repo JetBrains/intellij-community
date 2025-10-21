@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import com.intellij.openapi.util.Ref
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KaTypeRelationChecker
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -41,7 +42,7 @@ internal class ShadowedCallablesFilter {
      *  invoked. For example, `kotlin.text.String()` is not shortened by reference shortener, because shortened version `String()`
      *  is resolved to `kotlin.String()`. That's why we can't rely on reference shortener and need to use [ImportStrategy.DoNothing].
      */
-    context(KaSession)
+    context(_: KaSession)
     fun excludeFromCompletion(
         callableSignature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
@@ -89,7 +90,7 @@ internal class ShadowedCallablesFilter {
         return FilterResult(excludeFromCompletion)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun processSignatureConsideringOptions(
         fullSimplifiedSignature: SimplifiedSignature,
         simplifiedSignature: SimplifiedSignature,
@@ -149,7 +150,7 @@ internal class ShadowedCallablesFilter {
          *
          * Also, extensions are sorted by their kind: a function variable can be shadowed by an extension function.
          */
-        context(KaSession)
+        context(_: KaSession)
         fun sortExtensions(
             extensions: Collection<ApplicableExtension>,
             receiversFromContext: List<KaType>
@@ -196,7 +197,7 @@ internal class ShadowedCallablesFilter {
             private data class NameForLocal(val name: Name) : ReceiverId()
 
             companion object {
-                context(KaSession)
+                context(_: KaSession)
                 fun create(type: KaType): ReceiverId? {
                     val expandedClassSymbol = type.expandedSymbol ?: return null
                     val name = expandedClassSymbol.name ?: return null
@@ -229,8 +230,7 @@ private sealed class SimplifiedSignature {
     abstract val containerFqName: FqName?
 
     companion object {
-
-        context(KaSymbolProvider)
+        context(_: KaSession)
         fun KaCallableSymbol.getContainerFqName(): FqName? {
             val callableId = callableId ?: return null
             return when (location) {
@@ -253,10 +253,8 @@ private data class VariableLikeSimplifiedSignature(
     override val name: Name,
     override val containerFqName: FqName?,
 ) : SimplifiedSignature() {
-
     companion object {
-
-        context(KaSymbolProvider)
+        context(_: KaSession)
         fun create(
             signature: KaVariableSignature<*>,
         ) = VariableLikeSimplifiedSignature(
@@ -272,12 +270,12 @@ private class FunctionLikeSimplifiedSignature(
     private val requiredTypeArgumentsCount: Int,
     private val valueParameterTypes: Lazy<List<KaType>>,
     private val varargValueParameterIndices: List<Int>,
-    private val typeRelationChecker: KaTypeRelationChecker,
+    private val kaSession: KaSession,
 ) : SimplifiedSignature() {
 
     companion object {
 
-        context(KaSession)
+        context(session: KaSession)
         fun create(
             signature: KaVariableSignature<*>,
         ) = FunctionLikeSimplifiedSignature(
@@ -290,10 +288,10 @@ private class FunctionLikeSimplifiedSignature(
                 functionalType.parameterTypes
             },
             varargValueParameterIndices = emptyList(),
-            typeRelationChecker = this@KaSession,
+            kaSession = session,
         )
 
-        context(KaSession)
+        context(session: KaSession)
         fun create(
             signature: KaFunctionSignature<*>,
             requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
@@ -311,7 +309,7 @@ private class FunctionLikeSimplifiedSignature(
                             valueParameters.map { it.returnType }
                 },
                 varargValueParameterIndices = valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
-                typeRelationChecker = this@KaSession,
+                kaSession = session,
             )
         }
     }
@@ -322,7 +320,7 @@ private class FunctionLikeSimplifiedSignature(
         requiredTypeArgumentsCount = requiredTypeArgumentsCount,
         valueParameterTypes = valueParameterTypes,
         varargValueParameterIndices = varargValueParameterIndices,
-        typeRelationChecker = typeRelationChecker,
+        kaSession = kaSession,
     )
 
     override fun hashCode(): Int {
@@ -342,7 +340,7 @@ private class FunctionLikeSimplifiedSignature(
                 && containerFqName == other.containerFqName
                 && requiredTypeArgumentsCount == other.requiredTypeArgumentsCount
                 && varargValueParameterIndices == other.varargValueParameterIndices
-                && with(typeRelationChecker) {
+                && with(kaSession) {
             valueParameterTypes.value
                 .all(other.valueParameterTypes.value) { (left, right) ->
                     left.semanticallyEquals(right)

@@ -20,6 +20,7 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang3.RandomStringUtils
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -32,7 +33,9 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   override fun setUp() {
     super.setUp()
     VcsConfiguration.StandardConfirmation.ADD.doNothing()
-    repo.untrackedFilesHolder.createWaiter().waitFor()
+    runBlocking {
+      repo.untrackedFilesHolder.awaitNotBusy()
+    }
     _tracker = object : GitStageTracker(project) {
       override fun isStagingAreaAvailable() = true
     }
@@ -49,7 +52,9 @@ class GitStageTrackerTest : GitSingleRepoTest() {
       val t = _tracker
       _tracker = null
       t?.let { Disposer.dispose(it) }
-      repo.untrackedFilesHolder.createWaiter().waitFor()
+      runBlocking {
+        repo.untrackedFilesHolder.awaitNotBusy()
+      }
     }
     catch (e: Throwable) {
       addSuppressedException(e)

@@ -1,3 +1,3 @@
 class MyType(type):
-    def __instancecheck__(self, __instance):
-        <selection>return super().__instancecheck__(__instance)</selection>
+    def __instancecheck__(self, instance, /):
+        <selection>return super().__instancecheck__(instance)</selection>

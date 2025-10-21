@@ -6,9 +6,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.AutomaticModuleUnloader
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -358,7 +358,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
           moduleFiles.forEach {
-            moduleManager.newModule(it.toAbsolutePath().toString(), StdModuleTypes.JAVA.id)
+            moduleManager.newModule(it.toAbsolutePath().toString(), JavaModuleType.getModuleType().id)
           }
         }
       }

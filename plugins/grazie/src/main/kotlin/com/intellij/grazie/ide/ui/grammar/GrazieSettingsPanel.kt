@@ -3,34 +3,34 @@ package com.intellij.grazie.ide.ui.grammar
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.dsl.msg
+import com.intellij.grazie.ide.ui.configurable.StyleConfigurable
 import com.intellij.grazie.ide.ui.grammar.tabs.exceptions.GrazieExceptionsTab
-import com.intellij.grazie.ide.ui.grammar.tabs.rules.GrazieRulesTab
 import com.intellij.grazie.ide.ui.grammar.tabs.scope.GrazieScopeTab
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 
 class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
   private val scope = GrazieScopeTab()
-  internal val rules = GrazieRulesTab()
+  internal val rules = StyleConfigurable()
   private val exceptions = GrazieExceptionsTab()
 
-  override fun isModified(settings: GrazieConfig): Boolean = rules.isModified(settings.state) ||
+  override fun isModified(settings: GrazieConfig): Boolean = rules.isModified ||
                                                              scope.isModified(settings.state) ||
                                                              exceptions.isModified(settings.state)
 
   override fun apply(settings: GrazieConfig) {
+    rules.apply()
     GrazieConfig.update { state ->
-      exceptions.apply(scope.apply(rules.apply(state)))
+      exceptions.apply(scope.apply(state))
     }
-
-    rules.reset(settings.state)
   }
 
   override fun reset(settings: GrazieConfig) {
-    rules.reset(settings.state)
+    rules.reset()
     scope.reset(settings.state)
     exceptions.reset(settings.state)
   }
@@ -44,6 +44,7 @@ class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
 
   override fun getComponent(): JComponent = component
 
-  override fun dispose() = rules.dispose()
-
+  override fun dispose() {
+    Disposer.dispose(rules)
+  }
 }

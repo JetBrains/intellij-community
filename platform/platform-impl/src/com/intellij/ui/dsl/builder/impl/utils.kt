@@ -170,16 +170,6 @@ internal fun createLabel(@NlsContexts.Label text: String): JLabel {
 }
 
 private fun getLabelComponentFor(component: JComponent): JComponent? {
-  val labelFor = component.getClientProperty(DslComponentProperty.LABEL_FOR)
-  if (labelFor != null) {
-    if (labelFor is JComponent) {
-      return labelFor
-    }
-    else {
-      throw UiDslException("LABEL_FOR must be a JComponent: ${labelFor::class.java.name}")
-    }
-  }
-
   if (ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
     return component
   }

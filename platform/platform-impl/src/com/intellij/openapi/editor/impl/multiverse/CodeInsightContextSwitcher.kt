@@ -314,7 +314,7 @@ private class CodeInsightContextSwitcher(
 
       readAndEdtWriteAction {
         val contextManager = CodeInsightContextManager.getInstance(project)
-        val validContexts = contextManager.getCodeInsightContexts(editor.virtualFile)
+        val validContexts = contextManager.getCodeInsightContexts(editor.virtualFile!!)
         val context = presentation.context
         if (context in validContexts) {
           writeAction {

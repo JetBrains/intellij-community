@@ -127,6 +127,10 @@ fun GitRepository.last() = cd { last(project) }
 fun GitPlatformTest.last() = last(project)
 private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
+fun GitRepository.getHash(depth: Int) = cd { getHash(project, depth) }
+fun GitPlatformTest.getHash(depth: Int) = getHash(project, depth)
+private fun getHash(project: Project, depth: Int) = git(project, "log -1 --skip=$depth --pretty=%H")
+
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
 private fun lastMessage(project: Project) = message(project, "HEAD")

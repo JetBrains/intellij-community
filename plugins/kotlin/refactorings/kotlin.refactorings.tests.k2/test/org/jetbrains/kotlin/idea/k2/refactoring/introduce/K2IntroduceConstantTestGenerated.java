@@ -290,6 +290,11 @@ public abstract class K2IntroduceConstantTestGenerated extends AbstractK2Introdu
             KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
         }
 
+        @TestMetadata("extractFromAnnotationArg.kt")
+        public void testExtractFromAnnotationArg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceConstant/extractFromAnnotationArg.kt");
+        }
+
         @TestMetadata("extractInteger.kt")
         public void testExtractInteger() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceConstant/extractInteger.kt");

@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.ide.projectWizard.generators
 
-import com.intellij.ide.projectWizard.JDK_INTENT_KEY
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.icon
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shortcut
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRenderOnboardingTips
@@ -13,10 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
-import com.intellij.openapi.util.removeUserData
 import com.intellij.pom.java.JavaFeature
-import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -28,21 +25,16 @@ private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "Sa
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "SampleCodeWithRenderedOnboardingTipsInstanceMain.java"
 
 object AssetsJava {
-
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("The onboarding tips generated unconditionally")
   fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
     getJavaSampleTemplateName()
 
   @ApiStatus.Internal
-  fun getJavaSampleTemplateName(projectWizardStep: AssetsNewProjectWizardStep?): String {
-    val projectJdk = projectWizardStep?.context?.projectJdk
-    var javaVersion = (projectJdk?.sdkType as? JavaSdkImpl)?.getJavaVersion(projectJdk)?.feature ?: 0
-    if (javaVersion == 0) {
-      val jdkIntentVersion = projectWizardStep?.data?.removeUserData(JDK_INTENT_KEY)
-      javaVersion = JavaVersion.tryParse(jdkIntentVersion)?.feature ?: 0
-    }
+  fun getJavaSampleTemplateName(intent: ProjectWizardJdkIntent?): String {
     val minimumLevel = JavaFeature.JAVA_LANG_IO.minimumLevel
-    if (javaVersion >= minimumLevel.feature()) {
+    if (intent != null && intent.isAtLeast(minimumLevel.feature(), true)) {
       //use compact source file
       return when (shouldRenderOnboardingTips()) {
         true -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN
@@ -75,11 +67,14 @@ object AssetsJava {
   @ApiStatus.Internal
   fun prepareJavaSampleOnboardingTips(project: Project, fileName: String) {
     AssetsOnboardingTips.prepareOnboardingTips(project, fileName) { charSequence ->
-      charSequence.indexOf("System.out.println").takeIf { it >= 0 }
+      charSequence.indexOf("System.out.println").takeIf { it >= 0 } ?:
+      charSequence.indexOf("IO.println(\"i = \"").takeIf { it >= 0 }
     }
   }
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips generated unconditionally")
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
   val templateName = AssetsJava.getJavaSampleTemplateName()
@@ -87,6 +82,8 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, p
   withJavaSampleCodeAsset(sourcePath, packageName, templateName)
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips generated unconditionally")
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourcePath: String, templateName: String, packageName: String?, generateOnboardingTips: Boolean): Unit =
   withJavaSampleCodeAsset(sourcePath, packageName, templateName)
@@ -96,11 +93,13 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourceRootPath: String,
   packageName: String? = null,
   fileName: String = DEFAULT_FILE_NAME,
-  templateName: String = AssetsJava.getJavaSampleTemplateName(this),
+  templateName: String? = null,
+  jdkIntent: ProjectWizardJdkIntent? = null,
 ) {
+  val currentTemplate = templateName ?: AssetsJava.getJavaSampleTemplateName(jdkIntent)
   val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, fileName)
   AssetsJava.prepareJavaSampleOnboardingTips(project, fileName)
-  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
+  withJavaSampleCodeAsset(sourcePath, packageName, currentTemplate)
 }
 
 private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
@@ -145,6 +144,8 @@ private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   addFilesToOpen(sourcePath)
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips are prepared in the withJavaSampleCodeAsset function")
 fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project): Unit =
   AssetsJava.prepareJavaSampleOnboardingTips(project, DEFAULT_FILE_NAME)

@@ -18,12 +18,11 @@ import java.util.function.Supplier
 import javax.management.JMException
 import javax.management.ObjectName
 
-
 @Service(Service.Level.APP)
 class InvokerService {
   companion object {
     @JvmStatic
-    fun getInstance(): InvokerService = ApplicationManager.getApplication().getService<InvokerService>(InvokerService::class.java)
+    fun getInstance(): InvokerService = ApplicationManager.getApplication().getService(InvokerService::class.java)
 
     private const val BACKEND_JMX_PORT_PROPERTY = "rdct.tests.backendJmxPort"
     private const val BACKEND_JMX_HOST_PROPERTY = "rdct.tests.backendJmxHost"
@@ -34,7 +33,7 @@ class InvokerService {
 
   private var myInvoker: InvokerMBean? = null
 
-  val rdTarget = when {
+  val rdTarget: RdTarget = when {
     PlatformUtils.isJetBrainsClient() -> RdTarget.FRONTEND
     AppMode.isRemoteDevHost() -> RdTarget.BACKEND
     else -> RdTarget.DEFAULT

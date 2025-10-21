@@ -11,11 +11,13 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertConcurrentPromises
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.ClassRule
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -360,22 +362,27 @@ class AsyncPromiseTest {
         return Action.NONE
       }
     }) {
+      val latch = CountDownLatch(1)
       val promise = ReadAction.nonBlocking {
+        latch.await() // do not throw before the handler is installed
         throw UnsupportedOperationException()
       }
         .submit(AppExecutorUtil.getAppExecutorService())
 
-      promise.onProcessed { }
+      val exceptPromise = promise.onProcessed { } // add exception handler
+      latch.countDown()
 
       var cause: Throwable? = null
       try {
-        promise.get(10, TimeUnit.SECONDS)
+        exceptPromise.get()
       }
       catch (e: Throwable) {
         cause = ExceptionUtil.getRootCause(e)
       }
 
       assertThat(cause).isInstanceOf(UnsupportedOperationException::class.java)
+
+      TimeoutUtil.sleep(1) // execute all handlers pushed to the future
       assertThat(loggedError.get()).isTrue()
     }
   }

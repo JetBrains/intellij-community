@@ -19,9 +19,11 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 fun createFrontendProcessHandler(
@@ -47,6 +49,8 @@ open class FrontendSessionProcessHandler(
   protected val cs: CoroutineScope = project.service<FrontendSessionProcessHandlerCoroutineScope>().cs.childScope("FrontendProcessHandler")
 
   protected val handlerId: ProcessHandlerId = processHandlerDto.processHandlerId
+
+  private val nativePidFuture: CompletableFuture<Long?>? by lazy { processHandlerDto.nativePid?.asCompletableFuture() }
 
   init {
     cs.launch(Dispatchers.EDT) {
@@ -130,6 +134,10 @@ open class FrontendSessionProcessHandler(
   override fun getProcessInput(): OutputStream? {
     LOG.error("getProcessInput shouldn't be used on the frontend")
     return null
+  }
+
+  override fun getNativePid(): CompletableFuture<Long?>? {
+    return nativePidFuture
   }
 }
 

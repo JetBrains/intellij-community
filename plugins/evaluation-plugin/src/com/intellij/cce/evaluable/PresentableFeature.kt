@@ -12,7 +12,6 @@ import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.openapi.progress.runBlockingCancellable
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -56,11 +55,9 @@ class LayoutManager(
 ) {
   private val globalLayout = AtomicReference(workspace.layout)
 
-  fun processData(f: suspend () -> PresentableEvalData): PresentableEvalData {
-    val data = runBlockingCancellable {
-      PresentableEvalData.augment(augmenters) {
-        f()
-      }
+  suspend fun processData(f: suspend () -> PresentableEvalData): PresentableEvalData {
+    val data = PresentableEvalData.augment(augmenters) {
+      f()
     }
     try {
       processData(data)

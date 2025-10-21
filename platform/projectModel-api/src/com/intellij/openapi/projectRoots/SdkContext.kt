@@ -4,8 +4,7 @@ package com.intellij.openapi.projectRoots
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import org.jetbrains.annotations.ApiStatus
 
-// todo IJPL-339 mark experimental
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface SdkContext : CodeInsightContext {
   fun getSdk(): Sdk?
 }

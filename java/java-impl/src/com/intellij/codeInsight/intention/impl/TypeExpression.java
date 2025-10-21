@@ -45,7 +45,7 @@ public class TypeExpression extends Expression {
     }
     if (myItems.isEmpty()) return null;
 
-    final PsiType type = myItems.iterator().next().getType();
+    final PsiType type = myItems.getFirst().getType();
     return type == null ? null : new PsiTypeResult(type, project) {
       @Override
       public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {

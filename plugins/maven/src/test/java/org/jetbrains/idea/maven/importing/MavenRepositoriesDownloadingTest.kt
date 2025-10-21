@@ -198,9 +198,14 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     createProjectPom(pom())
     doImportProjectsAsync(listOf(projectPom), false)
     TestCase.assertEquals(1, projectsManager.rootProjects.size)
-    val problemDescription = projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description
+    val problemDescription = projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description!!
     forMaven3 {
-      TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)", problemDescription)
+      if (mavenVersionIsOrMoreThan("3.9.1")) {
+        TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)", problemDescription)
+      }
+      else {
+        assertTrue(problemDescription , problemDescription.contains("Unauthorized"))
+      }
     }
     forMaven4 {
       TestCase.assertEquals("too many authentication attempts. Limit: 3", problemDescription)

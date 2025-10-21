@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
-    <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.logging" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.sonatype.nexus:nexus-indexer-artifact:1.0.1" type="repository">
         <properties maven-id="org.sonatype.nexus:nexus-indexer-artifact:1.0.1">

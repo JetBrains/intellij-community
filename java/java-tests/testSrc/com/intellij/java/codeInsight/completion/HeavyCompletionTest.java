@@ -11,8 +11,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -113,7 +113,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   @NeedsIndex.Full
   public void testQualifyInaccessibleClassName() throws Exception {
-    PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "second", myFixture.getTempDirFixture().findOrCreateDir("second"));
+    PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "second", myFixture.getTempDirFixture().findOrCreateDir("second"));
     myFixture.addFileToProject("second/foo/bar/AxBxCxDxEx.java", "package foo.bar; class AxBxCxDxEx {}");
 
     myFixture.configureByText("a.java", "class Main { ABCDE<caret> }");
@@ -204,7 +204,7 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable());
 
     Module anotherModule =
-      PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "another", myFixture.getTempDirFixture().findOrCreateDir("another"));
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "another", myFixture.getTempDirFixture().findOrCreateDir("another"));
     ModuleRootModificationUtil.setModuleSdk(anotherModule, IdeaTestUtil.getMockJdk17());
     Sdk jdk14 = IdeaTestUtil.getMockJdk14();
     WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk14, getTestRootDisposable()));

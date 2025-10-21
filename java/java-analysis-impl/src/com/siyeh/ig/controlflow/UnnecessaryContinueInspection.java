@@ -51,7 +51,7 @@ public final class UnnecessaryContinueInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryContinueVisitor();
   }
 

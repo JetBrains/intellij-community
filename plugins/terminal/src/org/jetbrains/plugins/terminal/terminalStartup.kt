@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
@@ -11,13 +12,8 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
-import com.intellij.platform.eel.provider.utils.stderrString
-import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.utils.*
 import com.intellij.util.PathUtil
 import com.intellij.util.io.awaitExit
 import com.intellij.util.system.OS
@@ -30,7 +26,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import org.jetbrains.plugins.terminal.util.terminalApplicationScope
-import java.lang.ref.WeakReference
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.time.Duration
@@ -68,21 +63,20 @@ internal fun startProcess(
   envs: Map<String, String>,
   initialWorkingDirectory: Path,
   initialTermSize: TermSize,
-): Pair<PtyProcess, ShellProcessHolder> {
+): ShellProcessHolder {
   return runBlockingMaybeCancellable {
     val context = buildStartupEelContext(initialWorkingDirectory, command)
     val eelApi = context.eelDescriptor.toEelApi()
     val remoteCommand = convertCommandToRemote(eelApi, command)
     val workingDirectory = context.workingDirectoryProvider(eelApi)
     val process = doStartProcess(eelApi, remoteCommand, envs, workingDirectory, initialTermSize)
-    val ptyProcess = process.convertToJavaProcess() as PtyProcess
-    ptyProcess to ShellProcessHolder(process.pid, WeakReference(ptyProcess), eelApi)
+    ShellProcessHolder(process, eelApi)
   }
 }
 
 private suspend fun convertCommandToRemote(eelApi: EelApi, command: List<String>): List<String> {
   if (eelApi.descriptor != LocalEelDescriptor && isWslCommand(command)) {
-    val shell = eelApi.exec.fetchLoginShellEnvVariables()["SHELL"] ?: "/bin/sh"
+    val shell = eelApi.fetchMinimalEnvironmentVariables()["SHELL"] ?: "/bin/sh"
     return listOf(shell, LocalTerminalDirectRunner.LOGIN_CLI_OPTION, LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION)
   }
   return command
@@ -173,6 +167,20 @@ private fun getWslDistributionNameFromCommand(command: List<String>): String? {
 }
 
 @Throws(ExecuteProcessException::class)
+internal fun startLocalProcess(
+  command: List<String>,
+  envs: Map<String, String>,
+  workingDirectory: String,
+  initialTermSize: TermSize,
+): ShellProcessHolder {
+  return runBlockingMaybeCancellable {
+    val eelWorkingDirectory = EelPath.parse(workingDirectory, LocalEelDescriptor)
+    val eelProcess = doStartProcess(localEel, command, envs, eelWorkingDirectory, initialTermSize)
+    ShellProcessHolder(eelProcess, localEel)
+  }
+}
+
+@Throws(ExecuteProcessException::class)
 private suspend fun doStartProcess(
   eelApi: EelApi,
   command: List<String>,
@@ -185,34 +193,96 @@ private suspend fun doStartProcess(
     .env(envs)
     .workingDirectory(workingDirectory)
     .interactionOptions(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
+  @Suppress("checkedExceptions")
   return execOptions.eelIt()
 }
 
 internal fun shouldUseEelApi(): Boolean = Registry.`is`("terminal.use.EelApi", true)
 
+/**
+ * @return The environment variables of this EelApi.
+ * These environment variables should be non-interactive and non-login.
+ * Specifically, they should not include variables defined in shell initialization files
+ * such as ~/.bashrc, ~/.bash_profile, ~/.zshrc, or ~/.zprofile.
+ * Because shell configuration files are loaded during a shell startup and
+ * loading the same configuration file twice might break things. 
+ */
+internal suspend fun EelApi.fetchMinimalEnvironmentVariables(): Map<String, String> {
+  if (this.descriptor == LocalEelDescriptor) {
+    return System.getenv()
+  }
+  return when (val exec = this.exec) {
+    is EelExecPosixApi -> exec.environmentVariables().minimal().eelIt().await()
+    is EelExecWindowsApi -> exec.environmentVariables().eelIt().await()
+  }
+}
+
+internal fun fetchMinimalEnvironmentVariablesBlocking(eelDescriptor: EelDescriptor): Map<String, String> {
+  if (eelDescriptor == LocalEelDescriptor) {
+    return System.getenv()
+  }
+  return runBlockingMaybeCancellable {
+    eelDescriptor.toEelApi().fetchMinimalEnvironmentVariables()
+  } 
+}
+
+
 internal class ShellProcessHolder(
-  private val shellPid: EelApi.Pid,
-  private val ptyProcessRef: WeakReference<PtyProcess>,
+  eelProcess: EelProcess,
   private val eelApi: EelApi,
 ) {
   val isPosix: Boolean get() = eelApi.platform.isPosix
 
+  val ptyProcess: PtyProcess = eelProcess.convertToJavaProcess() as PtyProcess
+  private val shellPid: EelApi.Pid = eelProcess.pid
+
+  val descriptor: EelDescriptor get() = eelApi.descriptor
+
   fun terminatePosixShell() {
-    val ptyProcess = ptyProcessRef.get() ?: return
     terminalApplicationScope().launch(Dispatchers.IO) {
-      val killProcess = eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.value.toString()).eelIt()
-      val exitCode = withTimeoutOrNull(5.seconds) {
-        ptyProcess.awaitExit()
+      if (!ptyProcess.isAlive) {
+        log.debug { "Shell process ${processInfo(ptyProcess)} is already terminated" }
+        return@launch
       }
-      if (exitCode == null) {
+      log.debug { "Sending SIGHUP to shell process ${processInfo(ptyProcess)}" }
+      val killProcess = try {
+        eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.value.toString()).eelIt()
+      }
+      catch (e: ExecuteProcessException) {
+        log.warn("Unable to send SIGHUP to ${processInfo(ptyProcess)}", e)
+        return@launch
+      }
+      if (ptyProcess.awaitExit(5.seconds) == null) {
         val killProcessResult = withTimeoutOrNull(1.seconds) {
           killProcess.awaitProcessResult()
         }
-        log.info("${ptyProcess::class.java.simpleName}(pid:$shellPid) hasn't been terminated by SIGHUP, performing forceful termination. " +
-                 "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
-        ptyProcess.destroyForcibly()
+        if (ptyProcess.isAlive) {
+          log.info("Shell process ${processInfo(ptyProcess)} hasn't been terminated by SIGHUP, performing forceful termination. " +
+                   "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
+          ptyProcess.destroyForcibly()
+        }
+      }
+      val exitCode = ptyProcess.awaitExit(2.seconds)
+      if (exitCode != null) {
+        log.debug { "Shell process ${processInfo(ptyProcess)} has been terminated with exit code $exitCode" }
+      }
+      else {
+        log.warn("Shell process ${processInfo(ptyProcess)} has not been terminated!")
       }
     }
+  }
+
+  /**
+   * @return The exit value of the process if it exits within the timeout or null otherwise.
+   */
+  private suspend fun Process.awaitExit(timeout: kotlin.time.Duration): Int? {
+    return withTimeoutOrNull(timeout) {
+      this@awaitExit.awaitExit()
+    }
+  }
+
+  private fun processInfo(process: PtyProcess): String {
+    return "${process::class.java.name}($shellPid)"
   }
 
   private fun EelProcessExecutionResult.stringify(): String {

@@ -2,7 +2,8 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.actions.NonTrivialActionGroup;
+import org.jetbrains.annotations.ApiStatus;
 
-
+@ApiStatus.Internal
 public final class MarkRootGroup extends NonTrivialActionGroup {
 }

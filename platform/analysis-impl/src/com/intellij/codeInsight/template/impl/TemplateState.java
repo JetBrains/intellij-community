@@ -106,7 +106,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     myEditorDocumentListener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
-        if (CommandProcessor.getInstance().getCurrentCommand() != null && !isUndoOrRedoInProgress()) {
+        if (CommandProcessor.getInstance().isCommandInProgress() && !isUndoOrRedoInProgress()) {
           myDocumentChanged = true;
         }
       }

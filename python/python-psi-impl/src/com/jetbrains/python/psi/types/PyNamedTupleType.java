@@ -10,10 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +20,15 @@ import java.util.*;
 
 
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
-
-  public static final @NotNull Set<String> NAMEDTUPLE_SPECIAL_ATTRIBUTES =
-    ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_types", "_field_defaults");
+  private static final ImmutableSet<String> PYTHON_2_ATTRIBUTES = ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults", "_field_types");
+  private static final ImmutableSet<String> PYTHON_3_ATTRIBUTES = ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults");
+  public static @NotNull Set<String> getSpecialAttributes(LanguageLevel level) {
+    if (level.isPy3K()) {
+      return PYTHON_3_ATTRIBUTES;
+    } else {
+      return PYTHON_2_ATTRIBUTES;
+    }
+  }
 
   private final @NotNull String myName;
 
@@ -67,7 +70,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     }
 
     if (completionPrefix == null) {
-      final Condition<String> nameFilter = NAMEDTUPLE_SPECIAL_ATTRIBUTES::contains;
+      final Condition<String> nameFilter = getSpecialAttributes(LanguageLevel.forElement(location))::contains;
       final CompletionVariantsProcessor processor =
         new CompletionVariantsProcessor(location, null, nameFilter, false, context.get(CTX_SUPPRESS_PARENTHESES) != null);
 

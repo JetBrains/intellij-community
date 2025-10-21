@@ -22,11 +22,12 @@ internal abstract class PreviewFilePromoAction(private val topic: PromoTopic) : 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    tryUltimate(null,
-                PluginAdvertiserService.pyCharmProfessional,
-                e.project,
-                null,
-                createOpenDownloadPageLambda(PromoEventSource.FILE_PREVIEW, topic))
+    tryUltimate(
+      pluginId = null,
+      suggestedIde = PluginAdvertiserService.pyCharmProfessional,
+      project = e.project,
+      fallback = createOpenDownloadPageLambda(PromoEventSource.FILE_PREVIEW, topic)
+    )
   }
 }
 

@@ -5,7 +5,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +22,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
+
 @ApiStatus.Internal
 public final class CommandMerger {
 
@@ -30,7 +30,7 @@ public final class CommandMerger {
     return groupId != null && Comparing.equal(lastGroupId, groupId);
   }
 
-  private final @Nullable Project project;
+  private final boolean isLocalHistoryActivity;
   private final boolean isTransparentSupported;
   private @Nullable @Command String commandName;
   private @Nullable Reference<Object> lastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
@@ -44,8 +44,8 @@ public final class CommandMerger {
   private boolean isTransparent;
   private boolean isValid = true;
 
-  CommandMerger(@Nullable Project project, boolean isTransparent, boolean isTransparentSupported) {
-    this.project = project;
+  CommandMerger(boolean isLocalHistoryActivity, boolean isTransparent, boolean isTransparentSupported) {
+    this.isLocalHistoryActivity = isLocalHistoryActivity;
     this.isTransparentSupported = isTransparentSupported;
     this.isTransparent = isTransparent;
   }
@@ -106,7 +106,6 @@ public final class CommandMerger {
       }
       undoStacksHolder.addToStacks(
         new UndoableGroup(
-          project,
           commandName,
           currentActions,
           undoConfirmationPolicy,
@@ -115,6 +114,7 @@ public final class CommandMerger {
           editorStateAfter,
           flushReason,
           commandTimestamp,
+          isLocalHistoryActivity,
           isTransparent(),
           isGlobal(),
           isValid

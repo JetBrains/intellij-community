@@ -2,12 +2,7 @@
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.BooleanEventField
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.StringEventField
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -17,11 +12,13 @@ import com.intellij.util.asSafely
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.hatch.sdk.isHatch
+import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
@@ -32,6 +29,7 @@ import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import org.jetbrains.annotations.ApiStatus
 
 val Project.modules: Array<Module> get() = ModuleManager.getInstance(this).modules
 val Project.sdks: List<Sdk> get() = modules.mapNotNull(Module::getSdk)
@@ -92,7 +90,20 @@ enum class InterpreterTarget(val value: String) {
   TARGET_DOCKER("docker"),
   TARGET_DOCKER_COMPOSE("docker-compose"),
   TARGET_VAGRANT("vagrant"),
-  TARGET_WSL("wsl"),
+  TARGET_WSL("wsl");
+
+  @get:ApiStatus.Internal
+  val isDocker: Boolean
+    get() = this in DOCKER_BASED
+
+  @get:ApiStatus.Internal
+  val isWsl: Boolean
+    get() = this in WSL
+
+  companion object {
+    private val DOCKER_BASED = setOf(REMOTE_DOCKER, REMOTE_DOCKER_COMPOSE, TARGET_DOCKER, TARGET_DOCKER_COMPOSE)
+    private val WSL = setOf(REMOTE_WSL, TARGET_WSL)
+  }
 }
 
 val EXECUTION_TYPE: StringEventField = EventFields.String("executionType", listOf(
@@ -152,9 +163,9 @@ val Sdk.interpreterType: InterpreterType
     isUv -> UV
     isPoetry -> POETRY
     isHatch -> HATCH
-    PythonSdkUtil.isConda(this) || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
+    this.isCondaVirtualEnv || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
     VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV
-    PythonSdkUtil.isVirtualEnv(this) -> VIRTUALENV
+    this.isVirtualEnv -> VIRTUALENV
     else -> REGULAR
   }
 

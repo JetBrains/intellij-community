@@ -25,7 +25,7 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection.ForClass(
       val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
       val message = DevKitBundle.message("inspection.light.service.must.be.concrete.class.message")
       val holder = (sink as HighlightSinkImpl).holder
-      holder.registerProblem(elementToReport, message, ProblemHighlightType.GENERIC_ERROR, *fixes)
+      holder.registerProblem(elementToReport.element, message, ProblemHighlightType.GENERIC_ERROR, *fixes)
       return
     }
 

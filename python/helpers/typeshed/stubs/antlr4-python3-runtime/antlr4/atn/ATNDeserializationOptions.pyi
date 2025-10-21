@@ -1,6 +1,7 @@
 from _typeshed import Incomplete
 
 class ATNDeserializationOptions:
+    __slots__ = ("readonly", "verifyATN", "generateRuleBypassTransitions")
     defaultOptions: Incomplete
     readonly: bool
     verifyATN: Incomplete

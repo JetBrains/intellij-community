@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.CoroutineSupport.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.*
@@ -60,6 +61,7 @@ class EdtScheduler(@JvmField val coroutineScope: CoroutineScope) {
     return schedule(delay = delay.milliseconds, modality = modality, task = task, kind = kind)
   }
 
+  @JvmOverloads
   fun schedule(
     delay: Duration,
     modality: ModalityState,

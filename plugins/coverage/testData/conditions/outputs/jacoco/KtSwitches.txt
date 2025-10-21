@@ -63,7 +63,7 @@ Line 53 coverage: FULL
 Hits: 1
 Line 56 coverage: PARTIAL
 Hits: 1
-Covered 2/8 branches
+Covered 1/8 branches
 Line 59 coverage: FULL
 Hits: 1
 Line 65 coverage: FULL

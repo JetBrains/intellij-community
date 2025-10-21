@@ -19,6 +19,14 @@
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
+            interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.newFileHook"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook"
             dynamic="true"/>
@@ -65,9 +73,6 @@
             qualifiedName="org.jetbrains.kotlin.projectStructureInsightsProvider"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider"
             dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.smartEnterProcessorFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.SmartEnterProcessorWithFixers$Fixer"/>
-    </extensionPoint>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.supportAvailability"
             interface="org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability"
@@ -102,8 +107,19 @@
 
     <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
                     interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
-                    dynamic="true">
-    </extensionPoint>
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.implementationDetailClassNameCheckerProvider"
+                    interface="org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.forwardDeclarationPolicyProvider"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.ForwardDeclarationPolicyProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.kaDanglingFileResolutionModeProvider"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -133,7 +149,6 @@
             key="kotlin.language.configurable"
             id="preferences.language.Kotlin"
             instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
-    <search.optionContributor implementation="org.jetbrains.kotlin.idea.configuration.KotlinPluginSwitchSearchOptionContributor"/>
 
     <projectConfigurable
             instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
@@ -158,9 +173,6 @@
 
     <lang.floatingToolbar language="kotlin"/>
 
-    <lang.foldingBuilder
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
     <stacktrace.fold substring="at kotlinx.coroutines."/>
 
     <codeInsight.linkHandler
@@ -202,9 +214,6 @@
 
     <search.topHitProvider implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsTopHitProvider"/>
 
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler"/>
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler"/>
-
     <moduleConfigurationEditorProvider implementation="org.jetbrains.kotlin.idea.roots.ui.NonJvmKotlinModuleEditorsProvider"/>
 
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$Source"/>
@@ -222,11 +231,6 @@
             key="kotlin.code-vision.inheritors"
             description="Enable Code-Vision inheritors search"
             defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.experimental.new.j2k"
-            description="Enable new Java to Kotlin converter"
-            defaultValue="true"
             restartRequired="false"/>
     <registryKey
             key="kotlin.disable.auto.completion.inside.expression"
@@ -358,26 +362,12 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.unwrap.KotlinUnwrapDescriptor"/>
 
-    <statementUpDownMover
-            id="ktExpression"
-            order="before declaration"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinExpressionMover"/>
-    <statementUpDownMover
-            id="ktDeclaration"
-            order="before ktExpression"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinDeclarationMover"/>
-
     <moveLeftRightHandler language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinMoveLeftRightHandler"/>
 
     <editorSmartKeysConfigurable instance="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsConfigurable"/>
 
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinDeclarationAndAssignmentHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinInitializerAndIfToElvisHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinBlockIntoSingleStatementHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinStatementsAddSemicolonHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinToStringTemplateHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWithTrailingCommaHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWhenEntryHandler"/>
 
     <quoteHandler fileType="Kotlin" className="org.jetbrains.kotlin.idea.editor.KotlinQuoteHandler"/>
 

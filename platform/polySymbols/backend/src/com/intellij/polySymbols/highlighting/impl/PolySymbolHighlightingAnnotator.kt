@@ -181,7 +181,6 @@ class PolySymbolHighlightingAnnotator : Annotator {
       .forEach { (range, textAttributesKey) ->
         holder.newSilentAnnotationWithDebugInfo(HighlightInfoType.SYMBOL_TYPE_SEVERITY, textAttributesKey.externalName)
           .textAttributes(textAttributesKey)
-          .needsUpdateOnTyping()
           .range(range)
           .create()
       }
@@ -221,7 +220,6 @@ class PolySymbolHighlightingAnnotator : Annotator {
         .range(reference.absoluteRange)
         .highlightType(descriptor.highlightType)
         .tooltip(message)
-        .needsUpdateOnTyping()
         .applyIfNotNull(attributesKey) { textAttributes(it) }
         .apply {
           for (fix in descriptorFixes ?: highlightDisplayKey

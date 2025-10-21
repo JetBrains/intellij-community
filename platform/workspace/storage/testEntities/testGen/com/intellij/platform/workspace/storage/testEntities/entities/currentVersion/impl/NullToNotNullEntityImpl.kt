@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -16,12 +16,13 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class NullToNotNullEntityImpl(private val dataSource: NullToNotNullEntityData) : NullToNotNullEntity,
-                                                                                          WorkspaceEntityBase(dataSource) {
+internal class NullToNotNullEntityImpl(private val dataSource: NullToNotNullEntityData) : NullToNotNullEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -59,8 +60,8 @@ internal class NullToNotNullEntityImpl(private val dataSource: NullToNotNullEnti
   }
 
 
-  internal class Builder(result: NullToNotNullEntityData?) :
-    ModifiableWorkspaceEntityBase<NullToNotNullEntity, NullToNotNullEntityData>(result), NullToNotNullEntity.Builder {
+  internal class Builder(result: NullToNotNullEntityData?) : ModifiableWorkspaceEntityBase<NullToNotNullEntity, NullToNotNullEntityData>(
+    result), NullToNotNullEntityBuilder {
     internal constructor() : this(NullToNotNullEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -157,7 +158,7 @@ internal class NullToNotNullEntityData : WorkspaceEntityData<NullToNotNullEntity
   internal fun isNullStringInitialized(): Boolean = ::nullString.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NullToNotNullEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<NullToNotNullEntity> {
     val modifiable = NullToNotNullEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -177,15 +178,14 @@ internal class NullToNotNullEntityData : WorkspaceEntityData<NullToNotNullEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return NullToNotNullEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return NullToNotNullEntity(nullString, notNullBoolean, notNullInt, entitySource) {
     }
   }

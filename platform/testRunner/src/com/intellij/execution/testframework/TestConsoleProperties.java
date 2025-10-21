@@ -211,7 +211,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
    * If supported by the framework, can be used in additional actions toolbar
    */
   protected @NotNull ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
-    String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
+    String text = ExecutionBundle.message("junit.running.info.include.non.started.in.rerun.failed.action.name");
     return new DumbAwareToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
 
@@ -219,7 +219,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
    * If supported by the framework, can be used in additional actions toolbar
    */
   protected @NotNull ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
-    String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
+    String text = ExecutionBundle.message("junit.running.info.hide.successful.config.action.name");
     setIfUndefined(HIDE_SUCCESSFUL_CONFIG, true);
     return new DumbAwareToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
   }

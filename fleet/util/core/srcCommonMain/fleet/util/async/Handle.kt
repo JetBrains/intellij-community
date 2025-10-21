@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.async
 
-import fleet.util.updateAndGet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
 import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.updateAndFetch
 import kotlin.coroutines.CoroutineContext
 
 data class Handle<T>(val value: Deferred<ValueWithContext<T>>,
@@ -86,8 +86,12 @@ private suspend fun<T> handleScopeImpl(outerScope: CoroutineScope, body: suspend
         override val coroutineContext: CoroutineContext get() = context
         override fun <T> handle(launcher: Launcher<T>): Handle<T> {
           val handle = outerScope.handle(launcher)
-          handles.updateAndGet { hs -> hs.add(handle) }
-          handle.job.invokeOnCompletion { handles.updateAndGet { hs -> hs.remove(handle) } }
+          handles.updateAndFetch { hs -> hs.add(handle) }
+          handle.job.invokeOnCompletion {
+            handles.updateAndFetch { hs ->
+              hs.remove(handle)
+            }
+          }
           return handle
         }
       }.body()

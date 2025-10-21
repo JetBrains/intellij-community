@@ -4,7 +4,6 @@ package com.intellij.vcs.log.ui.details
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.OnePixelDivider
@@ -14,6 +13,7 @@ import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
@@ -62,7 +62,7 @@ class CommitDetailsListPanel
     border = JBUI.Borders.empty()
     add(detailsPanel, BorderLayout.CENTER)
   }
-  private val loadingPanel = JBLoadingPanel(BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+  private val loadingPanel = JBLoadingPanel(BorderLayout(), parent, ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS).apply {
     isOpaque = false
 
     val scrollPane = JBScrollPane(

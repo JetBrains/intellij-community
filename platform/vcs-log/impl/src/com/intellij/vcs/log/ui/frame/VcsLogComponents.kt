@@ -21,6 +21,8 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterUi
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.getLogProvider
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.AbstractVcsLogUi

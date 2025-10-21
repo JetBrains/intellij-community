@@ -47,7 +47,7 @@ internal class RedundantRequireNotNullCallInspection : KotlinApplicableInspectio
         val functionName = getFunctionName(element) ?: return null
         val argument = extractArgument(element) ?: return null
         val argumentType = argument.expressionType ?: return null
-        if (argumentType.canBeNull) return null
+        if (argumentType.isNullable) return null
 
         return Context(
             functionName,

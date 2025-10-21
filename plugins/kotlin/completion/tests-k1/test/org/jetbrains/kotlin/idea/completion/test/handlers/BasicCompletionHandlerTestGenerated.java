@@ -662,6 +662,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/importAliases/CompanionObject.kt");
         }
 
+        @TestMetadata("Constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../testData/handlers/basic/importAliases/Constructor.kt");
+        }
+
         @TestMetadata("ExtensionFun.kt")
         public void testExtensionFun() throws Exception {
             runTest("../testData/handlers/basic/importAliases/ExtensionFun.kt");
@@ -1396,6 +1401,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/typeArgsForCall/HasExpectedType.kt");
         }
 
+        @TestMetadata("NoTypeArgumentsForOverloadWithError.kt")
+        public void testNoTypeArgumentsForOverloadWithError() throws Exception {
+            runTest("../testData/handlers/basic/typeArgsForCall/NoTypeArgumentsForOverloadWithError.kt");
+        }
+
         @TestMetadata("NotAllTypeArgumentsFromParameters.kt")
         public void testNotAllTypeArgumentsFromParameters() throws Exception {
             runTest("../testData/handlers/basic/typeArgsForCall/NotAllTypeArgumentsFromParameters.kt");
@@ -1414,6 +1424,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("Simple.kt")
         public void testSimple() throws Exception {
             runTest("../testData/handlers/basic/typeArgsForCall/Simple.kt");
+        }
+
+        @TestMetadata("TypeArgumentsForComparator.kt")
+        public void testTypeArgumentsForComparator() throws Exception {
+            runTest("../testData/handlers/basic/typeArgsForCall/TypeArgumentsForComparator.kt");
+        }
+
+        @TestMetadata("TypeArgumentsForReversed.kt")
+        public void testTypeArgumentsForReversed() throws Exception {
+            runTest("../testData/handlers/basic/typeArgsForCall/TypeArgumentsForReversed.kt");
         }
 
         @TestMetadata("TypeArgumentsFromParameters.kt")
@@ -1439,6 +1459,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("TypeArgumentsFromReturnType4.kt")
         public void testTypeArgumentsFromReturnType4() throws Exception {
             runTest("../testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType4.kt");
+        }
+
+        @TestMetadata("TypeForUnrelatedOverloadWIthoutError.kt")
+        public void testTypeForUnrelatedOverloadWIthoutError() throws Exception {
+            runTest("../testData/handlers/basic/typeArgsForCall/TypeForUnrelatedOverloadWIthoutError.kt");
         }
     }
 
@@ -2050,6 +2075,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("NoTypeInsertion.kt")
         public void testNoTypeInsertion() throws Exception {
             runTest("../testData/handlers/basic/variableNameAndType/NoTypeInsertion.kt");
+        }
+
+        @TestMetadata("TypeInsertionOnContextParameter.kt")
+        public void testTypeInsertionOnContextParameter() throws Exception {
+            runTest("../testData/handlers/basic/variableNameAndType/TypeInsertionOnContextParameter.kt");
         }
 
         @TestMetadata("TypeInsertionOnLateinit.kt")

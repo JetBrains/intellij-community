@@ -1,14 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -20,13 +18,7 @@ import java.util.List;
 
 class CoverageClassFilterEditor extends ClassFilterEditor {
   CoverageClassFilterEditor(Project project) {
-    super(project, new ClassFilter() {
-      @Override
-      public boolean isAccepted(PsiClass aClass) {
-        if (aClass.getContainingClass() != null) return false;
-        return true;
-      }
-    }, null);
+    super(project, aClass -> aClass.getContainingClass() == null, null);
     myTableModel.setEditEnabled(false);
     myTable.setVisibleRowCount(4);
   }

@@ -136,22 +136,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          int newSelectionIndex = -1;
-          for (Item o : myList.getSelectedValuesList()) {
-            int i = o.index;
-            removeContentAt(myAllContents.get(i));
-            if (newSelectionIndex < 0) {
-              newSelectionIndex = i;
-            }
-          }
-
-          rebuildListContent();
-          if (myAllContents.isEmpty()) {
-            close(CANCEL_EXIT_CODE);
-            return;
-          }
-          newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
-          myList.setSelectedIndex(newSelectionIndex);
+          deleteSelectedItems();
         }
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           doOKAction();
@@ -190,9 +175,19 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         }
       }
     });
+    JComponent listWithToolbar = ToolbarDecorator.createDecorator(myList)
+      .disableUpDownActions()
+      .setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          deleteSelectedItems();
+        }
+      })
+      .createPanel();
+    JComponent listWithFilter = ListWithFilter.wrap(
+      myList, ScrollPaneFactory.createScrollPane(listWithToolbar), o -> o.getShortText(renderer.previewChars), true);
 
-    mySplitter.setFirstComponent(ListWithFilter.wrap(
-      myList, ScrollPaneFactory.createScrollPane(myList), o -> o.getShortText(renderer.previewChars), true));
+    mySplitter.setFirstComponent(listWithFilter);
     mySplitter.setSecondComponent(new JPanel());
     mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -223,6 +218,25 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     d.restoreSplitterProportions(mySplitter);
 
     return mySplitter;
+  }
+
+  private void deleteSelectedItems() {
+    int newSelectionIndex = -1;
+    for (Item o : myList.getSelectedValuesList()) {
+      int i = o.index;
+      removeContentAt(myAllContents.get(i));
+      if (newSelectionIndex < 0) {
+        newSelectionIndex = i;
+      }
+    }
+
+    rebuildListContent();
+    if (myAllContents.isEmpty()) {
+      close(CANCEL_EXIT_CODE);
+      return;
+    }
+    newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
+    myList.setSelectedIndex(newSelectionIndex);
   }
 
   protected abstract void removeContentAt(final Data content);

@@ -7,16 +7,13 @@ import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.tabs.TabInfo
-import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
@@ -28,26 +25,6 @@ object CodeReviewTabs {
       .onEach { count ->
         tab.setText(text)
         tab.appendCount(count)
-      }
-      .launchIn(this)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Deprecated with the move to the new design")
-  fun CoroutineScope.bindTabUi(
-    tabs: JBTabsImpl,
-    tab: TabInfo,
-    text: Supplier<@Nls String>,
-    totalFlow: Flow<Int?>,
-    unreadFlow: Flow<Int?>
-  ): Job {
-    return combine(totalFlow, unreadFlow, ::Pair)
-      .onEach { (total, unread) ->
-        tab.setText(text)
-        tab.appendUnreadIcon(tabs.getTabLabel(tab)!!, unread)
-        tab.appendCount(total, unread == null || unread <= 0)
-
-        tab.setUnreadTooltip(unread)
       }
       .launchIn(this)
   }

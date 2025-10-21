@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author Eugene Zhuravlev
- */
 public class PathMacrosCollectorTest extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -37,7 +34,7 @@ public class PathMacrosCollectorTest extends UsefulTestCase {
     root.addContent(new Text("$Revision 1.23$"));
     root.addContent(new Text("file://$root$/some/path/just$file$name.txt"));
 
-    final Set<String> macros = PathMacrosCollector.getMacroNames(root, null, new PathMacrosImpl(false));
+    final Set<String> macros = PathMacrosCollector.Companion.getMacroNames(root, null, () -> new PathMacrosImpl(false));
     UsefulTestCase.assertSameElements(macros, "MACro1", "macro4", "mac_ro6", "macr.o7", "mac-ro8", "root");
   }
 
@@ -48,12 +45,12 @@ public class PathMacrosCollectorTest extends UsefulTestCase {
     configuration.setAttribute("value2", "file://$root$/some/path/just$file$name.txt");
     root.addContent(configuration);
 
-    final Set<String> macros = PathMacrosCollector.getMacroNames(root, new PathMacroFilter() {
+    final Set<String> macros = PathMacrosCollector.Companion.getMacroNames(root, new PathMacroFilter() {
                                                                     @Override
                                                                     public boolean recursePathMacros(@NotNull Attribute attribute) {
                                                                       return "value".equals(attribute.getName());
                                                                     }
-                                                                  }, new PathMacrosImpl(false));
+                                                                  }, () -> new PathMacrosImpl(false));
     UsefulTestCase.assertSameElements(macros, "macro5", "MACRO", "root");
   }
 
@@ -64,17 +61,17 @@ public class PathMacrosCollectorTest extends UsefulTestCase {
     testTag.setAttribute("ignore", "$PATH$");
     root.addContent(testTag);
 
-    final Set<String> macros = PathMacrosCollector.getMacroNames(root, null, new PathMacrosImpl(false));
+    final Set<String> macros = PathMacrosCollector.Companion.getMacroNames(root, null, () -> new PathMacrosImpl(false));
     assertEquals(2, macros.size());
     assertTrue(macros.contains("MACRO"));
     assertTrue(macros.contains("PATH"));
 
-    final Set<String> filtered = PathMacrosCollector.getMacroNames(root, new PathMacroFilter() {
+    final Set<String> filtered = PathMacrosCollector.Companion.getMacroNames(root, new PathMacroFilter() {
                                                                      @Override
                                                                      public boolean skipPathMacros(@NotNull Attribute attribute) {
                                                                        return "ignore".equals(attribute.getName());
                                                                      }
-                                                                   }, new PathMacrosImpl(false));
+                                                                   }, () -> new PathMacrosImpl(false));
 
     assertEquals(1, filtered.size());
     assertTrue(macros.contains("MACRO"));

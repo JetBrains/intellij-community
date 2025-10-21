@@ -2,13 +2,12 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.openapi.editor.impl.EditorImpl
-import java.awt.Component
 import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
 object NotebookUiUtils {
-  fun getEditorPoint(editorImpl: EditorImpl, e: MouseEvent): Pair<Component, Point>? {
+  fun getEditorPoint(editorImpl: EditorImpl, e: MouseEvent): Point? {
     val component = if (SwingUtilities.isDescendingFrom(e.component, editorImpl.contentComponent)) {
       editorImpl.contentComponent
     }
@@ -19,12 +18,10 @@ object NotebookUiUtils {
       null
     }
     return if (component != null) {
-      component to SwingUtilities.convertPoint(e.component, e.point, component)
+      SwingUtilities.convertPoint(e.component, e.point, component)
     }
     else {
       null
     }
   }
-
-
 }

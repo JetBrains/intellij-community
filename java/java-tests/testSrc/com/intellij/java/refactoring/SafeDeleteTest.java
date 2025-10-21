@@ -419,33 +419,20 @@ public class SafeDeleteTest extends MultiFileTestCase {
     });
   }
 
-  public void testDeepDeleteFieldAndInitializerMethod() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodCascadeWithField() {
-    doSingleFileTest();
-  }
-
-  public void testForInitExpr() {
-    doSingleFileTest();
-  }
-
-  public void testForInitList() {
-    doSingleFileTest();
-  }
-
-  public void testForUpdateExpr() {
-    doSingleFileTest();
-  }
-
-  public void testForUpdateList() {
-    doSingleFileTest();
-  }
-
-  public void testUpdateContractOnParameterRemoval() {
-    doSingleFileTest();
-  }
+  public void testDeepDeleteFieldAndInitializerMethod() { doSingleFileTest(); }
+  public void testDeleteMethodCascadeWithField() { doSingleFileTest(); }
+  public void testForInitExpr() { doSingleFileTest(); }
+  public void testForInitList() { doSingleFileTest(); }
+  public void testForInitDeclaration() { doSingleFileTest(); }
+  public void testForUpdateExpr() { doSingleFileTest(); }
+  public void testForUpdateList() { doSingleFileTest(); }
+  public void testUpdateContractOnParameterRemoval() { doSingleFileTest(); }
+  public void testMultipleFieldsInSingleDeclaration1() { doSingleFileTest(); }
+  public void testMultipleFieldsInSingleDeclaration2() { doSingleFileTest(); }
+  public void testMultipleFieldsInSingleDeclaration3() { doSingleFileTest(); }
+  public void testMultipleVariablesInSingleDeclaration1() { doSingleFileTest(); }
+  public void testMultipleVariablesInSingleDeclaration2() { doSingleFileTest(); }
+  public void testMultipleVariablesInSingleDeclaration3() { doSingleFileTest(); }
 
   public void testSealedParent() {
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_17, getTestRootDisposable());

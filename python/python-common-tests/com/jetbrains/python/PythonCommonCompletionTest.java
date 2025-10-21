@@ -17,7 +17,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   private void doMultiFileTest(CompletionType completionType, int invocationCount) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
-    myFixture.complete(completionType, invocationCount);
+    @NotNull LookupElement[] variants = myFixture.complete(completionType, invocationCount);
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
@@ -2233,6 +2233,14 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doMultiFileTest();
   }
 
+  // PY-83412
+  public void testImportableNamesNotSuggestedInTheMiddleOfAssignmentTargets() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    assertDoesntContain(myFixture.getLookupElementStrings(), "foo_func");
+  }
+
   // PY-62208
   public void testAlreadyImportedNamesNotSuggestedTwiceInsidePatterns() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
@@ -2243,18 +2251,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       // TODO Use regular doMultiFileTest once PY-73173 is fixed
       assertEquals(1, Collections.frequency(variants, "MyClass"));
     });
-  }
-
-  // PY-62208
-  public void testTooShortImportableNamesSuggestedOnlyInExtendedCompletion() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.complete(CompletionType.BASIC, 1);
-    List<String> basicCompletionVariants = myFixture.getLookupElementStrings();
-    assertDoesntContain(basicCompletionVariants, "c1", "c2");
-    myFixture.complete(CompletionType.BASIC, 2);
-    List<String> extendedCompletionVariants = myFixture.getLookupElementStrings();
-    assertContainsElements(extendedCompletionVariants, "c1", "c2");
   }
 
   private static void runWithImportableNamesInBasicCompletionDisabled(@NotNull Runnable action) {

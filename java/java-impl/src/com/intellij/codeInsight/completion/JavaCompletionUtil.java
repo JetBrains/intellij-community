@@ -800,7 +800,7 @@ public final class JavaCompletionUtil {
   static void insertParentheses(@NotNull InsertionContext context,
                                 @NotNull LookupElement item,
                                 boolean overloadsMatter,
-                                ThreeState hasParams, // UNSURE if providing no arguments is a valid situation
+                                @NotNull ThreeState hasParams, // UNSURE if providing no arguments is a valid situation
                                 boolean forceClosingParenthesis) {
     Editor editor = context.getEditor();
     char completionChar = context.getCompletionChar();
@@ -862,7 +862,7 @@ public final class JavaCompletionUtil {
     }
 
     if (completionChar == '.') {
-      AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      AutoPopupController.getInstance(file.getProject()).scheduleAutoPopup(context.getEditor());
     } else if (completionChar == ',') {
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }

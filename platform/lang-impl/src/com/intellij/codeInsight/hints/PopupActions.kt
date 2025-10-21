@@ -342,7 +342,7 @@ private fun refreshAllOpenEditors(project: Project) {
   val fileEditorManager = FileEditorManager.getInstance(project)
 
   fileEditorManager.selectedFiles.forEach { file ->
-    psiManager.findFile(file)?.let { daemonCodeAnalyzer.restart(it) }
+    psiManager.findFile(file)?.let { daemonCodeAnalyzer.restart(it, "PopupActionsKt.refreshAllOpenEditors") }
   }
 }
 

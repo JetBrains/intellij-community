@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransfor
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.UnfoldFunctionCallToIfOrWhenUtils.canUnfold
@@ -14,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 
 internal class UnfoldFunctionCallToIfIntention :
-    KotlinApplicableModCommandAction<KtCallExpression, Unit>(KtCallExpression::class) {
+    KotlinApplicableModCommandAction.Simple<KtCallExpression>(KtCallExpression::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.function.call.with.if")
 
@@ -22,9 +21,6 @@ internal class UnfoldFunctionCallToIfIntention :
         ApplicabilityRanges.calleeExpression(element)
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = canUnfold<KtIfExpression>(element)
-
-    override fun KaSession.prepareContext(element: KtCallExpression) {
-    }
 
     override fun invoke(
       actionContext: ActionContext,

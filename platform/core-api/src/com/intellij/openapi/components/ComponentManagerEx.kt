@@ -3,9 +3,9 @@ package com.intellij.openapi.components
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.objectTree.ReferenceDelegatingDisposableInternal
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.util.objectTree.ReferenceDelegatingDisposableInternal
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -28,8 +28,7 @@ interface ComponentManagerEx : ComponentManager, ReferenceDelegatingDisposableIn
   fun getCoroutineScope(): CoroutineScope
 
   @ApiStatus.Internal
-  fun getMutableComponentContainer(): ComponentManager =
-    this as ComponentManager
+  fun getMutableComponentContainer(): ComponentManager = this as ComponentManager
 
   @ApiStatus.Internal
   override fun getDisposableDelegate(): Disposable = this
@@ -39,10 +38,6 @@ interface ComponentManagerEx : ComponentManager, ReferenceDelegatingDisposableIn
 
   @ApiStatus.Internal
   fun unregisterComponent(componentKey: Class<*>): ComponentAdapter?
-
-  @TestOnly
-  @ApiStatus.Internal
-  fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable)
 
   @ApiStatus.Internal
   fun instances(createIfNeeded: Boolean = false, filter: ((implClass: Class<*>) -> Boolean)? = null): Sequence<Any>
@@ -97,15 +92,16 @@ interface ComponentManagerEx : ComponentManager, ReferenceDelegatingDisposableIn
   fun getServiceImplementation(key: Class<*>): Class<*>?
 
   @ApiStatus.Internal
-  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?)
-
-  @TestOnly
-  @ApiStatus.Internal
-  fun registerComponentInstance(key: Class<*>, instance: Any)
-
-  @ApiStatus.Internal
   fun unregisterService(serviceInterface: Class<*>)
 
   @ApiStatus.Internal
   fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T)
+}
+
+@TestOnly
+@ApiStatus.Internal
+interface TestMutableComponentManager {
+  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?)
+
+  fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable)
 }

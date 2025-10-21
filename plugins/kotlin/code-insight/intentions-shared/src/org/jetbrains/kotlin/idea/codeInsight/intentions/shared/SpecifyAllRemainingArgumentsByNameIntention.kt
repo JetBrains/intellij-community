@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemain
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class SpecifyAllRemainingArgumentsByNameIntention: KotlinApplicableModCommandAction<KtValueArgumentList, RemainingArgumentsData>(KtValueArgumentList::class) {
-    override fun getFamilyName(): String = KotlinBundle.getMessage("specify.all.remaining.arguments.by.name")
+    override fun getFamilyName(): String = KotlinBundle.message("specify.all.remaining.arguments.by.name")
 
     override fun getApplicableRanges(element: KtValueArgumentList): List<TextRange> {
         val firstArgument = element.arguments.firstOrNull() ?: return ApplicabilityRange.self(element)

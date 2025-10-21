@@ -41,6 +41,7 @@ import org.jetbrains.jewel.foundation.state.ToggleableComponentState
 import org.jetbrains.jewel.foundation.state.ToggleableComponentState.Companion.readToggleableState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 
 @Composable
@@ -90,7 +91,8 @@ public fun IconButton(
                 .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
                 .padding(style.metrics.padding)
                 .background(background, shape)
-                .border(style.metrics.borderWidth, border, shape),
+                .border(style.metrics.borderWidth, border, shape)
+                .thenIf(!enabled) { disabledAppearance() },
         contentAlignment = Alignment.Center,
         content = { content(buttonState) },
     )
@@ -146,7 +148,8 @@ public fun SelectableIconButton(
                 .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
                 .padding(style.metrics.padding)
                 .background(background, shape)
-                .border(style.metrics.borderWidth, border, shape),
+                .border(style.metrics.borderWidth, border, shape)
+                .thenIf(!enabled) { disabledAppearance() },
         contentAlignment = Alignment.Center,
         content = { content(buttonState) },
     )
@@ -204,7 +207,8 @@ public fun ToggleableIconButton(
                 .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
                 .padding(style.metrics.padding)
                 .background(background, shape)
-                .border(style.metrics.borderWidth, border, shape),
+                .border(style.metrics.borderWidth, border, shape)
+                .thenIf(!enabled) { disabledAppearance() },
         contentAlignment = Alignment.Center,
         content = { content(buttonState) },
     )

@@ -1,7 +1,7 @@
 <idea-plugin>
   <name>Code Coverage for Java</name>
   <id>Coverage</id>
-  <category>Code Coverage</category>
+  <category>JVM Tools</category>
   <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
 

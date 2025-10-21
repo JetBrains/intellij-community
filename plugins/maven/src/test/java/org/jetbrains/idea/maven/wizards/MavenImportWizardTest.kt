@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -59,7 +60,8 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
   fun testImportProjectWithManyPoms() = runBlocking {
     val pom1 = createPom("pom1.xml")
     val pom2 = pom1.parent.resolve("pom2.xml")
-    pom2.write(MavenTestCaseLegacy.createPomXml(
+    pom2.write(MavenTestCase.createPomXml(
+      MavenConstants.MODEL_VERSION_4_0_0,
       """
       <groupId>test</groupId>
       <artifactId>project2</artifactId>
@@ -87,7 +89,8 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     val dir = tempDir.newPath("", true)
     val projectName = dir.toFile().getName()
     val pom = dir.resolve("pom.xml")
-    pom.write(MavenTestCaseLegacy.createPomXml(
+    pom.write(MavenTestCase.createPomXml(
+      MavenConstants.MODEL_VERSION_4_0_0,
       """
       <groupId>test</groupId>
       <artifactId>

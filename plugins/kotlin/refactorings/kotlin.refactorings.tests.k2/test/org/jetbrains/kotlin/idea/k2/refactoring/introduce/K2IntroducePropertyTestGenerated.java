@@ -166,6 +166,11 @@ public abstract class K2IntroducePropertyTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceProperty/extractExtensionWithInitializer.kt");
         }
 
+        @TestMetadata("extractFromAnnotationArg.kt")
+        public void testExtractFromAnnotationArg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceProperty/extractFromAnnotationArg.kt");
+        }
+
         @TestMetadata("extractFromDefaultValueInConstructor.kt")
         public void testExtractFromDefaultValueInConstructor() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceProperty/extractFromDefaultValueInConstructor.kt");

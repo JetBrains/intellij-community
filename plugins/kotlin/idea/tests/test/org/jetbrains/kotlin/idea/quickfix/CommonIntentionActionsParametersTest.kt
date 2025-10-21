@@ -8,19 +8,24 @@ import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.uast.UMethod
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class CommonIntentionActionsParametersTest : BasePlatformTestCase() {
+class CommonIntentionActionsParametersTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         myFixture.configureByText("Anno.kt", "annotation class Anno(val i: Int)")
         myFixture.configureByText("ClassRef.kt", "annotation class ClassRef(val klass: KClass<*>)")
         myFixture.configureByText("Root.kt", "annotation class Root(val children: Array<Child>")

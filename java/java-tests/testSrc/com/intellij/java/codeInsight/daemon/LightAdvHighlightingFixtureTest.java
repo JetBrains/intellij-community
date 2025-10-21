@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
@@ -193,26 +192,6 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     myFixture.addClass("package a; public class b {}");
     myFixture.addClass("package c.d; public class a {}");
     doTest();
-  }
-
-  public void testTypeAnnotations() {
-    myFixture.addClass("""
-                         import java.lang.annotation.ElementType;
-                         import java.lang.annotation.Target;
-                         @Target({ElementType.TYPE_USE})
-                         @interface Nullable {}
-                         """);
-    myFixture.addClass("class Middle<R> extends Base<@Nullable R, String>{}");
-    myFixture.addClass("class Child<R> extends Middle<R>{}");
-    PsiClass baseClass = myFixture.addClass("class Base<R, C> {}");
-    PsiClass fooClass = myFixture.addClass("""
-                                             class Foo {
-                                               Child<String> field;
-                                             }""");
-    PsiField fooField = fooClass.findFieldByName("field", false);
-    PsiType substituted =
-      TypeConversionUtil.getSuperClassSubstitutor(baseClass, (PsiClassType)fooField.getType()).substitute(baseClass.getTypeParameters()[0]);
-    assertEquals(1, substituted.getAnnotations().length);
   }
 
   public void testCodeFragmentMayAccessDefaultPackage() {

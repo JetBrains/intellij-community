@@ -15,14 +15,12 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
-import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
+import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
+import com.jetbrains.python.sdk.conda.execution.getCondaBinToExecute
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -41,10 +39,6 @@ internal class CondaPackageCache : PythonPackageCache<String> {
 
   private val lock = Mutex()
   private var loadInProgress: Boolean = false
-
-  suspend fun forceReloadCache(sdk: Sdk, project: Project) {
-    return reloadCache(sdk, project, true)
-  }
 
   suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false) {
     lock.withLock {
@@ -67,11 +61,9 @@ internal class CondaPackageCache : PythonPackageCache<String> {
 
   private suspend fun refreshAll(sdk: Sdk, project: Project) {
     withContext(Dispatchers.IO) {
-      val pathOnTarget = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
       val targetConfig = sdk.targetEnvConfiguration
-      val targetRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
-      val commandExecutor = TargetEnvironmentRequestCommandExecutor(targetRequest)
-      val baseConda = PyCondaEnv.getEnvs(commandExecutor, pathOnTarget).getOrThrow()
+      val binaryToExec = sdk.getCondaBinToExecute()
+      val baseConda = PyCondaEnv.getEnvs(binaryToExec).getOrThrow()
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
@@ -110,7 +102,7 @@ internal class CondaPackageCache : PythonPackageCache<String> {
         .filterNot { it[0].startsWith("r-") } // todo[akniazev]: make sure it's the best way to get rid of R packages
         .groupBy({ it[0] }, { it[1] })
         .mapValues { it.value.distinct().sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
-        .toSortedMap(PythonRankingAwarePackageNameComparator())
+        .toMap()
 
       cache = packages
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
@@ -17,11 +18,13 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -80,7 +83,8 @@ public final class ModifierKeyDoubleClickHandler {
     }
   }
 
-  public static final class MyEventDispatcher implements IdeEventQueue.EventDispatcher {
+  @ApiStatus.Internal
+  public static final class MyEventDispatcher implements IdeEventQueue.NonLockedEventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent event) {
       if (!(event instanceof KeyEvent keyEvent)) {
@@ -95,13 +99,19 @@ public final class ModifierKeyDoubleClickHandler {
 
       ModifierKeyDoubleClickHandler doubleClickHandler = getInstance();
 
-      boolean result = false;
-      for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
-        if (dispatcher.dispatch(keyEvent)) {
-          result = true;
-        }
+      Collection<MyDispatcher> dispatchers = doubleClickHandler.myDispatchers.values();
+      if (dispatchers.isEmpty()) {
+        return false;
       }
-      return result;
+      return WriteIntentReadAction.<Boolean, RuntimeException>compute(() -> {
+        boolean innerResult = false;
+        for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
+          if (dispatcher.dispatch(keyEvent)) {
+            innerResult = true;
+          }
+        }
+        return innerResult;
+      });
     }
   }
 

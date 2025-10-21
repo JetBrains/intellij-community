@@ -62,13 +62,13 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .throwFailure()
-    .mapModelsToViewModels { GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it) }
+    .mapStatefulToStateful { GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it) }
     .modelFlow(cs, LOG)
 
   override val draftNotes: DraftNotesFlow = mergeRequest.draftNotes
     .throwFailure()
     .mapFiltered { it.discussionId == null }
-    .mapModelsToViewModels { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest) }
+    .mapStatefulToStateful { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest) }
     .modelFlow(cs, LOG)
 
 

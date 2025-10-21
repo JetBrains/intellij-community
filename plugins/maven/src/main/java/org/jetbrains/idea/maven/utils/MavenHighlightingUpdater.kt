@@ -104,7 +104,7 @@ internal class MavenHighlightingUpdater(
 
       if (!MavenDomUtil.isMavenFile(psiFile)) return@readAction null
 
-      DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+      DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this)
     }
   }
 

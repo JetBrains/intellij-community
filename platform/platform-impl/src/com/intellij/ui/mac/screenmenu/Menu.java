@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
 import com.intellij.CommonBundle;
@@ -11,8 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.ui.mac.MacMenuSettings;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.ArrayUtilRt;
@@ -395,7 +395,7 @@ public class Menu extends MenuItem {
 
     IS_ENABLED = false;
 
-    if (!SystemInfoRt.isJBSystemMenu) {
+    if (!MacMenuSettings.isJbSystemMenu) {
       return false;
     }
 

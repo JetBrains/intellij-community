@@ -8,6 +8,7 @@ import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -81,22 +82,24 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   //        0) remove 'synchronized' and put synchronization on clients to decide?
   //        1) prune tombstones (see comment in a .split() method for details)
   //        2) .size() is now O(N), make it O(1)
-  //        3) Half-utilized segmentTable room (see HeaderLayout comments)
+  //        3) Under-utilized (< 50%-utilized) segmentTable room (see HeaderLayout comments)
 
   private final MMappedFileStorage storage;
   private transient BufferSource bufferSource;
 
-  /** Used avoid updating header.fileState on _each_ modification */
+  /** Used to avoid updating header.fileState on _each_ modification */
   private boolean dirty = false;
 
   private final boolean wasProperlyClosed;
 
   private transient HeaderLayout header;
+
   /**
-   * Segments are quite light, but there are queried very frequently, and there are not too many of them, so
-   * cache them instead of allocate each time seems to be a good idea
+   * Map[segmentIndex -> HashMapSegmentLayout]
+   * Segments are quite light, but there are queried very frequently -- and there are not too many of them.
+   * So cache them instead of allocating a new instance each time.
    */
-  private final transient Int2ObjectOpenHashMap<HashMapSegmentLayout> segmentsCache = new Int2ObjectOpenHashMap<>();
+  private final transient Int2ObjectMap<HashMapSegmentLayout> segmentsCache = new Int2ObjectOpenHashMap<>();
 
   private final transient HashMapAlgo hashMapAlgo = new HashMapAlgo(0.5f);
 
@@ -122,17 +125,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       header = new HeaderLayout(bufferSource, segmentSize);
 
       if (fileIsEmpty) {
-        header.magicWord(MAGIC_WORD);
-        header.version(IMPLEMENTATION_VERSION);
-        header.segmentSize(segmentSize);
-        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
-        wasProperlyClosed = true;//new storage is by definition 'correct'
-
-        header.globalHashSuffixDepth(0);
-        header.actualSegmentsCount(0);
-
-        HashMapSegmentLayout segment = allocateSegment(0, header.globalHashSuffixDepth());
-        header.updateSegmentIndex(0, segment.segmentIndex());
+        initEmptyMap(segmentSize);
+        wasProperlyClosed = true; //new empty storage is by definition 'correct'
       }
       else {
         int magicWord = header.magicWord();
@@ -158,6 +152,20 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
       }
     }
+  }
+
+  private void initEmptyMap(int segmentSize) throws IOException {
+    header.magicWord(MAGIC_WORD);
+    header.version(IMPLEMENTATION_VERSION);
+    header.segmentSize(segmentSize);
+    header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+
+
+    header.globalHashSuffixDepth(0);
+    header.actualSegmentsCount(0);
+
+    HashMapSegmentLayout segment = allocateSegment(0, header.globalHashSuffixDepth());
+    header.updateSegmentIndex(0, segment.segmentIndex());
   }
 
   /**
@@ -281,6 +289,31 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       }
     }
     return true;
+  }
+
+  @Override
+  public synchronized void clear() throws IOException {
+    checkNotClosed();
+    if (header.actualSegmentsCount() == 1) {
+      //isEmpty() could be O(#segments), hence first check the actualSegmentsCount: if there is only a single segment,
+      // it _could_ be the map was just created => empty:
+      if (isEmpty()) {
+        return;
+      }
+      //...otherwise the map could be _logically_ empty, but physically still have many segments filled with tombstones -- in
+      // which case we still want to clear them all, even though logically we could just keep the map as-is.
+      //MAYBE RC: really, even if there is a single segment -- it could be filled with tombstones, so may ask for cleaning
+    }
+    int segmentSize = header.segmentSize();
+
+    segmentsCache.clear();
+
+    storage.zeroizeTillEOF(0);
+    //MAYBE RC: zeroize() is not very fast, and also mmapped file size remains the same, hence it still occupies a significant space
+    //          on disk. Better having something like storage.truncate() -- but it is hard to implement cross-platform for memory-mapped
+    //          files
+    initEmptyMap(segmentSize);
+    dirty = true;
   }
 
 
@@ -412,8 +445,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
    */
   @VisibleForTesting
   public static int[] slotIndexesForSegment(int segmentHashSuffix,
-                                     byte segmentHashSuffixDepth,
-                                     byte globalHashSuffixDepth) {
+                                            byte segmentHashSuffixDepth,
+                                            byte globalHashSuffixDepth) {
     assert (segmentHashSuffix & ~suffixMask(segmentHashSuffixDepth)) == 0;
     assert globalHashSuffixDepth >= segmentHashSuffixDepth
       : "globalDepth(=" + globalHashSuffixDepth + ") must be >= segmentDepth(=" + segmentHashSuffixDepth + ")";
@@ -602,12 +635,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     // quite doable, and we could cache uncompressed segmentsTable in memory -- 32-64k heap usage is OK given
     // it makes hashtable almost 2x larger for same segmentSize, and likely also speeds up segmentTable lookup
     // a bit.
-    // Alternative solution would be to break (headerSegment.size == dataSegment.size) constraint: i.e. allow
-    // header to be (80 + dataSegment.size) bytes. Such change of layout means we can't align segments to the
+    // Alternative solution would be to untie (headerSegment.size == dataSegment.size) constraint: i.e. allow
+    // header to be (80 + dataSegment.size) bytes. Such a change of layout means we can't align segments to the
     // first page anymore -- so there will be (dataSegment.size-80) wasted bytes at the end of the first page.
-    // But this seems a better tradeoff than the first option. And even better: since OS virtual memory page
+    // But this still seems a better tradeoff than the first option. And even better: since OS virtual memory page
     // size (4k-16k) usually smaller than segmentSize (32k-64k) - only a part (< 50%) of those 32k-64k of wasted
-    // space will really waste _RAM_.
+    // space would really waste _RAM_.
 
     private final ByteBuffer headerBuffer;
 
@@ -768,8 +801,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
     @VisibleForTesting
     public HashMapSegmentLayout(@NotNull BufferSource bufferSource,
-                         int segmentIndex,
-                         int segmentSize) throws IOException {
+                                int segmentIndex,
+                                int segmentSize) throws IOException {
       this(segmentIndex, segmentSize,
            bufferSource.slice(segmentIndex * (long)segmentSize, segmentSize)
       );
@@ -778,6 +811,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     @Override
     public int aliveEntriesCount() {
       return segmentBuffer.getInt(LIVE_ENTRIES_COUNT_OFFSET);
+    }
+
+    void clear() {
+      updateAliveEntriesCount(0);
+      //TODO RC: implement -- clear all slots, and update hashSuffix (how?)
+      throw new UnsupportedOperationException("Method not implemented yet");
     }
 
     /**

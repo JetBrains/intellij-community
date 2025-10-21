@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,6 +19,7 @@ import com.intellij.util.TestTimeOut;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,12 +28,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.platform.locking.impl.IntelliJLockingUtil.getGlobalThreadingSupport;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStressPerformance() {
@@ -221,5 +226,65 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     var elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
     // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment
     assertTrue(String.valueOf(elapsedMs), cancelEventTime.isTimedOut());
+  }
+
+  public void testNonLockedEventDispatcherHasNoWriteIntentAccess() {
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      assertFalse(ApplicationManager.getApplication().isWriteIntentLockAcquired());
+      var ideEventQueue = IdeEventQueue.getInstance();
+      var threadingSupport = getGlobalThreadingSupport();
+      var hasWriteIntentAccess = new AtomicBoolean(false);
+      var dispatcherCalled = new AtomicBoolean(false);
+
+      // Create a NonLockedEventDispatcher that tries to check for write intent access
+      IdeEventQueue.NonLockedEventDispatcher dispatcher = e -> {
+        dispatcherCalled.set(true);
+        // This should not have write intent access
+        hasWriteIntentAccess.set(threadingSupport.isWriteIntentLocked());
+        return false;
+      };
+
+      ideEventQueue.addDispatcher(dispatcher, getTestRootDisposable());
+
+      // Post a test event to trigger the dispatcher
+      var testEvent = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "test");
+      postCarefully(testEvent);
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+
+      assertTrue("NonLockedEventDispatcher should have been called", dispatcherCalled.get());
+      assertFalse("NonLockedEventDispatcher should not have write intent access", hasWriteIntentAccess.get());
+      return Unit.INSTANCE;
+    });
+  }
+
+  public void testRegularEventDispatcherHasWriteIntentAccess() {
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      assertFalse(ApplicationManager.getApplication().isWriteIntentLockAcquired());
+
+      var ideEventQueue = IdeEventQueue.getInstance();
+      var threadingSupport = getGlobalThreadingSupport();
+      var hasWriteIntentAccess = new AtomicBoolean(false);
+      var dispatcherCalled = new AtomicBoolean(false);
+
+      // Create a regular EventDispatcher to verify it has write intent access (for comparison)
+      @SuppressWarnings("deprecation")
+      IdeEventQueue.EventDispatcher dispatcher = e -> {
+        dispatcherCalled.set(true);
+        // Regular dispatchers should have write intent access
+        hasWriteIntentAccess.set(threadingSupport.isWriteIntentLocked());
+        return false;
+      };
+
+      ideEventQueue.addDispatcher(dispatcher, getTestRootDisposable());
+
+      // Post a test event to trigger the dispatcher
+      var testEvent = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "test");
+      postCarefully(testEvent);
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+
+      assertTrue("Regular EventDispatcher should have been called", dispatcherCalled.get());
+      assertTrue("Regular EventDispatcher should have write intent access", hasWriteIntentAccess.get());
+      return Unit.INSTANCE;
+    });
   }
 }

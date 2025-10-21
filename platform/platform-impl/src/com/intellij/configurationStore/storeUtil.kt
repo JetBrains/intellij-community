@@ -16,7 +16,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
@@ -95,11 +94,13 @@ object StoreUtil {
 }
 
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
-  val storeReloadManager = if (componentManager is Project) StoreReloadManager.getInstance(componentManager) else null
-  storeReloadManager?.reloadChangedStorageFiles()
-  storeReloadManager?.blockReloadingProjectOnExternalChanges()
+  val storeReloadManager = if (componentManager is Project) componentManager.serviceAsync<StoreReloadManager>() else null
+  if (storeReloadManager != null) {
+    storeReloadManager.reloadChangedStorageFiles()
+    storeReloadManager.blockReloadingProjectOnExternalChanges()
+  }
   try {
-    // Force local ClientId: settings are not saved on disk under a remote ClientId
+    // force local ClientId: settings are not saved on disk under a remote ClientId
     withContext(ClientId.localId.asContextElement()) {
       componentManager.stateStore.save(forceSavingAllSettings)
     }
@@ -108,8 +109,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
   }
-  catch (e: CancellationException) { throw e }
-  catch (e: ProcessCanceledException) { throw e }
+  catch (e: CancellationException) {
+    throw e
+  }
   catch (e: Throwable) {
     LOG.error("Save settings failed, please restart application", e)
   }

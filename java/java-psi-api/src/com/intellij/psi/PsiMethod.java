@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmMethod;
@@ -86,6 +86,18 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    */
   @Override
   boolean isConstructor();
+
+  /**
+   * Checks if the method is a default constructor. 
+   * When a class contains no explicit constructor declarations, a default constructor is implicitly declared.
+   * 
+   * @see <a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.9">JLS 8.8.9 Default Constructor</a>
+   * @see #isConstructor() 
+   * @return true if the method is a default constructor, false otherwise
+   */
+  default boolean isDefaultConstructor() {
+    return false;
+  }
 
   /**
    * Checks if the method accepts a variable number of arguments. 

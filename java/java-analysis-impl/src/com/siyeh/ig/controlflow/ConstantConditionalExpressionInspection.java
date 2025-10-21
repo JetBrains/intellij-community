@@ -93,7 +93,7 @@ public final class ConstantConditionalExpressionInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConstantConditionalExpressionVisitor();
   }
 

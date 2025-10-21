@@ -9,7 +9,6 @@ print(c1._make)
 print(c1._asdict)
 print(c1._replace)
 print(c1._fields)
-print(c1._field_types)
 print(c1._field_defaults)
 
 
@@ -19,5 +18,4 @@ print(c2._make)
 print(c2._asdict)
 print(c2._replace)
 print(c2._fields)
-print(c2._field_types)
 print(c2._field_defaults)

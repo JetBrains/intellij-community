@@ -11,6 +11,13 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
@@ -58,7 +65,7 @@ internal object AddMemberToSupertypeFixFactory {
     listOfNotNull(action)
   }
 
-  context(KaSession)
+  context(_: KaSession)
   private fun getCandidateMembers(memberElement: KtCallableDeclaration): List<MemberData> {
     val callableSymbol = memberElement.symbol as? KaCallableSymbol ?: return emptyList()
     val containingClass = callableSymbol.containingDeclaration as? KaClassSymbol
@@ -71,7 +78,7 @@ internal object AddMemberToSupertypeFixFactory {
     return classSymbols.mapNotNull { createMemberData(it, memberElement) }
   }
 
-  context(KaSession)
+  context(_: KaSession)
   @OptIn(KaExperimentalApi::class)
   private fun createMemberData(classSymbol: KaClassSymbol, memberElement: KtCallableDeclaration): MemberData? {
     val project = memberElement.project
@@ -102,7 +109,7 @@ internal object AddMemberToSupertypeFixFactory {
     return MemberData(signaturePreview, sourceCode, targetClass)
   }
 
-  context(KaSession)
+  context(_: KaSession)
   @OptIn(KaExperimentalApi::class)
   private fun KaDeclarationRenderer.render(targetClassSymbol: KaClassSymbol) = with {
     modifiersRenderer = modifiersRenderer.with {

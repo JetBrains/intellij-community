@@ -1,3 +1,5 @@
+from typing import Any
+
 x = 42
 
 # print('commented')

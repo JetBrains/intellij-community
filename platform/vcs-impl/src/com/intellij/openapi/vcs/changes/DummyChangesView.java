@@ -15,16 +15,14 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
+import javax.swing.*;
 import java.util.List;
-
-import static org.jetbrains.concurrency.Promises.resolvedPromise;
+import java.util.function.Supplier;
 
 class DummyChangesView implements ChangesViewEx {
   DummyChangesView() {
@@ -47,7 +45,7 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public void updateProgressText(String text, boolean isError) {
+  public void updateProgressComponent(@NotNull List<Supplier<JComponent>> progress) {
   }
 
   @Override
@@ -59,12 +57,7 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public void refreshImmediately() {
-  }
-
-  @Override
-  public @NotNull Promise<?> promiseRefresh(@NotNull ModalityState modalityState) {
-    return resolvedPromise();
+  public void scheduleRefresh(@NotNull Runnable callback) {
   }
 
   @Override

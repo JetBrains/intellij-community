@@ -2,7 +2,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 
 public interface PresentableEnum {
+  @NotNull
   @NlsContexts.Label String getPresentableText();
 }

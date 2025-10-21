@@ -18,7 +18,9 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -37,6 +39,9 @@ internal class CellImpl<T : JComponent>(
     private set
 
   override var comment: DslLabel? = null
+    private set
+
+  override var commentRight: DslLabel? = null
     private set
 
   var label: JLabel? = null
@@ -155,6 +160,19 @@ internal class CellImpl<T : JComponent>(
 
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
     this.comment = if (comment == null) null else createComment(comment, maxLineLength, action).apply {
+      registerCreationStacktrace(this)
+      document.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          updateAccessibleContextDescription()
+        }
+      })
+    }
+    updateAccessibleContextDescription()
+    return this
+  }
+
+  override fun commentRight(comment: String?, action: HyperlinkEventAction): Cell<T> {
+    this.commentRight = if (comment == null) null else createComment(comment, MAX_LINE_LENGTH_NO_WRAP, action).apply {
       registerCreationStacktrace(this)
       document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -334,6 +352,7 @@ internal class CellImpl<T : JComponent>(
     if (viewComponent.isVisible != isVisible) {
       viewComponent.isVisible = isVisible
       comment?.let { it.isVisible = isVisible }
+      commentRight?.let { it.isVisible = isVisible }
       label?.let { it.isVisible = isVisible }
 
       // Force parent to re-layout
@@ -355,6 +374,7 @@ internal class CellImpl<T : JComponent>(
       viewComponent.isEnabled = isEnabled
     }
     comment?.let { it.isEnabled = isEnabled }
+    commentRight?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
   }
 
@@ -367,16 +387,23 @@ internal class CellImpl<T : JComponent>(
       return
     }
 
-    val document = comment?.document
-    try {
-      // Get text without html tags
-      lastAccessibleDescriptionFromComment = document?.getText(0, document.length)?.trim()
-    }
-    catch (e: BadLocationException) {
-      // Cannot get text
-      return
-    }
+    lastAccessibleDescriptionFromComment = AccessibleContextUtil.combineAccessibleStrings(commentRight?.getPlainText(), "\n", comment?.getPlainText())
     component.accessibleContext.accessibleDescription = lastAccessibleDescriptionFromComment
+  }
+
+  /**
+   * Extract text without html tags
+   */
+  @Suppress("HardCodedStringLiteral")
+  private fun DslLabel.getPlainText(): @Nls String? {
+    val document = document ?: return null
+    try {
+      val result = document.getText(0, document.length) ?: return null
+      return result.trim().takeIf { it.isNotEmpty() }
+    }
+    catch (_: BadLocationException) {
+      return null
+    }
   }
 
   companion object {

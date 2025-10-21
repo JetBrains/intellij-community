@@ -1,4 +1,4 @@
-// "Add 'String' as 2nd parameter to method 'set'" "true-preview"
+// "Add 'String' as 2nd parameter to method 'set()'" "true-preview"
 import java.util.List;
 
 public class X<T> {

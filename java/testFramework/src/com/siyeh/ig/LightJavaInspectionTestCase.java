@@ -99,7 +99,7 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
 
   protected final void checkQuickFix(String intentionName) {
     final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
-    assertNotNull(intention);
+    assertNotNull("Intention \"" + intentionName + "\" not found.", intention);
     myFixture.launchAction(intention);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".after.java");

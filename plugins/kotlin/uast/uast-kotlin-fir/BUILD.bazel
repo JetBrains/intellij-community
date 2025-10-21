@@ -1,27 +1,29 @@
-### auto-generated section `build kotlin.uast.uast-kotlin.k2` start
+### auto-generated section `build intellij.kotlin.uast` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
-  jvm_target = 11,
-  context_receivers = True,
+  name = "custom_kotlin-uast",
+  jvm_target = "11",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
-  ]
+  ],
+  x_context_parameters = True
 )
 
 jvm_library(
-  name = "kotlin-uast-uast-kotlin-k2",
-  module_name = "kotlin.uast.uast-kotlin.k2",
+  name = "kotlin-uast",
+  module_name = "intellij.kotlin.uast",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-uast",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:asm",
+    "//libraries/asm",
     "//plugins/kotlin/uast/uast-kotlin-base",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
@@ -36,4 +38,4 @@ jvm_library(
     "@lib//:kotlinc-symbol-light-classes",
   ]
 )
-### auto-generated section `build kotlin.uast.uast-kotlin.k2` end
+### auto-generated section `build intellij.kotlin.uast` end

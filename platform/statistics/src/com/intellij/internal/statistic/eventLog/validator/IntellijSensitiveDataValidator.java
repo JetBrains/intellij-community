@@ -88,7 +88,7 @@ import java.util.concurrent.ConcurrentMap;
  * It is validated by the following rules:
  * <pre>
  * {
- *   "event_id" : ["{enum:file.in.project}" ],
+ *   "event_id" : ["{enum:file.type.in.project}" ],
  *   "event_data" : {
  *     "file_type" : [ "{util#file_type}" ]
  *   }

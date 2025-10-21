@@ -105,7 +105,7 @@ class Maven4ModelVersionErrorParser(
       val path = Path(fileName)
       if (pathChecker(path)) {
         val modelAndOffset = getModelFromPath(project, path)
-        if (modelAndOffset == null || modelAndOffset.first == "4.0.0")
+        if (modelAndOffset == null || modelAndOffset.first == MavenConstants.MODEL_VERSION_4_0_0)
           return newBuildIssue(logLine, path, modelAndOffset?.second)
       }
     }
@@ -209,9 +209,12 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
               if (modelVersion.exists()) {
                 modelVersion.stringValue = MavenConstants.MODEL_VERSION_4_1_0
               }
-              val rootTag = psiFile.document?.rootTag
-              rootTag?.setAttribute("xmlns", NEW_XMLNS)
-              rootTag?.setAttribute("xsi:schemaLocation", NEW_SCHEMA_LOCATION)
+              val rootTag = psiFile.document?.rootTag ?: return@executeCommand
+              if (rootTag.getAttribute("xmlns:xsi") == null) {
+                rootTag.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+              }
+              rootTag.setAttribute("xmlns", NEW_XMLNS)
+              rootTag.setAttribute("xsi:schemaLocation", NEW_SCHEMA_LOCATION)
             }
 
             documentManager.doPostponedOperationsAndUnblockDocument(document)

@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import class 'BLUE'" "true"
+// "Import enum entry 'ColorEnum.BLUE'" "true"
 // ERROR: Unresolved reference: BLUE
 // IGNORE_K1
 package test
@@ -14,7 +14,7 @@ public enum ColorEnum {
 }
 
 // FILE: first.after.kt
-// "Import class 'BLUE'" "true"
+// "Import enum entry 'ColorEnum.BLUE'" "true"
 // ERROR: Unresolved reference: BLUE
 // IGNORE_K1
 package test

@@ -1,15 +1,18 @@
 ### auto-generated section `build intellij.devkit.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  name = "custom_core",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,16 +21,19 @@ jvm_library(
   module_name = "intellij.devkit.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  resources = [":core_resources"],
+  kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:jetbrains-annotations",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -43,8 +49,7 @@ jvm_library(
     "//plugins/properties:properties-backend",
     "//xml/impl",
     "//java/openapi:java",
-    "@lib//:guava",
-    "@lib//:xerces",
+    "//libraries/guava",
     "//platform/observable",
     "//spellchecker",
     "//plugins/properties/properties-psi-api:psi",
@@ -61,14 +66,14 @@ jvm_library(
     "//platform/service-container",
     "//platform/platform-api:ide",
     "//jps/jps-builders:build",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/xdebugger-impl:debugger-impl",
     "//java/debugger/impl",
     "@lib//:netty-codec-http",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:netty-buffer",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
@@ -78,18 +83,19 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/backend/workspace",
     "//platform/ide-core-impl",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//json/backend",
-    "@lib//:kotlinx-serialization-protobuf",
+    "//libraries/kotlinx/serialization/protobuf",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/ijent/buildConstants",
     "//platform/markdown-utils",
-    "@lib//:snakeyaml",
+    "//libraries/snakeyaml",
     "//platform/eel-provider",
-  ],
-  runtime_deps = [":core_resources"]
+    "//libraries/xerces",
+    "//platform/usageView-impl",
+  ]
 )
 ### auto-generated section `build intellij.devkit.core` end

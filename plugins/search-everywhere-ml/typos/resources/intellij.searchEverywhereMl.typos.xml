@@ -2,8 +2,6 @@
 
   <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
 
-  <incompatible-with>com.intellij.modules.androidstudio</incompatible-with>
-
   <dependencies>
     <module name="intellij.platform.ml.impl"/>
     <plugin id="tanvd.grazi"/>
@@ -18,10 +16,6 @@
     <advancedSetting default="true" id="searcheverywhere.ml.typos.enable"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlTyposBundle"/>
-
-    <registryKey key="search.everywhere.ml.spell.checker.enabled"
-                 description="Enable spell checking for Actions Tab."
-                 defaultValue="true"/>
 
     <registryKey key="search.everywhere.ml.typos.min.confidence"
                  description="Minimum confidence required for spelling suggestion"

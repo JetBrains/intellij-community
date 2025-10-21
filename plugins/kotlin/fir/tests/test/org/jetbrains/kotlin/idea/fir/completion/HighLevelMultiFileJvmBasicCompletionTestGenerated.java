@@ -220,6 +220,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/HiddenDeclarationsInWhenCondition/");
     }
 
+    @TestMetadata("ImplicitReceiverExposedSuperInterface")
+    public void testImplicitReceiverExposedSuperInterface() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ImplicitReceiverExposedSuperInterface/");
+    }
+
     @TestMetadata("InImportClassifiers")
     public void testInImportClassifiers() throws Exception {
         runTest("../../completion/testData/basic/multifile/InImportClassifiers/");

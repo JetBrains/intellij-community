@@ -4,7 +4,7 @@ package git4idea.ui.branch.dashboard
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.branch.GitInOutCountersInProject
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch

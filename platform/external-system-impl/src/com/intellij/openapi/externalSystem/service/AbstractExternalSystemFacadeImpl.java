@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -236,9 +237,11 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public synchronized void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+    public synchronized void onTaskOutput(@NotNull ExternalSystemTaskId id,
+                                          @NotNull String text,
+                                          @NotNull ProcessOutputType processOutputType) {
       try {
-        myManager.onTaskOutput(id, text, stdOut);
+        myManager.onTaskOutput(id, text, processOutputType);
       }
       catch (RemoteException e) {
         // Ignore

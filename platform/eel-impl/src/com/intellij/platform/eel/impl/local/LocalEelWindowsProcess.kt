@@ -22,18 +22,19 @@ internal class LocalEelWindowsProcess private constructor(
   private val process: Process,
   private val resizeWindow: ((WinSize) -> Unit)?,
   scope: CoroutineScope,
+  commandLineForDebug: String,
 ) : EelWindowsProcess {
   companion object {
     @JvmStatic
-    suspend fun create(process: Process, resizeWindow: ((WinSize) -> Unit)?): LocalEelWindowsProcess =
-      LocalEelWindowsProcess(process, resizeWindow, ApplicationManager.getApplication().serviceAsync<EelLocalApiService>().scope)
+    suspend fun create(process: Process, resizeWindow: ((WinSize) -> Unit)?, commandLineForDebug: String): LocalEelWindowsProcess =
+      LocalEelWindowsProcess(process, resizeWindow, ApplicationManager.getApplication().serviceAsync<EelLocalApiService>().scope, commandLineForDebug)
   }
 
   override val pid: EelApi.Pid = LocalPid(process.pid())
   override val stdin: EelSendChannel = process.outputStream.asEelChannel()
   override val stdout: EelReceiveChannel = StreamClosedAwareEelReceiveChannel(process.inputStream.consumeAsEelChannel())
   override val stderr: EelReceiveChannel = StreamClosedAwareEelReceiveChannel(process.errorStream.consumeAsEelChannel())
-  override val exitCode: Deferred<Int> = scope.async(CoroutineName("LocalEelWindowsProcess pid=${process.pid()}")) {
+  override val exitCode: Deferred<Int> = scope.async(CoroutineName("LocalEelWindowsProcess ($commandLineForDebug) pid=${process.pid()}")) {
     process.awaitExit()
   }
 

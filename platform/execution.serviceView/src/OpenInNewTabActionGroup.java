@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -19,7 +20,7 @@ import java.awt.*;
 import static com.intellij.platform.execution.serviceView.ServiceViewActionProvider.getSelectedItems;
 import static com.intellij.platform.execution.serviceView.ServiceViewActionProvider.getSelectedView;
 
-final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAware {
+final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

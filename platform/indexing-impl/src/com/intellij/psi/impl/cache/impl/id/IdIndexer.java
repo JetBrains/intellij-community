@@ -17,7 +17,6 @@ import java.util.Map;
  * out files that should not be indexed.
  * If implementation does not implement {@link FileTypeIndexingHint} then all the files of the type this indexer is registered
  * for -- will be indexed.
- * <p>
  *
  * @author traff
  * @see IdIndex
@@ -25,6 +24,7 @@ import java.util.Map;
 @ApiStatus.OverrideOnly
 public interface IdIndexer extends DataIndexer<IdIndexEntry, Integer, FileContent> {
   /**
+   * @return Map[IdIndexEntry -> {@link com.intellij.psi.search.UsageSearchContext}] (see {@link IdIndex} for the meaning)
    * <b>BEWARE</b>: Even though this method declares generic {@link Map} return value, it is <b>highly recommended</b> to
    * use {@link IdDataConsumer} helper to collect (ID, occurenceMask) pairs in this method implementation, instead of generic
    * {@link Map}.

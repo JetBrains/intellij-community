@@ -24,13 +24,14 @@ abstract class AbstractNecromancer<Z : Zombie>(private val name: String) : Necro
  */
 abstract class WeakNecromancer(name: String) : AbstractNecromancer<Nothing>(name) {
   abstract suspend fun spawn(recipe: SpawnRecipe)
-  override suspend fun shouldSpawnZombie(recipe: SpawnRecipe) = true
 
-  final override fun turnIntoZombie(recipe: TurningRecipe) = null
-  final override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: Nothing) = false
-  final override suspend fun buryZombie(id: Int, zombie: FingerprintedZombie<Nothing>?) = Unit
-  final override suspend fun exhumeZombie(id: Int) = null
-  final override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: Nothing?) = spawn(recipe)
+  override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean = true
+
+  final override fun turnIntoZombie(recipe: TurningRecipe): Nothing? = null
+  final override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: Nothing): Boolean = false
+  final override suspend fun buryZombie(id: Int, zombie: FingerprintedZombie<Nothing>?): Unit = Unit
+  final override suspend fun exhumeZombie(id: Int): Nothing? = null
+  final override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: Nothing?): Unit = spawn(recipe)
 }
 
 /**

@@ -71,7 +71,7 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
         return when (parent) {
             is KtNamedFunction -> {
                 val returnType = parent.getReturnType(analysisSession = this) ?: return null
-                val isNullable = returnType.canBeNull
+              val isNullable = returnType.isNullable
                 if (!returnType.isUnitType && !isNullable) return null
 
                 Context(

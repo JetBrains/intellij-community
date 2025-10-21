@@ -1,0 +1,13 @@
+// FIX: Replace with 'forEach'
+
+fun foo(nums: List<Int>) {
+    nums.forEach {
+        if (it % 2 == 0) {
+            "even"
+        } else {
+            "odd"
+        }
+    }
+}
+
+// IGNORE_K1

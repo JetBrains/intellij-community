@@ -44,7 +44,8 @@ multiline_formats: dict[str, str]
 
 def simple_separated_format(separator: str) -> TableFormat: ...
 def tabulate(
-    tabular_data: Mapping[str, Iterable[Any]] | Iterable[Iterable[Any]],
+    # The key is converted using str().
+    tabular_data: Mapping[Any, Iterable[Any]] | Iterable[Iterable[Any]],
     headers: str | dict[str, str] | Sequence[str] = (),
     tablefmt: str | TableFormat = "simple",
     floatfmt: str | Iterable[str] = "g",

@@ -4,5 +4,4 @@ fun foo() {
     BUF<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: "BUFSIZE"

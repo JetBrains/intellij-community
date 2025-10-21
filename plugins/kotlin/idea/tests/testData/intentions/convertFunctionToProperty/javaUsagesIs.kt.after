@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 package test
 
 val isFoo<caret>: Boolean

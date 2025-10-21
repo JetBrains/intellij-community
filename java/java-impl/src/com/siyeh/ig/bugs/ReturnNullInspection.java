@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -11,6 +10,8 @@ import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -20,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -79,10 +80,6 @@ public final class ReturnNullInspection extends BaseInspection {
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiElement elt = (PsiElement)infos[0];
-    if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
-      return null;
-    }
-
     final PsiMethod method = PsiTreeUtil.getParentOfType(elt, PsiMethod.class, false, PsiLambdaExpression.class);
     if (method == null) return null;
     final PsiType type = method.getReturnType();
@@ -91,13 +88,11 @@ public final class ReturnNullInspection extends BaseInspection {
       return new ReplaceWithEmptyOptionalFix(((PsiClassType)type).rawType().getCanonicalText());
     }
 
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
-    return LocalQuickFix.from(new AddAnnotationModCommandAction(manager.getDefaultNullable(), method,
-                                                                ArrayUtilRt.toStringArray(manager.getNotNulls())));
+    return LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(method));
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ReturnNullVisitor();
   }
 
@@ -195,6 +190,10 @@ public final class ReturnNullInspection extends BaseInspection {
       if (DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) {
         return;
       }
+      if (!lambda && JavaMethodContractUtil.hasExplicitContractAnnotation(method)) {
+        List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
+        if (ContainerUtil.exists(contracts, c -> c.getReturnValue().isNull())) return;
+      }
 
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
         if (m_reportCollectionMethods) {
@@ -221,7 +220,7 @@ public final class ReturnNullInspection extends BaseInspection {
           return false;
         }
         final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, variable, element);
-        return Arrays.stream(refs).anyMatch(this::isInNullableContext);
+        return ContainerUtil.exists(refs, this::isInNullableContext);
       }
       else if (parent instanceof PsiExpressionList) {
         final PsiElement grandParent = parent.getParent();

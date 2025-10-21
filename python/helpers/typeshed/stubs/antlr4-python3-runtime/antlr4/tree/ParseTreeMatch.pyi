@@ -4,6 +4,7 @@ from antlr4.tree.ParseTreePattern import ParseTreePattern as ParseTreePattern
 from antlr4.tree.Tree import ParseTree as ParseTree
 
 class ParseTreeMatch:
+    __slots__ = ("tree", "pattern", "labels", "mismatchedNode")
     tree: Incomplete
     pattern: Incomplete
     labels: Incomplete

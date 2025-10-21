@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots.builders
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.indexing.roots.IndexableEntityProvider
@@ -14,7 +15,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge.Co
 
 class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =
-    builder is SdkIteratorBuilder || builder is InheritedSdkIteratorBuilder
+    !Registry.`is`("use.workspace.file.index.for.partial.scanning") &&
+    (builder is SdkIteratorBuilder || builder is InheritedSdkIteratorBuilder)
 
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
                            project: Project,
@@ -44,7 +46,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
     val result = mutableListOf<IndexableFilesIterator>()
     for (entry in unifiedBuilders.entries) {
-      findSdk(entry.key.first, entry.key.second)?.apply {
+      findSdk(project, entry.key.first, entry.key.second)?.apply {
         result.addAll(entry.value.createIterator(this, project))
       }
     }

@@ -25,7 +25,7 @@ import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.descriptionInPopup
 import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.shortenNameInPopup
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
 import kotlinx.coroutines.CoroutineScope
 

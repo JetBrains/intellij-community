@@ -43,7 +43,13 @@ public final class LibraryUtil {
         return library;
       }
     }
-    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
+    final LibraryTable table;
+    if (project != null) {
+      table = LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project);
+    }
+    else {
+      table = LibraryTablesRegistrar.getInstance().getLibraryTable();
+    }
     return findInTable(table, fqn);
   }
 

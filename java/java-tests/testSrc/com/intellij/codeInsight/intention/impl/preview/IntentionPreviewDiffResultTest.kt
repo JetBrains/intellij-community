@@ -294,7 +294,22 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
     ).formatResult()
     assertEquals("", result)
   }
-  
+
+  @Test
+  fun testSnippet() {
+    val text = """
+      public void method() {
+        int a = 1;
+      }
+    """.trimIndent()
+    val result = IntentionPreviewDiffResult.fromSnippet(IntentionPreviewInfo.Snippet(JavaFileType.INSTANCE, text, 5)).formatResult()
+    assertEquals("""
+      5 : public void method() {
+      6 :   int a = 1;
+      7 : }
+    """.trimIndent(), result)
+  }
+
   /**
    * Returns a textual representation of diffs from created and modified text, how they will look
    * in the intention preview window. Each diff chunk is separated via a horizontal dashed line.

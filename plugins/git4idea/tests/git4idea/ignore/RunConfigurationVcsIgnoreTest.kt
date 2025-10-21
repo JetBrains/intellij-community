@@ -8,7 +8,6 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.VfsTestUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
 import org.assertj.core.api.Assertions.assertThat
@@ -31,8 +30,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   }
 
   fun `test run configuration not ignored`() {
-    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
-    gitIgnore.write("!$configurationName")
+    val gitIgnore = prepareUnversionedFile( GITIGNORE, "!$configurationName")
 
     val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
     ApplicationManager.getApplication().invokeAndWait {
@@ -46,16 +44,14 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   }
 
   fun `test run configuration ignored`() {
-    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
-    gitIgnore.write("$configurationName*")
+    prepareUnversionedFile(GITIGNORE, "$configurationName*")
     ApplicationManager.getApplication().invokeAndWait {
       assertThat(VcsIgnoreManager.getInstance(project).isRunConfigurationVcsIgnored(configurationName)).isTrue()
     }
   }
 
   fun `test remove run configuration from ignore`() {
-    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
-    gitIgnore.write(".idea")
+    val gitIgnore = prepareUnversionedFile(GITIGNORE, ".idea")
     val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
     ApplicationManager.getApplication().invokeAndWait {
       assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isTrue()

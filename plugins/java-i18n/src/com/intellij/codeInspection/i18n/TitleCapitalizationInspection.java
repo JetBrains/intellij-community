@@ -179,7 +179,11 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
                                            problemElement);
         literal.replace(newExpression);
       }
-      if (UastContextKt.toUElement(problemElement) instanceof UCallExpression call) {
+      UElement uElement = UastContextKt.toUElement(problemElement);
+      if (uElement instanceof UQualifiedReferenceExpression ref) {
+        uElement = ref.getSelector();
+      }
+      if (uElement instanceof UCallExpression call) {
         final Property property = updater.getWritable(getPropertyArgument(call));
         Value value = Value.of(property, call.getValueArgumentCount() > 1);
         if (value == null) return;

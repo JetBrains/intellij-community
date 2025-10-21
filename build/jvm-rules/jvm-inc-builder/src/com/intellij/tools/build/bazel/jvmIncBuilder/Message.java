@@ -69,7 +69,17 @@ public interface Message {
   }
 
   static Message create(Runner reporter, Kind kind, String message, Throwable ex) {
-    StringBuilder buf = new StringBuilder(message != null? message : ex.getMessage());
+    StringBuilder buf = new StringBuilder(message != null? message : "");
+
+    String errDescription = ex.getMessage();
+    if (errDescription == null) {
+      errDescription = ex.getClass().getName();
+    }
+    if (!buf.isEmpty()) {
+      buf.append(": ");
+    }
+    buf.append(errDescription);
+
     if (kind == Kind.ERROR) {
       StringWriter trace = new StringWriter();
       ex.printStackTrace(new PrintWriter(trace));

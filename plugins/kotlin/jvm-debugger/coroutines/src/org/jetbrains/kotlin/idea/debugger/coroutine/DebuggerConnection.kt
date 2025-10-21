@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
-import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.configurations.JavaParameters
@@ -12,6 +11,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
@@ -20,11 +20,12 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.util.MonolithUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
@@ -37,7 +38,7 @@ class DebuggerConnection(
     // Used externally on the Android Studio side
     @Suppress("MemberVisibilityCanBePrivate")
     val alwaysShowPanel: Boolean = false
-) : XDebuggerManagerListener, Disposable {
+) : FrontendXDebuggerManagerListener, Disposable {
     companion object {
         private val log by logger
     }
@@ -56,27 +57,29 @@ class DebuggerConnection(
         }
 
         connection = project.messageBus.connect()
-        connection?.subscribe(XDebuggerManager.TOPIC, this)
+        connection?.subscribe(FrontendXDebuggerManagerListener.TOPIC, this)
     }
 
-    override fun processStarted(debugProcess: XDebugProcess) {
-        if (XDebugSessionProxy.useFeProxy()) return // TODO IDEA-368739
-        DebuggerInvocationUtil.swingInvokeLater(project) {
-            val session = debugProcess.session
+    override fun sessionStarted(session: XDebugSessionProxy) {
+        // Coroutines view is only supported in monolith
+        val monolithSession = MonolithUtils.findSessionById(session.id) ?: return
+        session.coroutineScope.launch(Dispatchers.EDT) {
+            session.sessionTabWhenInitialized.await()
+            val debugProcess = monolithSession.debugProcess
             if (debugProcess is JavaDebugProcess &&
                 !isDisposed &&
                 coroutinesPanelShouldBeShown() &&
-                !coroutinePanelIsRegistered(session))
-            {
-                registerXCoroutinesPanel(session)?.let {
-                    Disposer.register(this, it)
+                !coroutinePanelIsRegistered(session)
+            ) {
+                registerXCoroutinesPanel(session, debugProcess, monolithSession)?.let {
+                    Disposer.register(this@DebuggerConnection, it)
                 }
             }
         }
     }
 
-    private fun coroutinePanelIsRegistered(session: XDebugSession): Boolean {
-        val ui = session.ui as? RunnerLayoutUiImpl ?: return false
+    private fun coroutinePanelIsRegistered(session: XDebugSessionProxy): Boolean {
+        val ui = session.sessionTab?.ui as? RunnerLayoutUiImpl ?: return false
         val contentUi = ui.contentUI
         val content = invokeAndWaitIfNeeded {
             contentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
@@ -84,15 +87,18 @@ class DebuggerConnection(
         return content != null
     }
 
-    override fun processStopped(debugProcess: XDebugProcess) {
+    override fun sessionStopped(session: XDebugSessionProxy) {
         ApplicationManager.getApplication().invokeLater {
             Disposer.dispose(this)
         }
     }
 
-    private fun registerXCoroutinesPanel(session: XDebugSession): Disposable? {
-        val ui = session.ui ?: return null
-        val javaDebugProcess = session.debugProcess as? JavaDebugProcess ?: return null
+    private fun registerXCoroutinesPanel(
+        sessionProxy: XDebugSessionProxy,
+        javaDebugProcess: JavaDebugProcess,
+        monolithSession: XDebugSession
+    ): Disposable? {
+        val ui = sessionProxy.sessionTab?.ui ?: return null
         val coroutineThreadView = CoroutineView(project, javaDebugProcess)
         val framesContent: Content = createContent(ui, coroutineThreadView)
         framesContent.isCloseable = false
@@ -101,18 +107,17 @@ class DebuggerConnection(
             override fun selectionChanged(event: ContentManagerEvent) {
                 val content = event.content
                 if (content == framesContent && content.isSelected) {
-                    val suspendContext = session.suspendContext
+                    val suspendContext = monolithSession.suspendContext
                     if (suspendContext is SuspendContextImpl) {
                         coroutineThreadView.renewRoot(suspendContext)
-                    }
-                    else {
+                    } else {
                         coroutineThreadView.resetRoot()
                     }
                 }
             }
         }, this)
-        session.addSessionListener(coroutineThreadView.debugSessionListener(session))
-        session.rebuildViews()
+        monolithSession.addSessionListener(coroutineThreadView.debugSessionListener(monolithSession))
+        sessionProxy.rebuildViews()
         return coroutineThreadView
     }
 

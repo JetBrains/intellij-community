@@ -2,8 +2,8 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -23,7 +23,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
                                    int actionIndex,
                                    StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, JavaUiBundle.message("classpath.add.module.dependency.action"),
-          StdModuleTypes.JAVA.getIcon());
+          JavaModuleType.getModuleType().getIcon());
     myContext = context;
   }
 

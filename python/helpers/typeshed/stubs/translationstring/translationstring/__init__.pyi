@@ -1,8 +1,9 @@
 from collections.abc import Callable
 from gettext import NullTranslations
-from typing import Any, Protocol
+from typing import Any, Protocol, type_check_only
 from typing_extensions import Self
 
+@type_check_only
 class _TranslationStringFactory(Protocol):
     def __call__(
         self,
@@ -12,6 +13,7 @@ class _TranslationStringFactory(Protocol):
         context: str | None = ...,
     ) -> TranslationString: ...
 
+@type_check_only
 class _ChameleonTranslate(Protocol):
     def __call__(
         self,
@@ -22,9 +24,11 @@ class _ChameleonTranslate(Protocol):
         default: str | None = ...,
     ) -> TranslationString: ...
 
+@type_check_only
 class _TranslatorPolicy(Protocol):
     def __call__(self, translations: NullTranslations, tstring: str, domain: str | None, context: str | None) -> str: ...
 
+@type_check_only
 class _Translator(Protocol):
     def __call__(
         self,
@@ -34,11 +38,13 @@ class _Translator(Protocol):
         context: str | None = None,
     ) -> str: ...
 
+@type_check_only
 class _PluralizerPolicy(Protocol):
     def __call__(
         self, translations: NullTranslations, singular: str, plural: str, n: int, domain: str | None, context: str | None
     ) -> str: ...
 
+@type_check_only
 class _Pluralizer(Protocol):
     def __call__(
         self,
@@ -51,6 +57,7 @@ class _Pluralizer(Protocol):
     ) -> str: ...
 
 class TranslationString(str):
+    __slots__ = ("domain", "context", "default", "mapping")
     domain: str | None
     context: str | None
     default: str

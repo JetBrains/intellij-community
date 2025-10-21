@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -26,7 +26,7 @@ fun ModifiableRootModel.addHamcrestLibrary() {
   PsiTestUtil.addLibrary(this, "hamcrest-library", libraryJar.parent, libraryJar.name)
 }
 
-fun ModifiableRootModel.addJUnit5Library(version: String = "5.9.1") {
+fun ModifiableRootModel.addJUnit5Library(version: String = "5.12.0") {
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-api:$version")
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-params:$version")
 }

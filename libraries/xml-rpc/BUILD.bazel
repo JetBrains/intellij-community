@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.xml.rpc` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "xml-rpc_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "xml-rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":xml-rpc_resources"],
+  exports = ["@lib//:libraries-xml-rpc-xml-rpc"],
+  runtime_deps = ["@lib//:libraries-xml-rpc-xml-rpc"]
+)
+### auto-generated section `build intellij.libraries.xml.rpc` end

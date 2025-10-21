@@ -9,24 +9,19 @@ import com.intellij.credentialStore.keePass.getDefaultDbFile
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.Ephemeral
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.asPromise
 import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -35,7 +30,7 @@ private val LOG: Logger
   get() = logger<CredentialStore>()
 
 @Internal
-abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : PasswordSafe() {
+abstract class BasePasswordSafe : PasswordSafe() {
   protected abstract val settings: PasswordSafeSettings
 
   override var isRememberPasswordByDefault: Boolean
@@ -128,12 +123,8 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     }
   }
 
-  // maybe in the future we will use native async; this method added here instead "if needed, just use runAsync in your code"
-  override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> {
-    return coroutineScope.async(Dispatchers.IO) {
-      get(attributes)
-    }.asCompletableFuture().asPromise()
-  }
+  override suspend fun getAsync(attributes: CredentialAttributes): Ephemeral<Credentials> =
+    currentProvider.getAsync(attributes)
 
   suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
@@ -161,7 +152,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
 @Internal
 class TestPasswordSafeImpl @NonInjectable constructor(
   override val settings: PasswordSafeSettings
-) : BasePasswordSafe(coroutineScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()) {
+) : BasePasswordSafe() {
   @TestOnly
   constructor() : this(service<PasswordSafeSettings>())
 
@@ -173,7 +164,7 @@ class TestPasswordSafeImpl @NonInjectable constructor(
 }
 
 @Internal
-class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(coroutineScope), SettingsSavingComponent {
+class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   override val settings: PasswordSafeSettings
     get() = service<PasswordSafeSettings>()
 }

@@ -45,7 +45,7 @@ final class JavaCompilerConfiguration extends JavaCompilerConfigurationProxy {
                  value -> {
                    setAdditionalOptions(project, module, value);
                    PsiManager.getInstance(project).dropPsiCaches();
-                   DaemonCodeAnalyzer.getInstance(project).restart();
+                   DaemonCodeAnalyzer.getInstance(project).restart("JavaCompilerConfiguration.additionalOptions " +value);
                  })
         .withRootPane(() -> OptPane.pane(OptPane.stringList(bindId, JavaCompilerBundle.message("settings.override.compilation.options.column"))));
     }

@@ -72,12 +72,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  public boolean isDocString() {
-    final List<ASTNode> stringNodes = getStringNodes();
-    return stringNodes.size() == 1 && stringNodes.get(0).getElementType() == PyTokenTypes.DOCSTRING;
-  }
-
-  @Override
   public boolean isInterpolated() {
     return StreamEx.of(getStringElements())
       .select(PyFormattedStringElement.class)

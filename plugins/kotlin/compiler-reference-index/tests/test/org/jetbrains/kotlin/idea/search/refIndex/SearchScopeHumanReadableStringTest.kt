@@ -91,11 +91,13 @@ open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase(
             """.trimIndent()
         )
 
+        if (!isCompatibleVersions) return
         installCompiler()
         rebuildProject()
     }
 
     fun `test array list with code usage scope`() {
+        if (!isCompatibleVersions) return
         PsiSearchHelper.getInstance(project)
             .getCodeUsageScope(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST))
             .assertWithExpected(
@@ -125,6 +127,7 @@ open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase(
     }
 
     fun `test array list with use scope`() {
+        if (!isCompatibleVersions) return
         PsiSearchHelper.getInstance(project).getUseScope(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST)).assertWithExpected(
             """
                Union:
@@ -136,6 +139,7 @@ open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase(
     }
 
     fun `test java class with code usage scope`() {
+        if (!isCompatibleVersions) return
         PsiSearchHelper.getInstance(project)
             .getCodeUsageScope(myFixture.findClass("one.JavaClass"))
             .assertWithExpected(
@@ -165,6 +169,7 @@ open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase(
     }
 
     fun `test java class with use scope`() {
+        if (!isCompatibleVersions) return
         PsiSearchHelper.getInstance(project).getUseScope(myFixture.findClass("one.JavaClass")).assertWithExpected(
             """
                Union:

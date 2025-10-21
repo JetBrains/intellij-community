@@ -1,0 +1,28 @@
+// "Change exception object to class" "true"
+// WITH_STDLIB
+
+<caret>object ECA : Exception() {
+    class EcaClass {
+        var ecaClassVar = 0
+        fun ecaClassFun() = ecaClassVar + 1
+    }
+
+    object EcaObject {
+        var ecaObjectVar = 0
+        fun ecaObjectFun() = ecaObjectVar + 1
+    }
+}
+
+fun useEca() {
+    val ec = ECA.EcaClass()
+    ec.ecaClassVar++
+    println(ec.ecaClassVar)
+    println(ec.ecaClassFun())
+
+    ECA.EcaObject.ecaObjectVar++
+    println(ECA.EcaObject.ecaObjectVar)
+    println(ECA.EcaObject.ecaObjectFun())
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectInheritsExceptionInspection$ChangeObjectToClassQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectInheritsExceptionInspection$ChangeObjectToClassQuickFix

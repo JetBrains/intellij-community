@@ -10,6 +10,8 @@ import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * An instruction that pushes given value to the stack
@@ -29,7 +31,12 @@ public class PushInstruction extends EvalInstruction {
 
   @Override
   public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
-    return getValue() instanceof DfaVariableValue var ? List.of(var.getDescriptor()) : List.of();
+    if (getValue() instanceof DfaVariableValue var) {
+      return Stream.iterate(var, Objects::nonNull, DfaVariableValue::getQualifier)
+        .map(DfaVariableValue::getDescriptor)
+        .toList();
+    }
+    return List.of();
   }
 
   public @NotNull DfaValue getValue() {

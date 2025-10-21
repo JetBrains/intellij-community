@@ -3,6 +3,7 @@ package com.intellij.tools.launch
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.getMavenRepositoryPath
 import java.io.File
 
 interface PathsProvider {
@@ -30,7 +31,7 @@ interface PathsProvider {
     get() = JdkDownloader.blockingGetJdkHomeAndLog(BuildDependenciesCommunityRoot(communityRootFolder.toPath())).normalize().toFile()
 
   val mavenRepositoryFolder: File
-    get() = File(System.getProperty("user.home")).resolve(".m2/repository")
+    get() = File(getMavenRepositoryPath())
 
   val communityBinFolder: File
     get() = communityRootFolder.resolve("bin")

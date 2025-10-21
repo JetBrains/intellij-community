@@ -6,9 +6,9 @@ import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.psi.impl.stubs.evaluateVersionsForElement
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -22,7 +22,7 @@ class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: Flow
   private val reachability: BooleanArray = BooleanArray(instructions.size)
 
   init {
-    val languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(scopeOwner.containingFile)
+    val languageLevel = getEffectiveLanguageLevel(scopeOwner.containingFile)
     val languageVersion = Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
 
     val stack = ArrayDeque<Instruction>()

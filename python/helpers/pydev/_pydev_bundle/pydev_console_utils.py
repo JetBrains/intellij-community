@@ -13,6 +13,7 @@ from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from _pydevd_bundle.pydevd_tables import exec_table_command
 from _pydevd_bundle.pydevd_tables import exec_image_table_command
+from _pydevd_bundle.pydevd_tables import exec_raw
 from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
 from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, \
     PythonUnhandledException, PythonTableException
@@ -432,6 +433,17 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         if not success:
             raise PythonTableException(str(res))
 
+    #
+    def execRaw(self, command):
+        try:
+            success, res = exec_raw(command, self.get_namespace(), self.get_namespace())
+            if success:
+                return res
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
+        if not success:
+            raise PythonUnhandledException(str(res))
 
     #
     def execTableImageCommand(self, command, command_type, offset, image_id):

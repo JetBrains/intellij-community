@@ -78,11 +78,11 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   protected abstract @NotNull @NlsContexts.PopupContent String getIndexNotReadyMessage();
 
   private void updateElementImplementations(Object lookupItemObject, ImplementationViewSession session) {
+    if (lookupItemObject instanceof PSIPresentationBgRendererWrapper.ItemWithPresentation<?> itemWithPresentation) {
+      lookupItemObject = itemWithPresentation.getItem();
+    }
     if (lookupItemObject instanceof PsiItemWithSimilarity<?> itemWithSimilarity)  {
       lookupItemObject = itemWithSimilarity.getValue();
-    }
-    if (lookupItemObject instanceof PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
-      lookupItemObject = ((PSIPresentationBgRendererWrapper.PsiItemWithPresentation)lookupItemObject).getItem();
     }
     ImplementationViewSessionFactory currentFactory = session.getFactory();
     ImplementationViewSession newSession = createNewSession(currentFactory, session, lookupItemObject);

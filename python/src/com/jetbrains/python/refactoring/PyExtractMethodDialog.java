@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 public class PyExtractMethodDialog extends AbstractExtractMethodDialog<Object> {
@@ -62,7 +63,7 @@ public class PyExtractMethodDialog extends AbstractExtractMethodDialog<Object> {
   @NotNull
   public PyExtractMethodSettings getExtractMethodSettings() {
     return new PyExtractMethodSettings(getMethodName(), getAbstractVariableData(), ((PyCodeFragment)myFragment).getOutputType(),
-                                       myAddTypeAnnotationsCheckbox.isSelected());
+                                       ((PyCodeFragment)myFragment).getOutputTypes(), myAddTypeAnnotationsCheckbox.isSelected());
   }
 
   @Override
@@ -75,7 +76,8 @@ public class PyExtractMethodDialog extends AbstractExtractMethodDialog<Object> {
       data.originalName = name;
       data.name = name;
       data.passAsParameter = true;
-      data.typeName = ((PyCodeFragment)myFragment).getInputTypes().get(name);
+      data.typeName = ((PyCodeFragment)myFragment).getInputTypeName(name);
+      data.type = ((PyCodeFragment)myFragment).getInputType(name);
       datas[i] = data;
     }
     return datas;
@@ -110,8 +112,9 @@ public class PyExtractMethodDialog extends AbstractExtractMethodDialog<Object> {
 
     @Override
     public void setValue(@NotNull PyVariableData data, @NotNull String value) {
-      if (myNameValidator.test(value)) {
+      if (myNameValidator.test(value) && !Objects.equals(data.getTypeName(), value)) {
         data.typeName = value;
+        data.type = null; // the user needs to import the type he specified manually
       }
     }
 

@@ -7,11 +7,14 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingPopupManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
@@ -28,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.Arrays;
 
@@ -40,9 +42,9 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
   private static final Key<Boolean> INITIALIZED = Key.create("PropertyEditTooltipManager");
   private static final long TOOLTIP_DELAY_MS = 500;
 
-  private final Alarm myAlarm = new Alarm();
+  private final Alarm myCalculateShowTooltipAlarm;
 
-  public static void initializeForDocument(@NotNull Document document) {
+  static void initializeForDocument(@NotNull Document document) {
     EditorFactory.getInstance().editors(document).forEach(EditPropertyValueTooltipManager::initializeForEditor);
   }
 
@@ -55,27 +57,32 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
   private EditPropertyValueTooltipManager(@NotNull Editor editor) {
     editor.getCaretModel().addCaretListener(this);
     editor.addEditorMouseListener(this);
+    myCalculateShowTooltipAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ((EditorImpl)editor).getDisposable());
   }
 
   @Override
   public void mouseReleased(@NotNull EditorMouseEvent event) {
-    Editor editor = event.getEditor();
-    if (event.getArea() == EditorMouseEventArea.EDITING_AREA && shouldShowTooltip(editor)) {
-      event.consume();
-      myAlarm.cancelAllRequests();
-      showTooltip(editor);
+    if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+      submitCalculateShowingTooltipInBGT(event.getEditor());
     }
   }
 
   @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
-    myAlarm.cancelAllRequests();
-    Editor editor = event.getEditor();
-    if (shouldShowTooltip(editor)) myAlarm.addRequest(() -> showTooltip(editor), TOOLTIP_DELAY_MS);
+    submitCalculateShowingTooltipInBGT(event.getEditor());
+  }
+
+  private void submitCalculateShowingTooltipInBGT(@NotNull Editor editor) {
+    myCalculateShowTooltipAlarm.cancelAllRequests();
+    myCalculateShowTooltipAlarm.addRequest(() -> {
+      if (ReadAction.compute(() -> shouldShowTooltip(editor))) {
+        ApplicationManager.getApplication().invokeLater(() -> showTooltip(editor));
+      }
+    }, TOOLTIP_DELAY_MS);
   }
 
   private static boolean shouldShowTooltip(@NotNull Editor editor) {
-    return EditPropertyValueAction.isEnabled(editor);
+    return !editor.isDisposed() && EditPropertyValueAction.isEnabled(editor);
   }
 
   private static void showTooltip(@NotNull Editor editor) {
@@ -83,20 +90,17 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
                                                     createActionText(ACTION_EDIT_PROPERTY_VALUE, "edit")),
                                       "&nbsp;&nbsp;&nbsp;&nbsp;");
     if (hintText.isEmpty()) return;
-    JComponent component = HintUtil.createInformationLabel("<html>" + hintText, new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-        String actionId = switch (e.getDescription()) {
-          case "expand" -> ACTION_EXPAND_REGION;
-          case "edit" -> ACTION_EDIT_PROPERTY_VALUE;
-          default -> null;
-        };
-        if (actionId != null) {
-          AnAction action = ActionManager.getInstance().getAction(actionId);
-          if (action != null) {
-            ActionUtil.invokeAction(action, editor.getContentComponent(), ActionPlaces.UNKNOWN, e.getInputEvent(), null);
-          }
+    JComponent component = HintUtil.createInformationLabel("<html>" + hintText, e -> {
+      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+      String actionId = switch (e.getDescription()) {
+        case "expand" -> ACTION_EXPAND_REGION;
+        case "edit" -> ACTION_EDIT_PROPERTY_VALUE;
+        default -> null;
+      };
+      if (actionId != null) {
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        if (action != null) {
+          ActionUtil.invokeAction(action, editor.getContentComponent(), ActionPlaces.UNKNOWN, e.getInputEvent(), null);
         }
       }
     }, null, null);

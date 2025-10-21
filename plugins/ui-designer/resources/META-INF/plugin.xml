@@ -76,7 +76,7 @@
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.BoundFieldAssignmentInspection"/>
 
-    <fileEditorProvider id="ui-designer" implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider" fileType="GUI_DESIGNER_FORM"/>
+    <fileEditorProvider id="ui-designer" implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider"/>
 
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"/>

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
@@ -61,9 +61,9 @@ internal class JavaDefaultMethodsNotOverriddenByDelegationInspection : AbstractK
                         KtClassMemberInfo.create(
                             symbol = javaDefaultMethod,
                             memberText = javaDefaultMethod.render(KtGenerateMembersHandler.renderer),
-                            memberIcon = getIcon(javaDefaultMethod),
+                            memberIcon = KotlinIconProvider.getIcon(javaDefaultMethod),
                             containingSymbolText = fqName,
-                            containingSymbolIcon = getIcon(javaDefaultMethod),
+                            containingSymbolIcon = KotlinIconProvider.getIcon(javaDefaultMethod),
                         )
                     }.toList().takeIf { it.isNotEmpty() } ?: return
                     memberInfos to delegateName

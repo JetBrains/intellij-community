@@ -7,23 +7,90 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 internal object CoroutinesIds {
-    val COROUTINES_PACKAGE: FqName = FqName("kotlinx.coroutines")
+    val PACKAGE: FqName = FqName("kotlinx.coroutines")
 
-    val CURRENT_COROUTINE_CONTEXT_ID: CallableId = CallableId(COROUTINES_PACKAGE, Name.identifier("currentCoroutineContext"))
-    
-    val JOB_CLASS_ID: ClassId = ClassId(COROUTINES_PACKAGE, Name.identifier("Job"))
-    val JOB_JOIN_ID: CallableId = CallableId(JOB_CLASS_ID, Name.identifier("join"))
-    val JOIN_ALL_ID: CallableId = CallableId(COROUTINES_PACKAGE, Name.identifier("joinAll"))
-    
-    val DEFERRED_CLASS_ID: ClassId = ClassId(COROUTINES_PACKAGE, Name.identifier("Deferred"))
-    val DEFERRED_AWAIT_ID: CallableId = CallableId(DEFERRED_CLASS_ID, Name.identifier("await"))
-    val AWAIT_ALL_ID: CallableId = CallableId(COROUTINES_PACKAGE, Name.identifier("awaitAll"))
-    
-    val COROUTINE_SCOPE_CLASS_ID: ClassId = ClassId(COROUTINES_PACKAGE, Name.identifier("CoroutineScope"))
-    
-    val COROUTINES_SELECTS_PACKAGE: FqName = FqName("kotlinx.coroutines.selects")
+    object Job {
+        val ID: ClassId = ClassId(PACKAGE, Name.identifier("Job"))
 
-    val SELECT_BUILDER_CLASS_ID: ClassId = ClassId(COROUTINES_SELECTS_PACKAGE, Name.identifier("SelectBuilder"))
-    val SELECT_BUILDER_INVOKE_ID: CallableId = CallableId(SELECT_BUILDER_CLASS_ID, Name.identifier("invoke"))
-    val SELECT_BUILDER_ON_TIMEOUT_ID: CallableId = CallableId(COROUTINES_SELECTS_PACKAGE, Name.identifier("onTimeout"))
+        val join: CallableId = CallableId(ID, Name.identifier("join"))
+        
+        object Key {
+            val ID: ClassId = Job.ID.createNestedClassId(Name.identifier("Key"))
+        }
+    }
+    
+    object NonCancellable {
+        val ID: ClassId = ClassId(PACKAGE, Name.identifier("NonCancellable"))
+    }
+
+    val joinAll: CallableId = CallableId(PACKAGE, Name.identifier("joinAll"))
+
+    object Deferred {
+        val ID: ClassId = ClassId(PACKAGE, Name.identifier("Deferred"))
+        val await: CallableId = CallableId(ID, Name.identifier("await"))
+    }
+
+    val awaitAll: CallableId = CallableId(PACKAGE, Name.identifier("awaitAll"))
+
+    object CoroutineScope {
+        val ID: ClassId = ClassId(PACKAGE, Name.identifier("CoroutineScope"))
+
+        val coroutineContext: CallableId = CallableId(ID, Name.identifier("coroutineContext"))
+    }
+
+    object Selects {
+        val PACKAGE: FqName = FqName("kotlinx.coroutines.selects")
+
+        object SelectBuilder {
+            val ID: ClassId = ClassId(PACKAGE, Name.identifier("SelectBuilder"))
+
+            val invoke: CallableId = CallableId(ID, Name.identifier("invoke"))
+        }
+
+        val onTimeout: CallableId = CallableId(PACKAGE, Name.identifier("onTimeout"))
+    }
+
+    object Channels {
+        val PACKAGE: FqName = FqName("kotlinx.coroutines.channels")
+
+        val produce: CallableId = CallableId(PACKAGE, Name.identifier("produce"))
+    }
+
+    object Flows {
+        val PACKAGE: FqName = FqName("kotlinx.coroutines.flow")
+
+        val flowOn: CallableId = CallableId(PACKAGE, Name.identifier("flowOn"))
+    }
+    
+    object CoroutineDispatcher {
+        val ID: ClassId = ClassId(PACKAGE, Name.identifier("CoroutineDispatcher"))
+    }
+
+    val currentCoroutineContext: CallableId = CallableId(PACKAGE, Name.identifier("currentCoroutineContext"))
+    val suspendCancellableCoroutine: CallableId = CallableId(PACKAGE, Name.identifier("suspendCancellableCoroutine"))
+    
+    val withContext: CallableId = CallableId(PACKAGE, Name.identifier("withContext"))
+    
+    val launch: CallableId = CallableId(PACKAGE, Name.identifier("launch"))
+    val async: CallableId = CallableId(PACKAGE, Name.identifier("async"))
+    val future: CallableId = CallableId(PACKAGE, Name.identifier("future"))
+    val produce: CallableId = CallableId(PACKAGE, Name.identifier("produce"))
+    val promise: CallableId = CallableId(PACKAGE, Name.identifier("promise"))
+
+    object ParameterNames {
+        val context: Name = Name.identifier("context")
+    }
+
+    object Stdlib {
+        val PACKAGE: FqName = FqName("kotlin.coroutines")
+        
+        object CoroutineContext {
+            val ID: ClassId = ClassId(PACKAGE, Name.identifier("CoroutineContext"))
+            
+            val plus: CallableId = CallableId(ID, Name.identifier("plus"))
+            val minusKey: CallableId = CallableId(ID, Name.identifier("minusKey"))
+        }
+        
+        val coroutineContext: CallableId = CallableId(PACKAGE, Name.identifier("coroutineContext"))
+    }
 }

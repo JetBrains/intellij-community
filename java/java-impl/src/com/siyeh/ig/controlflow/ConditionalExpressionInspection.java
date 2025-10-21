@@ -223,7 +223,7 @@ public final class ConditionalExpressionInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConditionalExpressionVisitor();
   }
 

@@ -14,12 +14,12 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import java.util.concurrent.TimeUnit
 
 fun loadDependenciesSync(project: Project) {
-  val libs = collectLibrariesToSync(project)
-  if (libs.isEmpty()) {
-    return
-  }
-
   runBlocking(JarRepositoryManager.DOWNLOADER_EXECUTOR.asCoroutineDispatcher()) {
+    val libs = collectLibrariesToSync(project)
+    if (libs.isEmpty()) {
+      return@runBlocking
+    }
+
     loadDependenciesSyncImpl(project, libs)
   }
 }

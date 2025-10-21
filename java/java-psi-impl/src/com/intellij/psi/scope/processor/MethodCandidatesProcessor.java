@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -87,7 +87,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
-                                                             final boolean staticProblem, final boolean accessible, final boolean varargs) {
+                                                             boolean staticProblem, boolean accessible, boolean varargs) {
     return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
                                                getTypeArguments(), getLanguageLevel(), varargs);
   }
@@ -161,5 +161,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     public boolean isVarargs() {
       return myVarargs;
     }
+  }
+
+  @Override
+  public void forceAddResult(@NotNull PsiMethod method) {
+    add(createCandidateInfo(method, PsiSubstitutor.EMPTY, false, true, method.isVarArgs()));
   }
 }

@@ -1,5 +1,5 @@
 // PRIORITY: HIGH
-// INTENTION_TEXT: "Add import for 'pack.name.Fixtures'"
+// INTENTION_TEXT: "Add import for 'pack.name.Fixtures.Register'"
 
 package pack.name
 
@@ -17,3 +17,5 @@ class Fixtures {
 fun test() {
     pack.name.<caret>Fixtures.Register.Domain.UserRepository.authSuccess
 }
+
+// IGNORE_K1

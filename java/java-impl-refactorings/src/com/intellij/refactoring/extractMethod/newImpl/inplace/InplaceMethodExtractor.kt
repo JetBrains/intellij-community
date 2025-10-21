@@ -8,9 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.asTextRange
-import com.intellij.openapi.editor.event.CaretEvent
-import com.intellij.openapi.editor.event.CaretListener
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -21,20 +18,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.CodeFragmentAnalyzer
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
-import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.checkReferenceIdentifier
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeBasedDisposable
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createNavigationGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createPreview
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.findElementAt
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -111,7 +100,6 @@ internal class InplaceMethodExtractor(
             val methodName = editor.document.getText(range)
             val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return@onSuccess
             InplaceExtractMethodCollector.executed.log(defaultExtractor.extractOptions.methodName != methodName)
-            installGotItTooltips(editor, callIdentifierRange.asTextRange, methodIdentifierRange.asTextRange)
             MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
             runWithModalProgressBlocking(project, ExtractMethodHandler.getRefactoringName()) {
               extractor.replaceDuplicates(editor, extractedMethod)
@@ -125,25 +113,6 @@ internal class InplaceMethodExtractor(
       Disposer.dispose(disposable)
       throw e
     }
-  }
-
-  private fun installGotItTooltips(editor: Editor, navigationGotItRange: TextRange?, changeSignatureGotItRange: TextRange?){
-    if (navigationGotItRange == null || changeSignatureGotItRange == null) {
-      return
-    }
-    val parentDisposable = Disposer.newDisposable().also { EditorUtil.disposeWithEditor(editor, it) }
-    val previousBalloonFuture = createNavigationGotIt(parentDisposable)?.showInEditor(editor, navigationGotItRange)
-    val disposable = createChangeBasedDisposable(editor)
-    val caretListener = object: CaretListener {
-      override fun caretPositionChanged(event: CaretEvent) {
-        if (editor.logicalPositionToOffset(event.newPosition) in changeSignatureGotItRange) {
-          previousBalloonFuture?.thenAccept { balloon -> balloon.hide(true) }
-          createChangeSignatureGotIt(parentDisposable)?.showInEditor(editor, changeSignatureGotItRange)
-          Disposer.dispose(disposable)
-        }
-      }
-    }
-    editor.caretModel.addCaretListener(caretListener, disposable)
   }
 
   private fun afterTemplateStart(templateState: TemplateState) {

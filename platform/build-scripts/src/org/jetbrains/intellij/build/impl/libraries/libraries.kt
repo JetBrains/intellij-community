@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.libraries
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 /**
@@ -11,26 +12,6 @@ import org.jetbrains.jps.model.module.JpsModule
  */
 @ApiStatus.Internal
 fun JpsModule.isLibraryModule(): Boolean {
-  return name in LIBRARY_MODULE_NAMES
+  return name.startsWith("intellij.libraries.") &&
+         sourceRoots.none { it.rootType == JavaSourceRootType.SOURCE }
 }
-
-/**
- * Please mind that intellij.libraries.microba and intellij.libraries.cglib are exceptions and should not be included in this list
- */
-private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
-  "intellij.libraries.assertj.core",
-  "intellij.libraries.compose.foundation.desktop",
-  "intellij.libraries.compose.foundation.desktop.junit",
-  "intellij.libraries.grpc",
-  "intellij.libraries.grpc.netty.shaded",
-  "intellij.libraries.junit4",
-  "intellij.libraries.junit5",
-  "intellij.libraries.kotlinTest",
-  "intellij.libraries.ktor.client",
-  "intellij.libraries.ktor.client.cio",
-  "intellij.libraries.kotlinx.io",
-  "intellij.libraries.skiko",
-  "intellij.libraries.coil",
-  "intellij.libraries.testng",
-  "intellij.libraries.dokka",
-)

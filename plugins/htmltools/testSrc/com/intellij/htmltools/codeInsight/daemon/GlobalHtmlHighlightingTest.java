@@ -3,13 +3,13 @@ package com.intellij.htmltools.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.util.XmlUtil;
 
 /**
  * @author Maxim.Mossienko
  */
-public class GlobalHtmlHighlightingTest extends JavaInspectionTestCase {
+public class GlobalHtmlHighlightingTest extends BasePlatformTestCase {
   private String myOldDoctype;
 
   @Override
@@ -18,6 +18,7 @@ public class GlobalHtmlHighlightingTest extends JavaInspectionTestCase {
     final ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
     myOldDoctype = manager.getDefaultHtmlDoctype(getProject());
     manager.setDefaultHtmlDoctype(XmlUtil.XHTML_URI, getProject());
+    myFixture.enableInspections(new XmlHighlightVisitorBasedInspection());
   }
 
   @Override
@@ -34,11 +35,17 @@ public class GlobalHtmlHighlightingTest extends JavaInspectionTestCase {
   }
 
   public void testReportingXmlHighlightVisitorProblems() {
-    doTest(getTestName(true), new XmlHighlightVisitorBasedInspection());
+    myFixture.configureByFile(getBasePath() + getTestName(false) + ".xhtml");
+    myFixture.testHighlighting();
   }
 
   @Override
   public String getTestDataPath() {
     return PathManager.getCommunityHomePath() + "/plugins/htmltools/testData/inspections";
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "xmlHighlightVisitor/";
   }
 }

@@ -9,15 +9,12 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
-import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.toolWindow.StripeButtonUi
-import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.*
 import com.intellij.ui.*
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
@@ -47,10 +44,10 @@ internal abstract class AbstractSquareStripeButton(
     })
   }
 
-  fun paintDraggingButton(g: Graphics) {
+  fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
     val areaSize = size.also {
       JBInsets.removeFrom(it, insets)
-      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+      JBInsets.removeFrom(it, SquareStripeButtonLook.getIconPadding(isLeft))
     }
 
     val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
@@ -134,10 +131,11 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
           val texts = getStripeSplitText()
           val button = this@SquareStripeButton
           val insets = button.insets
-          val textOffset = if (UISettings.Companion.getInstance().compactMode) 4 else 6
-          val x = insets.left + JBUI.scale(textOffset)
+          val textPadding = if (UISettings.getInstance().compactMode) 4 else 6
+          val textOffset = JBUI.CurrentTheme.Toolbar.stripeToolbarTextOffset(button.isOnTheLeftStripe())
+          val x = insets.left + JBUI.scale(textPadding + textOffset)
           var y = iconPosition.y + JBUI.scale(3)
-          val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textOffset * 2)
+          val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textPadding * 2)
           val textHeight = fm.height
           var firstX: Int? = null
 
@@ -213,11 +211,8 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
     return arrayOf(text.substring(0, index), text.substring(index + 1))
   }
 
-  private val customizer = InternalUICustomization.getInstance()
-
-  override fun paintButtonLook(_g: Graphics) {
+  override fun paintButtonLook(g: Graphics) {
     val look = buttonLook
-    val g = customizer?.configureButtonLook(look, _g) ?: _g
     if (!myShowName) {
       super.paintButtonLook(g)
       return
@@ -370,3 +365,7 @@ internal open class SquareAnActionButton(@JvmField protected val window: ToolWin
   }
 }
 
+internal fun Component.isOnTheLeftStripe(): Boolean {
+  val stripe = ComponentUtil.getParentOfType(ToolWindowToolbar::class.java, this)
+  return stripe is ToolWindowLeftToolbar
+}

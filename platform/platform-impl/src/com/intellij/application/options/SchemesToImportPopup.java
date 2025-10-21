@@ -66,7 +66,7 @@ public abstract class SchemesToImportPopup<T> {
 
     private void updateColors(boolean isSelected) {
       Color bg = isSelected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
-      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
+      Color fg = isSelected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground();
 
       setColors(bg, fg, myPanel, myNameLabel);
     }

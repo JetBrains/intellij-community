@@ -20,6 +20,10 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
 
   protected constructor(parentScope: CoroutineScope): super(parentScope)
 
+  override fun <T : Any> getServiceForClient(serviceClass: Class<T>): T? {
+    return postGetService(serviceClass, createIfNeeded = true)
+  }
+
   override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     return sessionsManager.getSessions(clientKind).mapNotNull {

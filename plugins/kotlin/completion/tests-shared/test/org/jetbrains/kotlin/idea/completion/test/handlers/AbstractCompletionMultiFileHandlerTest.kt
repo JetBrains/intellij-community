@@ -19,6 +19,7 @@ import java.io.File
 @TestDataPath("/")
 @TestMetadata("testData/handlers/multifile")
 abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
+    fun testAddImportsChainedCompletionExtension() = doTest()
     fun testExtensionFunctionImport() = doTest()
     fun testExtensionPropertyImport() = doTest()
     fun testImportAlreadyImportedObject() = doTest()
@@ -52,6 +53,7 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
     fun testKTIJ_32792() = doTest { tailText == " -> " && typeText == "(Int, String)" }
     fun testExplicitReceiverCast() = doTest()
     fun testCovariantExtensionFunction() = doTest()
+    fun testKDocClassifier() = doTest { tailText == " (bar)" }
 
     protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
 

@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+class Context
+open class Boo {
+    <caret>open fun foo(ctx: Context) {
+    }
+}
+
+class Baz : Boo() {
+    override fun foo(ctx: Context) {
+        super.foo(ctx)
+    }
+}

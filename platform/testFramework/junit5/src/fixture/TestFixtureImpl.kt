@@ -88,6 +88,11 @@ internal class TestFixtureImpl<T>(
         withContext(NonCancellable) {
           fixtureScope.coroutineContext.job.join()
           tearDown()
+          // Return state to the initializer value so it can be reused.
+          // This is relevant for the class-level fixtures in abstract classes that can be tear down if one of the implementations has
+          // finished running. If we don't reset the state, then the following implementors of the abstract class will use the fixture in
+          // the disposed state.
+          _state = initializer
         }
       }
     }

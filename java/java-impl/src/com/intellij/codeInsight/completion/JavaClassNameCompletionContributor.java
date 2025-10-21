@@ -275,7 +275,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
 
   @Override
-  public @NlsContexts.HintText String handleEmptyLookup(final @NotNull CompletionParameters parameters, final Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(final @NotNull CompletionParameters parameters, final @NotNull Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     if (shouldShowSecondSmartCompletionHint(parameters)) {

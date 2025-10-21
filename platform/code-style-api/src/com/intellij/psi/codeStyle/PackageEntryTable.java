@@ -1,32 +1,27 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class PackageEntryTable implements JDOMExternalizable, Cloneable {
+  private static final String NAME = "name";
+  private static final String STATIC = "static";
+  private static final String MODULE = "module";
+  private static final String SUBPACKAGES = "withSubpackages";
+  private static final Set<String> ALLOWED_ATTRIBUTES = Set.of(NAME, STATIC, MODULE, SUBPACKAGES);
+
   private final List<PackageEntry> myEntries = new ArrayList<>();
 
   @Override
@@ -105,15 +100,19 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
+    boolean checkCompatibilityEnabled = Registry.is("code.style.package.entry.table.check.compatibility", false);
     myEntries.clear();
     List<Element> children = element.getChildren();
     for (final Element e : children) {
       @NonNls String name = e.getName();
       if ("package".equals(name)) {
-        String packageName = e.getAttributeValue("name");
-        boolean isStatic = Boolean.parseBoolean(e.getAttributeValue("static"));
-        boolean isModule = Boolean.parseBoolean(e.getAttributeValue("module"));
-        boolean withSubpackages = Boolean.parseBoolean(e.getAttributeValue("withSubpackages"));
+        if (checkCompatibilityEnabled && !isCompatible(e)) {
+          continue;
+        }
+        String packageName = e.getAttributeValue(NAME);
+        boolean isStatic = Boolean.parseBoolean(e.getAttributeValue(STATIC));
+        boolean isModule = Boolean.parseBoolean(e.getAttributeValue(MODULE));
+        boolean withSubpackages = Boolean.parseBoolean(e.getAttributeValue(SUBPACKAGES));
         if (packageName == null) {
           throw new InvalidDataException();
         }
@@ -142,6 +141,15 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
     }
   }
 
+  private static boolean isCompatible(Element e) {
+    for (Attribute attribute : e.getAttributes()) {
+      if (!ALLOWED_ATTRIBUTES.contains(attribute.getName())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public void writeExternal(Element parentNode) throws WriteExternalException {
     for (PackageEntry entry : myEntries) {
@@ -153,13 +161,13 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
         @NonNls Element element = new Element("package");
         parentNode.addContent(element);
         String packageName = entry.getPackageName();
-        element.setAttribute("name", entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY ||
+        element.setAttribute(NAME, entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY ||
                                      entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY ||
                                      entry == PackageEntry.ALL_MODULE_IMPORTS ? "": packageName);
-        element.setAttribute("withSubpackages", entry.isWithSubpackages() ? "true" : "false");
-        element.setAttribute("static", entry.isStatic() ? "true" : "false");
+        element.setAttribute(SUBPACKAGES, entry.isWithSubpackages() ? "true" : "false");
+        element.setAttribute(STATIC, entry.isStatic() ? "true" : "false");
         if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
-          element.setAttribute("module", "true");
+          element.setAttribute(MODULE, "true");
         }
       }
     }

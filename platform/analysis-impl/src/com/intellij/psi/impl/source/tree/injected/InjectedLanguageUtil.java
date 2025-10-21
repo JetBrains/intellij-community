@@ -10,7 +10,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -48,6 +47,22 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
       return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
     }
   }
+
+  /**
+   * A key used internally for forcing the association of an injected editor.
+   * It is used for artificially created editors (to emulate behaviors for actions)
+   */
+  @ApiStatus.Internal
+  public static final Key<Editor> FORCE_INJECTED_EDITOR_KEY = Key.create("FORCE_INJECTED_EDITOR_KEY");
+
+  /**
+   * A key used internally to identify and handle temporarily injected modified language copies.
+   * This key serves as a marker in the context of language injections, enabling operations
+   * related to managing and retrieving injected PSI elements.
+   * It is used mostly for modified copies, because in this case it is impossible to match elements directly.
+   */
+  @ApiStatus.Internal
+  public static final Key<PsiElement> FORCE_INJECTED_COPY_ELEMENT_KEY = Key.create("FORCE_INJECTED_COPY_ELEMENT_KEY");
 
   /**
    * {@link InjectedLanguageManager#FRANKENSTEIN_INJECTION}
@@ -178,6 +193,8 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     if (!documentWindow.isValid()) {
       return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
     }
+    Editor editor = hostEditor.getUserData(FORCE_INJECTED_EDITOR_KEY);
+    if (editor != null) return editor;
     return InjectedEditorWindowTracker.getInstance().createEditor(documentWindow, hostEditor, injectedFile);
   }
 
@@ -334,7 +351,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
                (DocumentEx)hostDocument,
                indicator, oldRoot, newRoot, documentManager);
     if (runnable == null) {
-      ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class).disposeEditorFor(injectedDocument);
+      InjectedEditorWindowTracker.getInstance().disposeEditorFor(injectedDocument);
     }
     return runnable;
   }

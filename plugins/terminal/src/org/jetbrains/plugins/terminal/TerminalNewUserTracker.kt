@@ -5,7 +5,7 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import org.jetbrains.plugins.terminal.TerminalNewUserTracker.Companion.clearNewUserValue
 
@@ -21,7 +21,7 @@ internal class TerminalNewUserTracker : AppLifecycleListener {
   }
 
   override fun appStarted() {
-    if (ConfigImportHelper.isNewUser()) {
+    if (InitialConfigImportState.isNewUser()) {
       // Remember to use it later, because the user may close the IDE several times before our use case is executed.
       PropertiesComponent.getInstance().setValue(IS_NEW_USER_PROPERTY, true)
     }

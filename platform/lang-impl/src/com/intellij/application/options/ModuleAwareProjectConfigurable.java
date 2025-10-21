@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
@@ -27,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.platform.ModuleAttachProcessorKt.getSortedModules;
 
 public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurable> implements SearchableConfigurable,
                                                                                                Configurable.NoScroll {
@@ -66,10 +66,8 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
         return projectConfigurableProvider.getValue().createComponent();
       }
     }
-    final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject),
-                                                      module -> isSuitableForModule(module));
-
-    final T projectConfigurable = createProjectConfigurable();
+    List<Module> modules = ContainerUtil.filter(getSortedModules(myProject), this::isSuitableForModule);
+    T projectConfigurable = createProjectConfigurable();
 
     if (modules.size() == 1 && projectConfigurable == null) {
       Module module = modules.get(0);
@@ -98,7 +96,6 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     final CardLayout layout = new CardLayout();
     final JPanel cardPanel = new JPanel(layout);
     splitter.setSecondComponent(cardPanel);
-
 
     if (projectConfigurable != null) {
       myConfigurablesProviders.put(null, AtomicNotNullLazyValue.createValue(() -> projectConfigurable));

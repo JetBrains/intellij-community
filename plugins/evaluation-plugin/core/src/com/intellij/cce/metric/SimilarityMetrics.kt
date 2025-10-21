@@ -4,10 +4,8 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
-import com.intellij.cce.evaluable.AIA_USER_PROMPT
-import com.intellij.cce.evaluable.LLM_JUDGE_RESPONSE
 import com.intellij.cce.evaluable.REFERENCE_PROPERTY
-import com.intellij.cce.metric.util.LLMJudge
+import com.intellij.cce.metric.ProposalSemanticSimilarityScore.Companion.NAME
 import com.intellij.cce.metric.util.CloudSemanticSimilarityCalculator
 import com.intellij.cce.metric.util.computeBleuScore
 import com.intellij.cce.workspace.info.SessionIndividualScore
@@ -21,7 +19,7 @@ import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class SimilarityMetric(override val showByDefault: Boolean) : ConfidenceIntervalMetric<Pair<Double, Double>>() {
+abstract class SimilarityMetric(override val showByDefault: Boolean, val compatibleElementTypes: List<String> = emptyList()) : ConfidenceIntervalMetric<Pair<Double, Double>>() {
   override val supportsIndividualScores: Boolean = true
   private var totalMatched: Double = 0.0
   private var totalExpected: Double = 0.0
@@ -43,8 +41,8 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
     for (session in sessions) {
       val metricScores = mutableMapOf<String, MutableList<Double>>()
       val additionalInfo = mutableMapOf<String, MutableList<Any>>()
-
-      for (lookup in session.lookups) {
+      val compatibleLookups = session.lookups.filter { it.checkElementTypeCompatibility(compatibleElementTypes) }
+      for (lookup in compatibleLookups) {
         val expectedText = computeExpectedText(session, lookup)
         val currentExpected = computeExpected(lookup, expectedText)
         expected += currentExpected
@@ -73,7 +71,8 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
     var matched = 0.0
     var expected = 0.0
     for (session in sessions) {
-      for (lookup in session.lookups) {
+      val compatibleLookups = session.lookups.filter { it.checkElementTypeCompatibility(compatibleElementTypes) }
+      for (lookup in compatibleLookups) {
         val expectedText = computeExpectedText(session, lookup)
         val currentExpected = computeExpected(lookup, expectedText)
         expected += currentExpected
@@ -96,8 +95,8 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
   protected open fun postCompute(lookup: Lookup, similarity: Double, additionalInfo: MutableMap<String, MutableList<Any>>) {}
 }
 
-class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
-  override val name = "Matched Ratio"
+class MatchedRatio(showByDefault: Boolean = false, compatibleElementTypes: List<String> = emptyList()) : SimilarityMetric(showByDefault, compatibleElementTypes) {
+  override val name: String = "Matched Ratio"
   override val description: String = "Length of selected proposal normalized by expected text (avg by invocations)"
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
@@ -175,38 +174,7 @@ class BleuScore(showByDefault: Boolean = true) : SimilarityMetric(showByDefault)
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
-class LLMJudgeScore(showByDefault: Boolean = true, private val llmJudge: LLMJudge) : SimilarityMetric(showByDefault) {
-  override val name: String
-    get() = NAME
-  override val description: String = "Calculates the LLM-as-a-Judge Score score for the AIA response compared to the reference text."
-
-  private var rawResponse: String? = null
-
-  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
-    val aiaResponse = lookup.additionalInfo[AIA_RESPONSE] as? String ?: return null
-    val reference = lookup.additionalInfo[REFERENCE_PROPERTY] as? String ?: return null
-    val question = lookup.additionalInfo[AIA_USER_PROMPT] as? String ?: return null
-
-    val (score, response) = llmJudge.computeLLMJudgeScoreSync(question, aiaResponse, reference)
-    rawResponse = response
-    return score
-  }
-
-  override fun postCompute(lookup: Lookup, similarity: Double, additionalInfo: MutableMap<String, MutableList<Any>>) {
-    if (!rawResponse.isNullOrEmpty()) {
-      additionalInfo.computeIfAbsent(LLM_JUDGE_RESPONSE) { mutableListOf() }.add(rawResponse!!)
-      rawResponse = null
-    }
-  }
-
-  override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
-
-  companion object {
-    const val NAME: String = "LLM Judge Score"
-  }
-}
-
-class SemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : SimilarityMetric(showByDefault) {
+class ProposalSemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator, compatibleElementTypes: List<String> = emptyList()) : SimilarityMetric(showByDefault, compatibleElementTypes) {
   override val name: String
     get() = NAME
   private val project: Project

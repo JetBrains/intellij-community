@@ -18,6 +18,7 @@ public interface GroovyProjectDescriptors {
   TestLibrary LIB_GROOVY_2_5 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:2.5.23");
   TestLibrary LIB_GROOVY_3_0 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:3.0.20");
   TestLibrary LIB_GROOVY_4_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:4.0.18");
+  TestLibrary LIB_GROOVY_5_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:5.0.0-beta-1");
 
   LightProjectDescriptor GROOVY_1_6 = new LibraryLightProjectDescriptor(LIB_GROOVY_1_6);
   LightProjectDescriptor GROOVY_1_7 = new LibraryLightProjectDescriptor(LIB_GROOVY_1_7);
@@ -27,6 +28,7 @@ public interface GroovyProjectDescriptors {
   LightProjectDescriptor GROOVY_2_5 = new LibraryLightProjectDescriptor(LIB_GROOVY_2_5);
   LightProjectDescriptor GROOVY_3_0 = new LibraryLightProjectDescriptor(LIB_GROOVY_3_0);
   LightProjectDescriptor GROOVY_4_0 = new LibraryLightProjectDescriptor(LIB_GROOVY_4_0);
+  LightProjectDescriptor GROOVY_5_0 = new LibraryLightProjectDescriptor(LIB_GROOVY_5_0);
 
   TestLibrary LIB_GROOVY_LATEST = LIB_GROOVY_2_4;
   LightProjectDescriptor GROOVY_LATEST = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST);

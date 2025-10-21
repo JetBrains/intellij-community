@@ -15,10 +15,12 @@ import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation {
+@ApiStatus.Internal
+public final class DummyEntryPointsPresentation extends UnusedDeclarationPresentation {
   private static final RefEntryPointFilter myFilter = new RefEntryPointFilter();
   private QuickFixAction[] myQuickFixActions;
 

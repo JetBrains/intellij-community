@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,9 +22,9 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,10 +82,8 @@ public class PySkeletonRefresher {
       try {
         final List<String> errors = refresher.regenerateSkeletons();
         if (!errors.isEmpty()) {
-          LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
-          for (String moduleName : errors) {
-            LOG.warn(moduleName);
-          }
+          var failedSkeletons = StringUtil.join(errors, ", ");
+          LOG.warn(String.format("%s: %s", PyBundle.message("sdk.some.skeletons.failed"), failedSkeletons));
         }
       }
       catch (ExecutionException e) {
@@ -130,7 +129,7 @@ public class PySkeletonRefresher {
     final PyPregeneratedSkeletons preGeneratedSkeletons =
       PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
 
-    final String builtinsFileName = PySdkUtil.getBuiltinsFileName(mySdk);
+    final String builtinsFileName = PySkeletonUtil.getBuiltinsFileName(mySdk);
     final File builtinsFile = new File(skeletonsPath, builtinsFileName);
 
     final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
@@ -159,7 +158,7 @@ public class PySkeletonRefresher {
     cleanUpSkeletons(skeletonsDir);
 
     if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
-      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(this), myProject.getDisposed());
     }
 
     return failedModules;
@@ -272,7 +271,7 @@ public class PySkeletonRefresher {
         if (PyNames.INIT_DOT_PY.equals(itemName) && item.length() == 0) continue; // these are versionless
         if (PySkeletonGenerator.BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
         if (PySkeletonGenerator.STATE_MARKER_FILE.equals(itemName)) continue;
-        if (PySdkUtil.getBuiltinsFileName(mySdk).equals(itemName)) {
+        if (PySkeletonUtil.getBuiltinsFileName(mySdk).equals(itemName)) {
           continue;
         }
         final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(item);

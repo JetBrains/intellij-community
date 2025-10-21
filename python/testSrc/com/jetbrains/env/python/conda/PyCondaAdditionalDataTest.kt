@@ -25,9 +25,14 @@ class PyCondaAdditionalDataTest {
 
   @Test
   fun testSerialize() {
-    val flavorData = PyCondaFlavorData(PyCondaEnv(PyCondaEnvIdentity.NamedEnv("D"), "foo"))
+    val flavorData = PyCondaFlavorData(
+      env = PyCondaEnv(
+        envIdentity = PyCondaEnvIdentity.NamedEnv("D"),
+        fullCondaPathOnTarget = "foo",
+      )
+    )
     val data = PythonSdkAdditionalData(
-      PyFlavorAndData(flavorData, CondaEnvSdkFlavor.getInstance()))
+      PyFlavorAndData(flavorData, CondaEnvSdkFlavor))
     val rootElement = Element("root")
     data.save(rootElement)
 
@@ -36,7 +41,7 @@ class PyCondaAdditionalDataTest {
 
 
     val reloadedData = PythonSdkAdditionalData.loadFromElement(rootElement)
-    Assert.assertEquals(reloadedData.flavor, CondaEnvSdkFlavor.getInstance())
+    Assert.assertEquals(reloadedData.flavor, CondaEnvSdkFlavor)
     Assert.assertEquals(reloadedData.flavorAndData.data, flavorData)
   }
 }

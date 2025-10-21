@@ -36,11 +36,14 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -61,10 +64,9 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -89,7 +91,7 @@ interface RunConfigurationTemplateProvider {
   fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl?
 }
 
-@State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
+@State(name = "RunManager", storages = [Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO)])
 open class RunManagerImpl @NonInjectable constructor(val project: Project, private val coroutineScope: CoroutineScope, sharedStreamProvider: StreamProvider?) :
   RunManagerEx(), PersistentStateComponent<Element>, Disposable, SettingsSavingComponent {
   companion object {
@@ -167,7 +169,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     get() = listManager.idToSettings
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
-  // so that when it is eventually loaded, we can mark is as a selected.
+  // so that when it is eventually loaded, we can mark it as selected.
   protected open var selectedConfigurationId: String? = null
 
   private val iconAndInvalidCache = RunConfigurationIconAndInvalidCache()
@@ -179,7 +181,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
-  // templates should be first, because to migrate old before a run list to effective, we need to get template before a run task
+  // templates should be first, because, to migrate old before a run list to effective, we need to get template before a run task
   private val workspaceSchemeManagerProvider = SchemeManagerIprProvider("configuration", Comparator { n1, n2 ->
     val w1 = getNameWeight(n1)
     val w2 = getNameWeight(n2)
@@ -200,9 +202,12 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create(
     directoryName = "workspace",
-    processor = RunConfigurationSchemeManager(this, templateDifferenceHelper,
-                                              isShared = false,
-                                              isWrapSchemeIntoComponentElement = false),
+    processor = RunConfigurationSchemeManager(
+      manager = this,
+      templateDifferenceHelper = templateDifferenceHelper,
+      isShared = false,
+      isWrapSchemeIntoComponentElement = false,
+    ),
     streamProvider = workspaceSchemeManagerProvider,
     isAutoSave = false,
   )
@@ -210,16 +215,18 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   @Suppress("LeakingThis")
   private val projectSchemeManager = SchemeManagerFactory.getInstance(project).create(
     directoryName = "runConfigurations",
-    processor = RunConfigurationSchemeManager(this, templateDifferenceHelper,
-                                              isShared = true,
-                                              isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
+    processor = RunConfigurationSchemeManager(
+      manager = this, templateDifferenceHelper = templateDifferenceHelper,
+      isShared = true,
+      isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null,
+    ),
     schemeNameToFileName = OLD_NAME_CONVERTER,
     streamProvider = sharedStreamProvider ?: schemeManagerIprProvider,
   )
 
   @Suppress("unused")
   internal val dotIdeaRunConfigurationsPath: String
-    get() = FileUtil.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
+    get() = FileUtilRt.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
 
   private val rcInArbitraryFileManager = RCInArbitraryFileManager(project)
 
@@ -237,7 +244,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-      project.messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      project.messageBus.connect(coroutineScope).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         iconAndInvalidCache.clear()
       }
@@ -656,7 +663,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     val element = Element("state")
 
     if (EDT.isCurrentThreadEdt()) {
-      runWriteAction { workspaceSchemeManager.save() }
+      ApplicationManager.getApplication().runWriteAction { workspaceSchemeManager.save() }
     }
     else {
       workspaceSchemeManager.save()
@@ -756,17 +763,16 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
   @VisibleForTesting
   protected open fun onFirstLoadingStarted() {
-    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
-      object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
-        override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
-          extension.configurationTypes
-        }
-      }, true, this)
+    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(coroutineScope, true, object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
+      override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
+        extension.configurationTypes
+      }
+    })
   }
 
   @VisibleForTesting
   protected open fun onFirstLoadingFinished() {
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    project.messageBus.connect(coroutineScope).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
           clearSelectedConfigurationIcon()
@@ -780,10 +786,30 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
       return
     }
 
-    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(object : ExtensionPointListener<ConfigurationType> {
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<ConfigurationType> {
+      private val semaphore = Semaphore(1)
+
       override fun extensionAdded(extension: ConfigurationType, pluginDescriptor: PluginDescriptor) {
         idToType.drop()
-        project.stateStore.reloadState(RunManagerImpl::class.java)
+
+        val task = suspend {
+          semaphore.withPermit {
+            project.stateStore.reloadState(RunManagerImpl::class.java)
+          }
+        }
+
+        // plugin unloading is performed in a write action
+        if (EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteAccessAllowed) {
+          runWithModalProgressBlocking(ModalTaskOwner.project(project), "", TaskCancellation.cancellable()) {
+            task()
+          }
+        }
+        else {
+          @Suppress("RAW_RUN_BLOCKING")
+          runBlocking {
+            task()
+          }
+        }
       }
 
       override fun extensionRemoved(extension: ConfigurationType, pluginDescriptor: PluginDescriptor) {
@@ -798,18 +824,18 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
         }
 
         lock.write {
-          templateIdToConfiguration.values.removeIf(java.util.function.Predicate { it.type == extension })
+          templateIdToConfiguration.values.removeIf { it.type == extension }
         }
       }
-    }, this)
+    })
 
-    ProgramRunner.PROGRAM_RUNNER_EP.addExtensionPointListener(object : ExtensionPointListener<ProgramRunner<*>> {
+    ProgramRunner.PROGRAM_RUNNER_EP.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<ProgramRunner<*>> {
       override fun extensionRemoved(extension: ProgramRunner<*>, pluginDescriptor: PluginDescriptor) {
         for (settings in allSettings) {
           (settings as RunnerAndConfigurationSettingsImpl).handleRunnerRemoved(extension)
         }
       }
-    }, this)
+    })
   }
 
   override fun noStateLoaded() {

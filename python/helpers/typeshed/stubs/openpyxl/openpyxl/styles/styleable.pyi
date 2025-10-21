@@ -34,6 +34,7 @@ class StyleArrayDescriptor:
     def __get__(self, instance: StyleableObject, cls: Unused) -> bool: ...
 
 class StyleableObject:
+    __slots__ = ("parent", "_style")
     font: StyleDescriptor
     fill: StyleDescriptor
     border: StyleDescriptor

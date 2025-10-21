@@ -27,6 +27,8 @@ import kotlin.Result
 import kotlin.time.Duration.Companion.milliseconds
 
 object ApplicationUtil {
+  val LOG = Logger.getInstance(ApplicationUtil::class.java)
+
   // throws exception if it can't grab read action right now
   @Throws(CannotRunReadActionException::class)
   @JvmStatic
@@ -135,6 +137,7 @@ object ApplicationUtil {
     }
   }
 
+  @ApiStatus.Internal
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "Use withContext with proper dispatcher, or readAndWriteAction for read followed by write")
   @JvmStatic
@@ -146,13 +149,14 @@ object ApplicationUtil {
     }
   }
 
+  @ApiStatus.Internal
   @Deprecated(message = "Use withContext with proper dispatcher, or readAndWriteAction for read followed by write")
   @JvmStatic
   fun invokeAndWaitSomewhere(thread: EdtReplacementThread, modalityState: ModalityState, r: Runnable) {
     when (thread) {
       EdtReplacementThread.EDT -> {
         if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired) {
-          Logger.getInstance(ApplicationUtil::class.java).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock")
+          LOG.error("Can't invokeAndWait from WT to EDT: probably leads to deadlock")
         }
         EdtInvocationManager.invokeAndWaitIfNeeded(r)
       }
@@ -160,7 +164,7 @@ object ApplicationUtil {
         r.run()
       }
       else if (SwingUtilities.isEventDispatchThread()) {
-        Logger.getInstance(ApplicationUtil::class.java).error("Can't invokeAndWait from EDT to WT")
+        LOG.error("Can't invokeAndWait from EDT to WT")
       }
       else {
         val s = Semaphore(1)
@@ -184,7 +188,7 @@ object ApplicationUtil {
       }
       EdtReplacementThread.EDT_WITH_IW -> {
         if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired) {
-          Logger.getInstance(ApplicationUtil::class.java).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock")
+          LOG.error("Can't invokeAndWait from WT to EDT: probably leads to deadlock")
         }
         ApplicationManager.getApplication().invokeAndWait(r, modalityState)
       }

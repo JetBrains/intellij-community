@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
-import org.gradle.internal.impldep.gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 /**

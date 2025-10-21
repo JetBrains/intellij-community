@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "HardCodedStringLiteral")
 
 package org.jetbrains.intellij.build.impl.logging.jps
 
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -16,13 +15,16 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.MessageHandler
-import org.jetbrains.jps.incremental.messages.*
+import org.jetbrains.jps.incremental.messages.BuildMessage
+import org.jetbrains.jps.incremental.messages.BuilderStatisticsMessage
+import org.jetbrains.jps.incremental.messages.BuildingTargetProgressMessage
+import org.jetbrains.jps.incremental.messages.CompilerMessage
+import org.jetbrains.jps.incremental.messages.ProgressMessage
 import java.beans.Introspector
 import java.nio.file.Files
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
@@ -88,34 +90,12 @@ internal class JpsMessageHandler(private val context: CompilationContext, privat
   private var progress = -1.0f
 
   override fun processMessage(message: BuildMessage): Unit = TeamCityBuildMessageLogger.withFlow(span) {
-    val text = message.messageText
+    val text = if (message is CompilerMessage) message.compilerMessageText else message.messageText
     when (message.kind) {
       BuildMessage.Kind.ERROR, BuildMessage.Kind.INTERNAL_BUILDER_ERROR -> {
-        val compilerName: String
-        val messageText: String
-        if (message is CompilerMessage) {
-          compilerName = message.compilerName
-          val sourcePath = message.sourcePath
-          messageText = buildString {
-            if (sourcePath != null) {
-              append(sourcePath)
-              if (message.line != -1L) {
-                append(':').append(message.line)
-              }
-              appendLine(':')
-            }
-            append(text)
-            val moduleNames = message.moduleNames
-            if (moduleNames.any()) {
-              append(moduleNames.joinToString(prefix = " (", postfix = ")"))
-            }
-          }
-        }
-        else {
-          compilerName = ""
-          messageText = text
-        }
-        errorMessagesByCompiler.computeIfAbsent(compilerName) { CopyOnWriteArrayList() }.add(messageText)
+        val compilerName: String = if (message is CompilerMessage) message.compilerName else ""
+        val compilerMessages: MutableList<String> = errorMessagesByCompiler.computeIfAbsent(compilerName) { java.util.Collections.synchronizedList(ArrayList()) }
+        compilerMessages.add(text)
       }
       BuildMessage.Kind.WARNING -> context.messages.warning(text)
       BuildMessage.Kind.INFO, BuildMessage.Kind.JPS_INFO -> if (message is BuilderStatisticsMessage) {
@@ -159,7 +139,8 @@ internal class JpsMessageHandler(private val context: CompilationContext, privat
       return
     }
 
-    val csvPath = context.paths.logDir.resolve("compilation-time.csv").also { it.createParentDirs() }
+    val csvPath = context.paths.logDir.resolve("compilation-time.csv")
+    Files.createDirectories(context.paths.logDir)
     Files.newBufferedWriter(csvPath).use { out ->
       compilationFinishTimeForTarget.forEach(BiConsumer { k, v ->
         val startTime = compilationStartTimeForTarget.getValue(k) - compilationStart
@@ -182,6 +163,26 @@ internal class JpsMessageHandler(private val context: CompilationContext, privat
     buildMessages.info(" top ${topTargets.size} targets by compilation time:")
     for (entry in topTargets) {
       buildMessages.info("  ${entry.first}: ${TimeUnit.NANOSECONDS.toMillis(entry.second)}ms")
+    }
+  }
+
+  private val CompilerMessage.compilerMessageText: String get() {
+    return buildString {
+      if (sourcePath != null) {
+        append(sourcePath)
+        if (line != -1L) {
+          append(':').append(line)
+        }
+        if (column != -1L) {
+          append(':').append(column)
+        }
+        appendLine(':')
+      }
+      append(messageText)
+      if (moduleNames.any()) {
+        appendLine()
+        append(moduleNames.joinToString(prefix = "(JPS module: ", postfix = ")"))
+      }
     }
   }
 

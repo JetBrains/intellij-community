@@ -5,7 +5,7 @@ class Temp35 {
     @Override public void work() { }
   }; }
 
-  public interface Workable { void work(); }
+  public interface <error descr="Duplicate class: 'Workable'">Workable</error> { void work(); }
   public interface <error descr="Duplicate class: 'Workable'">Workable</error> { void work(); }
 
   public static void main(String[] args) {

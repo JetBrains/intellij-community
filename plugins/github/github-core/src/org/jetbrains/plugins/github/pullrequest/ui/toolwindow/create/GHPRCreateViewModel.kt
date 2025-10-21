@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionViewModel
 import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
@@ -12,6 +13,7 @@ import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -38,18 +40,17 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.*
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelViewModel
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import java.util.concurrent.Semaphore
 
 private typealias NewBranchNameCallback = suspend (suggestedName: String) -> String
 
 @ApiStatus.Internal
-interface GHPRCreateViewModel {
+interface GHPRCreateViewModel : CodeReviewTitleDescriptionViewModel {
   val project: Project
   val avatarIconsProvider: GHAvatarIconsProvider
 
@@ -61,8 +62,6 @@ interface GHPRCreateViewModel {
   val changesVm: StateFlow<ComputedResult<GHPRCreateChangesViewModel?>?>
   val diffVm: GHPRCreateDiffViewModel
 
-  val titleText: StateFlow<String>
-  val descriptionText: StateFlow<String>
   val templateLoadingState: StateFlow<ComputedResult<String?>>
 
   val titleAndDescriptionGenerationVm: StateFlow<GHPRCreateTitleAndDescriptionGenerationViewModel?>
@@ -75,9 +74,6 @@ interface GHPRCreateViewModel {
   val creationProgress: StateFlow<CreationState?>
 
   var remoteBranchNameCallback: NewBranchNameCallback?
-
-  fun setTitle(text: String)
-  fun setDescription(text: String)
 
   fun setHead(repo: GHGitRepositoryMapping?, branch: GitBranch?)
   fun setBaseBranch(branch: GitRemoteBranch?)
@@ -117,7 +113,7 @@ internal class GHPRCreateViewModelImpl(
   private val viewPullRequest: (GHPRIdentifier, Boolean) -> Unit,
   private val closeNewPullRequest: () -> Unit,
   private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
-  private val refreshPrOnCurrentBranch: () -> Unit
+  private val refreshPrOnCurrentBranch: () -> Unit,
 ) : GHPRCreateViewModel, Disposable {
   private val cs = parentCs.childScope(javaClass.name)
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
@@ -175,6 +171,8 @@ internal class GHPRCreateViewModelImpl(
     dataContext.repositoryDataService.loadTemplate()
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
+  override val isTemplateLoading: StateFlow<Boolean> = templateLoadingState.mapState { it.isInProgress }
+
   override val titleAndDescriptionGenerationVm: StateFlow<GHPRCreateTitleAndDescriptionGenerationViewModel?> =
     GHPRTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()
       .mapNotNull { it.firstOrNull() }
@@ -211,10 +209,8 @@ internal class GHPRCreateViewModelImpl(
   private val _creationProgress = MutableStateFlow<CreationState?>(null)
   override val creationProgress: StateFlow<CreationState?> = _creationProgress.asStateFlow()
 
-  private val titleLock = ReentrantLock()
-
-  @Volatile
-  private var titleSetAutomatically: Boolean = true
+  private val autoTitleJob: Job
+  private val titleLock = Semaphore(1)
 
   override var remoteBranchNameCallback: NewBranchNameCallback? = null
 
@@ -224,7 +220,7 @@ internal class GHPRCreateViewModelImpl(
       descriptionText.value = template.orEmpty()
     }
 
-    cs.launchNow {
+    autoTitleJob = cs.launchNow {
       branchesWithProgress.collectScoped {
         val headBranch = it.branches.headBranch ?: return@collectScoped
         it.commitsRequest.collectScoped { commitsRequest ->
@@ -262,22 +258,28 @@ internal class GHPRCreateViewModelImpl(
   }
 
   private suspend fun setTitleFromFirstCommitOrBranch(headBranch: GitBranch, commitsRequest: Deferred<List<VcsCommitMetadata>>?) {
-    if (!titleSetAutomatically) {
-      currentCoroutineContext().cancel()
-      return
-    }
     val commits = runCatching { commitsRequest?.await() }.getOrNull() ?: return
-    titleLock.withLock {
-      val singleCommit = commits.singleOrNull()
-      titleText.value = singleCommit?.subject ?: headBranch.name
+    val title = generateTitle(commits, headBranch)
+    @Suppress("BlockingMethodInNonBlockingContext")
+    titleLock.acquire()
+    try {
+      checkCanceled()
+      titleText.value = title
+    }
+    finally {
+      titleLock.release()
     }
   }
 
   override fun setTitle(text: String) {
-    titleLock.withLock {
-      if (titleText.value == text) return@withLock
-      titleSetAutomatically = false
+    titleLock.acquire()
+    try {
+      if (titleText.value == text) return
+      autoTitleJob.cancel()
       titleText.value = text
+    }
+    finally {
+      titleLock.release()
     }
   }
 
@@ -529,11 +531,17 @@ internal class GHPRCreateViewModelImpl(
     val headRepo = currentBranchTrackInfo?.remote?.let { remote -> repositories.find { it.remote.remote == remote } } ?: baseRepo
     return BranchesState(baseRepo, defaultBranch, headRepo, currentBranch)
   }
+
+  companion object {
+    private fun generateTitle(commits: List<VcsCommitMetadata>, headBranch: GitBranch): @NlsSafe String =
+      commits.singleOrNull()?.subject ?: headBranch.name
+  }
 }
 
 private class MetadataListViewModel<T>(cs: CoroutineScope, itemsLoader: suspend () -> List<T>) : LabeledListPanelViewModel<T> {
   override val isEditingAllowed: Boolean = true
   override val items = MutableStateFlow(emptyList<T>())
+
   // Eagerly load the data on creation, so that the reviewer panel is populated immediately.
   override val selectableItems: StateFlow<ComputedResult<List<T>>> =
     computationStateFlow(flowOf(Unit)) { itemsLoader() }

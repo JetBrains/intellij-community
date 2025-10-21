@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 class RemoveUselessCastFix(element: KtBinaryExpressionWithTypeRHS) : PsiUpdateModCommandAction<KtBinaryExpressionWithTypeRHS>(element),
                                                                      CleanupFix.ModCommand {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.useless.cast")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.cast")
 
     override fun invoke(context: ActionContext, element: KtBinaryExpressionWithTypeRHS, updater: ModPsiUpdater) {
         invoke(element)

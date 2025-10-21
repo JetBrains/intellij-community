@@ -12,19 +12,25 @@ import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.*
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import io.ktor.util.decodeString
+import io.ktor.util.moveToByteArray
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.spyk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.easymock.EasyMock.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junitpioneer.jupiter.cartesian.CartesianTest
@@ -39,6 +45,8 @@ import java.nio.channels.Channels
 import java.nio.channels.WritableByteChannel
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.absoluteValue
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
@@ -183,7 +191,7 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
-      override suspend fun close() = Unit
+      override suspend fun closeForReceive() = Unit
     }
 
     val result = mutableListOf<Byte>()
@@ -235,7 +243,7 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
-      override suspend fun close() = Unit
+      override suspend fun closeForReceive() = Unit
     }
     val stream = channel.consumeAsInputStream()
     while (true) {
@@ -400,10 +408,140 @@ class EelChannelToolsTest {
     assertEquals(0, eelChannel.consumeAsInputStream().read(ByteArray(data.size), data.size, 0))
   }
 
+  @Nested
+  inner class TestEelOutputChannel {
+
+    @Test
+    fun testSendWholeBuffer(): Unit = timeoutRunBlocking {
+      val pipe = EelOutputChannel()
+      val producerProgress = AtomicInteger(0)
+      val chunksCount = 50
+      coroutineScope {
+        val producer = launch {
+          for (i in 0 until chunksCount) {
+            pipe.sendWholeBuffer(wrap(i.toString().plus("\n").toByteArray()))
+            producerProgress.set(i)
+          }
+          pipe.sendEof()
+        }
+        val consumer = launch {
+          val readBuffer = allocate(10)
+          var i = 0
+          do {
+            readBuffer.clear()
+            val readResult = pipe.exposedSource.receive(readBuffer)
+            if (readResult == EOF) {
+              break
+            }
+            readBuffer.flip()
+            val readLine = readBuffer.moveToByteArray().toString(Charsets.UTF_8).removeSuffix("\n").toInt()
+            assertEquals(i, readLine)
+            assertTrue((readLine - producerProgress.get()).absoluteValue <= 1)
+            i += 1
+          }
+          while (true)
+          assertEquals(chunksCount, i)
+        }
+      }
+    }
+
+    @Test
+    fun testSendUntilEndNoInterrupt(): Unit = timeoutRunBlocking {
+      testSendUntilEnd(chunksCount = 100)
+    }
+
+    @Test
+    fun testSendUntilEndInterrupt(): Unit = timeoutRunBlocking {
+      testSendUntilEnd(chunksCount = 100, endAtChunk = 50)
+    }
+
+    suspend fun testSendUntilEnd(chunksCount: Int, endAtChunk: Int? = null) {
+      val pipe = EelOutputChannel()
+      val producerProgress = AtomicInteger(0)
+      coroutineScope {
+        val processExited = CompletableDeferred<Unit>()
+        launch {
+          pipe.sendUntilEnd(flow {
+            for (i in 0 until chunksCount) {
+              emit(i.toString().plus("\n").toByteArray())
+              producerProgress.set(i)
+            }
+          }, processExited)
+        }
+        val readBuffer = allocate(10 * chunksCount)
+        var i = 0
+        do {
+          val expectedRead = if (i == endAtChunk) {
+            processExited.complete(Unit)
+            waitUntil { producerProgress.get() == chunksCount - 1 }
+            (i until chunksCount).joinToString("") { "$it\n" }.also {
+              i = chunksCount
+            }
+          }
+          else {
+            assertTrue { (producerProgress.get() - i).absoluteValue <= 1 }
+            "$i\n".also {
+              i += 1
+            }
+          }
+          val readResult = pipe.exposedSource.receive(readBuffer)
+          if (readResult == EOF) {
+            break
+          }
+          readBuffer.flip()
+          val readLine = readBuffer.moveToByteArray().toString(Charsets.UTF_8)
+          assertEquals(expectedRead, readLine)
+          readBuffer.clear()
+        }
+        while (true)
+        assertEquals(chunksCount + 1, i)
+      }
+    }
+
+    @Test
+    fun testPipeWithErrorClosedForReceive(): Unit = timeoutRunBlocking {
+      val pipe = EelOutputChannel()
+      pipe.exposedSource.closeForReceive()
+      try {
+        pipe.sendWholeBuffer(ByteBuffer.wrap("D".toByteArray()))
+        fail("Writing into closed channel must be an error")
+      }
+      catch (e: EelChannelClosedException) {
+        // Expected exception
+      }
+    }
+
+    @Test
+    fun testPipeWithErrorException(): Unit = timeoutRunBlocking {
+      val pipe = EelOutputChannel()
+
+      val error = Exception("some error")
+      val expectedMessageError = "Pipe was broken with message: ${error.message}"
+
+      pipe.ensureClosed(error)
+      try {
+        pipe.sendWholeBuffer(ByteBuffer.wrap("D".toByteArray()))
+        fail("Writing into broken pipe must be an error")
+      }
+      catch (e: EelChannelClosedException) {
+        assertEquals(error, e.cause)
+      }
+
+      try {
+        pipe.exposedSource.receive(allocate(1))
+        fail("Reading from broken pipe must be an error")
+      }
+      catch (e: EelChannelClosedException) {
+        assertEquals(error, e.cause)
+      }
+    }
+
+  }
+
   @Test
   fun testPipeWithErrorClosed(): Unit = timeoutRunBlocking {
     val pipe = EelPipe()
-    pipe.source.close()
+    pipe.source.closeForReceive()
     try {
       pipe.sink.send(ByteBuffer.wrap("D".toByteArray()))
       fail("Writing into closed channel must be an error")

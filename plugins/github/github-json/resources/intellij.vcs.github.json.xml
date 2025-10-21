@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.github.json">
+<idea-plugin>
   <dependencies>
     <module name="intellij.json.backend"/>
   </dependencies>

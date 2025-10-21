@@ -1,15 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeActionWithDefaultState;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public class KindSorter implements Sorter {
+public class KindSorter implements Sorter, TreeActionWithDefaultState {
   public static final Sorter INSTANCE = new KindSorter(false);
   public static final Sorter POPUP_INSTANCE = new KindSorter(true);
 
@@ -61,12 +65,18 @@ public class KindSorter implements Sorter {
 
   @Override
   public boolean isVisible() {
-    return false;
+    return true;
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
   }
 
   @Override
   public @NotNull ActionPresentation getPresentation() {
-    throw new IllegalStateException();
+    return new ActionPresentationData(
+      StructureViewBundle.message("action.structureview.sort.by.kind"), null, AllIcons.ObjectBrowser.SortByType);
   }
 
   @Override

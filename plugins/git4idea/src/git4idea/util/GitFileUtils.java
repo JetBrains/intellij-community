@@ -14,10 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitBinaryHandler;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersion;
 import git4idea.index.GitIndexUtil;
@@ -238,6 +235,20 @@ public final class GitFileUtils {
                                          @NotNull List<? extends FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
+      handler.endOptions();
+      handler.addParameters(paths);
+      Git.getInstance().runCommand(handler).throwOnError();
+    }
+  }
+
+  public static void restoreStagedAndWorktree(@NotNull Project project,
+                                              @NotNull VirtualFile root,
+                                              @NotNull List<FilePath> files,
+                                              @NotNull String source)
+    throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESTORE);
+      handler.addParameters("--staged", "--worktree", "--source=" + source);
       handler.endOptions();
       handler.addParameters(paths);
       Git.getInstance().runCommand(handler).throwOnError();

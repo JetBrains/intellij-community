@@ -2839,7 +2839,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                          }
                          """);
     myFixture.completeBasic();
-    assertEquals(List.of("NonNls", "NotNull", "UnknownNullability"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("NonNls", "NotNull", "NotNullByDefault", "UnknownNullability"), myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.Full
@@ -3250,5 +3250,12 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     configureByTestName();
     myFixture.completeBasic();
     assertTrue(myFixture.getLookupElementStrings().contains("A"));
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testAmbiguousCallLeastUpperBound() {
+    configureByTestName();
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 }

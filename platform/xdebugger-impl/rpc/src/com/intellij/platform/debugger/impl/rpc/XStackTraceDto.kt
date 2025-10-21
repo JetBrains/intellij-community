@@ -8,7 +8,6 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ThreeState
-import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus

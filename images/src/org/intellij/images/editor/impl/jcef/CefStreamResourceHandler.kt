@@ -3,8 +3,11 @@ package org.intellij.images.editor.impl.jcef
 
 import com.intellij.openapi.Disposable
 import com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated(replaceWith = ReplaceWith("com.intellij.ui.jcef.utils.JBCefStreamResourceHandler"),
             message = "Use JBCefStreamResourceHandler instead",
             level = DeprecationLevel.WARNING)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
@@ -41,6 +41,23 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
       if (cur instanceof GrAnnotationMemberValue) result.add((GrAnnotationMemberValue)cur);
     }
     return result.toArray(new GrAnnotationMemberValue[0]);
+  }
+
+  @Override
+  public int getInitializerCount() {
+    int count = 0;
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrAnnotationMemberValue) count++;
+    }
+    return count;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrAnnotationMemberValue) return false;
+    }
+    return true;
   }
 
   @Override

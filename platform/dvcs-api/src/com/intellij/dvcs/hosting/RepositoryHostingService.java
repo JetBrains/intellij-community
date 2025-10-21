@@ -19,6 +19,6 @@ public interface RepositoryHostingService {
    * @see RepositoryListLoader
    * @deprecated deprecated with the removal of completion from an old clone dialog
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @Nullable RepositoryListLoader getRepositoryListLoader(@NotNull Project project) {return null;}
 }

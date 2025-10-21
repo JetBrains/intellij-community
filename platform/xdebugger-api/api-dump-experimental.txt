@@ -6,6 +6,9 @@ a:com.intellij.xdebugger.XDebugProcess
 - *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
 - *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
+com.intellij.xdebugger.XDebugSessionListener
+- java.util.EventListener
+- *:stackFrameChanged(Z):V
 *:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler
 - *sf:Companion:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
 - a:areInlineBreakpointsDisabled(com.intellij.openapi.vfs.VirtualFile):Z
@@ -36,8 +39,10 @@ a:com.intellij.xdebugger.frame.XStackFrame
 - f:getTooltipText():java.lang.String
 - setIcon(javax.swing.Icon):V
 - setToolTipText(java.lang.String):V
-*:com.intellij.xdebugger.frame.XStringValueModifier
-- a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
+*:com.intellij.xdebugger.frame.XValueTextModificationPreparator
+- a:convertToStringLiteral(java.lang.String):java.lang.String
+*:com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider
+- a:getTextValuePreparator(com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.frame.XValueTextModificationPreparator
 *:com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler
 - a:createProvider(com.intellij.xdebugger.XDebugProcess):com.intellij.xdebugger.hotswap.HotSwapProvider
 *:com.intellij.xdebugger.ui.TextValueVisualizer

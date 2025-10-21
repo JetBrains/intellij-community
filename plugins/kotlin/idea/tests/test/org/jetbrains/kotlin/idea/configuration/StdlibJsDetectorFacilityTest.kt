@@ -15,9 +15,11 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
+import org.jetbrains.kotlin.idea.test.UseK1PluginMode
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
+@UseK1PluginMode
 @TestApplication
 class StdlibJsDetectorFacilityTest {
     companion object {

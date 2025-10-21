@@ -24,7 +24,7 @@ internal suspend fun getFreezeRunDescriptor(text: String, project: Project): Run
   }
 }
 
-internal class FreezeTabContentProvider : StacktraceTabContentProvider {
+private class FreezeTabContentProvider : StacktraceTabContentProvider {
   override suspend fun createRunTabDescriptor(project: Project, text: String): RunContentDescriptor? {
     return getFreezeRunDescriptor(text, project)
   }

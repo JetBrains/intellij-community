@@ -30,9 +30,11 @@ import java.util.function.Predicate;
  */
 public final class PlainDescriptor extends PsiVarDescriptor {
   private final @NotNull PsiVariable myVariable;
+  private final int myHash;
 
   public PlainDescriptor(@NotNull PsiVariable variable) {
     myVariable = variable;
+    myHash = System.identityHashCode(variable);
   }
 
   @Override
@@ -64,7 +66,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
       PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
-      return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, myVariable)));
+      return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityForRead(type, myVariable)));
     }
     if (PsiUtil.isJvmLocalVariable(myVariable) ||
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
@@ -82,7 +84,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myVariable.getName());
+    return myHash;
   }
 
   @Override
@@ -134,17 +136,17 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     }
 
     PsiType type = getType(qualifier);
-    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, myVariable);
+    Nullability nullability = DfaPsiUtil.getElementNullabilityForRead(type, myVariable);
     if (nullability != Nullability.UNKNOWN) {
       return DfaNullability.fromNullability(nullability);
     }
 
-    if (myVariable instanceof PsiParameter && myVariable.getParent() instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)myVariable.getParent()).getIteratedValue();
+    if (myVariable instanceof PsiParameter && myVariable.getParent() instanceof PsiForeachStatement forEach) {
+      PsiExpression iteratedValue = forEach.getIteratedValue();
       if (iteratedValue != null) {
         PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
         if (itemType != null) {
-          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullability(itemType, myVariable));
+          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullabilityForRead(itemType, myVariable));
         }
       }
     }
@@ -309,7 +311,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     if (notChainConstructors.size() != 1) {
       return null;
     }
-    PsiMethod targetConstructor = notChainConstructors.get(0);
+    PsiMethod targetConstructor = notChainConstructors.getFirst();
     PsiCodeBlock constructorBody = targetConstructor.getBody();
 
     if (constructorBody == null || constructorBody.getStatements().length == 0) {

@@ -222,9 +222,7 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
 }
 
 private object RedundantOverrideFix : KotlinModCommandQuickFix<KtNamedFunction>() {
-    override fun getName(): String = KotlinBundle.message("redundant.override.fix.text")
-
-    override fun getFamilyName(): String = name
+    override fun getFamilyName(): String = KotlinBundle.message("redundant.override.fix.text")
 
     override fun applyFix(
         project: Project,

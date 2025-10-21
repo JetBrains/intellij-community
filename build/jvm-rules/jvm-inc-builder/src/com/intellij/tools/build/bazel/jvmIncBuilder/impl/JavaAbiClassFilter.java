@@ -2,8 +2,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumenterClassWriter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.FieldNode;
@@ -14,39 +13,73 @@ import java.util.*;
 
 public class JavaAbiClassFilter extends ClassVisitor {
   public static final String MODULE_INFO_CLASS_NAME = "module-info";
-  private boolean isAbiClass;
+  private boolean isEnum;
   private boolean allowPackageLocalMethods;
-  private Set<String> myExcludedClasses = new HashSet<>();
-  private List<FieldNode> myFields = new ArrayList<>();
-  private List<MethodNode> myMethods = new ArrayList<>();
+  private String myName;
+  private final List<FieldNode> myFields = new ArrayList<>();
+  private final MethodContainer myMethods;
+  private final Set<String> myReferencedClasses = new HashSet<>();
+  private final List<InnerClassInfo> myInnerClasses = new ArrayList<>();
 
-  private JavaAbiClassFilter(ClassVisitor delegate) {
+  private JavaAbiClassFilter(ClassVisitor delegate, MethodContainer methodContainer) {
     super(Opcodes.API_VERSION, delegate);
+    myMethods = methodContainer;
   }
 
-  public static byte @Nullable [] filter(byte[] classBytes, InstrumentationClassFinder finder) {
+  public static byte @Nullable [] filter(byte[] classBytes) {
     ClassReader reader = new FailSafeClassReader(classBytes);
-    int version = InstrumenterClassWriter.getClassFileVersion(reader);
-    ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
-    JavaAbiClassFilter abiVisitor = new JavaAbiClassFilter(writer);
+    if (!isAbiClass(reader.getAccess(), reader.getClassName())) {
+      return null; // optimization, return faster
+    }
+
+    ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS) {
+      @Override
+      protected String getCommonSuperClass(String type1, String type2) {
+        return null;
+      }
+    };
+
+    // Stripping certain DEBUG-INFO from abi.jar might lead to bytecode differences between compilation results against some artifact and abi-version of this artifact.
+    // This won't affect the behavior of the resulting bytecode. However, if such differences are not desired, parameter DEBUG-INFO should be kept.
     reader.accept(
-      abiVisitor, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
+      new JavaAbiClassFilter(writer, MethodContainer.create(reader)), ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES /*| ClassReader.SKIP_DEBUG*/
     );
-    return abiVisitor.isAbiClass? writer.toByteArray() : null;
+    return writer.toByteArray();
   }
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    isAbiClass = MODULE_INFO_CLASS_NAME.equals(name) || isAbiVisible(access);
+    myName = name;
+    isEnum = isEnum(access);
     allowPackageLocalMethods = name.contains("/android/");   // todo: temporary condition to enable android tests compilation
-    if (!isAbiClass) {
-      myExcludedClasses.add(name);
+
+    myReferencedClasses.add(name);
+    if (superName != null) {
+      myReferencedClasses.add(superName);
     }
+    Collections.addAll(myReferencedClasses, interfaces);
+
     super.visit(version, access, name, signature, superName, interfaces);
+  }
+
+  private static boolean isAbiClass(int access, String name) {
+    return MODULE_INFO_CLASS_NAME.equals(name) || isAbiVisible(access);
   }
 
   private static boolean isAbiVisible(int access) {
     return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0;
+  }
+
+  private static boolean isEnum(int access) {
+    return (access & Opcodes.ACC_ENUM) != 0;
+  }
+
+  private static boolean isSynthetic(int access) {
+    return (access & Opcodes.ACC_SYNTHETIC) != 0;
+  }
+
+  private static boolean isStatic(int access) {
+    return (access & Opcodes.ACC_STATIC) != 0;
   }
 
   private static boolean isPackageLocal(int access) {
@@ -55,69 +88,231 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-    if (isAbiVisible(access)) {
+    if (isAbiVisible(access) || isEnum && isSynthetic(access)) {
       FieldNode field = new FieldNode(Opcodes.API_VERSION, access, name, descriptor, signature, value);
       myFields.add(field);
+      collectReferencedTypes(Type.getType(descriptor));
       return field;
     }
     return null;
   }
 
+  private void collectReferencedTypes(Type type) {
+    if (type.getSort() == Type.OBJECT) {
+      myReferencedClasses.add(type.getInternalName());
+    }
+    if (type.getSort() == Type.ARRAY) {
+      collectReferencedTypes(type.getElementType());
+    }
+    else if (type.getSort() == Type.METHOD) {
+      collectReferencedTypes(type.getReturnType());
+      for (Type argType : type.getArgumentTypes()) {
+        collectReferencedTypes(argType);
+      }
+    }
+  }
+
   @Override
   public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
     if (isAbiVisible(access) || (allowPackageLocalMethods && isPackageLocal(access))) {
-      MethodNode method = new AbiMethod(access, name, descriptor, signature, exceptions);
-      myMethods.add(method);
-      return method;
+      MethodNode visitor = myMethods.addAbiStubMethod(access, name, descriptor, signature, exceptions);
+      if (visitor != null) {
+        collectReferencedTypes(Type.getMethodType(descriptor));
+      }
+      return visitor;
     }
     return null;
   }
 
   @Override
   public void visitEnd() {
-    Collections.sort(myFields, Comparator.comparing(f -> f.name));
+    // Important: sorting members may cause generated bytecode built against ABI content
+    // to be binary-different from the generated bytecode built against artifact's bytecode
+    // For now, sorting is disabled to minimize bytecode differences
+
+    // process postponed entries in the InnerClasses attribute
+    for (InnerClassInfo cls : myInnerClasses) {
+      if (cls.outerName == null || cls.innerName == null || !isAbiVisible(cls.access)) {
+        continue; // name is a local or anonymous class or the class cannot be included in ABI
+      }
+      if (cls.outerName.equals(myName) /*this class encloses class <name>*/ || cls.name.equals(myName) /*this class is a member of <outerName>*/ || myReferencedClasses.contains(cls.name)) {
+        cv.visitInnerClass(cls.name, cls.outerName, cls.innerName, cls.access);
+      }
+    }
+
+    //Collections.sort(myFields, Comparator.comparing(f -> f.name));
     for (FieldNode field : myFields) {
       field.accept(cv);
     }
-    Collections.sort(myMethods, Comparator.comparing(m -> m.name));
-    for (MethodNode method : myMethods) {
+
+    //Collections.sort(myMethods, Comparator.comparing(m -> m.name));
+    for (MethodNode method : myMethods.getMethods()) {
       method.accept(cv);
     }
     super.visitEnd();
   }
 
   @Override
+  public void visitNestHost(String nestHost) {
+    myReferencedClasses.add(nestHost);
+    super.visitNestHost(nestHost);
+  }
+
+  @Override
   public void visitNestMember(String nestMember) {
-    if (nestMember == null || !myExcludedClasses.contains(nestMember)) {
-      super.visitNestMember(nestMember);
-    }
+    myReferencedClasses.add(nestMember);
+    super.visitNestMember(nestMember);
   }
 
   @Override
   public void visitPermittedSubclass(String permittedSubclass) {
-    if (permittedSubclass == null || !myExcludedClasses.contains(permittedSubclass)) {
-      super.visitPermittedSubclass(permittedSubclass);
-    }
+    myReferencedClasses.add(permittedSubclass);
+    super.visitPermittedSubclass(permittedSubclass);
+  }
+
+  @Override
+  public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+    collectReferencedTypes(Type.getType(descriptor));
+    return super.visitRecordComponent(name, descriptor, signature);
   }
 
   @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
-    // innerName == null for anonymous classes
-    if (isAbiVisible(access) && innerName != null && !myExcludedClasses.contains(name)) {
-      super.visitInnerClass(name, outerName, innerName, access);
-    }
+    // postpone decision until it is known which classes are referenced
+    myInnerClasses.add(new InnerClassInfo(name, outerName, innerName, access));
+  }
+
+  @Override
+  public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+    collectReferencedTypes(Type.getType(descriptor));
+    return super.visitAnnotation(descriptor, visible);
+  }
+
+  @Override
+  public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+    collectReferencedTypes(Type.getType(descriptor));
+    return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
+  }
+
+  @Override
+  public void visitSource(String source, String debug) {
+    // skip source information
   }
 
   private static final class AbiMethod extends MethodNode {
-    private static final InsnNode NOP_INSTRUCTION = new InsnNode(Opcodes.NOP);
+    private static final List<InsnNode> ourBodyInstructions = List.of(
+      new InsnNode(Opcodes.ACONST_NULL),
+      new InsnNode(Opcodes.ATHROW)
+    );
+    private final Label myMethodStart = new Label();
+    private final Label myMethodEnd = new Label();
+    private final int myParamsSize;
 
     AbiMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
       super(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions);
-
+      myParamsSize = (Type.getArgumentsAndReturnSizes(desc) >> 2) - (isStatic(access)? 1 : 0);
       if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
-        // in a valid bytecode non-abstract and non-native methods must have a code attribute
-        instructions.add(NOP_INSTRUCTION);
+        // in a valid bytecode, non-abstract and non-native methods must have a code attribute
+        instructions.add(getLabelNode(myMethodStart));
+        for (InsnNode insn : ourBodyInstructions) {
+          instructions.add(insn);
+        }
+        instructions.add(getLabelNode(myMethodEnd));
       }
     }
+
+    @Override
+    public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+      if (index < myParamsSize) {
+        // keep local variable DEBUG info for method parameters only
+        super.visitLocalVariable(name, descriptor, signature, myMethodStart, myMethodEnd, index);
+      }
+      // skip all other local vars
+    }
+
+    @Override
+    public void visitLineNumber(int line, Label start) {
+      // skip line numbers
+    }
   }
+
+  private interface MethodContainer {
+    @Nullable
+    MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions);
+
+    Collection<MethodNode> getMethods();
+
+    static MethodContainer create(ClassReader reader) {
+      if (isEnum(reader.getAccess())) {
+        // Keep enum's certain methods in ABI content. Form compiler relies on enum's valueOf() and similar methods in property value introspection.
+        // Failure to read enum constants on compilation stage may lead to incorrectly generated UI setup code.
+        return new EnumMethodContainer(Opcodes.API_VERSION, reader);
+      }
+      return new MethodContainer() {
+        private final List<MethodNode> myNodes = new ArrayList<>();
+        @Override
+        public MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+          AbiMethod node = new AbiMethod(access, name, descriptor, signature, exceptions);
+          myNodes.add(node);
+          return node;
+        }
+
+        @Override
+        public Collection<MethodNode> getMethods() {
+          return Collections.unmodifiableCollection(myNodes);
+        }
+      };
+    }
+  }
+
+  private static class EnumMethodContainer implements MethodContainer {
+    private static final Set<String> ourEnumMethodsToKeep = Set.of(
+      "valueOf", "values", "$values", "name", "ordinal", "compareTo"
+    );
+    private final Map<String, MethodNode> myNodes = new LinkedHashMap<>(); // keep method order
+
+    EnumMethodContainer(int api, ClassReader reader) {
+      if (isAbiVisible(reader.getAccess())) {
+        // collect methods to keep
+        reader.accept(new ClassVisitor(api) {
+          @Override
+          public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+            if (shouldKeepMethod(access, name)) {
+              MethodNode node = new MethodNode(api, access, name, descriptor, signature, exceptions);
+              myNodes.put(getKey(name, descriptor), node);
+              return node;
+            }
+
+            myNodes.put(getKey(name, descriptor), new AbiMethod(access, name, descriptor, signature, exceptions));
+            return null;
+          }
+        }, ClassReader.SKIP_DEBUG);
+      }
+    }
+
+    @Override
+    @Nullable
+    public MethodNode addAbiStubMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+      return shouldKeepMethod(access, name)? null : myNodes.computeIfAbsent(getKey(name, descriptor), k -> new AbiMethod(access, name, descriptor, signature, exceptions));
+    }
+
+    @Override
+    public Collection<MethodNode> getMethods() {
+      return Collections.unmodifiableCollection(myNodes.values());
+    }
+
+    private static @NotNull String getKey(String name, String descriptor) {
+      return name + descriptor;
+    }
+
+    private static boolean shouldKeepMethod(int access, String name) {
+      return isSynthetic(access) || isAbiVisible(access) && ourEnumMethodsToKeep.contains(name) || isConstructor(name);
+    }
+
+    private static boolean isConstructor(String name) {
+      return "<init>".equals(name) || "<clinit>".equals(name);
+    }
+  }
+
+  private record InnerClassInfo(String name, String outerName, String innerName, int access) {}
 }

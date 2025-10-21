@@ -7,9 +7,10 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.locks.LockSupport
 import kotlin.time.Duration
 
-private val DELAY_INTERVAL: Long = 50
+private const val DELAY_INTERVAL: Long = 50
 
 @TestOnly
 suspend fun waitUntil(message: String? = null, timeout: Duration = DEFAULT_TEST_TIMEOUT, condition: suspend CoroutineScope.() -> Boolean) {
@@ -74,4 +75,21 @@ suspend fun waitUntilAssertSucceeds(message: String? = null, timeout: Duration =
     }
   }
 
+}
+
+@TestOnly
+fun waitUntilAssertSucceedsBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, block: () -> Unit) {
+  val deadline = System.currentTimeMillis() + timeout.inWholeMilliseconds
+  var storedFailure: AssertionError
+  do {
+    try {
+      block()
+      return
+    }
+    catch (e: AssertionError) {
+      storedFailure = e
+    }
+    LockSupport.parkNanos(DELAY_INTERVAL * 1_000_000)
+  } while (System.currentTimeMillis() < deadline)
+  throw AssertionError(storedFailure)
 }

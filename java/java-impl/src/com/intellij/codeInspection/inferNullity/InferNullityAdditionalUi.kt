@@ -6,9 +6,9 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 
-class InferNullityAdditionalUi {
-  lateinit var checkBox: JCheckBox
-  val panel: DialogPanel = panel {
+public class InferNullityAdditionalUi {
+  public lateinit var checkBox: JCheckBox
+  public val panel: DialogPanel = panel {
     row {
       checkBox = checkBox(JavaBundle.message("checkbox.annotate.local.variables")).component
     }

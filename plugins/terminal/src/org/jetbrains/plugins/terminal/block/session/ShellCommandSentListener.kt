@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.session
 
-import java.util.EventListener
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 /**
  * @see ShellCommandExecutionManagerImpl
  */
-internal interface ShellCommandSentListener : EventListener {
+@ApiStatus.Internal
+interface ShellCommandSentListener : EventListener {
   /**
    * Called when a user command has been submitted for later execution.
    * Might be called in the background or in the UI thread.

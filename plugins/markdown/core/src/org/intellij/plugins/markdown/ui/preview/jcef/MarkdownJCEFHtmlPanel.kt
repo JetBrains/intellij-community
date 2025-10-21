@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -53,11 +52,14 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.round
 
-class MarkdownJCEFHtmlPanel(
-  private val project: Project?,
-  private val virtualFile: VirtualFile?
-) : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
-  constructor() : this(null, null)
+class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFile: VirtualFile?)
+  : JCEFHtmlPanel(
+  isOffScreenRendering = isOffScreenRendering(),
+  client = null,
+  url = null,
+), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase()
+{
+  constructor() : this(project = null, virtualFile = null)
 
   private val pageBaseName = "markdown-preview-index-${DigestUtil.randomToken()}.html"
   private val resourceProvider = MyAggregatingResourceProvider()
@@ -66,8 +68,10 @@ class MarkdownJCEFHtmlPanel(
 
   private val scrollListeners = ArrayList<MarkdownHtmlPanel.ScrollListener>()
 
+  @Suppress("UsagesOfObsoleteApi")
   private var currentExtensions = emptyList<MarkdownBrowserPreviewExtension>()
 
+  @Suppress("UsagesOfObsoleteApi")
   private fun reloadExtensions() {
     currentExtensions.forEach(Disposer::dispose)
     currentExtensions = MarkdownBrowserPreviewExtension.Provider.all
@@ -118,9 +122,7 @@ class MarkdownJCEFHtmlPanel(
 
   internal fun showSearchBar() = searchSession?.showSearchBar()
 
-  override fun getComponent(): JComponent {
-    return panelComponent
-  }
+  override fun getComponent(): JComponent = panelComponent
 
   init {
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
@@ -139,17 +141,6 @@ class MarkdownJCEFHtmlPanel(
     val connection = application.messageBus.connect(this)
     connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
       changeFontSize(settings.state.fontSize)
-    })
-    connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { settings ->
-      val scale = settings.currentIdeScale
-      // language=JavaScript
-      val code = """
-      |(function() {
-      |  const styles = document.querySelector(":root").style;
-      |  styles.setProperty("${PreviewLAFThemeStyles.Variables.Scale}", "${scale}");
-      |})();
-      """.trimMargin()
-      executeJavaScript(code)
     })
 
     coroutineScope.launch {
@@ -254,14 +245,15 @@ class MarkdownJCEFHtmlPanel(
     scrollListeners.remove(listener)
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
-    executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
+    runJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
   }
 
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {
     val horizontal = JBCefApp.normalizeScaledSize(horizontalUnits)
     val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
-    executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
+    runJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
   }
 
   private val previewInnerComponent by lazy { super.getComponent() }
@@ -324,7 +316,7 @@ class MarkdownJCEFHtmlPanel(
     return panel
   }
 
-  fun getTemporaryFontSize() = getUserData(TEMPORARY_FONT_SIZE)
+  fun getTemporaryFontSize(): Int? = getUserData(TEMPORARY_FONT_SIZE)
 
   /**
    * @param size Unscaled font size.
@@ -346,7 +338,7 @@ class MarkdownJCEFHtmlPanel(
     |  styles.setProperty("${PreviewLAFThemeStyles.Variables.FontSize}", "${scaled}px");
     |})();
     """.trimMargin()
-    executeJavaScript(code)
+    runJavaScript(code)
   }
 
   private fun createFileSchemeResourcesProcessor(projectRoot: VirtualFile?): ResourceProvider? {
@@ -360,18 +352,15 @@ class MarkdownJCEFHtmlPanel(
   private inner class MyAggregatingResourceProvider : ResourceProvider {
     private val internalResources = baseScripts + baseStyles
 
-    override fun canProvide(resourceName: String): Boolean {
-      return resourceName in internalResources ||
-             resourceName == pageBaseName ||
-             currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
-    }
+    override fun canProvide(resourceName: String): Boolean =
+      resourceName in internalResources ||
+      resourceName == pageBaseName ||
+      currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
 
-    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-      return when (resourceName) {
-        pageBaseName -> ResourceProvider.Resource(buildIndexContent().toByteArray(), "text/html")
-        in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
-        else -> currentExtensions.map { it.resourceProvider }.firstOrNull { it.canProvide(resourceName) }?.loadResource(resourceName)
-      }
+    override fun loadResource(resourceName: String): ResourceProvider.Resource? = when (resourceName) {
+      pageBaseName -> ResourceProvider.Resource(buildIndexContent().toByteArray(), "text/html")
+      in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
+      else -> currentExtensions.map { it.resourceProvider }.firstOrNull { it.canProvide(resourceName) }?.loadResource(resourceName)
     }
   }
 
@@ -433,9 +422,7 @@ class MarkdownJCEFHtmlPanel(
     private fun isOffScreenRendering(): Boolean = Registry.`is`("ide.browser.jcef.markdownView.osr.enabled")
 
     private object ProhibitingResourceRequestHandler : CefResourceRequestHandlerAdapter() {
-      override fun onBeforeResourceLoad(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): Boolean {
-        return true
-      }
+      override fun onBeforeResourceLoad(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): Boolean = true
     }
   }
 }

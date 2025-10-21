@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public class Stack<T> extends ArrayList<T> {
   }
 
   @SafeVarargs
-  public Stack(@NotNull T... items) {
+  public Stack(T... items) {
     super(items.length);
     for (T item : items) {
       push(item);
@@ -73,6 +74,7 @@ public class Stack<T> extends ArrayList<T> {
   /**
    * @deprecated don't search for element index in a stack, use another collection
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public int search(Object o) {
     int idx = lastIndexOf(o);

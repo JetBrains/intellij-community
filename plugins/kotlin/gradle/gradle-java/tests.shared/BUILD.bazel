@@ -1,26 +1,31 @@
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "tests.shared",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests.shared_test_lib",
+  module_name = "kotlin.gradle.gradle-java.tests.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle:gradle-tests_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-util-io:ide-util-io",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -44,10 +49,8 @@ jvm_library(
     "//plugins/kotlin/base/project-model",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/facet",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
@@ -67,21 +70,19 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/gradle/code-insight-common",
-    "//plugins/kotlin/gradle/code-insight-toml",
+    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common",
+    "//plugins/kotlin/gradle/code-insight-toml:kotlin-gradle-codeInsight-toml",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/migration",
     "//plugins/gradle/java",
     "//plugins/kotlin/base/platforms",
-    "//plugins/kotlin/gradle/code-insight-groovy",
+    "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
     "//plugins/kotlin/inspections",
     "//plugins/groovy/groovy-psi:psi",
     "//plugins/gradle/java:java-tests_test_lib",
     "//plugins/kotlin/run-configurations/jvm",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
-    "@lib//:kotlinc-kotlin-scripting-common",
-    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//plugins/kotlin/base/fe10/analysis",
@@ -89,18 +90,21 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core:core_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//plugins/kotlin/base/external-build-system",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/openapi:java",
-    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
-    "//plugins/kotlin/base/scripting.k1",
-    "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
     "//plugins/kotlin/jvm-debugger/coroutines",
-  ]
+    "//java/java-runtime:rt",
+  ],
+  exports = ["@lib//:kotlin-gradle-plugin-idea"]
 )
+### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
 
-jvm_test(
+### auto-generated section `test kotlin.gradle.gradle-java.tests.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "tests.shared_test",
   runtime_deps = [":tests.shared_test_lib"]
 )
-### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
+### auto-generated section `test kotlin.gradle.gradle-java.tests.shared` end

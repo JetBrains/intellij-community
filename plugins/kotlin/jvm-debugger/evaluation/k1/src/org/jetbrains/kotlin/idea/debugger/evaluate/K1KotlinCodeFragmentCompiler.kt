@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory

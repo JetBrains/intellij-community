@@ -1,0 +1,5 @@
+// IGNORE_K1
+// LANGUAGE_VERSION: 2.3
+// "Remove redundant return" "true"
+fun foo(): String = ""
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantReturnFix

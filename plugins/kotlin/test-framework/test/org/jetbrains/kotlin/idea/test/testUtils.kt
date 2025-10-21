@@ -12,11 +12,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -27,7 +29,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 @JvmField
-val IDEA_TEST_DATA_DIR = File(KotlinRoot.DIR, "idea/tests/testData")
+val IDEA_TEST_DATA_DIR : File =
+    if (BazelTestUtil.isUnderBazelTest) {
+        TestKotlinArtifacts.kotlinIdeaTestData.toFile()
+    } else {
+        File(KotlinRoot.DIR, "idea/tests/testData")
+    }
 
 fun KtFile.dumpTextWithErrors(ignoreErrors: Set<DiagnosticFactory<*>> = emptySet()): String {
     val text = text

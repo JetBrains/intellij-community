@@ -68,25 +68,27 @@ fun CoroutineScope.awaitCancellationAndDispose(disposable: Disposable) {
 fun createBoundedTaskExecutor(
   name: String,
   coroutineScope: CoroutineScope,
-  parallelism: Int = 1,
+  concurrency: Int = 1,
 ): CoroutineDispatcherBackedExecutor {
-  return CoroutineDispatcherBackedExecutor(coroutineScope = coroutineScope, name = name, parallelism = parallelism)
+  return CoroutineDispatcherBackedExecutor(coroutineScope = coroutineScope, name = name, concurrency = concurrency)
 }
 
 // TODO expose interface if ever goes public
 @Internal
 @OptIn(ExperimentalCoroutinesApi::class)
-class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: String, parallelism: Int) : Executor {
-  private val childScope = coroutineScope.childScope(name, Dispatchers.IO.limitedParallelism(parallelism = parallelism))
+class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: String, concurrency: Int) : Executor {
+  private val childScope = coroutineScope.childScope(name, Dispatchers.IO.limitedParallelism(parallelism = concurrency))
 
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
 
-  fun scope(): CoroutineScope = childScope
-
   override fun execute(command: Runnable) {
     childScope.coroutineContext.ensureActive()
-    childScope.launch(ClientId.coroutineContext()) {
-      command.run()
+    executeSuspending { command.run() }
+  }
+
+  fun <T> executeSuspending(action: suspend () -> T): Deferred<T> {
+    return childScope.async(ClientId.coroutineContext()) {
+      action()
     }
   }
 

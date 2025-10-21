@@ -28,6 +28,7 @@ import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -190,6 +191,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     final ActionCallback cb = new ActionCallback();
     afterUpdate = cb.createSetDoneRunnable();
     if (myAsyncSupport != null) {
+      myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneUpdateScheduled(this);
       myAsyncSupport.updateAll(afterUpdate);
     }
     else {

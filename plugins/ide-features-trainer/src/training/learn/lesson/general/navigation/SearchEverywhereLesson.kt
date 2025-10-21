@@ -12,6 +12,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.searchComponents.ExtendableSearchTextField
 import com.intellij.util.ui.UIUtil
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
@@ -45,10 +46,9 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   override val lessonContent: LessonContext.() -> Unit = {
     configurationTasks()
     sdkConfigurationTasks()
-
     task("SearchEverywhere") {
-      triggerAndBorderHighlight().component { ui: ExtendableTextField ->
-        UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
+      triggerAndBorderHighlight().component { ui: ExtendableSearchTextField ->
+        ui.isShowing
       }
       text(LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it),
                                  LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))

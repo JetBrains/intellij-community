@@ -18,7 +18,7 @@ import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 @Service(Service.Level.PROJECT)
 public final class ControlFlowFactory implements Disposable {
   // psiElements hold weakly, controlFlows softly
-  private final Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = CollectionFactory.createConcurrentWeakKeySoftValueMap();
+  private volatile @NotNull Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = CollectionFactory.createConcurrentWeakKeySoftValueMap();
 
   public static ControlFlowFactory getInstance(Project project) {
     return project.getService(ControlFlowFactory.class);
@@ -34,7 +34,7 @@ public final class ControlFlowFactory implements Disposable {
   }
 
   private void clearCache() {
-    cachedFlows.clear();
+    cachedFlows = CollectionFactory.createConcurrentWeakKeySoftValueMap();
   }
 
   void registerSubRange(final PsiElement codeFragment,

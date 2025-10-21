@@ -15,7 +15,7 @@ private val LOG = logger<PostponableLogRefresher>()
 
 @ApiStatus.Internal
 class PostponableLogRefresher internal constructor(private val logData: VcsLogData) {
-  private val rootsToRefresh = mutableSetOf<VirtualFile?>()
+  private val rootsToRefresh = mutableSetOf<VirtualFile>()
   private val refreshers = mutableMapOf<String, Refresher>()
 
   init {

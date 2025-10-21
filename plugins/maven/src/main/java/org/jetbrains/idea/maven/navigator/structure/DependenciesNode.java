@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-class DependenciesNode extends BaseDependenciesNode {
+final class DependenciesNode extends BaseDependenciesNode {
   DependenciesNode(MavenProjectsStructure structure, ProjectNode parent, MavenProject mavenProject) {
     super(structure, parent, mavenProject);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpLibFolder);

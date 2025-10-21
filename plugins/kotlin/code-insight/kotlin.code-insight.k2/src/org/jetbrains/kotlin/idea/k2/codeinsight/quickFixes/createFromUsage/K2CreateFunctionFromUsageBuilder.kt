@@ -14,12 +14,19 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.directSupertypes
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageBuilder.buildRequestsAndActions
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.canRefactor
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -68,7 +75,7 @@ object K2CreateFunctionFromUsageBuilder {
         }
     }
 
-    context (KaSession)
+    context(_: KaSession)
     private fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass, CreateMethodRequest>> {
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
         val requests = mutableListOf<Pair<JvmClass, CreateMethodRequest>>()
@@ -155,7 +162,7 @@ object K2CreateFunctionFromUsageBuilder {
         return containerClassForExtension.containingFile.children.find { it.isExtensionDeclaration() && it is PsiNamedElement && it.name == name} != null
     }
 
-    context (KaSession)
+    context(_: KaSession)
     private fun shouldCreateCompanionClass(calleeExpression: KtSimpleNameExpression): Boolean {
         val receiverExpression = calleeExpression.getReceiverExpression()
         val receiverResolved =
@@ -171,7 +178,7 @@ object K2CreateFunctionFromUsageBuilder {
         KtTokens.PUBLIC_KEYWORD to JvmModifier.PUBLIC
     )
 
-    context (KaSession)
+    context(_: KaSession)
     private fun computeModifiers(
         container: PsiElement,
         calleeExpression: KtSimpleNameExpression,
@@ -211,7 +218,7 @@ object K2CreateFunctionFromUsageBuilder {
         return listOf(JvmModifier.PUBLIC)
     }
 
-    context (KaSession)
+    context(_: KaSession)
     private fun samePackage(
         calleeExpression: KtSimpleNameExpression,
         callExpression: KtCallExpression
@@ -224,7 +231,7 @@ object K2CreateFunctionFromUsageBuilder {
     /**
      * Returns the type of the class containing this [KtSimpleNameExpression] if the class is abstract. Otherwise, returns null.
      */
-    context (KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KtSimpleNameExpression.getAbstractTypeOfContainingClass(): KaType? {
         val containingClass = PsiTreeUtil.getParentOfType(
@@ -236,11 +243,7 @@ object K2CreateFunctionFromUsageBuilder {
         if (containingClass is KtEnumEntry || containingClass.isAnnotation()) return null
 
         val classSymbol = containingClass.symbol as? KaClassSymbol ?: return null
-        val classType = buildClassType(classSymbol) {
-            for (typeParameter in containingClass.typeParameters) {
-                argument(buildStarTypeProjection())
-            }
-        }
+        val classType = buildClassTypeWithStarProjections(classSymbol)
         if (containingClass.modifierList.hasAbstractModifier() || classSymbol.classKind == KaClassKind.INTERFACE) return classType
 
         // KaType.getAbstractSuperType() does not guarantee it's the closest abstract super type. We can implement it as a
@@ -248,7 +251,7 @@ object K2CreateFunctionFromUsageBuilder {
         return classType.getAbstractSuperType()
     }
 
-    context (KaSession)
+    context(_: KaSession)
     private fun KaType.getAbstractSuperType(): KaType? {
         fun Sequence<KaType>.firstAbstractEditableType() = firstOrNull { it.hasAbstractDeclaration() && it.canRefactor() }
         return directSupertypes.firstAbstractEditableType() ?: allSupertypes.firstAbstractEditableType()
@@ -257,7 +260,7 @@ object K2CreateFunctionFromUsageBuilder {
     /**
      * Returns class or superclass of the express's type if the class or the super class is abstract. Otherwise, returns null.
      */
-    context (KaSession)
+    context(_: KaSession)
     private fun KtExpression.getTypeOfAbstractSuperClass(): KaType? {
         val type = expressionType ?: return null
         if (type.hasAbstractDeclaration()) return type
@@ -267,14 +270,14 @@ object K2CreateFunctionFromUsageBuilder {
     /**
      * Returns the receiver's type if it is abstract, or it has an abstract superclass. Otherwise, returns null.
      */
-    context (KaSession)
+    context(_: KaSession)
     private fun KtSimpleNameExpression.getAbstractTypeOfReceiver(): KaType? {
         // If no explicit receiver exists, the containing class can be an implicit receiver.
         val receiver = getReceiverExpression() ?: return getAbstractTypeOfContainingClass()
         return receiver.getTypeOfAbstractSuperClass()
     }
 
-    context (KaSession)
+    context(_: KaSession)
     fun computeImplicitReceiverType(calleeExpression: KtSimpleNameExpression): List<KaType> {
         return calleeExpression.containingKtFile.scopeContext(calleeExpression).implicitReceivers.mapNotNull { implicitReceiver ->
             val callable = (calleeExpression.getParentOfTypeAndBranch<KtFunction> { bodyExpression }

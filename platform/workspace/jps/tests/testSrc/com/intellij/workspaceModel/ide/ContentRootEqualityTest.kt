@@ -4,11 +4,13 @@ package com.intellij.workspaceModel.ide
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
+import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -18,6 +20,40 @@ class ContentRootEqualityTest {
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
+  }
+
+  @Test
+  @Ignore
+  fun `content roots with same urls`() {
+    // create module with content root but without source roots
+    val contentRootUrl = virtualFileManager.getOrCreateFromUrl("/123")
+    val sourceRootUrl = virtualFileManager.getOrCreateFromUrl("/data")
+
+    val targetBuilder = MutableEntityStorage.create()
+    val module = targetBuilder.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
+      contentRoots = listOf(
+        ContentRootEntity(contentRootUrl, emptyList(), MySource) {
+          sourceRoots = emptyList()
+        },
+      )
+    })
+
+    // create another builder
+    val sourceBuilder = MutableEntityStorage.from(targetBuilder.toSnapshot())
+
+    // add source root to the target storage
+    targetBuilder.modifyContentRootEntity(module.contentRoots.first()) {
+      sourceRoots = listOf(SourceRootEntity(sourceRootUrl, SourceRootTypeId("Type"), MySource))
+    }
+
+    // remove content root from the source storage
+    sourceBuilder.removeEntity(sourceBuilder.entities(ContentRootEntity::class.java).first())
+
+    targetBuilder.assertConsistency()
+    sourceBuilder.assertConsistency()
+
+    // apply target storage to the source storage
+    targetBuilder.applyChangesFrom(sourceBuilder)
   }
 
   @Test

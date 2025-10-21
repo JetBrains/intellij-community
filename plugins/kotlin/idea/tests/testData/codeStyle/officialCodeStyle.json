@@ -46,6 +46,7 @@
       "extends_list_wrap": "normal",
       "field_annotation_wrap": "split_into_lines",
       "finally_on_new_line": false,
+      "function_context_parameters_wrap": "split_into_lines",
       "if_rparen_on_new_line": true,
       "import_nested_classes": false,
       "imports_layout": [
@@ -83,6 +84,7 @@
         "io.ktor.**"
       ],
       "parameter_annotation_wrap": "off",
+      "property_context_parameters_wrap": "split_into_lines",
       "smart_tabs": false,
       "space_after_comma": true,
       "space_after_extend_colon": true,

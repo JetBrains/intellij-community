@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.jewel.ui" />
     <module name="intellij.platform.jewel.foundation" />

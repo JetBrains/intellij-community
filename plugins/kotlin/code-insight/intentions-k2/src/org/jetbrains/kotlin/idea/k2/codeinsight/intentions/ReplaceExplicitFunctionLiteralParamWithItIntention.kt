@@ -22,10 +22,9 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-
 internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetingIntention<KtElement>(
     KtElement::class.java,
-    KotlinBundle.lazyMessage("replace.explicit.lambda.parameter.with.it"),
+    KotlinBundle.messagePointer("replace.explicit.lambda.parameter.with.it"),
 ) {
 
     override fun startInWriteAction(): Boolean = false

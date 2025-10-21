@@ -62,7 +62,7 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
 
     val filter = ConfigurationReleaseFilter("ALL", fromBucket, toBucket)
 
-    val version = ConfigurationVersion(majorVersionBorders, endpoints, options, listOf(filter))
+    val version = ConfigurationVersion(majorVersionBorders, listOf(filter), endpoints, options)
 
     val externalSettings = Configuration(PRODUCT_CODE, listOf(version))
 

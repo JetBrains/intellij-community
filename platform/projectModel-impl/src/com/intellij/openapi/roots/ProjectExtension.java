@@ -18,11 +18,4 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ProjectExtension {
   public void projectSdkChanged(@Nullable Sdk sdk) {
   }
-
-  /**
-   * Returns true if the state was changed after read
-   */
-  public abstract boolean readExternalElement(@NotNull Element element);
-
-  public abstract void writeExternal(@NotNull Element element);
 }

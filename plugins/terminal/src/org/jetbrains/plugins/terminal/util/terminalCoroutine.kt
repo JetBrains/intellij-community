@@ -5,7 +5,15 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Experimental
+@OptIn(ExperimentalCoroutinesApi::class)
+fun <T : Any> Deferred<T>.getNow(): T? {
+  return if (isCompleted && !isCancelled) getCompleted() else null
+}
 
 @ApiStatus.Internal
 fun terminalProjectScope(project: Project): CoroutineScope {

@@ -51,10 +51,6 @@ public final class PyPackage extends InstalledPackage {
     return myLocation;
   }
 
-  public boolean isInstalled() {
-    return myLocation != null;
-  }
-
   @Override
   public @Nullable String getTooltipText() {
     return FileUtil.getLocationRelativeToUserHome(myLocation);

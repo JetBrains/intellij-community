@@ -11,6 +11,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.evaluate
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -222,7 +223,7 @@ internal class WhenWithOnlyElseInspection
      *
      * @return `true` if `this` is _definitely_ pure.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.isPure(): Boolean = when (this) {
         is KtStringTemplateExpression -> !hasInterpolation()
         is KtConstantExpression -> true

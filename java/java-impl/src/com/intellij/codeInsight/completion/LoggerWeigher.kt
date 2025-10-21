@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 
-class LoggerWeigher : CompletionWeigher() {
+public class LoggerWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<*> = when (element) {
     is JvmLoggerLookupElement -> -1
     else -> 1

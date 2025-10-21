@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal.benchmark
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.navigation.openFileWithPsiElement
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -161,7 +160,7 @@ internal abstract class AbstractCompletionBenchmarkScenario(
                 PsiDocumentManager.getInstance(project).commitDocument(document)
             }
             editor.moveCaret(editor.caretModel.offset + text.length + 1)
-            AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, null)
+            AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
         }, "InsertTextAndInvokeCompletion", "completionBenchmark")
 
         val result = try {

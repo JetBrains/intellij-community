@@ -28,8 +28,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
+import com.intellij.workspaceModel.core.fileIndex.impl.FileTypeAssocTableUtil;
 import kotlin.Lazy;
 import kotlin.LazyKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -39,7 +41,8 @@ import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
 
-final class RootIndex {
+@ApiStatus.Internal
+public final class RootIndex {
   static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
     String name1 = o1.getOwnerModule().getName();
     String name2 = o2.getOwnerModule().getName();
@@ -50,7 +53,12 @@ final class RootIndex {
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
   private final @NotNull Project myProject;
-  private final Lazy<OrderEntryGraph> myOrderEntryGraphLazy = LazyKt.lazy(() -> calculateOrderEntryGraph());
+  private final Lazy<OrderEntryGraph> myOrderEntryGraphLazy;
+
+  public RootIndex(@NotNull Project project, @Nullable OrderEntryGraph graph) {
+    myProject = project;
+    myOrderEntryGraphLazy = graph == null ? LazyKt.lazy(() -> calculateOrderEntryGraph()) : LazyKt.lazyOf(graph);
+  }
 
   @SuppressWarnings("deprecation")
   RootIndex(@NotNull Project project) {
@@ -65,6 +73,7 @@ final class RootIndex {
     if (workspaceModelTopics != null) {
       LOG.assertTrue(workspaceModelTopics.getModulesAreLoaded(), "Directory index can only be queried after project initialization");
     }
+    myOrderEntryGraphLazy = LazyKt.lazy(() -> calculateOrderEntryGraph());
   }
 
   private @NotNull RootInfo buildRootInfo(@NotNull Project project) {
@@ -92,7 +101,7 @@ final class RootIndex {
           }
           List<String> patterns = contentEntry.getExcludePatterns();
           if (!patterns.isEmpty()) {
-            FileTypeAssocTable<Boolean> table = new FileTypeAssocTable<>();
+            FileTypeAssocTable<Boolean> table = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
             for (String pattern : patterns) {
               table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), Boolean.TRUE);
             }
@@ -259,7 +268,8 @@ final class RootIndex {
     return RootFileValidityChecker.ensureValid(file, container, null);
   }
 
-  private @NotNull OrderEntryGraph getOrderEntryGraph() {
+  @ApiStatus.Internal
+  public @NotNull OrderEntryGraph getOrderEntryGraph() {
     return myOrderEntryGraphLazy.getValue();
   }
 
@@ -274,7 +284,8 @@ final class RootIndex {
    * <p>
    * <p>Each edge carries with it the associated OrderEntry that caused the dependency.
    */
-  private static class OrderEntryGraph {
+  @ApiStatus.Internal
+  public static class OrderEntryGraph {
     private static class Edge {
       private final Module myKey;
       private final @NotNull ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge

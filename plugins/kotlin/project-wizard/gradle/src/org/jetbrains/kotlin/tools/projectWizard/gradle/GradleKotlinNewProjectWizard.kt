@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
 import com.fasterxml.jackson.dataformat.toml.TomlMapper
@@ -17,7 +17,6 @@ import com.intellij.openapi.observable.util.equalsTo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
@@ -206,10 +205,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         var selectedJdkJvmTarget: Int? = null
             private set
 
-        private fun resolveSelectedJvmTarget(): Int? {
+        private fun resolveSelectedJvmTarget(): Int? =
             // Ordinal here works correctly, starting at Java 1.0 (0)
-            return sdk?.let { JavaSdk.getInstance().getVersion(it) }?.ordinal
-        }
+            jdkIntent.javaVersion?.feature
 
         override fun resolveIsFoojayPluginSupported(): Boolean {
             if (!super.resolveIsFoojayPluginSupported()) {
@@ -293,7 +291,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 // Find the library entries from the libraries table in the TOML file
                 val libraryEntries = tomlTree.get("libraries") ?: return false
                 // Find the name of the library entry that contains the Kotlin Gradle Plugin
-                libraryEntries.fields().asSequence().firstOrNull { (_, node) ->
+                libraryEntries.properties().firstOrNull { (_, node) ->
                     node.get("module")?.asText()?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
                 }?.key
             }.getOrNull() ?: return false

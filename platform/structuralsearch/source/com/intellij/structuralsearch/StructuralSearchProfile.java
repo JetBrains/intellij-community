@@ -195,6 +195,10 @@ public abstract class StructuralSearchProfile {
     return fragment.getText();
   }
 
+  public @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass(Language dialect) {
+    return getTemplateContextTypeClass();
+  }
+
   public abstract @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
   public @Nullable LanguageFileType detectFileType(@NotNull PsiElement context) {

@@ -1,11 +1,16 @@
 from typing import overload
+from typing_extensions import deprecated
 
 from ._typing import GeoArray, OptGeoArrayLike, OptGeoArrayLikeSeq
 from .geometry.base import BaseGeometry
 from .lib import Geometry
 
 __all__ = [
+    "coverage_union",
+    "coverage_union_all",
     "difference",
+    "disjoint_subset_union",
+    "disjoint_subset_union_all",
     "intersection",
     "intersection_all",
     "symmetric_difference",
@@ -13,8 +18,6 @@ __all__ = [
     "unary_union",
     "union",
     "union_all",
-    "coverage_union",
-    "coverage_union_all",
 ]
 
 @overload
@@ -52,8 +55,10 @@ def symmetric_difference(a: OptGeoArrayLikeSeq, b: OptGeoArrayLike, grid_size: f
 @overload
 def symmetric_difference(a: OptGeoArrayLike, b: OptGeoArrayLikeSeq, grid_size: float | None = None, **kwargs) -> GeoArray: ...
 @overload
+@deprecated("symmetric_difference_all behaves incorrectly and will be removed in a future version.")
 def symmetric_difference_all(geometries: OptGeoArrayLike, axis: None = None, **kwargs) -> BaseGeometry: ...
 @overload
+@deprecated("symmetric_difference_all behaves incorrectly and will be removed in a future version.")
 def symmetric_difference_all(geometries: OptGeoArrayLikeSeq, axis: int, **kwargs) -> BaseGeometry | GeoArray: ...
 @overload
 def union(a: Geometry, b: Geometry, grid_size: float | None = None, **kwargs) -> BaseGeometry: ...
@@ -84,3 +89,8 @@ def coverage_union(a: OptGeoArrayLike, b: OptGeoArrayLike, *, axis: int, **kwarg
 def coverage_union_all(geometries: OptGeoArrayLike, axis: None = None, **kwargs) -> BaseGeometry: ...
 @overload
 def coverage_union_all(geometries: OptGeoArrayLikeSeq, axis: int, **kwargs) -> BaseGeometry | GeoArray: ...
+def disjoint_subset_union(a: OptGeoArrayLike, b: OptGeoArrayLike, **kwargs) -> BaseGeometry | GeoArray: ...
+@overload
+def disjoint_subset_union_all(geometries: OptGeoArrayLike, *, axis: None = None, **kwargs) -> BaseGeometry: ...
+@overload
+def disjoint_subset_union_all(geometries: OptGeoArrayLikeSeq, *, axis: int, **kwargs) -> BaseGeometry | GeoArray: ...

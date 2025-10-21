@@ -1,0 +1,20 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.parser"/>
+    <module name="intellij.python.community"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.interpreterProvider"
+                    dynamic="true"
+                    interface="com.intellij.python.community.interpreters.spi.InterpreterProvider"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="Pythonid">
+    <interpreterProvider implementation="com.intellij.python.community.interpreters.impl.VanillaInterpreterProvider"/>
+  </extensions>
+</idea-plugin>

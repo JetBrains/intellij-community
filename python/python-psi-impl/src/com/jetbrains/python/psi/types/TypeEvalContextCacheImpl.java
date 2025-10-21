@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -21,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Ilya.Kazakevich
  */
-final class TypeEvalContextCacheImpl implements TypeEvalContextCache, Disposable {
+final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> myCachedMapStorage;
   private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> myLibrariesCachedMapStorage;
   private final LowMemoryWatcher myLowMemoryWatcher;
@@ -37,13 +36,14 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache, Disposable
         return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT, myLowMemoryModificationTracker);
       }
     });
+
     myLibrariesCachedMapStorage = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<>() {
       @Override
       public @NotNull CachedValueProvider.Result<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> compute() {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
         final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
-        return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project));
+        return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project), myLowMemoryModificationTracker);
       }
     });
 
@@ -78,7 +78,6 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache, Disposable
     return retrieveFromStorage(standard, myLibrariesCachedMapStorage);
   }
 
-  @Override
   public void dispose() {
     myLowMemoryWatcher.stop();
   }

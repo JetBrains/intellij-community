@@ -4,12 +4,12 @@ package com.jetbrains.rhizomedb
 import fleet.fastutil.longs.LongArrayList
 import fleet.fastutil.longs.toArray
 import fleet.util.computeShim
-import fleet.util.updateAndGet
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.updateAndFetch
 
 class QueryCache private constructor(private val cache: AtomicReference<QueryCacheData>) {
 
@@ -66,14 +66,14 @@ class QueryCache private constructor(private val cache: AtomicReference<QueryCac
 
   companion object {
     fun empty(): QueryCache =
-      QueryCache(kotlin.concurrent.atomics.AtomicReference(QueryCacheData(persistentHashMapOf(), persistentHashMapOf())))
+      QueryCache(AtomicReference(QueryCacheData(persistentHashMapOf(), persistentHashMapOf())))
   }
 
   fun <T> performQuery(query: CachedQuery<T>, compute: () -> CachedQueryResult<T>): CachedQueryResult<T> =
     @Suppress("UNCHECKED_CAST")
     (cache.load().find(query) as CachedQueryResult<T>?) ?: run {
       val res = compute()
-      cache.updateAndGet { index ->
+      cache.updateAndFetch { index ->
         val existing = index.find(query)
         when {
           existing == null -> index.insert(query, res)

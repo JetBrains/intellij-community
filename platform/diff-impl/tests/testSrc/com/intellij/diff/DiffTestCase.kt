@@ -205,12 +205,16 @@ abstract class DiffTestCase : TestCase() {
 
     fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
       if (skipLastNewline && !ignoreSpaces) {
-        assertTrue(StringUtil.equals(chunk1, chunk2) ||
-                   StringUtil.equals(stripNewline(chunk1), chunk2) ||
-                   StringUtil.equals(chunk1, stripNewline(chunk2)))
+        assertTrue(
+          "Text1: '$chunk1', Text2: '$chunk2'",
+          StringUtil.equals(chunk1, chunk2) ||
+          StringUtil.equals(stripNewline(chunk1), chunk2) ||
+          StringUtil.equals(chunk1, stripNewline(chunk2)))
       }
       else {
-        assertTrue(isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
+        assertTrue(
+          "Text1: '$chunk1', Text2: '$chunk2'",
+          isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
       }
     }
 

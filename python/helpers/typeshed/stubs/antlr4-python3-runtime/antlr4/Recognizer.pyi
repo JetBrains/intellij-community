@@ -5,6 +5,7 @@ from antlr4.RuleContext import RuleContext as RuleContext
 from antlr4.Token import Token as Token
 
 class Recognizer:
+    __slots__ = ("_listeners", "_interp", "_stateNumber")
     tokenTypeMapCache: Incomplete
     ruleIndexMapCache: Incomplete
     def __init__(self) -> None: ...

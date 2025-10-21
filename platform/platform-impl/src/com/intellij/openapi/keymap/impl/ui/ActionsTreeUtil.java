@@ -110,7 +110,7 @@ public final class ActionsTreeUtil {
         result.put(actionId, descriptor.getName());
       }
     }
-    for (PluginId id : PluginId.getRegisteredIds()) {
+    for (PluginId id : PluginManagerCore.getPluginSet().buildPluginIdMap().keySet()) {
       if (visited.contains(id)) {
         continue;
       }
@@ -128,7 +128,7 @@ public final class ActionsTreeUtil {
       .sort(Comparator.comparing(IdeaPluginDescriptor::getName));
     Map<PluginId, String> pluginNames = plugins.toMap(PluginDescriptor::getPluginId, PluginDescriptor::getName);
     List<PluginId> pluginsIds = plugins.map(PluginDescriptor::getPluginId)
-      .append(JBIterable.from(PluginId.getRegisteredIds()).sort(PluginId::compareTo))
+      .append(JBIterable.from(PluginManagerCore.getPluginSet().buildPluginIdMap().keySet()).sort(PluginId::compareTo))
       .unique().toList();
     for (PluginId pluginId : pluginsIds) {
       if (PluginManagerCore.CORE_ID.equals(pluginId)

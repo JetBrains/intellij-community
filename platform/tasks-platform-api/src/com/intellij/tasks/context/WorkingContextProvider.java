@@ -4,6 +4,7 @@ package com.intellij.tasks.context;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public abstract class WorkingContextProvider {
+  @ApiStatus.Internal
   public static final ExtensionPointName<WorkingContextProvider> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.contextProvider");
 
   /**
@@ -37,5 +39,9 @@ public abstract class WorkingContextProvider {
   public abstract void loadContext(@NotNull Project project, @NotNull Element fromElement);
 
   public void clearContext(@NotNull Project project) {
+  }
+
+  public boolean isEnabled() {
+    return true;
   }
 }

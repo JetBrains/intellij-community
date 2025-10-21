@@ -24,6 +24,11 @@ public interface PluginDescriptor {
     return classLoader == null ? getClass().getClassLoader() : classLoader;
   }
 
+  /**
+   * @return true if the installed plugin version is a part of IDE distribution, false - if the plugin received an update or installed by user
+   *
+   * @see com.intellij.ide.plugins.PluginManagerCore#isUpdatedBundledPlugin
+   */
   default boolean isBundled() {
     return false;
   }

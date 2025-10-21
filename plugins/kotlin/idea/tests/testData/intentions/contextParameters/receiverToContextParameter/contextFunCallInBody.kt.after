@@ -1,6 +1,7 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
-context(string: String) fun foo() {
+context(string: String)
+fun foo() {
     bar()
 }
 

@@ -82,7 +82,7 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
     val builder = TargetTypeBuildScope.newBuilder()
     scopes.add(builder.setTypeId("project-dependencies-resolving").setForceBuild(false).setAllTargets(true).build())
     val messageHandler = JpsMessageHandler()
-    if (!JpsBootstrapMain.Companion.underTeamCity) {
+    if (!JpsBootstrapMain.Companion.underTeamCity && System.getenv("JPS_DISABLE_VERBOSE") == null) {
       // Show downloading process on local run, very handy
       messageHandler.setExplicitlyVerbose()
     }

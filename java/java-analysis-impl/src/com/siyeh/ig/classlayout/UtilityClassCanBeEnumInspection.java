@@ -9,7 +9,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -17,10 +16,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -47,19 +46,15 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (!PsiUtil.isAvailable(JavaFeature.ENUMS, element)) {
+      if (!PsiUtil.isAvailable(JavaFeature.ENUMS, element) || !(element.getParent() instanceof PsiClass aClass)) {
         return;
       }
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass aClass)) {
+      final PsiKeyword keyword = PsiTreeUtil.getChildOfType(aClass, PsiKeyword.class);
+      if (keyword == null) {
         return;
       }
       for (PsiMethod constructor : aClass.getConstructors()) {
         constructor.delete();
-      }
-      final List<PsiKeyword> keywords = PsiTreeUtil.getChildrenOfTypeAsList(aClass, PsiKeyword.class);
-      if (keywords.isEmpty()) {
-        return;
       }
       final PsiModifierList modifierList = aClass.getModifierList();
       if (modifierList != null) {
@@ -69,15 +64,14 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiStatement statement = factory.createStatementFromText(";", element);
-      final PsiElement token = statement.getChildren()[0];
+      final PsiElement token = statement.getFirstChild();
       aClass.addAfter(token, aClass.getLBrace());
-      final PsiKeyword newKeyword = factory.createKeyword(JavaKeywords.ENUM);
-      keywords.get(0).replace(newKeyword);
+      keyword.replace(factory.createKeyword(JavaKeywords.ENUM));
     }
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UtilityClassCanBeEnumVisitor();
   }
 
@@ -91,20 +85,15 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
-      if (aClass.isEnum()) {
+      if (aClass.isEnum() 
+          || !UtilityClassUtil.isUtilityClass(aClass, true, true) 
+          || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
         return;
       }
-      if (!UtilityClassUtil.isUtilityClass(aClass, true, true) || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
-        return;
-      }
-      LocalSearchScope scope = null;
       for (PsiField field : aClass.getFields()) {
         if (!field.hasModifierProperty(PsiModifier.FINAL) || !PsiUtil.isCompileTimeConstant(field)) {
-          if (scope == null) {
-            scope = new LocalSearchScope(new PsiElement[]{aClass}, null, true);
-          }
-          // It's a compile error when non-constant is accessed from initializer or constructor in an enum
-          for (PsiReference reference : ReferencesSearch.search(field, scope).asIterable()) {
+          // It's a compile error when a non-constant is accessed from an initializer or constructor in an enum
+          for (PsiReference reference : VariableAccessUtils.getVariableReferences(field)) {
             // no need to check constructors, or instance field, because utility classes only have empty constructors and static fields
             final PsiClassInitializer initializer =
               PsiTreeUtil.getParentOfType(reference.getElement(), PsiClassInitializer.class, true, PsiClass.class);
@@ -114,10 +103,8 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
           }
         }
       }
-      for (PsiReference reference : ReferencesSearch.search(aClass).asIterable()) {
-        if (reference.getElement().getParent() instanceof PsiNewExpression) {
-          return;
-        }
+      if (!ReferencesSearch.search(aClass).forEach(ref -> !(ref.getElement().getParent() instanceof PsiNewExpression))) {
+        return;
       }
       registerClassError(aClass);
     }

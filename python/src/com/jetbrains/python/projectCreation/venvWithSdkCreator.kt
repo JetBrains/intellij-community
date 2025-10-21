@@ -7,24 +7,27 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.*
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.python.community.execService.python.validatePythonAndGetVersion
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
-import com.jetbrains.python.*
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.PythonModuleTypeBase
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -106,7 +109,7 @@ private suspend fun findExistingVenv(
     logger.warn("No flavor found for $pythonPath")
     return@withContext null
   }
-  return@withContext when (val p = pythonPath.validatePythonAndGetVersion()) {
+  return@withContext when (val p = pythonPath.validatePythonAndGetInfo()) {
     is Result.Success -> pythonPath
     is Result.Failure -> {
       logger.warn("No version string. python seems to be broken: $pythonPath. ${p.error}")
@@ -122,7 +125,7 @@ private suspend fun getSystemPython(
 
 
   // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
+  var systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).firstOrNull()
 
   // No python found?
   if (systemPythonBinary == null) {
@@ -168,7 +171,7 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
 
 private suspend fun getSdk(pythonPath: PythonBinary, project: Project): Sdk =
   withProgressText(ProjectBundle.message("progress.text.configuring.sdk")) {
-    val allJdks = ProjectJdkTable.getInstance().allJdks
+    val allJdks = PythonSdkUtil.getAllSdks().toTypedArray()
     val currentSdk = allJdks.firstOrNull { sdk -> sdk.homeDirectory?.toNioPath() == pythonPath }
     if (currentSdk != null) return@withProgressText currentSdk
 

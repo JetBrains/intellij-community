@@ -28,6 +28,7 @@ public interface JavaStubElementTypes {
   JavaProvidesStatementElementType PROVIDES_STATEMENT = new JavaProvidesStatementElementType();
   JavaRecordComponentElementType RECORD_COMPONENT = new JavaRecordComponentElementType();
   JavaRecordHeaderElementType RECORD_HEADER = new JavaRecordHeaderElementType();
+  JavaPackageStatementElementType PACKAGE_STATEMENT = new JavaPackageStatementElementType();
 
   JavaPackageAccessibilityStatementElementType EXPORTS_STATEMENT =
     new JavaPackageAccessibilityStatementElementType("EXPORTS_STATEMENT", BasicJavaElementType.BASIC_EXPORTS_STATEMENT);

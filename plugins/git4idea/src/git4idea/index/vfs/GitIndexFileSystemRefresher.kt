@@ -3,7 +3,7 @@ package git4idea.index.vfs
 
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -116,7 +116,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
 
     val indexFile = GitIndexVirtualFile(project, key.root, key.filePath)
-    OutsidersPsiFileSupport.markFile(indexFile, key.filePath)
+    SyntheticPsiFileSupport.markFile(indexFile, key.filePath.getPath())
     return indexFile
   }
 

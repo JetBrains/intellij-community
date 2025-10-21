@@ -39,9 +39,6 @@ internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
   panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
-  panel.applyCallbacks = builder.builder.applyCallbacks
-  panel.resetCallbacks = builder.builder.resetCallbacks
-  panel.isModifiedCallbacks = builder.builder.isModifiedCallbacks
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -51,7 +48,4 @@ fun initPanelInternal(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
   panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
-  panel.applyCallbacks = builder.builder.applyCallbacks
-  panel.resetCallbacks = builder.builder.resetCallbacks
-  panel.isModifiedCallbacks = builder.builder.isModifiedCallbacks
 }

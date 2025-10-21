@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
 
 class NullableBooleanEqualityCheckToElvisIntention : SelfTargetingIntention<KtBinaryExpression>(
-    KtBinaryExpression::class.java, KotlinBundle.lazyMessage("convert.boolean.const.to.elvis")
+    KtBinaryExpression::class.java, KotlinBundle.messagePointer("convert.boolean.const.to.elvis")
 ) {
     override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
         if (element.operationToken != KtTokens.EQEQ && element.operationToken != KtTokens.EXCLEQ) return false

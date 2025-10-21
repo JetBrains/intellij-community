@@ -1,8 +1,8 @@
-from typing import Callable, Any
+from typing import Callable
 
 
 def func(x):
     pass
 
 
-var: [Callable[[Any], None]] = func
+var: [Callable[..., None]] = func

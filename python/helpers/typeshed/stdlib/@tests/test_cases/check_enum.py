@@ -7,8 +7,8 @@ from typing_extensions import assert_type
 
 A = enum.Enum("A", "spam eggs bacon")
 B = enum.Enum("B", ["spam", "eggs", "bacon"])
-C = enum.Enum("Bar", [("spam", 1), ("eggs", 2), ("bacon", 3)])
-D = enum.Enum("Bar", {"spam": 1, "eggs": 2})
+C = enum.Enum("C", [("spam", 1), ("eggs", 2), ("bacon", 3)])
+D = enum.Enum("D", {"spam": 1, "eggs": 2})
 
 assert_type(A, Type[A])
 assert_type(B, Type[B])

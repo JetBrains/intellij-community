@@ -89,7 +89,7 @@ public abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspec
   }
 
   @Override
-  public final BaseInspectionVisitor buildVisitor() {
+  public final @NotNull BaseInspectionVisitor buildVisitor() {
     return new CastedLiteralMayBeJustLiteralVisitor();
   }
 

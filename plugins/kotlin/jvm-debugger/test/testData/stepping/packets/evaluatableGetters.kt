@@ -132,3 +132,7 @@ fun main() {
 
 // RESUME: 13
 // PRINT_FRAME
+
+// IGNORE_K1
+// IGNORE_K2
+/*IDEA-380225*/

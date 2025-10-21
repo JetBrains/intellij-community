@@ -144,7 +144,7 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
   public void testRenameModule() throws ModuleWithNameAlreadyExists {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     final Module module = WriteAction.computeAndWait(() -> {
-      Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA.getId());
+      Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", JavaModuleType.getModuleType().getId());
       return res;
     });
     final Artifact artifact = addArtifact(root().module(module).moduleSource(module));

@@ -39,7 +39,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new DynamicRegexReplaceableByCompiledPatternVisitor();
   }
 

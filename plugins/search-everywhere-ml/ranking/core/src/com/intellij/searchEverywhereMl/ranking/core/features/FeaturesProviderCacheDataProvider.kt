@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Contract
  * features that are later going to be reported. This means that any features that rely on usage statistics or currently opened file will be
  * incorrect, as that data will be too fresh for our purposes. Thus, we cache the data to remember the state before a file has been opened.
  */
-internal class FeaturesProviderCacheDataProvider {
+class FeaturesProviderCacheDataProvider {
   @Contract("null -> null; !null -> new")
   fun getDataToCache(project: Project?): FeaturesProviderCache? {
     if (project == null) return null

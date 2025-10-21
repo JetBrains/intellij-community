@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -31,7 +32,7 @@ internal class ThisKeywordHandler(
     private val prefixMatcher: PrefixMatcher,
 ) : CompletionKeywordHandler<KaSession>(KtTokens.THIS_KEYWORD) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -65,7 +66,7 @@ internal class ThisKeywordHandler(
         return result
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KaSymbol): Boolean {
         if (symbol !is KaClassSymbol) return true
         if (symbol.classKind != KaClassKind.COMPANION_OBJECT) return true
@@ -73,14 +74,14 @@ internal class ThisKeywordHandler(
         return parameters.offset in companionPsi.textRange
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createThisLookupElement(receiver: KaImplicitReceiver, labelName: Name?): LookupElement {
         return createKeywordElement(KtTokens.THIS_KEYWORD.value, labelName.labelNameToTail(), lookupObject = KeywordLookupObject())
             .withTypeText(receiver.type.renderVerbose())
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getThisLabelBySymbol(symbol: KaSymbol): Name? = when {
         symbol is KaNamedSymbol && !symbol.name.isSpecial -> symbol.name
         symbol is KaAnonymousFunctionSymbol -> {

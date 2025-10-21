@@ -54,7 +54,7 @@ class JoinDeclarationAndAssignmentInspection : IntentionBasedInspection<KtProper
 
 class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProperty>(
     KtProperty::class.java,
-    KotlinBundle.lazyMessage("join.declaration.and.assignment")
+    KotlinBundle.messagePointer("join.declaration.and.assignment")
 ) {
     override fun applicabilityRange(element: KtProperty): TextRange? {
         if (!element.isApplicableByPsi()) return null

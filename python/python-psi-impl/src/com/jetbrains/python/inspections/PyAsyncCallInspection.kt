@@ -32,19 +32,14 @@ class PyAsyncCallInspection : PyInspection() {
       val expr = node.expression
       if (expr is PyCallExpression && isAwaitableCall(expr) && !isIgnored(expr)) {
         val awaitableType = when {
-          isOuterFunctionAsync(
-            expr) -> AwaitableType.AWAITABLE
-          isOuterFunctionCoroutine(expr,
-                                                                                                                       myTypeEvalContext) -> AwaitableType.COROUTINE
+          isOuterFunctionAsync(expr) -> AwaitableType.AWAITABLE
+          isOuterFunctionCoroutine(expr, myTypeEvalContext) -> AwaitableType.COROUTINE
           else -> return
         }
         // no need to check whether await or yield from is missed, because it's PyCallExpression already, not PyPrefixExpression
-        val functionName = getCalledCoroutineName(expr,
-                                                                                                                                      resolveContext)
-                           ?: return
+        val functionName = getCalledCoroutineName(expr, resolveContext) ?: return
         registerProblem(node, PyPsiBundle.message("INSP.NAME.coroutine.is.not.awaited", functionName),
-                        PyAddAwaitCallForCoroutineFix(
-                          awaitableType))
+                        PyAddAwaitCallForCoroutineFix(awaitableType))
       }
     }
 
@@ -72,7 +67,11 @@ class PyAsyncCallInspection : PyInspection() {
       AWAITABLE, COROUTINE
     }
 
-    val ignoreReturnedType = listOf("asyncio.tasks.Task")
+    val ignoreReturnedType = listOf(
+      "asyncio.tasks.Task",
+      "asyncio.Task",
+      "_asyncio.Task"
+    )
     val ignoreBuiltinFunctions = listOf("asyncio.events.AbstractEventLoop.run_in_executor",
                                         "asyncio.tasks.ensure_future",
                                         "asyncio.ensure_future")

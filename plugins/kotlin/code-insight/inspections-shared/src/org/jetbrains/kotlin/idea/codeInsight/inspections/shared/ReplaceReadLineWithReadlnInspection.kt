@@ -17,14 +17,12 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
-private val kotlinIoPackage: FqName = FqName("kotlin.io")
-private val readLineFqName = FqName("kotlin.io.readLine")
 private val readLineName = Name.identifier("readLine")
 
 class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simple<KtExpression, ReplaceReadLineWithReadlnInspection.Context>(), CleanupLocalInspectionTool {
@@ -64,7 +62,7 @@ class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simpl
             val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull()
             resolvedCall?.symbol?.callableId
         } ?: return null
-        if (callableId.packageName != kotlinIoPackage || callableId.callableName != readLineName) return null
+        if (callableId.packageName != StandardKotlinNames.KOTLIN_IO_PACKAGE || callableId.callableName != readLineName) return null
 
         val qualifiedOrCall = element.getQualifiedExpressionForSelectorOrThis()
         val parent = qualifiedOrCall.parent

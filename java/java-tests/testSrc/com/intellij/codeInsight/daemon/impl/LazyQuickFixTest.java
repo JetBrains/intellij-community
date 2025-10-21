@@ -243,7 +243,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
 
     MyLazyFixHighlightVisitor.infoCreated = false;
     MyLazyFixHighlightVisitor.fixComputed = false;
-    DaemonCodeAnalyzerImpl.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerImpl.getInstance(getProject()).restart(this);
     doHighlighting();
     assertTrue(MyLazyFixHighlightVisitor.infoCreated);
     assertFalse(MyLazyFixHighlightVisitor.fixComputed); // must not recompute on each restart

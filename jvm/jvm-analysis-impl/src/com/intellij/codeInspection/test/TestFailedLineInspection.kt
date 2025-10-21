@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.codeInspection.*
@@ -33,6 +33,6 @@ class TestFailedLineInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   companion object {
-    const val TEST_FAILED_MAGNITUDE = 6 // see TestStateInfo#Magnitude
+    const val TEST_FAILED_MAGNITUDE: Int = 6 // see TestStateInfo#Magnitude
   }
 }

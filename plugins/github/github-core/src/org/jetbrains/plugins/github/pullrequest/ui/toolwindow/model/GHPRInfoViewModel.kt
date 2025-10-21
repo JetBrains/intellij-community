@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.project.Project
@@ -47,7 +48,7 @@ class GHPRInfoViewModel internal constructor(
         pullRequestUrl = details.url
         val currentVm = vm
         if (currentVm == null) {
-          val newVm = GHPRDetailsViewModelImpl(project, cs.childScope(), dataContext, dataProvider, details, openPullRequestDiff)
+          val newVm = GHPRDetailsViewModelImpl(project, cs.childScope(GHPRDetailsViewModelImpl::class), dataContext, dataProvider, details, openPullRequestDiff)
           vm = newVm
           ComputedResult.success(newVm)
         }

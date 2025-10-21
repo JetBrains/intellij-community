@@ -696,6 +696,7 @@ public abstract class DiffRequestProcessor
     return myProject;
   }
 
+  @CalledInAny
   public @Nullable DiffRequest getActiveRequest() {
     return myActiveRequest;
   }

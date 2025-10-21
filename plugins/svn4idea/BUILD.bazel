@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.vcs.svn` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-svn_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.vcs.svn",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":vcs-svn_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -27,25 +28,25 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//platform/analysis-impl",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "//platform/diff-impl",
     "//platform/util/concurrency",
     "//platform/util-ex",
-    "@lib//:guava",
-    "@lib//:ini4j",
-    "@lib//:oro_matcher",
+    "//libraries/guava",
+    "//libraries/ini4j",
+    "//libraries/oro-matcher",
     "@lib//:jaxb-api",
-    "@lib//:javax-activation",
-    "@lib//:stream_ex",
+    "//libraries/javax/activation",
+    "//libraries/stream",
     "//platform/statistics",
     "//platform/lvcs-api:lvcs",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/external-process-auth-helper",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [
-    ":vcs-svn_resources",
     "@lib//:jaxb-runtime",
     "@lib//:sqlite",
   ]
@@ -53,18 +54,17 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.svn` end
 
 ### auto-generated section `build intellij.vcs.svn.tests` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
-java_library(
+jvm_library(
   name = "vcs-svn-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "vcs-svn-tests_test_lib",
+  module_name = "intellij.vcs.svn.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java", "testSource/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:junit4",
     "//platform/analysis-api:analysis",
@@ -76,7 +76,6 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ide-core-impl",
@@ -86,14 +85,18 @@ jvm_library(
     "//platform/vcs-tests:vcs-testFramework",
     "@lib//:hamcrest",
     "@lib//:kotlin-test",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
   ]
 )
+### auto-generated section `build intellij.vcs.svn.tests` end
 
-jvm_test(
+### auto-generated section `test intellij.vcs.svn.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
   name = "vcs-svn-tests_test",
   runtime_deps = [":vcs-svn-tests_test_lib"]
 )
-### auto-generated section `build intellij.vcs.svn.tests` end
+### auto-generated section `test intellij.vcs.svn.tests` end

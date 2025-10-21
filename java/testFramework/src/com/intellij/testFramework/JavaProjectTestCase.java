@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -39,6 +39,6 @@ public abstract class JavaProjectTestCase extends HeavyPlatformTestCase {
 
   @Override
   protected @NotNull ModuleType<?> getModuleType() {
-    return StdModuleTypes.JAVA;
+    return JavaModuleType.getModuleType();
   }
 }

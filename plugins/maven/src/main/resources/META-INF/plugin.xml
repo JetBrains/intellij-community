@@ -58,7 +58,8 @@
 
     <extensionPoint name="mavenAdditionalHighlighter" interface="org.jetbrains.idea.maven.dom.MavenAdditionalHightligher" dynamic="true"/>
 
-    <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator" dynamic="true"/>
+    <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator"
+                    dynamic="true"/>
   </extensionPoints>
 
   <dependencies>
@@ -70,8 +71,9 @@
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
   <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
+  <depends optional="true" config-file="grazie-support.xml">tanvd.grazi</depends>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.maven.profiler"/>
   </content>
 
@@ -223,6 +225,14 @@
                      key="inspection.redundant.groupId.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection"/>
+    <localInspection language="XML" shortName="MavenRedundantVersion" bundle="messages.MavenDomBundle"
+                     key="inspection.redundant.version.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantVersionInspection"/>
+    <localInspection language="XML" shortName="MavenNoRootDefined" bundle="messages.MavenDomBundle"
+                     key="inspection.no.root.defined.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNoRootDefinedInspection"/>
     <localInspection language="XML" shortName="MavenPropertyInParent" bundle="messages.MavenDomBundle"
                      key="inspection.property.in.parent.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
@@ -242,6 +252,26 @@
                      key="inspection.wrong.model.version"
                      groupKey="inspection.group" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewModelVersionInOldSchemaInspection"/>
+
+    <localInspection language="XML" shortName="MavenNewModelVersionInOldMaven" bundle="messages.MavenDomBundle"
+                     key="inspection.new.model.version.with.old.maven"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewModelVersionInOldMavenInspection"/>
+
+    <localInspection language="XML" shortName="MavenBomPackagingInOldSchema" bundle="messages.MavenDomBundle"
+                     key="inspection.new.packaging.in.old.model.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenBomPackagingInOldSchema"/>
+
+    <localInspection language="XML" shortName="Maven4RedundantParentCoordinates" bundle="messages.MavenDomBundle"
+                     key="inspection.redundant.parent.coordinates.maven.4"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.Maven4RedundantParentCoordinatesInspection"/>
+
+    <localInspection language="XML" shortName="MavenModulesInMaven4" bundle="messages.MavenDomBundle"
+                     key="inspection.modules.tag.in.maven.4"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenModulesInMaven4Inspection"/>
 
     <xml.xmlExtension implementation="org.jetbrains.idea.maven.dom.MavenXmlExtension"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
@@ -312,6 +342,12 @@
     <codeInsight.unresolvedReferenceQuickFixProvider
       implementation="org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFixProvider"/>
 
+    <codeInsight.declarativeInlayProvider language="XML"
+                                          implementationClass="org.jetbrains.idea.maven.dom.inlay.MavenModelVersionInlayHintProvider"
+                                          providerId="maven.pom.model.version.hints" group="OTHER_GROUP" isEnabledByDefault="true"
+                                          bundle="messages.MavenDomBundle" nameKey="maven.version.inlay.hint.name"
+                                          descriptionKey="maven.version.inlay.hint.description"/>
+
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoFileContributor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContributor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContributor"/>
@@ -348,6 +384,10 @@
       implementation="org.jetbrains.idea.maven.statistics.MavenLibraryCoordinatesWhitelistValidationRule"/>
 
 
+    <editorFactoryListener implementation="org.jetbrains.idea.maven.editor.MavenModelVersionEditorFactoryListener"/>
+    <registryKey key="maven.sync.model.editing" defaultValue="true"
+                 description="Synchronize editing model and xmlns in pom.xml"/>
+
     <registryKey key="maven.collect.local.stat" defaultValue="false"
                  description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
 
@@ -370,7 +410,16 @@
                  description="Skip update local gav index in unit tests"/>
 
     <registryKey key="maven.import.separate.main.and.test.modules.when.needed" defaultValue="true"
-                 description="In order to support different 'testSource' and 'testTarget' compiler options, IntelliJ IDEA will create separate modules for such projects (IDEA-85478).\nAvailable only when Import using IntelliJ Workspace API is enabled."/>
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when needed."/>
+
+    <registryKey key="maven.import.separate.main.and.test.modules.when.lang.level" defaultValue="true"
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when main and test Java language levels differ."/>
+
+    <registryKey key="maven.import.separate.main.and.test.modules.when.compiler.args" defaultValue="true"
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when main and test compiler arguments differ."/>
+
+    <registryKey key="maven.import.separate.main.and.test.modules.when.multiReleaseOutput" defaultValue="true"
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when multiReleaseOutput or compileSourceRoots are used."/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
@@ -439,9 +488,6 @@
 
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
-
-    <registryKey key="maven.sync.compileSourceRoots.and.multiReleaseOutput" defaultValue="true"
-                 description="Create source roots corresponding to compileSourceRoots and multireleaseOutput during Maven sync"/>
 
     <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="true"
                  description="Use IDEA confirming trust manager for maven importer"/>
@@ -684,7 +730,7 @@
     </action>
 
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
-            icon="AllIcons.Actions.Refresh">
+            icon="AllIcons.Actions.ForceRefresh">
     </action>
 
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
@@ -865,11 +911,11 @@
       <reference ref="Maven.Reimport"/>
     </group>
 
+    <action id="Maven.SyncAllSplitAction" class="org.jetbrains.idea.maven.project.actions.SyncAllSplitAction"
+            icon="MavenIcons.UpdateFolders"/>
+
     <group id="Maven.NavigatorActionsToolbar">
-      <group id="Maven.SyncAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.SyncActionGroup"
-             icon="AllIcons.Actions.Refresh">
-        <reference ref="Maven.SyncAllGroup"/>
-      </group>
+      <reference ref="Maven.SyncAllSplitAction"/>
       <reference ref="Maven.UpdateFolders"/>
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
              icon="AllIcons.Actions.Download">
@@ -990,5 +1036,10 @@
     <listener class="org.jetbrains.idea.maven.plugins.compatibility.PluginCompatibilityConfiguratorListener"
               topic="org.jetbrains.idea.maven.project.MavenSyncListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
+
+    <listener class="org.jetbrains.idea.maven.editor.MavenModelVersionSynchronizerService$MyCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+    <listener class="org.jetbrains.idea.maven.editor.MavenModelVersionSynchronizerService$MyDynamicPluginListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 </idea-plugin>

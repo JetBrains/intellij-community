@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ * Modified 2025 by JetBrains s.r.o.
+ * Copyright (C) 2025 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.compose.ide.plugin.shared
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
@@ -364,12 +381,12 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     importProjectFromTestData()
 
     val colorFile = runWriteActionAndWait {
-      projectRoot.createFile("composeApp/src/$sourceSetName/kotlin/org/example/project/A.kt").apply {
+      myProjectRoot.createFile("composeApp/src/$sourceSetName/kotlin/org/example/project/A.kt").apply {
         writeText(code.trimIndent())
       }
     }
 
-    val countExpectedProviders = LineMarkersPass.getMarkerProviders(KotlinLanguage.INSTANCE, project).count {
+    val countExpectedProviders = LineMarkersPass.getMarkerProviders(KotlinLanguage.INSTANCE, myProject).count {
       expectedComposeColorLineMarkerProviderDescriptorClass.isInstance(it)
     }
     kAssertEquals(1, countExpectedProviders, "Expected single ${expectedComposeColorLineMarkerProviderDescriptorClass.java.name} provider")
@@ -391,7 +408,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     codeInsightTestFixture.doHighlighting()
 
     val highlightInfos = runReadAction {
-      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, project)
+      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, myProject)
         .filter { lineMarkerInfo -> lineMarkerInfo.navigationHandler is ColorIconRenderer }
         .sortedBy { it.startOffset }
     }
@@ -410,7 +427,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
 
     codeInsightTestFixture.doHighlighting()
     val highlightInfo = runReadAction {
-      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, project)
+      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, myProject)
         .single { lineMarkerInfo ->
           lineMarkerInfo.navigationHandler is ColorIconRenderer && lineMarkerInfo.element == element
         }
@@ -421,7 +438,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
         (highlightInfo.navigationHandler as ColorIconRenderer).getSetColorTask()
         ?: return@runInEdtAndWait
       WriteCommandAction.runWriteCommandAction(
-        project,
+        myProject,
         ComposeIdeBundle.message("compose.color.picker.action.name"),
         null,
         { setColorTask.invoke(newColor) },
@@ -441,7 +458,7 @@ abstract class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     runAll(
       { _codeInsightTestFixture?.tearDown() },
       { _codeInsightTestFixture = null },
-      { myTestFixture = null },
+      { resetTestFixture() },
     )
   }
 

@@ -14,6 +14,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -38,14 +39,16 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
 
   @Override
   protected void resetEditorFrom(final @NotNull RunConfigurationBase<?> runConfiguration) {
-    var configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
+    var configuration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
+    if (configuration == null) return;
     myClassFilterEditor.setFilters(getCoveragePatterns(configuration, true));
     myExcludeClassFilterEditor.setFilters(getCoveragePatterns(configuration, false));
   }
 
   @Override
   protected void applyEditorTo(final @NotNull RunConfigurationBase runConfiguration) {
-    var configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
+    var configuration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
+    if (configuration == null) return;
     ClassFilter[] newCoveragePatterns = ArrayUtil.mergeArrays(myClassFilterEditor.getFilters(), myExcludeClassFilterEditor.getFilters());
     ClassFilter[] oldCoveragePatterns = ObjectUtils.chooseNotNull(configuration.getCoveragePatterns(), ClassFilter.EMPTY_ARRAY);
     //apply new order if something else was changed as well
@@ -78,7 +81,8 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
     return result;
   }
 
-  static ClassFilter @NotNull [] getCoveragePatterns(@NotNull JavaCoverageEnabledConfiguration configuration, boolean include) {
+  static ClassFilter @NotNull [] getCoveragePatterns(@Nullable JavaCoverageEnabledConfiguration configuration, boolean include) {
+    if (configuration == null) return ClassFilter.EMPTY_ARRAY;
     return Arrays.stream(ObjectUtils.chooseNotNull(configuration.getCoveragePatterns(), ClassFilter.EMPTY_ARRAY))
       .filter(classFilter -> classFilter.INCLUDE == include).toArray(ClassFilter[]::new);
   }

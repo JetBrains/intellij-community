@@ -93,9 +93,7 @@ object TargetConfigurationGroups {
             +CommonTargetConfigurator
             +JvmTargetConfigurator
             +NATIVE.ALL
-            if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
-                +JS
-            }
+            +JS
             +AndroidTargetConfigurator
         }
     )

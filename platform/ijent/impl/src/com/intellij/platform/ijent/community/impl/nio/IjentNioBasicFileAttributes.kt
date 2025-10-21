@@ -8,6 +8,7 @@ import com.intellij.platform.eel.fs.EelFileInfo.Type.*
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.time.Instant
@@ -93,11 +94,7 @@ class IjentNioPosixFileAttributes(
   }
 
   override fun getCaseSensitivity(): FileAttributes.CaseSensitivity = when (val type = fileInfo.type) {
-    is Directory -> when (type.sensitivity) {
-      EelFileInfo.CaseSensitivity.SENSITIVE -> FileAttributes.CaseSensitivity.SENSITIVE
-      EelFileInfo.CaseSensitivity.INSENSITIVE -> FileAttributes.CaseSensitivity.INSENSITIVE
-      EelFileInfo.CaseSensitivity.UNKNOWN -> FileAttributes.CaseSensitivity.UNKNOWN
-    }
+    is Directory -> EelPathUtils.getCaseSensitivity(type)
     else -> throw IllegalStateException("Cannot ask for case sensitivity of $type")
   }
 }

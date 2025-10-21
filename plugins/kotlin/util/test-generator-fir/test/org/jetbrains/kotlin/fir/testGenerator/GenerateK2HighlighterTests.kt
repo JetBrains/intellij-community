@@ -15,7 +15,7 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
             model("highlighterMetaInfo", pattern = Patterns.KTS)
         }
 
-        testClass<AbstractK2MainKtsHighlightingTest> {
+        testClass<AbstractK2ScriptHighlightingTest> {
             model("mainKts/highlighting", pattern = Patterns.MAIN_KTS)
         }
 

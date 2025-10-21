@@ -86,7 +86,7 @@ class PyDataViewerCommunityPanel(
   private lateinit var errorLabel: Cell<JEditorPane>
 
   init {
-    dataViewerModel.PyDataViewerCompletionProvider().apply(slicingTextField)
+    PyDataViewerCompletionProvider(dataViewerModel.frameAccessor).apply(slicingTextField)
     formatTextField.text = dataViewerModel.format
 
     add(panelWithTable, BorderLayout.CENTER)

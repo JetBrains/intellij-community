@@ -45,6 +45,8 @@ class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
 
   @Deprecated("Use gradleIdentityPathOrNull instead")
   val fullGradlePath: String
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use gradleIdentityPathOrNull instead")
     get() = gradleIdentityPath
 
   val isBuildSrcModule: Boolean

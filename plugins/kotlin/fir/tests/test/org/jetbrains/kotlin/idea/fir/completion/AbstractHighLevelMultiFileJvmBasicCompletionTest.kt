@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -31,6 +32,10 @@ abstract class AbstractHighLevelMultiFileJvmBasicCompletionTest : KotlinFixtureC
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             test()
         }
+    }
+
+    override fun extraLookupElementCheck(lookupElement: LookupElement) {
+        SerializabilityChecker.checkLookupElement(lookupElement, myFixture.project)
     }
 
     override fun fileName(): String = getTestName(false) + ".kt"

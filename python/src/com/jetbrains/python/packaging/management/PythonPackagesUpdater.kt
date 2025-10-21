@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.Result
-import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.pip.PypiPackageCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,7 +24,6 @@ private class PythonPackagesUpdater : ProjectActivity {
   override suspend fun execute(project: Project) {
     withContext(Dispatchers.IO) {
       thisLogger().debug("Updating PyPI cache and ranking")
-      serviceAsync<PyPIPackageRanking>().reload()
       when (val r = serviceAsync<PypiPackageCache>().reloadCache()) {
         is Result.Success -> Unit
         is Result.Failure -> {

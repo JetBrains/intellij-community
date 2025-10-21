@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.processOutput.ProcessOutputApi
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -56,6 +57,22 @@ fun showProcessExecutionErrorDialog(
   execError: ExecError,
 ) {
   check(project == null || !project.isDisposed)
+
+  val logId = execError.loggedProcessId
+
+  if (project != null && logId != null) {
+    ProcessOutputApi.getInstance()?.also { api ->
+      val foundAndOpened = api.tryOpenLogInToolWindow(project, logId)
+
+      if (foundAndOpened) {
+        execError.additionalMessageToUser?.also {
+          api.specifyAdditionalMessageToUser(project, logId, it)
+        }
+
+        return
+      }
+    }
+  }
 
   val errorMessageText = PyBundle.message("dialog.message.command.could.not.complete")
   // HTML format for text in `JBLabel` enables text wrapping

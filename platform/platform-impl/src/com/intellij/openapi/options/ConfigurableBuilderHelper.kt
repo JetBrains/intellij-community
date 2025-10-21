@@ -9,7 +9,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 class ConfigurableBuilderHelper {
   companion object {
     @JvmStatic

@@ -23,9 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +36,8 @@ import java.io.File;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchConfiguration extends ApplicationConfiguration {
-  protected JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
+public final class JavaScratchConfiguration extends ApplicationConfiguration {
+  JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, project, factory);
   }
 
@@ -113,6 +115,35 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     };
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject(), getConfigurationModule().getSearchScope()));
     return state;
+  }
+
+  @Override
+  public @Nullable PsiClass getMainClass() {
+    // The class present in the scratch file is not part of the Project,
+    // so the default implementation of this method from superclass won't do here.
+    String mainClassName = getMainClassName();
+    if (mainClassName == null) {
+      throw new IllegalStateException("Main class name is not set");
+    }
+    VirtualFile scratchVirtualFile = getScratchVirtualFile();
+    if (scratchVirtualFile == null) {
+      throw new IllegalArgumentException("VirtualFile of the scratch file doesn't exist");
+    }
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scratchVirtualFile);
+    if (!(psiFile instanceof PsiJavaFile psiJavaFile)) {
+      throw new IllegalArgumentException("PsiJavaFile expected");
+    }
+    Ref<PsiClass> psiClassRef = Ref.create(null);
+    psiJavaFile.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitClass(@NotNull PsiClass aClass) {
+        if (mainClassName.equals(aClass.getQualifiedName())) {
+          psiClassRef.set(aClass);
+        }
+        super.visitClass(aClass);
+      }
+    });
+    return psiClassRef.get();
   }
 
   @Override

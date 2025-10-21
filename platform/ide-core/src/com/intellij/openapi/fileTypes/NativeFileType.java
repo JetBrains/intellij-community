@@ -1,18 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
 public final class NativeFileType implements INativeFileType {
   public static final NativeFileType INSTANCE = new NativeFileType();
@@ -64,16 +64,16 @@ public final class NativeFileType implements INativeFileType {
       throw new IllegalArgumentException("Non-local file: " + file + "; FS=" + file.getFileSystem());
     }
 
-    List<String> commands = new ArrayList<>();
-    if (SystemInfo.isWindows) {
+    var commands = new ArrayList<String>();
+    if (OS.CURRENT == OS.Windows) {
       //noinspection SpellCheckingInspection
       commands.add("rundll32.exe");
       commands.add("url.dll,FileProtocolHandler");
     }
-    else if (SystemInfo.isMac) {
+    else if (OS.CURRENT == OS.macOS) {
       commands.add("/usr/bin/open");
     }
-    else if (SystemInfo.hasXdgOpen()) {
+    else if (PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
       commands.add("xdg-open");
     }
     else {

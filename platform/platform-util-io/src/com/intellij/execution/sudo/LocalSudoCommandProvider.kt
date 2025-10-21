@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.sudo
 
 import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.system.OS
@@ -14,10 +14,6 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 open class LocalSudoCommandProvider : SudoCommandProvider {
-  private val hasGkSudo = PathExecLazyValue.create("gksudo")
-  private val hasKdeSudo = PathExecLazyValue.create("kdesudo")
-  private val hasPkExec = PathExecLazyValue.create("pkexec")
-
   override fun isAvailable(): Boolean = true
 
   override fun sudoCommand(wrappedCommand: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine? {
@@ -37,13 +33,13 @@ open class LocalSudoCommandProvider : SudoCommandProvider {
                 do shell script ${escapedCommand} with prompt "${escapedPrompt}" with administrator privileges without altering line endings
             end tell""".trimIndent())
       }
-      hasGkSudo.get() -> {
+      PathEnvironmentVariableUtil.isOnPath("gksudo") -> {
         GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(wrappedCommand) + command)
       }
-      hasKdeSudo.get() -> {
+      PathEnvironmentVariableUtil.isOnPath("kdesudo") -> {
         GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(wrappedCommand) + command)
       }
-      hasPkExec.get() -> {
+      PathEnvironmentVariableUtil.isOnPath("pkexec") -> {
         GeneralCommandLine(listOf("pkexec") + envCommand(wrappedCommand) + command)
       }
       ExecUtil.hasTerminalApp() -> {

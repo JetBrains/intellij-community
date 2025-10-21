@@ -270,10 +270,12 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   /**
    * @return readonly map of current mappings. to modify mappings use {@link #setPointerMapping(Map)}
    */
+  @ApiStatus.Internal
   public @NotNull Map<? extends VirtualFilePointer, ? extends Charset> getAllPointersMappings() {
     return Collections.unmodifiableMap(myMapping);
   }
 
+  @ApiStatus.Internal
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
@@ -303,6 +305,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
 
+  @ApiStatus.Internal
   public void setPointerMapping(@NotNull Map<? extends VirtualFilePointer, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified

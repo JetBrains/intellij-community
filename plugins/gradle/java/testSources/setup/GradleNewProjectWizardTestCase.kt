@@ -12,6 +12,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GENERATE_ONBOARDIN
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.ide.wizard.Step
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -21,21 +22,32 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
+import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 
 @RegistryKey("ide.activity.tracking.enable.debug", "true")
 @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
 abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
+
+  private lateinit var executionOutputTracker: ExternalSystemExecutionTracer
+
+  @BeforeEach
+  fun installGradleExecutionOutputTracker(@TestDisposable disposable: Disposable) {
+    executionOutputTracker = ExternalSystemExecutionTracer()
+    executionOutputTracker.install(disposable)
+  }
 
   @BeforeEach
   fun cleanupStoredPropertiesInNPW() {
@@ -134,9 +146,22 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
   }
 
   fun assertDaemonJvmProperties(project: Project) {
+    val jvmCriteria = gradleJvmInfo.toJvmCriteria()
+
+    // This assumption contains information about the requested Gradle daemon JVM parameters.
+    // Therefore, in the worst scenario we check that we form Gradle request correctly.
+    val isDiscoApiAvailable = !executionOutputTracker.output.joinToString("").contains(
+      "Toolchain resolvers did not return download URLs providing a JDK matching " +
+      "{languageVersion={${jvmCriteria.version}}, vendor=${jvmCriteria.vendor}, implementation=vendor-specific, nativeImageCapable=false} " +
+      "for any of the requested platforms"
+    )
+    Assumptions.assumeTrue(isDiscoApiAvailable) {
+      "The https://api.foojay.io/disco/v3.0/distributions service is unavailable."
+     }
+
     val externalProjectPath = Path.of(project.basePath!!)
     val properties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
-    Assertions.assertEquals(gradleJvmInfo.toJvmCriteria(), properties.criteria)
+    Assertions.assertEquals(jvmCriteria, properties.criteria)
   }
 
   companion object {

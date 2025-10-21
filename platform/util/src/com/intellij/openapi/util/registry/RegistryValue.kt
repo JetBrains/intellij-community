@@ -64,10 +64,10 @@ open class RegistryValue @Internal constructor(
       result = try {
         resolveRequiredValue(key = key).toInt()
       }
-      catch (e: NumberFormatException) {
+      catch (_: NumberFormatException) {
         registry.getBundleValue(key, keyDescriptor).toInt()
       }
-      intCachedValue = result!!
+      intCachedValue = result
     }
     return result
   }
@@ -149,7 +149,7 @@ open class RegistryValue @Internal constructor(
       try {
         return Color(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt())
       }
-      catch (ignored: Exception) {
+      catch (_: Exception) {
       }
     }
     return defaultValue

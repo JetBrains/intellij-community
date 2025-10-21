@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -34,7 +35,7 @@ private var PsiElement.relevantDiagnosticClasses: Set<KClass<out KaDiagnosticWit
  * N.B. If Analysis API introduces a safer or more efficient way to transfer diagnostics
  * between Analysis Sessions (for example, by pointers, see KT-74573), this mechanism should also use it.
  */
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 fun KtElement.restoreKaDiagnosticsForUnresolvedReference(): Set<KaDiagnosticWithPsi<*>> {
@@ -53,7 +54,7 @@ fun KtElement.restoreKaDiagnosticsForUnresolvedReference(): Set<KaDiagnosticWith
 /**
  * Saves [diagnostic] so that it can be restored for [this] element by [restoreKaDiagnosticsForUnresolvedReference].
  */
-context(KaSession)
+context(_: KaSession)
 @ApiStatus.Internal
 fun PsiElement.saveKaDiagnosticForUnresolvedReference(diagnostic: KaDiagnosticWithPsi<*>) {
     relevantDiagnosticClasses += diagnostic.diagnosticClass

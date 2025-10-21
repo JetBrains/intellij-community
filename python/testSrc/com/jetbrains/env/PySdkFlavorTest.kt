@@ -2,6 +2,7 @@
 package com.jetbrains.env
 
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.env.python.PySDKRule
 import com.jetbrains.getPythonBinaryPath
 import com.jetbrains.python.sdk.sdkSeemsValid
@@ -23,7 +24,7 @@ abstract class PySdkFlavorTestBase {
 
 
   @Test
-  fun testValid(): Unit = runTest(timeout = 2.minutes) {
+  fun testValid(): Unit =  timeoutRunBlocking(2.minutes) {
     sdkRule.sdk.getPythonBinaryPath(projectRule.project).getOrThrow()
     repeat(1000) {
       Assert.assertTrue(sdkRule.sdk.sdkSeemsValid)

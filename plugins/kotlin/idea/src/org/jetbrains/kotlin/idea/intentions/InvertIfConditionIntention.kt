@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
     KtIfExpression::class.java,
-    KotlinBundle.lazyMessage("invert.if.condition")
+    KotlinBundle.messagePointer("invert.if.condition")
 ) {
     override fun isApplicableTo(element: KtIfExpression, caretOffset: Int): Boolean {
         if (!element.ifKeyword.textRange.containsOffset(caretOffset)) return false

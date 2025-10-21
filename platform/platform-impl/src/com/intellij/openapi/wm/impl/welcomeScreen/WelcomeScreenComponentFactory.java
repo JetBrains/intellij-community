@@ -394,7 +394,9 @@ public final class WelcomeScreenComponentFactory {
                 }
               }
             }, disposable);
-            toolbar.updateActionsAsync();
+            if (toolbar.getParent() != null) {
+              toolbar.updateActionsAsync();
+            }
           });
         }
       });

@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.ide.util.treeView.CachedTreePresentationKt.CACHED_TREE_PRESENTATION_PROPERTY;
 import static java.util.Collections.emptyList;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
@@ -1327,8 +1328,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @ApiStatus.Internal
   @Override
+  public @Nullable CachedTreePresentation getCachedPresentation() {
+    return expandImpl.getCachedPresentation();
+  }
+
+  @ApiStatus.Internal
+  @Override
   public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+    var oldValue = expandImpl.getCachedPresentation();
     expandImpl.setCachedPresentation(presentation);
+    firePropertyChange(CACHED_TREE_PRESENTATION_PROPERTY, oldValue, presentation);
   }
 
   private class CachedPresentationImpl {
@@ -1376,7 +1385,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       Tree.super.clearToggledPaths();
     }
 
-    @Nullable CachedTreePresentation getCachedPresentation() {
+    @Override
+    public @Nullable CachedTreePresentation getCachedPresentation() {
       return cachedPresentation != null ? cachedPresentation.cachedTree : null;
     }
 
@@ -1394,6 +1404,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (cachedPresentation != null) {
         var rootPath = getRootPath();
         if (rootPath != null) {
+          presentation.rootLoaded(rootPath.getLastPathComponent()); // in case the root managed to load very quickly
           cachedPresentation.updateExpandedNodes(rootPath);
         }
       }

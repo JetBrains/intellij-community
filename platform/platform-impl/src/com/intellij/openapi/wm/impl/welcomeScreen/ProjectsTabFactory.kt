@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WelcomeScreenCustomization
 import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
@@ -35,9 +36,9 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
@@ -61,15 +62,11 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   IdeBundle.message("welcome.screen.projects.title"),
   WelcomeScreenEventCollector.TabType.TabNavProject
 ) {
-  private val projectsPanelWrapper: Wrapper = Wrapper()
-  private val recentProjectsPanel: JComponent = createRecentProjectsPanel()
-  private val emptyStatePanel: JComponent = createEmptyStatePanel()
-  private val notificationPanel: JComponent = WelcomeScreenComponentFactory.createNotificationToolbar(parentDisposable)
-  private var panelState: PanelState
+
+  private var isPanelEmptyPredicate: ValueComponentPredicate = ValueComponentPredicate(true)
+  private var notificationPanel: JComponent? = null
 
   init {
-    panelState = getCurrentState()
-    updateState(panelState)
     val connect = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
     connect.subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
       override fun onCloneCanceled() {}
@@ -88,6 +85,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
         checkState()
       }
     })
+    checkState()
   }
 
   override fun buildComponent(): JComponent {
@@ -100,15 +98,25 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     return panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          cell(projectsPanelWrapper)
+          val placeholder = placeholder()
             .align(Align.FILL)
+
+          val recentProjectsPanel = when {
+            Registry.`is`("station.enable.welcome.screen.promo") -> createTwoRowRecentProjectsPanel()
+            else -> createRecentProjectsPanel()
+          }
+          val emptyStatePanel = createEmptyStatePanel()
+          isPanelEmptyPredicate.addListener { isEmpty ->
+            placeholder.component = if (isEmpty) emptyStatePanel else recentProjectsPanel
+          }
+          placeholder.component = if (isPanelEmptyPredicate.invoke()) emptyStatePanel else recentProjectsPanel
         }.resizableRow()
         row {
-          cell(notificationPanel)
+          notificationPanel = cell(WelcomeScreenComponentFactory.createNotificationToolbar(parentDisposable))
             .align(AlignX.RIGHT)
             .applyToComponent {
               putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
-            }
+            }.component
         }
         if (promo != null) {
           row {
@@ -127,22 +135,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   }
 
   private fun checkState() {
-    val currentState = getCurrentState()
-    if (currentState == panelState) {
-      return
-    }
-    updateState(currentState)
-  }
-
-  private fun updateState(currentPanelState: PanelState) {
-    if (currentPanelState == PanelState.EMPTY) {
-      projectsPanelWrapper.setContent(emptyStatePanel)
-    }
-    else {
-      projectsPanelWrapper.setContent(recentProjectsPanel)
-    }
-    panelState = currentPanelState
-    projectsPanelWrapper.repaint()
+    isPanelEmptyPredicate.set(getCurrentState() == PanelState.EMPTY)
   }
 
   override fun updateComponent() {
@@ -193,7 +186,50 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
 
     initDnD(treeComponent)
 
+    recentProjectsPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+
     return recentProjectsPanel
+  }
+
+  private fun createTwoRowRecentProjectsPanel(): JComponent {
+    val recentProjectTree = createComponent(
+      parentDisposable, ProjectCollectors.all
+    )
+    recentProjectTree.selectLastOpenedProject()
+    val treeComponent = recentProjectTree.component
+
+    val projectSearch = recentProjectTree.installSearchField()
+    if (ExperimentalUI.isNewUI()) {
+      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", AllIcons.Actions.Search)
+    }
+
+    val actionsToolbar = createActionsToolbar()
+    actionsToolbar.targetComponent = treeComponent
+
+    return panel {
+      row {
+        cell(actionsToolbar.component)
+      }
+      row {
+        cell(projectSearch)
+      }
+
+      separator()
+      row {
+        val scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true)
+          .apply {
+            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+            isOpaque = false
+          }
+        cell(scrollPane)
+          .align(Align.FILL)
+      }.resizableRow()
+
+    }.andTransparent()
+      .apply {
+        border = JBUI.Borders.empty(13, 12)
+        initDnD(this)
+      }
   }
 
   private fun createEmptyStatePanel(): JComponent {

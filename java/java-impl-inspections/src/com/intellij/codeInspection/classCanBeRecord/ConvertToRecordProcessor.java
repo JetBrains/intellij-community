@@ -213,25 +213,25 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
     RenameUtil.addConflictDescriptions(usages, conflicts);
     for (UsageInfo usage : usages) {
-      if (usage instanceof BrokenEncapsulationUsageInfo) {
-        conflicts.putValue(usage.getElement(), ((BrokenEncapsulationUsageInfo)usage).myErrMsg);
+      if (usage instanceof BrokenEncapsulationUsageInfo brokenEncapsulationUsageInfo) {
+        conflicts.putValue(usage.getElement(), brokenEncapsulationUsageInfo.errorMessage);
       }
       else if (usage instanceof FieldUsageInfo fieldUsageInfo) {
         PsiElement element = fieldUsageInfo.getElement();
-        if (element != null && !isAccessible(element, fieldUsageInfo.myField)) {
+        if (element != null && !isAccessible(element, fieldUsageInfo.field)) {
           boolean canBeFixed = element instanceof PsiReferenceExpression refExpr && !PsiUtil.isAccessedForWriting(refExpr);
           if (!canBeFixed) {
             final PsiElement container = ConflictsUtil.getContainer(element);
             String message = JavaRefactoringBundle.message("0.will.become.inaccessible.from.1",
-                                                           RefactoringUIUtil.getDescription(fieldUsageInfo.myField, true),
+                                                           RefactoringUIUtil.getDescription(fieldUsageInfo.field, true),
                                                            RefactoringUIUtil.getDescription(container, true));
             conflicts.putValue(element, message);
           }
         }
       }
       else if (usage instanceof RenameMethodUsageInfo renameMethodInfo) {
-        RenamePsiElementProcessor renameMethodProcessor = RenamePsiElementProcessor.forElement(renameMethodInfo.myMethod);
-        renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.myMethod, renameMethodInfo.myNewName, conflicts, myAllRenames);
+        RenamePsiElementProcessor renameMethodProcessor = RenamePsiElementProcessor.forElement(renameMethodInfo.method);
+        renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.method, renameMethodInfo.newName, conflicts, myAllRenames);
       }
     }
 
@@ -258,12 +258,12 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     PsiIdentifier classIdentifier = null;
     PsiElement nextElement = psiClass.getFirstChild();
     while (nextElement != null) {
-      if (nextElement instanceof PsiKeyword && JavaTokenType.CLASS_KEYWORD.equals(((PsiKeyword)nextElement).getTokenType())) {
+      if (nextElement instanceof PsiKeyword keyword && JavaTokenType.CLASS_KEYWORD.equals(keyword.getTokenType())) {
         recordBuilder.addRecordDeclaration();
       }
-      else if (nextElement instanceof PsiIdentifier) {
-        classIdentifier = (PsiIdentifier)nextElement;
-        recordBuilder.addPsiElement(classIdentifier);
+      else if (nextElement instanceof PsiIdentifier psiIdentifier) {
+        classIdentifier = psiIdentifier;
+        recordBuilder.addPsiElement(psiIdentifier);
       }
       else if (nextElement instanceof PsiTypeParameterList) {
         recordBuilder.addPsiElement(nextElement);
@@ -344,7 +344,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   private void useAccessorsWhenNecessary(@NotNull UsageInfo @NotNull [] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof FieldUsageInfo fieldUsageInfo) {
-        PsiField field = fieldUsageInfo.myField;
+        PsiField field = fieldUsageInfo.field;
         PsiElement target = fieldUsageInfo.getElement();
         if (target instanceof PsiReferenceExpression refExpr && !PsiUtil.isAccessedForWriting(refExpr) && !isAccessible(target, field)) {
           refExpr.replace(JavaPsiFacade.getElementFactory(myProject).createExpressionFromText(refExpr.getText() + "()", refExpr));
@@ -441,8 +441,8 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       PsiType fieldType = field.getType();
       if (PsiTypes.charType().equals(fieldType) || PsiTypes.shortType().equals(fieldType)) {
         PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-        if (parent instanceof PsiTypeCastExpression) {
-          PsiTypeElement castType = ((PsiTypeCastExpression)parent).getCastType();
+        if (parent instanceof PsiTypeCastExpression castExpression) {
+          PsiTypeElement castType = castExpression.getCastType();
           if (castType != null && PsiTypes.intType().equals(castType.getType())) {
             myNonVisitedFields.remove(field);
           }
@@ -580,8 +580,8 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     for (PsiField field : fields) {
       StringBuilder fieldComment = new StringBuilder();
       for (PsiComment comment : ObjectUtils.notNull(PsiTreeUtil.getChildrenOfType(field, PsiComment.class), new PsiComment[0])) {
-        if (comment instanceof PsiDocComment) {
-          Arrays.stream(((PsiDocComment)comment).getDescriptionElements()).map(PsiElement::getText).forEach(fieldComment::append);
+        if (comment instanceof PsiDocComment docComment) {
+          Arrays.stream(docComment.getDescriptionElements()).map(PsiElement::getText).forEach(fieldComment::append);
           continue;
         }
         String commentText = comment.getText();

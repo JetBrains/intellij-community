@@ -29,7 +29,7 @@ public final class AwaitNotInLoopInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AwaitNotInLoopVisitor();
   }
 

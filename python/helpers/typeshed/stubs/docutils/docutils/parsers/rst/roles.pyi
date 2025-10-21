@@ -1,6 +1,6 @@
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, Final
+from typing_extensions import TypeAlias, deprecated
 
 import docutils.parsers.rst.states
 from docutils import nodes
@@ -9,7 +9,8 @@ from docutils.nodes import Node, system_message
 from docutils.parsers.rst.states import Inliner
 from docutils.utils import Reporter
 
-DEFAULT_INTERPRETED_ROLE: str
+__docformat__: Final = "reStructuredText"
+DEFAULT_INTERPRETED_ROLE: Final = "title-reference"
 
 _RoleFn: TypeAlias = Callable[
     [str, str, str, int, docutils.parsers.rst.states.Inliner, Mapping[str, Any], Sequence[str]],
@@ -127,5 +128,8 @@ def unimplemented_role(
     options: Mapping[str, Any] | None = None,
     content: Sequence[str] | None = None,
 ) -> tuple[list[Node], list[system_message]]: ...
+@deprecated("Deprecated and will be removed in Docutils 2.0, Use `roles.normalize_options()` instead.")
 def set_classes(options: dict[str, str]) -> None: ...
+@deprecated("Deprecated and will be removed in Docutils 2.0, Use `roles.normalize_options()` instead.")
 def normalized_role_options(options: Mapping[str, Any] | None) -> dict[str, Any]: ...
+def normalize_options(options: Mapping[str, Any] | None) -> dict[str, Any]: ...

@@ -408,12 +408,7 @@ public final class KeyHashLog<Key> implements Closeable {
     EnumeratorStringDescriptor enumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE;
 
     try (KeyHashLog<String> keyHashLog = new KeyHashLog<>(enumeratorStringDescriptor, Path.of(indexPath), false)) {
-      IntSet allHashes = keyHashLog.getSuitableKeyHashes(new IdFilter() {
-        @Override
-        public boolean containsFileId(int id) {
-          return true;
-        }
-      });
+      IntSet allHashes = keyHashLog.getSuitableKeyHashes(IdFilter.ACCEPT_ALL);
 
       for (Integer hash : allHashes) {
         System.out.println("key hash = " + hash);

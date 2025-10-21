@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.java.inst;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.SimpleAssignmentInstruction;
@@ -32,8 +31,10 @@ public class JvmAssignmentInstruction extends SimpleAssignmentInstruction {
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter,
                                       @NotNull DfaMemoryState stateBefore) {
     DfaValue value = stateBefore.peek();
-    if (value instanceof DfaVariableValue && !ControlFlow.isTempVariable((DfaVariableValue)value)) {
-      JavaDfaHelpers.dropLocality(value, stateBefore);
+    if (value instanceof DfaVariableValue) {
+      if (!DfaValueFactory.isTempVariable((DfaVariableValue)value)) {
+        JavaDfaHelpers.dropLocality(value, stateBefore);
+      }
     }
     return super.accept(interpreter, stateBefore);
   }

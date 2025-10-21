@@ -22,10 +22,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -47,6 +49,15 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
   protected open fun definitionsString(params: JavaParameters): String = ""
 
+  protected open fun getMainClass(profile: JavaRunConfigurationBase): String? = profile.runClass
+
+  protected open fun getConfigurationRunName(profile: JavaRunConfigurationBase): String? = getMainClass(profile)
+
+  protected open fun configureParameters(runProfile: JavaRunConfigurationBase): JavaParameters? = JavaParameters().apply {
+    JavaParametersUtil.configureConfiguration(this, runProfile)
+    this.vmParametersList.addParametersString(runProfile.vmParameters)
+  }
+
   override fun createExecutionEnvironment(project: Project,
                                           executeRunConfigurationTask: ExecuteRunConfigurationTask,
                                           executor: Executor?): ExecutionEnvironment? {
@@ -55,8 +66,10 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val runProfile = executeRunConfigurationTask.runProfile
     if (runProfile !is JavaRunConfigurationBase) return null
 
-    val mainClass = runProfile.runClass ?: return null
+    val mainClass = getMainClass(runProfile) ?: return null
+    val configurationRunName = getConfigurationRunName(runProfile) ?: return null
     val module = runProfile.configurationModule.module ?: return null
+    val javaModuleName = runProfile.findJavaModuleName(isTestModule(module))
 
     val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
     val externalProjectPath = gradleModuleData.directoryToRunTask
@@ -65,10 +78,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     if (!projectSettings.isResolveModulePerSourceSet) {
       return null
     }
-    val params = JavaParameters().apply {
-      JavaParametersUtil.configureConfiguration(this, runProfile)
-      this.vmParametersList.addParametersString(runProfile.vmParameters)
-    }
+    val params = configureParameters(runProfile) ?: return null
 
     val taskSettings = ExternalSystemTaskExecutionSettings()
     taskSettings.isPassParentEnvs = params.isPassParentEnvs
@@ -76,7 +86,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     taskSettings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     taskSettings.externalProjectPath = externalProjectPath
 
-    val runAppTaskName = "$mainClass.main()"
+    val runAppTaskName = "$configurationRunName.main()"
     taskSettings.taskNames = listOf(gradleModuleData.getTaskPath(runAppTaskName))
     customiseTaskExecutionsSettings(taskSettings, module)
 
@@ -98,6 +108,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .withGradleTaskPath(gradlePath)
       .withRunAppTaskName(runAppTaskName)
       .withMainClass(mainClass)
+      .withJavaModuleName(javaModuleName)
       .withSourceSetName(sourceSetName)
       .withJavaConfiguration(project, runProfile)
 
@@ -111,6 +122,9 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .filter { it.providerId !== CompileStepBeforeRun.ID }
     return environment
   }
+
+  private fun isTestModule(module: Module): Boolean = ModuleRootManager.getInstance(module)
+    .getSourceRoots(JavaSourceRootType.SOURCE).isEmpty()
 
   private fun GradleInitScriptParametersBuilder.withJavaConfiguration(project: Project, runProfile: JavaRunConfigurationBase) = apply {
     if (getEffectiveConfiguration(runProfile, project) != null) {
@@ -163,6 +177,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     private lateinit var mainClass: String
     private lateinit var javaExePath: String
     private lateinit var sourceSetName: String
+    private var javaModuleName: String? = null
 
     fun build(): GradleInitScriptParameters {
       return GradleInitScriptParametersImpl(configuration,
@@ -174,7 +189,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                             runAppTaskName,
                                             mainClass,
                                             javaExePath,
-                                            sourceSetName
+                                            sourceSetName,
+                                            javaModuleName
       )
     }
 
@@ -208,6 +224,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       return this
     }
 
+    fun withJavaModuleName(javaModuleName: String?): GradleInitScriptParametersBuilder {
+      this.javaModuleName = javaModuleName
+      return this
+    }
+
     fun withJavaExePath(javaExePath: String): GradleInitScriptParametersBuilder {
       this.javaExePath = javaExePath
       return this
@@ -230,5 +251,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     override val mainClass: String,
     override val javaExePath: String,
     override val sourceSetName: String,
+    override val javaModuleName: String?,
   ) : GradleInitScriptParameters
 }

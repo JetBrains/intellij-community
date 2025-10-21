@@ -7,11 +7,14 @@ import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -24,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 @VisibleForTesting
 class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentManager {
   private val myCache: MutableMap<String, IjentId> = ConcurrentHashMap()
+  private val initializedIjents: MutableSet<String> = ContainerUtil.newConcurrentSet()
 
   override val isIjentAvailable: Boolean
     get() = WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()
@@ -37,21 +41,23 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
     )
   }
 
-  override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
+  override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
+    val descriptor = (descriptor ?: (project?.getEelDescriptor() as? WslEelDescriptor) ?: WslEelDescriptor(wslDistribution)) as WslEelDescriptor
+
     val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
-    val ijentId = myCache.computeIfAbsent("""wsl:${wslDistribution.id}${if (rootUser) ":root" else ""}""") { ijentName ->
+    val ijentIdLabel = ijentIdLabel(wslDistribution, rootUser)
+    val ijentId = myCache.computeIfAbsent(ijentIdLabel) { ijentName ->
       val ijentId = ijentSessionRegistry.register(ijentName) { ijentId ->
-        val ijent = deployAndLaunchIjent(
+        val ijentSession = wslDistribution.createIjentSession(
           scope,
           project,
           ijentId.toString(),
-          wslDistribution,
           wslCommandLineOptionsModifier = { it.setSudo(rootUser) },
         )
         scope.coroutineContext.job.invokeOnCompletion {
-          ijent.close()
+          ijentSession.close()
         }
-        ijent
+        ijentSession
       }
       scope.coroutineContext.job.invokeOnCompletion {
         ijentSessionRegistry.unregister(ijentId)
@@ -59,8 +65,18 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
       }
       ijentId
     }
-    return ijentSessionRegistry.get(ijentId) as IjentPosixApi
+    val ijent = ijentSessionRegistry.get(ijentId).getIjentInstance(descriptor)
+    initializedIjents.add(ijentIdLabel)
+    return ijent
   }
+
+  override fun isIjentInitialized(descriptor: EelDescriptor): Boolean {
+    require(descriptor is WslEelDescriptor)
+    return ijentIdLabel(descriptor.distribution, false) in initializedIjents
+  }
+
+  private fun ijentIdLabel(wslDistribution: WSLDistribution, rootUser: Boolean): String =
+    """wsl:${wslDistribution.id}${if (rootUser) ":root" else ""}"""
 
   init {
     scope.coroutineContext.job.invokeOnCompletion {

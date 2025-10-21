@@ -25,7 +25,7 @@ class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
         setOf(
             "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
             "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
-            "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
+            "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)", "kotlin.Triple",
 
             /* Gradle DSL especially annoying hints */
             "org.gradle.api.Project.hasProperty(propertyName)",

@@ -33,6 +33,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -391,9 +392,8 @@ internal class ToolbarFrameHeader(
     return InternalUICustomization.getInstance()?.frameHeaderBackgroundConverter(color) ?: color
   }
 
-  override fun getComponentGraphics(graphics: Graphics?): Graphics? {
-    val componentGraphics = super.getComponentGraphics(graphics)
-    return InternalUICustomization.getInstance()?.transformGraphics(this, componentGraphics) ?: componentGraphics
+  override fun getComponentGraphics(graphics: Graphics): Graphics {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
   }
 
   override fun updateActive() {

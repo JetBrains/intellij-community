@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
@@ -49,7 +49,7 @@ open class DebuggerTestCompilerFacility(
     private val jvmTarget: JvmTarget,
     private val compileConfig: TestCompileConfiguration,
 ) {
-    private val kotlinStdlibPath = TestKotlinArtifacts.kotlinStdlib.absolutePath
+    private val kotlinStdlibPath = TestKotlinArtifacts.kotlinStdlib.absolutePathString()
 
     protected val mainFiles: TestFilesByLanguageAndPlatform
     private val libraryFiles: TestFilesByLanguageAndPlatform
@@ -214,8 +214,20 @@ open class DebuggerTestCompilerFacility(
     private fun getCompilerOptionsCommonForLibAndSource(): List<String> {
         val options = mutableListOf(
             "-Xlambdas=${compileConfig.lambdasGenerationScheme.description}",
-            "-Xcontext-receivers",
         )
+
+        for (feature in compileConfig.enabledLanguageFeatures) {
+            when (feature) {
+                LanguageFeature.ContextReceivers -> {
+                    options.add("-Xcontext-receivers")
+                }
+                LanguageFeature.ContextParameters -> {
+                    options.add("-Xcontext-parameters")
+                }
+                else -> {}
+            }
+        }
+
         if (compileConfig.languageVersion != null) {
             options.add("-language-version=${compileConfig.languageVersion}")
         }

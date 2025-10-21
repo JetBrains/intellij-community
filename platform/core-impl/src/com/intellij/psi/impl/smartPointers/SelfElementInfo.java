@@ -2,8 +2,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -24,9 +23,10 @@ import java.util.List;
 @ApiStatus.Internal
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
+
   private final @NotNull CodeInsightContext myContext;
   private volatile Identikit myIdentikit;
-  private final VirtualFile myFile;
+  private final VirtualFile myVirtualFile;
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
@@ -35,17 +35,17 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,
-                  @NotNull PsiFile containingFile,
+                  @NotNull PsiFile containingPsiFile,
                   boolean forInjected) {
     myForInjected = forInjected;
     myIdentikit = identikit;
 
-    myFile = containingFile.getViewProvider().getVirtualFile();
-    myContext = FileViewProviderUtil.getCodeInsightContext(containingFile);
+    myVirtualFile = containingPsiFile.getViewProvider().getVirtualFile();
+    myContext = CodeInsightContextUtil.getCodeInsightContext(containingPsiFile);
     setRange(range);
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public @NotNull CodeInsightContext getContext() {
     return myContext;
   }
@@ -153,13 +153,6 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
-                                                         @NotNull Project project,
-                                                         @NotNull Language language) {
-    return restoreFileFromVirtual(virtualFile, CodeInsightContexts.anyContext(), project, language);
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
                                                          @NotNull CodeInsightContext context,
                                                          @NotNull Project project,
                                                          @NotNull Language language) {
@@ -225,7 +218,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   final @NotNull VirtualFile getVirtualFile() {
-    return myFile;
+    return myVirtualFile;
   }
 
   @Override

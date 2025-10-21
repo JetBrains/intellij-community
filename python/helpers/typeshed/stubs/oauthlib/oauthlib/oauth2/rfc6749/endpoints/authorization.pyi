@@ -1,29 +1,31 @@
 from _typeshed import Incomplete
-from typing import Any
+from logging import Logger
 
-from .base import BaseEndpoint as BaseEndpoint
+from oauthlib.common import _HTTPMethod
 
-log: Any
+from .base import BaseEndpoint
+
+log: Logger
 
 class AuthorizationEndpoint(BaseEndpoint):
-    def __init__(self, default_response_type, default_token_type, response_types) -> None: ...
+    def __init__(self, default_response_type: str, default_token_type: str, response_types: dict[str, Incomplete]) -> None: ...
     @property
-    def response_types(self): ...
+    def response_types(self) -> dict[str, Incomplete]: ...
     @property
-    def default_response_type(self): ...
+    def default_response_type(self) -> str: ...
     @property
     def default_response_type_handler(self): ...
     @property
     def default_token_type(self): ...
     def create_authorization_response(
         self,
-        uri,
-        http_method: str = "GET",
-        body: Incomplete | None = None,
-        headers: Incomplete | None = None,
-        scopes: Incomplete | None = None,
-        credentials: Incomplete | None = None,
+        uri: str,
+        http_method: _HTTPMethod = "GET",
+        body: str | None = None,
+        headers: dict[str, str] | None = None,
+        scopes=None,
+        credentials: dict[str, Incomplete] | None = None,
     ): ...
     def validate_authorization_request(
-        self, uri, http_method: str = "GET", body: Incomplete | None = None, headers: Incomplete | None = None
+        self, uri: str, http_method: _HTTPMethod = "GET", body: str | None = None, headers: dict[str, str] | None = None
     ): ...

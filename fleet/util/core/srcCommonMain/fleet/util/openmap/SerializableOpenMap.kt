@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.openmap
 
-import fleet.util.KPersistentMapSerializer
+import fleet.util.serialization.PersistentMapSerializer
 import fleet.util.serialization.DataSerializer
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -68,7 +68,7 @@ data class SerializableOpenMap<D>(internal val m: PersistentMap<String, Serializ
 }
 
 class SerializableOpenMapSerializer : DataSerializer<SerializableOpenMap<*>, PersistentMap<String, SerializedValue>>(
-  KPersistentMapSerializer(String.serializer(), SerializedValue.serializer())) {
+  PersistentMapSerializer(String.serializer(), SerializedValue.serializer())) {
   override fun fromData(data: PersistentMap<String, SerializedValue>): SerializableOpenMap<*> {
     return SerializableOpenMap<Any>(data)
   }

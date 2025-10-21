@@ -1,3 +1,6 @@
+from typing import Any
+
+
 class Test:
     def method(self, a):
         def func(b):

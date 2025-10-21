@@ -31,7 +31,12 @@ public final class InvalidRunConfigurationIcon extends IconWithOverlay {
   @Override
   public @Nullable Shape getOverlayShape(int x, int y) {
     if (ExperimentalUI.isNewUI()) {
-      float scale = getScale();
+      // Using getScale() won't do here, because it only handles the case when the icon scaled by changing its OBJ_SCALE.
+      // But there are other ways to "scale" an icon, e.g. using replaceBy() and a replacer that substitutes an icon of a different size.
+      // It could be a custom SVG file optimized for a larger size, for example.
+      // Because this thing is only for one place in the platform, and the shape calculation assumes the size of 16x16 anyway,
+      // we can use "poor man's getScale()" here to compute the effective scale.
+      float scale = (float) getIconWidth() / 16.0f;
       return new Rectangle2D.Float(x + scale * (16 - 7), y, 7 * scale, 7 * scale);
     }
     return null;

@@ -186,7 +186,8 @@ public final class BuildDataManager {
   /**
    * @deprecated Use {@link #getTargetStateManager()} or, preferably, avoid using internal APIs.
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public @NotNull BuildTargetsState getTargetsState() {
     return targetStateManager;
   }
@@ -262,6 +263,7 @@ public final class BuildDataManager {
    * @deprecated Use {@link BuildDataManager#getFileStampStorage(BuildTarget)}.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public @Nullable ProjectStamps getFileStampService() {
     return myFileStampService;

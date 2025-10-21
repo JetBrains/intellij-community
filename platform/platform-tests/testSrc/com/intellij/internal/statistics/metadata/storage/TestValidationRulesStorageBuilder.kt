@@ -4,12 +4,16 @@ package com.intellij.internal.statistics.metadata.storage
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
+import java.io.File
+import java.nio.file.Files
 
 class TestValidationRulesStorageBuilder(private val recorderId: String = "TEST") {
   private var cachedContent: String? = ""
   private var serverContentProvider: () -> String = {""}
   private var cachedLastModified: Long = 0
   private var serverLastModified: Long = 0
+  private var cachedDictionary: File? = null
+  private var serverDictionaryProvider: () -> String = {""}
 
   fun withCachedContent(content: String): TestValidationRulesStorageBuilder {
     cachedContent = content
@@ -36,9 +40,28 @@ class TestValidationRulesStorageBuilder(private val recorderId: String = "TEST")
     return this
   }
 
+  fun withCachedDictionary(file: File): TestValidationRulesStorageBuilder {
+    cachedDictionary = file
+    return this
+  }
+
+  fun withServerDictionary(content: String): TestValidationRulesStorageBuilder {
+    serverDictionaryProvider = { content }
+    return this
+  }
+
   fun build(): TestValidationRulesStorage {
     val persistence = TestEventLogMetadataPersistence(recorderId, cachedContent, cachedLastModified)
-    val loader = TestEventLogMetadataLoader(serverContentProvider, serverLastModified)
+    if (cachedDictionary != null) {
+      persistence.dictionaryStorage
+        .updateDictionaryByName(cachedDictionary!!.name, Files.readAllBytes(cachedDictionary!!.toPath()))
+      persistence.setDictionaryLastModified(cachedDictionary!!.name, cachedLastModified)
+    }
+    val loader = TestEventLogMetadataLoader(
+      serverContentProvider,
+      serverLastModified,
+      serverDictionaryProvider,
+      cachedDictionary?.name ?: "test_dictionary.ndjson")
     return TestValidationRulesStorage(recorderId, persistence, loader)
   }
 }
@@ -62,8 +85,21 @@ private class TestEventLogMetadataPersistence(recorderId: String, private var co
   override fun getLastModified(): Long = modified
 }
 
-private class TestEventLogMetadataLoader(private val provider: () -> String, private val lastModified: Long) : EventLogMetadataLoader {
+private class TestEventLogMetadataLoader(
+  private val provider: () -> String,
+  private val lastModified: Long,
+  private val dictionaryContentProvider: () -> String,
+  private val dictionaryName: String?,
+) : EventLogMetadataLoader {
   override fun loadMetadataFromServer(): String = provider.invoke()
+
+  override fun getDictionariesLastModifiedOnServer(recorderId: String?): Map<String?, Long?> = if (recorderId != null && dictionaryName != null) {
+    mapOf(dictionaryName to lastModified)
+  } else {
+    emptyMap()
+  }
+
+  override fun loadDictionaryFromServer(recorderId: String?, dictionaryName: String?): String = dictionaryContentProvider.invoke()
 
   override fun getLastModifiedOnServer(): Long = lastModified
 

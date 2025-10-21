@@ -21,7 +21,8 @@ import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 
@@ -56,16 +57,25 @@ class PyRequirementVisitor(
     val sdk = module.pythonSdk ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
     val requirementsManager = manager.getDependencyManager() ?: return
+    if (requirementsManager.getDependenciesFile() == null)
+      return
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
+
+
+    val fixes = if (requirementsManager.isAddDependencyPossible()) {
+      arrayOf(PyAddToDeclaredPackagesQuickFix(requirementsManager, packageName),
+              IgnoreRequirementFix(setOf(packageName)))
+    }
+    else
+      arrayOf()
 
     registerProblem(
       packageReferenceExpression,
       PyPsiBundle.message(PACKAGE_NOT_LISTED, importedPyModule),
       ProblemHighlightType.WEAK_WARNING,
       null,
-      PyAddToDeclaredPackagesQuickFix(requirementsManager, packageName),
-      IgnoreRequirementFix(setOf(packageName))
+      *fixes
     )
   }
 
@@ -89,7 +99,10 @@ class PyRequirementVisitor(
     val message = PyPsiBundle.message(REQUIREMENT_NOT_SATISFIED, requirementsList, unsatisfied.size)
 
     val ignoreFix = IgnoreRequirementFix(unsatisfied.mapTo(mutableSetOf()) { it.presentableTextWithoutVersion })
-    val quickFixes = listOf(SyncProjectQuickFix(), ignoreFix)
+    val quickFixes = buildList {
+      if (!sdk.isReadOnly) add(SyncProjectQuickFix())
+      add(ignoreFix)
+    }
 
     registerProblem(
       file,

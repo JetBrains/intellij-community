@@ -386,10 +386,19 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                 CodeInsightTestFixtureImpl.invokeIntention(action, psiFile, editor)
 
                 if (!shouldBeAvailableAfterExecution) {
-                    val afterAction = pattern.findActionByPattern(getAvailableActions(), acceptMatchByFamilyName = true)
+                    val afterActions = pattern.findActionsByPattern(getAvailableActions(), acceptMatchByFamilyName = true)
 
-                    if (afterAction != null) {
-                        TestCase.fail("Action '$text' is still available after its invocation in test $testFilePath")
+                    if (afterActions.isNotEmpty()) {
+                        val plural = afterActions.size > 1
+                        val afterActionsText = afterActions.joinToString { "'" + it.text + "'" }
+                        TestCase.assertFalse(
+                            "Action" +
+                                    ("s".takeIf { plural } ?: "") +
+                                    " $afterActionsText " +
+                                    ("are".takeIf { plural } ?: "is") +
+                                    " still available after its invocation in test $testFilePath",
+                            afterActionsText == "'$text'"
+                        )
                     }
                 }
             }

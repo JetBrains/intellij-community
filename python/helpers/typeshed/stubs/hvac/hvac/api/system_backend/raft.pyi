@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any
 
 from hvac.api.system_backend.system_backend_mixin import SystemBackendMixin
@@ -6,12 +5,7 @@ from requests import Response
 
 class Raft(SystemBackendMixin):
     def join_raft_cluster(
-        self,
-        leader_api_addr,
-        retry: bool = False,
-        leader_ca_cert: Incomplete | None = None,
-        leader_client_cert: Incomplete | None = None,
-        leader_client_key: Incomplete | None = None,
+        self, leader_api_addr, retry: bool = False, leader_ca_cert=None, leader_client_cert=None, leader_client_key=None
     ): ...
     def read_raft_config(self): ...
     def remove_raft_node(self, server_id): ...

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="studio-platform" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:studio-platform:2025.1.2-287">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:studio-platform:2025.1.2-287">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2025.1.2-287/studio-platform-2025.1.2-287.jar">
           <sha256sum>21a748abc565fd6d97d90f2547d0fd1da36810171050b2a337cbc02799cfe482</sha256sum>

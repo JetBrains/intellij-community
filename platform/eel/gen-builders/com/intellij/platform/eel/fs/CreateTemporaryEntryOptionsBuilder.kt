@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @GeneratedBuilder.Result
 @ApiStatus.Internal
-class CreateTemporaryEntryOptionsBuilder() {
+class CreateTemporaryEntryOptionsBuilder {
   private var deleteOnExit: Boolean = false
 
   private var parentDirectory: EelPath? = null

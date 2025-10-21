@@ -15,7 +15,7 @@ public final class ServiceViewActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     for (AnAction action : actions) {
-      if (action instanceof JumpToServicesAction || action instanceof GroupByContributorAction) {
+      if (action instanceof JumpToServicesAction || action instanceof GroupByContributorAction || action instanceof AddServiceActionGroup) {
         return new SmartList<>(action);
       }
     }

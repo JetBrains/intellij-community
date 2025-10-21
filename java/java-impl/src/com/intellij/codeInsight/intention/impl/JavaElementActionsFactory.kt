@@ -28,7 +28,7 @@ import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
 import java.util.*
 
-class JavaElementActionsFactory : JvmElementActionsFactory() {
+public class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = if (target is UDeclaration) target.javaPsi as PsiModifierListOwner else target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()

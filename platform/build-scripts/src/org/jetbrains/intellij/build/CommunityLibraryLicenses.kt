@@ -59,7 +59,10 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations(Suppliers.APACHE),
 
     LibraryLicense("Apache Ant", version = "1.9", libraryName = "Ant", url = "https://ant.apache.org/")
-      .apache("https://ant.apache.org/license.html"),
+      // used in the intellij.gradle.jps module
+      .additionalLibraryNames("ant")
+      .apache("https://ant.apache.org/license.html")
+      .suppliedByOrganizations(Suppliers.APACHE),
 
     LibraryLicense("Apache Axis", libraryName = "axis-1.4", version = "1.4", url = "https://axis.apache.org/axis/")
       .apache("https://svn.apache.org/viewvc/axis/axis1/java/trunk/LICENSE?view=markup"),
@@ -143,7 +146,7 @@ object CommunityLibraryLicenses {
     LibraryLicense("AsciiDoc support for Visual Studio Code", version = "3.2.4", attachedTo = "intellij.textmate", url = "https://github.com/asciidoctor/asciidoctor-vscode")
       .mit("https://github.com/asciidoctor/asciidoctor-vscode/blob/master/README.md"),
 
-    LibraryLicense("ASM (JetBrains's fork)", libraryName = "ASM", url = "https://github.com/JetBrains/intellij-deps-asm")
+    LibraryLicense("ASM (JetBrains's fork)", libraryName = "asm", url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS)
       .forkedFrom(
@@ -309,6 +312,9 @@ object CommunityLibraryLicenses {
       .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
 
+    LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
+      .mit("https://github.com/microsoft/debugpy/blob/main/LICENSE"),
+
     LibraryLicense("Detekt", libraryName = "io.gitlab.arturbosch.detekt.api", url = "https://github.com/detekt/detekt")
       .apache("https://github.com/detekt/detekt/blob/master/LICENSE"),
 
@@ -331,6 +337,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("EditorConfig Java Parser", libraryName = "ec4j-core", url = "https://github.com/ec4j/ec4j")
       .apache("https://github.com/ec4j/ec4j/blob/master/LICENSE")
       .suppliedByPersons("Peter Palaga", "Angelo Zerr"),
+
+    LibraryLicense("Ehcache SizeOf", libraryName = "ehcache.sizeof", url = "https://github.com/ehcache/sizeof")
+      .apache("https://github.com/ehcache/sizeof/blob/master/LICENSE"),
 
     LibraryLicense("emoji-java", libraryName = "com.vdurmont:emoji-java", url = "https://github.com/vdurmont/emoji-java")
       .mit("https://github.com/vdurmont/emoji-java/blob/master/LICENSE.md")
@@ -509,6 +518,14 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/intellij-coverage/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense(libraryName = "io.github.z4kn4fein.semver.jvm", url = "https://github.com/z4kn4fein/kotlin-semver/")
+      .mit("https://github.com/z4kn4fein/kotlin-semver/blob/main/LICENSE")
+      .suppliedByPersons("Peter Csajtai"),
+
+    LibraryLicense(libraryName = "io.modelcontextprotocol.kotlin.sdk", url = "https://github.com/modelcontextprotocol/kotlin-sdk/")
+      .mit("https://github.com/modelcontextprotocol/kotlin-sdk/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense("ISO RELAX", libraryName = "isorelax", url = "https://sourceforge.net/projects/iso-relax/")
       .mit("https://sourceforge.net/projects/iso-relax/")
       .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
@@ -555,6 +572,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("Jarchivelib", libraryName = "rauschig.jarchivelib", url = "https://github.com/thrau/jarchivelib")
       .apache("https://github.com/thrau/jarchivelib/blob/master/LICENSE"),
 
+    LibraryLicense("Java-WebSocket", libraryName = "Java-WebSocket", url = "https://github.com/TooTallNate/Java-WebSocket")
+      .mit("https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE"),
+
     LibraryLicense(libraryName = "Java Compatibility", url = "https://github.com/JetBrains/intellij-deps-java-compatibility")
       .gpl2ce("https://github.com/JetBrains/intellij-deps-java-compatibility/raw/master/LICENSE"),
 
@@ -563,9 +583,6 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("Java Server Pages (JSP) for Visual Studio Code", version = "0.0.3", attachedTo = "intellij.textmate", url = "https://github.com/pthorsson/vscode-jsp")
       .mit("https://github.com/pthorsson/vscode-jsp/blob/master/LICENSE"),
-
-    LibraryLicense("Java Simple Serial Connector", libraryName = "io.github.java.native.jssc", url = "https://github.com/java-native/jssc")
-      .lgpl3("https://github.com/java-native/jssc/blob/master/LICENSE.txt"),
 
     LibraryLicense("Java String Similarity", libraryName = "java-string-similarity", url = "https://github.com/tdebatty/java-string-similarity")
       .mit("https://github.com/tdebatty/java-string-similarity/blob/master/LICENSE.md")
@@ -584,7 +601,8 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/square/javapoet/blob/master/LICENSE.txt"),
 
     LibraryLicense("javax inject", libraryName = "javax-inject", url = "https://github.com/javax-inject/javax-inject")
-      .apache("https://github.com/javax-inject/javax-inject"),
+      .apache("https://github.com/javax-inject/javax-inject")
+      .suppliedByPersons("https://groups.google.com/g/atinject-observer"),
 
     LibraryLicense("JAXB (Java Architecture for XML Binding) API", libraryName = "jaxb-api", url = "https://github.com/javaee/jaxb-spec")
       .cddl11("https://github.com/javaee/jaxb-spec/blob/master/LICENSE.txt")
@@ -635,9 +653,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("JetBrains Annotations", libraryName = "jetbrains-annotations", url = "https://github.com/JetBrains/java-annotations")
       .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
 
-    LibraryLicense("JetBrains Annotations for Java 5", libraryName = "jetbrains-annotations-java5", url = "https://github.com/JetBrains/java-annotations")
-      .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
-
     LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-ide-laf-bridge-243")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -656,6 +671,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/jetCheck/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("Jettison", libraryName = "jettison", url = "https://github.com/codehaus/jettison")
+      .apache("https://github.com/codehaus/jettison/blob/master/pom.xml")
+      .suppliedByOrganizations("The Jettison Team"),
+
     LibraryLicense("JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit", url = "https://www.eclipse.org/jgit/")
       .license("Eclipse Distribution License 1.0", "https://www.eclipse.org/org/documents/edl-v10.php")
       .suppliedByOrganizations(Suppliers.ECLIPSE),
@@ -669,10 +688,12 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations(Suppliers.ECLIPSE),
 
     LibraryLicense("JGoodies Common", libraryName = "jgoodies-common", url = "https://www.jgoodies.com/freeware/libraries/looks/")
-      .newBsd("https://opensource.org/licenses/BSD-3-Clause"),  // no longer OSS; historic versions are still available
+      .newBsd("https://opensource.org/licenses/BSD-3-Clause")  // no longer OSS; historic versions are still available
+      .suppliedByPersons("Karsten Lentzsch"),
 
     LibraryLicense("JGoodies Forms", libraryName = "jgoodies-forms", url = "https://www.jgoodies.com/freeware/libraries/forms/")
-      .newBsd("https://opensource.org/licenses/BSD-3-Clause"),  // no longer OSS; historic versions are still available
+      .newBsd("https://opensource.org/licenses/BSD-3-Clause")  // no longer OSS; historic versions are still available
+      .suppliedByPersons("Karsten Lentzsch"),
 
     LibraryLicense("Jing", libraryName = "jing", url = "https://relaxng.org/jclark/jing.html")
       .newBsd("https://opensource.org/license/bsd-3-clause/")
@@ -703,6 +724,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "jsch-agent-proxy", url = "https://github.com/ymnk/jsch-agent-proxy")
       .newBsd("https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt")
       .suppliedByPersons("Atsuhiko Yamanaka"),
+
+    LibraryLicense("jSerialComm", libraryName = "jetbrains.intellij.deps.jSerialComm", url= "https://github.com/JetBrains/jSerialComm")
+      .apache("https://github.com/JetBrains/jSerialComm/blob/master/LICENSE-APACHE-2.0")
+      .forkedFrom(groupId = "com.fazecast", artifactId = "jSerialComm", version = "2.11.2", mavenRepositoryUrl = "https://repo1.maven.org/maven2/"),
 
     LibraryLicense("JSON", libraryName = "json.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://www.json.org/")
       .license("JSON License", "https://www.json.org/license.html"),
@@ -771,6 +796,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
 
+    LibraryLicense("kotlin-codepoints", libraryName = "de.cketti.unicode.kotlin.codepoints.jvm", url = "https://github.com/cketti/kotlin-codepoints")
+      .mit("https://github.com/cketti/kotlin-codepoints/blob/main/LICENSE"),
+
     LibraryLicense("kotlin-metadata", libraryName = "kotlin-metadata", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -828,7 +856,8 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("kotlinx-document-store-mvstore", libraryName = "kotlinx-document-store-mvstore", url = "https://github.com/lamba92/kotlin.document.store")
-      .apache("https://github.com/lamba92/kotlin.document.store/blob/master/LICENSE"),
+      .apache("https://github.com/lamba92/kotlin.document.store/blob/master/LICENSE")
+      .suppliedByPersons("Lamberto Basti"),
 
     LibraryLicense("kotlinx.html", libraryName = "kotlinx-html-jvm", url = "https://github.com/Kotlin/kotlinx.html")
       .apache("https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE")
@@ -1047,6 +1076,15 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "opentest4j", url = "https://github.com/ota4j-team/opentest4j")
       .apache("https://github.com/ota4j-team/opentest4j/blob/master/LICENSE"),
 
+    LibraryLicense("org.eclipse.xtext.xbase", libraryName = "xtext-xbase", url = "https://github.com/eclipse/xtext-lib")
+      .eplV2("https://github.com/eclipse/xtext-lib/blob/master/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Sebastian Benz", "Lorenzo Bettini", "Arne Deutsch", "Christian Dietrich", "Moritz Eysholdt",
+        "Dennis Hübner", "Jan Köhnlein", "Anton Kosyakov", "Stefan Oehme", "Holger Schill", "Christian Schneider",
+        "Miro Spönemann", "Karsten Thoms", "Titouan Vervack", "Tamas Miklossy",
+        "Michael Clay", "Knut Wannheden", "Sebastian Zarnekow"
+      ),
+
     LibraryLicense("OverlayScrollbars", version = "2.1.1", attachedTo = "intellij.idea.community.main", url = "https://kingsora.github.io/OverlayScrollbars")
       .mit("https://github.com/KingSora/OverlayScrollbars/blob/master/LICENSE"),
 
@@ -1209,6 +1247,10 @@ object CommunityLibraryLicenses {
       .lgpl21("https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html")
       .suppliedByOrganizations("Sun Microsystems, Inc."),
 
+    LibraryLicense("System Stubs Jupiter", libraryName = "uk.webcompere.system.stubs.jupiter", url = "https://github.com/webcompere/system-stubs")
+      .mit("https://github.com/webcompere/system-stubs/blob/main/LICENSE")
+      .suppliedByPersons("Ashley Frieze"),
+
     LibraryLicense("Testcontainers Core", libraryName = "testcontainers", url = "https://java.testcontainers.org")
       .mit("https://github.com/testcontainers/testcontainers-java/blob/main/LICENSE")
       .suppliedByPersons("Richard North"),
@@ -1315,7 +1357,7 @@ object CommunityLibraryLicenses {
       .apache("https://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE")
       .suppliedByPersons("Cezar Andrei", "Radu Preotiuc", "Radu Preotiuc", "Wing Yew Poon", "Jacob Danner", "POI Team"),
 
-    LibraryLicense("XmlRPC", libraryName = "XmlRPC", url = "https://ws.apache.org/xmlrpc/xmlrpc2/")
+    LibraryLicense("XmlRPC", libraryName = "xml-rpc", url = "https://ws.apache.org/xmlrpc/xmlrpc2/")
       .apache("https://ws.apache.org/xmlrpc/xmlrpc2/license.html")
       .suppliedByPersons(
         "Daniel Rall", "Jon Scott Stevens", "John Wilson",
@@ -1324,7 +1366,7 @@ object CommunityLibraryLicenses {
         "Leonard Richarson", "Hannes Wallnoefer"
       ),
 
-    LibraryLicense("XStream", libraryName = "XStream", url = "https://x-stream.github.io/")
+    LibraryLicense("XStream", libraryName = "xstream", url = "https://x-stream.github.io/")
       .newBsd("https://x-stream.github.io/license.html")
       .suppliedByOrganizations("XStream Committers"),
 
@@ -1342,8 +1384,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.nlp.encoder.bert.uncased"),
     jetbrainsLibrary("ai.grazie.spell.gec.engine.local"),
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
-    jetbrainsLibrary("ai.grazie.utils.lucene.lt.compatibility"),
-    jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.configuration"),
@@ -1389,15 +1429,17 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
+    jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
+    jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
-    jetbrainsLibrary("jetbrains.fus.reporting.ap.validation"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
     jetbrainsLibrary("jetbrains.kotlin.compose.compiler.plugin"),
+    jetbrainsLibrary("jetbrains.kotlin.jps.plugin.classpath"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
     jetbrainsLibrary("jetbrains.ml.models.python.imports.ranking.model"),
+    jetbrainsLibrary("jetbrains.mlapi.catboost"),
     jetbrainsLibrary("jetbrains.mlapi.catboost.shadow.need.slf4j"),
-    jetbrainsLibrary("jetbrains.mlapi.ml.api"),
-    jetbrainsLibrary("jetbrains.mlapi.ml.tools"),
+    jetbrainsLibrary("jetbrains.mlapi.core"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
@@ -1427,8 +1469,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-dataframe-compiler-plugin"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
-    // TODO: KTIJ-32993
-    jetbrainsLibrary("kotlinc.kotlin-ide-dist"),
     jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("kotlinc.kotlin-objcexport-header-generator"),

@@ -71,6 +71,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
@@ -170,7 +171,22 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
     DiffTitleHandler.createHandler(() -> createTitles(), myContentPanel, myRequest, this);
 
-    DiffUtil.installShowNotifyListener(getComponent(), () -> myMarkupUpdater.scheduleUpdate());
+    DiffUtil.installShowNotifyListener(getComponent(), new Activatable() {
+      @Override
+      public void showNotify() {
+        myMarkupUpdater.scheduleUpdate();
+      }
+
+      @Override
+      public void hideNotify() {
+        Project project = myProject;
+        if (project == null) return;
+
+        //force re-highlighting the document which may be opened in other editor tab and miss highlighters because of com.intellij.openapi.editor.impl.MarkupModelImpl#removeHighlighter
+        Document document = getContent2().getDocument();
+        DiffEditorHighlighterUpdater.restartHighlighterFor(project, myEditor, document, "UnifiedDiffViewer.hide");
+      }
+    });
   }
 
   @Override
@@ -1605,7 +1621,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     protected void warnMockImplementation(@NotNull String methodName) {
       if (ourReportedMockMethods.add(methodName)) {
-        String message = "Method is not applicable. Consider using 'editor instanceOf ImaginaryEditor'";
+        String message = "Method + '" + methodName + "' is not applicable. Consider using 'editor instanceOf ImaginaryEditor'";
         if (ApplicationManager.getApplication().isInternal() ||
             ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(message);
@@ -1617,6 +1633,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     }
 
     @Override
+    @Nullable
+    @ApiStatus.Obsolete
     public VirtualFile getVirtualFile() {
       return FileDocumentManager.getInstance().getFile(getDocument());
     }

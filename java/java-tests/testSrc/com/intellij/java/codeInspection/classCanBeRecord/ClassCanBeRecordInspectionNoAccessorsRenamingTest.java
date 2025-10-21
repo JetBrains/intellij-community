@@ -6,6 +6,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassCanBeRecordInspectionNoAccessorsRenamingTest extends LightQuickFixParameterizedTestCase {
@@ -13,6 +15,11 @@ public class ClassCanBeRecordInspectionNoAccessorsRenamingTest extends LightQuic
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, false)};
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   @Override

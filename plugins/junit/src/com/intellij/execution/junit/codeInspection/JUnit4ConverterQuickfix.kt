@@ -220,7 +220,9 @@ internal class JUnit4ConverterQuickfix : LocalQuickFix {
     val containingFile = method.sourcePsi?.containingFile ?: return
     CompositeModCommandQuickFix.performActions(createModifierActions(method.javaPsi, modifierRequest(JvmModifier.PUBLIC, true)), containingFile)
     CompositeModCommandQuickFix.performActions(createChangeOverrideActions(method.javaPsi, shouldBePresent = false), containingFile)
-    method.accept(SuperCallRemoverVisitor(method.name))
+    val visitor = SuperCallRemoverVisitor(method.name)
+    method.accept(visitor)
+    visitor.applyModifications()
   }
 
   private fun transformTesSuite(method: UMethod) {
@@ -271,6 +273,9 @@ internal class JUnit4ConverterQuickfix : LocalQuickFix {
   }
 
   private class SuperCallRemoverVisitor(private val methodName: String) : AbstractUastVisitor() {
+    private val elementsToDelete = mutableListOf<PsiElement>()
+    private val tryExpressions = mutableListOf<UTryExpression>()
+
     override fun visitSuperExpression(node: USuperExpression): Boolean {
       val qualifiedSuper = node.uastParent.asSafely<UQualifiedReferenceExpression>() ?: return false
       val selector = qualifiedSuper.selector.asSafely<UCallExpression>() ?: return false
@@ -285,20 +290,29 @@ internal class JUnit4ConverterQuickfix : LocalQuickFix {
         if (finallyClause.asSafely<UBlockExpression>()?.expressions?.size == 1) {
           val catchClauses = tryExpression.catchClauses
           if (catchClauses.isEmpty() && !tryExpression.hasResources) {
-            val tryExprSrcPsi = tryExpression.sourcePsi ?: return false
-            val tryClauseSrcPsi = tryExpression.tryClause.sourcePsi ?: return false
-            val first = tryClauseSrcPsi.firstChild?.nextSibling
-            val last = tryClauseSrcPsi.lastChild?.prevSibling
-            tryExprSrcPsi.parent?.addRangeAfter(first, last, tryExpression.sourcePsi)
-            tryExprSrcPsi.delete()
-          } else {
-            finallyClause.sourcePsi?.delete()
+            tryExpressions.add(tryExpression)
+          }
+          else {
+            finallyClause.sourcePsi?.let { elementsToDelete.add(it) }
           }
           return false
         }
       }
-      qualifiedSuper.sourcePsi?.delete()
+      qualifiedSuper.sourcePsi?.let { elementsToDelete.add(it) }
       return false
+    }
+
+    fun applyModifications() {
+      for (tryExpression in tryExpressions) {
+        val tryExprSrcPsi = tryExpression.sourcePsi ?: continue
+        val tryClauseSrcPsi = tryExpression.tryClause.sourcePsi ?: continue
+        val first = tryClauseSrcPsi.firstChild?.nextSibling
+        val last = tryClauseSrcPsi.lastChild?.prevSibling
+        tryExprSrcPsi.parent?.addRangeAfter(first, last, tryExpression.sourcePsi)
+        tryExprSrcPsi.delete()
+      }
+
+      elementsToDelete.forEach { it.delete() }
     }
   }
 

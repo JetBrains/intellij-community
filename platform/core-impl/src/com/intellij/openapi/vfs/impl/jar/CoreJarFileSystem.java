@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -46,5 +47,13 @@ public final class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
   public void clearHandlersCache() {
     myHandlers.forEach((path, handler) -> handler.clearCaches());
     myHandlers.clear();
+  }
+
+  @ApiStatus.Internal
+  public void clearHandler(@NotNull String jarPath) {
+    CoreJarHandler handler = myHandlers.remove(jarPath);
+    if (handler != null) {
+      handler.clearCaches();
+    }
   }
 }

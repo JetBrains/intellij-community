@@ -154,7 +154,7 @@ class DeclarativeHintsProviderSettingsModel(
     val inlayData = sink.finish()
     val preprocessed = DeclarativeInlayHintsPass.preprocessCollectedInlayData(inlayData, editor.document)
     return Runnable {
-      DeclarativeInlayHintsPass.applyInlayData(editor, project, preprocessed, sourceId)
+      DeclarativeInlayHintsPass.applyInlayData(editor, project, preprocessed, emptySet(), sourceId)
     }
   }
 
@@ -267,7 +267,7 @@ private class PreviewInlayTreeSink(
       tree = tree,
       providerId = providerBean.requiredProviderId(),
       disabled = !enabled || !providerEnabled || activeOptions.any { !it.isEnabled },
-      payloads = null,
+      payloads = emptyList(),
       providerClass = providerBean.instance.javaClass,
       sourceId = sourceId
     ))

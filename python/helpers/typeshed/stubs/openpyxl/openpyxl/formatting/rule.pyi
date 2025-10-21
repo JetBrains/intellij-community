@@ -79,7 +79,7 @@ class FormatObject(Serialisable):
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, type: _FormatObjectType, val: Incomplete | None = None, gte: _ConvertibleToBool | None = None, extLst: Unused = None
+        self, type: _FormatObjectType, val=None, gte: _ConvertibleToBool | None = None, extLst: Unused = None
     ) -> None: ...
 
 class RuleType(Serialisable):
@@ -99,7 +99,7 @@ class IconSet(RuleType):
         showValue: _ConvertibleToBool | None = None,
         percent: _ConvertibleToBool | None = None,
         reverse: _ConvertibleToBool | None = None,
-        cfvo: Incomplete | None = None,
+        cfvo=None,
     ) -> None: ...
 
 class DataBar(RuleType):
@@ -116,7 +116,7 @@ class DataBar(RuleType):
         minLength: ConvertibleToInt | None = None,
         maxLength: ConvertibleToInt | None = None,
         showValue: _ConvertibleToBool | None = None,
-        cfvo: Incomplete | None = None,
+        cfvo=None,
         *,
         color: str | Color,
     ) -> None: ...
@@ -135,7 +135,7 @@ class ColorScale(RuleType):
     color: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
     cfvo: Incomplete
-    def __init__(self, cfvo: Incomplete | None = None, color: Incomplete | None = None) -> None: ...
+    def __init__(self, cfvo=None, color=None) -> None: ...
 
 class Rule(Serialisable):
     tagname: ClassVar[str]
@@ -184,46 +184,19 @@ class Rule(Serialisable):
     ) -> None: ...
 
 def ColorScaleRule(
-    start_type: Incomplete | None = None,
-    start_value: Incomplete | None = None,
-    start_color: Incomplete | None = None,
-    mid_type: Incomplete | None = None,
-    mid_value: Incomplete | None = None,
-    mid_color: Incomplete | None = None,
-    end_type: Incomplete | None = None,
-    end_value: Incomplete | None = None,
-    end_color: Incomplete | None = None,
+    start_type=None,
+    start_value=None,
+    start_color=None,
+    mid_type=None,
+    mid_value=None,
+    mid_color=None,
+    end_type=None,
+    end_value=None,
+    end_color=None,
 ): ...
-def FormulaRule(
-    formula: Incomplete | None = None,
-    stopIfTrue: Incomplete | None = None,
-    font: Incomplete | None = None,
-    border: Incomplete | None = None,
-    fill: Incomplete | None = None,
-): ...
-def CellIsRule(
-    operator: Incomplete | None = None,
-    formula: Incomplete | None = None,
-    stopIfTrue: Incomplete | None = None,
-    font: Incomplete | None = None,
-    border: Incomplete | None = None,
-    fill: Incomplete | None = None,
-): ...
-def IconSetRule(
-    icon_style: Incomplete | None = None,
-    type: Incomplete | None = None,
-    values: Incomplete | None = None,
-    showValue: Incomplete | None = None,
-    percent: Incomplete | None = None,
-    reverse: Incomplete | None = None,
-): ...
+def FormulaRule(formula=None, stopIfTrue=None, font=None, border=None, fill=None): ...
+def CellIsRule(operator=None, formula=None, stopIfTrue=None, font=None, border=None, fill=None): ...
+def IconSetRule(icon_style=None, type=None, values=None, showValue=None, percent=None, reverse=None): ...
 def DataBarRule(
-    start_type: Incomplete | None = None,
-    start_value: Incomplete | None = None,
-    end_type: Incomplete | None = None,
-    end_value: Incomplete | None = None,
-    color: Incomplete | None = None,
-    showValue: Incomplete | None = None,
-    minLength: Incomplete | None = None,
-    maxLength: Incomplete | None = None,
+    start_type=None, start_value=None, end_type=None, end_value=None, color=None, showValue=None, minLength=None, maxLength=None
 ): ...

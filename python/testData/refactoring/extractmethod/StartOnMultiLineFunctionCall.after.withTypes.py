@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def long_function_name(**kwargs): ...
 
 def example_function():

@@ -36,7 +36,7 @@ internal object PreferContextualCallablesWeigher {
      * Marks [symbol] as contextual if [symbol] or one of its overridden symbols is equal to or overridden by
      * one of the callables containing current position.
      */
-    context(KaSession)
+    context(_: KaSession)
     fun addWeight(lookupElement: LookupElement, symbol: KaCallableSymbol, contextualSymbolsCache: WeighingContext.ContextualSymbolsCache) {
         if (symbol !is KaNamedSymbol || symbol.name !in contextualSymbolsCache) return
 

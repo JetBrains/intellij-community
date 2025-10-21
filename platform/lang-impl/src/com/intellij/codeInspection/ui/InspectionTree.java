@@ -45,6 +45,7 @@ import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +56,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -65,6 +66,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
 
+@ApiStatus.Internal
 public final class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 
@@ -115,7 +117,7 @@ public final class InspectionTree extends Tree {
             expandPath(new TreePath(myModel.getRoot()));
             SmartExpander.installOn(InspectionTree.this);
             if (!myView.isDisposed()) {
-              myView.syncRightPanel();
+              ReadAction.run(() -> myView.syncRightPanel());
             }
           });
         }

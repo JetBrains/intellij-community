@@ -434,10 +434,11 @@ fun LoadingLabel(labelText: @NlsContexts.Label String? = null): JLabel = JLabel(
  * Loading label with a text
  */
 @Suppress("FunctionName")
-fun LoadingTextLabel(): JLabel = JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
-  foreground = UIUtil.getContextHelpForeground()
-  name = "Textual loading label"
-}
+fun LoadingTextLabel(text: @Nls String = ApplicationBundle.message("label.loading.page.please.wait")): JLabel =
+  JLabel(text).apply {
+    foreground = UIUtil.getContextHelpForeground()
+    name = "Textual loading label"
+  }
 
 /**
  * Scrollpane without background and borders

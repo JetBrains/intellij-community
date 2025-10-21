@@ -79,7 +79,7 @@ public final class CodeBlockOrInitializerSelectioner extends AbstractBasicBackBa
   }
 
   public static int findClosingBrace(List<ASTNode> children, int startOffset) {
-    int end = children.get(children.size() - 1).getTextRange().getEndOffset();
+    int end = children.getLast().getTextRange().getEndOffset();
     for (int i = 0; i < children.size(); i++) {
       ASTNode child = children.get(i);
 

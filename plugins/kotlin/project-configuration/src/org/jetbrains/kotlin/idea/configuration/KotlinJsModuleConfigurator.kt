@@ -10,8 +10,8 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryType
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType
 import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription
@@ -52,7 +52,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
         get() = KotlinJavaScriptStdlibDetectorFacility
 
     companion object {
-        const val NAME = "js"
+        const val NAME: String = "js"
     }
 
     /**

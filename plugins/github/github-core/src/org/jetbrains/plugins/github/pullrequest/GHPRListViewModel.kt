@@ -20,7 +20,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInter
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListPersistentSearchHistory
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchHistoryModel
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubSettings
 
 @ApiStatus.Experimental

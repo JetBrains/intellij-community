@@ -22,6 +22,10 @@ public interface IdeaVersion extends DomElement {
   @Convert(BuildNumberConverter.class)
   GenericAttributeValue<BuildNumber> getUntilBuild();
 
+  @NotNull
+  @Stubbed
+  @Convert(BuildNumberConverter.class)
+  GenericAttributeValue<BuildNumber> getStrictUntilBuild();
 
   /**
    * @deprecated Use {@link #getSinceBuild()}

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.toml.json` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "json_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -11,9 +11,11 @@ jvm_library(
   name = "json",
   module_name = "intellij.toml.json",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":json_resources"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
@@ -22,12 +24,9 @@ jvm_library(
     "//plugins/toml/core",
     "@lib//:kotlin-stdlib",
     "//json/backend",
-    "@lib//:stream_ex",
+    "//libraries/stream",
   ],
   exports = ["//json/backend"],
-  runtime_deps = [
-    ":json_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.toml.json` end

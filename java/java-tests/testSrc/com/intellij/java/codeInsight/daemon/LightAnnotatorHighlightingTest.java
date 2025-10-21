@@ -338,7 +338,6 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
                 return Messages.getQuestionIcon();
               }
             }));
-        checkThrowsWhenCalledTwice(holder, builder -> builder.needsUpdateOnTyping());
         checkThrowsWhenCalledTwice(holder, builder -> builder.problemGroup(() -> ""));
         checkThrowsWhenCalledTwice(holder, builder -> builder.tooltip(""));
         checkThrowsWhenCalledTwice(holder, builder -> builder.textAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES));

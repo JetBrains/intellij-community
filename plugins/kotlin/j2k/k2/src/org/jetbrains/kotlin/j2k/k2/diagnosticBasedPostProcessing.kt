@@ -55,7 +55,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
         Applier(processingDataList, file.project)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun processDiagnostic(diagnostic: KaDiagnosticWithPsi<*>, file: KtFile, rangeMarker: RangeMarker?): ProcessingData? {
         val processing = diagnosticToProcessing[diagnostic.diagnosticClass] ?: return null
         val element = diagnostic.psi
@@ -87,7 +87,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
 internal interface K2DiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWithPsi<*>> {
     val diagnosticClass: KClass<DIAGNOSTIC>
 
-    context(KaSession)
+    context(_: KaSession)
     fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix?
 }
 
@@ -97,9 +97,9 @@ internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWith
     private val fixFactory: KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC>
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
 
-    context(KaSession)
+    context(session: KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
-        val quickfix = with(fixFactory) { createQuickFixes(diagnostic).singleOrNull() } ?: return null
+        val quickfix = with(fixFactory) { session.createQuickFixes(diagnostic).singleOrNull() } ?: return null
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
                 quickfix.invoke(element.project, null, element.containingFile)
@@ -113,11 +113,11 @@ internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticW
     private val fixFactory: KotlinQuickFixFactory.ModCommandBased<DIAGNOSTIC>
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
 
-    context(KaSession)
+    context(session: KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
         val addExclExclCallFix =
             with(fixFactory) {
-                createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix }
+                session.createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix }
             } ?: return null
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
@@ -138,7 +138,7 @@ internal class K2CustomDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWithPs
     private val customFixFactory: (diagnostic: DIAGNOSTIC) -> K2DiagnosticFix?
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
         return customFixFactory(diagnostic)
     }

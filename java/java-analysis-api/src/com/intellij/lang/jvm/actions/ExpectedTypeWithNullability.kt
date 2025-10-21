@@ -8,18 +8,18 @@ import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
 
-open class ExpectedTypeWithNullability(val type: JvmType, val nullability: Nullability) : ExpectedType {
+public open class ExpectedTypeWithNullability(public val type: JvmType, public val nullability: Nullability) : ExpectedType {
     override fun getTheType(): JvmType = type
 
     override fun getTheKind(): ExpectedType.Kind = ExpectedType.Kind.EXACT
 
-    companion object {
-        fun createExpectedKotlinType(type: JvmType, nullability: Nullability): ExpectedTypeWithNullability = ExpectedTypeWithNullability(type, nullability)
+    public companion object {
+        public fun createExpectedKotlinType(type: JvmType, nullability: Nullability): ExpectedTypeWithNullability = ExpectedTypeWithNullability(type, nullability)
 
         /**
          * A placeholder to denote "This type is invalid". Only thing this type does is returning `false` for `isValid()` function.
          */
-        val INVALID_TYPE: ExpectedTypeWithNullability = createExpectedKotlinType(object : PsiType(emptyArray()) {
+        public val INVALID_TYPE: ExpectedTypeWithNullability = createExpectedKotlinType(object : PsiType(emptyArray()) {
             override fun <A : Any?> accept(visitor: PsiTypeVisitor<A>): A {
                 return visitor.visitType(PsiTypes.nullType())
             }

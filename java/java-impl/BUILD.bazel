@@ -1,9 +1,15 @@
 ### auto-generated section `build intellij.java.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+create_kotlinc_options(
+  name = "custom_impl",
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,23 +18,29 @@ jvm_library(
   module_name = "intellij.java.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":impl_resources"],
+  kotlinc_opts = ":custom_impl",
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
+    "//platform/platform-impl/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
+    "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//platform/util",
     "//java/openapi:java",
-    "@lib//:oro_matcher",
+    "//libraries/oro-matcher",
     "//xml/impl",
     "//java/java-runtime:rt",
     "//platform/lang-impl",
@@ -51,12 +63,12 @@ jvm_library(
     "//jps/model-impl",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/external-system-api:externalSystem",
-    "@lib//:guava",
-    "@lib//:velocity",
+    "//libraries/guava",
+    "//libraries/velocity",
     "//java/java-structure-view:structureView",
     "//spellchecker",
     "//platform/built-in-server:builtInServer-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "//java/compiler/openapi:java-compiler",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/external-system-impl:externalSystem-impl",
@@ -64,10 +76,9 @@ jvm_library(
     "@lib//:java-impl-completion-ranking-java",
     "//platform/util/jdom",
     "//plugins/copyright",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/statistics",
-    "//platform/inspect",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io-impl:ide-util-io-impl",
@@ -77,10 +88,10 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/platform-impl/internal",
     "//platform/backend/workspace",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/platform-impl:ide-impl",
     "//platform/markdown-utils",
-    "@lib//:jetbrains-markdown",
+    "//libraries/markdown",
     "//platform/threadDumpParser",
     "//platform/eel-provider",
     "//platform/bookmarks",
@@ -92,7 +103,6 @@ jvm_library(
   ],
   exports = [
     "//platform/lang-impl",
-    "//platform/execution-impl",
     "//java/java-psi-impl:psi-impl",
     "//java/java-frontback-impl:frontback-impl",
     "//java/java-indexing-impl:indexing-impl",
@@ -100,9 +110,6 @@ jvm_library(
     "//java/java-structure-view:structureView",
     "//platform/statistics",
   ],
-  runtime_deps = [
-    ":impl_resources",
-    "@lib//:jaxb-runtime",
-  ]
+  runtime_deps = ["@lib//:jaxb-runtime"]
 )
 ### auto-generated section `build intellij.java.impl` end

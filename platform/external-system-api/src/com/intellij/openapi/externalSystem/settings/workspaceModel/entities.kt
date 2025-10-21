@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 package com.intellij.openapi.externalSystem.settings.workspaceModel
 
@@ -11,13 +11,10 @@ interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
   val projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ExternalProjectsBuildClasspathEntity> {
-    override var entitySource: EntitySource
-    var projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>
-  }
-
+  @Deprecated(message = "Use ExternalProjectsBuildClasspathEntityBuilder instead")
+  interface Builder : ExternalProjectsBuildClasspathEntityBuilder
   companion object : EntityType<ExternalProjectsBuildClasspathEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -25,18 +22,13 @@ interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
       projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.projectsBuildClasspath = projectsBuildClasspath
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ExternalProjectsBuildClasspathEntityType.compatibilityInvoke(projectsBuildClasspath, entitySource, init)
   }
   //endregion
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyExternalProjectsBuildClasspathEntity(
   entity: ExternalProjectsBuildClasspathEntity,
   modification: ExternalProjectsBuildClasspathEntity.Builder.() -> Unit,

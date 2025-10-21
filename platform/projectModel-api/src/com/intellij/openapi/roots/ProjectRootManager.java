@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,12 +113,14 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    *
    * @param sdk the SDK instance.
    */
+  @RequiresWriteLock
   public abstract void setProjectSdk(@Nullable Sdk sdk);
 
   /**
    * Sets the name of the JDK to be used for the project
    * @param sdkTypeName the {@link SdkTypeId#getName()} of the SDK type
    */
+  @RequiresWriteLock
   public abstract void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName);
 
   @ApiStatus.Internal

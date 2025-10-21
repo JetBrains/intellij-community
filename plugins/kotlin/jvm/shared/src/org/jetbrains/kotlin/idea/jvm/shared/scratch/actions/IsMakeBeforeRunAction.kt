@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.SmallBorderCheckboxAction
 class IsMakeBeforeRunAction(val scratchFile: ScratchFile) : SmallBorderCheckboxAction(KotlinJvmBundle.message("scratch.make.before.run.checkbox")) {
     override fun update(e: AnActionEvent) {
         super.update(e)
-        e.presentation.isVisible = scratchFile.module != null && !scratchFile.options.isInteractiveMode
-        e.presentation.description = scratchFile.module?.let { selectedModule ->
+        e.presentation.isVisible = scratchFile.currentModule != null && !scratchFile.options.isInteractiveMode
+        e.presentation.description = scratchFile.currentModule?.let { selectedModule ->
             KotlinJvmBundle.message("scratch.make.before.run.checkbox.description", selectedModule.name)
         }
     }

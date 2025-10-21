@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -96,6 +97,7 @@ public abstract class CheckinHandler {
    * {@link BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)} to
    * get information about the checked in files.
    */
+  @RequiresEdt
   public void checkinSuccessful() {
 
   }

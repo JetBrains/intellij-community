@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.editor.Document;
@@ -10,26 +10,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EventObject;
 
 public class CommandEvent extends EventObject {
-  private final Runnable myCommand;
-  private final Project myProject;
+  private final @NotNull Runnable myCommand;
+  private final @Nullable Project myProject;
   private final @NlsContexts.Command String myCommandName;
-  private final Object myCommandGroupId;
-  private final UndoConfirmationPolicy myUndoConfirmationPolicy;
+  private final @Nullable Object myCommandGroupId;
+  private final @NotNull UndoConfirmationPolicy myUndoConfirmationPolicy;
   private final boolean myShouldRecordActionForActiveDocument;
-  private final Document myDocument;
+  private final @Nullable Document myDocument;
 
-  public CommandEvent(@NotNull CommandProcessor processor, @NotNull Runnable command, Project project, @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
+  public CommandEvent(@NotNull CommandProcessor processor, @NotNull Runnable command, @Nullable Project project, @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
     this(processor, command, null, null, project, undoConfirmationPolicy, true, null);
   }
 
   public CommandEvent(@NotNull CommandProcessor processor,
                       @NotNull Runnable command,
                       @NlsContexts.Command String commandName,
-                      Object commandGroupId,
-                      Project project,
+                      @Nullable Object commandGroupId,
+                      @Nullable Project project,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                       boolean shouldRecordActionForActiveDocument,
-                      Document document) {
+                      @Nullable Document document) {
     super(processor);
     myCommand = command;
     myCommandName = commandName;
@@ -48,7 +48,7 @@ public class CommandEvent extends EventObject {
     return myCommand;
   }
 
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -56,7 +56,7 @@ public class CommandEvent extends EventObject {
     return myCommandName;
   }
 
-  public Object getCommandGroupId() {
+  public @Nullable Object getCommandGroupId() {
     return myCommandGroupId;
   }
 

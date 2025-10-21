@@ -217,6 +217,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
       toolbarAddAction.showAddPopup(true, it.source as MouseEvent)}
     val shortcut = KeymapUtil.getShortcutsText(toolbarAddAction.shortcutSet.shortcuts)
     if (shortcut.isNotEmpty()) tree.emptyText.appendText(" $shortcut")
+    tree.accessibleContext.accessibleName = ExecutionBundle.message("run.configuration.tree.accessible.name")
     (tree.model as DefaultTreeModel).reload()
   }
 

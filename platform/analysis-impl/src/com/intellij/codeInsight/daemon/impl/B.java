@@ -52,7 +52,6 @@ final class B implements AnnotationBuilder {
   private TextAttributes enforcedAttributes;
   private TextAttributesKey textAttributesKey;
   private ProblemHighlightType highlightType;
-  private Boolean needsUpdateOnTyping;
   private @NlsContexts.Tooltip String tooltip;
   private List<FixB> fixes;
   private boolean created;
@@ -266,13 +265,11 @@ final class B implements AnnotationBuilder {
 
   @Override
   public @NotNull AnnotationBuilder needsUpdateOnTyping() {
-    return needsUpdateOnTyping(true);
+    return this;
   }
 
   @Override
   public @NotNull AnnotationBuilder needsUpdateOnTyping(boolean value) {
-    assertNotSet(this.needsUpdateOnTyping, "needsUpdateOnTyping");
-    this.needsUpdateOnTyping = value;
     return this;
   }
 
@@ -300,9 +297,6 @@ final class B implements AnnotationBuilder {
       tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
     }
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
-    if (needsUpdateOnTyping != null) {
-      annotation.setNeedsUpdateOnTyping(needsUpdateOnTyping);
-    }
     if (highlightType != null) {
       annotation.setHighlightType(highlightType);
     }
@@ -388,7 +382,6 @@ final class B implements AnnotationBuilder {
            omitIfEmpty(enforcedAttributes, "enforcedAttributes") +
            omitIfEmpty(textAttributesKey, "textAttributesKey") +
            omitIfEmpty(highlightType, "highlightType") +
-           omitIfEmpty(needsUpdateOnTyping, "needsUpdateOnTyping") +
            omitIfEmpty(tooltip, "tooltip") +
            omitIfEmpty(fixes, "fixes") +
            '}';

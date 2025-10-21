@@ -35,10 +35,7 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.haveSize
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -485,12 +482,14 @@ class WSLDistributionTest {
           @DelicateCoroutinesApi
           override val processAdapterScope: CoroutineScope = scope
 
-          override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
+          override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
             require(wslDistribution == mockWslDistribution) { "$wslDistribution != $mockWslDistribution" }
             return MockIjentApi(adapter, rootUser)
           }
 
           override val isIjentAvailable: Boolean = true
+
+          override fun isIjentInitialized(descriptor: EelDescriptor): Boolean = true
         },
         disposable,
       )
@@ -522,11 +521,13 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override val descriptor: EelDescriptor
     get() = object : EelDescriptor {
-      override val userReadableDescription: @NonNls String = "mock"
-      override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
+      override val machine: EelMachine = object : EelMachine {
+        override val name: @NonNls String = "mock"
+        override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
 
-      override suspend fun toEelApi(): EelApi {
-        throw UnsupportedOperationException()
+        override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
+          throw UnsupportedOperationException()
+        }
       }
     }
 
@@ -565,6 +566,8 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
   }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
+  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EelExecApi.EnvironmentVariablesDeferred =
+    EelExecApi.EnvironmentVariablesDeferred(CompletableDeferred(mapOf("SHELL" to TEST_SHELL)))
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): ExternalCliEntrypoint {
     throw UnsupportedOperationException()

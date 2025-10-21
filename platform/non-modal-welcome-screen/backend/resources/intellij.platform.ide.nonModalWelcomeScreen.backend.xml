@@ -1,0 +1,17 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeatureBackend"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.backend.WelcomeScreenFeatureBackend" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.backend.BackendWelcomeScreenFeatureApiProvider"/>
+  </extensions>
+</idea-plugin>

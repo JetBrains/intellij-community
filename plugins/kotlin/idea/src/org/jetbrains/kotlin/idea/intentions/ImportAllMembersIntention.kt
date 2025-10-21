@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ImportAllMembersIntention : SelfTargetingIntention<KtElement>(
     KtElement::class.java,
-    KotlinBundle.lazyMessage("import.members.with")
+    KotlinBundle.messagePointer("import.members.with")
 ), HighPriorityAction {
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean {
         val receiverExpression = element.receiverExpression() ?: return false
@@ -49,7 +49,7 @@ class ImportAllMembersIntention : SelfTargetingIntention<KtElement>(
         val helper = ImportInsertHelper.getInstance(project)
         if (helper.importDescriptor(dummyFile, target, forceAllUnderImport = true) == ImportDescriptorResult.FAIL) return false
 
-        setTextGetter(KotlinBundle.lazyMessage("import.members.from.0", targetFqName.parent().asString()))
+        setTextGetter(KotlinBundle.messagePointer("import.members.from.0", targetFqName.parent().asString()))
         return true
     }
 

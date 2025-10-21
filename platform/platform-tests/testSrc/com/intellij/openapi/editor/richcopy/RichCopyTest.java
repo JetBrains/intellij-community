@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import junit.framework.AssertionFailedError;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +75,14 @@ public class RichCopyTest extends BasePlatformTestCase {
   }
 
   private static String readFully(InputStream inputStream) throws IOException {
-    return new String(FileUtilRt.loadBytes(inputStream), StandardCharsets.UTF_8);
+    byte[] bytes = FileUtilRt.loadBytes(inputStream);
+
+    if (bytes.length == 0 || bytes[bytes.length - 1] != 0) {
+      // Strings copied to the clipboard are expected to be null-terminated.
+      throw new AssertionFailedError("String is not null-terminated");
+    }
+
+    return new String(bytes, 0, bytes.length - 1, StandardCharsets.UTF_8);
   }
 
   private static String readFully(Reader reader) throws IOException {

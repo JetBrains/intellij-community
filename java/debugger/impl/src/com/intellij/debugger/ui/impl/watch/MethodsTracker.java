@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.sun.jdi.Method;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class MethodsTracker {
   @SuppressWarnings("SSBasedInspection") private final Object2IntOpenHashMap<Method> myMethodCounter = new Object2IntOpenHashMap<>();
-  private final Int2ObjectMap<MethodOccurrence> myCache = new Int2ObjectOpenHashMap<>();
+  private final MyCache<MethodOccurrence> myCache = new MyCache<>();
   private final CompletableFuture<Void> myFinished = new CompletableFuture<>();
 
   public final class MethodOccurrence {
@@ -52,8 +51,12 @@ public class MethodsTracker {
       return myMethod != null && getOccurrenceCount(myMethod) > 1;
     }
 
-    MethodOccurrence getMethodOccurrence(int frameIndex) {
+    MethodOccurrence getMethodOccurrenceSync(int frameIndex) {
       return myCache.get(frameIndex);
+    }
+
+    CompletableFuture<MethodOccurrence> getMethodOccurrenceAsync(int frameIndex) {
+      return myCache.getExact(frameIndex);
     }
   }
 
@@ -78,5 +81,30 @@ public class MethodsTracker {
 
   private CompletableFuture<Integer> getExactOccurrenceCount(@Nullable Method method) {
     return myFinished.thenApply(__ -> myMethodCounter.getInt(method));
+  }
+
+  /**
+   * Quasi-thread-safe map that works on the following premises:
+   * <ul>
+   *   <li>Only {@code computeIfAbsent} and {@code get} are used</li>
+   *   <li>{@code computeIfAbsent} is called sequentially within the same thread (and so is {@code rehash})</li>
+   *   <li>{@code get} can be called in parallel, but it's guaranteed that the map
+   *  will eventually contain the bucket for the key.</li>
+   * </ul>
+   */
+  private static class MyCache<V> extends Int2ObjectOpenHashMap<V> {
+
+    private volatile CompletableFuture<Void> myRehashFinished = CompletableFuture.completedFuture(null);
+
+    public CompletableFuture<V> getExact(int key) {
+      return myRehashFinished.thenApply(__ -> super.get(key));
+    }
+
+    @Override
+    protected void rehash(int newN) {
+      myRehashFinished = new CompletableFuture<>();
+      super.rehash(newN);
+      myRehashFinished.complete(null);
+    }
   }
 }

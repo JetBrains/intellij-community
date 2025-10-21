@@ -109,6 +109,7 @@ open class PresentationData : ColoredItemPresentation, ComparableObject, Locatio
   fun updateFrom(presentation: ItemPresentation) {
     if (presentation is PresentationData) {
       background = presentation.background
+      tooltip = presentation.tooltip
       for (fragment in presentation.coloredText) {
         addText(fragment)
       }

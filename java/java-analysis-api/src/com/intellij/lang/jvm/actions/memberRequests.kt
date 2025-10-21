@@ -4,7 +4,7 @@ package com.intellij.lang.jvm.actions
 import com.intellij.lang.jvm.JvmModifier
 
 @JvmOverloads
-fun modifierRequest(modifier: JvmModifier, shouldBePresent: Boolean, processHierarchy: Boolean = true): ChangeModifierRequest = object : ChangeModifierRequest {
+public fun modifierRequest(modifier: JvmModifier, shouldBePresent: Boolean, processHierarchy: Boolean = true): ChangeModifierRequest = object : ChangeModifierRequest {
   override fun isValid(): Boolean = true
   override fun getModifier(): JvmModifier = modifier
   override fun shouldBePresent(): Boolean = shouldBePresent

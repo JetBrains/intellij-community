@@ -161,8 +161,18 @@ public interface Git {
                                 @NotNull String newName,
                                 GitLineHandlerListener @NotNull ... listeners);
 
+  default @NotNull GitCommandResult reset(@NotNull GitRepository repository,
+                         @NotNull GitResetMode mode,
+                         @NotNull String target,
+                         GitLineHandlerListener @NotNull ... listeners) {
+    return reset(repository, mode, target, null, listeners);
+  }
+
   @NotNull
-  GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
+  GitCommandResult reset(@NotNull GitRepository repository,
+                         @NotNull GitResetMode mode,
+                         @NotNull String target,
+                         @Nullable String reflogMessage,
                          GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
@@ -267,6 +277,11 @@ public interface Git {
 
   @Nullable
   Hash resolveReference(@NotNull GitRepository repository, @NotNull String reference);
+
+  @NotNull
+  GitCommandResult updateReference(@NotNull GitRepository repository, @NotNull String reference,
+                                   @NotNull Hash newObjectId,
+                                   @Nullable String reflogMessage);
 
   @NotNull
   GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);

@@ -7,8 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.pycharm.community.ide.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.ide.impl" />
     <orderEntry type="module" module-name="intellij.pycharm.community.ide.implTraining" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>

@@ -1,20 +1,8 @@
-package org.jetbrains.annotations;
-
 import java.lang.annotation.*;
 import java.util.*;
 import java.util.function.*;
+import org.jetbrains.annotations.*;
 import static java.lang.annotation.ElementType.*;
-
-@Retention(RetentionPolicy.CLASS)
-@Target({METHOD, FIELD, PARAMETER, LOCAL_VARIABLE, TYPE_USE, TYPE, PACKAGE})
-@interface Nls {
-  enum Capitalization {
-    NotSpecified,
-    Title,
-    Sentence
-  }
-  Capitalization capitalization() default Capitalization.NotSpecified;
-}
 
 class X {
   static native String message(@PropertyKey(resourceBundle = "MyBundle") String key, Object... params);

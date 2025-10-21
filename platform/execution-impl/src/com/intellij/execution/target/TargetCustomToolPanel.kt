@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
@@ -15,11 +16,14 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @ApiStatus.Internal
-class TargetCustomToolPanel(private val project: Project,
-                            private val targetEnvironmentType: TargetEnvironmentType<*>,
-                            private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
-                            private val language: LanguageRuntimeConfiguration,
-                            private val introspectable: LanguageRuntimeType.Introspectable?) {
+class TargetCustomToolPanel(
+  private val project: Project,
+  private val targetEnvironmentType: TargetEnvironmentType<*>,
+  private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+  private val language: LanguageRuntimeConfiguration,
+  private val introspectable: LanguageRuntimeType.Introspectable?,
+  private val stateChangedCallback: (() -> Unit)? = null,
+) {
 
   val component: JComponent by lazy { createComponent() }
 
@@ -43,6 +47,7 @@ class TargetCustomToolPanel(private val project: Project,
     languagePanel?.configurable?.apply()
   }
 
+  @RequiresEdt
   fun createCustomTool(): Any? {
     return customToolLanguageConfigurable?.createCustomTool()
   }
@@ -65,8 +70,9 @@ class TargetCustomToolPanel(private val project: Project,
 
   private fun createRuntimePanel(language: LanguageRuntimeConfiguration): LanguagePanel {
     val configurable = language.getRuntimeType().createConfigurable(project, language, targetEnvironmentType, targetSupplier)
-    if (introspectable != null) {
-      (configurable as? CustomToolLanguageConfigurable<*>)?.setIntrospectable(introspectable)
+    (configurable as? CustomToolLanguageConfigurable<*>)?.apply {
+      introspectable?.let { setIntrospectable(it) }
+      stateChangedCallback?.let { registerStateChangedCallback(it) }
     }
     val panel = panel {
       row {
@@ -80,7 +86,9 @@ class TargetCustomToolPanel(private val project: Project,
     }
   }
 
-  private data class LanguagePanel(val language: LanguageRuntimeConfiguration,
-                                   val configurable: Configurable,
-                                   val panel: JComponent)
+  private data class LanguagePanel(
+    val language: LanguageRuntimeConfiguration,
+    val configurable: Configurable,
+    val panel: JComponent,
+  )
 }

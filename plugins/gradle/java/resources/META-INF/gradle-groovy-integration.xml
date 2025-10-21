@@ -21,7 +21,7 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleJavaContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMiscContributor"/>
     <pluginDescriptions implementation="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptions"/>
-
+    <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GroovyGradleApplicationEnvironmentProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
     <dslInspectionProvider language="Groovy" implementationClass="org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyGradleDslInspectionProvider"/>

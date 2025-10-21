@@ -21,6 +21,7 @@ class Super {
   static Super OK_SAME_ANONYMOUS = new Super(){};
   static Sub[] OK_ARRAY = new Sub[3];
   static Super OK_PRIVATE = new MySub();
+  static Super C6 = new <warning descr="Referencing subclass SubSub from superclass Super initializer might lead to class loading deadlock">SubSub</warning>();
   static java.util.List<Sub> OK_GENERICS = new java.util.ArrayList<Sub>();
 
   static {
@@ -38,6 +39,8 @@ class Super {
     }
 
   }
+  
+  private static class SubSub extends Sub {} // private but indirect subclass
 }
 
 class Sub extends Super implements Intf {

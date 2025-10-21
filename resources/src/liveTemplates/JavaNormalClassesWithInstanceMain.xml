@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="Java//Instance 'main' methods for normal classes">
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.static.psvm"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.short.static.psvm"
             name="psvm" toReformat="true" toShortenFQNames="true" value="static void main(){&#13;&#10;  $END$&#13;&#10;}">
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.static.psvm"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.short.static.psvm"
             name="main" toReformat="true" toShortenFQNames="true" value="static void main(){&#13;&#10;  $END$&#13;&#10;}">
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" value="true" />
     </context>
   </template>
 
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.static.psvma"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.short.static.psvma"
             name="psvma" toReformat="true" toShortenFQNames="true" value="static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.static.psvma"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.short.static.psvma"
             name="maina" toReformat="true" toShortenFQNames="true" value="static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" value="true" />

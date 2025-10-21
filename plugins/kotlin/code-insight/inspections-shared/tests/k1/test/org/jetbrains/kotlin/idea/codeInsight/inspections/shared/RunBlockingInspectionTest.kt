@@ -8,22 +8,24 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.InspectionTestUtil
-import com.intellij.testFramework.createGlobalContextForTool
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import com.intellij.testFramework.runInEdtAndWait
+import org.jdom.Element
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.util.collectionUtils.concat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import java.io.File
-import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RunBlockingInspectionTest {
+class RunBlockingInspectionTest: ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
 
     private val testDataDir = KotlinRoot.DIR.resolve("code-insight/inspections-shared/tests/testData/inspections/runBlocking").path
     private data class TraceElement(val fgName: String, val url: String, val fileAndLine: String)
@@ -40,22 +42,36 @@ class RunBlockingInspectionTest {
         }
         fun getFixture() = myFixture
         public override fun setUp() = super.setUp()
+        public override fun tearDown() = super.tearDown()
         override fun getTestDataPath() = testDataDir
         override fun getProjectDescriptor(): DefaultLightProjectDescriptor = projectDescriptor
     }
     
     @BeforeAll
     fun initialize() {
-        testCase.setUp()
-        testCase.getFixture().testDataPath = testDataDir
-        val file = File("$testDataDir/inspectionData/tests.xml")
-        val expectedRoot: Element = JDOMUtil.load(file)
-        myTests = expectedRoot.getChildren("test").map {Test.fromElement(it)}
-        
-        val aggregatedInputFiles = myTests.fold(mutableListOf<String>()) { acc, test -> acc.concat(test.inputFiles)!!.toMutableList() }
-        aggregatedInputFiles.forEach { input ->
-            val psiFile = testCase.getFixture().configureByFile(input)
-            psiFileMap[input] = psiFile
+        setUpWithKotlinPlugin(testCase.testRootDisposable) {
+            testCase.setUp()
+            testCase.getFixture().testDataPath = testDataDir
+            val file = File("$testDataDir/inspectionData/tests.xml")
+            val expectedRoot: Element = JDOMUtil.load(file)
+            myTests = expectedRoot.getChildren("test").map {Test.fromElement(it)}
+
+            val aggregatedInputFiles = myTests.fold(mutableListOf<String>()) { acc, test -> acc.concat(test.inputFiles)!!.toMutableList() }
+            aggregatedInputFiles.forEach { input ->
+                val psiFile = testCase.getFixture().configureByFile(input)
+                psiFileMap[input] = psiFile
+            }
+        }
+    }
+
+    @AfterAll
+    fun tearDown() {
+        testCase.tearDown()
+        runInEdtAndWait {
+            // CodeInsightFixture use a light project.
+            // We have to clean it up after suite because it could conflict with tests which use TestApplication with a full project.
+            LightPlatformTestCase.closeAndDeleteProject()
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         }
     }
 

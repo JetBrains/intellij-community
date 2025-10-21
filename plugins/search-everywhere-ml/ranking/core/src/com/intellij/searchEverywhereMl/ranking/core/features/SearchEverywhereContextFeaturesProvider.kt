@@ -33,47 +33,49 @@ internal class SearchEverywhereContextFeaturesProvider {
     internal val IS_SINGLE_MODULE_PROJECT = EventFields.Boolean("isSingleModuleProject")
 
     internal fun getContextFields(): List<EventField<*>> {
-      val fields = arrayListOf<EventField<*>>(
-        LOCAL_MAX_USAGE_COUNT_KEY, LOCAL_MIN_USAGE_COUNT_KEY, LOCAL_MAX_USAGE_SE_COUNT_KEY, LOCAL_MIN_USAGE_SE_COUNT_KEY,
-        OPEN_FILE_TYPES_KEY, NUMBER_OF_OPEN_EDITORS_KEY, IS_SINGLE_MODULE_PROJECT
-      )
-      fields.addAll(CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT.getFieldsDeclaration() +
-                    ACTIONS_GLOBAL_STATISTICS_CONTEXT_DEFAULT.getFieldsDeclaration() +
-                    ACTIONS_GLOBAL_STATISTICS_CONTEXT_UPDATED.getFieldsDeclaration() +
-                    CONTRIBUTORS_GLOBAL_STATISTICS_CONTEXT.getFieldsDeclaration())
-      return fields
+      return buildList {
+        addAll(listOf(
+          LOCAL_MAX_USAGE_COUNT_KEY, LOCAL_MIN_USAGE_COUNT_KEY, LOCAL_MAX_USAGE_SE_COUNT_KEY, LOCAL_MIN_USAGE_SE_COUNT_KEY,
+          OPEN_FILE_TYPES_KEY, NUMBER_OF_OPEN_EDITORS_KEY, IS_SINGLE_MODULE_PROJECT
+        ))
+
+        addAll(CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT.getFieldsDeclaration())
+        addAll(ACTIONS_GLOBAL_STATISTICS_CONTEXT_DEFAULT.getFieldsDeclaration())
+        addAll(ACTIONS_GLOBAL_STATISTICS_CONTEXT_UPDATED.getFieldsDeclaration())
+        addAll(CONTRIBUTORS_GLOBAL_STATISTICS_CONTEXT.getFieldsDeclaration())
+      }
     }
   }
 
   fun getContextFeatures(project: Project?): List<EventPair<*>> {
-    val data = arrayListOf<EventPair<*>>()
     val localTotalStats = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java).getTotalStats()
-    data.add(LOCAL_MAX_USAGE_COUNT_KEY.with(localTotalStats.maxUsageCount))
-    data.add(LOCAL_MIN_USAGE_COUNT_KEY.with(localTotalStats.minUsageCount))
-    data.add(LOCAL_MAX_USAGE_SE_COUNT_KEY.with(localTotalStats.maxUsageFromSearchEverywhere))
-    data.add(LOCAL_MIN_USAGE_SE_COUNT_KEY.with(localTotalStats.minUsageFromSearchEverywhere))
 
-    val contributorsSelectionsRange = ContributorsLocalSummary.getInstance().getContributorsSelectionsRange()
-    data.addAll(CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT.getLocalContextStatistics(contributorsSelectionsRange))
+    return buildList {
+      add(LOCAL_MAX_USAGE_COUNT_KEY.with(localTotalStats.maxUsageCount))
+      add(LOCAL_MIN_USAGE_COUNT_KEY.with(localTotalStats.minUsageCount))
+      add(LOCAL_MAX_USAGE_SE_COUNT_KEY.with(localTotalStats.maxUsageFromSearchEverywhere))
+      add(LOCAL_MIN_USAGE_SE_COUNT_KEY.with(localTotalStats.minUsageFromSearchEverywhere))
 
-    val actionsGlobalSummary = ActionsGlobalSummaryManager.getInstance()
-    val contributorsGlobalSummary = ContributorsGlobalSummaryManager.getInstance()
-    data.addAll(ACTIONS_GLOBAL_STATISTICS_CONTEXT_DEFAULT.getGlobalContextStatistics(actionsGlobalSummary.eventCountRange) +
-                ACTIONS_GLOBAL_STATISTICS_CONTEXT_UPDATED.getGlobalContextStatistics(actionsGlobalSummary.updatedEventCountRange) +
-                CONTRIBUTORS_GLOBAL_STATISTICS_CONTEXT.getGlobalContextStatistics(contributorsGlobalSummary.eventCountRange)
-    )
+      val contributorsSelectionsRange = ContributorsLocalSummary.getInstance().getContributorsSelectionsRange()
+      addAll(CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT.getLocalContextStatistics(contributorsSelectionsRange))
 
-    project?.let {
-      if (project.isDisposed) {
-        return@let
+      val actionsGlobalSummary = ActionsGlobalSummaryManager.getInstance()
+      val contributorsGlobalSummary = ContributorsGlobalSummaryManager.getInstance()
+      addAll(ACTIONS_GLOBAL_STATISTICS_CONTEXT_DEFAULT.getGlobalContextStatistics(actionsGlobalSummary.eventCountRange) +
+             ACTIONS_GLOBAL_STATISTICS_CONTEXT_UPDATED.getGlobalContextStatistics(actionsGlobalSummary.updatedEventCountRange) +
+             CONTRIBUTORS_GLOBAL_STATISTICS_CONTEXT.getGlobalContextStatistics(contributorsGlobalSummary.eventCountRange)
+      )
+
+      project?.let {
+        if (project.isDisposed) {
+          return@let
+        }
+
+        val fem = FileEditorManager.getInstance(it)
+        add(OPEN_FILE_TYPES_KEY.with(fem.openFiles.map { file -> file.fileType.name }.distinct()))
+        add(NUMBER_OF_OPEN_EDITORS_KEY.with(fem.allEditors.size))
+        add(IS_SINGLE_MODULE_PROJECT.with(ModuleManager.getInstance(it).modules.size == 1))
       }
-
-      val fem = FileEditorManager.getInstance(it)
-      data.add(OPEN_FILE_TYPES_KEY.with(fem.openFiles.map { file -> file.fileType.name }.distinct()))
-      data.add(NUMBER_OF_OPEN_EDITORS_KEY.with(fem.allEditors.size))
-      data.add(IS_SINGLE_MODULE_PROJECT.with(ModuleManager.getInstance(it).modules.size == 1))
     }
-
-    return data
   }
 }

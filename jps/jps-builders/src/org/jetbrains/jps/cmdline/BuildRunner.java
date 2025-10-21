@@ -63,14 +63,6 @@ public final class BuildRunner {
     return myModelLoader.loadModel().getProject();
   }
 
-  /**
-   * @deprecated please use {@link #load(MessageHandler, Path, BuildFSState)}
-   */
-  @Deprecated(forRemoval = true)
-  public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull File dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
-    return load(msgHandler, dataStorageRoot.toPath(), fsState);
-  }
-
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull Path dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
     BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);

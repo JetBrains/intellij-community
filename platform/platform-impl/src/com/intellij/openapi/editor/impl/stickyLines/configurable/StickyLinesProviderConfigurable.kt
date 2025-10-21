@@ -13,6 +13,7 @@ internal class StickyLinesProviderConfigurable(
 ) : SearchableConfigurable {
 
   override fun createComponent(): JCheckBox = JCheckBox(language.displayName)
+    .apply { isOpaque = false }
 
   override fun isModified(): Boolean = false
 

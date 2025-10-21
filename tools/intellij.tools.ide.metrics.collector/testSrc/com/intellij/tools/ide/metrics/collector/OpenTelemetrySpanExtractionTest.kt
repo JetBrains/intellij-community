@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.metrics.collector
 
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
+import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsForStartup
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.FileSystems
 import java.nio.file.Paths
+import java.time.Instant
 import kotlin.io.path.div
 
 internal val openTelemetryReports by lazy {
@@ -28,6 +30,14 @@ internal val openTelemetryReports by lazy {
 }
 
 class OpenTelemetrySpanExtractionTest {
+
+  @Test
+  fun gatewayClientHostMetricsCollected() {
+    val file = (openTelemetryReports / "client-opentelemetry.json")
+    val result = OpentelemetrySpanJsonParser(SpanFilter.nameInList("rdct.station.discovery: scheduled", "rdct.gateway.LinkHandler.reporting.capabilities")).getSpanElements(file)
+    result.filter { it.startTimestamp == Instant.ofEpochMilli(1751546271647270 / 1000) && it.name == "rdct.station.discovery: scheduled" }.shouldHaveSize(1)
+    result.filter { it.startTimestamp == Instant.ofEpochMilli(1751546271719000 / 1000) && it.name == "rdct.gateway.LinkHandler.reporting.capabilities" }.shouldHaveSize(1)
+  }
 
   @Test
   fun startupMetricsCollected() {
@@ -77,6 +87,7 @@ class OpenTelemetrySpanExtractionTest {
       Metric.newCounter("%findUsages#count", 3),
       Metric.newDuration("%findUsages#mean_value", 2576),
       Metric.newDuration("%findUsages#standard_deviation", 1505),
+      Metric.newDuration("%findUsages#median_value", 3090),
       Metric.newDuration("FindUsagesManager.startProcessUsages_1", 509),
       Metric.newCounter("FindUsagesManager.startProcessUsages_1#number_of_found_usages", 1),
       Metric.newDuration("FindUsagesManager.startProcessUsages_2", 4106),
@@ -159,6 +170,7 @@ class OpenTelemetrySpanExtractionTest {
       Metric.newCounter("typing#count", 6),
       Metric.newDuration("typing#mean_value", 35),
       Metric.newDuration("typing#standard_deviation", 56),
+      Metric.newDuration("typing#median_value", 4),
       Metric.newDuration("completion_1", 539),
       Metric.newCounter("completion_1#number", 635),
       Metric.newDuration("completion_2", 148),
@@ -176,6 +188,7 @@ class OpenTelemetrySpanExtractionTest {
       Metric.newCounter("completion#count", 5),
       Metric.newDuration("completion#mean_value", 208),
       Metric.newDuration("completion#standard_deviation", 165),
+      Metric.newDuration("completion#median_value", 130),
       Metric.newDuration("invokeCompletion_1", 542),
       Metric.newCounter("invokeCompletion_1#caretOffset", 270),
       Metric.newDuration("invokeCompletion_2", 149),
@@ -193,6 +206,7 @@ class OpenTelemetrySpanExtractionTest {
       Metric.newCounter("invokeCompletion#count", 5),
       Metric.newDuration("invokeCompletion#mean_value", 209),
       Metric.newDuration("invokeCompletion#standard_deviation", 166),
+      Metric.newDuration("invokeCompletion#median_value", 131),
       Metric.newDuration("performCompletion_1", 302),
       Metric.newCounter("performCompletion_1#lookupsFound", 635),
       Metric.newDuration("performCompletion_2", 59),
@@ -210,6 +224,7 @@ class OpenTelemetrySpanExtractionTest {
       Metric.newCounter("performCompletion#count", 5),
       Metric.newDuration("performCompletion#mean_value", 104),
       Metric.newDuration("performCompletion#standard_deviation", 98),
+      Metric.newDuration("performCompletion#median_value", 59),
       Metric.newDuration("ComboEditorCompletionContributor", 2),
       Metric.newDuration("ContextFeaturesContributor_1", 16),
       Metric.newDuration("ContextFeaturesContributor_2", 1),
@@ -308,13 +323,13 @@ class OpenTelemetrySpanExtractionTest {
                                                     (openTelemetryReports / "opentelemetry_with_warmup_spans.json"),
                                                     "localInspections", "GeneralHighlightingPass")
     assertThat(metrics).containsAll(listOf(
-      Metric.newDuration("semanticHighlighting_1", 33),
-      Metric.newDuration("semanticHighlighting_2", 34),
-      Metric.newDuration("semanticHighlighting_3", 35),
-      Metric.newDuration("semanticHighlighting_4", 45),
-      Metric.newDuration("semanticHighlighting_5", 47),
-      Metric.newDuration("semanticHighlighting", 194),
-      Metric.newDuration("semanticHighlighting#mean_value", 38),
+      Metric.newDuration("semanticHighlighting_1", 347),
+      Metric.newDuration("semanticHighlighting_2", 337),
+      Metric.newDuration("semanticHighlighting_3", 342),
+      Metric.newDuration("semanticHighlighting_4", 349),
+      Metric.newDuration("semanticHighlighting_5", 350),
+      Metric.newDuration("semanticHighlighting", 1725),
+      Metric.newDuration("semanticHighlighting#mean_value", 345),
     ))
     val find = metrics.find { it.id.name == "semanticHighlighting_6" }
     assert(find == null) {

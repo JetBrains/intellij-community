@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
@@ -21,6 +22,15 @@ interface ThreadingSupport {
    * @return the result returned by the computation.
    */
   fun <T> runWriteIntentReadAction(computation: () -> T): T
+
+  /**
+   * Runs the specified [action] synchronously with a write-intent lock. The action is executed
+   * immediately if no write action is currently running.
+   *
+   * @param action the computation to perform.
+   * @return `true` if the action was executed, `false` if another write-intent lock could not be acquired.
+   */
+  fun tryRunWriteIntentReadAction(action: () -> Unit): Boolean
 
   /**
    * Executes a runnable with a write-intent lock only if locking is permitted on this thread
@@ -257,6 +267,53 @@ interface ThreadingSupport {
    * [action] is guaranteed to run. It may run immediately on the current thread or after some time on an unspecified thread.
    */
   fun runWhenWriteActionIsCompleted(action: () -> Unit)
+
+  /**
+   * Executes [action] with [blockingExecutor], and transfers write access to [action].
+   * This function requires the acquired write lock.
+   *
+   * [blockingExecutor] must block the running thread until [action] finishes.
+   * [blockingExecutor] can treat the passed runnable in a special way, so we wrap the runnable with [RunnableWithTransferredWriteAction]
+   *
+   * A typical example of [blockingExecutor] is [javax.swing.SwingUtilities.invokeAndWait]
+   */
+  @RequiresWriteLock
+  fun transferWriteActionAndBlock(blockingExecutor: (RunnableWithTransferredWriteAction) -> Unit, action: Runnable)
+
+  /**
+   * This function allows to conditionally execute [action] under write lock while checking a condition provided by [shouldProceedWithWriteAction].
+   *
+   * The function works in the following steps:
+   * 1. Acquire write-intent lock;
+   * 2. Execute [shouldProceedWithWriteAction];
+   * 3. If true, proceed with [action] under write lock which was atomically upgraded from the previously acquired write-intent;
+   * 4. If false, return without executing [action];
+   * 5. Release all acquired locks.
+   *
+   * Normally, write actions are heavy -- they need to terminate all existing read actions and cancel pending ones.
+   * Sometimes it is possible to avoid the execution of write action, but the decision needs to be taken with a consistent worldview.
+   * This function can be useful when the client is able to take this decision, for example, in `readAndWriteAction` group of functions
+   */
+  @ApiStatus.Internal
+  suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, action: () -> T): T?
+
+  /**
+   * Executes write action while suspending for lock acquisition.
+   */
+  suspend fun <T> runWriteAction(action: () -> T): T
+
+  /**
+   * A marker class that helps others to identify that the runnable needs to run quickly
+   */
+  abstract class RunnableWithTransferredWriteAction : Runnable {
+    companion object {
+      const val NAME: String = "RunnableWithTransferredWriteAction"
+    }
+
+    override fun toString(): String {
+      return NAME
+    }
+  }
 }
 
 typealias CleanupAction = () -> Unit

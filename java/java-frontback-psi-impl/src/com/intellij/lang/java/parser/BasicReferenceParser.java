@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +22,11 @@ import static com.intellij.util.BitUtil.set;
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link ReferenceParser}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class BasicReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
   public static final int ELLIPSIS = 0x02;
@@ -33,6 +37,14 @@ public class BasicReferenceParser {
   public static final int INCOMPLETE_ANNO = 0x40;
   public static final int VAR_TYPE = 0x80;
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   *             This class is planned to be removed.
+   *             As a temporary solution, use {@link ReferenceParser.TypeInfo}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static class TypeInfo {
     public boolean isPrimitive;
     public boolean isParameterized;

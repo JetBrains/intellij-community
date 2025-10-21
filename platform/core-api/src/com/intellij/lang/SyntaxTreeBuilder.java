@@ -45,8 +45,22 @@ public interface SyntaxTreeBuilder {
    * Slightly easier way to what {@link ITokenTypeRemapper} does (i.e. it just remaps current token to a given type).
    *
    * @param type new type for the current token.
+   * @see #remapCurrentTokenAndRestoreOnRollback
    */
   void remapCurrentToken(@NotNull IElementType type);
+
+  /**
+   * Similar to {@link #remapCurrentToken(IElementType)}, but records the original token type,
+   * which will be restored if any marker encompassing the current token is rolled back.
+   * <br/><br/>
+   * If invoked multiple times on the same token, then on marker rollback the token type
+   * that existed before the first invocation will be restored.
+   *
+   * @param type the new type for the current token
+   */
+  default void remapCurrentTokenAndRestoreOnRollback(@NotNull IElementType type) {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Subscribe for notification on default whitespace and comments skipped events.

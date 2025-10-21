@@ -7,7 +7,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoole
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsKey
-import org.jetbrains.annotations.ApiStatus
 import java.io.Serializable
 
 class VcsHistoryCache {
@@ -30,14 +29,6 @@ class VcsHistoryCache {
     historyCache.put(HistoryCacheBaseKey(filePath, vcsKey), cachedHistory)
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use putSession instead",
-              replaceWith = ReplaceWith("putSession(filePath, correctedPath, vcsKey, session, factory, isFull)"))
-  fun <C : Serializable, T : VcsAbstractHistorySession> put(filePath: FilePath, correctedPath: FilePath?, vcsKey: VcsKey, session: T,
-                                                            factory: VcsCacheableHistorySessionFactory<C, T>, isFull: Boolean) {
-    putSession(filePath, correctedPath, vcsKey, session, factory, isFull)
-  }
-
   fun <C : Serializable, T : VcsAbstractHistorySession> getSession(filePath: FilePath, vcsKey: VcsKey,
                                                                    factory: VcsCacheableHistorySessionFactory<C, T>,
                                                                    allowPartial: Boolean): T? {
@@ -45,13 +36,6 @@ class VcsHistoryCache {
                         ?: return null
     val customData = cachedHistory.customData as C?
     return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use getSession instead", replaceWith = ReplaceWith("getSession(filePath, vcsKey, factory, false)"))
-  fun <C : Serializable, T : VcsAbstractHistorySession> getFull(filePath: FilePath, vcsKey: VcsKey,
-                                                                factory: VcsCacheableHistorySessionFactory<C, T>): T? {
-    return getSession(filePath, vcsKey, factory, false)
   }
 
   fun getRevisions(filePath: FilePath, vcsKey: VcsKey): List<VcsFileRevision> {

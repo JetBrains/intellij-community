@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.gradle.scripting.shared.roots
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
-import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference

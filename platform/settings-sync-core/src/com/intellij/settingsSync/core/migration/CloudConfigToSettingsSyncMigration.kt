@@ -6,11 +6,11 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.core.*
 import com.intellij.settingsSync.core.config.EDITOR_FONT_SUBCATEGORY_ID
+import com.intellij.util.system.OS
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.Files
@@ -150,31 +150,13 @@ internal class CloudConfigToSettingsSyncMigration : SettingsSyncMigration {
 
     val OS_NAMES = arrayOf("mac", "win", "linux", "freebsd", "unix", "unknown")
 
-    fun calcOS(): String {
-      if (SystemInfo.isMac) {
-        return "mac"
-      }
-      if (SystemInfo.isWindows) {
-        return "win"
-      }
-      if (SystemInfo.isLinux) {
-        return "linux"
-      }
-      if (SystemInfo.isFreeBSD) {
-        return "freebsd"
-      }
-      if (SystemInfo.isUnix) {
-        return "unix"
-      }
-      if (SystemInfo.isSolaris) {
-        return "solaris"
-      }
-      if (SystemInfo.isChromeOS) {
-        return "chrome"
-      }
-      return "unknown"
+    fun calcOS(): String = when (OS.CURRENT) {
+      OS.Windows -> "win"
+      OS.macOS -> "mac"
+      OS.Linux -> "linux"
+      OS.FreeBSD -> "freebsd"
+      else -> "unix"
     }
-
   }
 
   fun filterOsName(fileName: String): Boolean {

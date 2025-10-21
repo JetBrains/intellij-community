@@ -29,7 +29,8 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.g
 # xterm installs freetype, xlib, cb etc. GL is also required by some python tests
 # First, install certs to install docker. Then update, then install docker and other tools
 # Docker cli is used in tests
-RUN apt-get update && apt-get install -y ca-certificates && apt-get upgrade -y && apt-get update && apt-get install -y openssl libgl1 zsh fish bash xterm locales libsqlite3-dev apt-transport-https ca-certificates curl software-properties-common docker-ce-cli && rm -rf /var/lib/apt/lists/*
+# Git is used in product-info.json generation (see ProductInfoGenerator#generateGitRevisionProperty) to run tests in dev-mode
+RUN apt-get update && apt-get install -y ca-certificates && apt-get upgrade -y && apt-get update && apt-get install -y openssl libgl1 zsh fish bash xterm locales libsqlite3-dev apt-transport-https ca-certificates curl software-properties-common docker-ce-cli git && rm -rf /var/lib/apt/lists/*
 
 # UTF locale is required for testFileEncoding
 # libsqlite3 is for Django
@@ -39,6 +40,10 @@ RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
 ENV LC_ALL=en_US.UTF-8
 ENV PYCHARM_PYTHONS=/pythons/
 ENV CONDA_PATH=/pythons/conda/bin/conda
+
+# don't ask the user to accept conda TOS
+# see PCQA-1152 and https://github.com/anaconda/conda-anaconda-tos?tab=readme-ov-file#cicd-environments
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
 
 COPY --from=builder /pythons/ /pythons
 

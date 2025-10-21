@@ -69,7 +69,7 @@ public final class ClassCouplingInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ClassCouplingVisitor();
   }
 

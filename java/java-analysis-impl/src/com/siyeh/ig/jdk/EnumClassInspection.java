@@ -30,7 +30,7 @@ public final class EnumClassInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new EnumClassVisitor();
   }
 

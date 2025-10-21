@@ -8,10 +8,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.ExpressionInfo
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-import com.intellij.xdebugger.frame.XValueDescriptor
+import com.intellij.xdebugger.frame.XDescriptor
+import com.intellij.xdebugger.frame.XPinToTopData
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.XValueGroupId
+import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
@@ -28,11 +32,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
-  suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): TimeoutSafeResult<XEvaluationResult>
+  suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult>
 
-  suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): TimeoutSafeResult<XEvaluationResult>
+  suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult>
 
-  suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): TimeoutSafeResult<XEvaluationResult>
+  suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult>
 
   suspend fun expressionInfoAtOffset(frameId: XStackFrameId, documentId: DocumentId, offset: Int, sideEffectsAllowed: Boolean): ExpressionInfo?
 
@@ -47,9 +51,15 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 @ApiStatus.Internal
 @Serializable
 sealed interface XValueComputeChildrenEvent {
-  // TODO[IJPL-160146]: support [XValueGroup]
   @Serializable
-  data class AddChildren(val names: List<String>, val children: List<XValueDto>, val isLast: Boolean) : XValueComputeChildrenEvent
+  data class AddChildren(
+    val names: List<String>,
+    val children: List<XValueDto>,
+    val isLast: Boolean,
+    val topGroups: List<XValueGroupDto>,
+    val bottomGroups: List<XValueGroupDto>,
+    val topValues: List<XValueDto>,
+  ) : XValueComputeChildrenEvent
 
   @Serializable
   data class SetAlreadySorted(val value: Boolean) : XValueComputeChildrenEvent
@@ -92,13 +102,35 @@ sealed interface XEvaluationResult {
 @Serializable
 data class XValueDto(
   val id: XValueId,
-  @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XValueDescriptor>?,
+  @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XDescriptor>?,
   val canNavigateToSource: Boolean,
   @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
   val valueMark: RpcFlow<XValueMarkerDto?>,
   val presentation: RpcFlow<XValueSerializedPresentation>,
   val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
+  val name: String?,
+  val textProvider: RpcFlow<XValueTextProviderDto>?,
+  @Serializable(with = DeferredSerializer::class) val pinToTopData: Deferred<XPinToTopData>?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XValueTextProviderDto(
+  val shouldShowTextValue: Boolean,
+  val textValue: String?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XValueGroupDto(
+  val id: XValueGroupId,
+  val groupName: String,
+  val icon: IconId?,
+  val isAutoExpand: Boolean,
+  val isRestoreExpansion: Boolean,
+  val separator: String,
+  val comment: String?,
 )
 
 @ApiStatus.Internal

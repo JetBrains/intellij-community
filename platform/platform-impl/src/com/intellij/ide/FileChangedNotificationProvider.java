@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.EditorNotificationPanel;
@@ -57,7 +57,7 @@ public final class FileChangedNotificationProvider implements EditorNotification
       }
     });
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkFileListenerBackgroundable() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {

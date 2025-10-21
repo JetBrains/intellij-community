@@ -591,11 +591,11 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   protected String getSignature() {
     final @NonNls StringBuilder buffer = new StringBuilder();
-    if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected()) {
+    if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected() && myNullability != null) {
       final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       buffer.append("@");
       buffer.append(
-        StringUtil.getShortName(myNullability == Nullability.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
+        StringUtil.getShortName(nullManager.getDefaultAnnotation(myNullability, myTargetClass)));
       buffer.append("\n");
     }
     final int declarationOffset = buffer.length();

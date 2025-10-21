@@ -36,10 +36,10 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
         val location = context.location ?: return false
         val module = location.module?.takeIf { it.platform.isJvm() } ?: return false
         val container = getEntryPointContainer(location) ?: return false
-        val startClassFQName = getMainClassJvmName(container) ?: return false
+        val startClassFQName = getMainClassQualifiedName(container) ?: return false
 
         configuration.setModule(module)
-        configuration.runClass = startClassFQName
+        configuration.mainClassName = startClassFQName
         configuration.setGeneratedName()
 
         return true
@@ -52,7 +52,7 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
 
     override fun isConfigurationFromContext(configuration: KotlinRunConfiguration, context: ConfigurationContext): Boolean {
         val entryPointContainer = getEntryPointContainer(context.location) ?: return false
-        val startClassFQName = getMainClassJvmName(entryPointContainer) ?: return false
+        val startClassFQName = getMainClassQualifiedName(entryPointContainer) ?: return false
         val jvmModule = context.module?.takeIf { it.platform.isJvm() }
 
         return isConfigurationFromContext(configuration, startClassFQName, jvmModule)
@@ -63,13 +63,13 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
         contextStartClassFQName: String,
         contextJvmModule: Module?
     ): Boolean {
-        return configuration.runClass == contextStartClassFQName &&
+        return configuration.mainClassName == contextStartClassFQName &&
                 configuration.configurationModule?.module == contextJvmModule
     }
 
     override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? {
         val entryPointContainer = getEntryPointContainer(context.location) ?: return null
-        val startClassFQName = getMainClassJvmName(entryPointContainer) ?: return null
+        val startClassFQName = getMainClassQualifiedName(entryPointContainer) ?: return null
         val jvmModule = context.module?.takeIf { it.platform.isJvm() }
 
         ProgressManager.checkCanceled()
@@ -83,18 +83,6 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
     }
 
     companion object {
-        @ApiStatus.ScheduledForRemoval
-        @Deprecated(
-            "Use 'KotlinMainFunctionDetector.findMainOwner()' instead",
-            ReplaceWith(
-                "KotlinMainFunctionDetector.getInstance().findMainOwner(locationElement)",
-                "org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector",
-                "org.jetbrains.kotlin.idea.base.lineMarkers.run.findMainOwner"
-            )
-        )
-        fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? {
-            return KotlinMainFunctionDetector.getInstance().findMainOwner(locationElement)
-        }
 
         @Deprecated(
             "Use 'getStartClassFqName() instead",
@@ -118,6 +106,22 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
                     containerClass?.toLightClass()?.let { ClassUtil.getJVMClassName(it) }
                 } else {
                     container.toLightClass()?.let { ClassUtil.getJVMClassName(it) }
+                }
+            }
+            else -> null
+        }
+
+        @ApiStatus.Internal
+        fun getMainClassQualifiedName(container: KtDeclarationContainer): String? = when (container) {
+            is KtFile -> container.javaFileFacadeFqName.asString()
+            is KtClassOrObject -> {
+                if (!container.isValid) {
+                    null
+                } else if (container is KtObjectDeclaration && container.isCompanion()) {
+                    val containerClass = container.getParentOfType<KtClass>(true)
+                    containerClass?.toLightClass()?.qualifiedName
+                } else {
+                    container.toLightClass()?.qualifiedName
                 }
             }
             else -> null

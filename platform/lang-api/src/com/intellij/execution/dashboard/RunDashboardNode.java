@@ -19,8 +19,4 @@ public interface RunDashboardNode {
   }
 
   Project getProject();
-
-  default @Nullable Runnable getRemover() {
-    return null;
-  }
 }

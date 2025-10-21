@@ -2,6 +2,7 @@ from collections.abc import Callable
 from threading import Event
 from typing_extensions import TypeAlias
 
+from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.ssh_gss import _SSH_GSSAuth
 from paramiko.transport import Transport
@@ -46,3 +47,12 @@ class GssapiWithMicAuthHandler:
     def auth_username(self) -> str: ...
     @property
     def gss_host(self) -> str: ...
+
+class AuthOnlyHandler(AuthHandler):
+    def send_auth_request(
+        self, username: str, method: str, finish_message: Callable[[Message], None] | None = None
+    ) -> list[str]: ...
+    def auth_none(self, username: str) -> list[str]: ...  # type: ignore[override]
+    def auth_publickey(self, username: str, key: PKey) -> list[str]: ...  # type: ignore[override]
+    def auth_password(self, username: str, password: str) -> list[str]: ...  # type: ignore[override]
+    def auth_interactive(self, username: str, handler: _InteractiveCallback, submethods: str = "") -> list[str]: ...  # type: ignore[override]

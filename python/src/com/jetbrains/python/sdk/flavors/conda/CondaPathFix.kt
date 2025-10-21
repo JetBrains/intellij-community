@@ -6,7 +6,7 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.util.EnvReader
+import com.intellij.util.ShellEnvironmentReader
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import org.jetbrains.annotations.ApiStatus
@@ -52,7 +52,8 @@ fun TargetedCommandLineBuilder.fixCondaPathEnvIfNeeded(condaPathOnTarget: FullPa
     return
   }
   try {
-    val envs = EnvReader().readBatEnv(activateBat, emptyList())
+    val command = ShellEnvironmentReader.winShellCommand(activateBat, null)
+    val envs = ShellEnvironmentReader.readEnvironment(command, 0).first
     addEnvVars(envs, condaPathOnTarget)
   }
   catch (e: IOException) {

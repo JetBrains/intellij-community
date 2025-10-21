@@ -3,19 +3,19 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 
 import com.google.gson.JsonObject
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
-import org.jetbrains.kotlin.idea.base.util.getAsStringList
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.projectStructureTest.*
 import java.io.File
+import kotlin.io.path.Path
 
 abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<ModuleDependentsTestProjectStructure>(
     ModuleDependentsTestProjectStructureParser,
 ) {
-
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-platform").resolve("testData").resolve("moduleDependents")
 
@@ -23,33 +23,45 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
 
     override fun doTestWithProjectStructure(testDirectory: String) {
         assertNotEmpty(testProjectStructure.targets)
-        testProjectStructure.targets.forEach(::checkTarget)
+        testProjectStructure.targets.forEach { checkTarget(it, testDirectory) }
     }
 
-    private fun checkTarget(target: ModuleDependentsTestTarget) {
-        val entityReference = target.entityReference
-
-        val targetModule = when (entityReference) {
+    private fun checkTarget(target: TestProjectEntityReference, testDirectory: String) {
+        val targetModule = when (target) {
             is TestProjectLibraryReference ->
-                projectLibrariesByName.getValue(entityReference.name).toKaLibraryModules(project).first()
+                projectLibrariesByName.getValue(target.name).toKaLibraryModules(project).first()
 
             is TestProjectModuleReference ->
-                modulesByName.getValue(entityReference.name).toKaSourceModuleForProduction()!!
+                modulesByName.getValue(target.name).toKaSourceModuleForProduction()!!
         }
 
-        val directDependents = moduleDependentsProvider.getDirectDependents(targetModule)
-        assertEquals(
-            "Direct dependents of ${entityReference.name}:",
-            target.directDependents,
-            directDependents.map { (it as KaSourceModule).name }.toSet(),
-        )
+        checkDirectDependents(target, targetModule, testDirectory)
+        checkTransitiveDependents(target, targetModule, testDirectory)
+    }
 
+    private fun checkDirectDependents(target: TestProjectEntityReference, targetModule: KaModule, testDirectory: String) {
+        val directDependents = moduleDependentsProvider.getDirectDependents(targetModule)
+        checkDependentsAgainstFile(directDependents, testDirectory, target.name, "direct.txt")
+    }
+
+    private fun checkTransitiveDependents(target: TestProjectEntityReference, targetModule: KaModule, testDirectory: String) {
         val transitiveDependents = moduleDependentsProvider.getTransitiveDependents(targetModule)
-        assertEquals(
-            "Transitive dependents of ${entityReference.name}:",
-            target.transitiveDependents,
-            transitiveDependents.map { (it as KaSourceModule).name }.toSet(),
-        )
+        checkDependentsAgainstFile(transitiveDependents, testDirectory, target.name, "transitive.txt")
+    }
+
+    private fun checkDependentsAgainstFile(
+        dependents: Collection<KaModule>,
+        testDirectory: String,
+        targetName: String,
+        fileSuffix: String
+    ) {
+        val expectedFile = Path(testDirectory, targetName, fileSuffix)
+        val renderedDependents = if (dependents.isNotEmpty()) {
+            dependents.map { renderModuleName(it) }.sorted().joinToString("\n")
+        } else {
+            "<EMPTY>"
+        }
+        KotlinTestUtils.assertEqualsToFile(expectedFile, renderedDependents)
     }
 }
 
@@ -60,7 +72,7 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
 data class ModuleDependentsTestProjectStructure(
     override val libraries: List<TestProjectLibrary>,
     override val modules: List<TestProjectModule>,
-    val targets: List<ModuleDependentsTestTarget>,
+    val targets: List<TestProjectEntityReference>,
 ) : TestProjectStructure
 
 private object ModuleDependentsTestProjectStructureParser : TestProjectStructureParser<ModuleDependentsTestProjectStructure> {
@@ -73,28 +85,6 @@ private object ModuleDependentsTestProjectStructureParser : TestProjectStructure
     ): ModuleDependentsTestProjectStructure = ModuleDependentsTestProjectStructure(
         libraries,
         modules,
-        json.getAsJsonObjectList(TARGETS_FIELD)!!.map(ModuleDependentsTestTargetParser::parse),
+        json.getAsJsonObjectList(TARGETS_FIELD)!!.map(TestProjectEntityReferenceParser::parse),
     )
-}
-
-data class ModuleDependentsTestTarget(
-    val entityReference: TestProjectEntityReference,
-    val directDependents: Set<String>,
-    val transitiveDependents: Set<String>,
-)
-
-private object ModuleDependentsTestTargetParser {
-    private const val DIRECT_DEPENDENTS_FIELD = "directDependents"
-    private const val TRANSITIVE_DEPENDENTS_FIELD = "transitiveDependents"
-
-    fun parse(json: JsonObject): ModuleDependentsTestTarget {
-        // We can parse `json` as the entity reference itself to avoid boilerplate around the entity reference.
-        val entityReference = TestProjectEntityReferenceParser.parse(json)
-
-        return ModuleDependentsTestTarget(
-            entityReference,
-            json.getAsStringList(DIRECT_DEPENDENTS_FIELD)!!.toSet(),
-            json.getAsStringList(TRANSITIVE_DEPENDENTS_FIELD)!!.toSet(),
-        )
-    }
 }

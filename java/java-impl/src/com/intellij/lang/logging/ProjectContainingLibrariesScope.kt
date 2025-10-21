@@ -12,17 +12,17 @@ import com.intellij.psi.search.ProjectAndLibrariesScope
  * Scope which contains project files and libraries which are only available in the project, e.g. it excludes libraries for
  * the configuration scripts like Gradle build script.
  * */
-class ProjectContainingLibrariesScope(project: Project) : ProjectAndLibrariesScope(project) {
+public class ProjectContainingLibrariesScope(project: Project) : ProjectAndLibrariesScope(project) {
   private val projectFileIndex: ProjectFileIndex = ProjectFileIndex.getInstance(project);
 
   override fun contains(file: VirtualFile): Boolean = !projectFileIndex.findContainingLibraries(file).isEmpty()
 
-  companion object {
+  public companion object {
     private val PROJECT_CONTAINING_LIBRARIES_SCOPE_KEY = NotNullLazyKey.createLazyKey<GlobalSearchScope, Project>(
       "PROJECT_CONTAINING_LIBRARIES_SCOPE_KEY"
     ) { project: Project -> ProjectContainingLibrariesScope(project) }
 
     @JvmStatic
-    fun getScope(project: Project): GlobalSearchScope = PROJECT_CONTAINING_LIBRARIES_SCOPE_KEY.getValue(project)
+    public fun getScope(project: Project): GlobalSearchScope = PROJECT_CONTAINING_LIBRARIES_SCOPE_KEY.getValue(project)
   }
 }

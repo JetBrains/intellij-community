@@ -4,6 +4,7 @@ package git4idea;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public class DialogManager {
                                 final int defaultButtonIndex,
                                 final int focusedButtonIndex,
                                 final @Nullable Icon icon,
-                                final @Nullable DialogWrapper.DoNotAskOption dontAskOption) {
+                                final @Nullable DoNotAskOption dontAskOption) {
     return dialogManager().showMessageDialog(message, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption);
   }
 
@@ -85,7 +86,7 @@ public class DialogManager {
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon,
-                                  @Nullable DialogWrapper.DoNotAskOption dontAskOption) {
+                                  @Nullable DoNotAskOption dontAskOption) {
     return Messages.showDialog(message, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption);
   }
 

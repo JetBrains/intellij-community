@@ -1,15 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework
 
-import com.intellij.ide.plugins.ModuleDependencies
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PluginContentDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Files
@@ -29,8 +30,11 @@ private object PluginBuilderConsts {
 private val pluginIdCounter = AtomicInteger()
 
 /**
+ * for removal in 26.1
+ *
  * use [com.intellij.platform.testFramework.plugins.plugin] instead
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use PluginSpec instead")
 class PluginBuilder() {
   private data class ExtensionBlock(val ns: String, val text: String)
@@ -57,9 +61,9 @@ class PluginBuilder() {
   private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
-  private val dependencies = mutableListOf<ModuleDependencies.ModuleReference>()
-  private val pluginDependencies = mutableListOf<ModuleDependencies.PluginReference>()
-  private val incompatibleWith = mutableListOf<ModuleDependencies.PluginReference>()
+  private val dependencies = mutableListOf<PluginModuleId>()
+  private val pluginDependencies = mutableListOf<PluginId>()
+  private val incompatibleWith = mutableListOf<PluginId>()
 
   private data class SubDescriptor(val filename: String, val builder: PluginBuilder)
 
@@ -120,11 +124,11 @@ class PluginBuilder() {
   }
 
   fun module(
-    moduleName: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
-    moduleFile: String = "$moduleName.xml",
+    moduleId: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
+    moduleFile: String = "$moduleId.xml",
   ): PluginBuilder {
     subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
-    content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
+    content.add(PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId, PluginModuleId.JETBRAINS_NAMESPACE), configFile = null, descriptorContent = null, loadingRule = loadingRule, requiredIfAvailable = null))
     return this
   }
 
@@ -134,17 +138,17 @@ class PluginBuilder() {
   }
 
   fun dependency(moduleName: String): PluginBuilder {
-    dependencies.add(ModuleDependencies.ModuleReference(moduleName))
+    dependencies.add(PluginModuleId(moduleName, PluginModuleId.JETBRAINS_NAMESPACE))
     return this
   }
 
   fun pluginDependency(pluginId: String): PluginBuilder {
-    pluginDependencies.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
+    pluginDependencies.add(PluginId.getId(pluginId))
     return this
   }
 
   fun incompatibleWith(pluginId: String): PluginBuilder {
-    incompatibleWith.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
+    incompatibleWith.add(PluginId.getId(pluginId))
     return this
   }
 
@@ -248,30 +252,30 @@ class PluginBuilder() {
       if (content.isNotEmpty()) {
         append("\n<content>\n  ")
         content.joinTo(this, separator = "\n  ") { moduleItem ->
-          val loadingAttribute = when (moduleItem.loadingRule) {
+          val loadingAttribute = when (moduleItem.defaultLoadingRule) {
             ModuleLoadingRule.OPTIONAL -> ""
             ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
             ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
             ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
           }
-          """<module name="${moduleItem.name}" $loadingAttribute/>"""
+          """<module name="${moduleItem.moduleId.name}" $loadingAttribute/>"""
         }
         append("\n</content>")
       }
 
       if (incompatibleWith.isNotEmpty()) {
         incompatibleWith.joinTo(this, separator = "\n  ") {
-          """<incompatible-with>${it.id}</incompatible-with>"""
+          """<incompatible-with>${it}</incompatible-with>"""
         }
       }
 
       if (dependencies.isNotEmpty() || pluginDependencies.isNotEmpty()) {
         append("\n<dependencies>\n  ")
         if (dependencies.isNotEmpty()) {
-          dependencies.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
+          dependencies.joinTo(this, separator = "\n  ") { """<module name="${it}" />""" }
         }
         if (pluginDependencies.isNotEmpty()) {
-          pluginDependencies.joinTo(this, separator = "\n  ") { """<plugin id="${it.id}" />""" }
+          pluginDependencies.joinTo(this, separator = "\n  ") { """<plugin id="${it}" />""" }
         }
         append("\n</dependencies>")
       }

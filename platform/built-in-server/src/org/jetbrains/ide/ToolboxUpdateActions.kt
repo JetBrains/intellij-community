@@ -11,6 +11,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -74,7 +75,9 @@ class ToolboxSettingsActionRegistry(coroutineScope: CoroutineScope) {
     scheduleUpdate()
   }
 
-  fun getActions() : List<SettingsEntryPointAction.UpdateAction> = ArrayList(pendingActions).sortedBy { it.actionId }
+  fun getActions(): List<SettingsEntryPointAction.UpdateAction> =
+    if (Registry.`is`("station.use.station.comms.tools.management")) emptyList()
+    else ArrayList(pendingActions).sortedBy { it.actionId }
 }
 
 class ToolboxSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {

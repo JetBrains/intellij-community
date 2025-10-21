@@ -368,11 +368,6 @@ public final class InspectionValidatorWrapper implements Validator {
   }
 
   @Override
-  public boolean validateConfiguration(CompileScope scope) {
-    return true;
-  }
-
-  @Override
   public ValidityState createValidityState(DataInput in) throws IOException {
     return PsiElementsValidityState.load(in);
   }

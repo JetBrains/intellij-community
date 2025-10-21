@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class ClsStubBuilderForWrongMetadataVersionTest : AbstractClsStubBuilderTest() {
@@ -24,6 +23,6 @@ class ClsStubBuilderForWrongMetadataVersionTest : AbstractClsStubBuilderTest() {
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinJdkAndLibraryProjectDescriptor(File(IDEA_TEST_DATA_DIR.absolutePath + "/wrongMetadataVersionLib/bin"))
+        return KotlinJdkAndLibraryProjectDescriptor(IDEA_TEST_DATA_DIR.toPath().resolve("wrongMetadataVersionLib/bin"))
     }
 }

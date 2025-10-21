@@ -11,7 +11,7 @@ class PythonConsoleScriptsTest : LightPlatform4TestCase() {
     val pythonConfigurationFactory = PythonConfigurationType.getInstance().factory
 
     SoftAssertions.assertSoftly { softly ->
-      PythonRunConfiguration(project, pythonConfigurationFactory).let { runConfiguration ->
+      PythonRunConfiguration.createRunConfigurationForTests(project, pythonConfigurationFactory).let { runConfiguration ->
         runConfiguration.scriptName = "script.py"
         softly
           .assertThat(buildScriptWithConsoleRun(runConfiguration))
@@ -19,7 +19,7 @@ class PythonConsoleScriptsTest : LightPlatform4TestCase() {
           .describedAs("Generates the line that executes the script")
       }
 
-      PythonRunConfiguration(project, pythonConfigurationFactory).let { runConfiguration ->
+      PythonRunConfiguration.createRunConfigurationForTests(project, pythonConfigurationFactory).let { runConfiguration ->
         runConfiguration.scriptName = "script name with spaces.py"
         softly
           .assertThat(buildScriptWithConsoleRun(runConfiguration))
@@ -27,7 +27,7 @@ class PythonConsoleScriptsTest : LightPlatform4TestCase() {
           .describedAs("Generates the line that executes the script with spaces in its name")
       }
 
-      PythonRunConfiguration(project, pythonConfigurationFactory).let { runConfiguration ->
+      PythonRunConfiguration.createRunConfigurationForTests(project, pythonConfigurationFactory).let { runConfiguration ->
         runConfiguration.scriptName = "script's name.py"
         softly
           .assertThat(buildScriptWithConsoleRun(runConfiguration))
@@ -35,7 +35,7 @@ class PythonConsoleScriptsTest : LightPlatform4TestCase() {
           .describedAs("Generates the line that executes the script with a single quotes in its name")
       }
 
-      PythonRunConfiguration(project, pythonConfigurationFactory).let { runConfiguration ->
+      PythonRunConfiguration.createRunConfigurationForTests(project, pythonConfigurationFactory).let { runConfiguration ->
         runConfiguration.scriptName = "script.py"
         runConfiguration.workingDirectory = "/home/username"
         softly
@@ -44,7 +44,7 @@ class PythonConsoleScriptsTest : LightPlatform4TestCase() {
           .describedAs("Generates the line that executes the script with working directory specified")
       }
 
-      PythonRunConfiguration(project, pythonConfigurationFactory).let { runConfiguration ->
+      PythonRunConfiguration.createRunConfigurationForTests(project, pythonConfigurationFactory).let { runConfiguration ->
         runConfiguration.scriptName = "script.py"
         runConfiguration.workingDirectory = "/home/username"
         runConfiguration.scriptParameters = "simple \"one parameter in four words\" \"let's make it harder\""
@@ -55,7 +55,7 @@ class PythonConsoleScriptsTest : LightPlatform4TestCase() {
           .describedAs("Generates the line that executes the script with working directory and parameters specified")
       }
 
-      PythonRunConfiguration(project, pythonConfigurationFactory).let { runConfiguration ->
+      PythonRunConfiguration.createRunConfigurationForTests(project, pythonConfigurationFactory).let { runConfiguration ->
         runConfiguration.scriptName = "user_module"
         runConfiguration.isModuleMode = true
         softly
@@ -64,7 +64,7 @@ class PythonConsoleScriptsTest : LightPlatform4TestCase() {
           .describedAs("Generates the line that executes the module")
       }
 
-      PythonRunConfiguration(project, pythonConfigurationFactory).let { runConfiguration ->
+      PythonRunConfiguration.createRunConfigurationForTests(project, pythonConfigurationFactory).let { runConfiguration ->
         runConfiguration.scriptName = "script.py"
         runConfiguration.envs["FOO"] = "BAR"
         runConfiguration.envs["BAZ"] = "qux"

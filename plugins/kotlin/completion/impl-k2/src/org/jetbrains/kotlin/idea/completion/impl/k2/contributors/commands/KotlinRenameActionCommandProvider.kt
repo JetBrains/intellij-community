@@ -10,7 +10,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 
-class KotlinRenameActionCommandProvider: AbstractRenameActionCommandProvider() {
+internal class KotlinRenameActionCommandProvider: AbstractRenameActionCommandProvider() {
   override fun findRenameOffset(offset: Int, psiFile: PsiFile): Int? {
       var currentOffset = offset
       if (currentOffset == 0) return null

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.application.options.CodeStyle;
@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class RParenthTailType extends TailType {
   private static final Logger LOG = Logger.getInstance(RParenthTailType.class);
@@ -35,7 +36,7 @@ public abstract class RParenthTailType extends TailType {
   protected abstract boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
 
   @Override
-  public int processTail(final Editor editor, int tailOffset) {
+  public int processTail(final @NotNull Editor editor, int tailOffset) {
     return addRParenth(editor, tailOffset,
                        isSpaceWithinParentheses(CodeStyle.getLocalLanguageSettings(editor, tailOffset), editor, tailOffset));
   }

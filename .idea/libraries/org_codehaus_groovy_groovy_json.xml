@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="org.codehaus.groovy:groovy-json" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-json:3.0.19">
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-json:3.0.25">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.19/groovy-json-3.0.19.jar">
-          <sha256sum>6f4b1f79e8745b1546b96d248f50f1122e0697b6d33bbdd3af362ebc8fd19df3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25.jar">
+          <sha256sum>511cea72a464809d7e376968910fa704f9fa5afa8f2a94b53672a061b45475bb</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.19/groovy-json-3.0.19.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.19/groovy-json-3.0.19-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

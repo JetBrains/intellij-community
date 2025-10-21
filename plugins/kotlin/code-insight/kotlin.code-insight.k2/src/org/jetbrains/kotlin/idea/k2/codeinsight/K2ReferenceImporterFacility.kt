@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
@@ -87,7 +88,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtFile.hasUnresolvedImportWhichCanImport(element: PsiElement): Boolean {
     if (element !is KtSimpleNameExpression) return false
     val referencedName = element.getReferencedName()
@@ -97,7 +98,7 @@ private fun KtFile.hasUnresolvedImportWhichCanImport(element: PsiElement): Boole
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtImportDirective.isResolved(): Boolean {
     val reference = importedReference?.getQualifiedElementSelector()?.mainReference
     return reference?.resolveToSymbol() != null

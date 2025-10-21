@@ -16,11 +16,7 @@ internal abstract class ComponentInstanceInitializer(
   override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
     try {
       val instance = instantiateWithContainer(componentManager.dependencyResolver, parentScope, instanceClass, pluginId)
-      if (instance is Disposable) {
-        Disposer.register(componentManager.serviceParentDisposable, instance)
-      }
-
-      componentManager.initializeService(component = instance, serviceDescriptor = null, pluginId = pluginId)
+      initializeComponentOrLightService(instance, pluginId, componentManager)
 
       @Suppress("DEPRECATION")
       if (instance is com.intellij.openapi.components.BaseComponent) {

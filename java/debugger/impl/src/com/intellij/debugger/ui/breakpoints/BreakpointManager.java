@@ -143,7 +143,7 @@ public class BreakpointManager {
   }
 
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
-    DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
       if (xBreakpoint instanceof XLineBreakpointImpl<?> xLineBreakpoint) {
         RangeHighlighter highlighter = xLineBreakpoint.getHighlighter();
@@ -248,14 +248,6 @@ public class BreakpointManager {
       }
       return null;
     });
-  }
-
-  /**
-   * @deprecated use {@link #addExceptionBreakpoint(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable ExceptionBreakpoint addExceptionBreakpoint(final @NotNull String exceptionClassName, final String packageName) {
-    return addExceptionBreakpoint(exceptionClassName);
   }
 
   public @Nullable MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {

@@ -84,6 +84,9 @@ public final class PSIRenderingUtils {
     return text;
   }
 
+  @ApiStatus.Internal
+  public static final String PSI_ELEMENT_UNNAMED_TEXT = "<unnamed>";
+
   public static @NotNull String getPSIElementText(PsiElement element) {
     VirtualFile file = element instanceof PsiFile ? PsiUtilCore.getVirtualFile(element) :
                        element instanceof VirtualFile ? (VirtualFile)element : null;
@@ -99,7 +102,7 @@ public final class PSIRenderingUtils {
     }
 
     String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
-    return StringUtil.notNullize(name, "<unnamed>");
+    return StringUtil.notNullize(name, PSI_ELEMENT_UNNAMED_TEXT);
   }
 
   public static @Nullable String extractPresentablePath(@Nullable PsiElement element) {

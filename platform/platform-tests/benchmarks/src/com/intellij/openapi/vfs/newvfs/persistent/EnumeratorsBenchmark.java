@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
+import com.intellij.platform.util.io.storages.enumerator.DurableStringEnumerator;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.*;
 import org.openjdk.jmh.annotations.*;
@@ -24,7 +25,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * Compares performance of PersistentEnumerator vs DurableEnumerator implementations
  */
-@BenchmarkMode({Mode.AverageTime, Mode.SampleTime})
+@BenchmarkMode({Mode.AverageTime/*, Mode.SampleTime*/})
 @OutputTimeUnit(NANOSECONDS)
 @Warmup(iterations = 3, time = 2, timeUnit = SECONDS)
 @Measurement(iterations = 5, time = 5, timeUnit = SECONDS)
@@ -32,30 +33,60 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Threads(1)
 public class EnumeratorsBenchmark {
 
+
   @State(Scope.Benchmark)
-  public static class DurableDataEnumeratorContext {
+  public static class DataContext {
 
     @Param({"100000", "1000000", "10000000"})
     protected int totalKeys = 1000000;
 
-    @Param({"true", "false"})
-    protected boolean newImplementation;
-
-
-    private Path tempDir;
-
-    protected DurableDataEnumerator<String> enumerator;
-
     protected String[] generatedKeys;
-    protected int[] enumeratedIds;
 
 
     @Setup
     public void setup() throws Exception {
+      generatedKeys = generateKey(totalKeys);
+    }
+
+    private static String[] generateKey(int keysCount) {
+      String[] keys = new String[keysCount];
+      ThreadLocalRandom rnd = ThreadLocalRandom.current();
+      for (int i = 0; i < keysCount; i++) {
+        keys[i] = randomString(rnd, rnd.nextInt(5, 128));
+      }
+      return keys;
+    }
+
+    private static String randomString(Random rnd,
+                                       int size) {
+      final char[] chars = new char[size];
+      for (int i = 0; i < chars.length; i++) {
+        chars[i] = Character.forDigit(rnd.nextInt(0, Character.MAX_RADIX), Character.MAX_RADIX);
+      }
+      return new String(chars);
+    }
+  }
+
+  @State(Scope.Benchmark)
+  public static class DurableDataEnumeratorContext {
+
+    @Param({"persistent", "durable", "durable-string"})
+    protected String implementationKind;
+
+
+    private Path tempDir;
+
+    public DurableDataEnumerator<String> enumerator;
+
+    public int[] enumeratedIds;
+
+
+    @Setup
+    public void setup(DataContext dataContext) throws Exception {
       tempDir = FileUtil.createTempDirectory("DurableEnumerator", "tst").toPath();
       enumerator = createEnumerator();
 
-      generatedKeys = generateKey(totalKeys);
+      String[] generatedKeys = dataContext.generatedKeys;
       enumeratedIds = new int[generatedKeys.length];
 
       for (int i = 0; i < generatedKeys.length; i++) {
@@ -79,52 +110,35 @@ public class EnumeratorsBenchmark {
 
     private DurableDataEnumerator<String> createEnumerator() throws IOException {
       Path file = tempDir.resolve("enumerator");
-      if (newImplementation) {
-        return DurableEnumeratorFactory.defaultWithDurableMap(stringAsUTF8())
+      return switch (implementationKind) {
+        case "durable-string" -> DurableStringEnumerator.open(file);
+        case "durable" -> DurableEnumeratorFactory.defaultWithDurableMap(stringAsUTF8())
           .mapFactory(ExtendibleMapFactory.largeSize())
           .open(file);
-      }
-      else {
-        Files.deleteIfExists(file);//PersistentEnumerator is very confused if empty file is already exist
-        StorageLockContext lockContext = new StorageLockContext(true, true, true);
-        return new PersistentEnumerator<>(file, EnumeratorStringDescriptor.INSTANCE, 1 << 16, lockContext);
-      }
-    }
+        default -> {
+          Files.deleteIfExists(file);//PersistentEnumerator is very confused if an empty file is already exist
 
-    private static String[] generateKey(int keysCount) {
-      String[] keys = new String[keysCount];
-      ThreadLocalRandom rnd = ThreadLocalRandom.current();
-      for (int i = 0; i < keysCount; i++) {
-        keys[i] = randomString(rnd, rnd.nextInt(5, 128));
-      }
-      return keys;
-    }
-
-    private static String randomString(final Random rnd,
-                                       final int size) {
-      final char[] chars = new char[size];
-      for (int i = 0; i < chars.length; i++) {
-        chars[i] = Character.forDigit(rnd.nextInt(0, Character.MAX_RADIX), Character.MAX_RADIX);
-      }
-      return new String(chars);
+          StorageLockContext lockContext = new StorageLockContext(true, true, true);
+          yield new PersistentEnumerator<>(file, EnumeratorStringDescriptor.INSTANCE, 1 << 16, lockContext);
+        }
+      };
     }
   }
 
   @Benchmark
-  public String _baseline(DurableDataEnumeratorContext context) throws IOException {
+  public String _baseline(DataContext context) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    DurableDataEnumerator<String> enumerator = context.enumerator;
     String[] keys = context.generatedKeys;
-    int[] ids = context.enumeratedIds;
 
-    return keys[rnd.nextInt(ids.length)];
+    return keys[rnd.nextInt(keys.length)];
   }
 
   @Benchmark
-  public int enumerateExistingKey(DurableDataEnumeratorContext context) throws IOException {
+  public int enumerateExistingKey(DataContext dataContext,
+                                  DurableDataEnumeratorContext enumeratorContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    DurableDataEnumerator<String> enumerator = context.enumerator;
-    String[] keys = context.generatedKeys;
+    DurableDataEnumerator<String> enumerator = enumeratorContext.enumerator;
+    String[] keys = dataContext.generatedKeys;
 
     int index = rnd.nextInt(keys.length);
     String key = keys[index];
@@ -132,10 +146,11 @@ public class EnumeratorsBenchmark {
   }
 
   @Benchmark
-  public int enumerateNonExistingKey(DurableDataEnumeratorContext context) throws IOException {
+  public int enumerateNonExistingKey(DataContext dataContext,
+                                     DurableDataEnumeratorContext enumeratorContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    DurableDataEnumerator<String> enumerator = context.enumerator;
-    String[] keys = context.generatedKeys;
+    DurableDataEnumerator<String> enumerator = enumeratorContext.enumerator;
+    String[] keys = dataContext.generatedKeys;
 
     int index = rnd.nextInt(keys.length);
     String key = keys[index] + "_non-existing-suffix";
@@ -143,10 +158,11 @@ public class EnumeratorsBenchmark {
   }
 
   @Benchmark
-  public int tryEnumerateExistingKey(DurableDataEnumeratorContext context) throws IOException {
+  public int tryEnumerateExistingKey(DataContext dataContext,
+                                     DurableDataEnumeratorContext enumeratorContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    DurableDataEnumerator<String> enumerator = context.enumerator;
-    String[] keys = context.generatedKeys;
+    DurableDataEnumerator<String> enumerator = enumeratorContext.enumerator;
+    String[] keys = dataContext.generatedKeys;
 
     int index = rnd.nextInt(keys.length);
     String key = keys[index];
@@ -154,10 +170,11 @@ public class EnumeratorsBenchmark {
   }
 
   @Benchmark
-  public int tryEnumerateNonExistingKey(DurableDataEnumeratorContext context) throws IOException {
+  public int tryEnumerateNonExistingKey(DataContext dataContext,
+                                        DurableDataEnumeratorContext enumeratorContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    DurableDataEnumerator<String> enumerator = context.enumerator;
-    String[] keys = context.generatedKeys;
+    DurableDataEnumerator<String> enumerator = enumeratorContext.enumerator;
+    String[] keys = dataContext.generatedKeys;
 
     int index = rnd.nextInt(keys.length);
     String key = keys[index] + "_another-non-existing-suffix";
@@ -165,15 +182,17 @@ public class EnumeratorsBenchmark {
   }
 
   @Benchmark
-  public String valueOfExistingId(DurableDataEnumeratorContext context) throws IOException {
+  public String valueOfExistingId(DataContext dataContext,
+                                  DurableDataEnumeratorContext enumeratorContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    DurableDataEnumerator<String> enumerator = context.enumerator;
-    int[] ids = context.enumeratedIds;
+    DurableDataEnumerator<String> enumerator = enumeratorContext.enumerator;
+    int[] ids = enumeratorContext.enumeratedIds;
 
     int index = rnd.nextInt(ids.length);
     int id = ids[index];
     return enumerator.valueOf(id);
   }
+
 
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()

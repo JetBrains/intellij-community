@@ -38,6 +38,14 @@ class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent
     Disposer.register(parent, this)
   }
 
+  fun getAllIntervals(): Set<NotebookIntervalPointer> {
+    return mapReference.get()?.keys ?: emptySet()
+  }
+
+  fun getAll(): List<Pair<NotebookIntervalPointer, Value>> {
+    return mapReference.get()?.toList() ?: emptyList()
+  }
+
   private fun removePointers(removed: NotebookIntervalPointersEvent.OnRemoved) {
     val map = mapReference.get() ?: return
     for (p in removed.subsequentPointers) {
@@ -47,6 +55,11 @@ class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent
 
   operator fun get(cellPointer: NotebookIntervalPointer): Value? {
     return mapReference.get()?.get(cellPointer)
+  }
+
+  operator fun get(cellOrdinal: Int): Value? {
+    val intervalPointer = getAllIntervals().find { it.get()?.ordinal == cellOrdinal } ?: return null
+    return get(intervalPointer)
   }
 
   operator fun set(cellPointer: NotebookIntervalPointer, value: Value) {
@@ -63,6 +76,11 @@ class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent
   fun remove(cellPointer: NotebookIntervalPointer): Value? {
     return mapReference.get()?.remove(cellPointer)
   }
+
+  fun clear() {
+    mapReference.get()?.keys?.clear()
+  }
+
 
   /**
    * It's possible to pass any collection, but implementation has special mode for a case with large Set<NotebookIntervalPointer>

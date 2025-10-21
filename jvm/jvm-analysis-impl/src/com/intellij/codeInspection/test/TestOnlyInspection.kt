@@ -154,9 +154,9 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun reportProblem(elem: PsiElement, target: PsiModifierListOwner, holder: ProblemsHolder) {
       val message = JvmAnalysisBundle.message(
-        when {
-          target is PsiMethod && target.isConstructor -> "jvm.inspections.testonly.class.reference"
-          target is PsiField -> "jvm.inspections.testonly.field.reference"
+        when (target) {
+          is PsiMethod if target.isConstructor -> "jvm.inspections.testonly.class.reference"
+          is PsiField -> "jvm.inspections.testonly.field.reference"
           else -> "jvm.inspections.testonly.method.call"
         }
       )

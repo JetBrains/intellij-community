@@ -127,6 +127,6 @@ public final class NonCancelableIndicator implements StandardProgressIndicator {
 
   @Override
   public String toString() {
-    return "NonCancelableIndicator.INSTANCE: "+super.toString();
+    return "NonCancelableIndicator";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.CommonBundle
@@ -9,7 +9,10 @@ import com.intellij.diff.InvalidDiffRequestException
 import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
+import com.intellij.diff.statistics.MergeAction
+import com.intellij.diff.statistics.MergeStatisticsCollector
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -48,6 +51,7 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
@@ -230,7 +234,8 @@ open class MultipleFileMergeDialog(
 
   private fun <State> updateTree(treeStateStrategy: TreeTableStateStrategy<State>) {
     val factory = when {
-      project != null && groupByDirectory -> ChangesGroupingSupport.getFactory(ChangesGroupingSupport.DIRECTORY_GROUPING)
+      project != null && groupByDirectory -> ChangesGroupingSupport.findFactory(ChangesGroupingSupport.DIRECTORY_GROUPING)
+                                             ?: NoneChangesGroupingFactory
       else -> NoneChangesGroupingFactory
     }
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
@@ -279,6 +284,9 @@ open class MultipleFileMergeDialog(
 
   private fun acceptRevision(resolution: MergeSession.Resolution) {
     assert(resolution == MergeSession.Resolution.AcceptedYours || resolution == MergeSession.Resolution.AcceptedTheirs)
+
+    val side = if (resolution == MergeSession.Resolution.AcceptedYours) MergeAction.LEFT else MergeAction.RIGHT
+    MergeStatisticsCollector.logButtonClickOnTable(project, side)
 
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
@@ -423,7 +431,9 @@ open class MultipleFileMergeDialog(
 
       val callback = { result: MergeResult ->
         val document = FileDocumentManager.getInstance().getCachedDocument(file)
-        if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+        if (document != null) {
+          application.runWriteAction { FileDocumentManager.getInstance().saveDocument(document) }
+        }
         checkMarkModifiedProject(file)
 
         if (result != MergeResult.CANCEL) {

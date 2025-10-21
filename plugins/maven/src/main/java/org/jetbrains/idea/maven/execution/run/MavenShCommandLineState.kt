@@ -22,7 +22,9 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
@@ -40,7 +42,10 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalConten
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.util.containers.with
+import com.intellij.util.io.Compressor
+import com.intellij.util.io.outputStream
 import com.intellij.util.text.nullize
+import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor
 import org.jetbrains.idea.maven.execution.*
@@ -50,14 +55,17 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
+import org.jetbrains.idea.maven.utils.MavenUtil.isRunningFromSources
+import java.io.BufferedOutputStream
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.UnsupportedCharsetException
 import java.nio.file.Path
+import java.util.*
 import java.util.function.Function
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 class MavenShCommandLineState(val environment: ExecutionEnvironment, private val myConfiguration: MavenRunConfiguration) : RunProfileState, RemoteConnectionCreator {
   private var mavenConnectionWrapper: MavenRemoteConnectionWrapper? = null
@@ -75,12 +83,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
 
       val charset = tryToGetCharset(env, eelApi)
-      val envWithCharsets = if (charset != null) {
-        env
-      }
-      else {
-        env.with("JAVA_TOOL_OPTIONS", listOfNotNull(env["JAVA_TOOL_OPTIONS"], "-Dfile.encoding=UTF-8").joinToString(" "))
-      }
+      val envWithCharsets =
+        env.with("JAVA_TOOL_OPTIONS",
+                 listOfNotNull(env["JAVA_TOOL_OPTIONS"], "-Dfile.encoding=${charset?.name() ?: "UTF-8"}").joinToString(" "))
 
       val processHandler = runProcessInEel(eelApi, exe, envWithCharsets, charset ?: Charsets.UTF_8)
       JavaRunConfigurationExtensionManager.instance
@@ -131,7 +136,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
 
   @SuppressWarnings("IO_FILE_USAGE") // Here should be java.io.File, since we do not support remote eel run on windows Agent
-  private fun writeParamsToBatBecauseCmdIsReallyReallyBad(params: ParametersList, isSpyDebug: Boolean): File {
+  private fun writeParamsToBatBecauseCmdIsReallyReallyBad(params: ParametersList, isSpyDebug: Boolean): java.io.File {
 
     val tmpData = StringBuilder()
     val mapEnv = LinkedHashMap<String, String>()
@@ -171,7 +176,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     tmpData.append(commandPrefix).append(batParams.list.joinToString(" ") { CommandLineUtil.escapeParameterOnWindows(it, true) })
 
     val tempDirectory = FileUtilRt.getTempDirectory()
-    val tmpBat = FileUtil.createTempFile(File(tempDirectory), "mvn-idea-exec", ".bat", false, true)
+    val tmpBat = FileUtil.createTempFile(java.io.File(tempDirectory), "mvn-idea-exec", ".bat", false, true)
 
 
     tmpBat.writeText(tmpData.toString())
@@ -289,7 +294,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   ): BuildView? {
     val console = createConsole()
     val project = myConfiguration.project
-    val viewManager = project.getService<ExternalSystemRunConfigurationViewManager?>(ExternalSystemRunConfigurationViewManager::class.java)
+    val viewManager = project.getService<ExternalSystemRunConfigurationViewManager>(ExternalSystemRunConfigurationViewManager::class.java)
     return object : BuildView(project, console, descriptor, "build.toolwindow.run.selection.state", viewManager) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         super.onEvent(buildId, event)
@@ -312,7 +317,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     processHandler: ProcessHandler,
   ): ExecutionResult {
     val consoleView = createConsole()
-    val viewManager = environment.project.getService<BuildViewManager?>(BuildViewManager::class.java)
+    val viewManager = environment.project.getService<BuildViewManager>(BuildViewManager::class.java)
 
     descriptor.withProcessHandler(MavenBuildHandlerFilterSpyWrapper(processHandler, isWrapperedOutput(), isWindows()), null)
     descriptor.withExecutionEnvironment(environment)
@@ -387,27 +392,93 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private fun addIdeaParameters(args: ParametersList, eel: EelApi) {
     args.addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess())
-    args.addProperty(
-      MavenServerEmbedder.MAVEN_EXT_CLASS_PATH,
-      transferLocalContentToRemote(
-        source = MavenServerManager.getInstance().getMavenEventListener().toPath(),
-        target = TransferTarget.Temporary(eel.descriptor)
-      ).asEelPath().toString()
-    )
+    addMavenEventListener(args, eel)
+    createDumpFileIfRequired(args, eel)
     args.addProperty("jansi.passthrough", "true")
     args.addProperty("style.color", "always")
   }
 
-  private fun getEnv(existingEnv: Map<String, String>, debug: Boolean): Map<String, String> {
+  private fun createDumpFileIfRequired(args: ParametersList, eel: EelApi) {
+    if (!myConfiguration.runnerParameters.isResolveToWorkspace) {
+      return
+    }
+    val map = MavenExternalParameters.getProjectModuleMap(myConfiguration.project)
+    val remoteMapFile = transferLocalContentToRemote(
+      source = FileUtil.createTempFile("idea-" + myConfiguration.project.getLocationHash(), "-mvn.properties").toPath(),
+      target = TransferTarget.Temporary(eel.descriptor)
+    )
+    val remoteMap = toRemotePaths(map)
+
+    remoteMapFile.outputStream().use { os ->
+      remoteMap.store(BufferedOutputStream(os), null)
+    }
+
+    args.addProperty(MavenModuleMap.PATHS_FILE_PROPERTY, remoteMapFile.asEelPath().toString())
+
+  }
+
+  private fun toRemotePaths(map: Properties): Properties {
+    if (myConfiguration.project.getEelDescriptor() is LocalEelDescriptor) return map
+    val result = Properties()
+    map.keys.forEach {
+      val key = it.toString()
+      val path = map.getProperty(key)
+      result.setProperty(key, Path.of(path).asEelPath().toString())
+    }
+    return result
+  }
+
+  private fun addMavenEventListener(args: ParametersList, eel: EelApi) {
+    val path = prepareMavenListener()
+
+    args.addProperty(
+      MavenServerEmbedder.MAVEN_EXT_CLASS_PATH,
+      transferLocalContentToRemote(
+        source = path,
+        target = TransferTarget.Temporary(eel.descriptor)
+      ).asEelPath().toString()
+    )
+  }
+
+  private fun prepareMavenListener(): Path {
+    val pathToMavenListener = MavenServerManager.getInstance().getMavenEventListener().toPath()
+    if (!pathToMavenListener.exists()) {
+      throw IllegalStateException("$pathToMavenListener does not exist")
+    }
+    if (pathToMavenListener.isRegularFile()) return pathToMavenListener
+
+    if (isRunningFromSources()) {
+      val tempFile = FileUtil.createTempFile("idea", "-event-listener.jar", true).toPath()
+      MavenLog.LOG.warn("compressing maven event listener from $pathToMavenListener")
+      Compressor.Zip(tempFile)
+        .use { zip ->
+          zip.addDirectory(MavenServerManager.getInstance().getMavenEventListener().toPath())
+        }
+      return tempFile
+    }
+    throw IllegalStateException("$pathToMavenListener does not exist")
+  }
+
+  private suspend fun getJavaHome(): String? {
+    val defaultSettings = MavenRunner.getInstance(myConfiguration.project).state
+    val jreName = myConfiguration.runnerSettings?.jreName ?: defaultSettings.jreName
+    val isGlobalRunnerSettings = defaultSettings === myConfiguration.runnerSettings
+    val javaHome = readAction {
+      MavenExternalParameters.getJdk(myConfiguration.project, jreName, isGlobalRunnerSettings)
+    }.homePath ?: return null
+    return Path.of(javaHome).asEelPath().toString()
+  }
+
+  private suspend fun getEnv(existingEnv: Map<String, String>, debug: Boolean): MutableMap<String, String> {
     val map = HashMap<String, String>()
     map.putAll(existingEnv)
     myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(map) }
-    val javaParams = myConfiguration.createJavaParameters(myConfiguration.project)
-    map["JAVA_HOME"] = Path(javaParams.jdkPath).asEelPath().toString()
+    val javaHome = getJavaHome() ?: throw ExecutionException(MavenProjectBundle.message("exec.message.failed.to.find.maven.jdk"))
+    map["JAVA_HOME"] = javaHome
     val optsBuilder = StringBuilder(map["MAVEN_OPTS"] ?: "")
     myConfiguration.runnerSettings?.vmOptions?.let {
       if (optsBuilder.isNotEmpty()) optsBuilder.append(" ")
-      optsBuilder.append(it)
+      optsBuilder.append(ProgramParametersUtil.expandPathAndMacros(it, null, myConfiguration.project))
     }
     val mavenOpts = if (debug && mavenConnectionWrapper != null) {
       mavenConnectionWrapper!!.enhanceMavenOpts(optsBuilder.toString())
@@ -417,6 +488,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     }
     map["MAVEN_OPTS"] = mavenOpts
     myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(it) }
+    myConfiguration.runnerParameters.multimoduleDir?.nullize()?.let {
+      map["MAVEN_BASEDIR"] = ProgramParametersUtil.expandPathAndMacros(it, null, myConfiguration.project)
+    }
     return map
   }
 
@@ -426,7 +500,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     if (type is MavenWrapper) {
       val path = getPathToWrapperScript()
       val file = workingDir.resolve(path)
-      if (file.asNioPath(myConfiguration.project).exists()) {
+      if (file.asNioPath().exists()) {
         return path
       }
       return getMavenExecutablePath(BundledMaven3, eel)
@@ -484,13 +558,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     else {
       relativePath.replace(hostSeparator, targetSeparator)
     }
-  }
-
-  private fun getOrCreateRemoteConnection(): MavenRemoteConnectionWrapper? {
-    if (mavenConnectionWrapper == null) {
-      mavenConnectionWrapper = createRemoteConnection()
-    }
-    return mavenConnectionWrapper
   }
 
   private fun createRemoteConnection(): MavenRemoteConnectionWrapper? {

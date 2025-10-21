@@ -10,7 +10,7 @@ interface SimpleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleEntity, ModifiableWorkspaceEntity<SimpleEntity> {
+  interface Builder : SimpleEntity, WorkspaceEntityBuilder<SimpleEntity> {
     //obsolete
   }
 

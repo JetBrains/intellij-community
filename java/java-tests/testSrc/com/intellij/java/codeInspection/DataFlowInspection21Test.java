@@ -73,6 +73,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testInstanceof() {
     doTest();
   }
+  
+  public void testTakeWhileUpdate() { doTest(); }
 
   public void testNewStringWrongEquals() { doTest(); }
 
@@ -140,7 +142,6 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testSwitchBooleanWhen() { doTest(); }
 
   public void testJetBrainsNotNullByDefault() {
-    addJetBrainsNotNullByDefault(myFixture);
     doTest();
   }
   
@@ -210,6 +211,14 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+  
+  public void testGuavaIterablesProblems() {
+    doTest();
+  }
+  
+  public void testGenericVarargNullability() {
+    doTest();
+  }
 
   public void testPassthroughGenericParameter() {
     doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
@@ -223,6 +232,12 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   }
   
   public void testJSpecifyNullUnmarkedOverNullMarked() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testJSpecifySuperBound() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();

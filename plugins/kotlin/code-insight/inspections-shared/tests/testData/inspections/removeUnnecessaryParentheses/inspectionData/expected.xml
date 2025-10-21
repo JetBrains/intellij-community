@@ -1,0 +1,26 @@
+<problems>
+  <problem>
+    <file>unnecessaryParentheses1.kt</file>
+    <line>2</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="method" FQNAME="unnecessaryParentheses1.UnnecessaryParentheses1Kt void foo(int x1, int x2, int x3, int x4)" />
+    <problem_class id="RemoveUnnecessaryParentheses" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant parentheses</problem_class>
+    <description>Redundant parentheses</description>
+    <highlighted_element>(</highlighted_element>
+    <language>kotlin</language>
+    <offset>4</offset>
+    <length>1</length>
+  </problem>
+  <problem>
+    <file>unnecessaryParentheses1.kt</file>
+    <line>2</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="method" FQNAME="unnecessaryParentheses1.UnnecessaryParentheses1Kt void foo(int x1, int x2, int x3, int x4)" />
+    <problem_class id="RemoveUnnecessaryParentheses" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant parentheses</problem_class>
+    <description>Redundant parentheses</description>
+    <highlighted_element>)</highlighted_element>
+    <language>kotlin</language>
+    <offset>17</offset>
+    <length>1</length>
+  </problem>
+</problems>

@@ -10,7 +10,6 @@ import org.eclipse.aether.repository.RemoteRepository
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.konan.file.unzipTo
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
@@ -68,13 +67,13 @@ object KmpLightFixtureDependencyDownloader {
 
     private fun resolveKotlinNativePrebuiltDependency(
         coordinates: NativePrebuiltKmpCoordinates,
-    ): Path? {
+    ): Path {
         return try {
-            TestKotlinArtifacts.getNativeLib(coordinates.version, library = coordinates.libraryPart).toPath()
+            TestKotlinArtifacts.getNativeLib(coordinates.version, library = coordinates.libraryPart)
         } catch (_: TargetSupportException) {
             // Hack: use the linuxX64 version of K/N distribution, if the host doesn't support it.
             // This is necessary for Linux ARM64 agents, see KT-36871.
-            TestKotlinArtifacts.getNativeLib(coordinates.version, platform = "linux-x86_64", library = coordinates.libraryPart).toPath()
+            TestKotlinArtifacts.getNativeLib(coordinates.version, platform = "linux-x86_64", library = coordinates.libraryPart)
         }
     }
 

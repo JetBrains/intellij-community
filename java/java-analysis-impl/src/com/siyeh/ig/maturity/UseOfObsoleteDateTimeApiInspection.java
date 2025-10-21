@@ -25,7 +25,7 @@ public final class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ObsoleteDateTimeApiVisitor();
   }
 

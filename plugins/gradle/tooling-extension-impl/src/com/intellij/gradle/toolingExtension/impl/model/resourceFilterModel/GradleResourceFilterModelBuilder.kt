@@ -24,7 +24,7 @@ object GradleResourceFilterModelBuilder {
   fun getIncludes(project: Project, taskName: String): MutableSet<String?> {
     val filterableTask = project.tasks.findByName(taskName)
     if (filterableTask is PatternFilterable) {
-      return filterableTask.includes
+      return filterableTask.includes as MutableSet<String?>
     }
 
     return LinkedHashSet<String?>()

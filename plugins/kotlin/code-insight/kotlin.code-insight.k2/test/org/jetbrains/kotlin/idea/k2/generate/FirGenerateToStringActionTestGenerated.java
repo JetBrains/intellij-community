@@ -161,6 +161,11 @@ public abstract class FirGenerateToStringActionTestGenerated extends AbstractFir
             runTest("../../idea/tests/testData/codeInsight/generate/toString/singleTemplate/explicitDefaultAccessors.kt");
         }
 
+        @TestMetadata("intersectionOverride.kt")
+        public void testIntersectionOverride() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/generate/toString/singleTemplate/intersectionOverride.kt");
+        }
+
         @TestMetadata("keepQuotes.kt")
         public void testKeepQuotes() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/generate/toString/singleTemplate/keepQuotes.kt");

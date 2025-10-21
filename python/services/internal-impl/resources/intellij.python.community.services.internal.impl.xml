@@ -1,8 +1,9 @@
-<idea-plugin package="com.intellij.python.community.services.internal.impl">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.services.shared"/>
   </dependencies>
 </idea-plugin>

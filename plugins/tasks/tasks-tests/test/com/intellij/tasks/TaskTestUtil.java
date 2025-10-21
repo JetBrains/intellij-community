@@ -2,6 +2,7 @@
 package com.intellij.tasks;
 
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +138,7 @@ public final class TaskTestUtil {
     @NotNull
     @Override
     public Icon getIcon() {
-      return myIcon == null? myRepository.getIcon() : myIcon;
+      return myIcon != null ? myIcon : myRepository != null ? myRepository.getIcon() : EmptyIcon.ICON_16;
     }
 
     @NotNull

@@ -48,8 +48,8 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
           }""")
     );
 
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-    final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(getMyProject());
+    final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(getMyProject());
 
     assertSameElements(compilerConfiguration.getResourceFilePatterns(), "!*.class", "!*.java");
     assertFalse(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
@@ -60,7 +60,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
     assertTrue(compilerConfiguration.isParallelCompilationEnabled());
     assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
 
-    final JpsJavaCompilerOptions javacOpts = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+    final JpsJavaCompilerOptions javacOpts = JavacConfiguration.getOptions(getMyProject(), JavacConfiguration.class);
     assertFalse(javacOpts.PREFER_TARGET_JDK_COMPILER);
     assertEquals("-Dkey=val", javacOpts.ADDITIONAL_OPTIONS_STRING);
     assertTrue(javacOpts.GENERATE_NO_WARNINGS);
@@ -84,7 +84,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
       )
     );
     importProject();
-    ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
+    ArtifactManager artifactManager = ArtifactManager.getInstance(getMyProject());
     Artifact artifact = ReadAction.compute(() -> artifactManager.getArtifacts()[0]);
     assertEquals("myArt", artifact.getName());
   }
@@ -113,7 +113,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
     );
 
 
-    ArtifactManager artifactsManager = ArtifactManager.getInstance(myProject);
+    ArtifactManager artifactsManager = ArtifactManager.getInstance(getMyProject());
     Artifact artifact = ReadAction.compute(() -> artifactsManager.findArtifact("ArtifactRef"));
     assertNotNull(artifact);
     List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
@@ -144,7 +144,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
     );
 
 
-    ArtifactManager artifactsManager = ArtifactManager.getInstance(myProject);
+    ArtifactManager artifactsManager = ArtifactManager.getInstance(getMyProject());
     Artifact artifact = ReadAction.compute(() -> artifactsManager.findArtifact("SomeArt"));
     assertNotNull(artifact);
     List<PackagingElement<?>> artifactChildren = artifact.getRootElement().getChildren();

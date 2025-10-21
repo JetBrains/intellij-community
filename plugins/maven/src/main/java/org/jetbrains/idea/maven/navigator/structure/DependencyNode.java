@@ -14,7 +14,7 @@ import org.jetbrains.idea.maven.navigator.MavenNavigationUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-class DependencyNode extends BaseDependenciesNode implements ArtifactNode {
+final class DependencyNode extends BaseDependenciesNode implements ArtifactNode {
   private final MavenArtifact myArtifact;
   private final MavenArtifactNode myArtifactNode;
   private final boolean myUnresolved;

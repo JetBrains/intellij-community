@@ -6,7 +6,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.VisibleGraph
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
@@ -79,19 +78,21 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
     }
   }
 
-  private fun mapCommitsToRows(graph: VisibleGraph<VcsLogCommitStorageIndex>, scroll: Boolean): MutableMap<VcsLogCommitStorageIndex, VcsLogVisibleGraphIndex> {
+  private fun mapCommitsToRows(
+    graph: VisibleGraph<VcsLogCommitStorageIndex>,
+    scroll: Boolean,
+  ): Map<VcsLogCommitStorageIndex, VcsLogTableIndex> {
     val commits = mutableSetOf<VcsLogCommitStorageIndex>()
     commits.addAll(selectedCommits)
-    if (scroll && scrollingTarget != null && scrollingTarget.commit != null) commits.add(scrollingTarget.commit)
-    return mapCommitsToRows(commits, graph)
-  }
 
-  private fun mapCommitsToRows(commits: MutableCollection<VcsLogCommitStorageIndex>, graph: VisibleGraph<VcsLogCommitStorageIndex>): MutableMap<VcsLogCommitStorageIndex, VcsLogVisibleGraphIndex> {
-    val commitsToRows = mutableMapOf<VcsLogCommitStorageIndex, VcsLogVisibleGraphIndex>()
+    if (scroll && scrollingTarget != null && scrollingTarget.commit != null) commits.add(scrollingTarget.commit)
+
+    val commitsToRows = mutableMapOf<VcsLogCommitStorageIndex, VcsLogTableIndex>()
     for (row in 0 until graph.visibleCommitCount) {
       val commit = graph.getRowInfo(row).commit
+      val tableRow = table.model.fromGraphToTableRow(row)
       if (commits.remove(commit)) {
-        commitsToRows[commit] = row
+        commitsToRows[commit] = tableRow
       }
       if (commits.isEmpty()) break
     }

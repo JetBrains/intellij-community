@@ -100,7 +100,7 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml) ?: return null
     val ideaVersion = ideaPlugin.ideaVersion
     val sinceBuild = ideaVersion.sinceBuild.value
-    val untilBuild = ideaVersion.untilBuild.value
+    val untilBuild = ideaVersion.strictUntilBuild.value ?: ideaVersion.untilBuild.value
     return SinceUntilRange(sinceBuild, untilBuild)
   }
 

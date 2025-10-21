@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Assertions
 internal suspend fun doPropagationTest(submit: (() -> Unit) -> Unit) {
   return suspendCancellableCoroutine { continuation ->
     val element = TestElement("element")
-    installThreadContext(element).use {                               // install context in calling thread
+    installThreadContext(element) {                                    // install context in calling thread
       submit {                                                         // switch to another thread
         val result: Result<Unit> = runCatching {
           Assertions.assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context

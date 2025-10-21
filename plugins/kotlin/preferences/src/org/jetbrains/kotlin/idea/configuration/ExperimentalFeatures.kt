@@ -2,26 +2,16 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
 import org.jdesktop.swingx.VerticalLayout
-import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 
 object ExperimentalFeatures {
-    val NewJ2k = RegistryExperimentalFeature(
-        title = KotlinBasePluginBundle.message("configuration.feature.text.new.java.to.kotlin.converter"),
-        registryKey = "kotlin.experimental.new.j2k",
-        enabledByDefault = true
-    )
-
-    val allFeatures: List<ExperimentalFeature> = listOf(
-        NewJ2k,
-    ) + ExperimentalFeature.EP_NAME.extensionList
+    val allFeatures: List<ExperimentalFeature> = ExperimentalFeature.EP_NAME.extensionList
 }
 
 abstract class ExperimentalFeature {
@@ -35,6 +25,8 @@ abstract class ExperimentalFeature {
     }
 }
 
+// It can be used for future experimental features
+@Suppress("unused")
 open class RegistryExperimentalFeature(
     override val title: String,
     private val registryKey: String,
@@ -83,9 +75,7 @@ class ExperimentalFeaturesPanel : JPanel(VerticalLayout(5)) {
 
     companion object {
         fun createPanelIfShouldBeShown(): ExperimentalFeaturesPanel? {
-            val kotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
-            val shouldBeShown = kotlinVersion.isPreRelease && kotlinVersion.kind !is IdeKotlinVersion.Kind.ReleaseCandidate
-
+            val shouldBeShown = ApplicationInfo.getInstance().isEAP && ExperimentalFeatures.allFeatures.isNotEmpty()
             return if (shouldBeShown) ExperimentalFeaturesPanel() else null
         }
     }

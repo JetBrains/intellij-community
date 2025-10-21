@@ -63,11 +63,12 @@ class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
             2) We ensure that the 'module' belongs to the target
             */
             return allKotlinJvmRunTasks.firstNotNullOfOrNull { runTask ->
+                val taskNameWithoutLocation = runTask.data.name.substringAfterLast(':')
                 val target = allKotlinTargetDataNodes
-                    .filter { target -> runTask.data.name.lowercase() == "${target.data.externalName}Run".lowercase() }
+                    .filter { target -> taskNameWithoutLocation.equals("${target.data.externalName}Run", ignoreCase = true) }
                     .firstOrNull { target -> target.data.moduleIds.any { targetModuleId -> targetModuleId in sourceSetModuleIds } }
                     ?: return@firstNotNullOfOrNull null
-                KotlinJvmRunTaskData(target.data.externalName, runTask.data.name)
+                KotlinJvmRunTaskData(target.data.externalName, taskNameWithoutLocation)
             }
         }
     }

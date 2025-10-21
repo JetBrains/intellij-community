@@ -37,6 +37,13 @@ public final class JavaEditorFileSwapper implements EditorFileSwapper {
         PsiElement navigationElement = member.getOriginalElement().getNavigationElement();
         if (Comparing.equal(navigationElement.getContainingFile().getVirtualFile(), sourceFile)) {
           position = navigationElement.getTextOffset();
+          if (navigationElement instanceof PsiNameIdentifierOwner navigatableNameIdentifierOwner &&
+              navigatableNameIdentifierOwner.getNameIdentifier() != null &&
+              member instanceof PsiNameIdentifierOwner nameIdentifierOwner &&
+              nameIdentifierOwner.getNameIdentifier() != null &&
+              nameIdentifierOwner.getNameIdentifier().getTextRange().getEndOffset() == offset) {
+            position += navigatableNameIdentifierOwner.getNameIdentifier().getTextLength();
+          }
         }
       }
     }

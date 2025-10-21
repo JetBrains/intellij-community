@@ -7,8 +7,8 @@ class A1:
     x2: int = 1
 
 @dataclasses.dataclass
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'A1'">B1</error>(A1):
-    y1: str
+class B1(A1):
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'A1'">y1</error>: str
     y2: str = "1"
 
 @attr.dataclass
@@ -17,8 +17,8 @@ class A2:
     x2: int = 1
 
 @attr.dataclass
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'A2'">B2</error>(A2):
-    y1: str
+class B2(A2):
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'A2'">y1</error>: str
     y2: str = "1"
 
 @dataclasses.dataclass

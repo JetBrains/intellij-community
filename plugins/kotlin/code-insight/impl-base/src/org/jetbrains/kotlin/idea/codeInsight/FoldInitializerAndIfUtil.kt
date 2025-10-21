@@ -12,6 +12,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -39,7 +47,7 @@ data class FoldInitializerAndIfExpressionData(
     val couldBeVal: Boolean = false,
 )
 
-context(KaSession)
+context(_: KaSession)
 @ApiStatus.Internal
 @OptIn(KaExperimentalApi::class)
 fun prepareData(element: KtIfExpression, enforceNonNullableTypeIfPossible: Boolean = false): FoldInitializerAndIfExpressionData? {
@@ -136,7 +144,7 @@ fun joinLines(
     return positionedElvis
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun calculateType(
     declaration: KtVariableDeclaration,
     element: KtIfExpression,
@@ -162,7 +170,7 @@ private fun calculateType(
 
     // for val with explicit type, change it to non-nullable
     declaration.typeReference != null && (!declaration.isVar || declaration.isVar && enforceNonNullableType) ->
-        initializer.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
+        initializer.expressionType?.withNullability(false)
 
     else -> null
 }

@@ -2,7 +2,7 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Mapping
 from logging import Logger
-from typing import Protocol
+from typing import Any, Protocol
 from typing_extensions import TypeAlias
 
 # from fonttools.ttLib.ttGlyphSet
@@ -12,6 +12,9 @@ class _TTGlyph(Protocol):
     def drawPoints(self, pen) -> None: ...
 
 _TTGlyphSet: TypeAlias = Mapping[str, _TTGlyph]  # Simplified for our needs
+
+# fonttools.ttLib.TTFont
+_TTFont: TypeAlias = Any  # noqa: Y047
 
 # from fontTools.misc.loggingTools
 

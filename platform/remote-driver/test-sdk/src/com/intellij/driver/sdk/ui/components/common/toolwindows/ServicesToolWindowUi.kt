@@ -22,6 +22,10 @@ class ServicesToolWindowUi(data: ComponentData): ToolWindowUiComponent(data) {
     val serverTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Server")) }
     val threadsAndVariablesTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Threads & Variables")) }
     val stopButton = x { contains(byAccessibleName("Stop")) }
+    val runButton = x { byAccessibleName("Run") }
+    val beansTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Beans")) }
+    val healthTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Health")) }
+    val mappingsTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Mappings")) }
     val stepOverButton get() = button { byAccessibleName("Step Over") }
   }
 }

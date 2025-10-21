@@ -1,0 +1,21 @@
+<html>
+<body>
+<p>Reports instance <code>main</code> methods that are declared inside nested classes.</p>
+
+<p>
+  The invocation of <code>main</code> method within nested classes is not handled directly by Groovy; however, it is possible by delegating the execution to Java.
+  In such a scenario, the code will be executed successfully only if the Java version is enough. Consider the following example:
+</p>
+<pre><code>
+class Outer {
+  static class Nested {
+    void main() {
+      println 'Hello from nested'
+    }
+  }
+}
+</code></pre>
+
+The code runs successfully with Java 25, but not with Java 17.
+</body>
+</html>

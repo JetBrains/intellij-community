@@ -9,15 +9,19 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentsOfType
 import java.util.*
 
-object ByteCodeViewerManager {
+public object ByteCodeViewerManager {
   private val CLASS_SEARCHER_EP = ExtensionPointName<ClassSearcher>("ByteCodeViewer.classSearcher")
+  private val CLASS_FINDER_EP = ExtensionPointName<BytecodeViewerClassFileFinder>("ByteCodeViewer.classFileFinder")
 
   private fun PsiClass.containingClassFileClass(): PsiClass {
     return parentsOfType<PsiClass>(withSelf = true)
@@ -25,8 +29,14 @@ object ByteCodeViewerManager {
       .first()
   }
 
-  internal fun findClassFile(aClass: PsiClass): VirtualFile? {
+  public fun findClassFile(aClass: PsiClass): VirtualFile? {
     val fileClass = aClass.containingClassFileClass()
+    for (finder in CLASS_FINDER_EP.extensionList) {
+      val vFile = finder.findClass(aClass, fileClass)
+      if (vFile != null) {
+        return vFile
+      }
+    }
     val file = fileClass.originalElement.containingFile.virtualFile ?: return null
     val fileIndex = ProjectFileIndex.getInstance(aClass.project)
     val jvmClassName = ClassUtil.getBinaryClassName(aClass) ?: return null
@@ -37,30 +47,29 @@ object ByteCodeViewerManager {
     else {
       // source code; looking for a .class file in compiler output
       val moduleExtension = CompilerModuleExtension.getInstance(fileIndex.getModuleForFile(file)) ?: return null
-      val classRoot = if (fileIndex.isInTestSourceContent(file)) {
-        moduleExtension.compilerOutputPathForTests
-      } else {
-        moduleExtension.compilerOutputPath
-      } ?: return null
+      val classRoot = if (fileIndex.isInTestSourceContent(file)) moduleExtension.compilerOutputPathForTests
+      else moduleExtension.compilerOutputPath
+      if (classRoot == null) return null
       return classRoot.resolveFromRootOrRelative(jvmClassName.replace('.', '/') + ".class")
     }
   }
 
+  @Deprecated(message = "Use findClassFile instead")
   @JvmStatic
-  fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
+  public fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
     return findClassFile(aClass)?.contentsToByteArray(false)
   }
 
   @JvmStatic
-  fun getContainingClass(psiElement: PsiElement): PsiClass? {
+  public fun getContainingClass(psiElement: PsiElement): PsiClass? {
     for (searcher in CLASS_SEARCHER_EP.extensionList) {
       val aClass = searcher.findClass(psiElement)
       if (aClass != null) return aClass
     }
 
-    var containingClass = PsiTreeUtil.getParentOfType<PsiClass?>(psiElement, PsiClass::class.java, false)
+    var containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass::class.java, false)
     while (containingClass is PsiTypeParameter) {
-      containingClass = PsiTreeUtil.getParentOfType<PsiClass?>(containingClass, PsiClass::class.java)
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass::class.java)
     }
     if (containingClass != null) return containingClass
 

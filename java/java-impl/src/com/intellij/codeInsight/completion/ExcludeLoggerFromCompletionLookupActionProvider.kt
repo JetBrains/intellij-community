@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementAction
 import com.intellij.util.Consumer
 
-class ExcludeLoggerFromCompletionLookupActionProvider : LookupActionProvider {
+public class ExcludeLoggerFromCompletionLookupActionProvider : LookupActionProvider {
   override fun fillActions(lookupElement: LookupElement, lookup: Lookup, consumer: Consumer<in LookupElementAction>) {
     if (lookupElement is JvmLoggerLookupElement) {
       for (s in AddImportAction.getAllExcludableStrings(lookupElement.typeName)) {

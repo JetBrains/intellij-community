@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
-import com.intellij.xdebugger.XDebugSession
+import com.intellij.openapi.Disposable
 import com.intellij.xdebugger.frame.XExecutionStack
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -18,16 +18,19 @@ import org.jetbrains.annotations.Nls
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-open class XDebuggerExecutionStackDescriptionService(private val coroutineScope: CoroutineScope) {
+open class XDebuggerExecutionStackDescriptionService() {
 
-  protected open suspend fun doGetExecutionStackDescription(stack: XExecutionStack, session: XDebugSession): XDebuggerExecutionStackDescription = throw IllegalStateException("Not supposed to call this method")
+  protected open suspend fun doGetExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy): XDebuggerExecutionStackDescription = throw IllegalStateException("Not supposed to call this method")
 
   @Nls
-  fun getExecutionStackDescription(stack: XExecutionStack, session: XDebugSession): Deferred<XDebuggerExecutionStackDescription> {
-    return coroutineScope.async(Dispatchers.Default) {
-      doGetExecutionStackDescription(stack, session)
+  fun getExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy): Deferred<XDebuggerExecutionStackDescription> {
+    val currentSuspendContextCoroutineScope = sessionProxy.currentSuspendContextCoroutineScope ?: throw CancellationException()
+    return currentSuspendContextCoroutineScope.async(Dispatchers.Default) {
+      doGetExecutionStackDescription(stack, sessionProxy)
     }
   }
+
+  open fun getLoadDescriptionComponent(sessionProxy: XDebugSessionProxy, viewDisposable: Disposable) : XDebuggerDescriptionComponentProvider? = null
 
   open fun isAvailable(): Boolean = false
 }

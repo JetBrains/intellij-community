@@ -13,7 +13,7 @@ class GitMainMenuActionGroup : DefaultActionGroup(), DumbAware {
     e.presentation.isEnabledAndVisible = false
 
     val project = e.project ?: return
-    val vcs = ProjectLevelVcsManager.getInstance(project).singleVCS ?: return
+    val vcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS() ?: return
     if (vcs.keyInstanceMethod == GitVcs.getKey()) {
       e.presentation.isEnabledAndVisible = true
     }

@@ -19,8 +19,8 @@ import com.jediterm.terminal.ui.TerminalAction;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
+import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
@@ -186,6 +186,13 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   }
 
   @Override
+  public @Nullable String getCurrentDirectory() {
+    TtyConnector connector = getTtyConnector();
+    if (connector == null) return null;
+    return TerminalWorkingDirectoryManager.getWorkingDirectory(connector);
+  }
+
+  @Override
   public @NotNull JBTerminalSystemSettingsProvider getSettingsProvider() {
     return (JBTerminalSystemSettingsProvider)super.getSettingsProvider();
   }
@@ -194,7 +201,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = new ArrayList<>(super.getActions());
     if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
-      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
+      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, "Terminal.RenameSession", true));
     }
     JBTerminalWidgetListener listener = getListener();
     JBTerminalSystemSettingsProvider settingsProvider = getSettingsProvider();

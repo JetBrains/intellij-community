@@ -86,10 +86,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           projectId = project.projectId(),
           filesToScanInitially = filesToScanInitially.map { it.rpcId() },
           maxUsagesCount = maxUsagesCount
-        ).let {
-          if (shouldThrottle) it.throttledWithAccumulation()
-          else it.map { event -> ThrottledOneItem(event) }
-        }.take(maxUsagesCount).collect { throttledItems ->
+        ).take(maxUsagesCount)
+          .let {
+            if (shouldThrottle) it.throttledWithAccumulation()
+            else it.map { event -> ThrottledOneItem(event) }
+          }
+          .collect { throttledItems ->
           if (searchDisposable?.isDisposed == true) {
             return@collect
           }

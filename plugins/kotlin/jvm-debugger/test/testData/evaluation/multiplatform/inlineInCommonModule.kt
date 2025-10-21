@@ -18,5 +18,3 @@ fun main() {
 // STEP_INTO: 1
 // EXPRESSION: foo()
 // RESULT: 42: I
-
-// IGNORE_K2

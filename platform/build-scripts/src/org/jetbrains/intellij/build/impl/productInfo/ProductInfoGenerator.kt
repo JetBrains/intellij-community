@@ -1,4 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("ProductInfoGenerator")
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
@@ -8,7 +9,6 @@ import com.intellij.platform.buildData.productInfo.ProductFlavorData
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
-import com.jetbrains.plugin.structure.base.utils.exists
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
@@ -24,6 +24,7 @@ import java.nio.file.attribute.FileTime
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 const val PRODUCT_INFO_FILE_NAME: String = "product-info.json"
 
@@ -85,7 +86,7 @@ private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? 
   val gitRoot = findGitRoot(context)
   if (gitRoot == null) {
     if (!context.options.isInDevelopmentMode && !context.options.isTestBuild) {
-      context.messages.error("Cannot find Git repository root for '${context.paths.projectHome}'")
+      context.messages.logErrorAndThrow("Cannot find Git repository root for '${context.paths.projectHome}'")
     }
     return null
   }
@@ -94,7 +95,7 @@ private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? 
     return CustomProperty(CustomPropertyNames.GIT_REVISION, revision)
   }
   catch (e: Exception) {
-    context.messages.error("Cannot determine Git revision to store in product-info.json: ${e.message}", e)
+    context.messages.logErrorAndThrow("Cannot determine Git revision to store in product-info.json: ${e.message}", e)
     return null
   }
 }
@@ -131,4 +132,13 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
       dataDirectoryName = clientContext.systemSelector,
     )
   }
+}
+
+/**
+ * See 'IJI-2228 Publish product-info.json next to installers'.
+ *
+ * E.g., if [this] is `installer.tag.gz`, returned Path will be `installer.tag.gz.product-info.json`.
+ */
+internal fun Path.resolveProductInfoJsonSibling(): Path {
+  return resolveSibling("${this.fileName}.$PRODUCT_INFO_FILE_NAME")
 }

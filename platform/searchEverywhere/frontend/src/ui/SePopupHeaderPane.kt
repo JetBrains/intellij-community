@@ -3,13 +3,15 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -22,7 +24,10 @@ import com.intellij.util.bindSelectedTabIn
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
@@ -32,16 +37,16 @@ import javax.swing.JPanel
 @Internal
 class SePopupHeaderPane(
   private val project: Project?,
-  tabs: @Nls List<Tab>,
-  selectedTabState: MutableStateFlow<Int>,
   coroutineScope: CoroutineScope,
-  private val showInFindToolWindowAction: AnAction,
-): NonOpaquePanel() {
+  private val configuration: StateFlow<Configuration>,
+  private val resizeIfNecessary: () -> Unit,
+) : NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
-  private val tabInfos = mutableListOf<Tab>().apply { addAll(tabs) }
   private val tabShortcuts = SearchEverywhereTabsShortcutsUtils.createShortcutsMap()
   private val panel: DialogPanel
   private var toolbar: ActionToolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", DefaultActionGroup(), true)
+  private var toolbarListenerDisposable: Disposable? = null
+
   private val tabFilterContainer: JPanel = object : JPanel() {
     override fun getPreferredSize(): Dimension {
       val dimension = components.firstOrNull()?.preferredSize ?: Dimension(0, 0)
@@ -66,7 +71,7 @@ class SePopupHeaderPane(
           }
           .component
 
-        setFilterActions(emptyList())
+        setFilterActions(emptyList(), null)
         cell(tabFilterContainer).align(AlignY.FILL + AlignX.RIGHT).resizableColumn()
       }
 
@@ -77,25 +82,82 @@ class SePopupHeaderPane(
     panel.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
                                          JBUI.CurrentTheme.BigPopup.headerBorder())
 
-    for (tab in tabInfos) {
+    val initialConfiguration = configuration.value
+
+    initialConfiguration.tabs.ifEmpty {
+      listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.ID))
+    }.forEach { tab ->
       tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
     }
 
+    setSelectedIndexSafe(initialConfiguration.selectedTab.value)
+
     add(panel)
 
-    tabbedPane.bindSelectedTabIn(selectedTabState, coroutineScope)
-
     tabbedPane.addChangeListener {
-      val tabId = tabInfos[tabbedPane.selectedIndex].reportableId
+      val tabs = configuration.value.tabs
+      if (tabbedPane.selectedIndex < 0 || tabbedPane.selectedIndex >= tabs.size) return@addChangeListener
+
+      val tabId = tabs[tabbedPane.selectedIndex].reportableId
       SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(project,
                                                              SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(tabId),
                                                              SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(true))
     }
+
+    coroutineScope.launch {
+      configuration.collectLatest { configuration ->
+        withContext(Dispatchers.EDT) {
+          val uiSelectedTabIndex = tabbedPane.selectedIndex
+          tabbedPane.removeAll()
+
+          if (configuration.tabs.isNotEmpty()) {
+            for (tab in configuration.tabs) {
+              tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
+            }
+
+            if (uiSelectedTabIndex in configuration.tabs.indices) {
+              configuration.selectedTab.value = uiSelectedTabIndex
+            }
+
+            tabbedPane.bindSelectedTabIn(configuration.selectedTab, this)
+          }
+          else {
+            tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
+          }
+        }
+
+        this@launch.launch {
+          configuration.deferredTabs.collect { tab ->
+            withContext(Dispatchers.EDT) {
+              tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
+            }
+          }
+        }
+      }
+    }
   }
 
-  fun setFilterActions(actions: List<AnAction>) {
+  override fun removeNotify() {
+    toolbarListenerDisposable?.let { Disposer.dispose(it) }
+    toolbarListenerDisposable = null
+    super.removeNotify()
+  }
+
+  private fun setSelectedIndexSafe(index: Int) {
+    index.takeIf {
+      it >= 0 && it < tabbedPane.tabCount
+    }?.let {
+      tabbedPane.selectedIndex = it
+    }
+  }
+
+  fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction?) {
+    toolbarListenerDisposable?.let { Disposer.dispose(it) }
+    val toolbarListenerDisposable = Disposer.newDisposable()
+    this.toolbarListenerDisposable = toolbarListenerDisposable
+
     val actionGroup = DefaultActionGroup(actions)
-    actionGroup.add(showInFindToolWindowAction)
+    showInFindToolWindowAction?.let { actionGroup.add(it) }
     toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
     toolbar.targetComponent = this
@@ -104,15 +166,19 @@ class SePopupHeaderPane(
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
 
     setFilterComponent(toolbarComponent)
+    toolbar.addListener(object : ActionToolbarListener {
+      override fun actionsUpdated() {
+        ApplicationManager.getApplication().invokeLater {
+          resizeIfNecessary()
+        }
+      }
+    }, toolbarListenerDisposable)
+
+    resizeIfNecessary()
   }
 
   fun updateActionsAsync() {
     toolbar.updateActionsAsync()
-  }
-
-  fun addTab(tab: Tab) {
-    tabInfos.add(tab)
-    tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
   }
 
   private fun setFilterComponent(filterComponent: JComponent?) {
@@ -132,6 +198,21 @@ class SePopupHeaderPane(
 
   class Tab(val name: @Nls String, val id: String, val reportableId: String) {
     constructor(tabVm: SeTabVm) : this(tabVm.name, tabVm.tabId, tabVm.reportableTabId)
+  }
+
+  class Configuration(
+    val tabs: List<Tab>,
+    val deferredTabs: Flow<Tab>,
+    val selectedTab: MutableStateFlow<Int>,
+    val showInFindToolWindowAction: AnAction?,
+  ) {
+    companion object {
+      fun createInitial(
+        initialTabs: List<Tab>,
+        selectedTabId: String,
+      ): Configuration =
+        Configuration(initialTabs, emptyFlow(), MutableStateFlow(initialTabs.indexOfFirst { it.id == selectedTabId }), null)
+    }
   }
 
   companion object {

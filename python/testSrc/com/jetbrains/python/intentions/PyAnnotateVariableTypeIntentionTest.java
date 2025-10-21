@@ -236,6 +236,22 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testAnnotationCallableTypeWithEmptyParameterList() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeWithPositionalOnlyParameters() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeInferredFromTypeHint() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeInferredFromFunctionWithIllegalSignature() {
+    doAnnotationTest();
+  }
+
   public void testAnnotationTypingNamedTupleInOtherFile() {
     doMultiFileAnnotationTest();
   }
@@ -277,6 +293,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   // PY-28808
   public void testAnnotationEmptyTupleType() {
     doAnnotationTest();
+  }
+
+  // PY-83066
+  public void testAnnotationLiteralEnumType() {
+    doMultiFileAnnotationTest(LanguageLevel.getLatest());
   }
 
   // PY-46546
@@ -324,6 +345,10 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
 
   public void doMultiFileAnnotationTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
+  }
+
+  public void doMultiFileAnnotationTest(LanguageLevel languageLevel) {
+    runWithLanguageLevel(languageLevel, () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
   }
 
   private void doMultiFileTest(@NotNull String hint) {

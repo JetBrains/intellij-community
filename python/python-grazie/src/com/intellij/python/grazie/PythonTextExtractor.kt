@@ -25,6 +25,7 @@ internal class PythonTextExtractor : TextExtractor() {
     val elementType = PsiUtilCore.getElementType(root)
     if (elementType in PyTokenTypes.STRING_NODES) {
       val domain = if (elementType == PyTokenTypes.DOCSTRING) TextDomain.DOCUMENTATION else TextDomain.LITERALS
+      if (domain !in allowedDomains) return null
       val stringContent = TextContentBuilder.FromPsi.removingIndents(" \t")
         .removingLineSuffixes(" \t")
         .withUnknown(this::isUnknownFragment)
@@ -35,7 +36,7 @@ internal class PythonTextExtractor : TextExtractor() {
       return stringContent
     }
 
-    if (root is PsiCommentImpl) {
+    if (root is PsiCommentImpl && TextDomain.COMMENTS in allowedDomains) {
       val siblings = getNotSoDistantSimilarSiblings(root) { it is PsiCommentImpl }
       return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { TextContent.builder().build(it, TextDomain.COMMENTS) })
     }

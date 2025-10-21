@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.kryo5
+  library: Kryo5
+  files:
+  - name: $MAVEN_REPOSITORY$/com/esotericsoftware/kryo5/5/kryo5-5.jar

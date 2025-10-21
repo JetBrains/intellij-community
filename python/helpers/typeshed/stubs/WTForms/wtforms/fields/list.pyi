@@ -1,9 +1,11 @@
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import Any, Generic, TypeVar
 
 from wtforms.fields.core import Field, UnboundField, _FormT, _Validator, _Widget
 from wtforms.form import BaseForm
 from wtforms.meta import DefaultMeta, _SupportsGettextAndNgettext
+
+__all__ = ("FieldList",)
 
 _BoundFieldT = TypeVar("_BoundFieldT", bound=Field)
 
@@ -14,6 +16,11 @@ class FieldList(Field, Generic[_BoundFieldT]):
     last_index: int
     entries: list[_BoundFieldT]
     object_data: Iterable[Any]
+    # NOTE: This depends on the shape of errors of the bound field, which usually should
+    #       be a `Sequence[Sequence[str]]`, but can be `Sequence[_FormErrors]` for `FormField`
+    #       we could model this with a fake descriptor with overloads for `FieldList[FormField]`
+    #       but it might not be worth the hassle, for now we'll just leave it lax
+    errors: Sequence[Any]
     def __init__(
         self: FieldList[_BoundFieldT],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
         # because of our workaround we need to accept Field as well

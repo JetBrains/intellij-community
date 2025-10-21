@@ -18,6 +18,7 @@ from braintree.oauth_gateway import OAuthGateway
 from braintree.payment_method_gateway import PaymentMethodGateway
 from braintree.payment_method_nonce_gateway import PaymentMethodNonceGateway
 from braintree.paypal_account_gateway import PayPalAccountGateway
+from braintree.paypal_payment_resource_gateway import PayPalPaymentResourceGateway
 from braintree.plan_gateway import PlanGateway
 from braintree.sepa_direct_debit_account_gateway import SepaDirectDebitAccountGateway
 from braintree.settlement_batch_summary_gateway import SettlementBatchSummaryGateway
@@ -49,6 +50,7 @@ class BraintreeGateway:
     payment_method: PaymentMethodGateway
     payment_method_nonce: PaymentMethodNonceGateway
     paypal_account: PayPalAccountGateway
+    paypal_payment_resource: PayPalPaymentResourceGateway
     plan: PlanGateway
     sepa_direct_debit_account: SepaDirectDebitAccountGateway
     settlement_batch_summary: SettlementBatchSummaryGateway
@@ -61,4 +63,4 @@ class BraintreeGateway:
     verification: CreditCardVerificationGateway
     webhook_notification: WebhookNotificationGateway
     webhook_testing: WebhookTestingGateway
-    def __init__(self, config: Incomplete | None = None, **kwargs) -> None: ...
+    def __init__(self, config=None, **kwargs) -> None: ...

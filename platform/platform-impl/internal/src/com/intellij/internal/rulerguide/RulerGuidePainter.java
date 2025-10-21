@@ -99,7 +99,7 @@ final class RulerGuidePainter extends AbstractPainter implements Disposable {
     }
 
     @Override
-    public void executePaint(Component component, Graphics2D g) {
+    public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
         int y = 0;
         if (SystemInfoRt.isMac) {
           var window = ComponentUtil.getWindow(component);

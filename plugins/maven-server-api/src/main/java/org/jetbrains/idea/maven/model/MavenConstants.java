@@ -5,10 +5,20 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class MavenConstants {
-  public static final String MAVEN_4_XLMNS = "http://maven.apache.org/POM/4.1.0";
-  public static final String MAVEN_4_XLMNS_HTTPS = "https://maven.apache.org/POM/4.1.0";
-  public static final String MAVEN_4_XSD = "https://maven.apache.org/xsd/maven-4.1.0.xsd";
-  public static final String MAVEN_4_XSD_HTTPS = "http://maven.apache.org/xsd/maven-4.1.0.xsd";
+  public static final String MAVEN_4_XMLNS = "http://maven.apache.org/POM/4.1.0";
+  public static final String MAVEN_4_XMLNS_HTTPS = "https://maven.apache.org/POM/4.1.0";
+  public static final String MAVEN_4_XSD = "http://maven.apache.org/xsd/maven-4.1.0.xsd";
+  public static final String MAVEN_4_XSD_HTTPS = "https://maven.apache.org/xsd/maven-4.1.0.xsd";
+  public static final String MAVEN_4_XSD_UNDERSCORE = "http://maven.apache.org/maven-v4_1_0.xsd";
+  public static final String MAVEN_4_XSD_HTTPS_UNDERSCORE = "https://maven.apache.org/maven-v4_1_0.xsd";
+
+
+  public static final String MAVEN_3_XMLNS = "http://maven.apache.org/POM/4.0.0";
+  public static final String MAVEN_3_XMLNS_HTTPS = "https://maven.apache.org/POM/4.0.0";
+  public static final String MAVEN_3_XSD = "http://maven.apache.org/xsd/maven-4.0.0.xsd";
+  public static final String MAVEN_3_XSD_HTTPS = "https://maven.apache.org/xsd/maven-4..0.xsd";
+
+
   public static final String POM_EXTENSION = "pom";
   public static final String POM_XML = "pom.xml";
 

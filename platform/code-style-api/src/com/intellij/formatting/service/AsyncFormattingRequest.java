@@ -72,16 +72,49 @@ public interface AsyncFormattingRequest {
   void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message);
 
   /**
+   * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}.
+   * <p>
+   * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
+   *
+   * @param title     The notification title.
+   * @param message   The notification message.
+   * @param displayId The notification displayId.
+   */
+  default void onError(@NotNull @NlsContexts.NotificationTitle String title,
+                       @NotNull @NlsContexts.NotificationContent String message,
+                       @Nullable String displayId) {
+    onError(title, message);
+  }
+
+  /**
    * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}. In
    * addition, either navigate to the given offset in the open document or create a navigation link to a file from the formatting context.
    * <p>
    * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
    *
-   * @param title   The notification title.
-   * @param message The notification message.
-   * @param offset  Offset in the document to navigate to or -1 for no offset.
+   * @param title     The notification title.
+   * @param message   The notification message.
+   * @param offset    Offset in the document to navigate to or -1 for no offset.
    */
   void onError(@NotNull @NlsContexts.NotificationTitle String title,
                @NotNull @NlsContexts.NotificationContent String message,
                int offset);
+
+  /**
+   * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}. In
+   * addition, either navigate to the given offset in the open document or create a navigation link to a file from the formatting context.
+   * <p>
+   * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
+   *
+   * @param title     The notification title.
+   * @param message   The notification message.
+   * @param displayId The notification displayId.
+   * @param offset    Offset in the document to navigate to or -1 for no offset.
+   */
+  default void onError(@NotNull @NlsContexts.NotificationTitle String title,
+                       @NotNull @NlsContexts.NotificationContent String message,
+                       @Nullable String displayId,
+                       int offset) {
+    onError(title, message, offset);
+  }
 }

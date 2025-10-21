@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -18,10 +18,10 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.JBCheckBoxMenuItem
 import com.intellij.ui.icons.getMenuBarIcon
+import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.screenmenu.MenuItem
 import com.intellij.ui.plaf.beg.BegMenuItemUI
@@ -191,7 +191,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   private fun updateIcon(presentation: Presentation) {
     isToggled = isToggleable && Toggleable.isSelected(presentation)
     if (isToggleable && (presentation.icon == null || insideCheckedGroup || !UISettings.getInstance().showIconsInMenus)) {
-      if (ActionPlaces.MAIN_MENU == place && SystemInfo.isMacSystemMenu) {
+      if (ActionPlaces.MAIN_MENU == place && MacMenuSettings.isSystemMenu) {
         state = isToggled
         screenMenuItemPeer?.setState(isToggled)
       }
@@ -232,7 +232,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     return when {
       isMainMenu && isShowNoIcons(actionRef.getAction(), presentation) -> null
       !isAligned || !isAlignedInGroup -> return icon
-      isMainMenu && icon == null && SystemInfo.isMacSystemMenu -> EMPTY_MENU_ACTION_ICON
+      isMainMenu && icon == null && MacMenuSettings.isSystemMenu -> EMPTY_MENU_ACTION_ICON
       else -> icon
     }
   }
@@ -240,7 +240,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   override fun setIcon(icon: Icon?) {
     var effectiveIcon: Icon? = icon
     if (effectiveIcon != null) {
-      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) {
+      if (MacMenuSettings.isSystemMenu && ActionPlaces.MAIN_MENU == place) {
         // JDK can't correctly paint our HiDPI icons at the system menu bar
         effectiveIcon = getMenuBarIcon(effectiveIcon, useDarkIcons)
       }

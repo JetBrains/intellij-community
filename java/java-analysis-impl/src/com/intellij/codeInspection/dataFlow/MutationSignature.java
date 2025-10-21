@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
@@ -281,7 +281,7 @@ public final class MutationSignature {
   public static @NotNull MutationSignature fromCall(@Nullable PsiCall call) {
     if (call == null) return UNKNOWN;
     PsiMethod method = call.resolveMethod();
-    if (method != null) {
+    if (method != null && !method.isDefaultConstructor()) {
       if (SpecialField.findSpecialField(method) != null) {
         return PURE;
       }
@@ -291,9 +291,7 @@ public final class MutationSignature {
       if (newExpression.isArrayCreation()) return PURE;
       if (newExpression.getArgumentList() == null || !newExpression.getArgumentList().isEmpty()) return UNKNOWN;
       PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
-      if (classReference == null) return UNKNOWN;
-      PsiClass clazz = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
-      if (clazz == null) return UNKNOWN;
+      if (classReference == null || !(classReference.resolve() instanceof PsiClass clazz)) return UNKNOWN;
       Set<PsiClass> visited = new HashSet<>();
       while (true) {
         for (PsiField field : clazz.getFields()) {

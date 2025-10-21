@@ -63,7 +63,7 @@ public final class UnnecessaryLabelOnContinueStatementInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryLabelOnContinueStatementVisitor();
   }
 

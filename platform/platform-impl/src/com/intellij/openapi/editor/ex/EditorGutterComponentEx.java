@@ -68,7 +68,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract int getFoldingAreaOffset();
 
-  public abstract @Nullable Point getCenterPoint(GutterIconRenderer renderer);
+  public abstract @Nullable Point getCenterPoint(@NotNull GutterIconRenderer renderer);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 

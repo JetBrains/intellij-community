@@ -8,7 +8,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -53,6 +53,6 @@ public final class JavaPythonFacetType extends FacetType<JavaPythonFacet, JavaPy
 
   @Override
   public Icon getIcon() {
-    return  PythonPsiApiIcons.Python;
+    return PythonParserIcons.PythonFile;
   }
 }

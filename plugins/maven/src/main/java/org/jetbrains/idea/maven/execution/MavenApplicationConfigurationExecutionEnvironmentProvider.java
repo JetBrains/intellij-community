@@ -94,13 +94,14 @@ public final class MavenApplicationConfigurationExecutionEnvironmentProvider imp
 
     String workingDirectory = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
 
-    List<String> goals = runnerParameters.getGoals();
+    List<String> goals = new ArrayList<>(runnerParameters.getGoals());
     if (isNotEmpty(workingDirectory)) {
       goals.add("-Dexec.workingdir=" + workingDirectory);
     }
     goals.add("-Dexec.args=" + execArgs.getParametersString());
     goals.add("-Dexec.executable=" + toSystemDependentName(execExecutable));
     goals.add("exec:exec");
+    runnerParameters.setGoals(goals);
 
     if (executor == null) {
       executor = DefaultRunExecutor.getRunExecutorInstance();

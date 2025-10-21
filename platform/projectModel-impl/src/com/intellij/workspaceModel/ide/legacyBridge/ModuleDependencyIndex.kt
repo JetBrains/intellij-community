@@ -49,11 +49,6 @@ interface ModuleDependencyIndex {
   fun hasDependencyOn(libraryId: LibraryId): Boolean
 
   /**
-   * Return `true` if at least one module has dependency on [library]
-   */
-  fun hasDependencyOn(library: Library): Boolean
-
-  /**
    * Return `true` if at least one module has dependency on [sdk]
    */
   fun hasDependencyOn(sdk: Sdk): Boolean
@@ -70,17 +65,6 @@ interface ModuleDependencyIndex {
  */
 @ApiStatus.Internal
 interface ModuleDependencyListener : EventListener {
-  /** 
-   * Called when [library] is added to dependency of some module, and there were no dependencies on this library before 
-   */
-  fun addedDependencyOn(library: Library) {
-  }
-
-  /**
-   * Called when [library] is removed from dependencies of some module, and there are no dependencies on this library anymore 
-   */
-  fun removedDependencyOn(library: Library) {
-  }
 
   /**
    * Called when [library] is created and some module has a dependency on this library (it was unresolved before) 
@@ -101,18 +85,6 @@ interface ModuleDependencyListener : EventListener {
   }
 
   /**
-   * Called when [sdk] is added to dependency of some module, and there were no dependencies on this SDK before
-   */
-  fun addedDependencyOn(sdk: Sdk) {
-  }
-
-  /**
-   * Called when [sdk] is removed from dependencies of some module, and there are no dependencies on this SDK anymore
-   */
-  fun removedDependencyOn(sdk: Sdk) {
-  }
-
-  /**
    * Called when [sdk] is created and some module has a dependency on this SDK (it was unresolved before)
    */
   fun referencedSdkAdded(sdk: Sdk) {
@@ -128,11 +100,5 @@ interface ModuleDependencyListener : EventListener {
    * Called when [sdk] is removed and some module has a dependency on this SDK (it will become unresolved)
    */
   fun referencedSdkRemoved(sdk: Sdk) {
-  }
-
-  fun firstDependencyOnSdkAdded() {
-  }
-
-  fun lastDependencyOnSdkRemoved() {
   }
 }

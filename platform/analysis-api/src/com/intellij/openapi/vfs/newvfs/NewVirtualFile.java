@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -95,8 +95,26 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     });
   }
 
+  /**
+   * @return true if VFS _thinks_ it already cached _in_memory_ all the children of this file, false otherwise.
+   * It doesn't mean there are no yet-uncached children in the actual underlying FS: VFS may catch up changes
+   * in the underlying FS with delay -- it just means VFS _thinks_ it caches all the children, i.e., it _was_
+   * all the children in the folder at some moment.
+   */
+  @ApiStatus.Experimental
+  public boolean allChildrenLoaded() {
+    return false;//= safe, but not good for performance
+  }
+
+  /**
+   * @return children that VFS already loaded in memory. This may be not all the children in the actual underlying FS,
+   * since: (a) FS changes may be caught to VFS with delay (b) some children could be known to VFS, but not loaded
+   * in-memory (=stored in VFS persistent storage)
+   * @see #allChildrenLoaded()
+   */
   public abstract @NotNull @Unmodifiable Collection<VirtualFile> getCachedChildren();
 
+  /** @return all the children that are cached in VFS, including the ones that are not cached-in-memory now */
   @SuppressWarnings("SpellCheckingInspection")
   public abstract @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildren();
 
@@ -104,5 +122,35 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @SuppressWarnings("SpellCheckingInspection")
   public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
+  }
+
+  /**
+   * @return a wrapper that prevents VFS from caching new entries during file operations
+   * @see CacheAvoidingVirtualFile
+   * @see CacheAvoidingVirtualFileWrapper
+   */
+  @ApiStatus.Internal
+  public @NotNull VirtualFile asCacheAvoiding() {
+    return new CacheAvoidingVirtualFileWrapper(this);
+  }
+
+  /**
+   * @return VirtualFile, converted to cache-avoiding type -- so walking through its children won't trash VFS cache with new
+   * entries
+   * @throws IllegalArgumentException if VirtualFile can't be converted to cache-avoiding type
+   */
+  @ApiStatus.Internal
+  public static @NotNull VirtualFile asCacheAvoiding(@NotNull VirtualFile vFile) {
+    if (vFile instanceof CacheAvoidingVirtualFile) {
+      return vFile;
+    }
+    else if (vFile instanceof NewVirtualFile) {
+      return ((NewVirtualFile)vFile).asCacheAvoiding();
+    }
+    else {
+      throw new IllegalArgumentException(
+        vFile + "(" + vFile.getClass() + ") is not a (NewVirtualFile | CacheAvoidingVirtualFile) -> can't deal with it"
+      );
+    }
   }
 }

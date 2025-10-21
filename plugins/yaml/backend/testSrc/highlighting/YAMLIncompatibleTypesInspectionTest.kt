@@ -129,6 +129,36 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testStrMacro() {
+    myFixture.configureByText("test.yaml", """
+      - items:
+          - key:   'string'
+            value: "string"
+          - key:   "string"
+            value: string stirng
+          - key:   also a string
+            value: 'yet another'
+          - key:   <warning descr="The type of value is 'number' while other values use type 'string'">1</warning>
+            value: !!str true
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testTypeByTag() {
+    myFixture.configureByText("test.yaml", """
+      - items:
+          - key:   'string'
+            value: !!int 1
+          - key:   "string"
+            value: !!float 2
+          - key:   also a string
+            value: !!int 3
+          - key:   <warning descr="The type of value is 'number' while other values use type 'string'">1</warning>
+            value: <warning descr="The type of value is 'string' while other values use type 'number'">!!str 1</warning>
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
   fun testWrapWithDoubleQuotes() {
     myFixture.configureByText("test.yaml", """
       prop:

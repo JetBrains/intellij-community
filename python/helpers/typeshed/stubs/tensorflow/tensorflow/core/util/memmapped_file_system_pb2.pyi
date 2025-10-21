@@ -40,11 +40,7 @@ class MemmappedFileSystemDirectoryElement(google.protobuf.message.Message):
     name: builtins.str
     length: builtins.int
     def __init__(
-        self,
-        *,
-        offset: builtins.int | None = ...,
-        name: builtins.str | None = ...,
-        length: builtins.int | None = ...,
+        self, *, offset: builtins.int | None = ..., name: builtins.str | None = ..., length: builtins.int | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["length", b"length", "name", b"name", "offset", b"offset"]) -> None: ...
 
@@ -58,11 +54,11 @@ class MemmappedFileSystemDirectory(google.protobuf.message.Message):
 
     ELEMENT_FIELD_NUMBER: builtins.int
     @property
-    def element(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___MemmappedFileSystemDirectoryElement]: ...
-    def __init__(
+    def element(
         self,
-        *,
-        element: collections.abc.Iterable[global___MemmappedFileSystemDirectoryElement] | None = ...,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___MemmappedFileSystemDirectoryElement]: ...
+    def __init__(
+        self, *, element: collections.abc.Iterable[global___MemmappedFileSystemDirectoryElement] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["element", b"element"]) -> None: ...
 

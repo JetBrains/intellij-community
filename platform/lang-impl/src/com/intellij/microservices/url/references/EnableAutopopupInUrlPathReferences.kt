@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.microservices.url.references
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionConfidence
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -24,7 +23,7 @@ internal class EnableAutopopupInUrlPathReferences : CompletionConfidence() {
 internal class SlashTypedHandlerAutoPopup : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
     if (charTyped != '/') return super.checkAutoPopup(charTyped, project, editor, file)
-    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC) { f ->
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor) { f ->
       val offset = editor.caretModel.offset
       val psiElement = f.findElementAt(offset) ?: return@scheduleAutoPopup false
       hasUsageUrlPathReferences(psiElement, offset)

@@ -6,18 +6,16 @@ package com.intellij.ui.components
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.EventQueue
 import javax.swing.JScrollBar
-import kotlin.coroutines.CoroutineContext
 
 @Internal
 abstract class ScrollBarAnimationBehavior(
@@ -74,18 +72,11 @@ internal class MacScrollBarAnimationBehavior(
   private val hideThumbRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    // Can be called early in the lifecycle when there is no application yet.
-    var context = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false)
-    if (context == null) {
-      context = object : CoroutineDispatcher() {
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-          EventQueue.invokeLater(block)
-        }
-
-        override fun toString() = "Swing"
-      }
-    }
-    if (ApplicationManager.getApplication() != null) {
+    // can be called early in the lifecycle when there is no application yet
+    val app = ApplicationManager.getApplication()
+    var context = app?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(CoroutineSupport.UiDispatcherKind.LEGACY, false)
+                  ?: RawSwingDispatcher
+    if (app != null) {
       context += ModalityState.defaultModalityState().asContextElement()
     }
     coroutineScope.launch {

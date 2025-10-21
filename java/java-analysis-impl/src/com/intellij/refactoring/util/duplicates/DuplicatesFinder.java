@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -220,7 +220,7 @@ public final class DuplicatesFinder {
       }
 
     }
-    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1), ignoreParameterTypesAndPostVariableUsages);
+    final Match match = new Match(candidates.getFirst(), candidates.getLast(), ignoreParameterTypesAndPostVariableUsages);
     for (int i = 0; i < myPattern.length; i++) {
       if (!matchPattern(myPattern[i], candidates.get(i), candidates, match)) return null;
     }
@@ -300,10 +300,9 @@ public final class DuplicatesFinder {
       if (type1 instanceof PsiImmediateClassType && type2 instanceof PsiImmediateClassType) {
         final PsiClass psiClass1 = ((PsiImmediateClassType)type1).resolve();
         final PsiClass psiClass2 = ((PsiImmediateClassType)type2).resolve();
-        if (!(psiClass1 instanceof PsiAnonymousClass anonymousClass1 &&
-              psiClass2 instanceof PsiAnonymousClass anonymousClass2 &&
-              anonymousClass1.getBaseClassType().equals(anonymousClass2.getBaseClassType())
-        )) {
+        if (!(psiClass1 instanceof PsiAnonymousClass anonymousClass1) ||
+            !(psiClass2 instanceof PsiAnonymousClass anonymousClass2) ||
+            !anonymousClass1.getBaseClassType().equals(anonymousClass2.getBaseClassType())) {
           return false;
         }
       }
@@ -548,11 +547,9 @@ public final class DuplicatesFinder {
     final PsiMethod constructor2 = candidate.resolveConstructor();
     if (constructor1 != null && constructor2 != null) {
       if (!pattern.getManager().areElementsEquivalent(constructor1, constructor2)) return false;
+      if (pattern.getAnonymousClass() == null && candidate.getAnonymousClass() == null) return true;
     }
-    else {
-      if (!canTypesBeEquivalent(type1, type2)) return false;
-    }
-    return true;
+    return canTypesBeEquivalent(type1, type2);
   }
 
   private static boolean matchObjectAccess(@NotNull PsiClassObjectAccessExpression pattern,

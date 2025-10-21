@@ -17,10 +17,10 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl;
 import com.intellij.ui.treeStructure.TreeNodeViewModel;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +54,11 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   }
 
   protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
+    return adjustIconInTree(icon, selected, hasFocus);
+  }
+
+  @ApiStatus.Internal
+  public static Icon adjustIconInTree(Icon icon, boolean selected, boolean hasFocus) {
     var dark = icon != null && !StartupUiUtil.INSTANCE.isDarkTheme() && Registry.is("ide.project.view.change.icon.on.selection", true) && selected && hasFocus;
     return dark ? IconLoader.getDarkIcon(icon, true) : icon;
   }

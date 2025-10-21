@@ -37,12 +37,11 @@ class CostGraphDef(google.protobuf.message.Message):
             preceding_node: builtins.int
             preceding_port: builtins.int
             def __init__(
-                self,
-                *,
-                preceding_node: builtins.int | None = ...,
-                preceding_port: builtins.int | None = ...,
+                self, *, preceding_node: builtins.int | None = ..., preceding_port: builtins.int | None = ...
             ) -> None: ...
-            def ClearField(self, field_name: typing.Literal["preceding_node", b"preceding_node", "preceding_port", b"preceding_port"]) -> None: ...
+            def ClearField(
+                self, field_name: typing.Literal["preceding_node", b"preceding_node", "preceding_port", b"preceding_port"]
+            ) -> None: ...
 
         @typing.final
         class OutputInfo(google.protobuf.message.Message):
@@ -72,7 +71,12 @@ class CostGraphDef(google.protobuf.message.Message):
                 dtype: tensorflow.core.framework.types_pb2.DataType.ValueType | None = ...,
             ) -> None: ...
             def HasField(self, field_name: typing.Literal["shape", b"shape"]) -> builtins.bool: ...
-            def ClearField(self, field_name: typing.Literal["alias_input_port", b"alias_input_port", "dtype", b"dtype", "shape", b"shape", "size", b"size"]) -> None: ...
+            def ClearField(
+                self,
+                field_name: typing.Literal[
+                    "alias_input_port", b"alias_input_port", "dtype", b"dtype", "shape", b"shape", "size", b"size"
+                ],
+            ) -> None: ...
 
         NAME_FIELD_NUMBER: builtins.int
         DEVICE_FIELD_NUMBER: builtins.int
@@ -122,9 +126,13 @@ class CostGraphDef(google.protobuf.message.Message):
         inaccurate: builtins.bool
         """Are the costs inaccurate?"""
         @property
-        def input_info(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CostGraphDef.Node.InputInfo]: ...
+        def input_info(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CostGraphDef.Node.InputInfo]: ...
         @property
-        def output_info(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CostGraphDef.Node.OutputInfo]: ...
+        def output_info(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CostGraphDef.Node.OutputInfo]: ...
         @property
         def control_input(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
             """Ids of the control inputs for this node."""
@@ -149,7 +157,43 @@ class CostGraphDef(google.protobuf.message.Message):
             control_input: collections.abc.Iterable[builtins.int] | None = ...,
             inaccurate: builtins.bool | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["compute_cost", b"compute_cost", "compute_time", b"compute_time", "control_input", b"control_input", "device", b"device", "device_persistent_memory_size", b"device_persistent_memory_size", "device_temp_memory_size", b"device_temp_memory_size", "host_temp_memory_size", b"host_temp_memory_size", "id", b"id", "inaccurate", b"inaccurate", "input_info", b"input_info", "is_final", b"is_final", "memory_time", b"memory_time", "name", b"name", "output_info", b"output_info", "persistent_memory_size", b"persistent_memory_size", "temporary_memory_size", b"temporary_memory_size"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "compute_cost",
+                b"compute_cost",
+                "compute_time",
+                b"compute_time",
+                "control_input",
+                b"control_input",
+                "device",
+                b"device",
+                "device_persistent_memory_size",
+                b"device_persistent_memory_size",
+                "device_temp_memory_size",
+                b"device_temp_memory_size",
+                "host_temp_memory_size",
+                b"host_temp_memory_size",
+                "id",
+                b"id",
+                "inaccurate",
+                b"inaccurate",
+                "input_info",
+                b"input_info",
+                "is_final",
+                b"is_final",
+                "memory_time",
+                b"memory_time",
+                "name",
+                b"name",
+                "output_info",
+                b"output_info",
+                "persistent_memory_size",
+                b"persistent_memory_size",
+                "temporary_memory_size",
+                b"temporary_memory_size",
+            ],
+        ) -> None: ...
 
     @typing.final
     class AggregatedCost(google.protobuf.message.Message):
@@ -163,12 +207,7 @@ class CostGraphDef(google.protobuf.message.Message):
         """Aggregated cost value."""
         dimension: builtins.str
         """Aggregated cost dimension (e.g. 'memory', 'compute', 'network')."""
-        def __init__(
-            self,
-            *,
-            cost: builtins.float | None = ...,
-            dimension: builtins.str | None = ...,
-        ) -> None: ...
+        def __init__(self, *, cost: builtins.float | None = ..., dimension: builtins.str | None = ...) -> None: ...
         def ClearField(self, field_name: typing.Literal["cost", b"cost", "dimension", b"dimension"]) -> None: ...
 
     NODE_FIELD_NUMBER: builtins.int
@@ -176,7 +215,9 @@ class CostGraphDef(google.protobuf.message.Message):
     @property
     def node(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CostGraphDef.Node]: ...
     @property
-    def cost(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CostGraphDef.AggregatedCost]: ...
+    def cost(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CostGraphDef.AggregatedCost]: ...
     def __init__(
         self,
         *,

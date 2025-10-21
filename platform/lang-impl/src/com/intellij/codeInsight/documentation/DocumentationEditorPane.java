@@ -12,9 +12,11 @@ import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.components.impl.JBHtmlPaneImageResolver;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.svg.AdaptiveImageView;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -65,8 +67,19 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
         .keyboardActions(keyboardActions)
         .imageResolverFactory(component -> new JBHtmlPaneImageResolver(component, it -> imageResolver.resolveImage(it)))
         .iconResolver(name -> iconResolver.apply(name))
-        .customStyleSheetProvider(pane -> getDocumentationPaneAdditionalCssRules(num -> (int)(pane.getContentsScaleFactor() * num)))
-        .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
+        .customStyleSheetProvider(pane -> {
+          return getDocumentationPaneAdditionalCssRules(num -> {
+            if (pane instanceof DocumentationHintEditorPane hintEditorPane && hintEditorPane.isCustomSettingsEnabled()) {
+              return 0;
+            }
+            return (int)(pane.getContentsScaleFactor() * num);
+          });
+        })
+        .extensions(
+          CachingAdaptiveImageManagerService.isEnabled()
+          ? ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION
+          : ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES
+        )
         .build()
     );
     setBackground(BACKGROUND_COLOR);
@@ -79,7 +92,10 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
   }
 
   @Override
-  public void setDocument(Document doc) {
+  public void setDocument(@NotNull Document doc) {
+    if (CachingAdaptiveImageManagerService.isEnabled()) {
+      doc.putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
+    }
     super.setDocument(doc);
     myCachedPreferredSize = null;
   }
@@ -106,8 +122,16 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     }
     setSize(width, Short.MAX_VALUE);
     Dimension result = getPreferredSize();
-    myCachedPreferredSize = new Dimension(width, result.height);
+    // Add extra height to prevent bottom clipping
+    int extraHeight = getExtraHeight(result.height, contentsPreferredWidth(), width);
+    myCachedPreferredSize = new Dimension(width, result.height + extraHeight);
     return myCachedPreferredSize.height;
+  }
+
+  @Internal
+  @ApiStatus.Experimental
+  protected int getExtraHeight(int height, int contentPreferredWidth, int expectedWidth) {
+    return 0;
   }
 
   int getPreferredWidth() {
@@ -149,14 +173,19 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     if (!(document instanceof StyledDocument)) {
       return;
     }
-    String fontName = Registry.is("documentation.component.editor.font")
-                      ? EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName()
-                      : getFont().getFontName();
 
     myFontSize = size;
 
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
-    setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(size.getSize())));
+    setFont(UIUtil.getFontWithFallback(getFontName(), Font.PLAIN, JBUIScale.scale(size.getSize())));
+  }
+
+  @Internal
+  public String getFontName() {
+    String fontName = Registry.is("documentation.component.editor.font")
+                      ? EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName()
+                      : getFont().getFontName();
+    return fontName;
   }
 
   @Override

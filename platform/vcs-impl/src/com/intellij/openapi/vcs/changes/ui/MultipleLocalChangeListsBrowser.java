@@ -17,7 +17,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -97,12 +96,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     if (!changeListManager.areChangeListsEnabled()) {
       myChangeListChooser.setVisible(false);
-    }
-    else if (Registry.is("vcs.skip.single.default.changelist")) {
-      List<LocalChangeList> allChangeLists = changeListManager.getChangeLists();
-      if (allChangeLists.size() == 1 && allChangeLists.get(0).isBlank()) {
-        myChangeListChooser.setVisible(false);
-      }
     }
 
     myInclusionModel = new PartialCommitInclusionModel(myProject);

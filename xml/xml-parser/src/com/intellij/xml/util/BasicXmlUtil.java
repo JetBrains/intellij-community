@@ -13,7 +13,7 @@ public final class BasicXmlUtil {
 
   private BasicXmlUtil() { }
 
-  public static CharSequence getLocalName(final CharSequence tagName) {
+  public static @NotNull CharSequence getLocalName(@NotNull CharSequence tagName) {
     int pos = StringUtil.indexOf(tagName, ':');
     if (pos == -1) {
       return tagName;

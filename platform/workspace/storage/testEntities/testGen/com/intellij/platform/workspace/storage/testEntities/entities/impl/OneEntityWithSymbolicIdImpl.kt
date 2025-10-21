@@ -1,24 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Open
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicIdBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.OneSymbolicId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymbolicIdData) : OneEntityWithSymbolicId,
-                                                                                                  WorkspaceEntityBase(dataSource) {
+internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymbolicIdData) : OneEntityWithSymbolicId, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -47,8 +45,8 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
   }
 
 
-  internal class Builder(result: OneEntityWithSymbolicIdData?) :
-    ModifiableWorkspaceEntityBase<OneEntityWithSymbolicId, OneEntityWithSymbolicIdData>(result), OneEntityWithSymbolicId.Builder {
+  internal class Builder(result: OneEntityWithSymbolicIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithSymbolicId, OneEntityWithSymbolicIdData>(
+    result), OneEntityWithSymbolicIdBuilder {
     internal constructor() : this(OneEntityWithSymbolicIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,7 +122,7 @@ internal class OneEntityWithSymbolicIdData : WorkspaceEntityData<OneEntityWithSy
 
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OneEntityWithSymbolicId> {
     val modifiable = OneEntityWithSymbolicIdImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -144,15 +142,14 @@ internal class OneEntityWithSymbolicIdData : WorkspaceEntityData<OneEntityWithSy
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return OneEntityWithSymbolicId::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return OneEntityWithSymbolicId(myName, entitySource) {
     }
   }

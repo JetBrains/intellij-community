@@ -26,7 +26,9 @@ class _TensorDebugMode:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _TensorDebugModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_TensorDebugMode.ValueType], builtins.type):
+class _TensorDebugModeEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_TensorDebugMode.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     UNSPECIFIED: _TensorDebugMode.ValueType  # 0
     NO_TENSOR: _TensorDebugMode.ValueType  # 1
@@ -209,9 +211,76 @@ class DebugEvent(google.protobuf.message.Message):
         graph_id: builtins.str | None = ...,
         debugged_device: global___DebuggedDevice | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["debug_metadata", b"debug_metadata", "debugged_device", b"debugged_device", "debugged_graph", b"debugged_graph", "execution", b"execution", "graph_execution_trace", b"graph_execution_trace", "graph_id", b"graph_id", "graph_op_creation", b"graph_op_creation", "source_file", b"source_file", "stack_frame_with_id", b"stack_frame_with_id", "what", b"what"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["debug_metadata", b"debug_metadata", "debugged_device", b"debugged_device", "debugged_graph", b"debugged_graph", "execution", b"execution", "graph_execution_trace", b"graph_execution_trace", "graph_id", b"graph_id", "graph_op_creation", b"graph_op_creation", "source_file", b"source_file", "stack_frame_with_id", b"stack_frame_with_id", "step", b"step", "wall_time", b"wall_time", "what", b"what"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["what", b"what"]) -> typing.Literal["debug_metadata", "source_file", "stack_frame_with_id", "graph_op_creation", "debugged_graph", "execution", "graph_execution_trace", "graph_id", "debugged_device"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "debug_metadata",
+            b"debug_metadata",
+            "debugged_device",
+            b"debugged_device",
+            "debugged_graph",
+            b"debugged_graph",
+            "execution",
+            b"execution",
+            "graph_execution_trace",
+            b"graph_execution_trace",
+            "graph_id",
+            b"graph_id",
+            "graph_op_creation",
+            b"graph_op_creation",
+            "source_file",
+            b"source_file",
+            "stack_frame_with_id",
+            b"stack_frame_with_id",
+            "what",
+            b"what",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "debug_metadata",
+            b"debug_metadata",
+            "debugged_device",
+            b"debugged_device",
+            "debugged_graph",
+            b"debugged_graph",
+            "execution",
+            b"execution",
+            "graph_execution_trace",
+            b"graph_execution_trace",
+            "graph_id",
+            b"graph_id",
+            "graph_op_creation",
+            b"graph_op_creation",
+            "source_file",
+            b"source_file",
+            "stack_frame_with_id",
+            b"stack_frame_with_id",
+            "step",
+            b"step",
+            "wall_time",
+            b"wall_time",
+            "what",
+            b"what",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["what", b"what"]
+    ) -> (
+        typing.Literal[
+            "debug_metadata",
+            "source_file",
+            "stack_frame_with_id",
+            "graph_op_creation",
+            "debugged_graph",
+            "execution",
+            "graph_execution_trace",
+            "graph_id",
+            "debugged_device",
+        ]
+        | None
+    ): ...
 
 global___DebugEvent = DebugEvent
 
@@ -243,7 +312,12 @@ class DebugMetadata(google.protobuf.message.Message):
         file_version: builtins.str | None = ...,
         tfdbg_run_id: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["file_version", b"file_version", "tensorflow_version", b"tensorflow_version", "tfdbg_run_id", b"tfdbg_run_id"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "file_version", b"file_version", "tensorflow_version", b"tensorflow_version", "tfdbg_run_id", b"tfdbg_run_id"
+        ],
+    ) -> None: ...
 
 global___DebugMetadata = DebugMetadata
 
@@ -273,7 +347,9 @@ class SourceFile(google.protobuf.message.Message):
         host_name: builtins.str | None = ...,
         lines: collections.abc.Iterable[builtins.str] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["file_path", b"file_path", "host_name", b"host_name", "lines", b"lines"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["file_path", b"file_path", "host_name", b"host_name", "lines", b"lines"]
+    ) -> None: ...
 
 global___SourceFile = SourceFile
 
@@ -326,12 +402,11 @@ class CodeLocation(google.protobuf.message.Message):
         """
 
     def __init__(
-        self,
-        *,
-        host_name: builtins.str | None = ...,
-        stack_frame_ids: collections.abc.Iterable[builtins.str] | None = ...,
+        self, *, host_name: builtins.str | None = ..., stack_frame_ids: collections.abc.Iterable[builtins.str] | None = ...
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["host_name", b"host_name", "stack_frame_ids", b"stack_frame_ids"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["host_name", b"host_name", "stack_frame_ids", b"stack_frame_ids"]
+    ) -> None: ...
 
 global___CodeLocation = CodeLocation
 
@@ -390,7 +465,29 @@ class GraphOpCreation(google.protobuf.message.Message):
         output_tensor_ids: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["code_location", b"code_location"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["code_location", b"code_location", "device_name", b"device_name", "graph_id", b"graph_id", "graph_name", b"graph_name", "input_names", b"input_names", "num_outputs", b"num_outputs", "op_name", b"op_name", "op_type", b"op_type", "output_tensor_ids", b"output_tensor_ids"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "code_location",
+            b"code_location",
+            "device_name",
+            b"device_name",
+            "graph_id",
+            b"graph_id",
+            "graph_name",
+            b"graph_name",
+            "input_names",
+            b"input_names",
+            "num_outputs",
+            b"num_outputs",
+            "op_name",
+            b"op_name",
+            "op_type",
+            b"op_type",
+            "output_tensor_ids",
+            b"output_tensor_ids",
+        ],
+    ) -> None: ...
 
 global___GraphOpCreation = GraphOpCreation
 
@@ -436,7 +533,23 @@ class DebuggedGraph(google.protobuf.message.Message):
         instrumented_graph_def: builtins.bytes | None = ...,
         outer_context_id: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["graph_id", b"graph_id", "graph_name", b"graph_name", "instrumented_graph_def", b"instrumented_graph_def", "instrumented_ops", b"instrumented_ops", "original_graph_def", b"original_graph_def", "outer_context_id", b"outer_context_id"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "graph_id",
+            b"graph_id",
+            "graph_name",
+            b"graph_name",
+            "instrumented_graph_def",
+            b"instrumented_graph_def",
+            "instrumented_ops",
+            b"instrumented_ops",
+            "original_graph_def",
+            b"original_graph_def",
+            "outer_context_id",
+            b"outer_context_id",
+        ],
+    ) -> None: ...
 
 global___DebuggedGraph = DebuggedGraph
 
@@ -456,12 +569,7 @@ class DebuggedDevice(google.protobuf.message.Message):
     multi-host settings.
     TODO(cais): Test the uniqueness guarantee in multi-host settings.
     """
-    def __init__(
-        self,
-        *,
-        device_name: builtins.str | None = ...,
-        device_id: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, device_name: builtins.str | None = ..., device_id: builtins.int | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["device_id", b"device_id", "device_name", b"device_name"]) -> None: ...
 
 global___DebuggedDevice = DebuggedDevice
@@ -507,7 +615,9 @@ class Execution(google.protobuf.message.Message):
         """
 
     @property
-    def tensor_protos(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.tensor_pb2.TensorProto]:
+    def tensor_protos(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.tensor_pb2.TensorProto]:
         """Output Tensor values in the type described by `tensor_value_type`.
         The length of this should match `num_outputs`.
         """
@@ -537,7 +647,29 @@ class Execution(google.protobuf.message.Message):
         output_tensor_device_ids: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["code_location", b"code_location"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["code_location", b"code_location", "graph_id", b"graph_id", "input_tensor_ids", b"input_tensor_ids", "num_outputs", b"num_outputs", "op_type", b"op_type", "output_tensor_device_ids", b"output_tensor_device_ids", "output_tensor_ids", b"output_tensor_ids", "tensor_debug_mode", b"tensor_debug_mode", "tensor_protos", b"tensor_protos"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "code_location",
+            b"code_location",
+            "graph_id",
+            b"graph_id",
+            "input_tensor_ids",
+            b"input_tensor_ids",
+            "num_outputs",
+            b"num_outputs",
+            "op_type",
+            b"op_type",
+            "output_tensor_device_ids",
+            b"output_tensor_device_ids",
+            "output_tensor_ids",
+            b"output_tensor_ids",
+            "tensor_debug_mode",
+            b"tensor_debug_mode",
+            "tensor_protos",
+            b"tensor_protos",
+        ],
+    ) -> None: ...
 
 global___Execution = Execution
 
@@ -593,6 +725,22 @@ class GraphExecutionTrace(google.protobuf.message.Message):
         device_name: builtins.str | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["tensor_proto", b"tensor_proto"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["device_name", b"device_name", "op_name", b"op_name", "output_slot", b"output_slot", "tensor_debug_mode", b"tensor_debug_mode", "tensor_proto", b"tensor_proto", "tfdbg_context_id", b"tfdbg_context_id"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "device_name",
+            b"device_name",
+            "op_name",
+            b"op_name",
+            "output_slot",
+            b"output_slot",
+            "tensor_debug_mode",
+            b"tensor_debug_mode",
+            "tensor_proto",
+            b"tensor_proto",
+            "tfdbg_context_id",
+            b"tfdbg_context_id",
+        ],
+    ) -> None: ...
 
 global___GraphExecutionTrace = GraphExecutionTrace

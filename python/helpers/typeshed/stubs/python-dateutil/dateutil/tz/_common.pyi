@@ -2,12 +2,12 @@ import abc
 from datetime import datetime, timedelta, tzinfo
 from typing import ClassVar
 
+ZERO: timedelta
+
+__all__ = ["tzname_in_python2", "enfold"]
+
 def tzname_in_python2(namefunc): ...
 def enfold(dt: datetime, fold: int = 1): ...
-
-class _DatetimeWithFold(datetime):
-    @property
-    def fold(self): ...
 
 # Doesn't actually have ABCMeta as the metaclass at runtime,
 # but mypy complains if we don't have it in the stub.

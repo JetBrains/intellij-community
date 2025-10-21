@@ -22,7 +22,6 @@ import org.jetbrains.annotations.UnknownNullability
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-
 private val LOG = Logger.getInstance(FindModel::class.java)
 
 @Serializable
@@ -444,6 +443,7 @@ open class FindModel : UserDataHolder, Cloneable {
     set(showInNewTabEnabled) {
     }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("and not used anymore")
   fun setOpenInNewTabVisible(showInNewTabVisible: Boolean) {
   }
@@ -711,7 +711,7 @@ open class FindModel : UserDataHolder, Cloneable {
            "moduleName = '" + moduleName + "'\n" +
            "customScopeName = '" + customScopeName + "'\n" +
            "searchInProjectFiles = " + mySearchInProjectFiles + "\n" +
-           "userDataMap = " + dataHolder.get() + "\n"
+           "userDataMap = " + dataHolder + "\n"
   }
 
   @Transient
@@ -748,7 +748,7 @@ open class FindModel : UserDataHolder, Cloneable {
     notifyObservers()
   }
 
-   private fun notifyObservers() {
+  private fun notifyObservers() {
     for (observer in myObservers) {
       LOG.runAndLogException {
         observer.findModelChanged(this)

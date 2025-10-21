@@ -3,15 +3,13 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent
 import com.intellij.execution.configurations.AdditionalTabComponentManagerEx
+import com.intellij.ide.rpc.setupTransfer
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
-import com.intellij.platform.debugger.impl.shared.XDebugSessionAdditionalTabComponentConverter
-import com.intellij.platform.debugger.impl.shared.XDebuggerSessionAdditionalTabId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabId
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
@@ -22,16 +20,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
-class XDebugSessionAdditionalTabComponentManager(
-  private val project: Project,
-  private val debugTabScope: CoroutineScope,
-) : AdditionalTabComponentManagerEx, Disposable {
+class XDebugSessionAdditionalTabComponentManager(private val debugTabScope: CoroutineScope) : AdditionalTabComponentManagerEx {
   init {
-    Disposer.register(debugTabScope.asDisposable(), this)
+    debugTabScope.coroutineContext.job.invokeOnCompletion {
+      val tabs = tabToId.keys.toList()
+      for (tab in tabs) {
+        removeAdditionalTabComponent(tab)
+      }
+    }
   }
 
   val id: XDebugSessionAdditionalTabComponentManagerId = storeValueGlobally(debugTabScope, this, XDebugSessionAdditionalTabComponentManagerValueIdType)
@@ -41,9 +42,7 @@ class XDebugSessionAdditionalTabComponentManager(
   val tabComponentEvents: Flow<XDebuggerSessionAdditionalTabEvent> = _tabComponentEvents.asSharedFlow()
 
   override fun addAdditionalTabComponent(tabComponent: AdditionalTabComponent, id: String, icon: Icon?, closeable: Boolean): Content? {
-    val tabId = XDebugSessionAdditionalTabComponentConverter.EP_NAME.extensionList.firstNotNullOfOrNull {
-      it.convertToId(project, debugTabScope, tabComponent)
-    } ?: return null
+    val tabId = tabComponent.setupTransfer(debugTabScope.asDisposable())
     tabToId[tabComponent] = tabId
     val serializableTab = XDebuggerSessionAdditionalTabDto(tabId, contentId = id, tabComponent.tabTitle, tabComponent.tooltip, icon?.rpcId(), closeable)
     _tabComponentEvents.tryEmit(XDebuggerSessionAdditionalTabEvent.TabAdded(serializableTab))
@@ -60,13 +59,6 @@ class XDebugSessionAdditionalTabComponentManager(
     }
     val tabId = tabToId.remove(component) ?: return
     _tabComponentEvents.tryEmit(XDebuggerSessionAdditionalTabEvent.TabRemoved(tabId))
-  }
-
-  override fun dispose() {
-    val tabs = tabToId.keys.toList()
-    for (tab in tabs) {
-      removeAdditionalTabComponent(tab)
-    }
   }
 }
 

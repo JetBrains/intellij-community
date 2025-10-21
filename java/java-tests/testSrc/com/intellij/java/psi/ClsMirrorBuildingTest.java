@@ -137,7 +137,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
         }
       }
     };
-    PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("java.lang", true);
+    PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(true);
     StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<>(file, strategy, stub, 0, null);
     new ClassReader(file.contentsToByteArray()).accept(visitor, ClassReader.SKIP_FRAMES);
   }

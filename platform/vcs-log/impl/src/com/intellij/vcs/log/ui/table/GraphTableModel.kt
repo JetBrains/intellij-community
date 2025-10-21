@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.openapi.diagnostic.Logger
@@ -7,10 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.graph.PrintElement
-import com.intellij.vcs.log.graph.RowInfo
-import com.intellij.vcs.log.graph.RowType
-import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
+import com.intellij.vcs.log.graph.*
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager
@@ -90,7 +87,24 @@ open class GraphTableModel @ApiStatus.Internal constructor(
 
   open fun getPrintElements(row: VcsLogTableIndex): Collection<PrintElement> {
     return if (VisiblePack.NO_GRAPH_INFORMATION.get(visiblePack, false)) emptyList()
-    else getGraphRowInfo(row)?.printElements.orEmpty()
+    else getGraphRowInfo(row)?.printElements?.withPossibleHeadNode(row).orEmpty()
+  }
+
+  private fun Collection<PrintElement>.withPossibleHeadNode(row: VcsLogTableIndex): Collection<PrintElement> {
+    if (this.isEmpty()) return emptyList()
+
+    val haveHead = getRefsAtRow(row).find { it.name == VcsLogUtil.HEAD } != null
+    if (!haveHead) return this
+
+    val headNodeElement = filterIsInstance<NodePrintElement>().singleOrNull()?.let(::HeadNodePrintElement)
+    if (headNodeElement == null) return this
+
+    return map { element ->
+      when (element) {
+        is NodePrintElement -> headNodeElement
+        else -> element
+      }
+    }
   }
 
   fun getRefsAtRow(row: VcsLogTableIndex): List<VcsRef> {

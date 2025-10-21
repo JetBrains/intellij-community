@@ -10,6 +10,7 @@ import com.jetbrains.cef.SharedMemory;
 import com.jetbrains.cef.SharedMemoryCache;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefNativeRenderHandler;
+import org.cef.misc.CefLog;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,6 +49,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
                                    long sharedMemHandle,
                                    int width,
                                    int height) {
+    CefLog.Debug("JBCefNativeOsrHandler#onPaintWithSharedMem(browser=%s, sharedMemName=%s, width=%s, height=%s)", browser.toString(), sharedMemName, width, height);
     SharedMemory.WithRaster mem = mySharedMemCache.get(sharedMemName, sharedMemHandle);
     mem.setWidth(width);
     mem.setHeight(height);

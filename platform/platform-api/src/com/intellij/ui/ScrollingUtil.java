@@ -475,6 +475,10 @@ public final class ScrollingUtil {
         return;
       }
     }
+    if (selectionModel instanceof ImpossibleListSelectionModel impossibleListSelectionModel &&
+        !impossibleListSelectionModel.canBeSelected(indexToSelect)) {
+      indexToSelect += direction < 0 ? -1 : 1;
+    }
     _ensureIndexIsVisible(c, indexToSelect, direction, size);
     selectOrAddSelection(selectionModel, indexToSelect, modifiers);
   }
@@ -865,5 +869,13 @@ public final class ScrollingUtil {
     public void actionPerformed(@NotNull AnActionEvent e) {
       movePageDown(myTable);
     }
+  }
+
+  /**
+   * Defines a model for list selection, focusing on determining whether an item in the list can be selected.
+   */
+  @ApiStatus.Internal
+  public interface ImpossibleListSelectionModel {
+    boolean canBeSelected(int select);
   }
 }

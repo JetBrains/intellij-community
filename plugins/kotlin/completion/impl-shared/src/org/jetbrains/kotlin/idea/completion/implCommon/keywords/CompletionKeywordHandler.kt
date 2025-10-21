@@ -13,7 +13,7 @@ abstract class CompletionKeywordHandler<CONTEXT>(
 ) {
     object NO_CONTEXT
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     abstract fun createLookups(
         parameters: CompletionParameters, // todo replace with KotlinFirCompletionParameters eventually
         expression: KtExpression?,
@@ -31,13 +31,13 @@ inline fun <CONTEXT> completionKeywordHandler(
         project: Project
     ) -> Collection<LookupElement>
 ) = object : CompletionKeywordHandler<CONTEXT>(keyword) {
-    context(CONTEXT)
+    context(_: CONTEXT)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
-    ): Collection<LookupElement> = create(this@CONTEXT, parameters, expression, lookup, project)
+    ): Collection<LookupElement> = create(contextOf<CONTEXT>(), parameters, expression, lookup, project)
 }
 
 /**

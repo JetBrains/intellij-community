@@ -68,7 +68,9 @@ class AbilityData(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _TargetEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[AbilityData._Target.ValueType], builtins.type):
+    class _TargetEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[AbilityData._Target.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Point: AbilityData._Target.ValueType  # 2
         """Requires a target position."""
@@ -153,8 +155,76 @@ class AbilityData(google.protobuf.message.Message):
         is_instant_placement: builtins.bool | None = ...,
         cast_range: builtins.float | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "allow_autocast", b"allow_autocast", "allow_minimap", b"allow_minimap", "available", b"available", "button_name", b"button_name", "cast_range", b"cast_range", "footprint_radius", b"footprint_radius", "friendly_name", b"friendly_name", "hotkey", b"hotkey", "is_building", b"is_building", "is_instant_placement", b"is_instant_placement", "link_index", b"link_index", "link_name", b"link_name", "remaps_to_ability_id", b"remaps_to_ability_id", "target", b"target"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "allow_autocast", b"allow_autocast", "allow_minimap", b"allow_minimap", "available", b"available", "button_name", b"button_name", "cast_range", b"cast_range", "footprint_radius", b"footprint_radius", "friendly_name", b"friendly_name", "hotkey", b"hotkey", "is_building", b"is_building", "is_instant_placement", b"is_instant_placement", "link_index", b"link_index", "link_name", b"link_name", "remaps_to_ability_id", b"remaps_to_ability_id", "target", b"target"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "allow_autocast",
+            b"allow_autocast",
+            "allow_minimap",
+            b"allow_minimap",
+            "available",
+            b"available",
+            "button_name",
+            b"button_name",
+            "cast_range",
+            b"cast_range",
+            "footprint_radius",
+            b"footprint_radius",
+            "friendly_name",
+            b"friendly_name",
+            "hotkey",
+            b"hotkey",
+            "is_building",
+            b"is_building",
+            "is_instant_placement",
+            b"is_instant_placement",
+            "link_index",
+            b"link_index",
+            "link_name",
+            b"link_name",
+            "remaps_to_ability_id",
+            b"remaps_to_ability_id",
+            "target",
+            b"target",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "allow_autocast",
+            b"allow_autocast",
+            "allow_minimap",
+            b"allow_minimap",
+            "available",
+            b"available",
+            "button_name",
+            b"button_name",
+            "cast_range",
+            b"cast_range",
+            "footprint_radius",
+            b"footprint_radius",
+            "friendly_name",
+            b"friendly_name",
+            "hotkey",
+            b"hotkey",
+            "is_building",
+            b"is_building",
+            "is_instant_placement",
+            b"is_instant_placement",
+            "link_index",
+            b"link_index",
+            "link_name",
+            b"link_name",
+            "remaps_to_ability_id",
+            b"remaps_to_ability_id",
+            "target",
+            b"target",
+        ],
+    ) -> None: ...
 
 global___AbilityData = AbilityData
 
@@ -166,12 +236,7 @@ class DamageBonus(google.protobuf.message.Message):
     BONUS_FIELD_NUMBER: builtins.int
     attribute: global___Attribute.ValueType
     bonus: builtins.float
-    def __init__(
-        self,
-        *,
-        attribute: global___Attribute.ValueType | None = ...,
-        bonus: builtins.float | None = ...,
-    ) -> None: ...
+    def __init__(self, *, attribute: global___Attribute.ValueType | None = ..., bonus: builtins.float | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["attribute", b"attribute", "bonus", b"bonus"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["attribute", b"attribute", "bonus", b"bonus"]) -> None: ...
 
@@ -185,7 +250,9 @@ class Weapon(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _TargetTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Weapon._TargetType.ValueType], builtins.type):
+    class _TargetTypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Weapon._TargetType.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Ground: Weapon._TargetType.ValueType  # 1
         Air: Weapon._TargetType.ValueType  # 2
@@ -221,8 +288,29 @@ class Weapon(google.protobuf.message.Message):
         range: builtins.float | None = ...,
         speed: builtins.float | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["attacks", b"attacks", "damage", b"damage", "range", b"range", "speed", b"speed", "type", b"type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["attacks", b"attacks", "damage", b"damage", "damage_bonus", b"damage_bonus", "range", b"range", "speed", b"speed", "type", b"type"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "attacks", b"attacks", "damage", b"damage", "range", b"range", "speed", b"speed", "type", b"type"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "attacks",
+            b"attacks",
+            "damage",
+            b"damage",
+            "damage_bonus",
+            b"damage_bonus",
+            "range",
+            b"range",
+            "speed",
+            b"speed",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
 
 global___Weapon = Weapon
 
@@ -316,8 +404,98 @@ class UnitTypeData(google.protobuf.message.Message):
         armor: builtins.float | None = ...,
         weapons: collections.abc.Iterable[global___Weapon] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "armor", b"armor", "available", b"available", "build_time", b"build_time", "cargo_size", b"cargo_size", "food_provided", b"food_provided", "food_required", b"food_required", "has_minerals", b"has_minerals", "has_vespene", b"has_vespene", "mineral_cost", b"mineral_cost", "movement_speed", b"movement_speed", "name", b"name", "race", b"race", "require_attached", b"require_attached", "sight_range", b"sight_range", "tech_requirement", b"tech_requirement", "unit_alias", b"unit_alias", "unit_id", b"unit_id", "vespene_cost", b"vespene_cost"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "armor", b"armor", "attributes", b"attributes", "available", b"available", "build_time", b"build_time", "cargo_size", b"cargo_size", "food_provided", b"food_provided", "food_required", b"food_required", "has_minerals", b"has_minerals", "has_vespene", b"has_vespene", "mineral_cost", b"mineral_cost", "movement_speed", b"movement_speed", "name", b"name", "race", b"race", "require_attached", b"require_attached", "sight_range", b"sight_range", "tech_alias", b"tech_alias", "tech_requirement", b"tech_requirement", "unit_alias", b"unit_alias", "unit_id", b"unit_id", "vespene_cost", b"vespene_cost", "weapons", b"weapons"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "armor",
+            b"armor",
+            "available",
+            b"available",
+            "build_time",
+            b"build_time",
+            "cargo_size",
+            b"cargo_size",
+            "food_provided",
+            b"food_provided",
+            "food_required",
+            b"food_required",
+            "has_minerals",
+            b"has_minerals",
+            "has_vespene",
+            b"has_vespene",
+            "mineral_cost",
+            b"mineral_cost",
+            "movement_speed",
+            b"movement_speed",
+            "name",
+            b"name",
+            "race",
+            b"race",
+            "require_attached",
+            b"require_attached",
+            "sight_range",
+            b"sight_range",
+            "tech_requirement",
+            b"tech_requirement",
+            "unit_alias",
+            b"unit_alias",
+            "unit_id",
+            b"unit_id",
+            "vespene_cost",
+            b"vespene_cost",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "armor",
+            b"armor",
+            "attributes",
+            b"attributes",
+            "available",
+            b"available",
+            "build_time",
+            b"build_time",
+            "cargo_size",
+            b"cargo_size",
+            "food_provided",
+            b"food_provided",
+            "food_required",
+            b"food_required",
+            "has_minerals",
+            b"has_minerals",
+            "has_vespene",
+            b"has_vespene",
+            "mineral_cost",
+            b"mineral_cost",
+            "movement_speed",
+            b"movement_speed",
+            "name",
+            b"name",
+            "race",
+            b"race",
+            "require_attached",
+            b"require_attached",
+            "sight_range",
+            b"sight_range",
+            "tech_alias",
+            b"tech_alias",
+            "tech_requirement",
+            b"tech_requirement",
+            "unit_alias",
+            b"unit_alias",
+            "unit_id",
+            b"unit_id",
+            "vespene_cost",
+            b"vespene_cost",
+            "weapons",
+            b"weapons",
+        ],
+    ) -> None: ...
 
 global___UnitTypeData = UnitTypeData
 
@@ -348,8 +526,40 @@ class UpgradeData(google.protobuf.message.Message):
         research_time: builtins.float | None = ...,
         ability_id: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "mineral_cost", b"mineral_cost", "name", b"name", "research_time", b"research_time", "upgrade_id", b"upgrade_id", "vespene_cost", b"vespene_cost"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "mineral_cost", b"mineral_cost", "name", b"name", "research_time", b"research_time", "upgrade_id", b"upgrade_id", "vespene_cost", b"vespene_cost"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "mineral_cost",
+            b"mineral_cost",
+            "name",
+            b"name",
+            "research_time",
+            b"research_time",
+            "upgrade_id",
+            b"upgrade_id",
+            "vespene_cost",
+            b"vespene_cost",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "mineral_cost",
+            b"mineral_cost",
+            "name",
+            b"name",
+            "research_time",
+            b"research_time",
+            "upgrade_id",
+            b"upgrade_id",
+            "vespene_cost",
+            b"vespene_cost",
+        ],
+    ) -> None: ...
 
 global___UpgradeData = UpgradeData
 
@@ -362,12 +572,7 @@ class BuffData(google.protobuf.message.Message):
     buff_id: builtins.int
     """Stable ID."""
     name: builtins.str
-    def __init__(
-        self,
-        *,
-        buff_id: builtins.int | None = ...,
-        name: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, buff_id: builtins.int | None = ..., name: builtins.str | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["buff_id", b"buff_id", "name", b"name"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["buff_id", b"buff_id", "name", b"name"]) -> None: ...
 
@@ -394,7 +599,17 @@ class EffectData(google.protobuf.message.Message):
         friendly_name: builtins.str | None = ...,
         radius: builtins.float | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["effect_id", b"effect_id", "friendly_name", b"friendly_name", "name", b"name", "radius", b"radius"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["effect_id", b"effect_id", "friendly_name", b"friendly_name", "name", b"name", "radius", b"radius"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "effect_id", b"effect_id", "friendly_name", b"friendly_name", "name", b"name", "radius", b"radius"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "effect_id", b"effect_id", "friendly_name", b"friendly_name", "name", b"name", "radius", b"radius"
+        ],
+    ) -> None: ...
 
 global___EffectData = EffectData

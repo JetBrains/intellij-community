@@ -2,8 +2,9 @@ from _typeshed import Incomplete
 from collections.abc import Callable
 from typing_extensions import TypeAlias
 
-from pythoncom import com_error as com_error
-from win32com.client import gencache as gencache
+import pythoncom
+
+com_error = pythoncom.com_error
 
 # Type of pythoncom._univgw.WriteFromOutTuple
 # The two tuples must be of equal length

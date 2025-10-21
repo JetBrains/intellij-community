@@ -58,6 +58,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     // Default filter
     filterVm.searchState.value = defaultFilter
     vm.awaitLoader()
+    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(defaultFilter)) }
     confirmVerified(loaderSupplierMock)
 
     // Default filter
@@ -66,7 +67,6 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
       assignee = MergeRequestsAssigneeFilterValue(mockedUser.username, mockedUser.name)
     )
     vm.awaitLoader()
-    confirmVerified(loaderSupplierMock)
 
     // Change filter from Default
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
@@ -75,7 +75,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
     filterVm.searchState.value = defaultFilter
     vm.awaitLoader()
-    verify(exactly = 2) { loaderSupplierMock.invoke(any(), eq(defaultFilter)) }
+    verify(exactly = 1) { loaderSupplierMock.invoke(any(), eq(defaultFilter)) }
   }
 
   @Test

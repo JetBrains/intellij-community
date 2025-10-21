@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.diagnostic.Activity;
@@ -16,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
@@ -44,7 +44,6 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
 
   private final Project project;
   private final Editor editor;
-  private final Document document;
 
   /**
    * please use {@link FileEditor#getBackgroundHighlighter()} instead of manual instantiation
@@ -53,7 +52,6 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     this.project = project;
     this.editor = editor;
-    document = editor.getDocument();
   }
 
   private @NotNull List<TextEditorHighlightingPass> createPasses() {
@@ -63,13 +61,12 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     }
 
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    Document document = editor.getDocument();
     if (!documentManager.isCommitted(document)) {
       LOG.error(document + documentManager.someDocumentDebugInfo(document));
     }
 
-    CodeInsightContext context = editor != null
-                                 ? EditorContextManager.getEditorContext(editor, project)
-                                 : CodeInsightContexts.anyContext();
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
 
     PsiFile psiFile = renewFile(project, document, context);
     if (psiFile == null) return List.of();
@@ -80,6 +77,15 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     ArrayUtil.EMPTY_INT_ARRAY : null;
     if (effectivePassesToIgnore == null) {
       return List.of();
+    }
+
+    try {
+      HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
+    }
+    catch (IllegalStateException e) {
+      // could not find the session for this psi file;
+      // maybe the document was modified and the not-quite-incremental reparse has replaced the whole file
+      throw new ProcessCanceledException(e);
     }
 
     return TraceKt.use(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation"), span -> {

@@ -1,19 +1,19 @@
 ### auto-generated section `build intellij.libraries.junit5.params` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "junit5-params_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "junit5-params",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":junit5-params_resources"],
   exports = ["@lib//:junit5Params"],
   runtime_deps = [
-    ":junit5-params_resources",
     "@lib//:junit5Params",
     "//libraries/junit5",
   ]

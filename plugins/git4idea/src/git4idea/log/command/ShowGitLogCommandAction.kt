@@ -23,7 +23,7 @@ internal class ShowGitLogCommandAction : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod == GitVcs.getKey()
+    e.presentation.isEnabledAndVisible = ProjectLevelVcsManager.getInstance(project).getSingleVCS()?.keyInstanceMethod == GitVcs.getKey()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

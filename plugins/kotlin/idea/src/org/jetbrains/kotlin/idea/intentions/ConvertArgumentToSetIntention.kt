@@ -43,7 +43,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
-    KotlinBundle.lazyMessage("convert.argument.to.set.fix.text")
+    KotlinBundle.messagePointer("convert.argument.to.set.fix.text")
 ), LowPriorityAction {
 
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean = when (element) {

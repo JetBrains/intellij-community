@@ -4,27 +4,24 @@ package com.intellij.devkit.workspaceModel
 import com.intellij.application.options.CodeStyle
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import java.nio.file.Path
@@ -44,24 +41,12 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     val oldTrailingSpacesValue = settings.stripTrailingSpaces
     settings.stripTrailingSpaces = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE
 
-    //set up code style accordingly to settings used in intellij project to ensure that generated code follows it 
+    //set up code style accordingly to settings used in intellij project to ensure that generated code follows it
     val codeStyleSettings = CodeStyle.createTestSettings()
-    val kotlinCommonSettings = codeStyleSettings.getCommonSettings(KotlinLanguage.INSTANCE)
-    kotlinCommonSettings.ELSE_ON_NEW_LINE = true
-    kotlinCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN = false
-    kotlinCommonSettings.KEEP_FIRST_COLUMN_COMMENT = false
-    kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-    kotlinCommonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    kotlinCommonSettings.ALIGN_MULTILINE_EXTENDS_LIST = true
-    kotlinCommonSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED or CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-    kotlinCommonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    kotlinCommonSettings.RIGHT_MARGIN = 140
-    codeStyleSettings.getCustomSettings(KotlinCodeStyleSettings::class.java).LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY = false
-    val kotlinFileType: LanguageFileType? = KotlinFileType.INSTANCE
-    val indentOptions = codeStyleSettings.getIndentOptions(kotlinFileType)
-    indentOptions.INDENT_SIZE = INDENT_SIZE
-    indentOptions.TAB_SIZE = TAB_SIZE
-    indentOptions.CONTINUATION_INDENT_SIZE = CONTINUATION_INDENT_SIZE
+
+    val state = JDOMUtil.load(Path.of(PathManager.getHomePath(), ".idea", "codeStyles", "Project.xml")).children.first()
+
+    codeStyleSettings.readExternal(state)
     CodeStyle.setTemporarySettings(project, codeStyleSettings)
     disposeOnTearDown(Disposable {
       settings.stripTrailingSpaces = oldTrailingSpacesValue
@@ -99,7 +84,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path,
     pathToPackage: String = ".",
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
-    isTestModule: Boolean
+    isTestModule: Boolean,
   ) {
     val (srcRoot, genRoot) = generateCode(
       relativePathToEntitiesDirectory = ".",
@@ -132,7 +117,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
   }
 
   protected fun generateCode(
-    relativePathToEntitiesDirectory: String, processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean
+    relativePathToEntitiesDirectory: String, processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
   ): Pair<VirtualFile, VirtualFile> {
     val srcRoot = myFixture.findFileInTempDir(relativePathToEntitiesDirectory)
     val genRoot = myFixture.tempDirFixture.findOrCreateDir("gen/$relativePathToEntitiesDirectory")
@@ -153,7 +138,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
 
   class WorkspaceEntitiesProjectDescriptor(
     private val addWorkspaceStorageLibrary: Boolean,
-    private val addWorkspaceJpsEntityLibrary: Boolean
+    private val addWorkspaceJpsEntityLibrary: Boolean,
   ) : KotlinLightProjectDescriptor() {
     override fun configureModule(module: Module, model: ModifiableRootModel) {
       val contentEntry = model.contentEntries.first()

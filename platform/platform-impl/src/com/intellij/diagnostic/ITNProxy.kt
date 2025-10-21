@@ -58,7 +58,7 @@ internal object ITNProxy {
     template["protocol.version"] = "1.1"
     template["os.cpu.arch"] = if (CpuArch.isEmulated()) "${CpuArch.CURRENT}(emulated)" else "${CpuArch.CURRENT}"
     template["os.name"] = OS.CURRENT.name
-    template["os.version"] = OS.CURRENT.version
+    template["os.version"] = OS.CURRENT.version()
     template["host.id"] = DEVICE_ID
     template["java.version"] = SystemInfo.JAVA_RUNTIME_VERSION
     template["java.vm.vendor"] = SystemInfo.JAVA_VENDOR

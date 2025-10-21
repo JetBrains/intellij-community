@@ -1,5 +1,0 @@
-<idea-plugin>
-  <content>
-    <module name="intellij.platform.vcs.impl.frontend"/>
-  </content>
-</idea-plugin>

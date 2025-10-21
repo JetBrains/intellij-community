@@ -125,8 +125,8 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
   }
 
   @Override
-  public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
-    return createSmartPsiFileRangePointer(file, range, false);
+  public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile psiFile, @NotNull TextRange range) {
+    return createSmartPsiFileRangePointer(psiFile, range, false);
   }
 
   public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,

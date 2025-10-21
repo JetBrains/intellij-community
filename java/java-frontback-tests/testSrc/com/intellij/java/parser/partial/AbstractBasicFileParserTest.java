@@ -42,5 +42,7 @@ public abstract class AbstractBasicFileParserTest extends AbstractBasicJavaParsi
   public void testBindDocComment3() { doParserTest("class A {\n /** field comment */\n int f;\n}"); }
   public void testBindDocComment4() { doParserTest("class A {\n /** field comment */\n// field comment\n int f;\n}"); }
 
+  public void testDocCommentSnippet() { doParserTest("\nclass C {\n void foo() {\n///comment\n }\n}\n"); }
+
   protected abstract void doParserTest(String text);
 }

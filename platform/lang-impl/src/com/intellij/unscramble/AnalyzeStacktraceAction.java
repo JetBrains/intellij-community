@@ -7,19 +7,18 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Simple variant of Analyze Stacktrace that doesn't handle unscramblers or multiple-thread
  * thread dumps.
  */
+@ApiStatus.Internal
 public class AnalyzeStacktraceAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    AnalyzeStacktraceDialog dialog = new AnalyzeStacktraceDialog(project);
-    dialog.show();
+    new AnalyzeStacktraceDialog(e.getProject()).show();
   }
 
   @Override

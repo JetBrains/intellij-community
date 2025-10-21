@@ -16,7 +16,7 @@
   </extensions>
 
   <dependencies>
-    <module name="kotlin.base.analysis-api-platform"/>
+    <module name="intellij.kotlin.base.analysis.platform"/>
   </dependencies>
 
 </idea-plugin>

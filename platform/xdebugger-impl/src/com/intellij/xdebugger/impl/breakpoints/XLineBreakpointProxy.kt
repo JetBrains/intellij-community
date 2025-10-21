@@ -20,6 +20,7 @@ interface XLineBreakpointProxy : XBreakpointProxy, XLightLineBreakpointProxy {
   fun setLine(line: Int)
 
   fun updatePosition()
+  fun fastUpdatePosition()
 
   fun getHighlighter(): RangeHighlighter?
 
@@ -64,6 +65,10 @@ interface XLineBreakpointProxy : XBreakpointProxy, XLightLineBreakpointProxy {
 
     override fun updatePosition() {
       breakpoint.updatePosition()
+    }
+
+    override fun fastUpdatePosition() {
+      // do nothing
     }
 
     override fun getHighlighter(): RangeHighlighter? {

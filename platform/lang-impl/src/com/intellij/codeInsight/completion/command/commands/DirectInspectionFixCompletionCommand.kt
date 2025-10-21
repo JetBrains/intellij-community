@@ -3,11 +3,10 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler.availableFor
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler.Companion.availableFor
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.InspectionEngine.inspectEx
@@ -32,27 +31,27 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class DirectInspectionFixCompletionCommand(
-  private val inspectionId: String,
+class DirectInspectionFixCompletionCommand(
+  val inspectionId: String,
   override val presentableName: @Nls String,
   override val priority: Int?,
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup,
-  private val targetOffset: Int,
+  private val topLevelTargetOffset: Int,
   private val previewProvider: () -> IntentionPreviewInfo?,
-) : CompletionCommand(), CompletionCommandWithPreview {
-
+) : CompletionCommand() {
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
     //todo merge with error finder
     val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
     val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-    val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, targetOffset)
+    val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
     val isInjected = topLevelFile != psiFile
-
+    topLevelEditor.caretModel.moveToOffset(topLevelTargetOffset)
+    val targetOffset = editor.caretModel.offset
     val action: IntentionAction? = runWithModalProgressBlocking(psiFile.project, message("scanning.scope.progress.title")) {
-      val profileToUse = ProjectInspectionProfileManager.Companion.getInstance(psiFile.project).getCurrentProfile()
+      val profileToUse = ProjectInspectionProfileManager.getInstance(psiFile.project).getCurrentProfile()
       val inspectionWrapper = InspectionProfileWrapper(profileToUse)
       var inspectionTool = inspectionWrapper.inspectionProfile.getInspectionTool(inspectionId, psiFile.project)
       if (inspectionTool == null) return@runWithModalProgressBlocking null
@@ -60,12 +59,12 @@ internal class DirectInspectionFixCompletionCommand(
         inspectionTool = inspectionTool.sharedLocalInspectionToolWrapper
       }
       if (inspectionTool !is LocalInspectionToolWrapper) return@runWithModalProgressBlocking null
-      val lineRange = getLineRange(topLevelFile, topLevelOffset)
+      val lineRange = getLineRange(topLevelFile, topLevelTargetOffset)
       val indicator = EmptyProgressIndicator()
       val inspectionResult = readAction {
         jobToIndicator(currentThreadContext().job, indicator) {
           if (!isInjected) {
-            inspectEx(listOf(inspectionTool), topLevelFile, lineRange, lineRange, true, isInjected, true,
+            inspectEx(listOf(inspectionTool), topLevelFile, lineRange, lineRange, true, false, true,
                       indicator,
                       fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
                         return true
@@ -102,23 +101,22 @@ internal class DirectInspectionFixCompletionCommand(
       return@runWithModalProgressBlocking result
     }
     if (action == null) return
-    val marker = editor.document.createRangeMarker(offset, offset)
-    val targetMarker = editor.document.createRangeMarker(targetOffset, targetOffset)
-    editor.caretModel.moveToOffset(targetOffset)
+    val marker = topLevelEditor.document.createRangeMarker(topLevelOffset, topLevelOffset)
+    val targetMarker = topLevelEditor.document.createRangeMarker(topLevelTargetOffset, topLevelTargetOffset)
     ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, presentableName)
     if (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset) {
       //probably, intention moves the cursor
       return
     }
     if (marker.isValid) {
-      editor.caretModel.moveToOffset(marker.endOffset)
+      topLevelEditor.caretModel.moveToOffset(marker.endOffset)
     }
     else {
-      editor.caretModel.moveToOffset(offset)
+      topLevelEditor.caretModel.moveToOffset(topLevelOffset)
     }
   }
 
-  override fun getPreview(): IntentionPreviewInfo? {
-    return previewProvider()
+  override fun getPreview(): IntentionPreviewInfo {
+    return previewProvider() ?: IntentionPreviewInfo.EMPTY
   }
 }

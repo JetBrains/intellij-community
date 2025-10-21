@@ -11,7 +11,11 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class InlineCompletionShortcutBelowLineElement(lineNumber: Int) : InlineCompletionShortcutHintElementBase(lineNumber) {
+class InlineCompletionShortcutBelowLineElement @JvmOverloads constructor(
+  lineNumber: Int,
+  insertActionId: String,
+  forcedHint: InlineCompletionShortcutHint? = null,
+) : InlineCompletionShortcutHintElementBase(lineNumber, insertActionId, forcedHint) {
 
   override fun toPresentable(): InlineCompletionElement.Presentable {
     return Presentable(this, hint)
@@ -22,6 +26,7 @@ class InlineCompletionShortcutBelowLineElement(lineNumber: Int) : InlineCompleti
       InlineCompletionShortcutHint.INSERT -> 1
       InlineCompletionShortcutHint.INSERT_WORD -> 2 // show it twice more often than 'insert' hint
       InlineCompletionShortcutHint.INSERT_LINE -> 0 // never show 'complete a line'
+      InlineCompletionShortcutHint.INSERT_TERMINAL -> 0
     }
   }
 

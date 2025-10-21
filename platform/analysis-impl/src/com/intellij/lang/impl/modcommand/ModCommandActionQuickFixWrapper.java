@@ -13,9 +13,20 @@ import org.jetbrains.annotations.NotNull;
 
 final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix implements ReportingClassSubstitutor {
   private final ModCommandAction myAction;
+  private boolean myAvailableInBatchMode;
 
   ModCommandActionQuickFixWrapper(@NotNull ModCommandAction action) {
+    this(action, true);
+  }
+
+  ModCommandActionQuickFixWrapper(@NotNull ModCommandAction action, boolean availableInBatchMode) {
     myAction = action;
+    myAvailableInBatchMode = availableInBatchMode;
+  }
+
+  @Override
+  public boolean availableInBatchMode() {
+    return myAvailableInBatchMode;
   }
 
   ModCommandAction getAction() {

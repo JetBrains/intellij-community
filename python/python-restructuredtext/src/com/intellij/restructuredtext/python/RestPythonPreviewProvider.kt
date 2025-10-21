@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper.REST_RUNNER
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal fun toHtml(text: String, virtualFile: VirtualFile, project: Project): Pair<String, String>? {
   val module = ApplicationManager.getApplication().runReadAction<Module?> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
@@ -12,6 +12,7 @@ import com.intellij.testFramework.withProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardTestCase
+import org.jetbrains.idea.maven.wizards.sdk
 
 class MavenServerConnectorShutdownTest : MavenNewProjectWizardTestCase() {
   override fun runInDispatchThread() = false

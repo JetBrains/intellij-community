@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
-    KotlinBundle.lazyMessage("remove.explicit.type.specification")
+    KotlinBundle.messagePointer("remove.explicit.type.specification")
 ), HighPriorityAction {
 
     override fun applicabilityRange(element: KtCallableDeclaration): TextRange? = Holder.getRange(element)

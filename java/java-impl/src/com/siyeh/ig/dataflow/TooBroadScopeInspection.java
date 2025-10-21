@@ -104,8 +104,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
       }
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       if (arrayInitializer != null) {
-        final PsiExpression[] initializers = arrayInitializer.getInitializers();
-        for (final PsiExpression initializerExpression : initializers) {
+        for (PsiExpression initializerExpression : arrayInitializer.getInitializers()) {
           if (!isMovable(initializerExpression)) {
             return false;
           }
@@ -125,8 +124,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
       if (argumentList == null) {
         return false;
       }
-      final PsiExpression[] expressions = argumentList.getExpressions();
-      for (final PsiExpression argumentExpression : expressions) {
+      for (PsiExpression argumentExpression : argumentList.getExpressions()) {
         if (!isMovable(argumentExpression)) {
           return false;
         }
@@ -170,8 +168,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
       if (!isAllowedMethod(method)) {
         return false;
       }
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
       if (qualifierExpression != null) {
         if (!isMovable(qualifierExpression)) {
           return false;
@@ -186,8 +183,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
           return false;
         }
       }
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      for (PsiExpression argument : argumentList.getExpressions()) {
+      for (PsiExpression argument : methodCallExpression.getArgumentList().getExpressions()) {
         if (!isMovable(argument)) {
           return false;
         }
@@ -243,12 +239,12 @@ public final class TooBroadScopeInspection extends BaseInspection {
     final List<PsiReferenceExpression> result = new SmartList<>();
     //noinspection ConstantConditions
     ReferencesSearch.search(variable, variable.getUseScope())
-                    .forEach(reference -> reference instanceof PsiReferenceExpression && result.add((PsiReferenceExpression)reference));
+                    .forEach(reference -> reference instanceof PsiReferenceExpression expression && result.add(expression));
     return result;
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new TooBroadScopeVisitor();
   }
 
@@ -297,7 +293,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
       if (commonParent instanceof PsiForStatement) {
         return;
       }
-      final PsiElement referenceElement = references.get(0);
+      final PsiElement referenceElement = references.getFirst();
       final PsiElement blockChild = ScopeUtils.getChildWhichContainsElement(variableScope, referenceElement);
       if (blockChild == null) {
         return;
@@ -353,7 +349,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
         return false;
       }
       final PsiExpression rhs = assignmentExpression.getRExpression();
-      return rhs == null || !VariableAccessUtils.variableIsUsed(variable, rhs);
+      return !VariableAccessUtils.variableIsUsed(variable, rhs);
     }
   }
 
@@ -399,7 +395,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
           return;
         }
       }
-      final PsiElement referenceElement = references.get(0);
+      final PsiElement referenceElement = references.getFirst();
       final PsiElement firstReferenceScope =
         PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
       if (firstReferenceScope == null) {
@@ -500,8 +496,8 @@ public final class TooBroadScopeInspection extends BaseInspection {
       PsiStatement statement = PsiTreeUtil.getParentOfType(location, PsiStatement.class, false);
       assert statement != null;
       PsiElement statementParent = statement.getParent();
-      while (statementParent instanceof PsiStatement && !(statementParent instanceof PsiForStatement)) {
-        statement = (PsiStatement)statementParent;
+      while (statementParent instanceof PsiStatement s && !(statementParent instanceof PsiForStatement)) {
+        statement = s;
         statementParent = statement.getParent();
       }
       assert statementParent != null;

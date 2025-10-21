@@ -233,14 +233,6 @@ a:com.intellij.tasks.config.TaskRepositoryEditor
 - a:createComponent():javax.swing.JComponent
 - dispose():V
 - getPreferredFocusedComponent():javax.swing.JComponent
-a:com.intellij.tasks.context.WorkingContextProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- clearContext(com.intellij.openapi.project.Project):V
-- a:getDescription():java.lang.String
-- a:getId():java.lang.String
-- a:loadContext(com.intellij.openapi.project.Project,org.jdom.Element):V
-- a:saveContext(com.intellij.openapi.project.Project,org.jdom.Element):V
 c:com.intellij.tasks.timeTracking.model.WorkItem
 - duration:J
 - from:java.util.Date

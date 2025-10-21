@@ -9,6 +9,7 @@ import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.service.CliBasedHatchService
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -65,7 +66,7 @@ sealed interface PythonVirtualEnvironment {
    * Represents an existing Python virtual environment.
    * The environment was verified and the Python version was already discovered.
    */
-  data class Existing(override val pythonHomePath: PythonHomePath, val pythonVersion: String) : PythonVirtualEnvironment
+  data class Existing(override val pythonHomePath: PythonHomePath, val pythonInfo: PythonInfo) : PythonVirtualEnvironment
 
   /**
    * Represents a non-existing Python virtual environment.
@@ -95,12 +96,18 @@ interface HatchService {
   suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary? = null, envName: String? = null): PyResult<PythonVirtualEnvironment.Existing>
 
   suspend fun findVirtualEnvironments(): PyResult<List<HatchVirtualEnvironment>>
+
+  /**
+   * This function detects all Hatch virtual environments and returns the 'default' one if it exists. If such an environment
+   * doesn't exist, `null` is returned. In case of errors `PyError` is returned.
+   */
+  suspend fun findDefaultVirtualEnvironmentOrNull(): PyResult<HatchVirtualEnvironment?>
 }
 
 /**
  * Hatch Service for working directory (where hatch.toml / pyproject.toml is usually placed)
  */
-suspend fun Path?.getHatchService(hatchExecutablePath: Path? = null, hatchEnvironmentName: String? = null): PyResult<HatchService>  {
+suspend fun Path?.getHatchService(hatchExecutablePath: Path? = null, hatchEnvironmentName: String? = null): PyResult<HatchService> {
   return CliBasedHatchService(hatchExecutablePath = hatchExecutablePath, workingDirectoryPath = this, hatchEnvironmentName = hatchEnvironmentName)
 }
 

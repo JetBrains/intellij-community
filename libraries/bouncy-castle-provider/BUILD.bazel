@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.bouncy.castle.provider` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "bouncy-castle-provider_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "bouncy-castle-provider",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":bouncy-castle-provider_resources"],
+  exports = ["@lib//:bouncy-castle-provider"],
+  runtime_deps = ["@lib//:bouncy-castle-provider"]
+)
+### auto-generated section `build intellij.libraries.bouncy.castle.provider` end

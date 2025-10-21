@@ -38,6 +38,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -387,7 +388,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
       expectedText = StringUtil.convertLineSeparators(expectedText);
       Document document = EditorFactory.getInstance().createDocument(expectedText);
 
-      EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+      EditorCaretTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
 
       expectedText = document.getText();
       if (stripTrailingSpaces) {

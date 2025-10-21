@@ -3,9 +3,12 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -21,14 +24,42 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface XDebugManagerProxy {
   fun isEnabled(): Boolean
-  suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T
+
+  suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T
   fun getCurrentSessionProxy(project: Project): XDebugSessionProxy?
   fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?>
   fun getSessions(project: Project): List<XDebugSessionProxy>
 
   fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy
 
-  fun canUpdateInlineDebuggerFrames(): Boolean
+  fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager?
+
+  /**
+   * Returns `true` if the given [xValue] is presented on BE.
+   * In monolith mode, this method always returns `true`;
+   * in split mode, it returns `true` if the given [xValue]
+   * has access to ID used to find the relevant backend counterpart.
+   */
+  fun hasBackendCounterpart(xValue: XValue): Boolean
+
+  /**
+   * Invokes the given [block] with the ID of the given [value].
+   *
+   * Use with care, ensure that [hasBackendCounterpart] returns `true` for the given [value].
+   */
+  suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T
+
+  fun findSessionProxy(project: Project, sessionId: XDebugSessionId): XDebugSessionProxy? {
+    return getSessions(project).firstOrNull { it.id == sessionId }
+  }
+
+  /**
+   * Gets ID of the given [value].
+   *
+   * This method is used in split mode to pass the ID of the value from frontend to backend.
+   * It's not supported in monolith mode.
+   */
+  fun getXValueId(value: XValue): XValueId?
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")

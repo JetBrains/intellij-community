@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_KOTLIN_TIME
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RANGES
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeLeftAndRightSigns
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.KOTLIN_TIME_PACKAGE
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -117,6 +117,5 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         }
 }
 
-private val KOTLIN_TIME_PACKAGE = BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("time"))
 private val DURATION_CLASS_ID = ClassId(KOTLIN_TIME_PACKAGE , Name.identifier("Duration"))
 private val DURATION_COMPANION_CLASS_ID = ClassId(KOTLIN_TIME_PACKAGE, Name.identifier("Duration.Companion"))

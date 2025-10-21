@@ -18,12 +18,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.project.IntelliJProjectConfiguration.getLocalMavenRepo;
+
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
   private static final RemoteRepository mavenLocal;
 
   static {
     System.setProperty("org.jetbrains.idea.maven.aether.strictValidation", "true");
-    File mavenLocalDir = new File(SystemProperties.getUserHome(), ".m2/repository");
+    File mavenLocalDir = getLocalMavenRepo().toFile();
     mavenLocal = new RemoteRepository
       .Builder("mavenLocal", "default", "file://" + mavenLocalDir.getAbsolutePath())
       .build();

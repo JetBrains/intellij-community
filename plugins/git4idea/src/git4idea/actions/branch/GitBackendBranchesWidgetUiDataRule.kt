@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.UiDataRule
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupKeys
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
 import git4idea.repo.GitRepositoryIdCache
 
 internal class GitBackendBranchesWidgetUiDataRule: UiDataRule {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,31 +6,31 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.StorageUpdate;
 import com.intellij.util.indexing.containers.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
-import com.intellij.util.io.ResilientFileChannel;
+import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.system.OS;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlin.ranges.IntRange;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -47,11 +47,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
   private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 16384);
 
-  /** Use experimental forward-index implementation over fast (mapped) file attributes? */
-  private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE =
-    getBooleanProperty("mapped-file-type-index.forward-index-over-mapped-attribute", true);
-  private static final boolean USE_UNMAP_FOR_INDEX_DISPOSAL = // reduce the risk of JVM crash for linux and macOS
-    getBooleanProperty("mapped-file-type-index.use-unmap-for-dispose", SystemInfo.isWindows);
+  /** reduce the risk of JVM crash for Linux and macOS */
+  private static final boolean USE_UNMAP_FOR_INDEX_DISPOSAL = getBooleanProperty(
+    "mapped-file-type-index.use-unmap-for-dispose",
+    OS.CURRENT == OS.Windows
+  );
 
   private final @NotNull MappedFileTypeIndex.IndexDataController myDataController;
 
@@ -59,31 +59,18 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     super(extension);
 
     var storageFile = getStorageFile();
-    myDataController = loadIndexToMemory(storageFile.resolveSibling(storageFile.getFileName().toString() + ".index"), id -> {
-      notifyInvertedIndexChangedForFileTypeId(id);
-    });
-  }
+    Path forwardIndexStorageFile = storageFile.resolveSibling(storageFile.getFileName().toString() + ".index.mmap");
+    IndexDataController.ForwardIndexFileController forwardIndex = new ForwardIndexFileControllerOverMappedFile(
+      forwardIndexStorageFile
+    );
 
-  private static @NotNull MappedFileTypeIndex.IndexDataController loadIndexToMemory(@NotNull Path forwardIndexStorageFile,
-                                                                                    @NotNull IntConsumer invertedIndexChangeCallback)
-    throws StorageException {
-    final IndexDataController.ForwardIndexFileController forwardIndex;
-    if (FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE) {
-      forwardIndex = new ForwardIndexFileControllerOverMappedFile(
-        // TODO put this piece in the constructor after OverFile implementation is removed
-        forwardIndexStorageFile.resolveSibling(forwardIndexStorageFile.getFileName().toString() + ".mmap")
-      );
-    }
-    else {
-      forwardIndex = new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
-    }
     Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
     forwardIndex.processEntries((inputId, data) -> {
       if (data != 0) {
         invertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
     });
-    return new IndexDataController(invertedIndex, forwardIndex, invertedIndexChangeCallback);
+    myDataController = new IndexDataController(invertedIndex, forwardIndex, id -> notifyInvertedIndexChangedForFileTypeId(id));
   }
 
   private static short checkFileTypeIdIsShort(int fileTypeId) {
@@ -391,9 +378,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static RandomAccessIntContainer createContainerForInvertedIndex() {
     return new UpgradableRandomAccessIntContainer<>(
       INVERTED_INDEX_SIZE_THRESHOLD,
-      () -> {
-        return new IntHashSetAsRAIntContainer(Hash.DEFAULT_INITIAL_SIZE, Hash.DEFAULT_LOAD_FACTOR);
-      },
+      () -> new IntHashSetAsRAIntContainer(Hash.DEFAULT_INITIAL_SIZE, Hash.DEFAULT_LOAD_FACTOR),
       (container) -> {
         // calculate needed capacity so there are less memory allocations
         int maxId = 0;
@@ -404,185 +389,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         return new BitSetAsRAIntContainer(maxId + 1);
       }
     );
-  }
-
-  private static final class ForwardIndexFileControllerOverFile implements IndexDataController.ForwardIndexFileController {
-    private static final int ELEMENT_BYTES = Short.BYTES;
-    private static final int DEFAULT_FILE_ALLOCATION_BYTES = 512;
-    private static final int DEFAULT_FULL_SCAN_BUFFER_BYTES = 1024;
-
-    private final @NotNull ResilientFileChannel myFileChannel;
-    private volatile long myElementsCount;
-    private volatile long myModificationsCounter = 0L;
-
-    private ForwardIndexFileControllerOverFile(@NotNull Path storage) throws StorageException {
-      try {
-        myFileChannel = new ResilientFileChannel(storage, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
-        long fileSize = myFileChannel.size();
-        if (fileSize % ELEMENT_BYTES != 0) {
-          LOG.error("file type index is corrupted");
-          clear();
-          fileSize = 0;
-        }
-        myElementsCount = fileSize / ELEMENT_BYTES;
-      }
-      catch (IOException e) {
-        throw closeWithException(new StorageException(e));
-      }
-    }
-
-    private static long offsetInFile(long inputId) {
-      return inputId * ELEMENT_BYTES;
-    }
-
-    @Override
-    public long modificationsCounter() {
-      return myModificationsCounter;
-    }
-
-    @Override
-    public short get(int inputId) throws StorageException {
-      ByteBuffer dataBuf = ByteBuffer.allocate(ELEMENT_BYTES);
-      try {
-        int bytesLeft = ELEMENT_BYTES;
-        while (bytesLeft > 0) {
-          int result = myFileChannel.read(dataBuf, offsetInFile(inputId) + dataBuf.position());
-          if (result == -1 && bytesLeft == ELEMENT_BYTES) {
-            return 0; // read after EOF
-          }
-          if (result == -1) {
-            throw new StorageException("forward file type index is corrupted");
-          }
-          bytesLeft -= result;
-        }
-        dataBuf.flip();
-        return dataBuf.getShort();
-      }
-      catch (IOException e) {
-        throw closeWithException(new StorageException(e));
-      }
-    }
-
-    @Override
-    public void set(int inputId, short value) throws StorageException {
-      ByteBuffer dataBuf = ByteBuffer.allocate(ELEMENT_BYTES);
-      try {
-        ensureCapacity(inputId);
-        dataBuf.putShort(value);
-        dataBuf.flip();
-        int bytesWritten = 0;
-        while (bytesWritten < ELEMENT_BYTES) {
-          bytesWritten += myFileChannel.write(dataBuf, offsetInFile(inputId) + bytesWritten);
-        }
-      }
-      catch (IOException e) {
-        throw closeWithException(new StorageException(e));
-      }
-      //noinspection NonAtomicOperationOnVolatileField
-      myModificationsCounter++;
-    }
-
-    private void ensureCapacity(int inputIdToStore) throws StorageException {
-      final int elementsToStore = inputIdToStore + 1;
-      if (myElementsCount >= elementsToStore) {
-        return;
-      }
-      try {
-        final int zeroBufSize = DEFAULT_FILE_ALLOCATION_BYTES;
-        ByteBuffer zeroBuf = ByteBuffer.allocate(zeroBufSize);
-        while (myElementsCount < elementsToStore) {
-          myFileChannel.write(zeroBuf, offsetInFile(myElementsCount) + zeroBuf.position());
-          if (!zeroBuf.hasRemaining()) {
-            zeroBuf.position(0);
-            //noinspection NonAtomicOperationOnVolatileField
-            myElementsCount += zeroBufSize / ELEMENT_BYTES;
-          }
-        }
-      }
-      catch (IOException e) {
-        throw closeWithException(new StorageException(e));
-      }
-    }
-
-    @Override
-    public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
-      try {
-        boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
-
-        final int bufferSize = DEFAULT_FULL_SCAN_BUFFER_BYTES;
-        final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-        for (int i = 0; i < myElementsCount; ) {
-          if (isCheckCanceledNeeded) {
-            ProgressManager.checkCanceled();
-          }
-          buffer.clear();
-          while (buffer.position() < bufferSize) {
-            int cur = myFileChannel.read(buffer, offsetInFile(i) + buffer.position());
-            if (cur == -1) break; // EOF
-          }
-          buffer.flip();
-          if (buffer.limit() % ELEMENT_BYTES != 0) {
-            throw new StorageException("forward index is corrupted");
-          }
-          while (buffer.position() < buffer.limit()) {
-            processor.process(i, buffer.getShort());
-            i++;
-          }
-        }
-      }
-      catch (IOException e) {
-        throw closeWithException(new StorageException(e));
-      }
-    }
-
-    @Override
-    public void clear() throws StorageException {
-      try {
-        myFileChannel.truncate(0);
-        myElementsCount = 0;
-        //noinspection NonAtomicOperationOnVolatileField
-        myModificationsCounter++;
-      }
-      catch (IOException e) {
-        throw closeWithException(new StorageException(e));
-      }
-    }
-
-    @Override
-    public void flush() throws StorageException {
-      try {
-        myFileChannel.force(true);
-      }
-      catch (IOException e) {
-        throw closeWithException(new StorageException(e));
-      }
-    }
-
-    @Override
-    public boolean isDirty() {
-      //TODO
-      return false;
-    }
-
-    @Override
-    public void close() throws StorageException {
-      try {
-        myFileChannel.close();
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-    }
-
-    private StorageException closeWithException(StorageException e) {
-      try {
-        myFileChannel.close();
-      }
-      catch (IOException ioe) {
-        e.addSuppressed(ioe);
-      }
-      return e;
-    }
   }
 
   private static boolean isCheckCanceledNeeded() {
@@ -640,7 +446,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         return readImpl(inputId);
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -650,7 +456,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         writeImpl(inputId, value);
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
       modificationsCounter.incrementAndGet();
     }
@@ -669,7 +475,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         }
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -680,7 +486,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         modificationsCounter.incrementAndGet();
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -707,7 +513,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         }
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -718,6 +524,16 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     private short readImpl(int inputId) throws IOException {
       return storage.readShortField(inputId, FIELD_OFFSET);
+    }
+
+    @Contract("_ -> fail")
+    private static StorageException wrapped(@NotNull IOException e) throws StorageException {
+      if (e instanceof ClosedStorageException) {
+        AlreadyDisposedException ade = new AlreadyDisposedException("Index already closed");
+        ade.addSuppressed(e);
+        throw ade;
+      }
+      throw new StorageException(e);
     }
   }
 }

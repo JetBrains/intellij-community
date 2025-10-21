@@ -2,35 +2,27 @@
 package com.intellij.internal
 
 import com.intellij.ide.HelpTooltip
-import com.intellij.ide.IdeTooltip
-import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.EditorCssFontResolver
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
-import java.awt.Point
 import java.awt.Toolkit
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.net.URL
 import javax.swing.JEditorPane
-import javax.swing.JTree
-import javax.swing.tree.DefaultTreeCellRenderer
 
 internal class TestTooltipsAction : DumbAwareAction() {
 
@@ -45,15 +37,16 @@ internal class TestTooltipsAction : DumbAwareAction() {
       row("com.intellij.ide.HelpTooltip") {
         label("HelpTooltip with web link").applyToComponent {
           HelpTooltip().setTitle("Title").setDescription("<html>Some <i>description</i>")
-            .setBrowserLink("clickable web link", URL("https://www.jetbrains.com/"))
+            .setBrowserLink("Clickable web link", URL("https://www.jetbrains.com/"))
             .installOn (this) }
       }
       row("com.intellij.ide.HelpTooltip") {
         label("HelpTooltip with beep link").applyToComponent {
           HelpTooltip().setTitle("Title").setDescription("<html>Some <i>description</i>")
-            .setLink("clickable BEEP link", Runnable { Toolkit.getDefaultToolkit().beep() })
+            .setLink("Clickable BEEP link", Runnable { Toolkit.getDefaultToolkit().beep() })
             .installOn (this) }
       }
+      /* Error: Unable to make field private boolean javax.swing.tree.DefaultTreeCellRenderer.fillBackground accessible: module java.desktop does not "opens javax.swing.tree" to unnamed module
       row("com.intellij.ide.IdeTooltip") {
         label("Custom IDE tooltip with JTree").applyToComponent {
           val tooltip = IdeTooltip(this, Point(40, 40), JTree().apply {
@@ -69,6 +62,7 @@ internal class TestTooltipsAction : DumbAwareAction() {
           IdeTooltipManager.getInstance().setCustomTooltip(this, tooltip)
         }
       }
+      */
       row("com.intellij.ui.popup.AbstractPopup") {
         label("Popup with a component inside").applyToComponent {
           addMouseListener(object:MouseAdapter() {

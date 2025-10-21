@@ -26,7 +26,6 @@ internal interface SpacingConfiguration {
    */
   val labelColumnHorizontalGap: Int
 
-  val largeHorizontalGap: Int
   val largeVerticalGap: Int
 
   val shortTextWidth: Int

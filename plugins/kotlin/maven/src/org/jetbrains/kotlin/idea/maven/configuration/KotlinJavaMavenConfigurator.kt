@@ -23,10 +23,10 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, NAME, PRESENTABLE_TEXT) {
 
-    override fun isKotlinModule(module: Module) =
+    override fun isKotlinModule(module: Module): Boolean =
         hasKotlinJvmRuntimeInScope(module)
 
-    override fun isRelevantGoal(goalName: String) =
+    override fun isRelevantGoal(goalName: String): Boolean =
         goalName == PomFile.KotlinGoals.Compile
 
     override fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion): String {
@@ -46,10 +46,11 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
         }
     }
 
-    override fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
+    override fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion?) {
+        if (version == null) return
         val mavenCompilerTarget = pom.findProperty("maven.compiler.target")?.value?.text
-        val jvmTargetVersion = if (mavenCompilerTarget != null && mavenCompilerTarget in JvmTarget.values().map {it.description}) {
-            "\${maven.compiler.target}"
+        val jvmTargetVersion = if (mavenCompilerTarget != null && mavenCompilerTarget in JvmTarget.entries.map { it.description }) {
+            $$"${maven.compiler.target}"
         } else {
             val sdk = ModuleRootManager.getInstance(module).sdk
             getDefaultJvmTarget(sdk, version)?.description
@@ -72,8 +73,8 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
 
     companion object {
         private const val NAME = "maven"
-        const val TEST_LIB_ID = "kotlin-test"
-        const val JUNIT_TEST_LIB_ID = "kotlin-test-junit"
+        const val TEST_LIB_ID: String = "kotlin-test"
+        const val JUNIT_TEST_LIB_ID: String = "kotlin-test-junit"
         private val PRESENTABLE_TEXT get() = KotlinMavenBundle.message("configure.java.with.maven")
     }
 }

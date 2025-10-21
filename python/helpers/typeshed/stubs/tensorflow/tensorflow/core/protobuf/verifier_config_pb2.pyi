@@ -28,7 +28,9 @@ class VerifierConfig(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ToggleEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[VerifierConfig._Toggle.ValueType], builtins.type):
+    class _ToggleEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[VerifierConfig._Toggle.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DEFAULT: VerifierConfig._Toggle.ValueType  # 0
         ON: VerifierConfig._Toggle.ValueType  # 1
@@ -53,6 +55,11 @@ class VerifierConfig(google.protobuf.message.Message):
         verification_timeout_in_ms: builtins.int | None = ...,
         structure_verifier: global___VerifierConfig.Toggle.ValueType | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["structure_verifier", b"structure_verifier", "verification_timeout_in_ms", b"verification_timeout_in_ms"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "structure_verifier", b"structure_verifier", "verification_timeout_in_ms", b"verification_timeout_in_ms"
+        ],
+    ) -> None: ...
 
 global___VerifierConfig = VerifierConfig

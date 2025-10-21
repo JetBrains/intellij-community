@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class MoveMemberToTopLevelIntention : MoveMemberIntention(
-    textGetter = KotlinBundle.lazyMessage("move.to.top.level")
+    textGetter = KotlinBundle.messagePointer("move.to.top.level")
 ) {
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return null

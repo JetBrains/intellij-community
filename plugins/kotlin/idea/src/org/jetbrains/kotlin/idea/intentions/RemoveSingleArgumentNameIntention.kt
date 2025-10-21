@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class RemoveSingleArgumentNameIntention : SelfTargetingRangeIntention<KtValueArgument>(
     KtValueArgument::class.java,
-    KotlinBundle.lazyMessage("remove.argument.name")
+    KotlinBundle.messagePointer("remove.argument.name")
 ) {
     override fun applicabilityRange(element: KtValueArgument): TextRange? {
         if (!element.isNamed()) return null

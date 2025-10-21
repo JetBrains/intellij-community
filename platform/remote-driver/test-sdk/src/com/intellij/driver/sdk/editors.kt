@@ -28,7 +28,16 @@ interface Editor {
   fun getSelectionModel(): SelectionModel
   fun getSoftWrapModel(): SoftWrapModel
   fun visualLineToY(visualLine: Int): Int
+  fun getMarkupModel(): MarkupModel
 }
+
+@Remote("com.intellij.openapi.editor.markup.MarkupModel")
+interface MarkupModel {
+  fun getAllHighlighters(): Array<RangeHighlighter>
+}
+
+@Remote("com.intellij.openapi.editor.markup.RangeHighlighter")
+interface RangeHighlighter
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
@@ -77,7 +86,7 @@ interface EditorCustomElementRenderer {
   fun getText(): String?
 }
 
-@Remote("com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer")
+@Remote("com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer")
 interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
 }
@@ -97,13 +106,13 @@ interface InlineCompletionRenderTextBlock {
   val text: String
 }
 
-@Remote("com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList")
+@Remote("com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList")
 interface InlayPresentationList {
   fun getEntries(): Array<TextInlayPresentationEntry>
 }
 
 
-@Remote("com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry")
+@Remote("com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry")
 interface TextInlayPresentationEntry {
   fun getText(): String
 }
@@ -121,12 +130,16 @@ fun Driver.logicalPosition(line: Int, column: Int, rdTarget: RdTarget = RdTarget
 }
 
 @Remote("com.intellij.openapi.fileEditor.FileEditor")
-interface FileEditor
+interface FileEditor {
+  fun getFile(): VirtualFile
+}
 
 @Remote("com.intellij.openapi.fileEditor.FileEditorManager")
 interface FileEditorManager {
   fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor>
   fun getSelectedTextEditor(): Editor?
+  fun setSelectedEditor(editor: FileEditor)
+  fun getAllEditors(): Array<FileEditor>
   fun getCurrentFile(): VirtualFile
 }
 
@@ -148,8 +161,8 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) = step("Open file $relativePath") {
-  withContext {
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) {
+  step("Open file $relativePath") {
     val openedFile = if (!isRemDevMode) {
       val fileToOpen = findFile(relativePath = relativePath, project = project)
       if (fileToOpen == null) {

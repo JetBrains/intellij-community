@@ -3,13 +3,13 @@ package git4idea.rebase.log
 
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.vcs.log.ui.VcsLogUiEx
+import git4idea.GitDisposable
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitNotificationIdsHolder.Companion.REBASE_COMMIT_EDIT_UNDO_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.REBASE_COMMIT_EDIT_UNDO_ERROR_PROTECTED_BRANCH
@@ -19,6 +19,7 @@ import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibil
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoResult
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import kotlinx.coroutines.launch
 
 internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.NotificationTitle title: String,
@@ -26,6 +27,7 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.ProgressTitle undoProgressTitle: String,
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String,
+  logUiEx: VcsLogUiEx? = null,
 ) {
   val project = repository.project
   val notification = if (content.isNullOrEmpty()) VcsNotifier.standardNotification().createNotification(title, NotificationType.INFORMATION)
@@ -34,7 +36,7 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   notification.addAction(NotificationAction.createSimple(
     GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
     Runnable {
-      undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, this@notifySuccess) { notification.expire() }
+      undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, this@notifySuccess, logUiEx) { notification.expire() }
     }
   ))
 
@@ -79,20 +81,24 @@ private fun undoInBackground(
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String,
   result: GitCommitEditingOperationResult.Complete,
+  logUiEx: VcsLogUiEx?,
   expireUndoAction: () -> Unit,
 ) {
-  ProgressManager.getInstance().run(object : Task.Backgroundable(project, undoProgressTitle) {
-    override fun run(indicator: ProgressIndicator) {
-      val possibility = result.checkUndoPossibility()
-      if (possibility is UndoPossibility.Impossible) {
-        possibility.notifyUndoImpossible(project, undoImpossibleTitle)
-        expireUndoAction()
-        return
-      }
-      when (val undoResult = result.undo()) {
-        is UndoResult.Error -> undoResult.notifyUndoError(project, undoErrorTitle)
-        is UndoResult.Success -> expireUndoAction()
-      }
+  GitDisposable.getInstance(project).coroutineScope.launch {
+    withBackgroundProgress(project, undoProgressTitle) {
+        val possibility = result.checkUndoPossibility()
+        if (possibility is UndoPossibility.Impossible) {
+          possibility.notifyUndoImpossible(project, undoImpossibleTitle)
+          expireUndoAction()
+          return@withBackgroundProgress
+        }
+        when (val undoResult = result.undo()) {
+          is UndoResult.Error -> undoResult.notifyUndoError(project, undoErrorTitle)
+          is UndoResult.Success -> {
+            logUiEx?.focusCommitWhenReady(result.repository, result.commitToFocusOnUndo)
+            expireUndoAction()
+          }
+        }
     }
-  })
+  }
 }

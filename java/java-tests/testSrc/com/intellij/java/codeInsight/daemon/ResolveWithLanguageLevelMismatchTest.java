@@ -49,7 +49,7 @@ public final class ResolveWithLanguageLevelMismatchTest extends LightJavaCodeIns
       import com.example.*;
       
       class MyClass {
-        int a = <error descr="Usage of API documented as @since 14+">Record</error>.<error descr="Cannot resolve symbol 'x'">x</error>;
+        int a = <error descr="Usage of API documented as @since 16+">Record</error>.<error descr="Cannot resolve symbol 'x'">x</error>;
       }""");
       myFixture.enableInspections(new JavaApiUsageInspection());
       myFixture.checkHighlighting();

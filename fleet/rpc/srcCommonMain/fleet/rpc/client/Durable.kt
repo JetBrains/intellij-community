@@ -4,7 +4,6 @@ package fleet.rpc.client
 import fleet.util.causeOfType
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
-import kotlin.coroutines.coroutineContext
 
 /**
  * retries [body] if it fails because of [RpcClientException]
@@ -24,7 +23,7 @@ suspend fun <T> durable(verbose: Boolean = false, body: suspend CoroutineScope.(
     }
   }
   while (true) {
-    coroutineContext.job.ensureActive()
+    currentCoroutineContext().job.ensureActive()
     try {
       return coroutineScope { body() }
     }

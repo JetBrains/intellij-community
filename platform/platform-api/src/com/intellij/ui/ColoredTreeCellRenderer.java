@@ -82,7 +82,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
     if (UIUtil.isFullRowSelectionLAF()) {
-      setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+      setBackground(selected ? UIUtil.getTreeSelectionBackground(true) : null);
     }
     else if (WideSelectionTreeUI.isWideSelection(tree)) {
       setPaintFocusBorder(false);
@@ -96,7 +96,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else if (selected) {
       setPaintFocusBorder(true);
       if (isFocused()) {
-        setBackground(UIUtil.getTreeSelectionBackground());
+        setBackground(UIUtil.getTreeSelectionBackground(true));
       }
       else {
         setBackground(null);
@@ -201,37 +201,52 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleContextDelegateWithContextMenu(new AccessibleColoredTreeCellRenderer()) {
-        @Override
-        protected void doShowContextMenu() {
-          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
-        }
-
-        @Override
-        protected Container getDelegateParent() {
-          return getParent();
-        }
-
-        @Override
-        public String getAccessibleName() {
-          String name = super.getAccessibleName();
-
-          if (myAccessibleStatusText != null && !myAccessibleStatusText.isEmpty()) {
-            if (name == null) name = myAccessibleStatusText;
-            else {
-              if (!name.endsWith(",")) name += ",";
-              name += " " + myAccessibleStatusText + ".";
-            }
-          }
-
-          return name;
-        }
-      };
+      accessibleContext = new AccessibleColoredTreeCellRendererWithContextMenu();
     }
     return accessibleContext;
   }
 
+  protected class AccessibleColoredTreeCellRendererWithContextMenu extends AccessibleContextDelegateWithContextMenu {
+    public AccessibleColoredTreeCellRendererWithContextMenu(AccessibleColoredTreeCellRenderer context) {
+      super(context);
+    }
+
+    public AccessibleColoredTreeCellRendererWithContextMenu() {
+      super(new AccessibleColoredTreeCellRenderer());
+    }
+
+    @Override
+    protected void doShowContextMenu() {
+      ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
+    }
+
+    @Override
+    protected Container getDelegateParent() {
+      return getParent();
+    }
+  }
+
   protected class AccessibleColoredTreeCellRenderer extends AccessibleSimpleColoredComponent {
+    @Override
+    public String getAccessibleName() {
+      String name = getOriginalAccessibleName();
+
+      if (myAccessibleStatusText != null && !myAccessibleStatusText.isEmpty()) {
+        if (name == null) {
+          name = myAccessibleStatusText;
+        }
+        else {
+          if (!name.endsWith(",")) name += ",";
+          name += " " + myAccessibleStatusText + ".";
+        }
+      }
+
+      return name;
+    }
+
+    protected @Nullable @Nls String getOriginalAccessibleName() {
+      return super.getAccessibleName();
+    }
   }
 
   // The following method are overridden for performance reasons.

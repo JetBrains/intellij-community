@@ -96,6 +96,8 @@ public class PythonConsoleBackendService {
      */
     public void loadFullValue(int seq, java.util.List<java.lang.String> variables) throws PythonUnhandledException, org.apache.thrift.TException;
 
+    public java.lang.String execRaw(java.lang.String command) throws PythonUnhandledException, org.apache.thrift.TException;
+
     public java.lang.String execTableCommand(java.lang.String tableVariable, java.lang.String commandType, java.lang.String startIndex, java.lang.String endIndex, java.lang.String format) throws PythonUnhandledException, PythonTableException, org.apache.thrift.TException;
 
     public java.lang.String execTableImageCommand(java.lang.String tableVariable, java.lang.String commandType, java.lang.String offset, java.lang.String imageId) throws PythonUnhandledException, PythonTableException, org.apache.thrift.TException;
@@ -135,6 +137,8 @@ public class PythonConsoleBackendService {
     public void execDataViewerAction(java.lang.String varName, java.lang.String action, java.lang.String myArgs, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws org.apache.thrift.TException;
 
     public void loadFullValue(int seq, java.util.List<java.lang.String> variables, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws org.apache.thrift.TException;
+
+    public void execRaw(java.lang.String command, org.apache.thrift.async.AsyncMethodCallback<java.lang.String> resultHandler) throws org.apache.thrift.TException;
 
     public void execTableCommand(java.lang.String tableVariable, java.lang.String commandType, java.lang.String startIndex, java.lang.String endIndex, java.lang.String format, org.apache.thrift.async.AsyncMethodCallback<java.lang.String> resultHandler) throws org.apache.thrift.TException;
 
@@ -573,6 +577,33 @@ public class PythonConsoleBackendService {
         throw result.unhandledException;
       }
       return;
+    }
+
+    @Override
+    public java.lang.String execRaw(java.lang.String command) throws PythonUnhandledException, org.apache.thrift.TException
+    {
+      send_execRaw(command);
+      return recv_execRaw();
+    }
+
+    public void send_execRaw(java.lang.String command) throws org.apache.thrift.TException
+    {
+      execRaw_args args = new execRaw_args();
+      args.setCommand(command);
+      sendBase("execRaw", args);
+    }
+
+    public java.lang.String recv_execRaw() throws PythonUnhandledException, org.apache.thrift.TException
+    {
+      execRaw_result result = new execRaw_result();
+      receiveBase(result, "execRaw");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.unhandledException != null) {
+        throw result.unhandledException;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "execRaw failed: unknown result");
     }
 
     @Override
@@ -1260,6 +1291,41 @@ public class PythonConsoleBackendService {
     }
 
     @Override
+    public void execRaw(java.lang.String command, org.apache.thrift.async.AsyncMethodCallback<java.lang.String> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      execRaw_call method_call = new execRaw_call(command, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class execRaw_call extends org.apache.thrift.async.TAsyncMethodCall<java.lang.String> {
+      private java.lang.String command;
+      public execRaw_call(java.lang.String command, org.apache.thrift.async.AsyncMethodCallback<java.lang.String> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.command = command;
+      }
+
+      @Override
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("execRaw", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        execRaw_args args = new execRaw_args();
+        args.setCommand(command);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      @Override
+      public java.lang.String getResult() throws PythonUnhandledException, PythonTableException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new java.lang.IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_execRaw();
+      }
+    }
+
+    @Override
     public void execTableCommand(java.lang.String tableVariable, java.lang.String commandType, java.lang.String startIndex, java.lang.String endIndex, java.lang.String format, org.apache.thrift.async.AsyncMethodCallback<java.lang.String> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       execTableCommand_call method_call = new execTableCommand_call(tableVariable, commandType, startIndex, endIndex, format, resultHandler, this, ___protocolFactory, ___transport);
@@ -1879,6 +1945,38 @@ public class PythonConsoleBackendService {
         loadFullValue_result result = new loadFullValue_result();
         try {
           iface.loadFullValue(args.seq, args.variables);
+        } catch (PythonUnhandledException unhandledException) {
+          result.unhandledException = unhandledException;
+        }
+        return result;
+      }
+    }
+
+    public static class execRaw<I extends Iface> extends org.apache.thrift.ProcessFunction<I, execRaw_args> {
+      public execRaw() {
+        super("execRaw");
+      }
+
+      @Override
+      public execRaw_args getEmptyArgsInstance() {
+        return new execRaw_args();
+      }
+
+      @Override
+      public boolean isOneway() {
+        return false;
+      }
+
+      @Override
+      protected boolean rethrowUnhandledExceptions() {
+        return false;
+      }
+
+      @Override
+      public execRaw_result getResult(I iface, execRaw_args args) throws org.apache.thrift.TException {
+        execRaw_result result = new execRaw_result();
+        try {
+          result.success = iface.execRaw(args.command);
         } catch (PythonUnhandledException unhandledException) {
           result.unhandledException = unhandledException;
         }
@@ -17375,6 +17473,870 @@ public class PythonConsoleBackendService {
         org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
         java.util.BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
+          struct.unhandledException = new PythonUnhandledException();
+          struct.unhandledException.read(iprot);
+          struct.setUnhandledExceptionIsSet(true);
+        }
+      }
+    }
+
+    private static <S extends org.apache.thrift.scheme.IScheme> S scheme(org.apache.thrift.protocol.TProtocol proto) {
+      return (org.apache.thrift.scheme.StandardScheme.class.equals(proto.getScheme()) ? STANDARD_SCHEME_FACTORY : TUPLE_SCHEME_FACTORY).getScheme();
+    }
+  }
+
+  @SuppressWarnings({"cast", "rawtypes", "serial", "unchecked", "unused"})
+  public static class execRaw_args implements org.apache.thrift.TBase<execRaw_args, execRaw_args._Fields>, java.io.Serializable, Cloneable, Comparable<execRaw_args>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("execRaw_args");
+
+    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short)1);
+
+    private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new execRaw_argsStandardSchemeFactory();
+    private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new execRaw_argsTupleSchemeFactory();
+
+    public @org.apache.thrift.annotation.Nullable java.lang.String command; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      COMMAND((short)1, "command");
+
+      private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
+
+      static {
+        for (_Fields field : java.util.EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      @org.apache.thrift.annotation.Nullable
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // COMMAND
+            return COMMAND;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new java.lang.IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      @org.apache.thrift.annotation.Nullable
+      public static _Fields findByName(java.lang.String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final java.lang.String _fieldName;
+
+      _Fields(short thriftId, java.lang.String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      @Override
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      @Override
+      public java.lang.String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new java.util.EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(execRaw_args.class, metaDataMap);
+    }
+
+    public execRaw_args() {
+    }
+
+    public execRaw_args(
+      java.lang.String command)
+    {
+      this();
+      this.command = command;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public execRaw_args(execRaw_args other) {
+      if (other.isSetCommand()) {
+        this.command = other.command;
+      }
+    }
+
+    @Override
+    public execRaw_args deepCopy() {
+      return new execRaw_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.command = null;
+    }
+
+    @org.apache.thrift.annotation.Nullable
+    public java.lang.String getCommand() {
+      return this.command;
+    }
+
+    public execRaw_args setCommand(@org.apache.thrift.annotation.Nullable java.lang.String command) {
+      this.command = command;
+      return this;
+    }
+
+    public void unsetCommand() {
+      this.command = null;
+    }
+
+    /** Returns true if field command is set (has been assigned a value) and false otherwise */
+    public boolean isSetCommand() {
+      return this.command != null;
+    }
+
+    public void setCommandIsSet(boolean value) {
+      if (!value) {
+        this.command = null;
+      }
+    }
+
+    @Override
+    public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
+      switch (field) {
+      case COMMAND:
+        if (value == null) {
+          unsetCommand();
+        } else {
+          setCommand((java.lang.String)value);
+        }
+        break;
+
+      }
+    }
+
+    @org.apache.thrift.annotation.Nullable
+    @Override
+    public java.lang.Object getFieldValue(_Fields field) {
+      switch (field) {
+      case COMMAND:
+        return getCommand();
+
+      }
+      throw new java.lang.IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    @Override
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new java.lang.IllegalArgumentException();
+      }
+
+      switch (field) {
+      case COMMAND:
+        return isSetCommand();
+      }
+      throw new java.lang.IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(java.lang.Object that) {
+      if (that instanceof execRaw_args)
+        return this.equals((execRaw_args)that);
+      return false;
+    }
+
+    public boolean equals(execRaw_args that) {
+      if (that == null)
+        return false;
+      if (this == that)
+        return true;
+
+      boolean this_present_command = true && this.isSetCommand();
+      boolean that_present_command = true && that.isSetCommand();
+      if (this_present_command || that_present_command) {
+        if (!(this_present_command && that_present_command))
+          return false;
+        if (!this.command.equals(that.command))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int hashCode = 1;
+
+      hashCode = hashCode * 8191 + ((isSetCommand()) ? 131071 : 524287);
+      if (isSetCommand())
+        hashCode = hashCode * 8191 + command.hashCode();
+
+      return hashCode;
+    }
+
+    @Override
+    public int compareTo(execRaw_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+
+      lastComparison = java.lang.Boolean.compare(isSetCommand(), other.isSetCommand());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetCommand()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.command, other.command);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    @org.apache.thrift.annotation.Nullable
+    @Override
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    @Override
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      scheme(iprot).read(iprot, this);
+    }
+
+    @Override
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      scheme(oprot).write(oprot, this);
+    }
+
+    @Override
+    public java.lang.String toString() {
+      java.lang.StringBuilder sb = new java.lang.StringBuilder("execRaw_args(");
+      boolean first = true;
+
+      sb.append("command:");
+      if (this.command == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.command);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, java.lang.ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class execRaw_argsStandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      @Override
+      public execRaw_argsStandardScheme getScheme() {
+        return new execRaw_argsStandardScheme();
+      }
+    }
+
+    private static class execRaw_argsStandardScheme extends org.apache.thrift.scheme.StandardScheme<execRaw_args> {
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol iprot, execRaw_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // COMMAND
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.command = iprot.readString();
+                struct.setCommandIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol oprot, execRaw_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.command != null) {
+          oprot.writeFieldBegin(COMMAND_FIELD_DESC);
+          oprot.writeString(struct.command);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class execRaw_argsTupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      @Override
+      public execRaw_argsTupleScheme getScheme() {
+        return new execRaw_argsTupleScheme();
+      }
+    }
+
+    private static class execRaw_argsTupleScheme extends org.apache.thrift.scheme.TupleScheme<execRaw_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, execRaw_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TTupleProtocol oprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
+        java.util.BitSet optionals = new java.util.BitSet();
+        if (struct.isSetCommand()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetCommand()) {
+          oprot.writeString(struct.command);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, execRaw_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
+        java.util.BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.command = iprot.readString();
+          struct.setCommandIsSet(true);
+        }
+      }
+    }
+
+    private static <S extends org.apache.thrift.scheme.IScheme> S scheme(org.apache.thrift.protocol.TProtocol proto) {
+      return (org.apache.thrift.scheme.StandardScheme.class.equals(proto.getScheme()) ? STANDARD_SCHEME_FACTORY : TUPLE_SCHEME_FACTORY).getScheme();
+    }
+  }
+
+  @SuppressWarnings({"cast", "rawtypes", "serial", "unchecked", "unused"})
+  public static class execRaw_result implements org.apache.thrift.TBase<execRaw_result, execRaw_result._Fields>, java.io.Serializable, Cloneable, Comparable<execRaw_result>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("execRaw_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField UNHANDLED_EXCEPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("unhandledException", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new execRaw_resultStandardSchemeFactory();
+    private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new execRaw_resultTupleSchemeFactory();
+
+    public @org.apache.thrift.annotation.Nullable java.lang.String success; // required
+    public @org.apache.thrift.annotation.Nullable PythonUnhandledException unhandledException; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      UNHANDLED_EXCEPTION((short)1, "unhandledException");
+
+      private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
+
+      static {
+        for (_Fields field : java.util.EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      @org.apache.thrift.annotation.Nullable
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // UNHANDLED_EXCEPTION
+            return UNHANDLED_EXCEPTION;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new java.lang.IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      @org.apache.thrift.annotation.Nullable
+      public static _Fields findByName(java.lang.String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final java.lang.String _fieldName;
+
+      _Fields(short thriftId, java.lang.String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      @Override
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      @Override
+      public java.lang.String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new java.util.EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.UNHANDLED_EXCEPTION, new org.apache.thrift.meta_data.FieldMetaData("unhandledException", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, PythonUnhandledException.class)));
+      metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(execRaw_result.class, metaDataMap);
+    }
+
+    public execRaw_result() {
+    }
+
+    public execRaw_result(
+      java.lang.String success,
+      PythonUnhandledException unhandledException)
+    {
+      this();
+      this.success = success;
+      this.unhandledException = unhandledException;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public execRaw_result(execRaw_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+      if (other.isSetUnhandledException()) {
+        this.unhandledException = new PythonUnhandledException(other.unhandledException);
+      }
+    }
+
+    @Override
+    public execRaw_result deepCopy() {
+      return new execRaw_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.unhandledException = null;
+    }
+
+    @org.apache.thrift.annotation.Nullable
+    public java.lang.String getSuccess() {
+      return this.success;
+    }
+
+    public execRaw_result setSuccess(@org.apache.thrift.annotation.Nullable java.lang.String success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    @org.apache.thrift.annotation.Nullable
+    public PythonUnhandledException getUnhandledException() {
+      return this.unhandledException;
+    }
+
+    public execRaw_result setUnhandledException(@org.apache.thrift.annotation.Nullable PythonUnhandledException unhandledException) {
+      this.unhandledException = unhandledException;
+      return this;
+    }
+
+    public void unsetUnhandledException() {
+      this.unhandledException = null;
+    }
+
+    /** Returns true if field unhandledException is set (has been assigned a value) and false otherwise */
+    public boolean isSetUnhandledException() {
+      return this.unhandledException != null;
+    }
+
+    public void setUnhandledExceptionIsSet(boolean value) {
+      if (!value) {
+        this.unhandledException = null;
+      }
+    }
+
+    @Override
+    public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((java.lang.String)value);
+        }
+        break;
+
+      case UNHANDLED_EXCEPTION:
+        if (value == null) {
+          unsetUnhandledException();
+        } else {
+          setUnhandledException((PythonUnhandledException)value);
+        }
+        break;
+
+      }
+    }
+
+    @org.apache.thrift.annotation.Nullable
+    @Override
+    public java.lang.Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case UNHANDLED_EXCEPTION:
+        return getUnhandledException();
+
+      }
+      throw new java.lang.IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    @Override
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new java.lang.IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case UNHANDLED_EXCEPTION:
+        return isSetUnhandledException();
+      }
+      throw new java.lang.IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(java.lang.Object that) {
+      if (that instanceof execRaw_result)
+        return this.equals((execRaw_result)that);
+      return false;
+    }
+
+    public boolean equals(execRaw_result that) {
+      if (that == null)
+        return false;
+      if (this == that)
+        return true;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_unhandledException = true && this.isSetUnhandledException();
+      boolean that_present_unhandledException = true && that.isSetUnhandledException();
+      if (this_present_unhandledException || that_present_unhandledException) {
+        if (!(this_present_unhandledException && that_present_unhandledException))
+          return false;
+        if (!this.unhandledException.equals(that.unhandledException))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int hashCode = 1;
+
+      hashCode = hashCode * 8191 + ((isSetSuccess()) ? 131071 : 524287);
+      if (isSetSuccess())
+        hashCode = hashCode * 8191 + success.hashCode();
+
+      hashCode = hashCode * 8191 + ((isSetUnhandledException()) ? 131071 : 524287);
+      if (isSetUnhandledException())
+        hashCode = hashCode * 8191 + unhandledException.hashCode();
+
+      return hashCode;
+    }
+
+    @Override
+    public int compareTo(execRaw_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+
+      lastComparison = java.lang.Boolean.compare(isSetSuccess(), other.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, other.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = java.lang.Boolean.compare(isSetUnhandledException(), other.isSetUnhandledException());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetUnhandledException()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.unhandledException, other.unhandledException);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    @org.apache.thrift.annotation.Nullable
+    @Override
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    @Override
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      scheme(iprot).read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      scheme(oprot).write(oprot, this);
+      }
+
+    @Override
+    public java.lang.String toString() {
+      java.lang.StringBuilder sb = new java.lang.StringBuilder("execRaw_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("unhandledException:");
+      if (this.unhandledException == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.unhandledException);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, java.lang.ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class execRaw_resultStandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      @Override
+      public execRaw_resultStandardScheme getScheme() {
+        return new execRaw_resultStandardScheme();
+      }
+    }
+
+    private static class execRaw_resultStandardScheme extends org.apache.thrift.scheme.StandardScheme<execRaw_result> {
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol iprot, execRaw_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.success = iprot.readString();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // UNHANDLED_EXCEPTION
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.unhandledException = new PythonUnhandledException();
+                struct.unhandledException.read(iprot);
+                struct.setUnhandledExceptionIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol oprot, execRaw_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          oprot.writeString(struct.success);
+          oprot.writeFieldEnd();
+        }
+        if (struct.unhandledException != null) {
+          oprot.writeFieldBegin(UNHANDLED_EXCEPTION_FIELD_DESC);
+          struct.unhandledException.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class execRaw_resultTupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      @Override
+      public execRaw_resultTupleScheme getScheme() {
+        return new execRaw_resultTupleScheme();
+      }
+    }
+
+    private static class execRaw_resultTupleScheme extends org.apache.thrift.scheme.TupleScheme<execRaw_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, execRaw_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TTupleProtocol oprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
+        java.util.BitSet optionals = new java.util.BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetUnhandledException()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeString(struct.success);
+        }
+        if (struct.isSetUnhandledException()) {
+          struct.unhandledException.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, execRaw_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
+        java.util.BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readString();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
           struct.unhandledException = new PythonUnhandledException();
           struct.unhandledException.read(iprot);
           struct.setUnhandledExceptionIsSet(true);

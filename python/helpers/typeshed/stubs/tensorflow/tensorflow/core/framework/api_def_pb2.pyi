@@ -49,7 +49,9 @@ class ApiDef(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _VisibilityEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ApiDef._Visibility.ValueType], builtins.type):
+    class _VisibilityEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ApiDef._Visibility.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DEFAULT_VISIBILITY: ApiDef._Visibility.ValueType  # 0
         """Normally this is "VISIBLE" unless you are inheriting a
@@ -117,7 +119,12 @@ class ApiDef(google.protobuf.message.Message):
             deprecated: builtins.bool | None = ...,
             deprecation_version: builtins.int | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["deprecated", b"deprecated", "deprecation_version", b"deprecation_version", "name", b"name"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "deprecated", b"deprecated", "deprecation_version", b"deprecation_version", "name", b"name"
+            ],
+        ) -> None: ...
 
     @typing.final
     class Arg(google.protobuf.message.Message):
@@ -138,13 +145,11 @@ class ApiDef(google.protobuf.message.Message):
         them entirely) as can be done with op descriptions.
         """
         def __init__(
-            self,
-            *,
-            name: builtins.str | None = ...,
-            rename_to: builtins.str | None = ...,
-            description: builtins.str | None = ...,
+            self, *, name: builtins.str | None = ..., rename_to: builtins.str | None = ..., description: builtins.str | None = ...
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["description", b"description", "name", b"name", "rename_to", b"rename_to"]) -> None: ...
+        def ClearField(
+            self, field_name: typing.Literal["description", b"description", "name", b"name", "rename_to", b"rename_to"]
+        ) -> None: ...
 
     @typing.final
     class Attr(google.protobuf.message.Message):
@@ -186,7 +191,12 @@ class ApiDef(google.protobuf.message.Message):
             description: builtins.str | None = ...,
         ) -> None: ...
         def HasField(self, field_name: typing.Literal["default_value", b"default_value"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["default_value", b"default_value", "description", b"description", "name", b"name", "rename_to", b"rename_to"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "default_value", b"default_value", "description", b"description", "name", b"name", "rename_to", b"rename_to"
+            ],
+        ) -> None: ...
 
     GRAPH_OP_NAME_FIELD_NUMBER: builtins.int
     DEPRECATION_MESSAGE_FIELD_NUMBER: builtins.int
@@ -255,7 +265,37 @@ class ApiDef(google.protobuf.message.Message):
         description_prefix: builtins.str | None = ...,
         description_suffix: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["arg_order", b"arg_order", "attr", b"attr", "deprecation_message", b"deprecation_message", "deprecation_version", b"deprecation_version", "description", b"description", "description_prefix", b"description_prefix", "description_suffix", b"description_suffix", "endpoint", b"endpoint", "graph_op_name", b"graph_op_name", "in_arg", b"in_arg", "out_arg", b"out_arg", "summary", b"summary", "visibility", b"visibility"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "arg_order",
+            b"arg_order",
+            "attr",
+            b"attr",
+            "deprecation_message",
+            b"deprecation_message",
+            "deprecation_version",
+            b"deprecation_version",
+            "description",
+            b"description",
+            "description_prefix",
+            b"description_prefix",
+            "description_suffix",
+            b"description_suffix",
+            "endpoint",
+            b"endpoint",
+            "graph_op_name",
+            b"graph_op_name",
+            "in_arg",
+            b"in_arg",
+            "out_arg",
+            b"out_arg",
+            "summary",
+            b"summary",
+            "visibility",
+            b"visibility",
+        ],
+    ) -> None: ...
 
 global___ApiDef = ApiDef
 
@@ -266,11 +306,7 @@ class ApiDefs(google.protobuf.message.Message):
     OP_FIELD_NUMBER: builtins.int
     @property
     def op(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ApiDef]: ...
-    def __init__(
-        self,
-        *,
-        op: collections.abc.Iterable[global___ApiDef] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, op: collections.abc.Iterable[global___ApiDef] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["op", b"op"]) -> None: ...
 
 global___ApiDefs = ApiDefs

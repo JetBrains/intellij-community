@@ -14,14 +14,10 @@ public final class IgnoredPatternSet {
   private final Set<String> masks;
   private final FileTypeAssocTable<Boolean> ignorePatterns = new FileTypeAssocTable<>();
 
-  public IgnoredPatternSet() {
-    masks = new LinkedHashSet<>();
-  }
-
-  public IgnoredPatternSet(@NotNull List<String> masks) {
+  public IgnoredPatternSet(@NotNull List<String> initialMasks) {
     FileNameMatcherFactory fileNameMatcherFactory = null;
-    this.masks = new LinkedHashSet<>(masks.size());
-    for (String ignoredFile : masks) {
+    this.masks = new LinkedHashSet<>(initialMasks.size());
+    for (String ignoredFile : initialMasks) {
       if (ignorePatterns.findAssociatedFileType(ignoredFile) == null) {
         this.masks.add(ignoredFile);
         if (fileNameMatcherFactory == null) {

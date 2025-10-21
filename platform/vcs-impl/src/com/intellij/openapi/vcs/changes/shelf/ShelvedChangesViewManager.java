@@ -207,17 +207,6 @@ public class ShelvedChangesViewManager implements Disposable {
     return singleVcs.isWithCustomShelves();
   }
 
-  protected void removeContent(Content content) {
-    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-    contentManager.removeContent(content);
-    contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
-  }
-
-  protected void addContent(Content content) {
-    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-    contentManager.addContent(content);
-  }
-
   protected void activateContent() {
     ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
     contentManager.selectContent(SHELF);
@@ -708,6 +697,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myTree.setEditable(true);
       myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
       myTree.setCellEditor(new ShelveRenameTreeCellEditor());
+      myTree.getAccessibleContext().setAccessibleName(VcsBundle.message("shelve.tree.accessible.name"));
 
       final AnAction showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
       showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);

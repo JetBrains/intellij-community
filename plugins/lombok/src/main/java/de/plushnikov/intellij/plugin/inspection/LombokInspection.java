@@ -13,7 +13,6 @@ import de.plushnikov.intellij.plugin.problem.LombokProblemInstance;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
-import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
@@ -109,33 +108,6 @@ public final class LombokInspection extends LombokJavaInspectionBase {
             problemInstance.withLocalQuickFixes(() -> new RemoveAnnotationQuickFix(annotation, parentOfAnnotation));
             problems.add(problemInstance);
           }
-        }
-      }
-    }
-
-    /**
-     * Check MethodCallExpressions for calls for default (argument less) constructor
-     * Produce an error if resolved constructor method is build by lombok and contains some arguments
-     */
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
-      super.visitMethodCallExpression(methodCall);
-
-      PsiExpressionList list = methodCall.getArgumentList();
-      PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
-
-      boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
-      final int parameterCount = list.getExpressions().length;
-      if (isThisOrSuper && parameterCount == 0) {
-
-        JavaResolveResult[] results = referenceToMethod.multiResolve(true);
-        JavaResolveResult resolveResult = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-        PsiElement resolved = resolveResult.getElement();
-
-        if (resolved instanceof LombokLightMethodBuilder &&
-            ((LombokLightMethodBuilder)resolved).getParameterList().getParameters().length != 0) {
-          holder.registerProblem(methodCall, LombokBundle.message("inspection.message.default.constructor.doesn.t.exist"),
-                                 ProblemHighlightType.ERROR);
         }
       }
     }

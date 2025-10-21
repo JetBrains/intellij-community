@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,8 +114,8 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     return false;
   }
 
-  private static void switchToSuspendAll(@NotNull SuspendContextImpl suspendContext,
-                                         @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
+  static void switchToSuspendAll(@NotNull SuspendContextImpl suspendContext,
+                                 @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     DebugProcessImpl process = suspendContext.getDebugProcess();
     SuspendManager suspendManager = process.getSuspendManager();
     SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
@@ -143,7 +144,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     var request = process.getRequestsManager().createMethodEntryRequest(requestor);
 
     request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-    request.setEnabled(true);
+    DebuggerUtilsAsync.setEnabled(request, true);
   }
 
   private static @NotNull EvaluationListener addFinishEvaluationListener(@NotNull DebugProcessImpl process) {
@@ -214,6 +215,10 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
   private static boolean processSuspendAll(@NotNull SuspendContextImpl suspendContext,
                                            @NotNull SuspendContextImpl originalContext,
                                            @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
+    if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL) {
+      suspendContext.getDebugProcess().logError("Expected here suspend all context, but got " + suspendContext);
+    }
+
     // Need to 'replace' the originalContext (single-thread suspend context which passed filtering) with this one.
     suspendContext.resetThread(Objects.requireNonNull(originalContext.getEventThread()));
 

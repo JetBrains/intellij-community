@@ -112,11 +112,7 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
     }
 
     private fun configureModuleLibraryDependency(library: String, module: Module) {
-        if (library.startsWith("maven(")) {
-            configureModuleMavenLibraryDependency(library, module)
-        } else {
-            configureModuleCustomBuiltLibraryDependency(library, module)
-        }
+        configureModuleCustomBuiltLibraryDependency(library, module)
     }
 
     private fun configureModuleCustomBuiltLibraryDependency(library: String, module: Module) {
@@ -124,24 +120,6 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
         runInEdtAndWait {
             ConfigLibraryUtil.addLibrary(module, library) {
                 addRoot(libraryPath, OrderRootType.CLASSES)
-            }
-        }
-    }
-
-    private fun configureModuleMavenLibraryDependency(library: String, module: Module) {
-        val regex = Regex(MAVEN_DEPENDENCY_REGEX)
-        val match = regex.matchEntire(library)
-        check(match != null) {
-            "Cannot parse maven dependency: '$library'"
-        }
-        val (_, groupId: String, artifactId: String, version: String) = match.groupValues
-        val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
-        val artifacts = loadDependencies(description)
-        runInEdtAndWait {
-            ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
-                for (artifact in artifacts) {
-                    addRoot(artifact.file, artifact.type)
-                }
             }
         }
     }

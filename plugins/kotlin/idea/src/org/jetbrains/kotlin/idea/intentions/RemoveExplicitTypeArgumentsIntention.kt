@@ -72,7 +72,7 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
  */
 class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentIntention<KtTypeArgumentList>(
     KtTypeArgumentList::class.java,
-    KotlinBundle.lazyMessage("remove.explicit.type.arguments")
+    KotlinBundle.messagePointer("remove.explicit.type.arguments")
 ) {
     companion object {
         private val INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS: Set<String> = setOf(

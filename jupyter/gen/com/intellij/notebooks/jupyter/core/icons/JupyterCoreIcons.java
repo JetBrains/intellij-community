@@ -38,8 +38,10 @@ public final class JupyterCoreIcons {
   /** 16x16 */ public static final @NotNull Icon MergeCells = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/mergeCells.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/mergeCells.svg", -1267179727, 2);
   /** 16x16 */ public static final @NotNull Icon RestartKernel = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/restartKernel.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/restartKernel.svg", 1421273499, 2);
   /** 16x16 */ public static final @NotNull Icon ResultIncorrect = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/resultIncorrect.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/resultIncorrect.svg", 1020334393, 2);
+  /** 16x16 */ public static final @NotNull Icon RunAbove = load("icons/org.jetbrains.plugins.notebooks.jupyter/runAbove.svg", -1047070785, 2);
   /** 16x16 */ public static final @NotNull Icon RunAndAdd = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/runAndAdd.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/runAndAdd.svg", -2020961105, 2);
   /** 16x16 */ public static final @NotNull Icon RunAndSelect = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/runAndSelect.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/runAndSelect.svg", -994379967, 2);
+  /** 16x16 */ public static final @NotNull Icon RunBelow = load("icons/org.jetbrains.plugins.notebooks.jupyter/runBelow.svg", -1394524936, 2);
   /** 16x16 */ public static final @NotNull Icon RunningPythonNotebook = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/runningPythonNotebook.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/runningPythonNotebook.svg", -584924617, 0);
 
   public static final class Server {

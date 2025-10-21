@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.diff
 
 import com.intellij.history.core.revisions.Difference
@@ -11,11 +11,13 @@ import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal open class PresentableDifference(private val scope: ActivityScope,
+@ApiStatus.Internal
+open class PresentableDifference(private val scope: ActivityScope,
                                           private val selection: ChangeSetSelection,
-                                          internal val difference: Difference,
+                                          val difference: Difference,
                                           private val targetFilePath: FilePath) : PresentableChange {
 
   override fun getFilePath() = targetFilePath
@@ -38,7 +40,8 @@ internal open class PresentableDifference(private val scope: ActivityScope,
   override fun hashCode() = Objects.hash(scope, selection, difference)
 }
 
-internal class PresentableFileDifference(private val gateway: IdeaGateway,
+@ApiStatus.Internal
+class PresentableFileDifference(private val gateway: IdeaGateway,
                                          private val scope: ActivityScope,
                                          private val selection: ChangeSetSelection,
                                          difference: Difference,

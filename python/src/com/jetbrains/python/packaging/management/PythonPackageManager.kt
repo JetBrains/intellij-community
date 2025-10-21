@@ -3,31 +3,39 @@
 
 package com.jetbrains.python.packaging.management
 
+import com.intellij.execution.ExecutionException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PythonDependenciesExtractor
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
-import com.jetbrains.python.packaging.normalizePackageName
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.sdk.readOnlyErrorMessage
+import kotlinx.coroutines.CoroutineStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import org.jetbrains.annotations.Nls
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -35,27 +43,23 @@ import org.jetbrains.annotations.CheckReturnValue
  * @see com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI to execute commands with UI handlers
  */
 @ApiStatus.Experimental
-abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
-  private val lazyInitialization: Deferred<Unit> by lazy {
-    service<PythonSdkCoroutineService>().cs.async {
-      try {
-        repositoryManager.initCaches()
-        reloadPackages()
-        Unit
-      }
-      catch (t: Throwable) {
-        thisLogger().error("Failed to initialize PythonPackageManager for $sdk", t)
-      }
+abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Disposable.Default {
+  private val isInited = AtomicBoolean(false)
+  private val initializationJob = if (!shouldBeInitInstantly()) {
+    PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
+      initInstalledPackages()
+    }.also {
+      it.cancelOnDispose(this)
     }
   }
+  else {
+    null
+  }
 
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
-  protected open var dependencies: List<PythonPackage> = emptyList()
 
   @ApiStatus.Internal
   @Volatile
-  protected open var installedPackages: List<PythonPackage> = emptyList()
+  protected var installedPackages: List<PythonPackage> = emptyList()
 
   @ApiStatus.Internal
   @Volatile
@@ -68,24 +72,21 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return null
   }
 
-  @ApiStatus.Internal
-  fun findPackageSpecificationWithVersionSpec(
-    packageName: String,
-    versionSpec: PyRequirementVersionSpec? = null,
-  ): PythonRepositoryPackageSpecification? {
-    return repositoryManager.repositories.firstNotNullOfOrNull {
-      it.findPackageSpecificationWithSpec(packageName, versionSpec)
-    }
-  }
 
   @ApiStatus.Internal
   suspend fun sync(): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     syncCommand().getOr { return it }
     return reloadPackages()
   }
 
   @ApiStatus.Internal
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     waitForInit()
     installPackageCommand(installRequest, options).getOr { return it }
 
@@ -93,7 +94,18 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   @ApiStatus.Internal
+  suspend fun installPackageDetached(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): PyResult<List<PythonPackage>> {
+    waitForInit()
+    installPackageDetachedCommand(installRequest, options).getOr { return it }
+
+    return reloadPackages()
+  }
+
+  @ApiStatus.Internal
   suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     waitForInit()
     updatePackageCommand(*packages).getOr { return it }
 
@@ -102,14 +114,16 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   @ApiStatus.Internal
   suspend fun uninstallPackage(vararg packages: String): PyResult<List<PythonPackage>> {
+    if (sdk.isReadOnly) {
+      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    }
     if (packages.isEmpty()) {
       return PyResult.success(installedPackages)
     }
 
     waitForInit()
-    reloadDependencies()
 
-    val normalizedPackagesNames = packages.map { normalizePackageName(it) }
+    val normalizedPackagesNames = packages.map { PyPackageName.normalizePackageName(it) }
     uninstallPackageCommand(*normalizedPackagesNames.toTypedArray()).getOr { return it }
     return reloadPackages()
   }
@@ -117,22 +131,18 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
     val packages = loadPackagesCommand().getOr {
-      outdatedPackages = emptyMap()
-      installedPackages = emptyList()
       return it
     }
-    if (packages == installedPackages)
-      return PyResult.success(packages)
 
-    installedPackages = packages
-
-    ApplicationManager.getApplication().messageBus.apply {
-      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
-      syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      service<PythonSdkCoroutineService>().cs.launch {
+    if (packages != installedPackages) {
+      installedPackages = packages
+      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         reloadOutdatedPackages()
+      }.cancelOnDispose(this)
+
+      ApplicationManager.getApplication().messageBus.apply {
+        syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+        syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
       }
     }
 
@@ -181,20 +191,21 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
   }
 
-
-  @ApiStatus.Internal
-  suspend fun waitForInit() {
-    lazyInitialization.await()
-  }
-
   @ApiStatus.Internal
   @CheckReturnValue
   protected abstract suspend fun syncCommand(): PyResult<Unit>
 
+  @ApiStatus.Internal
+  open fun syncErrorMessage(): PackageManagerErrorMessage? = null
 
   @ApiStatus.Internal
   @CheckReturnValue
   protected abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
+
+  @ApiStatus.Internal
+  @CheckReturnValue
+  protected open suspend fun installPackageDetachedCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> =
+    installPackageCommand(installRequest, options)
 
   @ApiStatus.Internal
   @CheckReturnValue
@@ -210,27 +221,63 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   @ApiStatus.Internal
   protected abstract suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>>
 
+  /**
+   * Extracts project top-level dependencies.
+   * Returns null by default — this manager doesn't support dependency extraction.
+   */
   @ApiStatus.Internal
-  suspend fun reloadDependencies(): List<PythonPackage> {
-    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(project, sdk) ?: return emptyList()
-    dependencies = dependenciesExtractor.extract()
-    return dependencies
+  open suspend fun extractDependencies(): PyResult<List<PythonPackage>>? = null
+
+  @ApiStatus.Internal
+  suspend fun waitForInit() {
+    initializationJob?.join()
+    if (shouldBeInitInstantly()) {
+      initInstalledPackages()
+    }
   }
 
-  @ApiStatus.Internal
-  fun listDependencies(): List<PythonPackage> = dependencies
+  private suspend fun initInstalledPackages() {
+    try {
+      if (isInited.getAndSet(true))
+        return
+      if (installedPackages.isEmpty() && !PythonSdkType.isMock(sdk)) {
+        reloadPackages()
+      }
+    }
+    catch (t: CancellationException) {
+      throw t
+    }
+    catch (t: ExecutionException) {
+      thisLogger().warn("Failed to initialize PythonPackageManager for $sdk", t)
+    }
+  }
+
+  //Some test on EDT so need to be inited on first create
+  private fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode
 
   companion object {
+    @RequiresBackgroundThread
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
-      val manager = pythonPackageManagerService.forSdk(project, sdk)
-      //We need to call the lazy load if not inited
-      manager.lazyInitialization
-      return manager
+      return runBlockingMaybeCancellable {
+        val manager = pythonPackageManagerService.forSdk(project, sdk)
+
+        if (manager.shouldBeInitInstantly()) {
+          manager.initInstalledPackages()
+        }
+
+        manager
+      }
     }
 
     @Topic.AppLevel
     val PACKAGE_MANAGEMENT_TOPIC: Topic<PythonPackageManagementListener> = Topic(PythonPackageManagementListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
     val RUNNING_PACKAGING_TASKS: Key<Boolean> = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks")
+
+    @ApiStatus.Internal
+    data class PackageManagerErrorMessage(
+      @param:Nls val descriptionMessage: String,
+      @param:Nls val fixCommandMessage: String,
+    )
   }
 }

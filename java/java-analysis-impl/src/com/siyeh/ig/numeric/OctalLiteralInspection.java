@@ -50,7 +50,7 @@ public final class OctalLiteralInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new OctalLiteralVisitor();
   }
 

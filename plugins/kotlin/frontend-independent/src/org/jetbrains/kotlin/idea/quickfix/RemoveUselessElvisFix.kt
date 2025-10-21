@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.dropEnclosingParenthesesIfPossible
@@ -17,7 +19,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPs
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
 class RemoveUselessElvisFix(element: KtBinaryExpression) : PsiUpdateModCommandAction<KtBinaryExpression>(element), CleanupFix.ModCommand {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.useless.elvis.operator")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.elvis.operator")
 
     override fun invoke(context: ActionContext, element: KtBinaryExpression, updater: ModPsiUpdater) {
         element.replaced(element.left!!).dropEnclosingParenthesesIfPossible()
@@ -30,5 +32,9 @@ class RemoveUselessElvisFix(element: KtBinaryExpression) : PsiUpdateModCommandAc
                 RemoveUselessElvisFix(expression).asIntention()
             )
         }
+    }
+
+    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation {
+        return Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
     }
 }

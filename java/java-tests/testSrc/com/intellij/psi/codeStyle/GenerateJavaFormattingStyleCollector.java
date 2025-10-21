@@ -129,7 +129,7 @@ public class GenerateJavaFormattingStyleCollector extends TestCase {
        * PLEASE DON'T EDIT MANUALLY,
        * USE com.intellij.psi.codeStyle.GenerateJavaFormattingStyleCollector
        */
-      class JavaFormattingStyleCollector : ProjectUsagesCollector() {
+      public class JavaFormattingStyleCollector : ProjectUsagesCollector() {
         private val GROUP = EventLogGroup("java.code.style", <version>)
       
         override fun getGroup(): EventLogGroup {

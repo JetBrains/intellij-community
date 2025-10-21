@@ -55,7 +55,7 @@ object CodeReviewChangeListComponentFactory {
       }
     }.apply {
       if (progressModel != null) {
-        setupCodeReviewProgressModel(progressModel)
+        setupCodeReviewProgressModel(vm, progressModel)
       }
     }
     tree.rebuildTree()

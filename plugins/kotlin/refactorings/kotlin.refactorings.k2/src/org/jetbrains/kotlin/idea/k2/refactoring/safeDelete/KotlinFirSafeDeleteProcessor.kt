@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
+import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -355,6 +356,14 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             is KtTypeParameter -> {
                 deleteSeparatingComma(element)
                 deleteBracesAroundEmptyList(element)
+            }
+
+            is KtProperty if ((element.parent as? KtWhenExpression)?.subjectVariable === element) -> {
+                val commentSaver = CommentSaver(element)
+                element.initializer?.let { initializer ->
+                    val replaced = element.replace(initializer.copy())
+                    commentSaver.restore(replaced)
+                }
             }
 
             is KtParameter -> {

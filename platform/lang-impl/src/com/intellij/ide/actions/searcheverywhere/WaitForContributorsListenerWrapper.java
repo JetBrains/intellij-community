@@ -26,6 +26,7 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
   public static final long DEFAULT_THROTTLING_TIMEOUT_MS = 100;
 
   private final Map<SearchEverywhereContributor<?>, Boolean> contributorsMap = new HashMap<>();
+  private final Map<SearchEverywhereContributor<?>, Boolean> defaultEssentialContributorsCache = new HashMap<>();
   private final ScheduledExecutorService executorService = EdtExecutorService.getScheduledExecutorInstance();
   private final SearchListModel listModel;
   private Future<?> throttlingFlushFuture;
@@ -46,6 +47,15 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
     mySearchPattern = searchPattern;
   }
 
+  private void initializeDefaultEssentialContributors(Collection<? extends SearchEverywhereContributor<?>> contributors) {
+    if (defaultEssentialContributorsCache.isEmpty()) {
+      Map<? extends SearchEverywhereContributor<?>, Boolean> fallbackContributors = contributors.stream()
+        .filter(EssentialContributor::checkEssentialByDefault)
+        .collect(Collectors.toMap(Function.identity(), c -> false));
+      defaultEssentialContributorsCache.putAll(fallbackContributors);
+    }
+  }
+
   @Override
   public void dispose() {
     cancelAllFlushTasks();
@@ -53,6 +63,7 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
 
   @Override
   public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
+    initializeDefaultEssentialContributors(contributors);
     resetState(contributors);
     delegateListener.searchStarted(pattern, contributors);
     scheduleTimeoutFlush();
@@ -183,6 +194,11 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
     Map<? extends SearchEverywhereContributor<?>, Boolean> map = contributors.stream()
       .filter(EssentialContributor::checkEssential)
       .collect(Collectors.toMap(Function.identity(), c -> false));
+
+    if (map.isEmpty()) {
+      map = Map.copyOf(defaultEssentialContributorsCache);
+    }
+
     contributorsMap.clear();
     contributorsMap.putAll(map);
   }

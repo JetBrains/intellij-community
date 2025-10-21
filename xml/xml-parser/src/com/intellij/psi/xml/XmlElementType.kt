@@ -117,7 +117,7 @@ object XmlElementType {
 
   @JvmField
   val XML_FILE: IFileElementType =
-    IFileElementType(XMLLanguage.INSTANCE)
+    XmlFileElementType()
 
   @JvmField
   val XHTML_FILE: IElementType =

@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.core.getImplicitPackagePrefix
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -49,3 +51,17 @@ internal fun findSourceFileNameByMovedElements(elementsToMove: List<PsiElement>)
 
 internal fun containNestedDeclarations(elementsToMove: List<PsiElement>): Boolean =
     elementsToMove.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }
+
+internal fun findExplicitPkgMoveFqName(elementsToMove: List<PsiElement>): FqName? {
+    if (elementsToMove.isEmpty()) return null
+    val implicitPackagePrefix = elementsToMove.first().containingFile?.containingDirectory?.getImplicitPackagePrefix() ?: return null
+    if (implicitPackagePrefix.isRoot) return null
+    // files with a single class-like object are passed to the move refactoring as their contained declaration
+    if (elementsToMove.any { it !is KtFile && it !is KtClassOrObject }) return null
+    val ktFiles = elementsToMove.map { (it as? KtElement)?.containingKtFile ?: return null }
+    val samePackageFqName = ktFiles.mapTo(mutableSetOf()) { it.packageFqName }.singleOrNull() ?: return null
+    return samePackageFqName.takeIf { it == implicitPackagePrefix }
+}
+
+internal fun K2MoveTargetModel.isMoveToExplicitPackage(): Boolean =
+    pkgName == explicitPkgMoveFqName

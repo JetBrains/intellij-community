@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <extensionPoints>
     <extensionPoint name="tipAndTrickPromotionFactory" interface="com.intellij.ide.util.TipAndTrickPromotionFactory" dynamic="true"/>
   </extensionPoints>

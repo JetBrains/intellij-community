@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.ExecutionException;
@@ -12,7 +12,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.SuperUserStatus;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -39,8 +41,9 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("IO_FILE_USAGE")
 public final class IoTestUtil {
-  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || canCreateSymlinks();
+  public static final boolean isSymLinkCreationSupported = OS.isGenericUnix() || canCreateSymlinks();
 
   private IoTestUtil() { }
 
@@ -70,7 +73,7 @@ public final class IoTestUtil {
   }
 
   private static File expandWindowsPath(File file) {
-    if (SystemInfo.isWindows && file.getPath().indexOf('~') > 0) {
+    if (OS.CURRENT == OS.Windows && file.getPath().indexOf('~') > 0) {
       try {
         return file.getCanonicalFile();
       }
@@ -96,31 +99,31 @@ public final class IoTestUtil {
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    assumeTrue("Can't create symlinks on " + SystemInfo.getOsNameAndVersion(), isSymLinkCreationSupported);
+    assumeTrue("Can't create symlinks on " + OS.CURRENT, isSymLinkCreationSupported);
   }
 
   public static void assumeWindows() throws AssumptionViolatedException {
-    assumeTrue("Need Windows, can't run on " + SystemInfo.OS_NAME, SystemInfo.isWindows);
+    assumeTrue("Need Windows, can't run on " + OS.CURRENT, OS.CURRENT == OS.Windows);
   }
 
   public static void assumeMacOS() throws AssumptionViolatedException {
-    assumeTrue("Need macOS, can't run on " + SystemInfo.OS_NAME, SystemInfo.isMac);
+    assumeTrue("Need macOS, can't run on " + OS.CURRENT, OS.CURRENT == OS.macOS);
   }
 
   public static void assumeLinux() throws AssumptionViolatedException {
-    assumeTrue("Need Linux, can't run on " + SystemInfo.OS_NAME, SystemInfo.isLinux);
+    assumeTrue("Need Linux, can't run on " + OS.CURRENT, OS.CURRENT == OS.Linux);
   }
 
   public static void assumeUnix() throws AssumptionViolatedException {
-    assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME, SystemInfo.isUnix);
+    assumeTrue("Need Unix, can't run on " + OS.CURRENT, OS.isGenericUnix());
   }
 
   public static void assumeCaseSensitiveFS() throws AssumptionViolatedException {
-    assumeTrue("Assumed case sensitive FS but got " + SystemInfo.getOsNameAndVersion(), SystemInfo.isFileSystemCaseSensitive);
+    assumeTrue("Assumed case-sensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static void assumeCaseInsensitiveFS() throws AssumptionViolatedException {
-    assumeFalse("Assumed case insensitive FS but got " + SystemInfo.getOsNameAndVersion(), SystemInfo.isFileSystemCaseSensitive);
+    assumeFalse("Assumed case-insensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static void assumeWslPresence() throws AssumptionViolatedException {
@@ -133,7 +136,7 @@ public final class IoTestUtil {
   }
 
   public static @NotNull File createJunction(@NotNull String target, @NotNull String junction) {
-    assertTrue(SystemInfo.isWindows);
+    assertSame(OS.CURRENT, OS.Windows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
     File junctionFile = getFullLinkPath(junction);
@@ -143,7 +146,7 @@ public final class IoTestUtil {
   }
 
   public static void deleteJunction(@NotNull String junction) {
-    assertTrue(SystemInfo.isWindows);
+    assertSame(OS.CURRENT, OS.Windows);
     assertTrue(new File(junction).delete());
   }
 
@@ -151,7 +154,7 @@ public final class IoTestUtil {
    * Creates a "subst" drive for target, perform some tests on it, and deletes it. Windows-only.
    */
   public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<? super @NotNull File> createdSubstTester) {
-    assertTrue(SystemInfo.isWindows);
+    assertSame(OS.CURRENT, OS.Windows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
     String substRoot = getFirstFreeDriveLetter() + ":";
@@ -409,14 +412,31 @@ public final class IoTestUtil {
     return "";
   }
 
+  /** @deprecated use {@link #setCaseSensitivity(Path, boolean)} instead */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {
+    setCaseSensitivity(dir.toPath(), caseSensitive);
+  }
+
+  public static void setCaseSensitivity(@NotNull Path dir, boolean caseSensitive) throws IOException {
     assertTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
-    String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
-    String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
+    var changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.toString(), caseSensitive ? "enable" : "disable");
+    var out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.toString());
     if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
-      throw new IOException("Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
-                            " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
-                            " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
+      throw new IOException(
+        "Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
+        " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
+        " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
+    }
+  }
+
+  public static void unchecked(@NotNull ThrowableRunnable<? extends IOException> operation) {
+    try {
+      operation.run();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 }

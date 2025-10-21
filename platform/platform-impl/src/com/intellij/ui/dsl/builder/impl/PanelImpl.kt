@@ -7,7 +7,8 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -263,12 +264,6 @@ internal class PanelImpl(
     this.init()
   }
 
-  @Deprecated("Use customize(UnscaledGaps) instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun customize(customGaps: Gaps): PanelImpl {
-    return customize(customGaps.toUnscaled())
-  }
-
   override fun customize(customGaps: UnscaledGaps): PanelImpl {
     super.customize(customGaps)
     return this
@@ -324,13 +319,6 @@ internal class PanelImpl(
   fun isVisible(row: RowImpl): Boolean {
     val rowIndex = rows.indexOf(row)
     return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
-  }
-
-  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
-    super.verticalAlign(verticalAlign)
-    return this
   }
 
   override fun align(align: Align): PanelImpl {

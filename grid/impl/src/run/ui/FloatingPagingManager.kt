@@ -1,6 +1,7 @@
 package com.intellij.database.run.ui
 
 import com.intellij.database.DatabaseDataKeys
+import com.intellij.database.datagrid.CustomGridToolbarProvider
 import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridUtil.getSettings
 import com.intellij.database.run.ui.TableResultPanel.LayeredPaneWithSizer
@@ -55,11 +56,15 @@ class FloatingPagingManager {
       val actionManager = ActionManager.getInstance()
       val actions = actionManager.getAction("Console.TableResult.Pagination.Floating.Group") as ActionGroup
       val moreActions = actionManager.getAction("Console.TableResult.Pagination.Floating.MoreGroup") as ActionGroup
-      val toolbar = actionManager.createActionToolbar(ActionPlaces.GRID_FLOATING_PAGING_TOOLBAR, DefaultActionGroup(
-        actions,
-        Separator.getInstance(),
-        MoreActionGroup().apply { addAll(moreActions) }
-      ), true)
+      val toolbar = CustomGridToolbarProvider.createToolbar(
+        grid,
+        ActionPlaces.GRID_FLOATING_PAGING_TOOLBAR,
+        DefaultActionGroup(
+          actions,
+          Separator.getInstance(),
+          MoreActionGroup().apply { addAll(moreActions) }
+        )
+      )
       toolbar.targetComponent = targetPane
       toolbar.component.isOpaque = true
 

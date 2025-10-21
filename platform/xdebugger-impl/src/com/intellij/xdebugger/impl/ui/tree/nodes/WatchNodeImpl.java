@@ -10,6 +10,7 @@ import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
@@ -87,6 +88,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     return container;
   }
 
+  @ApiStatus.Internal
   public @NotNull XEvaluationOrigin getEvaluationOrigin() {
     return XEvaluationOrigin.WATCH;
   }

@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -95,15 +94,6 @@ public final class PyUtilCore {
   }
 
   public static boolean isTopLevel(@NotNull PsiElement element) {
-    if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
-      if (stub != null) {
-        final StubElement parentStub = stub.getParentStub();
-        if (parentStub != null) {
-          return parentStub.getPsi() instanceof PsiFile;
-        }
-      }
-    }
     return ScopeUtilCore.getScopeOwner(element) instanceof PsiFile;
   }
 

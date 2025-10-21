@@ -16,8 +16,11 @@ public final class ProblemDescriptorWithReporterName extends ProblemDescriptorBa
   private final String myReportingToolShortName;
 
   public ProblemDescriptorWithReporterName(@NotNull ProblemDescriptorBase pd, @NotNull String reportingToolShortName) {
-    super(pd.getStartElement(), pd.getEndElement(), pd.getDescriptionTemplate(), pd.getFixes(),
-          pd.getHighlightType(), pd.isAfterEndOfLine(), pd.getTextRangeInElement(), pd.showTooltip(), pd.isOnTheFly());
+    super(
+      pd.getStartElement(), pd.getEndElement(), pd.getDescriptionTemplate(), pd.getFixes(),
+      pd.getHighlightType(), pd.isAfterEndOfLine(), pd.getTextRangeInElement(), pd.showTooltip(),
+      pd.isOnTheFly(), pd.getTooltipTemplate()
+    );
     myReportingToolShortName = reportingToolShortName;
   }
 

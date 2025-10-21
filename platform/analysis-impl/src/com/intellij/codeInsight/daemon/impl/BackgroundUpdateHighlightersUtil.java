@@ -47,6 +47,8 @@ import java.util.*;
 public final class BackgroundUpdateHighlightersUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundUpdateHighlightersUtil.class);
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull PsiFile psiFile,
                                              @NotNull Document document,
@@ -84,8 +86,8 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
     HighlighterRecycler.runWithRecycler(session, toReuse -> {
       Processor<HighlightInfo> processor = info -> {
-        if (info.getGroup() == group && !info.isFromAnnotator() && !info.isFromInspection()) { // ignore annotators/inspections, they are applied via HighlightInfoUpdater
-          RangeHighlighterEx highlighter = info.getHighlighter();
+        RangeHighlighterEx highlighter = info.getHighlighter();
+        if (highlighter != null && info.getGroup() == group && !info.isFromAnnotator() && !info.isFromInspection()) { // ignore annotators/inspections, they are applied via HighlightInfoUpdater
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
 
@@ -251,14 +253,11 @@ public final class BackgroundUpdateHighlightersUtil {
     EditorColorsScheme colorsScheme = session.getColorsScheme(); // if null, the global scheme will be used
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
-      changeAttributes(finalHighlighter, info, colorsScheme, psiFile, infoAttributes);
-
-      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, session.getProject(), context);
-
+      changeAttributes(finalHighlighter, info, colorsScheme, psiFile, infoAttributes, context);
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx salvagedHighlighter = (RangeHighlighterEx)recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx salvagedHighlighter = (RangeHighlighterEx)recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, info.getDescription());
 
     if (info.isFileLevelAnnotation()) {
       HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);
@@ -289,9 +288,11 @@ public final class BackgroundUpdateHighlightersUtil {
       TextAttributes actualAttributes = highlighter.getTextAttributes(colorsScheme);
       boolean attributesSet = Comparing.equal(infoAttributes, actualAttributes);
       if (!attributesSet) {
+        TextAttributes forcedTextAttributes = highlighter.getForcedTextAttributes();
         highlighter.setTextAttributes(infoAttributes);
         TextAttributes afterSet = highlighter.getTextAttributes(colorsScheme);
         LOG.error("Expected to set " + infoAttributes + " but actual attributes are: " + actualAttributes +
+                  "; forcedTextAttributes: '" + forcedTextAttributes + "'" +
                   "; colorsScheme: '" + (colorsScheme == null ? "[global]" : colorsScheme.getName()) + "'" +
                   "; highlighter:" + highlighter + " (" + highlighter.getClass() + ")" +
                   "; was reused from the bin: " + (salvagedHighlighter != null) +
@@ -306,7 +307,8 @@ public final class BackgroundUpdateHighlightersUtil {
                                @NotNull HighlightInfo info,
                                @Nullable EditorColorsScheme colorsScheme,
                                @NotNull PsiFile psiFile,
-                               @Nullable TextAttributes infoAttributes) {
+                               @Nullable TextAttributes infoAttributes,
+                               @NotNull CodeInsightContext context) {
     TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
     highlighter.setTextAttributesKey(textAttributesKey);
 
@@ -314,6 +316,8 @@ public final class BackgroundUpdateHighlightersUtil {
         infoAttributes != null && !infoAttributes.equals(highlighter.getTextAttributes(colorsScheme))) {
       highlighter.setTextAttributes(infoAttributes);
     }
+
+    CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, psiFile.getProject(), context);
 
     highlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 

@@ -43,7 +43,6 @@ open class WindowsDistributionCustomizer {
   /**
    * Path to a directory containing images for installer: `logo.bmp`, `headerlogo.bmp`, `install.ico`, `uninstall.ico`.
    */
-  @Suppress("SpellCheckingInspection")
   var installerImagesPath: String? = null
 
   /**
@@ -81,9 +80,14 @@ open class WindowsDistributionCustomizer {
   }
 
   /**
-   * The returned name will be shown in Windows Installer and used in Registry keys.
+   * The returned name will be shown in the Windows Installer and used in Registry keys.
    */
   open fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = appInfo.fullProductName
+
+  /**
+   * The returned name will be used in the Windows Installer to look for previous versions.
+   */
+  open fun getAlternativeFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String? = null
 
   /**
    * The returned name will be used to create links on Desktop.

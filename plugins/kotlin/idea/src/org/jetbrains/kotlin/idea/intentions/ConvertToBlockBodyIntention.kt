@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -25,11 +24,11 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
 class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody>(
     KtDeclarationWithBody::class.java,
-    KotlinBundle.lazyMessage("convert.to.block.body")
+    KotlinBundle.messagePointer("convert.to.block.body")
 ) {
-    override fun isApplicableTo(element: KtDeclarationWithBody, caretOffset: Int) = createContext(element) != null
+    override fun isApplicableTo(element: KtDeclarationWithBody, caretOffset: Int): Boolean = createContext(element) != null
 
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean =
         element is KtDeclaration || super.skipProcessingFurtherElementsAfter(element)
 
     override fun applyTo(element: KtDeclarationWithBody, editor: Editor?) {
@@ -61,8 +60,7 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
                 returnTypeString = IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType),
                 bodyTypeIsUnit = bodyType?.isUnit() == true,
                 bodyTypeIsNothing = bodyType?.isNothing() == true,
-                reformat = reformat,
-                shortenReferences = ShortenReferencesFacility.getInstance()
+                reformat = reformat
             )
         }
 

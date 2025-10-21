@@ -42,6 +42,13 @@ internal class PatchedSimpleColoredComponent : SimpleColoredComponent() {
 
   var renderingHints: Map<RenderingHints.Key, Any?>? = null
 
+  init {
+    @Suppress("UseDPIAwareInsets")
+    ipad = Insets(ipad.top, 0, ipad.bottom, 0)
+    myBorder = null
+    isOpaque = false
+  }
+
   override fun applyAdditionalHints(g: Graphics2D) {
     super.applyAdditionalHints(g)
 
@@ -55,13 +62,6 @@ internal class PatchedSimpleColoredComponent : SimpleColoredComponent() {
       accessibleContext = PatchedAccessibleSimpleColoredComponent()
     }
     return accessibleContext
-  }
-
-  init {
-    @Suppress("UseDPIAwareInsets")
-    ipad = Insets(ipad.top, 0, ipad.bottom, 0)
-    myBorder = null
-    isOpaque = false
   }
 
   /**

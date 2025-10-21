@@ -1,6 +1,7 @@
 from _typeshed import Incomplete
 
 class Token:
+    __slots__ = ("source", "type", "channel", "start", "stop", "tokenIndex", "line", "column", "_text")
     INVALID_TYPE: int
     EPSILON: int
     MIN_USER_TOKEN_TYPE: int

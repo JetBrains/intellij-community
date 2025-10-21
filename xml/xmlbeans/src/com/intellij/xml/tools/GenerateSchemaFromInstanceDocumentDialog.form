@@ -3,7 +3,7 @@
   <grid id="fece0" binding="panel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="1" left="1" bottom="1" right="1"/>
     <constraints>
-      <xy x="282" y="178" width="645" height="201"/>
+      <xy x="282" y="178" width="711" height="221"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -13,8 +13,8 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/XmlBundle" key="instance2schema.dialog.instance.document.path"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.instance2schema.url.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="instance2schema.dialog.instance.document.path"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.instance2schema.url.tooltip"/>
         </properties>
       </component>
       <component id="bef0c" class="javax.swing.JLabel" binding="statusText">
@@ -22,8 +22,8 @@
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/XmlBundle" key="any.dialog.status"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="webservice.status.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="any.dialog.status"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="webservice.status.tooltip"/>
         </properties>
       </component>
       <component id="6432a" class="javax.swing.JLabel" binding="status">
@@ -33,7 +33,7 @@
         <properties>
           <foreground color="-65536"/>
           <text value=""/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="webservice.status.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="webservice.status.tooltip"/>
         </properties>
       </component>
       <component id="b2571" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="generateFromUrl">
@@ -43,7 +43,7 @@
           </grid>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.instance2schema.url.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.instance2schema.url.tooltip"/>
         </properties>
       </component>
       <component id="6ad20" class="javax.swing.JLabel" binding="designTypeText">
@@ -51,8 +51,8 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/XmlBundle" key="instance2schema.dialog.design.type"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.designtype.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="instance2schema.dialog.design.type"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.designtype.tooltip"/>
         </properties>
       </component>
       <component id="5c4f" class="javax.swing.JLabel" binding="detectSimpleContentTypesText">
@@ -60,8 +60,8 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/XmlBundle" key="instance2schema.dialog.detect.simple.content.type"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.simplecontenttype.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="instance2schema.dialog.detect.simple.content.type"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.simplecontenttype.tooltip"/>
         </properties>
       </component>
       <component id="cbbd3" class="javax.swing.JLabel" binding="detectEnumerationsLimitText">
@@ -70,8 +70,8 @@
         </constraints>
         <properties>
           <labelFor value="18828"/>
-          <text resource-bundle="messages/XmlBundle" key="instance2schema.dialog.detect.enumerations.limit"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.enumerations.tooltip"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="instance2schema.dialog.detect.enumerations.limit"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.enumerations.tooltip"/>
         </properties>
       </component>
       <component id="18828" class="javax.swing.JTextField" binding="detectEnumerationsLimit">
@@ -81,7 +81,7 @@
           </grid>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.enumerations.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.enumerations.tooltip"/>
         </properties>
       </component>
       <component id="78b1e" class="com.intellij.openapi.ui.ComboBox" binding="detectSimpleContentTypes">
@@ -89,7 +89,7 @@
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.simplecontenttype.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.simplecontenttype.tooltip"/>
         </properties>
       </component>
       <component id="f3bf0" class="com.intellij.openapi.ui.ComboBox" binding="designType">
@@ -97,7 +97,7 @@
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.designtype.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.designtype.tooltip"/>
         </properties>
       </component>
       <component id="a7b02" class="javax.swing.JLabel" binding="resultSchemaFileNameText">
@@ -106,8 +106,8 @@
         </constraints>
         <properties>
           <labelFor value="6bb2c"/>
-          <text resource-bundle="messages/XmlBundle" key="xml.generate.schema.dialog.label.result.schema.file.name"/>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.instance2schema.result.schema.name"/>
+          <text resource-bundle="messages/XmlBeansBundle" key="xml.generate.schema.dialog.label.result.schema.file.name"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.instance2schema.result.schema.name"/>
         </properties>
       </component>
       <component id="6bb2c" class="javax.swing.JTextField" binding="resultSchemaFileName">
@@ -117,7 +117,7 @@
           </grid>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.enumerations.tooltip"/>
+          <toolTipText resource-bundle="messages/XmlBeansBundle" key="xmlbeans.enumerations.tooltip"/>
         </properties>
       </component>
     </children>

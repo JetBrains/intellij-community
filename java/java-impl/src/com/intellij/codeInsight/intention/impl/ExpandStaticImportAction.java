@@ -73,7 +73,12 @@ public final class ExpandStaticImportAction extends PsiBasedModCommandAction<Psi
           refExprCopy.getContainingFile(), refExprCopy, staticImport);
         replaceAllAndDeleteImport(expressionToExpand, refExprCopy, staticImport);
       });
-      case NO -> ModCommand.psiUpdate(refExpr, refExprCopy -> expand(refExprCopy, getImportStaticStatement(refExprCopy)));
+      case NO -> ModCommand.psiUpdate(refExpr, refExprCopy -> {
+        PsiImportStaticStatement statement = getImportStaticStatement(refExprCopy);
+        PsiClass aClass = statement.resolveTargetClass();
+        if (aClass == null) return;
+        expand(refExprCopy, aClass);
+      });
       case UNSURE -> {
         final PsiImportStaticStatement staticImport = Objects.requireNonNull(getImportStaticStatement(refExpr));
         List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(context.file(), refExpr, staticImport);
@@ -82,7 +87,9 @@ public final class ExpandStaticImportAction extends PsiBasedModCommandAction<Psi
           yield ModCommand.psiUpdate(context, updater -> {
             PsiImportStaticStatement staticImportCopy = updater.getWritable(staticImport);
             PsiJavaCodeReferenceElement refExprCopy = updater.getWritable(refExpr);
-            expand(refExprCopy, staticImportCopy);
+            PsiClass aClass = staticImportCopy.resolveTargetClass();
+            if (aClass == null) return;
+            expand(refExprCopy, aClass);
             staticImportCopy.delete();
           });
         }

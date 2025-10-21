@@ -1,6 +1,6 @@
 from collections.abc import Iterator, MutableSet
 from re import Pattern
-from typing import Any, TypedDict
+from typing import Any, TypedDict, type_check_only
 from typing_extensions import deprecated
 from xml.etree.ElementTree import Element
 
@@ -10,11 +10,13 @@ from markdown.treeprocessors import Treeprocessor
 
 IDCOUNT_RE: Pattern[str]
 
+@type_check_only
 class _FlatTocToken(TypedDict):
     level: int
     id: str
     name: str
 
+@type_check_only
 class _TocToken(_FlatTocToken):
     children: list[_TocToken]
 

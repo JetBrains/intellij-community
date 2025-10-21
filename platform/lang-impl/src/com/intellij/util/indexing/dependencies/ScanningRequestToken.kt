@@ -32,7 +32,7 @@ internal object RequestFullHeavyScanningToken : ScanningRequestToken() {
 
 @ApiStatus.Internal
 @VisibleForTesting
-class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
+class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val forceCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
   override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
@@ -42,14 +42,14 @@ class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenc
 
   @VisibleForTesting
   fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-    return WriteOnlyFileIndexingStampImpl.create(appIndexingRequestId.toInt(), fileStamp, allowCheckingForOutdatedIndexesUsingFileModCount)
+    return WriteOnlyFileIndexingStampImpl.create(appIndexingRequestId.toInt(), fileStamp, forceCheckingForOutdatedIndexesUsingFileModCount)
   }
 }
 
 
 @ApiStatus.Internal
 @VisibleForTesting
-class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
+class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val forceCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
   override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
@@ -59,6 +59,6 @@ class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenc
 
   @VisibleForTesting
   fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-    return ReadWriteFileIndexingStampImpl.create(appIndexingRequestId.toInt(), fileStamp, allowCheckingForOutdatedIndexesUsingFileModCount)
+    return ReadWriteFileIndexingStampImpl.create(appIndexingRequestId.toInt(), fileStamp, forceCheckingForOutdatedIndexesUsingFileModCount)
   }
 }

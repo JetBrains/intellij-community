@@ -51,7 +51,7 @@ class cta_pbkdf2_sha1(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.Generic
     max_rounds: ClassVar[int]
     rounds_cost: ClassVar[str]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
 
 class dlitz_pbkdf2_sha1(uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignore[misc]
     name: ClassVar[str]
@@ -64,7 +64,7 @@ class dlitz_pbkdf2_sha1(uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: i
     max_rounds: ClassVar[int]
     rounds_cost: ClassVar[str]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
 
 class atlassian_pbkdf2_sha1(uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):
     name: ClassVar[str]
@@ -73,7 +73,7 @@ class atlassian_pbkdf2_sha1(uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler)
     min_salt_size: ClassVar[int]
     max_salt_size: ClassVar[int]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
 
 class grub_pbkdf2_sha512(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore[misc]
     name: ClassVar[str]
@@ -86,4 +86,6 @@ class grub_pbkdf2_sha512(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.Gene
     max_rounds: ClassVar[int]
     rounds_cost: ClassVar[str]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
+
+__all__ = ["pbkdf2_sha1", "pbkdf2_sha256", "pbkdf2_sha512", "cta_pbkdf2_sha1", "dlitz_pbkdf2_sha1", "grub_pbkdf2_sha512"]

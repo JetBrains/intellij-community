@@ -3,70 +3,72 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.util.Order
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.testFramework.registerOrReplaceServiceInstance
+import com.intellij.util.application
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
-  fun whenResolveProjectInfoStarted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
-    GradleSyncContributor.EP_NAME.point.registerExtension(
-      @Order(Int.MAX_VALUE)
-      object : GradleSyncContributor {
-        override suspend fun onResolveProjectInfoStarted(
-          context: ProjectResolverContext,
-          storage: MutableEntityStorage
-        ) {
-          action(context, storage)
+  fun whenSyncPhaseCompleted(phase: GradleSyncPhase, parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+    val thisPhase = phase
+    application.messageBus.connect(parentDisposable)
+      .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
+        override fun onSyncPhaseCompleted(context: ProjectResolverContext, phase: GradleSyncPhase) {
+          if (thisPhase == phase) {
+            action(context)
+          }
         }
-      }, parentDisposable)
+      })
   }
 
-  fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage, GradleModelFetchPhase) -> Unit) {
-    GradleSyncContributor.EP_NAME.point.registerExtension(
-      @Order(Int.MAX_VALUE)
-      object : GradleSyncContributor {
-        override suspend fun onModelFetchPhaseCompleted(
-          context: ProjectResolverContext,
-          storage: MutableEntityStorage,
-          phase: GradleModelFetchPhase
-        ) {
-          action(context, storage, phase)
+  fun whenModelFetchPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
+    application.messageBus.connect(parentDisposable)
+      .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
+        override fun onModelFetchPhaseCompleted(context: ProjectResolverContext, phase: GradleModelFetchPhase) {
+          action(context, phase)
         }
-      }, parentDisposable)
+      })
   }
 
-  fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
-    GradleSyncContributor.EP_NAME.point.registerExtension(
-      @Order(Int.MAX_VALUE)
-      object : GradleSyncContributor {
-        override suspend fun onModelFetchCompleted(
-          context: ProjectResolverContext,
-          storage: MutableEntityStorage
-        ) {
-          action(context, storage)
+  fun whenModelFetchCompleted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+    application.messageBus.connect(parentDisposable)
+      .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
+        override fun onModelFetchCompleted(context: ProjectResolverContext) {
+          action(context)
         }
-      }, parentDisposable)
+      })
   }
 
-  fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
+  fun whenProjectLoaded(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+    application.messageBus.connect(parentDisposable)
+      .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
+        override fun onProjectLoadedActionCompleted(context: ProjectResolverContext) {
+          action(context)
+        }
+      })
+  }
+
+  fun addSyncContributor(
+    phase: GradleSyncPhase,
+    parentDisposable: Disposable,
+    action: suspend (ProjectResolverContext, ImmutableEntityStorage) -> ImmutableEntityStorage,
+  ) {
     GradleSyncContributor.EP_NAME.point.registerExtension(
-      @Order(Int.MAX_VALUE)
       object : GradleSyncContributor {
-        override suspend fun onProjectLoadedActionCompleted(
-          context: ProjectResolverContext,
-          storage: MutableEntityStorage
-        ) {
-          action(context, storage)
+        override val phase: GradleSyncPhase = phase
+        override suspend fun createProjectModel(context: ProjectResolverContext, storage: ImmutableEntityStorage): ImmutableEntityStorage {
+          return action(context, storage)
         }
       }, parentDisposable)
   }

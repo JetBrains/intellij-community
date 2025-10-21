@@ -211,7 +211,12 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
     try {
       ((Annotator)myAnnotator).annotate(element, this);
     }
-    catch (IndexNotReadyException ignore) { }
+    catch (IndexNotReadyException ignore) {
+    }
+    catch (Throwable t) {
+      if (Logger.shouldRethrow(t)) throw t;
+      LOG.error(t);
+    }
   }
 
   /**

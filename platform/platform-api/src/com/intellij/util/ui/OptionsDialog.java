@@ -12,7 +12,7 @@ import java.awt.*;
 public abstract class OptionsDialog extends DialogWrapper {
   protected final Project myProject;
 
-  private class MyDoNotAsk implements DoNotAskOption {
+  private class MyDoNotAsk implements com.intellij.openapi.ui.DoNotAskOption {
     @Override
     public boolean isToBeShown() {
       return OptionsDialog.this.isToBeShown();

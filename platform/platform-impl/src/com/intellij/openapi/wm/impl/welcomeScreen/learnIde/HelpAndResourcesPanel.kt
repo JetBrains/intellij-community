@@ -23,7 +23,9 @@ import javax.swing.plaf.ComponentUI
 
 @ApiStatus.Internal
 class HelpAndResourcesPanel : JPanel() {
-  private val helpAndResourcesHeader: JTextPane = createTitlePanel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"))
+  private val helpAndResourcesHeader: JTextPane = createTitlePanel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).apply {
+    isFocusable = false
+  }
 
   init {
     initPanel()

@@ -86,22 +86,10 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomS
       closePipe()
       throw e
     }
-    val bytesBeforeRead = src.remaining()
-    // Choose the best approach:
-    if (src.remaining() <= dst.remaining()) {
-      // Bulk put the whole buffer
-      dst.put(src)
-    }
-    else {
-      // Slice, put, and set size back
-      val l = src.limit()
-      dst.put(src.limit(src.position() + dst.remaining()))
-      src.limit(l)
-    }
+    val bytesRead = dst.putPartially(src)
     // Decreasing the number of bytes should take place on the same thread `receive` is called, as receiver checks number after before
     // sender gets the chance to fix it.
     if (decreaseQueueAfterReceive) {
-      val bytesRead = bytesBeforeRead - src.remaining()
       _bytesInQueue.addAndGet(-bytesRead)
     }
     sendLock.complete(Unit) //buffer read
@@ -116,6 +104,9 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomS
     closePipe()
   }
 
+  override suspend fun closeForReceive() {
+    closePipe()
+  }
 
   override fun closePipe(error: Throwable?) {
     if (_bytesInQueue.get() > 0) {

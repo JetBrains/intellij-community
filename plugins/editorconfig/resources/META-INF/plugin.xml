@@ -22,7 +22,7 @@
     "org.editorconfig.editorconfigjetbrains: Invalid plugin descriptor 'plugin.xml'. Plugin has no dependencies."
   -->
   <depends>com.intellij.modules.lang</depends>
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.editorconfig.common"/>
     <module name="intellij.editorconfig.frontend"/>
     <module name="intellij.editorconfig.frontend.split"/>

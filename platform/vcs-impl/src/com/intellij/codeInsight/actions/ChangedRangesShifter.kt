@@ -90,9 +90,9 @@ class ChangedRangesShifter {
   private fun flush(nextLine: Int) {
     if (dirtyEnd != -1 && dirtyEnd < nextLine) {
       if (dirtyHasEarly) {
-        result.add(Range(dirtyStart + earlyShift, dirtyEnd + earlyShift + dirtyEarlyShift,
-                         dirtyStart + laterShift, dirtyEnd + laterShift + dirtyLaterShift)
-        )
+        val range = Range(dirtyStart + earlyShift, dirtyEnd + earlyShift + dirtyEarlyShift,
+                          dirtyStart + laterShift, dirtyEnd + laterShift + dirtyLaterShift)
+        if (!range.isEmpty) result.add(range)
       }
 
       dirtyStart = -1

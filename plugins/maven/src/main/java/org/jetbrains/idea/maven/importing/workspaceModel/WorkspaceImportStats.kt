@@ -24,7 +24,17 @@ internal class WorkspaceImportStats private constructor(private val project: Pro
     }
   }
 
-  fun <T> recordPhase(phase: IdeActivityDefinition, block: (phaseActivity: StructuredIdeActivity) -> T): T {
+  fun <T> recordPhaseBlocking(phase: IdeActivityDefinition, block: (phaseActivity: StructuredIdeActivity) -> T): T {
+    val phaseActivity = phase.startedWithParent(project, activity)
+    try {
+      return block(phaseActivity)
+    }
+    finally {
+      phaseActivity.finished()
+    }
+  }
+
+  suspend fun <T> recordPhase(phase: IdeActivityDefinition, block: suspend (phaseActivity: StructuredIdeActivity) -> T): T {
     val phaseActivity = phase.startedWithParent(project, activity)
     try {
       return block(phaseActivity)

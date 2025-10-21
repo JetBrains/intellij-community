@@ -1,0 +1,7 @@
+public class X {
+  void f() {
+    def a = true
+    def b = false
+    def c = !b ==> !a
+  }
+}

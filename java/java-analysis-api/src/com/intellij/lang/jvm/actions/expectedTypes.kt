@@ -3,11 +3,11 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.types.JvmType
 
-typealias ExpectedTypes = List<ExpectedType>
+public typealias ExpectedTypes = List<ExpectedType>
 
-fun expectedType(type: JvmType, kind: ExpectedType.Kind = ExpectedType.Kind.EXACT): ExpectedType = SimpleExpectedType(type, kind)
+public fun expectedType(type: JvmType, kind: ExpectedType.Kind = ExpectedType.Kind.EXACT): ExpectedType = SimpleExpectedType(type, kind)
 
-fun expectedTypes(type: JvmType, kind: ExpectedType.Kind = ExpectedType.Kind.EXACT): ExpectedTypes = listOf(expectedType(type, kind))
+public fun expectedTypes(type: JvmType, kind: ExpectedType.Kind = ExpectedType.Kind.EXACT): ExpectedTypes = listOf(expectedType(type, kind))
 
 internal class SimpleExpectedType(private val theType: JvmType, private val theKind: ExpectedType.Kind) : ExpectedType {
   override fun getTheType(): JvmType = theType

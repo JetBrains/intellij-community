@@ -4,16 +4,20 @@ package git4idea
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import git4idea.commands.GitCommandResult
+import git4idea.inMemory.rebase.InMemoryRebaseResult
 import git4idea.push.GitPushRepoResult
 import git4idea.push.GitPushTargetType
+import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.interactive.CantRebaseUsingLogException
 
-object GitOperationsCollector : CounterUsagesCollector() {
+internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("git.operations", 5)
+  private val GROUP: EventLogGroup = EventLogGroup("git.operations", 6)
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 
@@ -21,8 +25,8 @@ object GitOperationsCollector : CounterUsagesCollector() {
 
   private val PUSHED_COMMITS_COUNT = EventFields.RoundedInt("pushed_commits_count")
   private val PUSH_RESULT = EventFields.Enum<GitPushRepoResult.Type>("push_result")
-  private val TARGET_TYPE  = EventFields.Enum<GitPushTargetType>("push_target_type")
-  private val SET_UPSTREAM  = EventFields.Boolean("push_set_upsteram")
+  private val TARGET_TYPE = EventFields.Enum<GitPushTargetType>("push_target_type")
+  private val SET_UPSTREAM = EventFields.Boolean("push_set_upsteram")
   private val PUSH_TO_NEW_BRANCH = EventFields.Boolean("push_new_branch")
   private val PUSH_ACTIVITY = GROUP.registerIdeActivity("push",
                                                         finishEventAdditionalFields = arrayOf(PUSHED_COMMITS_COUNT,
@@ -39,6 +43,21 @@ object GitOperationsCollector : CounterUsagesCollector() {
     EXPECTED_COMMITS_NUMBER,
     ACTUAL_COMMITS_NUMBER,
   )
+  private val INTERACTIVE_REBASE_WAS_SUCCESSFUL = EventFields.Boolean("was_successful")
+  private val INTERACTIVE_REBASE_ACTIVITY = GROUP.registerIdeActivity("interactive.rebase",
+                                                                      finishEventAdditionalFields = arrayOf(INTERACTIVE_REBASE_WAS_SUCCESSFUL))
+  private val IN_MEMORY_REBASE_RESULT = EventFields.Enum<InMemoryRebaseResult>("in_memory_rebase_result")
+  private val IN_MEMORY_INTERACTIVE_REBASE_ACTIVITY = GROUP.registerIdeActivity("in.memory.interactive.rebase",
+                                                                                finishEventAdditionalFields = arrayOf(IN_MEMORY_REBASE_RESULT))
+
+  private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<CantRebaseUsingLogException.Reason>("cant_rebase_using_log_reason")
+  private val CANT_REBASE_USING_LOG_EVENT = GROUP.registerEvent("cant.rebase.using.log", CANT_REBASE_USING_LOG_REASON)
+
+  val REBASE_ENTRY_TYPE_FIELDS: Map<String, RoundedIntEventField> = GitRebaseEntry.knownActions.associate {
+    it.command to EventFields.RoundedInt("${it.command}_entries_count")
+  }
+  private val REBASE_START_USING_LOG_EVENT = GROUP.registerVarargEvent("rebase.start.using.log",
+                                                                       *REBASE_ENTRY_TYPE_FIELDS.values.toTypedArray())
 
   @JvmStatic
   fun startLogPush(project: Project): StructuredIdeActivity {
@@ -68,5 +87,39 @@ object GitOperationsCollector : CounterUsagesCollector() {
 
   fun rebaseViaLogInvalidEntries(project: Project, expectedCommitsNumber: Int, actualCommitsNumber: Int) {
     INTERACTIVE_REBASE_VIA_LOG_VALIDATION_ERROR.log(project, expectedCommitsNumber, actualCommitsNumber)
+  }
+
+  fun startInteractiveRebase(project: Project): StructuredIdeActivity {
+    return INTERACTIVE_REBASE_ACTIVITY.started(project)
+  }
+
+  fun endInteractiveRebase(activity: StructuredIdeActivity, wasSuccessful: Boolean) {
+    activity.finished {
+      listOf(INTERACTIVE_REBASE_WAS_SUCCESSFUL with wasSuccessful)
+    }
+  }
+
+  fun startInMemoryInteractiveRebase(project: Project): StructuredIdeActivity {
+    return IN_MEMORY_INTERACTIVE_REBASE_ACTIVITY.started(project)
+  }
+
+  fun endInMemoryInteractiveRebase(activity: StructuredIdeActivity, result: InMemoryRebaseResult) {
+    activity.finished {
+      listOf(IN_MEMORY_REBASE_RESULT with result)
+    }
+  }
+
+  fun logCantRebaseUsingLog(project: Project, reason: CantRebaseUsingLogException.Reason) {
+    CANT_REBASE_USING_LOG_EVENT.log(project, reason)
+  }
+
+  fun logRebaseStartUsingLog(project: Project, actions: Collection<GitRebaseEntry.Action>) {
+    val actionCounts = actions.groupingBy { it.command }.eachCount()
+
+    val eventPairs = actionCounts.entries.mapNotNull { (command, count) ->
+      REBASE_ENTRY_TYPE_FIELDS[command]?.with(count)
+    }.toTypedArray()
+
+    REBASE_START_USING_LOG_EVENT.log(project, *eventPairs)
   }
 }

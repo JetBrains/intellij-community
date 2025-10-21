@@ -2,12 +2,20 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.path
 
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 /**
  * Kotlin implementation of tests for PathAnnotationInspection.
  * Some tests might not pass because the inspection implementation might not fully support Kotlin.
  */
-class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBase() {
+class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
+
   fun testFileSystemGetPath() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")

@@ -1,6 +1,5 @@
-from win32.win32gui import *
+# The `winxpgui` module is obsolete and has been completely replaced
+# by `win32gui` and `win32console.GetConsoleWindow`. Use those instead.
 
-def GetConsoleWindow() -> int: ...
-
-# Actually returns a list of int|tuple, but lists don't support positional types
-def GetWindowRgnBox(hWnd: int, /) -> tuple[int, tuple[int, int, int, int]]: ...
+from win32console import GetConsoleWindow as GetConsoleWindow
+from win32gui import *

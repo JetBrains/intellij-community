@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.editor
 
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
@@ -244,12 +243,6 @@ open class CodeReviewEditorGutterChangesRenderer(
   }
 
   companion object {
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use a suspending function", ReplaceWith("cs.launch { render(model, editor) }"))
-    fun setupIn(cs: CoroutineScope, model: CodeReviewEditorGutterActionableChangesModel, editor: Editor) {
-      cs.launchNow { render(model, editor) }
-    }
-
     suspend fun render(model: CodeReviewEditorGutterActionableChangesModel, editor: Editor) : Nothing {
       withContext(Dispatchers.EDT + CoroutineName("Editor gutter code review changes renderer")) {
         val disposable = Disposer.newDisposable("Editor code review changes renderer disposable")

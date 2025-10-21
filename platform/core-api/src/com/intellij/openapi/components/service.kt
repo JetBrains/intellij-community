@@ -34,6 +34,8 @@ import org.jetbrains.annotations.ApiStatus
  *
  *   - Using the method keeps `MyApplicationService.getInstance()` consistent with `MyProjectService.getInstance(project)`,
  *     both on the declaration and call sites.
+ *
+ * @see ComponentManager.getService
  */
 //@RequiresBlockingContext
 inline fun <reified T : Any> service(): T {

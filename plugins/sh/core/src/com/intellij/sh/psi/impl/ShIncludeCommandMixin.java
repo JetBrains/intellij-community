@@ -9,12 +9,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.sh.psi.ShIncludeCommand;
 import com.intellij.sh.psi.ShSimpleCommandElement;
 import com.intellij.sh.psi.ShString;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-abstract class ShIncludeCommandMixin extends ShCommandImpl implements ShIncludeCommand {
+@ApiStatus.Internal
+abstract public class ShIncludeCommandMixin extends ShCommandImpl implements ShIncludeCommand {
   ShIncludeCommandMixin(ASTNode node) {
     super(node);
   }

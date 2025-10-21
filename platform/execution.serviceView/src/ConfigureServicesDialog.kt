@@ -2,12 +2,11 @@
 package com.intellij.platform.execution.serviceView
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.services.ServiceViewToolWindowDescriptor
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
@@ -17,6 +16,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigurationType
+import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigurationTypeSettings
+import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
+import com.intellij.platform.project.projectId
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
@@ -26,6 +29,7 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -35,7 +39,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
 
-internal class ConfigureServicesDialog(private val project: Project) : DialogWrapper(project) {
+internal class ConfigureServicesDialog(private val project: Project, settings: ServiceViewConfigurationTypeSettings) : DialogWrapper(project) {
   private val includedServicesTree = ServicesTree(project, ExecutionBundle.message("service.view.configure.run.configuration.types"))
   private val excludedServicesTree = ServicesTree(project, ExecutionBundle.message("service.view.configure.run.tool.windows"))
   private val initiallyFocusedTree: ServicesTree
@@ -58,22 +62,6 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
       }
       return Pair(included, excluded)
     }
-
-    // todo retrieve list from backend - ask Kostya?
-    private fun collectTypes(project: Project): Pair<List<ConfigurationType>, List<ConfigurationType>> {
-      val includedTypes = ArrayList<ConfigurationType>()
-      val excludedTypes = ArrayList<ConfigurationType>()
-      val types = RunDashboardManager.getInstance(project).types
-      for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
-        if (types.contains(type.id)) {
-          includedTypes.add(type)
-        }
-        else {
-          excludedTypes.add(type)
-        }
-      }
-      return Pair(includedTypes, excludedTypes)
-    }
   }
 
   init {
@@ -86,10 +74,8 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
     }
 
     val services = collectServices(project)
-    val types = collectTypes(project)
-
-    includedServicesTree.initTree(services.first, types.first, true)
-    excludedServicesTree.initTree(services.second, types.second, false)
+    includedServicesTree.initTree(services.first, settings.included, true)
+    excludedServicesTree.initTree(services.second, settings.excluded, false)
 
     initiallyFocusedTree = includedServicesTree
     init()
@@ -135,7 +121,11 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
 
     if (!project.isDefault) {
       val actionLink = ActionLink(ExecutionBundle.message("service.view.configure.dialog.new.project.text")) {
-        ConfigureServicesDialog(ProjectManager.getInstance().defaultProject).show()
+        ServiceViewCoroutineScopeProvider.getInstance(project).cs.launch {
+          val defaultProject = ProjectManager.getInstance().defaultProject
+          val defaultSettings = ServiceViewRpc.getInstance().loadConfigurationTypes(defaultProject.projectId()) ?: return@launch
+          ConfigureServicesDialog(defaultProject, defaultSettings).show()
+        }
       }
       actionLink.border = JBUI.Borders.emptyTop(10)
       actionLink.background = JBColor.background()
@@ -172,7 +162,9 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
 
   override fun doOKAction() {
     (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).setExcludedContributors(excludedServicesTree.getServices())
-    RunDashboardManager.getInstance(project).types = includedServicesTree.getTypes()
+    ServiceViewCoroutineScopeProvider.getInstance(project).cs.launch {
+      ServiceViewRpc.getInstance().saveConfigurationTypes(project.projectId(), includedServicesTree.getTypes())
+    }
     super.doOKAction()
   }
 }
@@ -203,8 +195,11 @@ private class ServicesTree(private val project: Project,
     }.installOn(tree)
   }
 
-  fun initTree(services: Collection<ServiceViewContributor<*>>, types: Collection<ConfigurationType>, expandTypes: Boolean) {
-    addNodes(services.map { ServiceViewContributorNode(it, project) } + types.map { RunConfigurationTypeNode(it) })
+  fun initTree(services: Collection<ServiceViewContributor<*>>, types: Collection<ServiceViewConfigurationType>, expandTypes: Boolean) {
+    addNodes(
+      services.map { ServiceViewContributorNode(it, project) }
+      + types.map { RunConfigurationTypeNode(it.typeId, it.displayName, it.iconId.icon()) }
+    )
     if (expandTypes && runDashboardNode != null) {
       tree.expandPath(TreeUtil.getPathFromRoot(runDashboardNode!!))
     }
@@ -295,7 +290,7 @@ private class ServicesTree(private val project: Project,
     }
     val types = HashSet<String>()
     for (child in runDashboardNode!!.children()) {
-      types.add((child as RunConfigurationTypeNode).type.id)
+      types.add((child as RunConfigurationTypeNode).id)
     }
     return types
   }
@@ -336,4 +331,4 @@ private class ServiceViewContributorNode(val contributor: ServiceViewContributor
 
 private class RunDashboardNode(nodeText: String) : ServiceTreeNode(nodeText, AllIcons.Actions.Execute)
 
-private class RunConfigurationTypeNode(val type: ConfigurationType) : ServiceTreeNode(type.displayName, type.icon)
+private class RunConfigurationTypeNode(val id: String, name: String,  icon: Icon) : ServiceTreeNode(name, icon)

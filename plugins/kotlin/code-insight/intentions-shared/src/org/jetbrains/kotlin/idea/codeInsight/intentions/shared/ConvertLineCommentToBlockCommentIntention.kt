@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
 class ConvertLineCommentToBlockCommentIntention : SelfTargetingIntention<PsiComment>(
     PsiComment::class.java,
-    KotlinBundle.lazyMessage("replace.with.block.comment")
+    KotlinBundle.messagePointer("replace.with.block.comment")
 ) {
 
     override fun isApplicableTo(element: PsiComment, caretOffset: Int): Boolean = element.isEndOfLineComment()

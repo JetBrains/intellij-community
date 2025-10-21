@@ -62,11 +62,11 @@ internal class LightEditFileEditorManagerImpl(
 
   override fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider? {
     val editorManager = LightEditService.getInstance().editorManager as LightEditorManagerImpl
-    val editorInfo = editorManager.findOpen(file) as LightEditorInfoImpl? ?: return null
+    val editorInfo = editorManager.findOpen(file) as? LightEditorInfoImpl ?: return null
     return FileEditorWithProvider(editorInfo.fileEditor, editorInfo.provider)
   }
 
-  override fun getSelectedEditor(): FileEditor? = LightEditService.getInstance().selectedFileEditor
+  override fun getSelectedEditor(): FileEditor? = LightEditService.getInstance().getSelectedFileEditor()
 
   override fun getSelectedTextEditor(): Editor? = LightEditorInfoImpl.getEditor(selectedEditor)
 
@@ -79,12 +79,10 @@ internal class LightEditFileEditorManagerImpl(
   override fun hasOpenedFile(): Boolean = !LightEditService.getInstance().editorManager.openFiles.isEmpty()
 
   override fun getSelectedFiles(): Array<VirtualFile> {
-    return arrayOf(LightEditService.getInstance().selectedFile ?: return VirtualFile.EMPTY_ARRAY)
+    return arrayOf(LightEditService.getInstance().getSelectedFile() ?: return VirtualFile.EMPTY_ARRAY)
   }
 
-  override fun getCurrentFile(): VirtualFile? {
-    return LightEditService.getInstance().selectedFile
-  }
+  override fun getCurrentFile(): VirtualFile? = LightEditService.getInstance().getSelectedFile()
 
   override fun hasOpenFiles(): Boolean = !LightEditService.getInstance().editorManager.openFiles.isEmpty()
 
@@ -92,9 +90,9 @@ internal class LightEditFileEditorManagerImpl(
     // Needed for composite not to postpone loading via DumbService.wrapGently()
     editorInfo.fileEditor.putUserData(FileEditorManagerKeys.DUMB_AWARE, true)
     val editorProvider = (editorInfo as LightEditorInfoImpl).provider
-    val editorWithProvider = FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider)
+    val editorWithProvider = FileEditorWithProvider(editorInfo.fileEditor, editorProvider)
     return createCompositeInstance(
-      file = editorInfo.getFile(),
+      file = editorInfo.file,
       model = flowOf(EditorCompositeModel(fileEditorAndProviderList = java.util.List.of(editorWithProvider), state = null)),
       coroutineScope = coroutineScope.childScope(editorInfo.toString()),
     )!!

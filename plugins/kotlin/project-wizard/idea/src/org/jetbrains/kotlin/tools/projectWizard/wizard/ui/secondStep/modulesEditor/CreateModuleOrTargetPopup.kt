@@ -45,10 +45,8 @@ class CreateModuleOrTargetPopup private constructor(
             if (allowMultiplatform) +MppModuleConfigurator
             +JvmSinglePlatformModuleConfigurator
             if (allowAndroid) +AndroidWithoutComposeSinglePlatformModuleConfigurator
-            if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
-                if (allowSinglePlatformJsBrowser) +BrowserJsSinglePlatformModuleConfigurator
-                if (allowSinglePlatformJsNode) +NodeJsSinglePlatformModuleConfigurator
-            }
+            if (allowSinglePlatformJsBrowser) +BrowserJsSinglePlatformModuleConfigurator
+            if (allowSinglePlatformJsNode) +NodeJsSinglePlatformModuleConfigurator
             if (allowIos) +IOSSinglePlatformModuleConfigurator
         }
     ) {

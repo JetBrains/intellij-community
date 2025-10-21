@@ -14,13 +14,6 @@ from psutil._common import (
     socktype_to_enum as socktype_to_enum,
     usage_percent as usage_percent,
 )
-from psutil._compat import (
-    PY3 as PY3,
-    FileNotFoundError as FileNotFoundError,
-    PermissionError as PermissionError,
-    ProcessLookupError as ProcessLookupError,
-    b as b,
-)
 
 __extra__all__: Incomplete
 PAGE_SIZE: Incomplete

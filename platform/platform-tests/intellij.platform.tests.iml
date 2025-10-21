@@ -11,21 +11,26 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.foldings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.remote.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" scope="TEST" />
@@ -47,11 +52,11 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.xml" />
-    <orderEntry type="library" scope="TEST" name="http-client" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.http.client" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
@@ -59,27 +64,28 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertj-swing" level="project" />
-    <orderEntry type="library" scope="TEST" name="snakeyaml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jna" level="project" />
-    <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
-    <orderEntry type="library" scope="TEST" name="jcef" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jcef" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="netty-buffer" level="project" />
-    <orderEntry type="library" scope="TEST" name="lz4-java" level="project" />
-    <orderEntry type="library" scope="TEST" name="caffeine" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.lz4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.aalto.xml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" scope="TEST" />
@@ -91,11 +97,11 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.impl" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
-    <orderEntry type="library" scope="TEST" name="HdrHistogram" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hdr.histogram" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.testEntities" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
@@ -114,17 +120,17 @@
     <orderEntry type="module" module-name="intellij.platform.ijent" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui.inspector" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
-    <orderEntry type="library" name="jsvg" level="project" />
-    <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsvg" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
-    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.buildData" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="ktor-server-cio" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="rhino" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rhino" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />
@@ -138,6 +144,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.model" level="project" />
     <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.serialization.kotlin" level="project" />
     <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.configuration" level="project" />
@@ -147,5 +154,8 @@
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.locking.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.highlighting" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.connection.client" level="project" />
   </component>
 </module>

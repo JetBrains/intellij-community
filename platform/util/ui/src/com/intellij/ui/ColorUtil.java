@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.diagnostic.Checks;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.MathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -522,5 +523,16 @@ public final class ColorUtil {
 
   public static @NotNull Color faded(@NotNull Color color) {
     return withAlpha(color, 0.45f);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Color editorFaded(@NotNull Color color, boolean darkEditor) {
+    /*
+      For my taste the optimal alpha depends on the theme:
+      - For dark themes it is 0.6; if lower the text is difficult to read.
+      - For light themes it is 0.5; if higher it is not clear that the text is semi-transparent.
+    */
+
+    return withAlpha(color, darkEditor ? 0.6f : 0.5f);
   }
 }
