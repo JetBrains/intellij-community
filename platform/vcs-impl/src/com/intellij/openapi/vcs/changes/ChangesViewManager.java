@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
@@ -24,14 +23,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
@@ -356,7 +352,12 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       JPanel mainPanel = simplePanel(myMainPanelContent)
         .addToBottom(myProgressLabel);
 
-      myEditorDiffPreview = new ChangesViewEditorDiffPreview();
+      myEditorDiffPreview = new ChangesViewEditorDiffPreview(
+        myChangesView.getViewModel().getTree(),
+        myContentPanel,
+        () -> createDiffPreviewProcessor(true),
+        () -> mySplitterDiffPreview != null
+      );
       Disposer.register(this, myEditorDiffPreview);
 
       // Override the handlers registered by editorDiffPreview
@@ -417,66 +418,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       else {
         Disposer.dispose(mySplitterDiffPreview);
         mySplitterDiffPreview = null;
-      }
-    }
-
-    private class ChangesViewEditorDiffPreview extends TreeHandlerEditorDiffPreview {
-      private ChangesViewEditorDiffPreview() {
-        super(myChangesView.getTree(), myContentPanel, ChangesViewDiffPreviewHandler.INSTANCE);
-      }
-
-      @Override
-      protected @NotNull DiffEditorViewer createViewer() {
-        return createDiffPreviewProcessor(true);
-      }
-
-      @Override
-      public void returnFocusToTree() {
-        ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
-        if (toolWindow != null) toolWindow.activate(null);
-      }
-
-      @Override
-      public boolean openPreview(boolean requestFocus) {
-        return CommitToolWindowUtil.openDiff(LOCAL_CHANGES, this, requestFocus);
-      }
-
-      @Override
-      public void updateDiffAction(@NotNull AnActionEvent e) {
-        ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
-      }
-
-      @Override
-      public @Nullable String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
-        return wrapper != null
-               ? VcsBundle.message("commit.editor.diff.preview.title", wrapper.getPresentableName())
-               : VcsBundle.message("commit.editor.diff.preview.empty.title");
-      }
-
-      @Override
-      protected boolean isOpenPreviewWithSingleClickEnabled() {
-        return isOpenEditorDiffPreviewWithSingleClick.asBoolean();
-      }
-
-      @Override
-      protected boolean isOpenPreviewWithSingleClick() {
-        if (myChangesView.isModelUpdateInProgress()) return false;
-        if (mySplitterDiffPreview != null && myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return false;
-        return super.isOpenPreviewWithSingleClick();
-      }
-
-      @Override
-      protected boolean isPreviewOnDoubleClick() {
-        return isCommitToolWindowShown(myProject) ?
-               VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
-               VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
-      }
-
-      @Override
-      protected boolean isPreviewOnEnter() {
-        return isCommitToolWindowShown(myProject) ?
-               VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
-               VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
       }
     }
 
