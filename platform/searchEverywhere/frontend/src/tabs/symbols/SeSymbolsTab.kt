@@ -28,7 +28,7 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   override val isIndexingDependent: Boolean get() = true
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())
+    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates(), true)
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
