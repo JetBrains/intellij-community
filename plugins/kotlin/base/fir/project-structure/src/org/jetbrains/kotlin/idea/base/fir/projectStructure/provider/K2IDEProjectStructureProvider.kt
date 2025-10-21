@@ -250,6 +250,10 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         return cache.cachedKaSdkModule(sdk.symbolicId)
     }
 
+    override fun getKaLibraryModule(sdkId: SdkId): KaLibraryModule {
+        return cache.cachedKaSdkModule(sdkId)
+    }
+
     override fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId {
         require(libraryModule is KaLibraryEntityBasedLibraryModuleBase) {
             "Expected ${KaLibraryEntityBasedLibraryModuleBase::class}, but got ${libraryModule::class} instead"

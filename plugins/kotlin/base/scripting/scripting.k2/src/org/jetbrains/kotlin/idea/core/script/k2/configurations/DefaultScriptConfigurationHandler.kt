@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
@@ -19,11 +18,13 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurati
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.jdkHome
@@ -32,9 +33,9 @@ import kotlin.script.experimental.jvm.jvm
 open class DefaultScriptConfigurationHandler(
     val project: Project, val coroutineScope: CoroutineScope
 ) : ScriptWorkspaceModelManager, ScriptRefinedConfigurationResolver {
-    private val data = ConcurrentHashMap<VirtualFile, ScriptConfigurationWithSdk>()
+    private val data = ConcurrentHashMap<VirtualFile, ScriptCompilationConfigurationResult>()
 
-    override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk {
+    override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
         val current = data[virtualFile]
         if (current != null) return current
 
@@ -44,33 +45,36 @@ open class DefaultScriptConfigurationHandler(
         return configuration
     }
 
-    override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
+    override fun get(virtualFile: VirtualFile): ScriptCompilationConfigurationResult? = data[virtualFile]
 
     override fun remove(virtualFile: VirtualFile) {
         data.remove(virtualFile)
     }
 
-    private suspend fun resolveScriptConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk {
-        val sdk = ProjectRootManager.getInstance(project).projectSdk
-
-        val scriptSource = VirtualFileScriptSource(virtualFile)
-
-        val providedConfiguration = sdk?.homePath?.let {
+    private suspend fun resolveScriptConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
+        val definitionJdk = definition.compilationConfiguration[ScriptCompilationConfiguration.jvm.jdkHome]
+        val configuration = if (definitionJdk != null) definition.compilationConfiguration
+        else {
+            val projectSdk = ProjectRootManager.getInstance(project).projectSdk?.homePath
             definition.compilationConfiguration.with {
-                jvm.jdkHome(File(it))
+                projectSdk?.let {
+                    jvm.jdkHome(File(it))
+                }
             }
         }
 
+        val scriptSource = VirtualFileScriptSource(virtualFile)
+
         val result = smartReadAction(project) {
-            refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
+            refineScriptCompilationConfiguration(scriptSource, definition, project, configuration)
         }
 
         project.service<ScriptReportSink>().attachReports(virtualFile, result.reports)
 
-        return ScriptConfigurationWithSdk(result, sdk?.let { SdkId(it.name, it.sdkType.name) })
+        return result
     }
 
-    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
+    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>) {
         val workspaceModel = project.serviceAsync<WorkspaceModel>()
 
         workspaceModel.update("updating .kts modules") {
@@ -80,7 +84,7 @@ open class DefaultScriptConfigurationHandler(
     }
 
     private fun getUpdatedStorage(
-        configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
+        configurations: Map<VirtualFile, ScriptCompilationConfigurationResult>,
         workspaceModel: WorkspaceModel,
     ): MutableEntityStorage {
         val storage = workspaceModel.currentSnapshot
@@ -89,12 +93,12 @@ open class DefaultScriptConfigurationHandler(
 
         val fileUrlManager = workspaceModel.getVirtualFileUrlManager()
 
-        for ((scriptFile, configurationWithSdk) in configurations) {
+        for ((scriptFile, configurationResult) in configurations) {
             val scriptUrl = scriptFile.toVirtualFileUrl(fileUrlManager)
             if (index.findEntitiesByUrl(scriptUrl).any()) continue
 
             val definition = findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
-            val configuration = configurationWithSdk.scriptConfiguration.valueOrNull()?.configuration ?: continue
+            val configuration = configurationResult.valueOrNull()?.configuration ?: continue
 
             val libraryIds = generateScriptLibraryEntities(configuration, definition, project)
             libraryIds.filterNot {
@@ -106,7 +110,7 @@ open class DefaultScriptConfigurationHandler(
             result addEntity KotlinScriptEntity(
                 scriptUrl, libraryIds.toList(), DefaultScriptEntitySource
             ) {
-                this.sdkId = configurationWithSdk.sdkId
+                this.sdkId = configuration.sdkId
             }
         }
 

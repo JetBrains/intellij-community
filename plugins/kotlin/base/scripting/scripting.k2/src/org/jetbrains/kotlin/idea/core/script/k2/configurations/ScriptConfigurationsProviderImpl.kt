@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,7 +17,6 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
-import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -91,9 +89,6 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
     override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> =
         virtualFile.currentDependencies.classes
 
-    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? =
-        virtualFile.currentDependencies.sdk?.let { ModifiableRootModelBridge.findSdk(it.name, it.type) }
-
     private val VirtualFile.currentDependencies: ScriptDependencies
         get() {
             val snapshot = project.workspaceModel.currentSnapshot
@@ -121,7 +116,7 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val definition = file.findScriptDefinition() ?: return null
-        return getConfigurationSupplier(definition).get(file.alwaysVirtualFile)?.scriptConfiguration
+        return getConfigurationSupplier(definition).get(file.alwaysVirtualFile)
     }
 
     private fun getConfigurationSupplier(definition: ScriptDefinition): ScriptRefinedConfigurationResolver {

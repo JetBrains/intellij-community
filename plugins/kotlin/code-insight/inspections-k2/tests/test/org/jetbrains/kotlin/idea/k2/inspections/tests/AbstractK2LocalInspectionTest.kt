@@ -12,7 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import java.io.File
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
@@ -102,7 +102,7 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
     // kotlin scripts require adjusting project model which is not possible for lightweight test fixture
     private class DefaultScriptConfigurationHandlerForTests(testProject: Project) :
         DefaultScriptConfigurationHandler(testProject, CoroutineScope(EmptyCoroutineContext)) {
-        override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
+        override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>) {}
 
         override fun isScriptExist(
             project: Project,

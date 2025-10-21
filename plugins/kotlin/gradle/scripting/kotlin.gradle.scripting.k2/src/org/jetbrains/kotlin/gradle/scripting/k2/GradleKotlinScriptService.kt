@@ -14,7 +14,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -31,7 +30,7 @@ import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.deserialize
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.sdkId
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
@@ -42,10 +41,7 @@ import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
-import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
-import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
+import org.jetbrains.kotlin.scripting.resolve.*
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -57,11 +53,11 @@ import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
 class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurationResolver, ScriptWorkspaceModelManager {
-    private val data = ConcurrentHashMap<VirtualFileUrl, ScriptConfigurationWithSdk>()
+    private val data = ConcurrentHashMap<VirtualFileUrl, ScriptCompilationConfigurationResult>()
 
-    override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? = null
+    override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult? = null
 
-    override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? {
+    override fun get(virtualFile: VirtualFile): ScriptCompilationConfigurationResult? {
         val url = virtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
         val result = data.computeIfAbsent(url) { url ->
             val entity = project.workspaceModel.currentSnapshot.getVirtualFileUrlIndex().findEntitiesByUrl(url)
@@ -69,10 +65,10 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
                     it.entitySource is KotlinGradleScriptEntitySource && it is KotlinScriptEntity
                 } as? KotlinScriptEntity
 
-            entity?.toConfigurationWithSdk() ?: ScriptConfigurationWithSdk.EMPTY
+            entity?.toConfigurationResult() ?: ResultWithDiagnostics.Failure()
         }
 
-        return if (result == ScriptConfigurationWithSdk.EMPTY) null else result
+        return if (result == ResultWithDiagnostics.Failure()) null else result
     }
 
     fun processScripts(
@@ -110,7 +106,7 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
 
             val updatedConfiguration = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
 
-            gradleScript.virtualFile to ScriptConfigurationWithSdk(updatedConfiguration, sdk?.let { SdkId(it.name, it.sdkType.name) })
+            gradleScript.virtualFile to updatedConfiguration
         }
 
         enrichStorage(configurations)
@@ -126,7 +122,7 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
         }
     }
 
-    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
+    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>) {
         if (configurationPerFile.size == 1) {
             val currentStorage = project.workspaceModel.currentSnapshot.toBuilder()
             project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
@@ -137,17 +133,17 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
     }
 
     private fun MutableEntityStorage.enrichStorage(
-        configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
+        configurations: Map<VirtualFile, ScriptCompilationConfigurationResult>,
     ) {
         val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
-        for ((scriptFile, configurationWithSdk) in configurations) {
-            val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
+        for ((scriptFile, configurationResult) in configurations) {
+            val configurationWrapper = configurationResult.valueOrNull() ?: continue
 
             val scriptUrl = scriptFile.toVirtualFileUrl(fileUrlManager)
 
-            val classes = configuration.dependenciesClassPath.sorted().map { it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
-            val sources = configuration.dependenciesSources.sorted().map { it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
+            val classes = configurationWrapper.dependenciesClassPath.sorted().map { it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
+            val sources = configurationWrapper.dependenciesSources.sorted().map { it.path.toVirtualFileUrl(fileUrlManager) }.toMutableSet()
 
             val dependencies = buildList {
                 addIfNotNull(
@@ -192,9 +188,9 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
                 dependencies,
                 KotlinGradleScriptEntitySource
             ) {
-                this.configuration = configuration.configuration?.asEntity()
-                this.reports = configurationWithSdk.scriptConfiguration.reports.map { it.toData() }.toMutableList()
-                this.sdkId = configurationWithSdk.sdkId
+                this.configuration = configurationWrapper.configuration?.asEntity()
+                this.reports = configurationResult.reports.map { it.toData() }.toMutableList()
+                this.sdkId = configurationWrapper.configuration?.sdkId
             }
         }
     }
@@ -333,13 +329,13 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
                 ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
             }
 
-            val updatedData = mutableMapOf<VirtualFileUrl, ScriptConfigurationWithSdk>()
+            val updatedData = mutableMapOf<VirtualFileUrl, ScriptCompilationConfigurationResult>()
             for (entityChange in event.getChanges(KotlinScriptEntity::class.java)) {
                 if (entityChange is EntityChange.Removed) continue
                 val entity = entityChange.newEntity ?: continue
                 if (entity.entitySource !is KotlinGradleScriptEntitySource) continue
 
-                val result = entity.toConfigurationWithSdk()
+                val result = entity.toConfigurationResult()
                 if (result != null) {
                     updatedData[entity.virtualFileUrl] = result
                 }
@@ -369,7 +365,7 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
 }
 
 
-fun KotlinScriptEntity.toConfigurationWithSdk(): ScriptConfigurationWithSdk? {
+fun KotlinScriptEntity.toConfigurationResult(): ScriptCompilationConfigurationResult? {
     val virtualFile = virtualFileUrl.virtualFile ?: return null
 
     val result = if (configuration == null) {
@@ -383,5 +379,5 @@ fun KotlinScriptEntity.toConfigurationWithSdk(): ScriptConfigurationWithSdk? {
         )
     }
 
-    return ScriptConfigurationWithSdk(result, sdkId)
+    return result
 }

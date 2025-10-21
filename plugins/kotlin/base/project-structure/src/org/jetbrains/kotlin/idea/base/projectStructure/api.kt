@@ -6,10 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -225,11 +222,19 @@ fun Library.toKaLibraryModules(project: Project): List<KaLibraryModule> =
     project.ideProjectStructureProvider.getKaLibraryModules(this)
 
 /**
- * Converts the [OpenapiSdk] to a list of [KaLibraryModule] in the specified [project].
+ * Converts the [OpenapiSdk] to [KaLibraryModule] in the specified [project].
  *
- * @return A list of corresponding [KaLibraryModule].
+ * @return Corresponding [KaLibraryModule].
  */
 fun OpenapiSdk.toKaLibraryModule(project: Project): KaLibraryModule =
+    project.ideProjectStructureProvider.getKaLibraryModule(this)
+
+/**
+ * Converts the [SdkId] to [KaLibraryModule] in the specified [project].
+ *
+ * @return Corresponding [KaLibraryModule].
+ */
+fun SdkId.toKaLibraryModule(project: Project): KaLibraryModule =
     project.ideProjectStructureProvider.getKaLibraryModule(this)
 
 /**

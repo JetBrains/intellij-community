@@ -40,7 +40,7 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
         val configurationsSupplier = definition.getConfigurationResolver(project)
         val projectModelUpdater = definition.getWorkspaceModelManager(project)
 
-        val configuration = configurationsSupplier.get(ktFile.alwaysVirtualFile)?.scriptConfiguration ?: return false
+        val configuration = configurationsSupplier.get(ktFile.alwaysVirtualFile) ?: return false
         if (configuration.isError()) {
             project.service<ScriptReportSink>().attachReports(ktFile.alwaysVirtualFile, configuration.reports)
             return true
