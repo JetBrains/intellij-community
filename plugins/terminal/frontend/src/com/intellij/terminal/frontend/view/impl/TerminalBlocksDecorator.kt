@@ -93,7 +93,7 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun createPromptDecoration(block: TerminalCommandBlock): BlockDecoration {
-    val startOffset = block.startOffset
+    val startOffset = block.startOffset.coerceAtLeast(outputModel.startOffset)
     val endOffset = block.endOffset
 
     val topInlay = createTopInlay(block)
@@ -111,7 +111,7 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun createFinishedBlockDecoration(block: TerminalCommandBlock): BlockDecoration {
-    val startOffset = block.startOffset
+    val startOffset = block.startOffset.coerceAtLeast(outputModel.startOffset)
     // End offset of the finished block is located after the line break.
     // But we need to place the end inlay before the line break and limit the height of the highlighters to the block content.
     // So adjust the offset by 1.
