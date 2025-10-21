@@ -131,12 +131,13 @@ internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.Case
 
 @Throws(IOException::class)
 internal fun readAttributesUsingEel(nioPath: Path): FileAttributes {
-  val eelPath = nioPath.asEelPath()
-  if (eelPath.descriptor == LocalEelDescriptor) {
+  val eelDescriptor = nioPath.getEelDescriptor()
+  if (eelDescriptor == LocalEelDescriptor) {
     val nioAttributes = Files.readAttributes(nioPath, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
     return FileAttributes.fromNio(nioPath, nioAttributes)
   }
   else {
+    val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = eelPath.descriptor.mountProvider()?.getMountRoot(eelPath)?.takeIf {
       fsBlocking {
         it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
