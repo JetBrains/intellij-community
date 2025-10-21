@@ -10,10 +10,7 @@ import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Insets
-import java.awt.Rectangle
+import java.awt.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
@@ -78,6 +75,15 @@ internal open class SquareStripeButtonLook(private val button: ActionButton) : I
       if (button.isFocused()) return UIManager.getColor("ToolWindow.Button.selectedBackground")?: color
     }
     return color
+  }
+
+  override fun getIconPosition(actionButton: ActionButtonComponent, icon: Icon): Point {
+    val rect = Rectangle(actionButton.getWidth(), actionButton.getHeight())
+    JBInsets.removeFrom(rect, actionButton.insets)
+    JBInsets.removeFrom(rect, getIconPadding(button.isOnTheLeftStripe()))
+    val x = rect.x + (rect.width - icon.iconWidth) / 2
+    val y = rect.y + (rect.height - icon.iconHeight) / 2
+    return Point(x, y)
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
