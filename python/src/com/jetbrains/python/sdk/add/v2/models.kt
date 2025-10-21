@@ -19,8 +19,6 @@ import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.emit
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.PySdkUtil
@@ -89,7 +87,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       detectedInterpreters,
       manuallyAddedInterpreters,
       condaViewModel.condaEnvironmentsResult,
-      hatchViewModel.hatchEnvironmentsResult,
+      hatchViewModel.availableEnvironments,
     ).map {
       modificationCounter.updateAndGet { it + 1 }
     }.launchIn(scope + Dispatchers.UI)
