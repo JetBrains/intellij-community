@@ -189,6 +189,8 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyBuiltinHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.UnsupportedFeatures"/>
 
+    <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.PyChangeLocalityDetector"/>
+
     <localInspection language="Python" shortName="PyUnusedLocalInspection" suppressId="PyUnusedLocal" bundle="messages.PyPsiBundle" key="INSP.NAME.unused" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection"/>
     <localInspection language="Python" shortName="PyRedundantParenthesesInspection" suppressId="PyRedundantParentheses" bundle="messages.PyPsiBundle" key="INSP.NAME.redundant.parentheses" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRedundantParenthesesInspection"/>
     <localInspection language="Python" shortName="PySimplifyBooleanCheckInspection" suppressId="PySimplifyBooleanCheck" bundle="messages.PyPsiBundle" key="INSP.NAME.check.can.be.simplified" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
