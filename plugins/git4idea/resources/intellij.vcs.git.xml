@@ -192,6 +192,8 @@
 
     <action id="git.update.force.pushed.branch" class="git4idea.actions.branch.GitForcePushedBranchUpdateAction" internal="true"/>
 
+    <action id="Git.FindMergedLocalBranches" class="git4idea.branch.FindMergedLocalBranchesAction" internal="true"/>
+
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>

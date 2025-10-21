@@ -78,6 +78,22 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
     private const val NAME_SEPARATOR = '/'
 
     private val ALL_REPOSITORIES: GitRepository? = null
+
+    internal fun collectDirectories(branchNames: Iterable<String>, withTrailingSlash: Boolean): Collection<String> {
+      val directories = mutableSetOf<String>()
+      for (branchName in branchNames) {
+        if (branchName.contains(NAME_SEPARATOR)) {
+          var index = 0
+          while (index < branchName.length) {
+            val end = branchName.indexOf(NAME_SEPARATOR, index)
+            if (end == -1) break
+            directories += if (withTrailingSlash) branchName.substring(0, end + 1) else branchName.substring(0, end)
+            index = end + 1
+          }
+        }
+      }
+      return directories
+    }
   }
 
   private var checkout = true
@@ -222,22 +238,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
   private fun collectLocalBranchNames() = repositories.asSequence().flatMap { it.branches.localBranches }.map { it.name }
   private fun collectRemoteBranchNames() = repositories.asSequence().flatMap { it.branches.remoteBranches }.map { it.nameForRemoteOperations }
 
-  private fun collectDirectories(branchNames: Iterable<String>, withTrailingSlash: Boolean): Collection<String> {
-    val directories = mutableSetOf<String>()
-    for (branchName in branchNames) {
-      if (branchName.contains(NAME_SEPARATOR)) {
-        var index = 0
-        while (index < branchName.length) {
-          val end = branchName.indexOf(NAME_SEPARATOR, index)
-          if (end == -1) break
-          directories += if (withTrailingSlash) branchName.substring(0, end + 1) else branchName.substring(0, end)
-          index = end + 1
-        }
-      }
-    }
-    return directories
-  }
-
   private fun validateBranchName(onApply: Boolean, overwriteCheckbox: JCheckBox, repositoriesComboBox: ComboBox<GitRepository?>)
     : ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
 
@@ -293,7 +293,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
     caretModel.moveToOffset(fixedCaret)
   }
 
-  private class BranchNamesCompletion(
+  internal class BranchNamesCompletion(
     val localDirectories: List<String>,
     val allSuggestions: List<String>)
     : TextCompletionProviderBase<String>(
