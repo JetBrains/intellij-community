@@ -2,7 +2,6 @@
 package com.intellij.platform.execution.dashboard
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.icons.AllIcons
@@ -21,7 +20,6 @@ import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.SmartList
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -65,10 +63,11 @@ class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(Borde
       super.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
       if (value is CheckedTreeNode) {
         val userObject = value.userObject
-        if (userObject is RunnerAndConfigurationSettings) {
+        if (userObject is RunDashboardConfigurationDto) {
           val renderer = textRenderer
           renderer.icon = type?.icon
-          renderer.append(userObject.name)
+          @Suppress("HardCodedStringLiteral")
+          renderer.append(userObject.configurationDisplayName)
         }
         else if (userObject is String) {
           val renderer = textRenderer
@@ -108,17 +107,19 @@ class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(Borde
 
     tree.addCheckboxTreeListener(object : CheckboxTreeListener {
       override fun nodeStateChanged(node: CheckedTreeNode) {
-        val settings = node.userObject as? RunnerAndConfigurationSettings ?: return
-        if (node.userObject is RunnerAndConfigurationSettings) {
+        val settings = node.userObject as? RunDashboardConfigurationDto ?: return
+        if (node.userObject is RunDashboardConfigurationDto) {
           try {
             nodeStateChanging = true
             if (node.isChecked) {
-              RunDashboardManagerProxy.getInstance(project).restoreConfigurations(
-                SmartList(settings.getConfiguration()))
+              // todo rpc with dto?
+              //RunDashboardManagerProxy.getInstance(project).restoreConfigurations(
+              //  SmartList(settings.getConfiguration()))
             }
             else {
-              RunDashboardManagerProxy.getInstance(project).hideConfigurations(
-                SmartList(settings.getConfiguration()))
+              // todo rpc with dto?
+              //RunDashboardManagerProxy.getInstance(project).hideConfigurations(
+              //  SmartList(settings.getConfiguration()))
             }
           }
           finally {
