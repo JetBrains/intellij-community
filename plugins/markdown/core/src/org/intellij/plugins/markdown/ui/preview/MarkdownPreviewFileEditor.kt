@@ -196,19 +196,8 @@ class MarkdownPreviewFileEditor(
         logger.warn("Cannot find any available preview panel provider. Registered providers: ${registeredProviders.joinToString { it.providerInfo.name }}")
       }
       else {
+        logger.warn("Cannot use preview panel provider '${preferredProvider.providerInfo.name}'. Using the first one that is available: ${availableProvider.providerInfo.name}")
         settings.previewPanelProviderInfo = availableProvider.providerInfo
-        if (PlatformUtils.getPlatformPrefix() != "AndroidStudio") {
-          Notifications.Bus.notify(
-            Notification(
-              "Markdown",
-              MarkdownBundle.message("markdown.settings.notification.title"),
-              MarkdownBundle.message("markdown.settings.preview.provider.not.available", providerInfo.name, availableProvider.providerInfo.name),
-              NotificationType.WARNING
-            ),
-            project
-          )
-          logger.warn("Cannot use preview panel provider '${providerInfo.name}'. Using the first one that is available: ${preferredProvider.providerInfo.name}")
-        }
         preferredProvider = availableProvider
       }
     }
