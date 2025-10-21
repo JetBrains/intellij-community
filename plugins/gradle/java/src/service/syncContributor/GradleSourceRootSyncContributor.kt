@@ -65,9 +65,8 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
 
     val sourceRootsToAdd = LinkedHashMap<GradleSourceSetEntitySource, GradleSourceRootData>()
 
-    val moduleEntitiesByUrl = storage.entities<ContentRootEntity>() .associate {  it.url to it.module }
+    val moduleEntities = storage.entities<ModuleEntity>()
 
-    val moduleEntitiesBySource = storage.entities<ModuleEntity>().associateBy { it.entitySource }
     val contentRootIndex = GradleContentRootIndex()
 
     for (buildModel in context.allBuilds) {
@@ -99,7 +98,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
 
         val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
         val sourceSetModel = context.getProjectModel(projectModel, GradleSourceSetModel::class.java) ?: continue
-        val projectModuleEntity = moduleEntitiesBySource[projectEntitySource] ?: moduleEntitiesByUrl[projectEntitySource.projectRootUrl] ?: continue
+        val projectModuleEntity = moduleEntities.singleOrNull { isProjectModuleEntity(it, projectEntitySource) } ?: continue
 
         for (sourceSet in sourceSetModel.sourceSets.values) {
 
@@ -108,7 +107,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
           val contentRoots = resolveContentRoots(virtualFileUrlManager, externalProject, sourceSet, contentRootIndex)
           val sourceRootData = GradleSourceRootData(externalProject, sourceSet, projectModuleEntity, sourceSetEntitySource, contentRoots)
 
-          if (sourceSetEntitySource in moduleEntitiesBySource || sourceRootData.contentRootUrls.any { it in moduleEntitiesByUrl} ) {
+          if (moduleEntities.any { isConflictedModuleEntity(it, sourceRootData) }) {
             continue
           }
           if (isUnloadedModule(project, sourceRootData)) {
@@ -126,6 +125,22 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
 
       configureSourceRoot(context, storage, virtualFileUrlManager, sourceRootData)
     }
+  }
+
+  private fun isProjectModuleEntity(
+    moduleEntity: ModuleEntity,
+    entitySource: GradleProjectEntitySource,
+  ): Boolean {
+    return moduleEntity.entitySource == entitySource ||
+           moduleEntity.contentRoots.singleOrNull()?.url == entitySource.projectRootUrl
+  }
+
+  private fun isConflictedModuleEntity(
+    moduleEntity: ModuleEntity,
+    sourceRootData: GradleSourceRootData,
+  ): Boolean {
+    return moduleEntity.entitySource == sourceRootData.entitySource ||
+           moduleEntity.contentRoots.any { it.url in sourceRootData.contentRootUrls }
   }
 
   private fun isUnloadedModule(
