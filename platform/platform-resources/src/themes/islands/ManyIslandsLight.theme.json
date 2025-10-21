@@ -88,6 +88,17 @@
       }
     },
 
+    "StripeToolbar.Button": {
+      "leftStripeIcon.padding": "5,5,5,2",
+      "rightStripeIcon.padding": "5,2,5,5",
+      "leftStripeIcon.padding.compact": "4,4,4,1",
+      "rightStripeIcon.padding.compact": "4,1,4,4",
+      "leftStripeIconWithName.padding": "4,4,4,1",
+      "rightStripeIconWithName.padding": "4,1,4,4",
+      "leftStripeIconWithName.padding.compact": "3,3,3,0",
+      "rightStripeIconWithName.padding.compact": "3,0,3,3"
+    },
+
     "EditorTabs": {
       "background": "BackgroundLight",
       "underTabsBorderColor": "BackgroundDark",
