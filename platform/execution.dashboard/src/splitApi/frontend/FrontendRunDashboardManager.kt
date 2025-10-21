@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -37,8 +36,8 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   private val frontendCustomizations = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceCustomizationDto>())
   private val frontendAvailableConfigurations = MutableStateFlow(emptySet<RunDashboardConfigurationDto>())
   private val frontendExcludedConfigurationTypeIds = MutableStateFlow(emptySet<String>())
-  private val statusFilter: RunDashboardStatusFilter = RunDashboardStatusFilter()
-  private val configurationTypes : MutableSet<String> = mutableSetOf()
+  private val statusFilter = RunDashboardStatusFilter()
+  private val configurationTypes = MutableStateFlow(emptySet<String>())
 
   internal suspend fun subscribeToBackendSettingsUpdates() {
     RunDashboardServiceRpc.getInstance().getSettings(project.projectId()).collect { updatesFromBackend ->
@@ -101,7 +100,7 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
 
   internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
     RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
-      syncTypes(updateFromBackend.toMutableSet())
+      syncTypes(updateFromBackend)
     }
   }
 
@@ -149,20 +148,18 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   }
 
   override fun getTypes(): Set<String> {
-    LOG.debug("getTypes() invoked on frontend;")
-    return configurationTypes.toSet()
+    return configurationTypes.value.toSet()
   }
 
-  private fun syncTypes(types: MutableSet<String>){
-    configurationTypes.clear()
-    configurationTypes.addAll(types)
+  private fun syncTypes(types: Set<String>) {
+    configurationTypes.value = types
 
     frontendDtos.update { currentDtos ->
       currentDtos.filter { dto -> dto.typeId in types }
     }
   }
 
-  override fun setTypes(types: MutableSet<String>) {
+  override fun setTypes(types: Set<String>) {
     LOG.debug("setTypes(${types.size} types) invoked on frontend;")
     syncTypes(types)
     RunDashboardServiceViewContributorHelper.scheduleSetConfigurationTypes(project, types)
