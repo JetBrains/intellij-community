@@ -47,6 +47,11 @@ jvm_library(
     "@lib//:junit4",
     "//platform/eel-provider",
     "//platform/lang-impl",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/platform-impl/eel:ide-impl-wsl",
   ]
 )
 ### auto-generated section `build intellij.terminal.tests` end
