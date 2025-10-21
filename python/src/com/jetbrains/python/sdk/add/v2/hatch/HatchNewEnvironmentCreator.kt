@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -28,7 +27,6 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
 ) : CustomNewEnvironmentCreator<P>("hatch", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
   override val toolValidator: ToolValidator<P> = model.hatchViewModel.toolValidator
-  private val hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
   private lateinit var hatchFormFields: HatchFormFields<P>
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
@@ -74,7 +72,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
   }
 
   override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk> {
-    val hatchEnv = hatchEnvironmentProperty.get()?.hatchEnvironment
+    val hatchEnv = model.hatchViewModel.selectedEnvFromAvailable.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
     val basePythonBinaryEelPath = when (basePythonBinaryPath) {
       is PathHolder.Eel -> basePythonBinaryPath.path

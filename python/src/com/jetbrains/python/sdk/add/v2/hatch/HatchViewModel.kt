@@ -28,8 +28,14 @@ class HatchViewModel<P : PathHolder>(
   propertyGraph: PropertyGraph,
   val projectPathFlows: ProjectPathFlows,
 ) : PythonToolViewModel {
-  val selectedHatchEnv: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
-  val hatchEnvironmentsResult: MutableStateFlow<PyResult<List<HatchVirtualEnvironment>>?> = MutableStateFlow(null)
+  val selectedEnvFromAvailable: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
+  /**
+   * there is a second field for selected existing env because the lookup values are different and the UI component doesn't reflect changes
+   * if the selected env is not in the list.
+   * (selection of non-existing env on the create new view and switching to the select existing view makes the UI inconsistent otherwise)
+   */
+  val selectedEnvFromExisting: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
+  val availableEnvironments: MutableStateFlow<PyResult<List<HatchVirtualEnvironment>>?> = MutableStateFlow(null)
   val hatchExecutable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(null)
 
   val toolValidator: ToolValidator<P> = ToolValidator(
@@ -50,14 +56,14 @@ class HatchViewModel<P : PathHolder>(
 
     hatchExecutable.afterChange { hatchExecutable ->
       if (hatchExecutable?.validationResult?.successOrNull == null) {
-        hatchEnvironmentsResult.value = null
+        availableEnvironments.value = null
         return@afterChange
       }
 
       val binaryToExec = hatchExecutable.pathHolder?.let { fileSystem.getBinaryToExec(it) }
                          ?: return@afterChange
       scope.launch(Dispatchers.UI) {
-        hatchEnvironmentsResult.value = detectHatchEnvironments(binaryToExec)
+        availableEnvironments.value = detectHatchEnvironments(binaryToExec)
       }
     }
   }

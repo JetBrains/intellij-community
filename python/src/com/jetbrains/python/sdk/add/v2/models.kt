@@ -88,7 +88,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       detectedInterpreters,
       manuallyAddedInterpreters,
       condaViewModel.condaEnvironmentsResult,
-      hatchViewModel.hatchEnvironmentsResult,
+      hatchViewModel.availableEnvironments,
     ).map {
       modificationCounter.updateAndGet { it + 1 }
     }.launchIn(scope + Dispatchers.UI)
