@@ -7,16 +7,16 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ImplicitArrayToStringInspectionTest extends LightJavaInspectionTestCase {
+public class ImplicitArrayToStringInspection25Test extends LightJavaInspectionTestCase {
 
-  public void testImplicitArrayToString() {
+  public void testImplicitArrayToStringIO() {
     doTest();
   }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
+    return JAVA_25;
   }
 
   @Nullable
