@@ -12,6 +12,7 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.*
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.function.Function
@@ -42,7 +43,8 @@ class PythonDocTestCommandLineState(config: PythonDocTestRunConfiguration, env: 
     /**
      * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
      */
-    private fun PythonDocTestRunConfiguration.buildTestSpec(): String =
+    @ApiStatus.Internal
+    fun PythonDocTestRunConfiguration.buildTestSpec(): String =
       when (testType) {
         TEST_SCRIPT -> scriptName
         TEST_CLASS -> "$scriptName::$className"
