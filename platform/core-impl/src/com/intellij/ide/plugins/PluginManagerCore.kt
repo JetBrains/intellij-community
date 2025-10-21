@@ -776,17 +776,18 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  fun processAllNonOptionalDependencyIds(rootDescriptor: IdeaPluginDescriptorImpl, pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                         contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
-                                         consumer: (PluginId) -> FileVisitResult) {
-    processAllNonOptionalDependencies(
-      rootDescriptor = rootDescriptor,
-      depProcessed = HashSet(),
-      pluginIdMap = pluginIdMap,
-      contentModuleIdMap = contentModuleIdMap,
-    ) { pluginId, _ ->
-      if (pluginId == null) FileVisitResult.CONTINUE else consumer(pluginId) 
-    }
+  fun processAllNonOptionalDependencyIds(
+    rootDescriptor: IdeaPluginDescriptorImpl,
+    pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
+    consumer: (PluginId) -> FileVisitResult,
+  ): Boolean = processAllNonOptionalDependencies(
+    rootDescriptor = rootDescriptor,
+    depProcessed = HashSet(),
+    pluginIdMap = pluginIdMap,
+    contentModuleIdMap = contentModuleIdMap,
+  ) { pluginId, _ ->
+    if (pluginId == null) FileVisitResult.CONTINUE else consumer(pluginId)
   }
 
   /**

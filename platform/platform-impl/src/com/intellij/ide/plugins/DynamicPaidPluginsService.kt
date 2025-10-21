@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTimedValue
@@ -107,22 +108,20 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     }
 
     if (requireRestartPlugins.isNotEmpty()) {
-      notifyNotLoadedWithoutRestart(pluginEnabler, requireRestartPlugins)
+      val (loadableAfterRestart, missingDependencies) = splitNotLoadedPlugins(requireRestartPlugins, pluginIdMap, contentModuleIdMap)
+
+      if (missingDependencies.isNotEmpty()) {
+        logger.info("Plugins cannot be loaded even with restart because of missing dependencies: ${missingDependencies.map { it.pluginId }}")
+      }
+
+      notifyNotLoadedWithoutRestart(pluginEnabler, loadableAfterRestart)
     }
     else {
       logger.debug("No plugins that require restart found to be enabled.")
     }
   }
 
-  private fun notifyNotLoadedWithoutRestart(pluginEnabler: PluginEnabler, plugins: List<IdeaPluginDescriptorImpl>) {
-    val (loadableAfterRestart, missingDependencies) = plugins.partition { plugin ->
-      plugin.dependencies.all { PluginManagerCore.isPluginInstalled(it.pluginId) || it.isOptional }
-    }
-
-    if (missingDependencies.isNotEmpty()) {
-      logger.info("Plugins cannot be loaded even with restart because of missing dependencies: ${missingDependencies.map { it.pluginId }}")
-    }
-
+  private fun notifyNotLoadedWithoutRestart(pluginEnabler: PluginEnabler, loadableAfterRestart: List<IdeaPluginDescriptorImpl>) {
     if (loadableAfterRestart.isNotEmpty()) {
       val notificationTitle: String = IdeBundle.message("notification.title.paid.plugins.not.loaded")
       val pluginNames = loadableAfterRestart.map { it.name }.sorted()
@@ -191,12 +190,34 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
       return if (requireRestart.isEmpty()) {
         // loadablePlugins.all { allowLoadUnloadWithoutRestart(it, context = loadablePlugins) } == true at this point
         // we can load all of them safely
-        return loadablePlugins + loadable to requireRestartPlugins
+        loadablePlugins + loadable to requireRestartPlugins
       }
       else doSplit(pluginsToLoad = loadable, loadablePlugins = loadablePlugins, requireRestartPlugins = requireRestartPlugins + requireRestart)
     }
 
     return doSplit(this, emptyList(), emptyList())
+  }
+
+  /**
+   * Splits a list of plugins that cannot be loaded dynamically into two categories:
+   * 1. plugins that require a restart to be loaded
+   * 2. plugins that miss some non-optional dependencies and cannot be loaded at all
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  fun splitNotLoadedPlugins(
+    plugins: List<IdeaPluginDescriptorImpl>,
+    pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
+  ): Pair<List<IdeaPluginDescriptorImpl>, List<IdeaPluginDescriptorImpl>> {
+    val (loadableAfterRestart, missingDependencies) = plugins.partition { plugin ->
+      PluginManagerCore.processAllNonOptionalDependencyIds(plugin, pluginIdMap, contentModuleIdMap) { dependency ->
+        if (PluginManagerCore.isPluginInstalled(dependency)) FileVisitResult.CONTINUE
+        else FileVisitResult.TERMINATE
+      }
+    }
+
+    return loadableAfterRestart to missingDependencies
   }
 }
 
