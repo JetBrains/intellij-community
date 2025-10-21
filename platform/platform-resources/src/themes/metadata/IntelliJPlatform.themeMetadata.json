@@ -1722,9 +1722,24 @@
       "since": "2023.1"
     },
     {
-      "key": "StripeToolbar.Button.iconPadding",
-      "description": "Tool window stripe button icon padding",
-      "since": "2023.1"
+      "key": "StripeToolbar.Button.leftStripeIcon.padding",
+      "description": "Tool window left stripe button icon padding",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.rightStripeIcon.padding",
+      "description": "Tool window right stripe button icon padding",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.leftStripeIconWithName.padding",
+      "description": "Tool window left stripe button icon padding with tool window names on",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.rightStripeIconWithName.padding",
+      "description": "Tool window right stripe button icon padding with tool window names on",
+      "since": "2025.3"
     },
     {
       "key": "List.hoverBackground",

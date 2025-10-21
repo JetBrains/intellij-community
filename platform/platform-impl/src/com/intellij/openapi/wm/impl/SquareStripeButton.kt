@@ -17,6 +17,8 @@ import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.ToolWindowLeftToolbar
+import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.ui.*
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
@@ -46,10 +48,10 @@ internal abstract class AbstractSquareStripeButton(
     })
   }
 
-  fun paintDraggingButton(g: Graphics) {
+  fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
     val areaSize = size.also {
       JBInsets.removeFrom(it, insets)
-      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+      JBInsets.removeFrom(it, SquareStripeButtonLook.getIconPadding(isLeft))
     }
 
     val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
@@ -366,3 +368,7 @@ internal open class SquareAnActionButton(@JvmField protected val window: ToolWin
   }
 }
 
+internal fun Component.isOnTheLeftStripe(): Boolean {
+  val stripe = ComponentUtil.getParentOfType(ToolWindowToolbar::class.java, this)
+  return stripe is ToolWindowLeftToolbar
+}
