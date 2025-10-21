@@ -509,7 +509,7 @@ a:com.intellij.openapi.actionSystem.ex.ActionButtonLook
 - <init>():V
 - s:getButtonState(Z,Z,Z,Z,Z):I
 - getDisabledIcon(javax.swing.Icon):javax.swing.Icon
-- ps:getIconPosition(com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon):java.awt.Point
+- p:getIconPosition(com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon):java.awt.Point
 - p:getState(com.intellij.openapi.actionSystem.ActionButtonComponent):I
 - p:getStateBackground(javax.swing.JComponent,I):java.awt.Color
 - paintBackground(java.awt.Graphics,javax.swing.JComponent):V

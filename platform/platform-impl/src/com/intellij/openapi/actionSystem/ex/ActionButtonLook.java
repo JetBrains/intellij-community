@@ -179,7 +179,7 @@ public abstract class ActionButtonLook {
     }
   }
 
-  protected static Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {
+  protected Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {
     Rectangle rect = new Rectangle(actionButton.getWidth(), actionButton.getHeight());
     Insets i = actionButton.getInsets();
     JBInsets.removeFrom(rect, i);
