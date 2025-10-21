@@ -67,6 +67,9 @@ open class TrafficLightRenderer private constructor(
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
   private val severityRegistrar: SeverityRegistrar
   private val errorCount = ErrorCountStorage()
+  @Volatile
+  private var isDisposed: Boolean = false
+
   @JvmField
   @ApiStatus.Internal
   protected val uiController: UIController
@@ -107,6 +110,7 @@ open class TrafficLightRenderer private constructor(
       for (rangeHighlighter in model.getAllHighlighters()) {
         incErrorCount(rangeHighlighter, 1)
       }
+      if (isDisposed) return@Runnable
       model.addMarkupModelListener(this, object : MarkupModelListener {
         override fun afterAdded(highlighter: RangeHighlighterEx) {
           incErrorCount(highlighter, 1)
@@ -166,6 +170,7 @@ open class TrafficLightRenderer private constructor(
 
   override fun dispose() {
     errorCount.clear()
+    isDisposed = true
   }
 
   private fun incErrorCount(highlighter: RangeHighlighter, delta: Int) {
