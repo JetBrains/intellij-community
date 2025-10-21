@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import com.intellij.ui.IconManager
@@ -16,6 +17,7 @@ import com.intellij.ui.PlatformIcons
 import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
+import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.meta.impl.YamlKeyInsertHandler
 import org.jetbrains.yaml.meta.model.*
 import org.jetbrains.yaml.psi.*
@@ -24,6 +26,9 @@ class YamlStructuralKeysCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val position = parameters.position
+    // Do not complete in comments
+    if (YAMLElementTypes.YAML_COMMENT_TOKENS.contains(position.elementType)) return
+
     val value = position.parentOfType<YAMLValue>(true) ?: return
     if (value.references.isNotEmpty()) return
     val jsonSchemaService = JsonSchemaService.Impl.get(position.getProject());
