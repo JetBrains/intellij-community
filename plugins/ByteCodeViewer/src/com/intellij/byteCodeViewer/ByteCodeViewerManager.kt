@@ -38,7 +38,6 @@ public object ByteCodeViewerManager {
       }
     }
     val file = fileClass.originalElement.containingFile.virtualFile ?: return null
-    val fileIndex = ProjectFileIndex.getInstance(aClass.project)
     val jvmClassName = ClassUtil.getBinaryClassName(aClass) ?: return null
     return if (FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
       // compiled class; looking for the right .class file (inner class 'A.B' is "contained" in 'A.class', but we need 'A$B.class')
@@ -46,11 +45,16 @@ public object ByteCodeViewerManager {
     }
     else {
       // source code; looking for a .class file in compiler output
-      val moduleExtension = CompilerModuleExtension.getInstance(fileIndex.getModuleForFile(file)) ?: return null
-      val classRoot = if (fileIndex.isInTestSourceContent(file)) moduleExtension.compilerOutputPathForTests
-      else moduleExtension.compilerOutputPath
+      val fileIndex = ProjectFileIndex.getInstance(aClass.project)
+      val module = fileIndex.getModuleForFile(file) ?: return null
+      val compilerModuleExtension = CompilerModuleExtension.getInstance(module) ?: return null
+      val classRoot = when (fileIndex.isInTestSourceContent(file)) {
+        true -> compilerModuleExtension.compilerOutputPathForTests
+        false -> compilerModuleExtension.compilerOutputPath
+      }
       if (classRoot == null) return null
-      return classRoot.resolveFromRootOrRelative(jvmClassName.replace('.', '/') + ".class")
+      val relativeClassFilePath = jvmClassName.replace('.', '/') + ".class"
+      return classRoot.resolveFromRootOrRelative(relativeClassFilePath)
     }
   }
 
