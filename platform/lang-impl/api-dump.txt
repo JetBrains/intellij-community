@@ -114,10 +114,6 @@ com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
 - getGroupName():java.lang.String
 com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 - a:onClick(com.intellij.openapi.editor.Editor):V
-f:com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
-- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,Z):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getShouldBeDelimited():Z
 com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter
 - a:paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.TextAttributes,java.awt.Graphics,java.lang.Object,java.awt.Point,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,Z,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - a:size(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,java.lang.Object):java.awt.Dimension

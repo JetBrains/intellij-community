@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class ZombieCodeVisionEntry(
   providerId: String,
   @Nls longPresentation: String,
