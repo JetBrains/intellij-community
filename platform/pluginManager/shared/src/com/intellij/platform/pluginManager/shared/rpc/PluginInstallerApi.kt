@@ -20,6 +20,7 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -40,7 +41,7 @@ interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   suspend fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
-  suspend fun installPluginFromDisk(projectId: ProjectId?): PluginInstalledFromDiskResult
+  suspend fun installPluginFromDisk(projectId: ProjectId?): Flow<PluginInstalledFromDiskResult>
   suspend fun installOrUpdatePlugin(sessionId: String, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?, customRepoPlugins: List<PluginDto>): InstallPluginResult
   suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, customRepoPlugins: List<PluginDto>): InstallPluginResult
   suspend fun isRestartRequired(sessionId: String): Boolean
