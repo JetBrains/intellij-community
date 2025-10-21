@@ -378,7 +378,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Override
-  public @NotNull List<PyClassLikeType> getAncestorTypes(final @NotNull TypeEvalContext context) {
+  public @NotNull List<@Nullable PyClassLikeType> getAncestorTypes(final @NotNull TypeEvalContext context) {
     return myClass.getAncestorTypes(context);
   }
 
@@ -746,7 +746,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private @NotNull StreamEx<PyClassLikeType> prepareTypesForProcessingMembers(@NotNull List<PyClassLikeType> types) {
+  private @NotNull StreamEx<PyClassLikeType> prepareTypesForProcessingMembers(@NotNull List<@Nullable PyClassLikeType> types) {
     return StreamEx.of(types).nonNull().map(type -> isDefinition() ? type.toClass() : type.toInstance());
   }
 
