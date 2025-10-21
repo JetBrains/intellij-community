@@ -44,7 +44,7 @@ class EventProcessingWithMultitaskingTest : SharedEventsTest() {
       jobs.forEach { it.join() }
     } ?: throw AssertionError("Test timed out in $timeout waiting for all events to be processed")
 
-    assertEquals(counter.get(), maxTasksNumber)
+    assertEquals(maxTasksNumber, counter.get())
   }
 
   @Test
