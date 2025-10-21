@@ -2,16 +2,11 @@
 package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.add.v2.*
-import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -19,8 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private val LOG: Logger = fileLogger()
 
 class CondaViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
@@ -39,16 +32,7 @@ class CondaViewModel<P : PathHolder>(
     toolVersionPrefix = "conda",
     backProperty = condaExecutable,
     propertyGraph = propertyGraph,
-    defaultPathSupplier = {
-      val targetEnvironmentConfiguration = (fileSystem as? FileSystem.Target)?.targetEnvironmentConfiguration
-      val executor = targetEnvironmentConfiguration.toExecutor()
-      val suggestedCondaPath = runCatching {
-        suggestCondaPath(targetCommandExecutor = executor)
-      }.getOrLogException(LOG)
-
-      val condaPathOnFS = suggestedCondaPath?.let { fileSystem.parsePath(suggestedCondaPath).getOrLogException(LOG) }
-      condaPathOnFS
-    }
+    defaultPathSupplier = { fileSystem.which("conda") }
   )
 
   override fun initialize(scope: CoroutineScope) {

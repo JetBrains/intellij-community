@@ -23,7 +23,7 @@ import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.flow.bindText
 import kotlinx.coroutines.CoroutineScope
 
-internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, private val errorSink: ErrorSink) : PythonNewEnvironmentCreator<P>(model) {
+internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>) : PythonNewEnvironmentCreator<P>(model) {
 
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
@@ -49,7 +49,7 @@ internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTar
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", "conda"),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
-        installAction = createInstallCondaFix(model, errorSink)
+        installAction = createInstallCondaFix(model)
       )
     }
   }

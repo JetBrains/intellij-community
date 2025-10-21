@@ -133,7 +133,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
           validationRequestor = validationRequestor,
           labelText = message("sdk.create.custom.venv.executable.path", "conda"),
           missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
-          installAction = createInstallCondaFix(model, errorSink),
+          installAction = createInstallCondaFix(model),
         )
       }.visibleIf(_baseConda)
 

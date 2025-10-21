@@ -38,7 +38,7 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
 
-internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>, private val errorSink: ErrorSink) : PythonExistingEnvironmentConfigurator<P>(model) {
+internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>) : PythonExistingEnvironmentConfigurator<P>(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
   private lateinit var condaExecutable: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
   private lateinit var reloadLink: ActionLink
@@ -53,7 +53,7 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", "conda"),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
-        installAction = createInstallCondaFix(model, errorSink)
+        installAction = createInstallCondaFix(model)
       )
 
       rowsRange {

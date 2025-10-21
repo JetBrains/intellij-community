@@ -1,18 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.execution.target.BrowsableTargetEnvironmentType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.getTargetType
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.where
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
@@ -55,6 +61,7 @@ internal class VenvAlreadyExistsError<P : PathHolder>(
 
 sealed interface FileSystem<P : PathHolder> {
   val isReadOnly: Boolean
+  val isBrowseable: Boolean
 
   fun parsePath(raw: String): PyResult<P>
 
@@ -68,11 +75,13 @@ sealed interface FileSystem<P : PathHolder> {
   suspend fun resolvePythonBinary(pythonHome: P): P?
 
   fun getBinaryToExec(path: P): BinaryToExec
+  suspend fun which(cmd: String): P?
 
   data class Eel(
     val eelApi: EelApi,
-    override val isReadOnly: Boolean = false,
   ) : FileSystem<PathHolder.Eel> {
+    override val isBrowseable: Boolean = true
+    override val isReadOnly: Boolean = false
     override fun getBinaryToExec(path: PathHolder.Eel): BinaryToExec {
       return BinOnEel(path.path)
     }
@@ -172,6 +181,10 @@ sealed interface FileSystem<P : PathHolder> {
     override suspend fun resolvePythonBinary(pythonHome: PathHolder.Eel): PathHolder.Eel? {
       return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
     }
+
+    override suspend fun which(cmd: String): PathHolder.Eel? {
+      return eelApi.exec.where(cmd)?.asNioPath()?.let { PathHolder.Eel(it) }
+    }
   }
 
   data class Target(
@@ -180,6 +193,8 @@ sealed interface FileSystem<P : PathHolder> {
   ) : FileSystem<PathHolder.Target> {
     override val isReadOnly: Boolean
       get() = !PythonInterpreterTargetEnvironmentFactory.isMutable(targetEnvironmentConfiguration)
+    override val isBrowseable: Boolean
+      get() = targetEnvironmentConfiguration.getTargetType() is BrowsableTargetEnvironmentType
 
     private val systemPythonCache = ArrayList<DetectedSelectableInterpreter<PathHolder.Target>>()
 
@@ -269,6 +284,13 @@ sealed interface FileSystem<P : PathHolder> {
       }.let { PathHolder.Target(it) }
 
       return pythonBinaryPath
+    }
+
+    override suspend fun which(cmd: String): PathHolder.Target? {
+      val which = getBinaryToExec(PathHolder.Target("which"))
+      val condaPathString = ExecService().execGetStdout(which, Args(cmd)).getOr { return null }
+      val condaPathOnFS = parsePath(condaPathString).getOr { return null }
+      return condaPathOnFS
     }
   }
 }

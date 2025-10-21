@@ -59,7 +59,7 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
   private val newInterpreterCreators = if (model.fileSystem.isReadOnly) emptyMap()
   else mapOf(
     VIRTUALENV to { EnvironmentCreatorVenv(model) },
-    CONDA to { CondaNewEnvironmentCreator(model, errorSink) },
+    CONDA to { CondaNewEnvironmentCreator(model) },
     PIPENV to { EnvironmentCreatorPip(model, errorSink) },
     POETRY to { EnvironmentCreatorPoetry(model, module, errorSink) },
     UV to { EnvironmentCreatorUv(model, module, errorSink) },
@@ -68,7 +68,7 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
 
   private val existingInterpreterSelectors = buildMap {
     put(PYTHON) { PythonExistingEnvironmentSelector(model, module) }
-    put(CONDA) { CondaExistingEnvironmentSelector(model, errorSink) }
+    put(CONDA) { CondaExistingEnvironmentSelector(model) }
     if (!limitExistingEnvironments) {
       put(POETRY) { PoetryExistingEnvironmentSelector(model, module) }
       put(UV) { UvExistingEnvironmentSelector(model, module) }

@@ -338,23 +338,18 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
 private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.installToolRow(
   fileSystem: FileSystem<*>,
   missingExecutableText: @Nls String,
-  installAction: ActionLink? = null,
+  installAction: ActionLink,
   validatedPathField: ValidatedPathField<T, P, V>,
 ): Row {
-  val selectExecutableLink = ActionLink(message("sdk.create.custom.select.executable.link")) {
+  val selectExecutableLink = if (fileSystem.isBrowseable) ActionLink(message("sdk.create.custom.select.executable.link")) {
     validatedPathField.button.doClick()
   }
-  val (firstFix, secondFix) = if (installAction == null || fileSystem.isReadOnly) {
-    Pair(selectExecutableLink, null)
-  }
-  else {
-    Pair(installAction, selectExecutableLink)
-  }
+  else null
 
   return row("") {
     validationTooltip(missingExecutableText,
-                      firstFix,
-                      secondFix,
+                      installAction,
+                      selectExecutableLink,
                       validationType = ValidationType.WARNING,
                       inline = true)
       .align(Align.FILL)
@@ -379,7 +374,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
     isFileSelectionMode = isFileSelectionMode,
   )
 
-  missingExecutableText?.let {
+  if (missingExecutableText != null && installAction != null && !fileSystem.isReadOnly) {
     installToolRow(
       fileSystem = fileSystem,
       missingExecutableText = missingExecutableText,

@@ -10,12 +10,12 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetPtyOptions
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.provider.utils.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler
+import com.intellij.remoteServer.util.ServerRuntimeException
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -24,8 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import com.intellij.remoteServer.util.ServerRuntimeException
-import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -53,6 +51,10 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
 
   val targetEnv = try {
     request.prepareEnvironment(TargetProgressIndicator.EMPTY)
+  }
+  catch (e: RuntimeException) { // some types like DockerRemoteRequest throw base RuntimeException instead of anything meaningful, need to change platform code first
+    fileLogger().warn("Failed to start $target", e) // TODO: i18n
+    return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
   catch (e: ExecutionException) {
     fileLogger().warn("Failed to start $target", e) // TODO: i18n
@@ -104,7 +106,7 @@ private class TargetProcessCommands(
     }
     targetEnv.shutdown()
   }, killProcess = {
-    process?.destroyForcibly();
+    process?.destroyForcibly()
     targetEnv.shutdown()
   })
 
