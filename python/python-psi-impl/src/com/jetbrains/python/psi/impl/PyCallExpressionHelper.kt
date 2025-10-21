@@ -984,18 +984,29 @@ fun analyzeArguments(
         variadicKeywordArguments.clear()
       }
       else if (seenSingleStar) {
-        val keywordArgument: PyExpression? = keywordArguments.removeKeywordArgument(parameterName)
+        val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
         if (keywordArgument != null) {
           mappedParameters.put(keywordArgument, parameter)
         }
-        else if (variadicKeywordArguments.isEmpty()) {
-          if (!parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
-          }
-        }
-        else {
+        else if (!variadicKeywordArguments.isEmpty()) {
           parametersMappedToVariadicKeywordArguments.add(parameter)
           mappedVariadicArgumentsToParameters = true
+        }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
+        }
+      }
+      else if (positionalOnlyMode) {
+        val positionalArgument = allPositionalArguments.next()
+        if (positionalArgument != null) {
+          mappedParameters.put(positionalArgument, parameter)
+        }
+        else if (!variadicPositionalArguments.isEmpty()) {
+          parametersMappedToVariadicPositionalArguments.add(parameter)
+          mappedVariadicArgumentsToParameters = true
+        }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
         }
       }
       else if (parameter.isParamSpecOrConcatenate(context)) {
@@ -1007,49 +1018,34 @@ fun analyzeArguments(
         variadicPositionalArguments.clear()
         variadicKeywordArguments.clear()
       }
-      else {
-        if (positionalOnlyMode) {
-          val positionalArgument = allPositionalArguments.next()
-          if (positionalArgument != null) {
-            mappedParameters.put(positionalArgument, parameter)
-          }
-          else if (!variadicPositionalArguments.isEmpty()) {
-            parametersMappedToVariadicPositionalArguments.add(parameter)
-            mappedVariadicArgumentsToParameters = true
-          }
-          else if (!parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
-          }
+      else if (allPositionalArguments.isEmpty()) {
+        val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
+        if (keywordArgument != null && !(!hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName))) {
+          mappedParameters.put(keywordArgument, parameter)
         }
-        else if (allPositionalArguments.isEmpty()) {
-          val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
-          if (keywordArgument != null && !(!hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName))) {
-            mappedParameters.put(keywordArgument, parameter)
-          }
-          else if (variadicPositionalArguments.isEmpty() && variadicKeywordArguments.isEmpty() && !parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
-          }
-          else {
-            if (!variadicPositionalArguments.isEmpty()) {
-              parametersMappedToVariadicPositionalArguments.add(parameter)
-            }
-            if (!variadicKeywordArguments.isEmpty()) {
-              parametersMappedToVariadicKeywordArguments.add(parameter)
-            }
-            mappedVariadicArgumentsToParameters = true
-          }
+        else if (variadicPositionalArguments.isEmpty() && variadicKeywordArguments.isEmpty() && !parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
         }
         else {
-          val positionalArgument = allPositionalArguments.next()
-          if (positionalArgument != null) {
-            mappedParameters.put(positionalArgument, parameter)
-            if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
-              parametersMappedToVariadicPositionalArguments.add(parameter)
-            }
+          if (!variadicPositionalArguments.isEmpty()) {
+            parametersMappedToVariadicPositionalArguments.add(parameter)
           }
-          else if (!parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
+          if (!variadicKeywordArguments.isEmpty()) {
+            parametersMappedToVariadicKeywordArguments.add(parameter)
           }
+          mappedVariadicArgumentsToParameters = true
+        }
+      }
+      else {
+        val positionalArgument = allPositionalArguments.next()
+        if (positionalArgument != null) {
+          mappedParameters.put(positionalArgument, parameter)
+          if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+            parametersMappedToVariadicPositionalArguments.add(parameter)
+          }
+        }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
         }
       }
     }
