@@ -371,6 +371,7 @@ open class TestTask(
   val isFinishWork = SuspendLatch("stopWorking#$id")
 
   protected fun testCheckCanceled(): Boolean {
+    if (!cancelable) return false
     when (params.cancellationType) {
       CancellationCheckType.MANAGER -> ProgressManager.checkCanceled()
       CancellationCheckType.SEMAPHORE -> if (isCancelled.check()) return true
