@@ -23,10 +23,8 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.ClosedStorageException;
-import com.intellij.util.io.DataEnumeratorEx;
+import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -53,6 +51,7 @@ import java.util.zip.ZipException;
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getLongProperty;
 import static com.intellij.util.io.DataEnumerator.NULL_ID;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -116,6 +115,11 @@ public final class FSRecordsImpl implements Closeable {
    */
   public static final boolean REUSE_DELETED_FILE_IDS = getBooleanProperty("vfs.reuse-deleted-file-ids", false);
 
+  /**
+   * Fail VFS operation(s) starting at X ms from VFS startup. Negative value means 'no failures'.
+   * Intended to use during QA of VFS error processing, especially during startup.
+   */
+  private static final long EMULATE_FAILURES_WITH_DELAY_MS = getLongProperty("vfs.debug.emulate-failures-starting-with-ms", -1);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -971,6 +975,13 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Reads children of parentId, under record-level read lock (not a hierarchy lock!) */
   private @NotNull ListResult loadChildrenUnderRecordLock(int parentId) throws IOException {
+    if (EMULATE_FAILURES_WITH_DELAY_MS >= 0) {
+      long elapsedMs = System.currentTimeMillis() - getCreationTimestamp();
+      if (elapsedMs > EMULATE_FAILURES_WITH_DELAY_MS) {
+        throw new CorruptedException("Emulated VFS failure at time " + elapsedMs);
+      }
+    }
+
     StampedLock recordLock = fileRecordLock.lockFor(parentId);
     long stamp = recordLock.readLock();
     try {

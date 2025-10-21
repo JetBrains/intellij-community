@@ -264,20 +264,24 @@ public final class PersistentFSConnection {
       records.setErrorsAccumulated(corruptions);
       if (corruptions == 1) {
         //Persist ErrorsAccumulated.
-        // No need to force() on each error -- we don't bother not persist exact count of errors,
-        // but we do want to persist (errors > 0) transition:
+        // No need to force() on _each_ error -- we don't bother not persisting _exact_ number of errors,
+        // but we _do_ want to persist (errors == 0) -> (errors > 0) transition:
         force();
       }
-      corruptionNotificationThrottler.runThrottled(System.nanoTime(), () -> {
-        Application app = ApplicationManager.getApplication();
-        if (app != null && !app.isHeadlessEnvironment()) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isHeadlessEnvironment()) {
+        corruptionNotificationThrottler.runThrottled(System.nanoTime(), () -> {
           boolean insistRestart = (corruptions >= INSIST_TO_RESTART_AFTER_ERRORS_COUNT);
           showCorruptionNotification(insistRestart);
-        }
-      });
+        });
+      }
+      else {
+        LOG.warn("No Application to show Notification about VFS corruption", cause);
+      }
     }
-    catch (IOException ioException) {
-      LOG.error(ioException);
+    catch (Throwable t) {
+      LOG.error(t);
+      cause.addSuppressed(t);
     }
   }
 
