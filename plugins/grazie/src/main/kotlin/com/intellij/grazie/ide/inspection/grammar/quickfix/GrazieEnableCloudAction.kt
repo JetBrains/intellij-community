@@ -9,6 +9,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.icons.GrazieIcons
+import com.intellij.grazie.utils.isPromotionAllowed
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
@@ -18,7 +19,7 @@ import javax.swing.Icon
 class GrazieEnableCloudAction : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction {
 
   override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean =
-    !GrazieCloudConnector.hasAdditionalConnectors() && GrazieConfig.get().explicitlyChosenProcessing == null
+    isPromotionAllowed && !GrazieCloudConnector.hasAdditionalConnectors() && GrazieConfig.get().explicitlyChosenProcessing == null
 
   override fun getName(): @IntentionName String = GrazieBundle.message("grazie.cloud.enable.action.text")
 

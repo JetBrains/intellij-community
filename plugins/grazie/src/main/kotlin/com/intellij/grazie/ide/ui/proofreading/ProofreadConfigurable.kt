@@ -15,6 +15,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.GrazieRemote.getLanguagesBasedOnUserAgreement
 import com.intellij.grazie.remote.LanguageDownloader
+import com.intellij.grazie.utils.isPromotionAllowed
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -137,6 +138,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
   }
 
   private fun Panel.cloudSettings() {
+    if (!isPromotionAllowed) return
     row {
       label(GrazieBundle.message("grazie.status.bar.widget.language.processing.label.text"))
 
