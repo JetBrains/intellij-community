@@ -299,6 +299,7 @@ com.intellij.codeInspection.LocalQuickFix
 - sf:EMPTY_ARRAY:com.intellij.codeInspection.LocalQuickFix[]
 - availableInBatchMode():Z
 - s:from(com.intellij.modcommand.ModCommandAction):com.intellij.codeInspection.LocalQuickFix
+- s:from(com.intellij.modcommand.ModCommandAction,Z):com.intellij.codeInspection.LocalQuickFix
 - generatePreview(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getRangesToHighlight(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):java.util.List
 - s:notNullElements(com.intellij.codeInspection.LocalQuickFix):com.intellij.codeInspection.LocalQuickFix[]
@@ -637,6 +638,7 @@ com.intellij.modcommand.ModCommandService
 - a:wrap(com.intellij.modcommand.ModCommandAction):com.intellij.codeInsight.intention.IntentionAction
 - a:wrapToLocalQuickFixAndIntentionActionOnPsiElement(com.intellij.modcommand.ModCommandAction,com.intellij.psi.PsiElement):com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction):com.intellij.codeInspection.LocalQuickFix
+- a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction,Z):com.intellij.codeInspection.LocalQuickFix
 com.intellij.modcommand.ModPsiUpdater
 - com.intellij.modcommand.ModPsiNavigator
 - a:cancel(java.lang.String):V
