@@ -555,10 +555,10 @@
                               Otherwise only the affected files will be refreshed.
                               Affects only a subset of Git operations.
                               The option is needed to debug possible &quot;incomplete VFS refresh&quot; reports, if they appear."/>
-    <registryKey key="git.log.use.index.for.picked.commits.highlighting" defaultValue="true"
+    <registryKey key="git.log.use.index.for.find.picked.commits" defaultValue="true"
                  description="Find cherry-picked commits not only looking at patches using 'git cherry'
                               but also by matching commit author, author time and &quot;cherry picked from commit &lt;hash&gt;&quot; suffix."/>
-    <registryKey key="git.log.fast.picked.commits.highlighting" defaultValue="true"
+    <registryKey key="git.log.fast.find.picked.commits" defaultValue="true"
                  description="Find cherry-picked commits not looking at patches using 'git cherry'
                               but by matching commit author, author time and commit message. This allows to find commits that were cherry-picked with conflicts
                               and without adding &quot;cherry picked from commit &lt;hash&gt;&quot; suffix. Requires &quot;git.log.use.index.for.picked.commits.highlighting&quot; set to true."/>
