@@ -697,8 +697,9 @@ public final class GradleExecutionHelper {
     };
     issue.setTitle(GradleBundle.message("gradle.build.issue.gradle.outdated.minor.version.title"));
     issue.addDescription(GradleBundle.message(
-      "gradle.build.issue.gradle.outdated.minor.version.description", currentVersion.getVersion(), latestVersion.getVersion()
+      "gradle.build.issue.gradle.outdated.minor.version.description", currentVersion.getVersion()
     ));
+    issue.addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", latestVersion.getVersion()));
     issue.addGradleVersionQuickFix(context.getProjectPath(), latestVersion);
 
     // find the responsible inspection and offer a link to its settings if available

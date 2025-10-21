@@ -87,8 +87,10 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
       val newVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion).version
       Assertions.assertThat(consoleText)
         .isEqualToIgnoringNewLines("""
-          Gradle version $oldVersion is currently being used. We recommend upgrading to Gradle version $newVersion.
-      
+          Gradle $oldVersion is not the latest minor version.
+
+          We recommend upgrading to Gradle version $newVersion.
+          
           Possible solutions:
            - Upgrade to Gradle $newVersion and re-sync
            - Edit inspection settings
