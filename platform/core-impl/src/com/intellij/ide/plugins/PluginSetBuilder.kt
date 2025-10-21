@@ -46,7 +46,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         plugin.isMarkedForLoading = false
       }
 
-      val pluginString = component.joinToString(separator = ", ") { "'${it.name}'" }
+      val pluginString = component.joinToString(separator = ", ") { "'${it.name} (${it.pluginId.idString}${if (it.contentModuleName != null) ":" + it.contentModuleName else ""})'" }
       errors.add(PluginLoadingError(
         reason = null,
         htmlMessageSupplier = Supplier {
