@@ -43,7 +43,6 @@ import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -1231,7 +1230,7 @@ class InfoAndProgressPanel internal constructor(
 }
 
 private class CounterLabel : JPanel(), UISettingsListener {
-  private val label: JBLabel
+  private val textPanel: TextPanel
   private var numberOfProgresses: Int = 0
   private var isProgressVisible: Boolean = false
 
@@ -1241,18 +1240,17 @@ private class CounterLabel : JPanel(), UISettingsListener {
   private var minimumSize: Dimension? = null
 
   init {
-    label = createLabel()
+    textPanel = createTextPanel()
     layout = BorderLayout()
-    add(label, BorderLayout.CENTER)
+    add(textPanel, BorderLayout.CENTER)
     isOpaque = false
     setNumber(0, isProgressVisible =false, isPopupShowing = false)
   }
 
-  private fun createLabel(): JBLabel {
-    val label = JBLabel()
-    label.font = TextPanel.getFont()
-    label.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
-    return label
+  private fun createTextPanel(): TextPanel {
+    val panel = TextPanel()
+    panel.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
+    return panel
   }
 
 
@@ -1269,14 +1267,14 @@ private class CounterLabel : JPanel(), UISettingsListener {
 
     refreshTextForMinimumSizeIfNeeded(numberToShow)
 
-    val labelText = when {
+    val panelText = when {
       isPopupShowing -> ""
       numberToShow <= 0 -> ""
       !isProgressVisible && numberToShow == 1 -> ""
       isProgressVisible -> "+${numberToShow}"
       else -> "${numberToShow}"
     }
-    label.text = labelText
+    textPanel.text = panelText
   }
 
   private fun refreshTextForMinimumSizeIfNeeded(numberToShow: Int) {
@@ -1300,7 +1298,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
     val texts = textsForMinimumSize
     if (texts == null || texts.isEmpty()) return super.getPreferredSize()
 
-    val probe = createLabel()
+    val probe = createTextPanel()
 
     var minSize = Dimension(0, 0)
     for (text in texts) {
