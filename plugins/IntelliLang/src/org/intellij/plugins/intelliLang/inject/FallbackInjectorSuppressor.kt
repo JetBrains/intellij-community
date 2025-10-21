@@ -5,13 +5,13 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
-private val EP = LanguageExtension<DefaultInjectorSuppressor>("org.intellij.intelliLang.defaultInjectorSuppressor")
+private val EP = LanguageExtension<FallbackInjectorSuppressor>("org.intellij.intelliLang.fallbackInjectorSuppressor")
 
 @ApiStatus.Internal
 fun isSuppressedFor(contextElement: PsiElement): Boolean = EP.allForLanguage(contextElement.language).any { it.isSuppressedFor(contextElement) }
 
 /**
- * This extension allows you to suppress injections by [DefaultLanguageInjector].
+ * This extension allows you to suppress injections by [DefaultLanguageInjectionPerformer] in [DefaultLanguageInjector].
  *
  * Possible use case:
  *
@@ -24,6 +24,6 @@ fun isSuppressedFor(contextElement: PsiElement): Boolean = EP.allForLanguage(con
  * tasks to the backend. Note that this approach may introduce latency depending on network conditions.
  */
 @ApiStatus.Experimental
-interface DefaultInjectorSuppressor {
+interface FallbackInjectorSuppressor {
   fun isSuppressedFor(contextElement: PsiElement): Boolean
 }
