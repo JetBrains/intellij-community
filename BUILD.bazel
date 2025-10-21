@@ -558,6 +558,7 @@ jvm_library(
     "//plugins/maven/maven40-server-impl:server-m40",
     "//plugins/mcp-server:mcpserver",
     "//plugins/textmate/tests:tests_test_lib",
+    "//python/python-process-output:processOutput",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

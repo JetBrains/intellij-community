@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.rootManager
@@ -39,7 +40,7 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
   suspend fun okClicked(addEnvironment: PythonAddEnvironment<PathHolder.Eel>) {
     when (val r = addEnvironment.getOrCreateSdkWithModal(moduleOrProject)) {
       is Result.Failure -> {
-        errorSink.emit(r.error)
+        errorSink.emit(r.error, moduleOrProject.project)
         return
       }
       is Result.Success -> {

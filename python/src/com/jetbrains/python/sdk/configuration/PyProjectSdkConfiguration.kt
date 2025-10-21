@@ -18,6 +18,8 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonPluginDisposable
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor
@@ -48,7 +50,7 @@ object PyProjectSdkConfiguration {
     thisLogger().debug("Configuring sdk using ${createSdkInfoWithTool.toolId}")
 
     val sdk = createSdkInfoWithTool.createSdkInfo.sdkCreator(needsConfirmation).getOr {
-      ShowingMessageErrorSync.emit(it.error)
+      ShowingMessageErrorSync.emit(it.error, module.project)
       return@withContext true
     } ?: return@withContext false
 

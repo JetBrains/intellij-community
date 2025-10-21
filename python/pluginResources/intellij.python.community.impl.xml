@@ -23,6 +23,7 @@
     <module name="intellij.python.community.impl.venv"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.sdkConfigurator.common"/>
+    <module name="intellij.python.processOutput"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -86,7 +87,6 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
   </extensions>
-
 
 
   <projectListeners>

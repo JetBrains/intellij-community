@@ -73,7 +73,8 @@ internal object ExecServiceImpl : ExecService {
             }
             return@withTimeout processLauncher.createExecError(
               messageToUser = additionalMessage,
-              errorReason = ExecErrorReason.UnexpectedProcessTermination(output)
+              errorReason = ExecErrorReason.UnexpectedProcessTermination(output),
+              loggedProcessId = process.loggedProcess.id,
             )
           }
           Result.success(successResult)
@@ -83,7 +84,8 @@ internal object ExecServiceImpl : ExecService {
         processLauncher.killAndJoin()
         processLauncher.createExecError(
           messageToUser = PyExecBundle.message("py.exec.timeout.error", description, options.timeout),
-          errorReason = ExecErrorReason.Timeout
+          errorReason = ExecErrorReason.Timeout,
+          loggedProcessId = process.loggedProcess.id,
         )
       }
       return@coroutineScope result
@@ -91,12 +93,17 @@ internal object ExecServiceImpl : ExecService {
   }
 }
 
-private fun <T : ExecErrorReason> ProcessLauncher.createExecError(messageToUser: @Nls String, errorReason: T): Result.Failure<ExecErrorImpl<T>> =
+private fun <T : ExecErrorReason> ProcessLauncher.createExecError(
+  messageToUser: @Nls String,
+  errorReason: T,
+  loggedProcessId: Int? = null,
+): Result.Failure<ExecErrorImpl<T>> =
   ExecErrorImpl(
     exe = exeForError,
     args = args.toTypedArray(),
     additionalMessageToUser = messageToUser,
-    errorReason = errorReason
+    errorReason = errorReason,
+    loggedProcessId = loggedProcessId,
   ).logAndFail()
 
 

@@ -356,6 +356,7 @@ jvm_library(
     "//python/python-poetry/common",
     "//python/python-uv/common",
     "//python/common",
+    "//python/python-process-output:processOutput",
   ],
   exports = [
     "//python/openapi:community",

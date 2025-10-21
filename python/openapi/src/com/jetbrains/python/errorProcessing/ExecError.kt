@@ -14,6 +14,8 @@ import com.jetbrains.python.PyCommunityBundle
 import org.jetbrains.annotations.Nls
 import kotlin.io.path.Path
 
+private val separatorRegex = Regex("[/\\\\]+")
+
 /**
  * Exe might sit on eel (new one) or on target (legacy)
  */
@@ -28,6 +30,12 @@ sealed interface Exe {
       }
     }
   }
+
+  fun pathParts(): List<String> =
+    when (this) {
+      is OnEel -> eelPath.parts
+      is OnTarget -> path.split(separatorRegex)
+    }
 
   data class OnEel(val eelPath: EelPath) : Exe {
     override fun toString(): String = eelPath.toString()
@@ -55,6 +63,11 @@ class ExecErrorImpl<T : ExecErrorReason>(
    * optional message to be displayed to the user: Why did we run this process. I.e "running pip to install package".
    */
   val additionalMessageToUser: @NlsContexts.DialogTitle String? = null,
+
+  /**
+   * Optional association with a [com.intellij.python.community.execService.impl.LoggedProcess] by its id.
+   */
+  val loggedProcessId: Int? = null,
 ) : PyError(getExecErrorMessage(exe.toString(), args, additionalMessageToUser, errorReason)) {
   val asCommand: String get() = (arrayOf(exe.toString()) + args).joinToString(" ")
 }

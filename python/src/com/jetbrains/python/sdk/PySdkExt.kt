@@ -34,6 +34,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -332,7 +333,7 @@ suspend fun PyDetectedSdk.setupSdk(
   doAssociate: Boolean,
 ) {
   val newSdk = setupAssociated(existingSdks, module.basePath, doAssociate).getOr {
-    ShowingMessageErrorSync.emit(it.error)
+    ShowingMessageErrorSync.emit(it.error, module.project)
     return
   }
   withContext(Dispatchers.EDT) {

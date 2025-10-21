@@ -19,6 +19,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.util.asDisposable
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
@@ -39,8 +40,8 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
 
   private val packagingScope: CoroutineScope = PyPackageCoroutine.getScope(project)
     .childScope("Packages SDK Controller", TraceContext(PyBundle.message("tracecontext.packages.sdk.controller"), null)).also {
-    Disposer.register(this, it.asDisposable())
-  }
+      Disposer.register(this, it.asDisposable())
+    }
 
   private val toolWindowService: PyPackagingToolWindowService
     get() = project.service<PyPackagingToolWindowService>()

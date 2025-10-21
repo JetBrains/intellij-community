@@ -20,7 +20,10 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageName
@@ -197,36 +200,42 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()) {
-    PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    managerUI.installPackagesRequestBackground(installRequest, options)?.let {
-      handleActionCompleted(
-        text = message("python.packaging.notification.installed", installRequest.title),
-        displayId = PYTHON_PACKAGE_INSTALLED
-      )
+    withContext(TraceContext(message("tracecontext.packaging.tool.window.install"))) {
+      PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
+      managerUI.installPackagesRequestBackground(installRequest, options)?.let {
+        handleActionCompleted(
+          text = message("python.packaging.notification.installed", installRequest.title),
+          displayId = PYTHON_PACKAGE_INSTALLED
+        )
+      }
+      toolWindowPanel?.clearFocus()
     }
-    toolWindowPanel?.clearFocus()
   }
 
   suspend fun installPackage(pkg: PythonPackage, options: List<String> = emptyList()) {
-    val installRequest = manager.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return
-    PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    managerUI.installPackagesRequestBackground(installRequest, options)?.let {
-      handleActionCompleted(
-        text = message("python.packaging.notification.installed", installRequest.title),
-        displayId = PYTHON_PACKAGE_INSTALLED
-      )
+    withContext(TraceContext(message("tracecontext.packaging.tool.window.install"))) {
+      val installRequest = manager.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return@withContext
+      PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
+      managerUI.installPackagesRequestBackground(installRequest, options)?.let {
+        handleActionCompleted(
+          text = message("python.packaging.notification.installed", installRequest.title),
+          displayId = PYTHON_PACKAGE_INSTALLED
+        )
+      }
+      toolWindowPanel?.clearFocus()
     }
-    toolWindowPanel?.clearFocus()
   }
 
   suspend fun deletePackage(vararg selectedPackages: InstalledPackage) {
-    PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
-    managerUI.uninstallPackagesBackground(selectedPackages.map { it.instance.name }) ?: return
-    handleActionCompleted(
-      text = message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }),
-      displayId = PYTHON_PACKAGE_DELETED
-    )
-    toolWindowPanel?.clearFocus()
+    withContext(TraceContext(message("tracecontext.packaging.tool.window.delete"))) {
+      PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
+      managerUI.uninstallPackagesBackground(selectedPackages.map { it.instance.name }) ?: return@withContext
+      handleActionCompleted(
+        text = message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }),
+        displayId = PYTHON_PACKAGE_DELETED
+      )
+      toolWindowPanel?.clearFocus()
+    }
   }
 
   @ApiStatus.Internal
@@ -257,20 +266,23 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         toolWindowPanel?.setEmpty()
       }
     }
-    refreshInstalledPackages()
+
+    withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      refreshInstalledPackages()
+    }
   }
 
   private fun subscribeToChanges() {
     val connection = project.messageBus.connect(this)
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(sdk: Sdk) {
-        if (currentSdk == sdk) serviceScope.launch(Dispatchers.Main) {
+        if (currentSdk == sdk) serviceScope.launch(Dispatchers.Main + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
           refreshInstalledPackages()
         }
       }
 
       override fun outdatedPackagesChanged(sdk: Sdk) {
-        if (currentSdk == sdk) serviceScope.launch(Dispatchers.Main) {
+        if (currentSdk == sdk) serviceScope.launch(Dispatchers.Main + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
           refreshInstalledPackages()
         }
 
