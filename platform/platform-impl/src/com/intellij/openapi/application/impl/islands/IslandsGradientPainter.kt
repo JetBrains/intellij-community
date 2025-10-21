@@ -50,6 +50,11 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
     return
   }
 
+  val paintRgb = (g.paint as? Color)?.rgb
+  if (paintRgb != mainColor.rgb) {
+    return
+  }
+
   val project = frame.project ?: return
 
   if (Registry.`is`("idea.islands.color.gradient.enabled", false)) {
