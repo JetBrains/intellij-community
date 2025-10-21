@@ -17,6 +17,7 @@ import com.intellij.uast.UastVisitorAdapter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
@@ -25,8 +26,11 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 @ApiStatus.Internal
 @VisibleForTesting
 class UseOptimizedEelFunctions : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-    UastVisitorAdapter(object : AbstractUastNonRecursiveVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (ModuleUtilCore.findModuleForPsiElement(holder.file)?.let(PsiUtil::isPluginModule) != true) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return UastVisitorAdapter(object : AbstractUastNonRecursiveVisitor() {
       private val visitedCalls = hashSetOf<UExpression>()
 
       override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
@@ -71,6 +75,7 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
         return true
       }
     }, true)
+  }
 
   private fun handleMethod(holder: ProblemsHolder, node: UCallExpression, fqn: String) {
     val methodPsi = node.methodIdentifier?.sourcePsi ?: return

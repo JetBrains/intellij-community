@@ -676,7 +676,7 @@ class UseOptimizedEelFunctionsTest {
         commit()
       }
 
-      for (directory in listOf("platform/eel/src", "platform/util/src", "platform/util-rt/src")) {
+      for (directory in listOf("platform/eel/src", "platform/util/src", "platform/util-rt/src", "platform/platform-api/src")) {
         PsiTestUtil.addSourceContentToRoots(
           module,
           Path.of(PathManager.getCommunityHomePath(), directory).refreshAndGetVirtualDirectory(),
