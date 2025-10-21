@@ -49,8 +49,8 @@
     },
 
     "MainWindow.background": "BackgroundDark",
-    "Borders.color": "BorderDark",
-    "Borders.ContrastBorderColor": "BorderDark",
+    "Borders.color": "#E8E9ED",
+    "Borders.ContrastBorderColor": "#E8E9ED",
 
     "MainWindow.Tab": {
       "selectedBackground": "BackgroundMid",
@@ -76,7 +76,7 @@
       "Header": {
         "background": "BackgroundMid",
         "inactiveBackground": "BackgroundMid",
-        "borderColor": "BorderDark"
+        "borderColor": "#E8E9ED"
       },
       "HeaderTab": {
         "hoverBackground": "HoverBackground",
