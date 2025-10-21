@@ -1348,7 +1348,10 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def accepts_anything(x: str) -> None:
                                pass
                            
-                           func(42, <warning descr="Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead">accepts_anything</warning>)""")
+                           # Bug: Expected error.
+                           # `Callable[[str], None]` is assignable to `Callable[[int | str], None]`.
+                           # Thus, substitution `T` -> `int | str` is considered valid.
+                           func(42, accepts_anything)""")
     );
   }
 

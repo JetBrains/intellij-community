@@ -3367,4 +3367,33 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    var: Template = Concrete()
                    """);
   }
+
+  // PY-25989 PY-84544
+  public void testTypeVarWidening() {
+    myFixture.enableInspections(PyAssertTypeInspection.class);
+    doTestByText("""
+                   from collections.abc import Iterable
+                   from typing import assert_type
+
+
+                   # PY-84544
+                   def foo(iterable: Iterable[int] | Iterable[str]) -> None:
+                       assert_type(next(iter(iterable)), int | str)
+
+
+                   # PY-25989
+                   assert_type(max(1, 2.6), float)
+                   assert_type(max(2.6, 1), float)
+                   max(1, <warning descr="Expected type 'int' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead">object()</warning>)    
+
+
+                   def bar[T: int, str](v1: T, v2: T) -> T:
+                       if (bool(input())):
+                           return v1
+                       return v2
+
+
+                   _ = bar(1, <warning descr="Expected type 'int' (matched generic type 'T ≤: int'), got 'str' instead">"a"</warning>)
+                   """);
+  }
 }
