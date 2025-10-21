@@ -8,6 +8,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -432,17 +433,19 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
   @Override
   public void dispose() {
     // clear all possible inner fields that may still have links to debugger objects
-    setModel(null);
-    myTreeModel.setRoot(null);
-    setCellRenderer(null);
-    UIUtil.dispose(this);
-    setLeadSelectionPath(null);
-    setAnchorSelectionPath(null);
-    accessibleContext = null;
-    removeComponentListener(myMoveListener);
-    removeTreeExpansionListener(myTreeExpansionListener);
-    myListeners.clear();
-    disposeRestorer();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      setModel(null);
+      myTreeModel.setRoot(null);
+      setCellRenderer(null);
+      UIUtil.dispose(this);
+      setLeadSelectionPath(null);
+      setAnchorSelectionPath(null);
+      accessibleContext = null;
+      removeComponentListener(myMoveListener);
+      removeTreeExpansionListener(myTreeExpansionListener);
+      myListeners.clear();
+      disposeRestorer();
+    });
   }
 
   void setCurrentRestorer(@NotNull XDebuggerTreeRestorer restorer) {
