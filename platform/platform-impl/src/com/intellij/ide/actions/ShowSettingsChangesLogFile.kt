@@ -2,7 +2,6 @@
 
 package com.intellij.ide.actions
 
-import com.intellij.LoggingSettingsChangesListener
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
