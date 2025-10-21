@@ -723,7 +723,7 @@ public class AllIcons {
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocusedOn = load("expui/ide/feedbackRatingFocusedOn.svg", "ide/feedbackRatingFocusedOn.svg", 1557121691, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOn = load("expui/ide/feedbackRatingOn.svg", "ide/feedbackRatingOn.svg", 1102075748, 0);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOnFocused = load("ide/feedbackRatingOnFocused.svg", -1692491005, 0);
-    /** 16x16 */ public static final @NotNull Icon Gift = load("ide/gift.svg", -1423934596, 2);
+    /** 16x16 */ public static final @NotNull Icon Gift = load("expui/ide/gift.svg", "ide/gift.svg", -1423934596, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 756397077, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 1387966645, 2);
     /** 16x16 */ public static final @NotNull Icon HectorSyntax = load("ide/hectorSyntax.svg", -415840178, 2);

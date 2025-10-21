@@ -2040,7 +2040,7 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey FeedbackRatingOnFocused = new IntelliJIconKey("ide/feedbackRatingOnFocused.svg", "ide/feedbackRatingOnFocused.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Gift = new IntelliJIconKey("ide/gift.svg", "ide/gift.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey Gift = new IntelliJIconKey("ide/gift.svg", "expui/ide/gift.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey HectorOff = new IntelliJIconKey("ide/hectorOff.svg", "ide/hectorOff.svg", AllIconsKeys.class);
