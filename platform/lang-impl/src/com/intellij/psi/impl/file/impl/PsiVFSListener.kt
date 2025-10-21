@@ -42,15 +42,13 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.util.FileContentUtilCore
 import one.util.streamex.StreamEx
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<PsiVFSListener>()
 
 @Service(Service.Level.PROJECT)
-@Internal
-class PsiVFSListener internal constructor(private val project: Project) {
+private class PsiVFSListener(private val project: Project) {
   private val myProjectRootManager: ProjectRootManager = ProjectRootManager.getInstance(project)
   private val manager = PsiManagerEx.getInstanceEx(project)
   private val fileManager = manager.fileManager as FileManagerEx
@@ -511,7 +509,7 @@ class PsiVFSListener internal constructor(private val project: Project) {
     )
   }
 
-  internal fun handleVfsChangeWithoutPsi(vFile: VirtualFile) {
+  fun handleVfsChangeWithoutPsi(vFile: VirtualFile) {
     if (!reportedUnloadedPsiChange && isInRootModel(vFile)) {
       fileManager.firePropertyChangedForUnloadedPsi()
       reportedUnloadedPsiChange = true
