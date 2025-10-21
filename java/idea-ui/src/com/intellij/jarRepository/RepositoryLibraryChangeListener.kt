@@ -10,6 +10,15 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 
 private class RepositoryLibraryChangeListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
+    val settings = RepositoryLibrarySettings.getInstanceOrDefaults(project)
+    val jarRepositoryAutoBindEnabled = settings.isJarRepositoryAutoBindEnabled()
+    val sha256ChecksumAutoBuildEnabled = settings.isSha256ChecksumAutoBuildEnabled()
+
+    // exit fast, avoid heavy computations if the feature is not enabled
+    if (!jarRepositoryAutoBindEnabled && !sha256ChecksumAutoBuildEnabled) {
+      return
+    }
+
     val changedLibraryEntities = mutableSetOf<LibraryEntity?>()
 
     // Handle library roots change
@@ -28,10 +37,9 @@ private class RepositoryLibraryChangeListener(private val project: Project) : Wo
       }
     }
 
-    val settings = RepositoryLibrarySettings.getInstanceOrDefaults(project)
     val utils = RepositoryLibraryUtils.getInstance(project)
     utils.computeExtendedPropertiesFor(libraries = changedLibraryEntities.filterNotNull().toSet(),
-                                       buildSha256Checksum = settings.isSha256ChecksumAutoBuildEnabled(),
-                                       guessAndBindRemoteRepository = settings.isJarRepositoryAutoBindEnabled())
+                                       buildSha256Checksum = sha256ChecksumAutoBuildEnabled,
+                                       guessAndBindRemoteRepository = jarRepositoryAutoBindEnabled)
   }
 }
