@@ -671,7 +671,14 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
       .andNot(IN_STRING_LITERAL)
       ,
       new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.TRUE, PyNames.FALSE, PyNames.NONE));
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(IN_ANNOTATION),
+           new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.NONE));
+  }
 
+  private void addAsync() {
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
@@ -688,13 +695,20 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
              .and(PY35)
-             .afterLeaf(psiElement().withElementType(PyTokenTypes.IDENTIFIER).withText(PyNames.ASYNC)),
-           new PyKeywordCompletionProvider(PyNames.DEF, PyNames.WITH, PyNames.FOR));
-    extend(CompletionType.BASIC,
-           psiElement()
-             .withLanguage(PythonLanguage.getInstance())
-             .and(IN_ANNOTATION),
-           new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.NONE));
+             .afterLeaf(psiElement().withElementType(PyTokenTypes.ASYNC_KEYWORD))
+             .andNot(IN_COMMENT)
+             .andNot(IN_STRING_LITERAL),
+           new CompletionProvider<>() {
+             @Override
+             protected void addCompletions(
+               @NotNull CompletionParameters parameters,
+               @NotNull ProcessingContext context,
+               @NotNull CompletionResultSet result
+             ) {
+               putKeywords(result, TailTypes.noneType(), PyNames.DEF, PyNames.WITH, PyNames.FOR);
+               result.stopHere();
+             }
+           });
   }
 
   private void addAs() {
@@ -805,6 +819,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
     addInfixOperators();
     addNot();
     addAs();
+    addAsync();
     addImportInFrom();
     addPy3kLiterals();
     //addExprIf();
