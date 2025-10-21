@@ -55,6 +55,7 @@ class ChangesViewCommitPanel internal constructor(
     val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("ChangesViewCommitPanel")
     Disposer.register(this) { scope.cancel() }
     viewModel.inclusionChanged.onEach { writeIntentReadAction { fireInclusionChanged() } }.launchIn(scope)
+    viewModel.setShowCheckboxes(true)
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
