@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Ref
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -152,6 +151,7 @@ class ThreadScopeCheckpoint(val context: CoroutineContext) : AbstractCoroutineCo
   }
 }
 
+@ConsistentCopyVisibility
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 data class ChildContext internal constructor(
@@ -521,7 +521,7 @@ internal fun <T, R> capturePropagationContext(function: Function<T, R>): Functio
   return f
 }
 
-internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callable<V>, ns: Long): MyScheduledFutureTask<V> {
+internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callable<V>, ns: Long): FutureTask<V> {
   if (isContextAwareComputation(c)) {
     return wrapper.MyScheduledFutureTask(c, ns)
   }
@@ -530,8 +530,7 @@ internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callab
   val cancellationTracker = AtomicBoolean(false)
   val wrappedCallable = ContextCallable(false, childContext, callable, cancellationTracker)
 
-  val cont = childContext.continuation
-  return CancellationScheduledFutureTask(wrapper, childContext, cont?.context?.job, cancellationTracker, wrappedCallable, ns)
+  return CancellationScheduledFutureTask(wrapper, childContext, cancellationTracker, wrappedCallable, ns)
 }
 
 internal fun capturePropagationContext(
@@ -539,7 +538,7 @@ internal fun capturePropagationContext(
   runnable: Runnable,
   ns: Long,
   period: Long,
-): MyScheduledFutureTask<*> {
+): FutureTask<*> {
   val childContext = createChildContext("$runnable (scheduled: $ns, period: $period)")
   val capturedRunnable1 = captureClientIdInRunnable(runnable)
   val capturedRunnable2 = Runnable {
@@ -551,15 +550,13 @@ internal fun capturePropagationContext(
     }
   }
   val cont = childContext.continuation
-  val (finalCapturedRunnable, job) = if (cont != null) {
-    val capturedRunnable3 = PeriodicCancellationRunnable(childContext.continuation, capturedRunnable2)
-    val childJob = cont.context.job
-    capturedRunnable3 to childJob
+  val finalCapturedRunnable = if (cont != null) {
+    PeriodicCancellationRunnable(cont, capturedRunnable2)
   }
   else {
-    capturedRunnable2 to null
+    capturedRunnable2
   }
-  return CancellationScheduledFutureTask<Void>(wrapper, childContext, job, finalCapturedRunnable, ns, period)
+  return CancellationScheduledFutureTask<Void>(wrapper, childContext, finalCapturedRunnable, ns, period)
 }
 
 @ApiStatus.Internal
