@@ -1023,10 +1023,7 @@ fun analyzeArguments(
         if (keywordArgument != null && !(!hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName))) {
           mappedParameters.put(keywordArgument, parameter)
         }
-        else if (variadicPositionalArguments.isEmpty() && variadicKeywordArguments.isEmpty() && !parameter.hasDefaultValue()) {
-          unmappedParameters.add(parameter)
-        }
-        else {
+        else if (!variadicPositionalArguments.isEmpty() || !variadicKeywordArguments.isEmpty()) {
           if (!variadicPositionalArguments.isEmpty()) {
             parametersMappedToVariadicPositionalArguments.add(parameter)
           }
@@ -1034,6 +1031,9 @@ fun analyzeArguments(
             parametersMappedToVariadicKeywordArguments.add(parameter)
           }
           mappedVariadicArgumentsToParameters = true
+        }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
         }
       }
       else {
