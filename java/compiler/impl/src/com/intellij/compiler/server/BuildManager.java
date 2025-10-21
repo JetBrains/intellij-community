@@ -152,7 +152,6 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -915,8 +914,7 @@ public final class BuildManager implements Disposable {
         String optionsPath = PathManager.getOptionsPath();
 
         if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-          optionsPath = asEelPath(
-            transferLocalContentToRemote(Path.of(optionsPath), new EelPathUtils.TransferTarget.Temporary(eelDescriptor))).toString();
+          optionsPath = asEelPath(OptionsDirectoryProcessor.transferOptionsToRemote(PathManager.getOptionsDir(), eelDescriptor)).toString();
         }
         else {
           optionsPath = pathMapper.apply(optionsPath);
