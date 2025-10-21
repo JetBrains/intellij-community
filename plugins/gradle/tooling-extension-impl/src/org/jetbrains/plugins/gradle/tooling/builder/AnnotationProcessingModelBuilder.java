@@ -24,8 +24,6 @@ import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigI
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class AnnotationProcessingModelBuilder extends AbstractModelBuilderService {
@@ -85,15 +83,8 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
     if (isAtLeastGradle6_3) {
       return options.getGeneratedSourceOutputDirectory().get().getAsFile();
     }
-    // Use old method signature if Gradle is old enough
-    // Reflection helps avoid "cannot resolve method" compile time issue
-    try {
-      Method getAnnotationProcessor = options.getClass().getMethod("getAnnotationProcessorGeneratedSourcesDirectory");
-      return (File)getAnnotationProcessor.invoke(options);
-    }
-    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-      return null;
-    }
+    //noinspection deprecation
+    return options.getAnnotationProcessorGeneratedSourcesDirectory();
   }
 
   @Override
