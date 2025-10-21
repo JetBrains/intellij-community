@@ -570,7 +570,8 @@ private suspend fun processAndGetProductPluginContentModules(
       ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
       val gameToolsPluginXml = JDOMUtil.load(gameToolsPluginFile)
 
-      val unused = embedAndCollectProductModules(file = gameToolsPluginFile, xml = gameToolsPluginXml, xIncludePathResolver = xIncludePathResolver, context = context)
+      resolveNonXIncludeElement(original = gameToolsPluginXml, base = gameToolsPluginFile, pathResolver = xIncludePathResolver, trackSourceFile = true)
+      val unused = collectAndEmbedProductModules(root = gameToolsPluginXml, xIncludePathResolver = xIncludePathResolver, context = context)
 
       val gameToolsPluginData = JDOMUtil.write(gameToolsPluginXml)
       layout.withPatch { moduleOutputPatcher, _, _ ->

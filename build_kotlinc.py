@@ -22,7 +22,7 @@ def main():
     assert workspace.joinpath('WORKSPACE').exists(), 'failed to find workspace root'
 
     # Set properties not currently exposed as flags.
-    args.kotlinc_version = '2.2.255-dev-255'  # JetBrains uses this version for local builds.
+    args.kotlinc_version = '2.3.255-dev-255'  # Must match BOOTSTRAP_VERSION in project-model-updater.
     args.intellij_dir = workspace.joinpath('tools/idea')
     args.kotlinc_dir = workspace.joinpath('external/jetbrains/kotlin')
     args.gradlew = args.kotlinc_dir.joinpath('gradlew')
@@ -36,7 +36,8 @@ def main():
 # Builds Kotlinc (via Gradle).
 def build_kotlin_compiler(args):
     clean_args = ['clean', '--no-build-cache'] if args.clean else []
-    # The flags are similar to .idea/runConfigurations/Kotlin_Coop__Publish_compiler_for_ide_JARs.xml.
+    # This is similar to publishCompiler() in project-model-updater, we just tweak the options
+    # (e.g. we set teamcity=true to get optimized production artifacts).
     cmd = [
         str(args.gradlew),
         f'--project-dir={args.kotlinc_dir}',
@@ -44,11 +45,11 @@ def build_kotlin_compiler(args):
         *clean_args,
         'publishIdeArtifacts',
         ':prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish',
+        f'-Pkotlin.build.deploy-path={args.intellij_dir}/lib/kotlin-snapshot',  # From project-model-updater.
         '-Ppublish.ide.plugin.dependencies=true',
         f'-PdeployVersion={args.kotlinc_version}',
         f'-Pbuild.number={args.kotlinc_version}',
         '-Pteamcity=true',  # Makes this a release build rather than a dev build.
-        '-Pkotlin.build.isObsoleteJdkOverrideEnabled=true',  # Avoids the need for JDK 1.6.
     ]
     run_subprocess(cmd, args.cmd_env, 'Building the Kotlin compiler')
 

@@ -15,16 +15,15 @@ optional dependency on the module 'com.intellij.modules.androidstudio' declared 
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.platform.customization.min"/>
     <module name="intellij.debugger.streams.core"/>
+    <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <!-- From CLionPlugin.xml: -->
     <module name="intellij.rml.dfa.impl"/>
-    <!-- GRPC is normally only included in IntelliJ Ultimate, but we need it for the Android plugin. -->
-    <module name="intellij.libraries.grpc"/>
-    <module name="intellij.libraries.grpc.netty.shaded"/>
   </content>
-  <xi:include href="/META-INF/common-ide-modules.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
 </idea-plugin>

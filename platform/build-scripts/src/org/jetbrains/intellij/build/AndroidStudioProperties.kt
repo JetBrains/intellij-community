@@ -38,9 +38,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     private val INHERITED_PLUGINS = IDEA_BUNDLED_PLUGINS
 
     private val EXTRA_PLUGINS = listOf(
-      // Bundle the GitHub and GitLab plugins, just like IdeaCommunityProperties does.
-      "intellij.vcs.github.community",
-      "intellij.vcs.gitlab.community",
       // Bundle the ML completion ranking plugins, just like IntelliJ IDEA does (b/456525685).
       "intellij.completionMlRanking",
       "intellij.turboComplete",
@@ -49,6 +46,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.c",
       "intellij.cidr.debugger",
       "intellij.cidr.base",
+      // We bundle the WebP plugin because we encourage WebP image assets on Android.
+      // See for example https://developer.android.com/studio/write/convert-webp.
+      "intellij.webp",
     )
 
     private val EXCLUDED_PLUGINS = listOf(
@@ -57,7 +57,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.eclipse",
       "intellij.featuresTrainer",
       "intellij.java.byteCodeViewer",
-      "intellij.marketplaceMl", // Currently experimental and disabled by default anyway (in IJ 2024.2).
       "intellij.maven",
       "intellij.mcpserver",
     )
@@ -90,9 +89,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::simpleType",
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::toAttributes",
       )
-    // b/373746515: K2 mode
-    // TODO(b/377539365): revert this after branching
-    enableKotlinPluginK2ByDefault()
 
     productLayout.productImplementationModules = listOf(
       // From IdeaCommunityProperties:
