@@ -20,7 +20,6 @@ fleetModule {
   module {
     name = "fleet.build.fs"
     importedFromJps {}
-    test {}
   }
 }
 
