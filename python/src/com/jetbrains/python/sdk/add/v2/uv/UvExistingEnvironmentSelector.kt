@@ -4,20 +4,15 @@ package com.jetbrains.python.sdk.add.v2.uv
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
-import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
-import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PathValidator
-import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.add.v2.Version
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.isAssociatedWithModule
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
@@ -27,7 +22,7 @@ import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class UvExistingEnvironmentSelector<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?)
+internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?)
   : CustomExistingEnvironmentSelector<P>("uv", model, module) {
   override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.uvViewModel.toolValidator
   override val interpreterType: InterpreterType = InterpreterType.UV
@@ -68,7 +63,7 @@ internal class UvExistingEnvironmentSelector<P: PathHolder>(model: PythonMutable
     }.mapNotNull { env ->
       env.homePath?.let { path ->
         model.fileSystem.parsePath(path).successOrNull?.let { homePath ->
-          DetectedSelectableInterpreter(homePath, env.version, false)
+          DetectedSelectableInterpreter(homePath, PythonInfo(env.version), false)
         }
       }
     }

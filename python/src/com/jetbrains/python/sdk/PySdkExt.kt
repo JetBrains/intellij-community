@@ -511,7 +511,6 @@ fun PyDetectedSdk.pyvenvContains(pattern: String): Boolean = runReadAction {
   if (isTargetBased()) {
     return@runReadAction false
   }
-  homeDirectory?.toNioPathOrNull()?.parent?.parent?.resolve("pyvenv.cfg")
   val pyvenvFile = homeDirectory?.parent?.parent?.findFile("pyvenv.cfg") ?: return@runReadAction false
   val text = FileDocumentManager.getInstance().getDocument(pyvenvFile)?.text ?: return@runReadAction false
   pattern in text

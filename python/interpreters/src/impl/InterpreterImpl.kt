@@ -8,20 +8,20 @@ import com.intellij.python.community.interpreters.InvalidInterpreter
 import com.intellij.python.community.interpreters.ValidInterpreter
 import com.intellij.python.community.services.shared.PythonWithName
 import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 
 internal class ValidInterpreterImpl(
-  override val languageLevel: LanguageLevel,
+  override val pythonInfo: PythonInfo,
   override val asExecutablePython: ExecutablePython,
   private val mixin: SdkMixin,
   override val ui: PyToolUIInfo?,
 ) : ValidInterpreter, InterpreterFields by mixin {
   override fun toString(): String {
-    return "ValidInterpreterImpl(languageLevel=$languageLevel, asExecutablePython=$asExecutablePython)"
+    return "ValidInterpreterImpl(pythonInfo=$pythonInfo, asExecutablePython=$asExecutablePython)"
   }
 }
 

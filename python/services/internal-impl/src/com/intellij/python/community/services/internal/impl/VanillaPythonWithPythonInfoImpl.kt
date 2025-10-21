@@ -4,16 +4,16 @@ package com.intellij.python.community.services.internal.impl
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.community.execService.python.validatePythonAndGetVersion
-import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.concurrentLimit
-import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.createByPythonBinary
-import com.intellij.python.community.services.shared.LanguageLevelComparator
-import com.intellij.python.community.services.shared.PythonWithLanguageLevel
-import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl.Companion.concurrentLimit
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl.Companion.createByPythonBinary
+import com.intellij.python.community.services.shared.PythonInfoComparator
+import com.intellij.python.community.services.shared.PythonWithPythonInfo
+import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -25,10 +25,10 @@ import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
 
 @Internal
-class VanillaPythonWithLanguageLevelImpl internal constructor(
+class VanillaPythonWithPythonInfoImpl internal constructor(
   override val pythonBinary: PythonBinary,
-  override val languageLevel: LanguageLevel,
-) : VanillaPythonWithLanguageLevel, Comparable<PythonWithLanguageLevel> {
+  override val pythonInfo: PythonInfo,
+) : VanillaPythonWithPythonInfo, Comparable<PythonWithPythonInfo> {
 
   companion object {
 
@@ -38,7 +38,7 @@ class VanillaPythonWithLanguageLevelImpl internal constructor(
      * Like [createByPythonBinary] but runs in parallel up to [concurrentLimit]
      * @return python path -> python with language level sorted from highest to lowest.
      */
-    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, PyResult<VanillaPythonWithLanguageLevel>>> =
+    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, PyResult<VanillaPythonWithPythonInfo>>> =
       coroutineScope {
         pythonBinaries.map {
           async {
@@ -49,9 +49,9 @@ class VanillaPythonWithLanguageLevelImpl internal constructor(
         }.awaitAll()
       }.sortedBy { it.first }
 
-    suspend fun createByPythonBinary(pythonBinary: PythonBinary): PyResult<VanillaPythonWithLanguageLevelImpl> {
-      val languageLevel = pythonBinary.validatePythonAndGetVersion().getOr { return it }
-      return Result.success(VanillaPythonWithLanguageLevelImpl(pythonBinary, languageLevel))
+    suspend fun createByPythonBinary(pythonBinary: PythonBinary): PyResult<VanillaPythonWithPythonInfoImpl> {
+      val pythonInfo = pythonBinary.validatePythonAndGetInfo().getOr { return it }
+      return Result.success(VanillaPythonWithPythonInfoImpl(pythonBinary, pythonInfo))
     }
   }
 
@@ -59,7 +59,7 @@ class VanillaPythonWithLanguageLevelImpl internal constructor(
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as VanillaPythonWithLanguageLevelImpl
+    other as VanillaPythonWithPythonInfoImpl
 
     return pythonBinary == other.pythonBinary
   }
@@ -69,7 +69,7 @@ class VanillaPythonWithLanguageLevelImpl internal constructor(
   }
 
   override fun toString(): String {
-    return "$pythonBinary ($languageLevel)"
+    return "$pythonBinary ($pythonInfo)"
   }
 
   override suspend fun getReadableName(): @Nls String {
@@ -81,8 +81,8 @@ class VanillaPythonWithLanguageLevelImpl internal constructor(
     }
     val pythonString = (if (pythonBinary.startsWith(home)) "~$separator" + pythonBinary.relativeTo(home).pathString
     else pythonBinary.pathString)
-    return "$pythonString ($languageLevel)"
+    return "$pythonString ($pythonInfo)"
   }
 
-  override fun compareTo(other: PythonWithLanguageLevel): Int = LanguageLevelComparator.compare(this, other)
+  override fun compareTo(other: PythonWithPythonInfo): Int = PythonInfoComparator.compare(this, other)
 }

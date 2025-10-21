@@ -11,12 +11,12 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
-import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
-import com.jetbrains.python.PyToolUIInfo
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -66,7 +66,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
   }
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): PyResult<SystemPython> {
-    val pythonWithLangLevel = VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonPath)
+    val pythonWithLangLevel = VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonPath)
       .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken", pythonPath)) { return it }
     val systemPython = SystemPython(pythonWithLangLevel, null)
     state.userProvidedPythons.add(pythonPath.pathString)
@@ -124,7 +124,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       val badPythons = mutableSetOf<PythonBinary>()
       val pythons = pythonsFromExtensions + state.userProvidedPythonsAsPath.filter { it.getEelDescriptor() == eelApi.descriptor }
 
-      val result = VanillaPythonWithLanguageLevelImpl.createByPythonBinaries(pythons.toSet())
+      val result = VanillaPythonWithPythonInfoImpl.createByPythonBinaries(pythons.toSet())
         .mapNotNull { (python, r) ->
           when (r) {
             is Result.Success -> SystemPython(r.result, pythonsUi[r.result.pythonBinary])

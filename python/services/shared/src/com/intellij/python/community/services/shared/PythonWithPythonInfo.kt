@@ -4,9 +4,9 @@ package com.intellij.python.community.services.shared
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 
 /**
- * Python (vanilla, conda, whatever) with known language level.
+ * Python (vanilla, conda, whatever) with known python info.
  */
-interface PythonWithLanguageLevel : PythonWithName, LanguageLevelHolder {
+interface PythonWithPythonInfo : PythonWithName, PythonInfoHolder {
 
   /**
    * Convert python to something that can be executed on [java.util.concurrent.ExecutorService]

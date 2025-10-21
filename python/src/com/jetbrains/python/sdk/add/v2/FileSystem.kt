@@ -9,13 +9,17 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.*
-import com.intellij.python.community.execService.python.validatePythonAndGetVersion
-import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
-import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
+import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -47,7 +51,7 @@ data class SdkWrapper<P>(val sdk: Sdk, val homePath: P)
 
 internal class VenvAlreadyExistsError<P : PathHolder>(
   val detectedSelectableInterpreter: DetectedSelectableInterpreter<P>,
-) : MessageError(message("python.add.sdk.already.contains.python.with.version", detectedSelectableInterpreter.languageLevel))
+) : MessageError(message("python.add.sdk.already.contains.python.with.version", detectedSelectableInterpreter.pythonInfo.languageLevel))
 
 sealed interface FileSystem<P : PathHolder> {
   val isReadOnly: Boolean
@@ -111,7 +115,7 @@ sealed interface FileSystem<P : PathHolder> {
       val systemPython = SystemPythonService().registerSystemPython(pathToPython.path).getOr { return it }
       val interpreter = DetectedSelectableInterpreter(
         homePath = PathHolder.Eel(systemPython.pythonBinary),
-        languageLevel = systemPython.languageLevel,
+        pythonInfo = systemPython.pythonInfo,
         isBase = true
       )
 
@@ -125,9 +129,9 @@ sealed interface FileSystem<P : PathHolder> {
     override suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
       // Venvs are not detected manually, but must migrate to VenvService or so
       val pythonBinaries = VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, null)
-      val suggestedPythonBinaries = VanillaPythonWithLanguageLevelImpl.createByPythonBinaries(pythonBinaries)
+      val suggestedPythonBinaries = VanillaPythonWithPythonInfoImpl.createByPythonBinaries(pythonBinaries)
 
-      val venvs: List<VanillaPythonWithLanguageLevel> = suggestedPythonBinaries.mapNotNull { (venv, r) ->
+      val venvs: List<VanillaPythonWithPythonInfo> = suggestedPythonBinaries.mapNotNull { (venv, r) ->
         when (r) {
           is Result.Failure -> {
             fileLogger().warn("Skipping $venv : ${r.error}")
@@ -147,7 +151,7 @@ sealed interface FileSystem<P : PathHolder> {
       }.map { (python, base, ui) ->
         DetectedSelectableInterpreter(
           homePath = PathHolder.Eel(python.pythonBinary),
-          languageLevel = python.languageLevel,
+          pythonInfo = python.pythonInfo,
           isBase = base,
           ui = ui
         )
@@ -223,13 +227,13 @@ sealed interface FileSystem<P : PathHolder> {
 
     private suspend fun registerSystemPython(pathToPython: PathHolder.Target): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {
       val pythonBinaryToExec = getBinaryToExec(pathToPython)
-      val languageLevel = pythonBinaryToExec.validatePythonAndGetVersion().getOr {
+      val pythonInfo = pythonBinaryToExec.validatePythonAndGetInfo().getOr {
         return it
       }
 
       val interpreter = DetectedSelectableInterpreter(
         homePath = pathToPython,
-        languageLevel = languageLevel,
+        pythonInfo = pythonInfo,
         true,
       ).also {
         systemPythonCache.add(it)
@@ -277,7 +281,7 @@ internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<I
       }
       .sortedByDescending { it.first }
       .map { (languageLevel, sdk) ->
-        InstallableSelectableInterpreter(languageLevel, sdk)
+        InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
       }
   }
   else -> emptyList()
@@ -305,11 +309,11 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       val languageLevel = sdk.versionString?.let {
         PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(it)
       } ?: run {
-        ExecService().validatePythonAndGetVersion(sdk.asBinToExecute()).getOrLogException(LOG)
+        ExecService().validatePythonAndGetInfo(sdk.asBinToExecute()).getOrLogException(LOG)?.languageLevel
       }
 
       languageLevel?.let {
-        ExistingSelectableInterpreter<P>(wrapSdk(sdk), it, sdk.isSystemWide)
+        ExistingSelectableInterpreter<P>(wrapSdk(sdk), PythonInfo(it), sdk.isSystemWide)
       }
     }
   allValidSdks
