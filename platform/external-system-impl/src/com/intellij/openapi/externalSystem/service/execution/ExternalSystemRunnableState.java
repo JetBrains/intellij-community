@@ -50,6 +50,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.task.RunConfigurationTaskState;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
@@ -83,6 +84,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   @ApiStatus.Internal
   public static final @NotNull Key<ExternalSystemTaskNotificationListener> TASK_NOTIFICATION_LISTENER_KEY =
     Key.create("TASK_NOTIFICATION_LISTENER");
+
+  @ApiStatus.Internal
+  public static final Key<Boolean> NAVIGATE_TO_ERROR = Key.create("NAVIGATE_TO_ERROR");
 
   private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
   private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
@@ -224,6 +228,12 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
     DefaultBuildDescriptor buildDescriptor =
       new DefaultBuildDescriptor(task.getId(), executionName, task.getExternalProjectPath(), System.currentTimeMillis());
+
+    Boolean navigateToError = task.getUserData(NAVIGATE_TO_ERROR);
+    if (navigateToError != null) {
+      buildDescriptor.setNavigateToError(navigateToError ? ThreeState.YES : ThreeState.NO);
+    }
+
     Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY);
     Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
     Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
