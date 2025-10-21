@@ -12,8 +12,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
 import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManager
 import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiUtils
+import com.intellij.platform.project.projectId
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckboxTreeListener
 import com.intellij.ui.CheckedTreeNode
@@ -23,6 +25,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JCheckBox
@@ -112,14 +115,14 @@ class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(Borde
           try {
             nodeStateChanging = true
             if (node.isChecked) {
-              // todo rpc with dto?
-              //RunDashboardManagerProxy.getInstance(project).restoreConfigurations(
-              //  SmartList(settings.getConfiguration()))
+              RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+                RunDashboardServiceRpc.getInstance().restoreConfigurations(project.projectId(), listOf(settings.configurationId))
+              }
             }
             else {
-              // todo rpc with dto?
-              //RunDashboardManagerProxy.getInstance(project).hideConfigurations(
-              //  SmartList(settings.getConfiguration()))
+              RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+                RunDashboardServiceRpc.getInstance().hideConfigurations(project.projectId(), listOf(settings.configurationId))
+              }
             }
           }
           finally {
