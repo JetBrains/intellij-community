@@ -159,12 +159,13 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       return null
     }
     val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId) ?: return null
-    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this, onBreakpointChange = {
+    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this)
+    newBreakpoint.installListener {
       breakpointsChanged.tryEmit(Unit)
-      if (it is XLineBreakpointProxy) {
-        lineBreakpointManager.breakpointChanged(it)
+      if (newBreakpoint is XLineBreakpointProxy) {
+        lineBreakpointManager.breakpointChanged(newBreakpoint)
       }
-    })
+    }
     val previousBreakpoint = breakpoints.putIfAbsent(breakpointDto.id, newBreakpoint)
     if (previousBreakpoint != null) {
       newBreakpoint.dispose()

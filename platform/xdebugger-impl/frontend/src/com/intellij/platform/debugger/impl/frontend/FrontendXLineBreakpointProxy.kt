@@ -20,7 +20,10 @@ import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInfo
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.breakpoints.*
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointHighlighterRange
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
@@ -96,8 +99,7 @@ internal class FrontendXLineBreakpointProxy(
   dto: XBreakpointDto,
   override val type: XLineBreakpointTypeProxy,
   manager: FrontendXBreakpointManager,
-  onBreakpointChange: (XBreakpointProxy) -> Unit,
-) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter, onBreakpointChange), XLineBreakpointProxy {
+) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter), XLineBreakpointProxy {
   private val debouncer = RequestsDebouncer(cs, this)
 
   private var lineSourcePosition: XSourcePosition? = null
