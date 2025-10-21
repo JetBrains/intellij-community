@@ -1243,7 +1243,7 @@ class InfoAndProgressPanel internal constructor(
   }
 }
 
-private class CounterLabel : JPanel() {
+private class CounterLabel : JPanel(), UISettingsListener {
   private val label: JBLabel
   private var numberOfProgresses: Int = 0
   private var isProgressVisible: Boolean = false
@@ -1328,5 +1328,9 @@ private class CounterLabel : JPanel() {
 
   override fun getMinimumSize(): Dimension {
     return preferredSize
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    minimumSize = null
   }
 }
