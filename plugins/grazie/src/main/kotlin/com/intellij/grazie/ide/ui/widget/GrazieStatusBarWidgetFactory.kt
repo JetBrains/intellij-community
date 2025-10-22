@@ -6,6 +6,9 @@ import com.intellij.grazie.GrazieConfig.State.Processing.Cloud
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -16,10 +19,13 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.util.application
+import kotlinx.coroutines.Dispatchers
 
 internal class GrazieStatusBarWidgetFactory : StatusBarWidgetFactory, GrazieStateLifecycle {
 
-  init { service<GrazieInitializerManager>().register(this) }
+  init {
+    service<GrazieInitializerManager>().register(this)
+  }
 
   override fun getId(): String {
     return widgetId
@@ -48,13 +54,14 @@ internal class GrazieStatusBarWidgetFactory : StatusBarWidgetFactory, GrazieStat
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-    application.invokeLater {
-      if (newState.explicitlyChosenProcessing != prevState.explicitlyChosenProcessing && prevState.explicitlyChosenProcessing != null) {
+    if (newState.explicitlyChosenProcessing == prevState.explicitlyChosenProcessing) return
+    application.invokeLater(
+      {
         ProjectManager.getInstance().openProjects.forEach { project ->
-          project.service<StatusBarWidgetsManager>().updateWidget(this)
+          project.service<StatusBarWidgetsManager>()
+            .updateWidget(this, Dispatchers.EDT + ModalityState.any().asContextElement())
         }
-      }
-    }
+      }, ModalityState.any())
   }
 
   companion object {

@@ -29,6 +29,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
 
 private val LOG = logger<StatusBarWidgetsManager>()
 
@@ -74,7 +75,8 @@ class StatusBarWidgetsManager(
     }
   }
 
-  fun updateWidget(factory: StatusBarWidgetFactory) {
+  @JvmOverloads
+  fun updateWidget(factory: StatusBarWidgetFactory, coroutineContext: CoroutineContext = Dispatchers.EDT) {
     if ((factory.isConfigurable && !StatusBarWidgetSettings.getInstance().isEnabled(factory)) || !factory.isAvailable(project)) {
       disableWidget(factory)
       return
@@ -95,7 +97,7 @@ class StatusBarWidgetsManager(
       val widget = createWidget(factory, dataContext, parentScope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
-      parentScope.launch(Dispatchers.EDT) {
+      parentScope.launch(coroutineContext) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
           null -> {
