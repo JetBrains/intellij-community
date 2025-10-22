@@ -58,7 +58,19 @@ open class PypiPackageCache : PythonPackageCache<String> {
 
   private val gson: Gson = Gson()
 
-  val filePath: Path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
+  val filePath: Path = getCachePath()
+
+  private fun getCachePath(): Path {
+    val overridePath = System.getProperty(PACKAGE_INDEX_CACHE_PROPERTY)
+    if (overridePath != null) {
+      thisLogger().debug("Using package index cache path from property: $overridePath")
+      return Paths.get(overridePath)
+    }
+
+    val path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
+    thisLogger().debug("Using package index cache path: $path")
+    return path
+  }
 
   @CheckReturnValue
   open suspend fun reloadCache(force: Boolean = false): Result<Unit, IOException> {
@@ -201,5 +213,6 @@ open class PypiPackageCache : PythonPackageCache<String> {
 
   companion object {
     private val LOG = thisLogger()
+    const val PACKAGE_INDEX_CACHE_PROPERTY = "python.packages.cache.index.path"
   }
 }
