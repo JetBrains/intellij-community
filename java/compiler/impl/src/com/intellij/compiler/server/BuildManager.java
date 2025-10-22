@@ -1188,7 +1188,12 @@ public final class BuildManager implements Disposable {
         .min(Map.Entry.comparingByValue())
         .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
         .filter(p -> p.second != null)
-        .orElseGet(BuildManager::getIDERuntimeSdk);
+        .orElseGet(() -> {
+          if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+            throw new IllegalStateException(JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.find.compatible.jdk"));
+          }
+          return getIDERuntimeSdk();
+        });
     });
   }
 
