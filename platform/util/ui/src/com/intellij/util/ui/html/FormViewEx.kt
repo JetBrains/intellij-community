@@ -10,6 +10,14 @@ import javax.swing.text.html.BlockView
 import javax.swing.text.html.FormView
 import javax.swing.text.html.InlineView
 
+private val focusTraversalCause = setOf(
+  FocusEvent.Cause.TRAVERSAL,
+  FocusEvent.Cause.TRAVERSAL_UP,
+  FocusEvent.Cause.TRAVERSAL_DOWN,
+  FocusEvent.Cause.TRAVERSAL_FORWARD,
+  FocusEvent.Cause.TRAVERSAL_BACKWARD ,
+)
+
 internal class FormViewEx(elem: Element) : FormView(elem) {
 
   override fun createComponent(): Component? =
@@ -18,7 +26,8 @@ internal class FormViewEx(elem: Element) : FormView(elem) {
       isFocusable = true
       addFocusListener(object : FocusAdapter() {
         override fun focusGained(e: FocusEvent?) {
-          (this@apply as? JComponent)?.scrollRectToVisible(bounds)
+          if (e?.cause in focusTraversalCause)
+            (this@apply as? JComponent)?.scrollRectToVisible(bounds)
         }
       })
     }
