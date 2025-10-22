@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -28,6 +29,7 @@ import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
@@ -78,28 +80,36 @@ internal data class RecentProjectItem(
     }
   }
 
+  private fun showReopenDialog(@Nls message: String) {
+    val exitCode = Messages.showYesNoDialog(
+      message,
+      IdeBundle.message("dialog.title.reopen.project"),
+      IdeBundle.message("button.remove.from.list"),
+      CommonBundle.getCancelButtonText(),
+      Messages.getErrorIcon()
+    )
+
+    if (exitCode == Messages.YES) {
+      RecentProjectsManager.getInstance().removePath(projectPath)
+    }
+  }
+
   fun openProject(event: AnActionEvent) {
     // Force move focus to IdeFrame
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
-    runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
-      EelInitialization.runEelInitialization(projectPath)
+    try {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
+        EelInitialization.runEelInitialization(projectPath)
+      }
+    } catch (e : EelUnavailableException) {
+      showReopenDialog(e.message)
+      return
     }
 
     val file = Path.of(projectPath).normalize()
     if (!Files.exists(file)) {
-      val exitCode = Messages.showYesNoDialog(
-        IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)),
-        IdeBundle.message("dialog.title.reopen.project"),
-        IdeBundle.message("button.remove.from.list"),
-        CommonBundle.getCancelButtonText(),
-        Messages.getErrorIcon()
-      )
-
-      if (exitCode == Messages.YES) {
-        RecentProjectsManager.getInstance().removePath(projectPath)
-      }
-
+      showReopenDialog(IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)))
       return
     }
 
