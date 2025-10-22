@@ -236,6 +236,7 @@
     "Debugger.EvaluateExpression.background": "Gray3",
     "NewUiOnboarding.Dialog.background": "PanelBackground",
     "WelcomeScreen.Details.background": "BackgroundDark",
+    "WelcomeScreen.Banner.background": "BackgroundLight",
 
     "HelpBrowser": {
       "UserMessage": {
