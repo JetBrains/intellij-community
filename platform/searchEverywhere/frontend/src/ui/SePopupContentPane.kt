@@ -289,6 +289,8 @@ class SePopupContentPane(
           val isPreviewEnabled = tabVm.isPreviewEnabled.getValue()
 
           withContext(Dispatchers.EDT) {
+            if (!isActive) return@withContext
+
             headerPane.setFilterActions(filterEditor.getHeaderActions(), vm.ShowInFindToolWindowAction(), isPreviewEnabled)
             hintHelper.removeRightExtensions()
             val rightActions = filterEditor.getSearchFieldActions()
