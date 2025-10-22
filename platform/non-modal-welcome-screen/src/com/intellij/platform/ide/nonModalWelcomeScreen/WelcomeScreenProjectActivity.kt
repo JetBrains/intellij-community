@@ -51,7 +51,9 @@ private class WelcomeScreenProjectActivity : ProjectActivity {
                      }
                      if (id == NON_MODAL_WELCOME_SCREEN_SETTING_ID) {
                        val welcomeScreenTabEnabled = newValue.asSafely<Boolean>() ?: return
-                       if (!welcomeScreenTabEnabled) {
+                       if (welcomeScreenTabEnabled) {
+                         WelcomeScreenTabUsageCollector.logWelcomeScreenTabEnabled()
+                       } else {
                          WelcomeScreenTabUsageCollector.logWelcomeScreenTabDisabled()
                        }
                      }
