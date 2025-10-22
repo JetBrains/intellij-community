@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.file.Files
@@ -159,7 +160,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
 
       val socket = Socket()
 
-      socket.connect(InetSocketAddress(localPortBinding.local))
+      socket.connect(InetSocketAddress(InetAddress.getLoopbackAddress(),localPortBinding.local))
 
       forwardingScope.launch {
         launch {
