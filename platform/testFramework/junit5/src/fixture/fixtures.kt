@@ -4,10 +4,8 @@ package com.intellij.testFramework.junit5.fixture
 import com.intellij.execution.RunManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -33,6 +31,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.EditorCaretTestUtil
+import com.intellij.testFramework.replaceService
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
@@ -272,6 +271,40 @@ fun <T : Any> extensionPointFixture(epName: ExtensionPointName<in T>, createExte
   val disposable = Disposer.newDisposable()
   epName.point.registerExtension(extension, disposable)
   initialized(extension) {
+    Disposer.dispose(disposable)
+  }
+}
+
+@TestOnly
+fun <T : Any> Application.replacedServiceFixture(
+  serviceInterface: Class<in T>,
+  createService: suspend () -> T,
+): TestFixture<T> = replacedServiceFixtureInner(
+  getComponentManager = { this@replacedServiceFixture },
+  serviceInterface,
+  createService
+)
+
+@TestOnly
+fun <T : Any> TestFixture<Project>.replacedServiceFixture(
+  serviceInterface: Class<in T>,
+  createService: suspend () -> T,
+): TestFixture<T> = replacedServiceFixtureInner(
+  getComponentManager = { this@replacedServiceFixture.init() },
+  serviceInterface,
+  createService
+)
+
+@TestOnly
+private fun <T : Any> replacedServiceFixtureInner(
+  getComponentManager: suspend TestFixtureInitializer.R<T>.() -> ComponentManager,
+  serviceInterface: Class<in T>,
+  createService: suspend () -> T,
+) = testFixture {
+  val service = createService()
+  val disposable = Disposer.newDisposable()
+  getComponentManager().replaceService(serviceInterface, service, disposable)
+  initialized(service) {
     Disposer.dispose(disposable)
   }
 }
