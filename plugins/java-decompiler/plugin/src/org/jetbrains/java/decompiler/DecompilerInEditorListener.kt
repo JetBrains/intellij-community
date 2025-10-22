@@ -34,6 +34,8 @@ private class DecompilerInEditorListener : EditorFactoryListener {
   }
 
   /**
+   * This is a hack. See IDEA-368466.
+   *
    * We want to add an icon to the small toolbar in the upper-right corner of the editor (aka "the inspection widget").
    *
    * Normal, well-behaved plugins (for example GitHub plugin, for code review), contribute their own actions to the
