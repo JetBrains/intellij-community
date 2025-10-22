@@ -434,6 +434,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     if ((injectedOffset == null || injectedFile == null) && isInjected) {
       return null
     }
+    copyTopFile.putUserData(COMMAND_COMPLETION_COPY, true)
     return AdjustedCompletionParameters(copyTopFile, injectedFile, adjustedOffset, injectedOffset)
   }
 
@@ -613,7 +614,7 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
     if (!super.prefixMatches(element)) return false
     val commandCompletionElement = element.`as`(CommandCompletionLookupElement::class.java) ?: return false
     val currentTags = commandCompletionElement.currentTags
-    val allLookupStrings = currentTags.ifEmpty { element.allLookupStrings } ?: return false
+    val allLookupStrings = currentTags.ifEmpty { element.allLookupStrings }
     if (!matched(allLookupStrings)) return false
     val otherTags = commandCompletionElement.otherTags
     if (otherTags.isEmpty()) return true
