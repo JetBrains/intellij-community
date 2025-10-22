@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
+import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import java.awt.*
 import java.awt.geom.Path2D
@@ -102,9 +102,9 @@ class CommentedCodeFrameRenderer(
   }
 
   companion object {
-    private val color: Color = JBColor(0x3574f0, 0x3574f0)
-    private val stroke: Stroke = BasicStroke(JBUIScale.scale(1.5f))
-    private val radius: Int get() = JBUIScale.scale(6)
+    private val color: Color = CodeReviewColorUtil.Review.LineFrame.border
+    private val stroke: Stroke = BasicStroke(JBUIScale.scale(1f))
+    private val radius: Int get() = JBUIScale.scale(4)
     private val scrollbarPadding: Int get() = JBUIScale.scale(15)
   }
 }
