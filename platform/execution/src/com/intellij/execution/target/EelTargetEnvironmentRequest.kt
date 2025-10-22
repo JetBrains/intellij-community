@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -267,6 +268,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     }
   }
 
+  @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val command = commandLine.collectCommandsSynchronously()
     val builder = eel.exec.spawnProcess(command.first())
@@ -275,7 +277,13 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     builder.env(commandLine.environmentVariables)
     builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
 
-    return runBlockingCancellable { builder.eelIt().convertToJavaProcess() }
+    return runBlockingCancellable {
+      try {
+        builder.eelIt().convertToJavaProcess()
+      }catch (e: ExecuteProcessException) {
+        throw ExecutionException(e)
+      }
+    }
   }
 
   override val targetPlatform: TargetPlatform = request.targetPlatform
