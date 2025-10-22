@@ -1405,7 +1405,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       editor.setVerticalScrollbarVisible(true);
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
       if (profile != null) {
-        TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
+        TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile, myDialect));
       }
       SubstitutionShortInfoHandler.install(editor, myFilterPanel, variableName -> {
         if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
