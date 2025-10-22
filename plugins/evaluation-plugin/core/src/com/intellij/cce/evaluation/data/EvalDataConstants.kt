@@ -523,6 +523,11 @@ object Metrics {
     dependencies = MetricDependencies(Analysis.FAILED_RELATED_FILE_VALIDATIONS)
   ) { RelatedFileValidationSuccess() }
 
+  val WAS_ASK_AI_CALLED: EvalMetric = EvalMetric(
+    threshold = 1.0,
+    dependencies = MetricDependencies(Execution.ACTUAL_SMART_CHAT_ENDPOINTS)
+  ) { WasAskAICalledMetric() }
+
   val FUNCTION_CALLING: EvalMetric = EvalMetric(
     threshold = 1.0,
     dependencies = MetricDependencies(
