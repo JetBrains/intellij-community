@@ -41,7 +41,7 @@ private class WelcomeScreenProjectActivity : ProjectActivity {
   private suspend fun subscribeToSettingsChanges(project: Project) {
     application
       .messageBus
-      .connect(WelcomeScreenService.getInstanceAsync(project).coroutineScope)
+      .connect(WelcomeScreenScopeHolder.getInstanceAsync(project).coroutineScope)
       .subscribe(AdvancedSettingsChangeListener.TOPIC,
                  object : AdvancedSettingsChangeListener {
                    override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
@@ -64,7 +64,7 @@ private class WelcomeScreenProjectActivity : ProjectActivity {
   private suspend fun subscribeToWelcomeScreenTabClose(project: Project) {
     project
       .messageBus
-      .connect(WelcomeScreenService.getInstanceAsync(project).coroutineScope)
+      .connect(WelcomeScreenScopeHolder.getInstanceAsync(project).coroutineScope)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
                  object : FileEditorManagerListener {
                    override fun fileClosed(source: FileEditorManager, file: VirtualFile) {

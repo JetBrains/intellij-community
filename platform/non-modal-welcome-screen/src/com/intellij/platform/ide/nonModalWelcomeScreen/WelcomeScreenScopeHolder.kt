@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
-internal class WelcomeScreenService(val coroutineScope: CoroutineScope) {
+internal class WelcomeScreenScopeHolder(val coroutineScope: CoroutineScope) {
   companion object {
-    fun getInstance(project: Project): WelcomeScreenService = project.service()
-    suspend fun getInstanceAsync(project: Project): WelcomeScreenService = project.serviceAsync()
+    fun getInstance(project: Project): WelcomeScreenScopeHolder = project.service()
+    suspend fun getInstanceAsync(project: Project): WelcomeScreenScopeHolder = project.serviceAsync()
   }
 }
