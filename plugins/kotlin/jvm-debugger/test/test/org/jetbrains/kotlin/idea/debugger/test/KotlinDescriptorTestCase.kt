@@ -40,9 +40,9 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -633,6 +633,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         if (file != null) {
             val breakpointCreator = this.breakpointCreator ?: error(BreakpointCreator::class.java.simpleName + " should be set")
             breakpointCreator.createBreakpoints(file)
+            myWasUsedOnlyDefaultSuspendPolicy = breakpointCreator.wasUsedOnlyDefaultSuspendPolicy
         }
     }
 

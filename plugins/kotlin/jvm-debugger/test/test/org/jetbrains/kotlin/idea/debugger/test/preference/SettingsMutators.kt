@@ -2,13 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.test.preference
 
+import com.intellij.debugger.USE_XSESSION_PAUSE_LISTENER_KEY
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys.DISABLE_KOTLIN_INTERNAL_CLASSES
@@ -33,6 +34,7 @@ internal val SettingsMutators: List<SettingsMutator<*>> = listOf(
     ForceRankingSettingsMutator,
     ReflectionPatchingMutator,
     ShowLibraryStackFramesMutator,
+    UseXSessionPauseListenerMutator,
 )
 
 private class DebuggerSettingsMutator<T : Any>(
@@ -101,6 +103,14 @@ private object ShowLibraryStackFramesMutator : SettingsMutator<Boolean>(Debugger
     override fun setValue(value: Boolean, project: Project): Boolean {
         val oldValue = XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames
         XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = value
+        return oldValue
+    }
+}
+
+private object UseXSessionPauseListenerMutator : SettingsMutator<Boolean>(DebuggerPreferenceKeys.USE_XSESSION_PAUSE_LISTENER) {
+    override fun setValue(value: Boolean, project: Project): Boolean {
+        val oldValue = USE_XSESSION_PAUSE_LISTENER_KEY.get(project, false)!!
+        USE_XSESSION_PAUSE_LISTENER_KEY.set(project, value)
         return oldValue
     }
 }
