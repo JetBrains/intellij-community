@@ -1025,14 +1025,10 @@ fun analyzeArguments(
       }
       else if (!allPositionalArguments.isEmpty()) {
         val positionalArgument = allPositionalArguments.next()
-        if (positionalArgument != null) {
-          mappedParameters.put(positionalArgument, parameter)
-          if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
-            parametersMappedToVariadicPositionalArguments.add(parameter)
-          }
-        }
-        else if (!parameter.hasDefaultValue()) {
-          unmappedParameters.add(parameter)
+        assert(positionalArgument != null)
+        mappedParameters.put(positionalArgument, parameter)
+        if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+          parametersMappedToVariadicPositionalArguments.add(parameter)
         }
       }
       else {
