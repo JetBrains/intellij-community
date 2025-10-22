@@ -59,7 +59,7 @@ fun assertLogicalStructure(
         val presentation = it.presentation
         presentation.presentableText == pathPart || (presentation as? PresentationData)?.coloredText?.firstOrNull()?.text == pathPart
       } as? StructureViewTreeElement
-      assertNotNull("Can't find a child '$pathPart'", child)
+      assertNotNull("Can't find a child '$pathPart', available: ${targetStructureElement.children.map { it.presentation.presentableText }}", child)
       targetStructureElement = child!!
     }
     var actualRoot = createActualNode(targetStructureElement)
