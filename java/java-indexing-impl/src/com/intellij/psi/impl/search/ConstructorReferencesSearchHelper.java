@@ -17,6 +17,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -97,17 +98,15 @@ class ConstructorReferencesSearchHelper {
     // search usages like "this(..)"
     if (!DumbService.getInstance(project).runReadActionInSmartMode(
       () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                               isStrictSignatureSearch,
-                               JavaKeywords.THIS, JavaKeywords.SUPER, processor))) {
+                               isStrictSignatureSearch, JavaKeywords.THIS, processor))) {
       return false;
     }
 
     // search usages like "super(..)"
     Processor<PsiClass> processor2 = inheritor -> {
-      final PsiElement navigationElement = inheritor.getNavigationElement();
-      if (navigationElement instanceof PsiClass) {
-        return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                  isStrictSignatureSearch, JavaKeywords.SUPER, JavaKeywords.THIS, processor);
+      if (inheritor.getNavigationElement() instanceof PsiClass aClass) {
+        return processSuperOrThis(aClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
+                                  isStrictSignatureSearch, JavaKeywords.SUPER, processor);
       }
       return true;
     };
@@ -160,37 +159,28 @@ class ConstructorReferencesSearchHelper {
                                      @NotNull Project project,
                                      final boolean isStrictSignatureSearch,
                                      @NotNull String superOrThisKeyword,
-                                     @NotNull String thisOrSuperKeyword,
                                      @NotNull Processor<? super PsiReference> processor) {
     PsiMethod[] constructors = inheritor.getConstructors();
     if (constructors.length == 0 && constructorCanBeCalledImplicitly) {
       if (!processImplicitConstructorCall(inheritor, processor, constructor, project, inheritor)) return false;
     }
     for (PsiMethod method : constructors) {
-      PsiCodeBlock body = method.getBody();
-      if (body == null || method == constructor && isStrictSignatureSearch || method instanceof SyntheticElement) {
+      if (method == constructor && isStrictSignatureSearch || method instanceof SyntheticElement) {
         continue;
       }
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length != 0 && statements[0] instanceof PsiExpressionStatement exprStatement &&
-          exprStatement.getExpression() instanceof PsiMethodCallExpression call) {
-        PsiReferenceExpression refExpr = call.getMethodExpression();
-        if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-          if (refExpr.textMatches(superOrThisKeyword)) {
-            PsiElement referencedElement = refExpr.resolve();
-            if (referencedElement instanceof PsiMethod constructor1) {
-              boolean match = isStrictSignatureSearch
-                              ? myManager.areElementsEquivalent(constructor1, constructor)
-                              : myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass());
-              if (match && !processor.process(refExpr)) return false;
-            }
-            //as long as we've encountered super/this keyword, no implicit ctr calls are possible here
-            continue;
-          }
-          else if (refExpr.textMatches(thisOrSuperKeyword)) {
-            continue;
+      PsiMethodCallExpression thisOrSuperCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (thisOrSuperCall != null) {
+        if (PsiSearchScopeUtil.isInScope(searchScope, thisOrSuperCall)) {
+          PsiReferenceExpression ref = thisOrSuperCall.getMethodExpression();
+          if (ref.textMatches(superOrThisKeyword) && ref.resolve() instanceof PsiMethod referencedConstructor) {
+            boolean match = isStrictSignatureSearch
+                            ? myManager.areElementsEquivalent(referencedConstructor, constructor)
+                            : myManager.areElementsEquivalent(constructor.getContainingClass(), referencedConstructor.getContainingClass());
+            if (match && !processor.process(ref)) return false;
           }
         }
+        //when we've encountered a super/this call, no implicit ctr calls are possible here
+        continue;
       }
       if (constructorCanBeCalledImplicitly && PsiSearchScopeUtil.isInScope(searchScope, method)) {
         if (!processImplicitConstructorCall(method, processor, constructor, project, inheritor)) return false;
