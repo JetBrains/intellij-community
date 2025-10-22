@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -40,6 +41,7 @@ private class ExistingJdkConfigurationActivity : ProjectActivity {
     }
 
     val rootManager = project.serviceAsync<ProjectRootManager>()
+    val jdkService = service<AddJdkService>()
     val addedJdks = registeredJdks.toMutableList()
 
     val priorityPaths = JavaHomeFinder.getFinder(project).findInJavaHome()
@@ -47,7 +49,7 @@ private class ExistingJdkConfigurationActivity : ProjectActivity {
     edtWriteAction {
       // Register collected JDKs
       for (path in jdkPathsToAdd) {
-        addedJdks.add(SdkConfigurationUtil.createAndAddSDK(path, javaSdk))
+        addedJdks.add(jdkService.createIncompleteJdk(path))
       }
 
       // Set project SDK
