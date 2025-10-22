@@ -166,7 +166,9 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
 
   private fun createRecentProjectTree(): RecentProjectFilteringTree =
     RecentProjectPanelComponentFactory.createComponent(
-      this, ProjectCollectors.all, treeBackground = null
+      this,
+      collectors = listOf(ProjectCollectors.cloneableProjectsCollector, ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project)),
+      treeBackground = null
     ).apply {
       tree.emptyText.text = NonModalWelcomeScreenBundle.message("welcome.screen.no.recent.projects")
       selectLastOpenedProject()
