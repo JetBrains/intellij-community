@@ -30,6 +30,12 @@ public interface FileManagerEx extends FileManager {
   @Nullable
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
 
+  /**
+   * Removes invalid files and directories from the cache.
+   *
+   * @param useFind pass {@code true} if it's expected that file view providers might have changed.
+   *                In this case, all files will be checked more thoroughly.
+   */
   @RequiresWriteLock
   void removeInvalidFilesAndDirs(boolean useFind);
 
