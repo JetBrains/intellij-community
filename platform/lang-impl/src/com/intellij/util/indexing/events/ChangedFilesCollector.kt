@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events
 
 import com.intellij.history.LocalHistory
@@ -36,6 +36,10 @@ import kotlin.concurrent.withLock
 
 private val LOG = logger<ChangedFilesCollector>()
 
+/**
+ * Collects file changes supplied from VFS via [AsyncFileListener].
+ * Collected changes could be accessed via [getEventMerger]
+ */
 @ApiStatus.Internal
 class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope) : IndexedFilesListener() {
   val dirtyFiles: DirtyFiles = DirtyFiles()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -21,10 +21,19 @@ import java.util.Set;
 public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
+
+  //files are duplicated here: they are both in filesToUpdate and in dirtyFiles (already sorted by
+  // projects). Maybe it is worth merging that functionality -- so we could always query dirty
+  // files per project?
   private final IntObjectMap<FileIndexingRequest> myFilesToUpdate = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
+  /**
+   * @param containingProjects projects request.file is belong to. Used mostly for diagnostics
+   * @param dirtyQueueProjects projects request.file is belong to. Used to actually put the file into
+   *                           apt queue(s)
+   */
   public void scheduleForUpdate(@NotNull FileIndexingRequest request,
                                 @NotNull Set<Project> containingProjects,
                                 @NotNull Collection<? extends Project> dirtyQueueProjects) {

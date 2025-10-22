@@ -1831,6 +1831,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myRegisteredIndexes.isContentDependentIndex(indexId);
   }
 
+  /** @return set of (opened) projects the given file belongs to */
   public @Unmodifiable @NotNull Set<Project> getContainingProjects(@NotNull VirtualFile file) {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {
@@ -1850,10 +1851,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  /** @return true if the file belongs to the specific project's indexable files set */
   public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {
     return ContainerUtil.find(myIndexableSets, pair -> pair.second.equals(project) && pair.first.isInSet(file)) != null;
   }
 
+  /** @return true if the file belongs to _any_ registered project's indexable files set */
   public boolean belongsToIndexableFiles(@NotNull VirtualFile file) {
     return ContainerUtil.find(myIndexableSets, pair -> pair.first.isInSet(file)) != null;
   }

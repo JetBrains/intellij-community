@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,8 +20,23 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
+
+/**
+ * Accumulates VFS file-change events
+ * [file: (ADDED | REMOVED | CONTENT_CHANGED | TRANSIENT_STATE_CHANGED)]
+ * and merges same-file events into a single record.
+ * </p>
+ * Accumulated changes could then be consumed with {@link #processChanges(VfsEventProcessor)}
+ */
 @Internal
 public final class VfsEventsMerger {
+
+  /** Map[ fileId -> ChangeInfo] */
+  private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = createConcurrentIntObjectMap();
+
+  /** Number of file events applied (='published') to {@link #myChangeInfos}, since start. */
+  private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
 
   @ApiStatus.Internal
   public void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
@@ -41,8 +55,6 @@ public final class VfsEventsMerger {
     IndexingEventsLogger.tryLog("FILE_TRANSIENT_STATE_CHANGED", file);
     updateChange(file, FILE_TRANSIENT_STATE_CHANGED);
   }
-
-  private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
 
   @ApiStatus.Internal
   public int getPublishedEventIndex() {
@@ -71,17 +83,18 @@ public final class VfsEventsMerger {
   public interface VfsEventProcessor {
     boolean process(@NotNull ChangeInfo changeInfo);
 
-    /**
-     * this is a helper method that designates the end of the events batch, can be used for optimizations
-     */
-    default void endBatch() {}
+    /** this is a helper method that designates the end of the events batch, can be used for optimizations */
+    default void endBatch() { }
   }
 
-  // 1. Method can be invoked in several threads
-  // 2. Method processes snapshot of available events at the time of the invokation, it does mean that if events are produced concurrently
-  // with the processing then set of events will be not empty
-  // 3. Method regularly checks for cancellations (thus can finish with PCEs) but event processor should process the change info atomically
-  // (without PCE)
+  /**
+   * 1. Method can be invoked in several threads
+   * 2. Method processes the snapshot of available events at the time of the invocation: it means
+   * that if events are produced concurrently with their processing then the set of events will
+   * be not empty
+   * 3. Method regularly checks for cancellations (thus can finish with PCEs), but event processor \
+   * should process the change info atomically (without PCE)
+   */
   @VisibleForTesting
   public boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
     if (!myChangeInfos.isEmpty()) {
@@ -106,10 +119,9 @@ public final class VfsEventsMerger {
             throw e;
           }
           catch (ProcessCanceledException pce) {
-            //TODO: IJPL-9805 states it should be no PCE here, but it is strange:
-            // 1) .checkCanceled() just a few lines above
-            // 2) ADE is unavoidable (e.g. VFS is closed by ShutDownTracker)
-            //Maybe drop this try-catch at all, and rely on general catch(Throwable) below?
+            //IJPL-9805: it should be no PCE here -- eventProcessor.process()/.endBatch() should
+            //           be 'atomic': a change is either processed, or not, so throw PCE from inside
+            //           the processor is an error
             ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(new RuntimeException(pce));
             assert false;
           }
@@ -143,9 +155,6 @@ public final class VfsEventsMerger {
   public @NotNull Iterator<VirtualFile> getChangedFiles() {
     return ContainerUtil.mapIterator(myChangeInfos.values().iterator(), ChangeInfo::getFile);
   }
-
-  private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private static final short FILE_ADDED = 1;
   private static final short FILE_REMOVED = 2;
