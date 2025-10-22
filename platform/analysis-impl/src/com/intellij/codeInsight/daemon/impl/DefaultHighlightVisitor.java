@@ -23,24 +23,15 @@ import java.util.List;
  */
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final Project myProject;
-  private final boolean myHighlightErrorElements;
   private HighlightInfoHolder myHolder;
-  private final boolean myBatchMode;
 
-  @SuppressWarnings("UnusedDeclaration")
   DefaultHighlightVisitor(@NotNull Project project) {
-    this(project, true, false);
-  }
-
-  DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean batchMode) {
     myProject = project;
-    myHighlightErrorElements = highlightErrorElements;
-    myBatchMode = batchMode;
   }
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile psiFile) {
-    return myHighlightErrorElements;
+    return true;
   }
 
   @Override
@@ -70,7 +61,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @SuppressWarnings("CloneDoesntCallSuperClone")
   @Override
   public @NotNull HighlightVisitor clone() {
-    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myBatchMode);
+    return new DefaultHighlightVisitor(myProject);
   }
 
   private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
@@ -92,20 +83,19 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         .range(element)
         .descriptionAndTooltip(errorDescription);
     }
-    int offset = range.getStartOffset();
+    int start = range.getStartOffset();
     PsiFile containingFile = element.getContainingFile();
     int fileLength = containingFile.getTextLength();
     FileViewProvider viewProvider = containingFile.getViewProvider();
-    PsiElement elementAtOffset = viewProvider.findElementAt(offset, LanguageUtil.getRootLanguage(element));
+    PsiElement elementAtOffset = viewProvider.findElementAt(start, LanguageUtil.getRootLanguage(element));
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
-    if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
+    if (start < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
       return HighlightInfo
         .newHighlightInfo(HighlightInfoType.ERROR)
-        .range(offset, offset + 1)
+        .range(start, start + 1)
         .descriptionAndTooltip(errorDescription);
     }
-    int start = offset;
-    int end = offset == 0 ? Math.min(offset + 1, fileLength) : offset;
+    int end = start == 0 ? Math.min(start + 1, fileLength) : start;
     return HighlightInfo
       .newHighlightInfo(HighlightInfoType.ERROR)
       .range(element, start, end)

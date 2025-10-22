@@ -74,8 +74,8 @@ class HighlightVisitorRunner {
         clones.add(cloned);
       }
     }
-    if (!defaultHighlightVisitorAdded) {
-      clones.add(new DefaultHighlightVisitor(project, myHighlightErrorElements, false));
+    if (!defaultHighlightVisitorAdded && myHighlightErrorElements) {
+      clones.add(new DefaultHighlightVisitor(project));
     }
     return clones.toArray(HighlightVisitor.EMPTY_ARRAY);
   }
