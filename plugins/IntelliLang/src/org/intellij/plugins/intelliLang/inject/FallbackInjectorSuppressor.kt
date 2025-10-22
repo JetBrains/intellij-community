@@ -24,6 +24,7 @@ fun isSuppressedFor(contextElement: PsiElement): Boolean = EP.allForLanguage(con
  * tasks to the backend. Note that this approach may introduce latency depending on network conditions.
  */
 @ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 interface FallbackInjectorSuppressor {
   fun isSuppressedFor(contextElement: PsiElement): Boolean
 }
