@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.fs.EelFileSystemApiKt;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
@@ -188,11 +188,11 @@ public class GitExecutableDetector {
   private @NotNull List<Detector> collectDetectors(@Nullable Project project, @Nullable Path gitDirectory) {
     List<Detector> detectors = new ArrayList<>();
 
-    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, gitDirectory);
-    if (eel != null) {
+    var eelDescriptor = GitEelExecutableDetectionHelper.tryGetEelDescriptor(project, gitDirectory);
+    if (eelDescriptor != null) {
       final var path = project != null ? project.getBasePath() : gitDirectory != null ? gitDirectory.toString() : null;
       assert path != null;
-      detectors.add(new EelBasedDetector(eel, path));
+      detectors.add(new EelBasedDetector(eelDescriptor, path));
       return detectors;
     }
 
@@ -226,17 +226,17 @@ public class GitExecutableDetector {
   }
 
   private static class EelBasedDetector implements Detector {
-    private final EelApi myEelApi;
+    private final EelDescriptor myEelDescriptor;
     private final String myRootDir;
 
-    EelBasedDetector(@NotNull final EelApi eelApi, @NotNull final String path) {
-      myEelApi = eelApi;
+    EelBasedDetector(@NotNull final EelDescriptor eelDescriptor, @NotNull final String path) {
+      myEelDescriptor = eelDescriptor;
       myRootDir = path;
     }
 
     @Override
     public @Nullable DetectionResult getPath() {
-      String detectedPath = GitEelExecutableDetectionHelper.getInstance().getExecutablePathIfReady(myEelApi, myRootDir);
+      String detectedPath = GitEelExecutableDetectionHelper.getInstance().getExecutablePathIfReady(myEelDescriptor, myRootDir);
       if (detectedPath == null) return null;
       return new DetectionResult(detectedPath);
     }
@@ -244,7 +244,7 @@ public class GitExecutableDetector {
     @Override
     public void runDetection() {
       // start computing and wait
-      GitEelExecutableDetectionHelper.getInstance().getExecutablePathBlocking(myEelApi, myRootDir);
+      GitEelExecutableDetectionHelper.getInstance().getExecutablePathBlocking(myEelDescriptor, myRootDir);
     }
   }
 
