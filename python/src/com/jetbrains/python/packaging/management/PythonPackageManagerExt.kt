@@ -41,8 +41,12 @@ fun PythonPackageManager.reloadPackagesBlocking() {
 suspend fun PythonPackageManager.installPackages(vararg packages: String): PyResult<List<PythonPackage>> {
   waitForInit()
   val specifications = packages.map {
-    findPackageSpecification(PyPackageName.normalizePackageName(it))
-    ?: return PyResult.localizedError(PyBundle.message("python.packaging.installing.error.failed.to.find.specification", it))
+    val packageName = PyPackageName.normalizePackageName(it)
+    findPackageSpecification(packageName) ?: let {
+      val repository = repositoryManager.repositories.firstOrNull()
+      repository ?: return@let null
+      PythonRepositoryPackageSpecification(repository, pyRequirement(packageName))
+    } ?: return PyResult.localizedError(PyBundle.message("python.packaging.installing.error.failed.to.find.specification", it))
   }
   return installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications))
 }
