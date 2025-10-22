@@ -95,13 +95,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   private boolean myModifiedClassesScanRequired = false;
 
-  public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
-    return Comparing.equal(mySteppingThroughThread.get(), threadProxy);
-  }
-
   public void setSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
     LightOrRealThreadInfo filterThread = myDebugProcess.getRequestsManager().getFilterThread();
-    if (filterThread != null && filterThread.getRealThread() != null) {
+    if (filterThread == null || filterThread.getRealThread() != null) {
       mySteppingThroughThread.set(threadProxy);
     }
     else {
@@ -732,7 +728,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl context = getProcess().getSuspendManager().getPausedContext();
-      ThreadReferenceProxyImpl steppingThread = getSteppingThread(suspendContext);
+      ThreadReferenceProxyImpl steppingThread = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? suspendContext.getThread() : null;
 
       DebuggerInvocationUtil.invokeLater(getProject(), () -> {
         if (myDebugProcess.isSteppingInProgress() && context != null) {
@@ -816,13 +812,6 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   private void switchToActiveSteppingContext(@Nullable ThreadReferenceProxyImpl steppingThread) {
     DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, null, steppingThread, null);
     getContextManager().setState(debuggerContext, State.IN_STEPPING, Event.CONTEXT, getDescription(debuggerContext));
-  }
-
-  public @Nullable ThreadReferenceProxyImpl getSteppingThread(@NotNull SuspendContextImpl suspendContext) {
-    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && isSteppingThrough(suspendContext.getThread())) {
-      return suspendContext.getThread();
-    }
-    return null;
   }
 
   private static class BreakpointReachedNotificationListener extends NotificationListener.Adapter {
