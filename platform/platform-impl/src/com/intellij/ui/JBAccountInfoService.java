@@ -248,7 +248,7 @@ public interface JBAccountInfoService {
     @NotNull LicenseeType licenseeType,
     @NotNull LicensePack licensePack,
     @NlsSafe @NotNull String licensedTo,
-    @NotNull Instant expiresOn
+    @Nullable Instant expiresOn
   ) { }
 
   enum LicenseKind {
