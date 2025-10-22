@@ -40,6 +40,6 @@ final class EditConfigurationAction extends DumbAwareAction implements ActionRem
     FrontendRunDashboardService node = project == null ? null : getSelectedNode(e);
     if (node == null) return;
 
-    scheduleEditConfiguration(node.getRunDashboardServiceDto().getUuid(), project);
+    scheduleEditConfiguration(project, node.getRunDashboardServiceDto().getUuid());
   }
 }

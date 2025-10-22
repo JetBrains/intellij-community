@@ -20,20 +20,26 @@ internal fun getSelectedNodes(e: AnActionEvent): List<FrontendRunDashboardServic
   return ServiceViewActionUtils.getTargets(e, FrontendRunConfigurationNode::class.java).mapNotNull { it.value }
 }
 
-internal fun scheduleEditConfiguration(serviceId: RunDashboardServiceId, project: Project) {
+internal fun scheduleEditConfiguration(project: Project, serviceId: RunDashboardServiceId) {
   RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
     RunDashboardServiceRpc.getInstance().editConfiguration(project.projectId(), serviceId)
   }
 }
 
-internal fun scheduleCopyConfiguration(serviceId: RunDashboardServiceId, project: Project) {
+internal fun scheduleCopyConfiguration(project: Project, serviceId: RunDashboardServiceId) {
   RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
     RunDashboardServiceRpc.getInstance().copyConfiguration(project.projectId(), serviceId)
   }
 }
 
-internal fun scheduleUpdateRunConfigurationFolderNames(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, project: Project) {
+internal fun scheduleHideConfiguration(project: Project, serviceIds: List<RunDashboardServiceId>) {
   RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
-    RunDashboardServiceRpc.getInstance().updateConfigurationFolderName(serviceIds, newGroupName, project.projectId())
+    RunDashboardServiceRpc.getInstance().hideConfiguration(project.projectId(), serviceIds)
+  }
+}
+
+internal fun scheduleUpdateRunConfigurationFolderNames(project: Project, serviceIds: List<RunDashboardServiceId>, newGroupName: String?) {
+  RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+    RunDashboardServiceRpc.getInstance().updateConfigurationFolderName(project.projectId(), serviceIds, newGroupName)
   }
 }

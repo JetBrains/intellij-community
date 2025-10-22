@@ -43,6 +43,6 @@ final class CopyConfigurationAction extends DumbAwareAction implements ActionRem
     FrontendRunDashboardService node = project == null ? null : getSelectedNode(e);
     if (node == null) return;
 
-    scheduleCopyConfiguration(node.getRunDashboardServiceDto().getUuid(), project);
+    scheduleCopyConfiguration(project, node.getRunDashboardServiceDto().getUuid());
   }
 }

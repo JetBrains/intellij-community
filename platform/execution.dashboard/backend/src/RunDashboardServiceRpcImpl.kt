@@ -3,6 +3,7 @@ package com.intellij.platform.execution.dashboard.backend
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
+import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
@@ -49,7 +50,7 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
     return RunDashboardManagerImpl.getInstance(project).configurationTypes;
   }
 
-  override suspend fun updateConfigurationFolderName(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, projectId: ProjectId) {
+  override suspend fun updateConfigurationFolderName(projectId: ProjectId, serviceIds: List<RunDashboardServiceId>, newGroupName: String?) {
     val project = projectId.findProjectOrNull() ?: return
     val dashboardManagerImpl = RunDashboardManagerImpl.getInstance(project)
     val backendServices = serviceIds.mapNotNull { dashboardManagerImpl.findServiceById(it) }
@@ -147,5 +148,11 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
     withContext(Dispatchers.EDT) {
       RunDashboardEditConfigurationUtils.editConfiguration(project, backendService)
     }
+  }
+
+  override suspend fun hideConfiguration(projectId: ProjectId, serviceIds: List<RunDashboardServiceId>) {
+    val project = projectId.findProjectOrNull() ?: return
+    val configurations = serviceIds.mapNotNull { serviceId -> RunDashboardManagerImpl.getInstance(project).findServiceById(serviceId)?.configurationSettings?.configuration }
+    RunDashboardManager.getInstance(project).hideConfigurations(configurations)
   }
 }

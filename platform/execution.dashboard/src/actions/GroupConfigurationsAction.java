@@ -53,6 +53,6 @@ final class GroupConfigurationsAction
 
     String groupName = value.isEmpty() ? null : value; // If input value is empty then ungroup nodes.
 
-    scheduleUpdateRunConfigurationFolderNames(ContainerUtil.map(nodes, it -> it.getRunDashboardServiceDto().getUuid()), groupName, project);
+    scheduleUpdateRunConfigurationFolderNames(project, ContainerUtil.map(nodes, it -> it.getRunDashboardServiceDto().getUuid()), groupName);
   }
 }
