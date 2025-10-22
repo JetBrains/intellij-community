@@ -8,13 +8,13 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertConcatenationToGstringIntention
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
+import org.jetbrains.plugins.groovy.util.GStringConcatenationUtil
 
 /**
  * Provides a quick fix for simplifying Gradle dependency syntax in Groovy build scripts
@@ -47,7 +47,7 @@ class GradleDependencyNamedArgumentsFix() : PsiUpdateModCommandQuickFix() {
       else factory.createExpressionFromText("$group + ':' + $name", element) as GrBinaryExpression
     val builder = StringBuilder(concatExpr.text.length)
     // assuming the named arguments resolve to strings, reuse ConvertConcatenationToGstringIntention
-    ConvertConcatenationToGstringIntention.performIntention(concatExpr, builder, false)
+    GStringConcatenationUtil.convertToGString(concatExpr, builder, false)
     val newArgument = factory.createExpressionFromText(GrStringUtil.addQuotes(builder.toString(), true))
     if (newArgument is GrString) GrStringUtil.removeUnnecessaryBracesInGString(newArgument)
 
