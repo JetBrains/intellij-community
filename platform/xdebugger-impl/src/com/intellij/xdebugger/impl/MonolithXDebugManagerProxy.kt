@@ -35,7 +35,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val sessionImpl = (session as XDebugSessionProxy.Monolith).session
+    val sessionImpl = (session as XDebugSessionProxy.Monolith).sessionImpl
     return withCoroutineScopeForId(block) { scope ->
       BackendXValueModel(scope, sessionImpl, value, precomputePresentation = false).id
     }
@@ -45,7 +45,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getXValueId(value: XValue): XValueId? = null
 
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
-    val sessionImpl = (session as XDebugSessionProxy.Monolith).session
+    val sessionImpl = (session as XDebugSessionProxy.Monolith).sessionImpl
     return withCoroutineScopeForId(block) { scope ->
       stack.getOrStoreGlobally(scope, sessionImpl)
     }

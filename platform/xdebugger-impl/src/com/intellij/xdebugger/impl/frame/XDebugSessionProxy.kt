@@ -119,56 +119,60 @@ interface XDebugSessionProxy {
     val DEBUG_SESSION_PROXY_KEY: DataKey<XDebugSessionProxy> = DataKey.create("XDebugSessionProxy")
   }
 
-  class Monolith internal constructor(val session: XDebugSessionImpl) : XDebugSessionProxy {
+  class Monolith internal constructor(val session: XDebugSession) : XDebugSessionProxy {
+
+    val sessionImpl: XDebugSessionImpl get() = session as XDebugSessionImpl
+    private val sessionImplIfAvailable get() = session as? XDebugSessionImpl
+
     override val runContentDescriptorId: RunContentDescriptorIdImpl?
-      get() = session.getMockRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?
+      get() = sessionImplIfAvailable?.getMockRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?
 
     override val project: Project
       get() = session.project
     override val id: XDebugSessionId
-      get() = session.id
+      get() = sessionImpl.id
     override val sessionName: String
       get() = session.sessionName
     override val sessionData: XDebugSessionData
-      get() = session.sessionData
+      get() = sessionImpl.sessionData
     override val consoleView: ConsoleView?
       get() = session.consoleView
     override val restartActions: List<AnAction>
-      get() = session.restartActions
+      get() = sessionImpl.restartActions
     override val extraActions: List<AnAction>
-      get() = session.extraActions
+      get() = sessionImpl.extraActions
     override val extraStopActions: List<AnAction>
-      get() = session.extraStopActions
+      get() = sessionImpl.extraStopActions
     override val consoleActions: List<AnAction>
       get() = consoleView?.createConsoleActions()?.toList() ?: emptyList()
     override val processHandler: ProcessHandler
       get() = session.debugProcess.processHandler
     override val coroutineScope: CoroutineScope
-      get() = session.coroutineScope
+      get() = sessionImpl.coroutineScope
     override val editorsProvider: XDebuggerEditorsProvider
       get() = session.debugProcess.editorsProvider
     override val valueMarkers: XValueMarkers<*, *>?
-      get() = session.valueMarkers
+      get() = sessionImplIfAvailable?.valueMarkers
     override val sessionTab: XDebugSessionTab?
-      get() = session.sessionTab
+      get() = sessionImplIfAvailable?.sessionTab
     override val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
-      get() = session.sessionTabDeferred
+      get() = sessionImpl.sessionTabDeferred
     override val isPaused: Boolean
       get() = session.isPaused
     override val isStopped: Boolean
       get() = session.isStopped
     override val isReadOnly: Boolean
-      get() = session.isReadOnly
+      get() = sessionImpl.isReadOnly
     override val isSuspended: Boolean
       get() = session.isSuspended
     override val isPauseActionSupported: Boolean
-      get() = session.isPauseActionSupported()
+      get() = sessionImpl.isPauseActionSupported()
     override val isStepOverActionAllowed: Boolean
-      get() = session.isStepOverActionAllowed
+      get() = sessionImpl.isStepOverActionAllowed
     override val isStepOutActionAllowed: Boolean
-      get() = session.isStepOutActionAllowed
+      get() = sessionImpl.isStepOutActionAllowed
     override val isRunToCursorActionAllowed: Boolean
-      get() = session.isRunToCursorActionAllowed
+      get() = sessionImpl.isRunToCursorActionAllowed
     override val isLibraryFrameFilterSupported: Boolean
       get() = session.debugProcess.isLibraryFrameFilterSupported
     override val isValuesCustomSorted: Boolean
@@ -191,10 +195,10 @@ interface XDebugSessionProxy {
     }
 
     override val currentSuspendContextCoroutineScope: CoroutineScope?
-      get() = session.currentSuspendCoroutineScope
+      get() = sessionImplIfAvailable?.currentSuspendCoroutineScope
 
     override val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?>
-      get() = session
+      get() = sessionImpl
       .activeNonLineBreakpointFlow.map { (it as? XBreakpointBase<*, *, *>)?.asProxy() }
 
     override fun getCurrentPosition(): XSourcePosition? {
@@ -206,15 +210,15 @@ interface XDebugSessionProxy {
     }
 
     override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
-      return session.getFrameSourcePosition(frame)
+      return sessionImplIfAvailable?.getFrameSourcePosition(frame)
     }
 
     override fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition? {
-      return session.getFrameSourcePosition(frame, sourceKind)
+      return sessionImplIfAvailable?.getFrameSourcePosition(frame, sourceKind)
     }
 
     override fun getCurrentExecutionStack(): XExecutionStack? {
-      return session.currentExecutionStack
+      return sessionImplIfAvailable?.currentExecutionStack
     }
 
     override fun getCurrentStackFrame(): XStackFrame? {
@@ -226,7 +230,7 @@ interface XDebugSessionProxy {
     }
 
     override fun isTopFrameSelected(): Boolean {
-      return session.isTopFrameSelected
+      return sessionImpl.isTopFrameSelected
     }
 
     override fun hasSuspendContext(): Boolean {
@@ -260,7 +264,7 @@ interface XDebugSessionProxy {
     }
 
     override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
-      return XStackFramesListColorsCache.Monolith(session, framesList)
+      return XStackFramesListColorsCache.Monolith(sessionImpl, framesList)
     }
 
     override fun areBreakpointsMuted(): Boolean {
@@ -275,7 +279,7 @@ interface XDebugSessionProxy {
       if (breakpoint !is XBreakpointProxy.Monolith) {
         return false
       }
-      return session.isInactiveSlaveBreakpoint(breakpoint.breakpoint)
+      return sessionImpl.isInactiveSlaveBreakpoint(breakpoint.breakpoint)
     }
 
     override fun getDropFrameHandler(): XDropFrameHandler? {
@@ -283,7 +287,7 @@ interface XDebugSessionProxy {
     }
 
     override fun getActiveNonLineBreakpoint(): XBreakpointProxy? {
-      val breakpoint = session.activeNonLineBreakpoint ?: return null
+      val breakpoint = sessionImplIfAvailable?.activeNonLineBreakpoint ?: return null
       if (breakpoint !is XBreakpointBase<*, *, *>) return null
       return breakpoint.asProxy()
     }
