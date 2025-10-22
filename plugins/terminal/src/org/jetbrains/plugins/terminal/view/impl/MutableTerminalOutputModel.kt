@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package org.jetbrains.plugins.terminal.view.impl
 
 import com.intellij.openapi.editor.Document
 import org.jetbrains.annotations.ApiStatus
@@ -7,6 +7,8 @@ import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 import org.jetbrains.plugins.terminal.session.impl.dto.toStyleRange
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 
 /**
  * Model that should manage the terminal output content: text, highlightings, and cursor position.
@@ -18,7 +20,7 @@ sealed interface MutableTerminalOutputModel : TerminalOutputModel {
   /**
    * Executes the given block with the model in the type-ahead mode.
    *
-   * In this mode, document changes are reported with to [TerminalOutputModelListener.afterContentChanged]
+   * In this mode, document changes are reported with to [org.jetbrains.plugins.terminal.view.TerminalOutputModelListener.afterContentChanged]
    * with `isTypeAhead == true`.
    */
   fun withTypeAhead(block: () -> Unit)

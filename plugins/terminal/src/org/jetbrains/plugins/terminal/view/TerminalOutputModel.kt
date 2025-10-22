@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package org.jetbrains.plugins.terminal.view
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel.Companion.DATA_KEY
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel.Companion.DATA_KEY
 
 /**
  * A read-only view of the contents of the terminal screen and history buffer.

@@ -17,8 +17,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
 import com.intellij.terminal.frontend.view.impl.toRelative
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 
 internal class TerminalCommandCompletionHandler(
   private val completionType: CompletionType,

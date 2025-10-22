@@ -21,11 +21,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
-import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.*
+import org.jetbrains.plugins.terminal.view.*
 import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.LinkedBlockingDeque

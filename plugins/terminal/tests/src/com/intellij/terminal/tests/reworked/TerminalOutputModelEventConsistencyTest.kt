@@ -11,11 +11,14 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asDisposable
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.awt.font.TextAttribute
 
 @RunWith(JUnit4::class)
 internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() {

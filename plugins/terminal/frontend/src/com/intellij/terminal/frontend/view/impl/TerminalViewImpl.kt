@@ -48,7 +48,9 @@ import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerI
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
@@ -62,11 +64,8 @@ import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
-import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
-import org.jetbrains.plugins.terminal.view.impl.TerminalOutputModelsSetImpl
-import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextBuilderImpl
-import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
+import org.jetbrains.plugins.terminal.view.*
+import org.jetbrains.plugins.terminal.view.impl.*
 import org.jetbrains.plugins.terminal.view.shellIntegration.*
 import java.awt.Component
 import java.awt.Dimension

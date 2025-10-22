@@ -7,11 +7,11 @@ import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.session.impl.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.*
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalCommandBlockImpl

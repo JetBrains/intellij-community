@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.view.shellIntegration
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import java.util.*
 
 @ApiStatus.Experimental

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockId
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
