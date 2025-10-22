@@ -151,6 +151,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asNioPath;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -1929,6 +1930,9 @@ public final class BuildManager implements Disposable {
   }
 
   public @NotNull Path getBuildSystemDirectory(Project project) {
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      return EelPathUtils.getSystemFolder(project).resolve(SYSTEM_ROOT);
+    }
     final WslPath wslPath = WslPath.parseWindowsUncPath(getProjectPath(project));
     if (wslPath != null) {
       Path buildDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(wslPath.getDistribution());
@@ -1949,13 +1953,26 @@ public final class BuildManager implements Disposable {
 
   public @NotNull File getProjectSystemDirectory(@NotNull Project project) {
     String projectPath = getProjectPath(project);
-    WslPath wslPath = WslPath.parseWindowsUncPath(projectPath);
     Function<String, Integer> hashFunction;
-    if (wslPath == null) {
-      hashFunction = String::hashCode;
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      final var descriptor = EelProviderUtil.getEelDescriptor(project);
+      hashFunction = s -> {
+        try {
+          return asEelPath(Path.of(s), descriptor).toString().hashCode();
+        }
+        catch (Throwable e) {
+          return s.hashCode();
+        }
+      };
     }
     else {
-      hashFunction = s -> Objects.requireNonNullElse(wslPath.getDistribution().getWslPath(s), s).hashCode();
+      WslPath wslPath = WslPath.parseWindowsUncPath(projectPath);
+      if (wslPath == null) {
+        hashFunction = String::hashCode;
+      }
+      else {
+        hashFunction = s -> Objects.requireNonNullElse(wslPath.getDistribution().getWslPath(s), s).hashCode();
+      }
     }
     return Utils.getDataStorageRoot(getBuildSystemDirectory(project).toFile(), projectPath, hashFunction);
   }
