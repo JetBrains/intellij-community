@@ -19,9 +19,7 @@ class GradleDownloadSourceEditorListener(private val cs: CoroutineScope) : FileE
     cs.launch {
       val project = source.project
       if (GradleLibrarySourcesDownloader.canDownloadSources(project, file)) {
-        GradleLibrarySourcesDownloader.download(project, file, object : GradleDependencySourceDownloaderErrorHandler {
-          override fun navigateToError(): Boolean = false
-        })
+        GradleLibrarySourcesDownloader.download(project, file, GradleDependencySourceDownloaderErrorHandler.Noop)
       }
     }
   }

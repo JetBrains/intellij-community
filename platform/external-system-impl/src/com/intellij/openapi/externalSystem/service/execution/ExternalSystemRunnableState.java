@@ -84,9 +84,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   @ApiStatus.Internal
   public static final @NotNull Key<ExternalSystemTaskNotificationListener> TASK_NOTIFICATION_LISTENER_KEY =
     Key.create("TASK_NOTIFICATION_LISTENER");
-
   @ApiStatus.Internal
-  public static final Key<Boolean> NAVIGATE_TO_ERROR = Key.create("NAVIGATE_TO_ERROR");
+  public static final Key<ThreeState> NAVIGATE_TO_ERROR_KEY = Key.create("NAVIGATE_TO_ERROR");
 
   private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
   private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
@@ -229,9 +228,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     DefaultBuildDescriptor buildDescriptor =
       new DefaultBuildDescriptor(task.getId(), executionName, task.getExternalProjectPath(), System.currentTimeMillis());
 
-    Boolean navigateToError = task.getUserData(NAVIGATE_TO_ERROR);
+    ThreeState navigateToError = myEnv.getUserData(NAVIGATE_TO_ERROR_KEY);
     if (navigateToError != null) {
-      buildDescriptor.setNavigateToError(navigateToError ? ThreeState.YES : ThreeState.NO);
+      buildDescriptor.setNavigateToError(navigateToError);
     }
 
     Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY);

@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -74,6 +75,11 @@ interface TaskExecutionSpec {
    * Activate and focus the tool window associated with the [executorId] on task failure.
    */
   val activateToolWindowOnFailure: Boolean
+
+  /**
+   * Open the file with the error that caused failure during the task execution.
+   */
+  val navigateToError: ThreeState
 
   companion object {
 

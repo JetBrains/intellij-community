@@ -19,7 +19,7 @@ import kotlin.io.path.exists
 interface GradleDependencySourceDownloaderErrorHandler {
   fun handle(project: Project, externalProjectPath: String, artifact: String, exception: Exception): Unit = Unit
 
-  fun navigateToError(): Boolean = true
+  companion object Noop : GradleDependencySourceDownloaderErrorHandler {}
 }
 
 internal object DefaultGradleDependencySourceDownloaderErrorHandler : GradleDependencySourceDownloaderErrorHandler {
