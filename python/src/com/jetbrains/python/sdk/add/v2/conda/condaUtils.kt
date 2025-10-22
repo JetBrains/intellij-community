@@ -10,12 +10,16 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v2.*
-import com.jetbrains.python.sdk.conda.*
+import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
+import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.takeWhile
 
@@ -24,7 +28,7 @@ internal fun PythonAddInterpreterModel<*>.createCondaCommand(): PyResult<PyConda
   val targetEnvironmentConfiguration = (fileSystem as? FileSystem.Target)?.targetEnvironmentConfiguration
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
   return PyCondaCommand(
-    fullCondaPathOnTarget = executable.pathHolder.toString().convertToPathOnTarget(targetEnvironmentConfiguration),
+    fullCondaPathOnTarget = executable.pathHolder.toString(),
     targetConfig = targetEnvironmentConfiguration
   ).let { PyResult.success(it) }
 }

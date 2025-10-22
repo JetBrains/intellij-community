@@ -10,6 +10,7 @@ import com.jetbrains.python.packaging.management.getPythonPackageManager
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.requirements.RequirementsFileType
+import com.jetbrains.python.sdk.isReadOnly
 
 internal sealed class PipPackageManagerAction : PythonPackageManagerAction<PipPythonPackageManager, String>() {
   override fun isWatchedFile(virtualFile: VirtualFile?): Boolean {
@@ -50,5 +51,15 @@ internal class PipUpdateEnvAction() : PipPackageManagerAction() {
   override suspend fun execute(e: AnActionEvent, manager: PipPythonPackageManager): PyResult<Unit> {
     val currentFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return PyResult.success(Unit)
     return manager.syncRequirementsTxt(currentFile)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (!e.presentation.isEnabledAndVisible)
+      return
+    val manager = e.getPythonPackageManager<PipPythonPackageManager>() ?: return
+    if (manager.sdk.isReadOnly) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.HelperName
 import com.jetbrains.python.errorProcessing.PyResult
@@ -58,7 +59,7 @@ class PipPackageManagerEngine(
   suspend fun syncRequirementsTxt(file: VirtualFile): PyResult<Unit> {
     return runPackagingTool(
       operation = "install",
-      arguments = listOf("-r", file.path)
+      arguments = Args("-r").addLocalFile(file.toNioPath())
     ).mapSuccess { }
   }
 
@@ -81,15 +82,14 @@ class PipPackageManagerEngine(
     return PyResult.success(packages)
   }
 
-  suspend fun runPackagingTool(operation: String, arguments: List<String>): PyResult<String> = withContext(Dispatchers.IO) {
-    val parameters = mutableListOf(operation)
+  private suspend fun runPackagingTool(operation: String, arguments: Args): PyResult<String> = withContext(Dispatchers.IO) {
+    val parameters = Args(operation)
     if (operation == "install") {
       PyProxyUtils.proxyString?.let {
-        parameters += "--proxy"
-        parameters += it
+        parameters.addArgs("--proxy", it)
       }
     }
-    parameters += arguments
+    parameters.add(arguments)
 
     thisLogger().debug("Running python packaging tool. Operation: $operation")
     ExecService().executeHelper(
@@ -98,6 +98,9 @@ class PipPackageManagerEngine(
       parameters,
     )
   }
+
+  private suspend fun runPackagingTool(operation: String, arguments: List<String>): PyResult<String> =
+    runPackagingTool(operation, Args(*arguments.toTypedArray()))
 
 
   private fun partitionPackagesBySource(installRequest: PythonPackageInstallRequest): List<List<String>> {
