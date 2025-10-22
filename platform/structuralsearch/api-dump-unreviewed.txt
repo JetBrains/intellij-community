@@ -1100,7 +1100,6 @@ f:com.intellij.structuralsearch.plugin.ui.UIUtil
 - s:detectFileType(com.intellij.structuralsearch.plugin.ui.SearchContext):com.intellij.openapi.fileTypes.LanguageFileType
 - s:getOrAddReplacementVariable(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.ReplacementVariableDefinition
 - s:getOrAddVariableConstraint(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.MatchVariableConstraint
-- s:getTemplateContextType(com.intellij.structuralsearch.StructuralSearchProfile):com.intellij.codeInsight.template.TemplateContextType
 - s:invokeAction(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
 - s:isTarget(java.lang.String,com.intellij.structuralsearch.MatchOptions):Z
 - s:setContent(com.intellij.openapi.editor.Editor,java.lang.String):V
