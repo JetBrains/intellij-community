@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon.previewfeature;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.preview.PreviewFeatureInspection;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -28,10 +29,13 @@ public final class PreviewFeatureWarningsTest extends LightJavaCodeInsightFixtur
   public void testAccessStaticMethodInPreviewFeatureClass() { doTest(); }
   public void testCallPreviewMethod() { doTest(); }
   public void testSuppressPreviewFeatureWarning() { doTest(); }
+  public void testUsingGathererOnOlderPreviewLevel() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, this::doTest);
+  }
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(LanguageLevel.JDK_21_PREVIEW);
+    return new ProjectDescriptor(LanguageLevel.JDK_25_PREVIEW);
   }
 
   private void doTest() {
