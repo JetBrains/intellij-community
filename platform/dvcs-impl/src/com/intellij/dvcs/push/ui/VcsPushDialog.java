@@ -359,6 +359,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     return panel == null ? null : panel.getValue();
   }
 
+  @ApiStatus.Experimental
+  public @Nullable VcsPushOptionsPanel getCustomPanel(@NotNull String id) {
+    return myCustomPanels.get(id);
+  }
+
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(VcsPushUi.VCS_PUSH_DIALOG, this);
