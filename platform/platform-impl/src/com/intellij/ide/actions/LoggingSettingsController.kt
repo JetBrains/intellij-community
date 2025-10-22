@@ -4,8 +4,8 @@ package com.intellij.ide.actions
 import com.intellij.configurationStore.getStateSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.settings.*
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
@@ -20,26 +20,29 @@ interface LoggingSettingsChangesListener {
   companion object {
     @Topic.AppLevel
     val TOPIC: Topic<LoggingSettingsChangesListener> = Topic(LoggingSettingsChangesListener::class.java)
-    const val REGISTRY_KEY: String = "ide.settings.log.persistent.changes"
+    const val JVM_PROPERTY_KEY: String = "ide.settings.log.persistent.changes"
   }
 }
 
 private class LoggingSettingsController : DelegatedSettingsController {
   private val storage = ConcurrentHashMap<PluginId, ConcurrentHashMap<String, Any>>()
   private val ignoredKeys = setOf("EntryPointsManager", "ProjectPlainTextFileTypeManager")
-  private val isEnabled: Boolean get() = Registry.`is`(LoggingSettingsChangesListener.REGISTRY_KEY, false)
+
+  init {
+    if (!System.getProperty(LoggingSettingsChangesListener.JVM_PROPERTY_KEY, "false").toBoolean()) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
   override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
     return GetResult.inapplicable()
   }
 
-  override fun createChild(container: ComponentManager): DelegatedSettingsController? {
-    return if (isEnabled) LoggingSettingsController() else null
+  override fun createChild(container: ComponentManager): DelegatedSettingsController {
+    return LoggingSettingsController()
   }
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult {
-    if (!isEnabled) return SetResult.inapplicable()
-
     val pluginStorage = storage.computeIfAbsent(key.pluginId) { ConcurrentHashMap() }
     val oldValue = pluginStorage[key.key]
     if (value == null) {

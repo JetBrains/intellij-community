@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.writeText
@@ -25,26 +24,40 @@ class ShowSettingsChangesLogFile : DumbAwareAction("Show Settings Changes Log Fi
 
     val file = FileUtilRt.createTempFile("settings-changes", ".txt", true)
     val tempFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file) ?: return
-
     val editor = FileEditorManager.getInstance(project).openFile(tempFile, true)
-    Registry.get(LoggingSettingsChangesListener.REGISTRY_KEY).setValue(true)
 
-    ApplicationManager.getApplication().messageBus.connect(editor[0]).subscribe(LoggingSettingsChangesListener.TOPIC, object : LoggingSettingsChangesListener {
-      override fun performed(event: LoggingSettingsChangesListener.Event) {
-        LOG.debug(event.change)
+    val isLoggingEnabled = System.getProperty(LoggingSettingsChangesListener.JVM_PROPERTY_KEY, "false").toBoolean()
+    val initialText = if (isLoggingEnabled)
+      "// 1. Call 'Save All' action first\n" +
+      "// 2. Remove the file content\n" +
+      "// 3. Change the setting you want to observe\n" +
+      "// 4. Call 'Save All' action again\n\n"
+    else
+      "The persistent settings saving logging seems to be disabled.\n" +
+      "To enable it, please add a JVM property '-Dide.settings.log.persistent.changes=true' and restart the IDE.\n"
 
-        ApplicationManager.getApplication().invokeLater {
-          WriteAction.run<IOException> {
-            val currentText = VfsUtil.loadText(tempFile)
-            tempFile.writeText(currentText + event.change + "\n")
+    ApplicationManager.getApplication().invokeLater {
+      WriteAction.run<IOException> {
+        tempFile.writeText(initialText)
+      }
+    }
+
+    if (isLoggingEnabled) {
+      ApplicationManager.getApplication().messageBus.connect(editor[0]).subscribe(LoggingSettingsChangesListener.TOPIC, object : LoggingSettingsChangesListener {
+        override fun performed(event: LoggingSettingsChangesListener.Event) {
+          LOG.debug(event.change)
+
+          ApplicationManager.getApplication().invokeLater {
+            WriteAction.run<IOException> {
+              val currentText = VfsUtil.loadText(tempFile)
+              tempFile.writeText(currentText + event.change + "\n")
+            }
           }
         }
-      }
-    })
+      })
+    }
 
     Disposer.register(editor[0]) {
-      Registry.get(LoggingSettingsChangesListener.REGISTRY_KEY).setValue(false)
-
       ApplicationManager.getApplication().invokeLater {
         WriteAction.run<IOException> {
           tempFile.delete(this)
