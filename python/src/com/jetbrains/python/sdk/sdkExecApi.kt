@@ -48,8 +48,20 @@ suspend fun ExecService.executeHelper(
   helperArgs: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyResult<String> =
-  execGetStdout(sdk, Args().addHelper(helper).addArgs(helperArgs), options, procListener)
+): PyResult<String> = executeHelper(sdk, helper, Args(*helperArgs.toTypedArray()), options, procListener)
+
+/**
+ * Executes [helper] on [sdk] (copies it to the remote machine if needed)
+ */
+@ApiStatus.Internal
+@CheckReturnValue
+suspend fun ExecService.executeHelper(
+  sdk: Sdk,
+  helper: HelperName,
+  helperArgs: Args = Args(),
+  options: ExecOptions = ExecOptions(),
+  procListener: PyProcessListener? = null,
+): PyResult<String> = execGetStdout(sdk, Args().addHelper(helper).add(helperArgs), options, procListener)
 
 
 // See function it calls for more info

@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
@@ -98,7 +99,10 @@ class PyRequirementVisitor(
     val message = PyPsiBundle.message(REQUIREMENT_NOT_SATISFIED, requirementsList, unsatisfied.size)
 
     val ignoreFix = IgnoreRequirementFix(unsatisfied.mapTo(mutableSetOf()) { it.presentableTextWithoutVersion })
-    val quickFixes = listOf(SyncProjectQuickFix(), ignoreFix)
+    val quickFixes = buildList {
+      if (!sdk.isReadOnly) add(SyncProjectQuickFix())
+      add(ignoreFix)
+    }
 
     registerProblem(
       file,
