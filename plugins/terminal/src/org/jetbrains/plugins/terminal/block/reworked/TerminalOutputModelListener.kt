@@ -47,7 +47,8 @@ interface TerminalOutputModelListener : EventListener {
  * The common interface for terminal output model events.
  */
 @ApiStatus.Experimental
-sealed interface TerminalOutputModelEvent {
+@ApiStatus.NonExtendable
+interface TerminalOutputModelEvent {
   /**
    * The model that fired the event.
    */
@@ -60,7 +61,8 @@ sealed interface TerminalOutputModelEvent {
  * @see TerminalOutputModelListener.afterContentChanged
  */
 @ApiStatus.Experimental
-sealed interface TerminalContentChangeEvent : TerminalOutputModelEvent {
+@ApiStatus.NonExtendable
+interface TerminalContentChangeEvent : TerminalOutputModelEvent {
 
   /**
    * The offset containing the first changed character.
@@ -110,7 +112,8 @@ sealed interface TerminalContentChangeEvent : TerminalOutputModelEvent {
  * @see TerminalOutputModelListener.cursorOffsetChanged
  */
 @ApiStatus.Experimental
-sealed interface TerminalCursorOffsetChangeEvent : TerminalOutputModelEvent {
+@ApiStatus.NonExtendable
+interface TerminalCursorOffsetChangeEvent : TerminalOutputModelEvent {
   /**
    * The old cursor offset value.
    */

@@ -35,7 +35,8 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel.Compani
  * (used to run "fullscreen" apps like Vim). The currently active model may be retrieved from the data context using the [DATA_KEY] key.
  */
 @ApiStatus.Experimental
-sealed interface TerminalOutputModel {
+@ApiStatus.NonExtendable
+interface TerminalOutputModel {
   companion object {
     val KEY: Key<TerminalOutputModel> = Key.create("TerminalOutputModel")
 
@@ -174,7 +175,8 @@ sealed interface TerminalOutputModel {
  * @see [TerminalOutputModel.takeSnapshot]
  */
 @ApiStatus.Experimental
-sealed interface TerminalOutputModelSnapshot {
+@ApiStatus.NonExtendable
+interface TerminalOutputModelSnapshot {
   /**
    * The length of the text available in the snapshot.
    */
