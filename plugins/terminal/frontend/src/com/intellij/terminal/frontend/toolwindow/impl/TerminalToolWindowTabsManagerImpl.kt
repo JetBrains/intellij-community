@@ -3,11 +3,8 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -28,9 +25,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.EventDispatcher
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import fleet.rpc.client.durable
@@ -48,6 +45,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
 import kotlin.time.Duration.Companion.seconds
 
 internal class TerminalToolWindowTabsManagerImpl(
@@ -59,7 +57,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   override val tabs: List<TerminalToolWindowTab>
     get() = mutableTabs.toList()
 
-  private val eventDispatcher = EventDispatcher.create(TerminalTabsManagerListener::class.java)
+  private val listeners = DisposableWrapperList<TerminalTabsManagerListener>()
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
@@ -101,7 +99,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener) {
-    eventDispatcher.addListener(listener, parentDisposable)
+    listeners.add(listener, parentDisposable)
   }
 
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
@@ -188,7 +186,9 @@ internal class TerminalToolWindowTabsManagerImpl(
       selectTab()
     }
 
-    eventDispatcher.multicaster.tabCreated(tab)
+    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling tab created event: $tab") {
+      it.tabCreated(tab)
+    }
   }
 
   private fun addToTabsList(tab: TerminalToolWindowTab) {
@@ -487,5 +487,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   companion object {
     val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
+
+    private val LOG = logger<TerminalToolWindowTabsManagerImpl>()
   }
 }

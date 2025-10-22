@@ -5,7 +5,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import java.util.*
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -20,7 +19,7 @@ interface TerminalTextSelectionModel {
 }
 
 @ApiStatus.Experimental
-interface TerminalTextSelectionListener : EventListener {
+interface TerminalTextSelectionListener {
   fun selectionChanged(event: TerminalTextSelectionChangeEvent)
 }
 

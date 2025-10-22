@@ -2,12 +2,14 @@
 package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.util.EventDispatcher
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.session.impl.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -31,7 +33,7 @@ class TerminalBlocksModelImpl(
       blocks[blocks.lastIndex] = value
     }
 
-  private val dispatcher = EventDispatcher.create(TerminalBlocksModelListener::class.java)
+  private val listeners = DisposableWrapperList<TerminalBlocksModelListener>()
 
   init {
     outputModel.addListener(parentDisposable, object : TerminalOutputModelListener {
@@ -49,14 +51,14 @@ class TerminalBlocksModelImpl(
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalBlocksModelListener) {
-    dispatcher.addListener(listener, parentDisposable)
+    listeners.add(listener, parentDisposable)
   }
 
   fun startNewBlock(offset: TerminalOffset) {
     val active = activeBlock as TerminalCommandBlockImpl
     if (offset == active.startOffset) {
       blocks.removeLast()
-      dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, active))
+      fireListeners(TerminalBlockRemovedEventImpl(this, active))
     }
     else {
       activeBlock = active.copy(endOffset = offset)
@@ -91,7 +93,7 @@ class TerminalBlocksModelImpl(
     if (firstNotRemovedBlockIndex != -1) {
       repeat(firstNotRemovedBlockIndex) {
         val block = blocks.removeFirst()
-        dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
+        fireListeners(TerminalBlockRemovedEventImpl(this, block))
       }
     }
     else {
@@ -109,7 +111,7 @@ class TerminalBlocksModelImpl(
     if (firstBlockToRemoveIndex != -1) {
       repeat(blocks.size - firstBlockToRemoveIndex) {
         val block = blocks.removeLast()
-        dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
+        fireListeners(TerminalBlockRemovedEventImpl(this, block))
       }
     }
 
@@ -126,13 +128,13 @@ class TerminalBlocksModelImpl(
     val oldBlocks = blocks.toList()
     blocks.clear()
     blocks.addAll(newBlocks)
-    dispatcher.multicaster.blocksReplaced(TerminalBlocksReplacedEventImpl(this, oldBlocks, newBlocks))
+    fireListeners(TerminalBlocksReplacedEventImpl(this, oldBlocks, newBlocks))
   }
 
   private fun addNewBlock(startOffset: TerminalOffset) {
     val newBlock = createNewBlock(startOffset)
     blocks.add(newBlock)
-    dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, newBlock))
+    fireListeners(TerminalBlockAddedEventImpl(this, newBlock))
   }
 
   private fun createNewBlock(startOffset: TerminalOffset): TerminalCommandBlock {
@@ -148,8 +150,23 @@ class TerminalBlocksModelImpl(
     )
   }
 
+  private fun fireListeners(event: TerminalBlocksModelEvent) {
+    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+      when (event) {
+        is TerminalBlockAddedEvent -> it.blockAdded(event)
+        is TerminalBlockRemovedEvent -> it.blockRemoved(event)
+        is TerminalBlocksReplacedEvent -> it.blocksReplaced(event)
+        else -> error("Unexpected event: $event")
+      }
+    }
+  }
+
   override fun toString(): String {
     return "TerminalBlocksModelImpl(blocks=$blocks)"
+  }
+
+  companion object {
+    private val LOG = logger<TerminalBlocksModelImpl>()
   }
 }
 

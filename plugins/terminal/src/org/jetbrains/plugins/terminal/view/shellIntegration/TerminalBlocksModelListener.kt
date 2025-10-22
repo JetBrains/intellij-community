@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.terminal.view.shellIntegration
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Experimental
-interface TerminalBlocksModelListener : EventListener {
+interface TerminalBlocksModelListener {
   fun blockAdded(event: TerminalBlockAddedEvent) {}
 
   fun blockRemoved(event: TerminalBlockRemovedEvent) {}
