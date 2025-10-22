@@ -10,6 +10,10 @@ import com.intellij.platform.ide.productMode.IdeProductMode
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+private val LOG  by lazy {
+  fileLogger()
+}
+
 @ApiStatus.Internal
 // FIXME: When we consider client services stable enough, all usages of the method must be removed,
 //        and the corresponding classes must be moved to frontend modules of their plugins
@@ -20,8 +24,8 @@ fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
     IdeProductMode.isBackend && isOldMonolithServiceViewEnabled() -> true
     else -> false
   }
-  fileLogger().debug("Services implementation is ${if (isServicesEnabled) "enabled" else "disabled"} in current environment. " +
-                     "Is frontend: ${IdeProductMode.isFrontend}, is monolith: ${IdeProductMode.isMonolith}, is backend: ${IdeProductMode.isBackend}.")
+  LOG.debug("Services implementation is ${if (isServicesEnabled) "enabled" else "disabled"} in current environment. " +
+            "Is frontend: ${IdeProductMode.isFrontend}, is monolith: ${IdeProductMode.isMonolith}, is backend: ${IdeProductMode.isBackend}.")
   return isServicesEnabled
 }
 
