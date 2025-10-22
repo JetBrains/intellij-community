@@ -278,6 +278,7 @@
                          implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
     <liveTemplateContext contextId="Python_Top_Level" baseContextId="Python"
                          implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
+    <liveTemplatePreprocessor implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDecoratorTemplatePreprocessor"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>

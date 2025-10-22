@@ -85,6 +85,20 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
     });
   }
 
+  // PY-36230
+  public void testPropertyDecoratorNoDuplicate() {
+    myFixture.configureByText("a.py", "class MyClass:\n    @prop<caret>");
+    myFixture.type("\t");
+    myFixture.checkResult("class MyClass:\n    @property\n    def <caret>(self):\n        return ");
+  }
+
+  // PY-36230
+  public void testPropertyDecoratorNoAtSymbol() {
+    myFixture.configureByText("a.py", "class MyClass:\n    prop<caret>");
+    myFixture.type("\t");
+    myFixture.checkResult("class MyClass:\n    @property\n    def <caret>(self):\n        return ");
+  }
+
   // PY-41231
   public void testIterableVariableWithTypeAnnotation() {
     doMultiFileTest();
