@@ -12,6 +12,9 @@
     <module name="intellij.settingsSync.core"/>
     <plugin id="com.intellij.marketplace"/>
   </dependencies>
+
+  <depends optional="true" config-file="intellij.settingsSync.performance.xml">com.jetbrains.performancePlugin</depends>
+
   <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
     <!-- The implicit main module of the plugin depends on internal modules (intellij.settingsSync.core), so it's required to set the namespace for it
