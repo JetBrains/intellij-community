@@ -87,6 +87,10 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     sessionInitializedDeferred.await()
   }
 
+  fun updatePlugin(pluginId: PluginId){
+    myInstalledPluginComponentMap[pluginId]?.firstOrNull()?.updatePlugin()
+  }
+
   fun isLoaded(pluginId: PluginId): Boolean {
     return isLoaded(pluginId, this.enabledMap)
   }

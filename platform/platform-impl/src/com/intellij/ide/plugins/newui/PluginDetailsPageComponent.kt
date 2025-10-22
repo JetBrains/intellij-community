@@ -535,7 +535,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     installOptionButton.setOptions(customizationModel.additionalActions)
     val mainAction = customizationModel.mainAction
     if (mainAction != null) {
-      setInstallAction(installOptionButton, mainAction)
+      if(customizationModel.isVisible) {
+        setInstallAction(installOptionButton, mainAction)
+      }
       installOptionButton.setEnabled(customizationModel.isVisible)
       installOptionButton.setTextAndSize(customizationModel.text)
       installOptionButton.isVisible = customizationModel.isVisible
@@ -563,7 +565,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, installedDescriptorForMarketplace, modalityState)
                              ?: return
     enableDisableController?.setOptions(customizationModel.additionalActions)
-    val visible = customizationModel.isVisible && customizationModel.text == null
+    val visible = customizationModel.isVisible && customizationModel.text == null && restartButton?.isVisible != true
     component.isVisible = visible
     component.isEnabled = visible
     if (customizationModel.text != null && restartButton?.isVisible != true) {
