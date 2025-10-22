@@ -246,6 +246,7 @@ class FrontendXDebuggerSession private constructor(
         updateState()
         isTopFrameSelected = isTopFrame
         currenSourcePosition = sourcePositionDto?.sourcePosition()
+        topSourcePosition = topSourcePositionDto?.sourcePosition()
         val newFrame = stackFrame?.let {
           getCurrentSuspendContext()?.getOrCreateStackFrame(it)
         }
@@ -400,6 +401,14 @@ class FrontendXDebuggerSession private constructor(
     executionStack as FrontendXExecutionStack
     isTopFrameSelected = isTopFrame
     currentExecutionStack = executionStack
+
+    // TODO Support XSourceKind
+    val frameSourcePosition = frame.sourcePosition
+    currenSourcePosition = frameSourcePosition
+    if (isTopFrame) {
+      topSourcePosition = frameSourcePosition
+    }
+
     currentStackFrame.value = StackFrameUpdate.notifyChanged(frame)
     cs.launch {
       XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,

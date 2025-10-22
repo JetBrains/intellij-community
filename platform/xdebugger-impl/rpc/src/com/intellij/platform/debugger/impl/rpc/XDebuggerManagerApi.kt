@@ -102,6 +102,7 @@ sealed interface XDebuggerSessionEvent {
   class StackFrameChanged(
     override val state: XDebugSessionState,
     val sourcePositionDto: XSourcePositionDto?,
+    val topSourcePositionDto: XSourcePositionDto?,
     val isTopFrame: Boolean,
     val stackFrame: XStackFrameDto?,
   ) : EventWithState

@@ -133,6 +133,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         trySend(XDebuggerSessionEvent.StackFrameChanged(
           currentSession.state(),
           currentSession.currentPosition?.toRpc(),
+          currentSession.topFramePosition?.toRpc(),
           currentSession.isTopFrameSelected,
           stackFrameDto,
         ))
