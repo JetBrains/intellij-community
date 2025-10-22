@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtilRt
@@ -57,7 +58,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
                                                   canChangeWhiteSpaceOnly, quickFormat, isSync)
     val formattingTask = createFormattingTask(service, formattingRequest)
     if (formattingTask != null) {
-      formattingRequest.setTask(formattingTask)
+      formattingRequest.task = formattingTask
       pendingRequests[document] = formattingRequest
       if (isSync) {
         runAsyncFormatBlocking(formattingRequest)
@@ -103,10 +104,28 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
   private suspend fun runAsyncFormat(formattingRequest: FormattingRequestImpl) {
     try {
-      formattingRequest.runAndAwaitTask()
+      underProgressIfNeeded(checkNotNull(formattingRequest.task).isRunUnderProgress, formattingRequest.context.project) {
+        formattingRequest.runAndAwaitTask()
+      }
     }
     finally {
       pendingRequests.remove(formattingRequest.document, formattingRequest)
+    }
+  }
+
+  private suspend fun underProgressIfNeeded(isNeeded: Boolean, project: Project, block: suspend () -> Unit) {
+    if (isNeeded) {
+      withBackgroundProgress(
+        project,
+        CodeStyleBundle.message("async.formatting.service.running", getName(service)),
+        TaskCancellation.cancellable()
+          .withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))
+      ) {
+        block()
+      }
+    }
+    else {
+      block()
     }
   }
 
@@ -121,7 +140,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     private val initialModificationStamp = document.getModificationStamp()
 
     @Volatile
-    private var task: FormattingTask? = null
+    var task: FormattingTask? = null
 
     private val taskStarted = CompletableDeferred<Unit>()
     private val taskResult = CompletableDeferred<String?>()
@@ -134,26 +153,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         return formattingTask.cancel()
       }
       return false
-    }
-
-    fun setTask(formattingTask: FormattingTask) {
-      task = formattingTask
-    }
-
-    private suspend fun underProgressIfNeeded(isNeeded: Boolean, block: () -> Unit) {
-      if (isNeeded) {
-        withBackgroundProgress(context.project,
-                               CodeStyleBundle.message("async.formatting.service.running", getName(service)),
-                               TaskCancellation.cancellable()
-                                 .withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))) {
-          coroutineToIndicator {
-            block()
-          }
-        }
-      }
-      else {
-        block()
-      }
     }
 
     private fun notifyExpired() {
@@ -180,7 +179,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       // GlobalScope is used here to prevent cancellation before that can happen.
       val taskJob = GlobalScope.launch(taskDispatcher) {
         try {
-          underProgressIfNeeded(task.isRunUnderProgress) {
+          coroutineToIndicatorIfNeeded(task.isRunUnderProgress) {
             taskStarted.complete(Unit)
             task.run()
           }
@@ -327,3 +326,14 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 }
 
 private const val TEMP_FILE_PREFIX = "ij-format-temp"
+
+private suspend fun coroutineToIndicatorIfNeeded(isNeeded: Boolean, block: () -> Unit) {
+  if (isNeeded) {
+    coroutineToIndicator {
+      block()
+    }
+  }
+  else {
+    block()
+  }
+}
