@@ -13,6 +13,8 @@ import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_MET
 public class JUnit6Framework extends JUnit5Framework {
   @Override
   public boolean isDumbAware() {
+    // Only Java is available in dumb mode, other language implementation might not support it.
+    // For example, Kotlin, because it relies on light classes which require resolve.
     return this.getClass().isAssignableFrom(JUnit6Framework.class);
   }
 
