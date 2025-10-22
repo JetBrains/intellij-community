@@ -54,7 +54,12 @@ import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.event.HyperlinkListener
 import kotlin.time.Duration.Companion.seconds
 
-private data class StackFrameUpdate(val frame: FrontendXStackFrame?, val isFrameChanged: Boolean)
+private class StackFrameUpdate private constructor(val frame: FrontendXStackFrame?, val isFrameChanged: Boolean) {
+  companion object {
+    fun notifyChanged(frame: FrontendXStackFrame?): StackFrameUpdate = StackFrameUpdate(frame, true)
+    fun noNotify(frame: FrontendXStackFrame?): StackFrameUpdate = StackFrameUpdate(frame, false)
+  }
+}
 
 @VisibleForTesting
 @ApiStatus.Internal
@@ -81,7 +86,7 @@ class FrontendXDebuggerSession private constructor(
   private val sessionStateFlow = MutableStateFlow(sessionDto.initialSessionState)
   private val suspendContext = MutableStateFlow<FrontendXSuspendContext?>(null)
   private val currentExecutionStack = MutableStateFlow<FrontendXExecutionStack?>(null)
-  private val currentStackFrame = MutableStateFlow<StackFrameUpdate>(StackFrameUpdate(null, false))
+  private val currentStackFrame = MutableStateFlow(StackFrameUpdate.noNotify(null))
   private val activeNonLineBreakpoint: StateFlow<XBreakpointProxy?> = channelFlow {
     sessionDto.activeNonLineBreakpointIdFlow.toFlow().collectLatest { breakpointId ->
       if (breakpointId == null) {
@@ -230,10 +235,10 @@ class FrontendXDebuggerSession private constructor(
       is XDebuggerSessionEvent.StackFrameChanged -> {
         updateState()
         sourcePositionFlow.value = sourcePosition?.sourcePosition()
-        stackFrame?.await()?.let {
-          val suspendContext = suspendContext.value ?: return
-          currentStackFrame.value = StackFrameUpdate(suspendContext.getOrCreateStackFrame(it), true)
+        val newFrame = stackFrame?.await()?.let {
+          suspendContext.value?.getOrCreateStackFrame(it)
         }
+        currentStackFrame.value = StackFrameUpdate.noNotify(newFrame)
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
       XDebuggerSessionEvent.SettingsChanged -> {}
@@ -249,7 +254,7 @@ class FrontendXDebuggerSession private constructor(
     sourcePositionFlow.value = null
     topSourcePositionFlow.value = null
     currentExecutionStack.value = null
-    currentStackFrame.value = StackFrameUpdate(null, false)
+    currentStackFrame.value = StackFrameUpdate.noNotify(null)
   }
 
   private fun SuspendData.applyToCurrents() {
@@ -268,7 +273,8 @@ class FrontendXDebuggerSession private constructor(
       }
     }
     stackFrameDto?.let {
-      currentStackFrame.value = StackFrameUpdate(suspendContextLifetimeScope.getOrCreateStackFrame(it, project), false)
+      val frame = suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
+      currentStackFrame.value = StackFrameUpdate.noNotify(frame)
     }
     sourcePositionFlow.value = sourcePositionDto?.sourcePosition()
     topSourcePositionFlow.value = topSourcePositionDto?.sourcePosition()
@@ -373,10 +379,10 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
+    currentExecutionStack.value = executionStack as FrontendXExecutionStack
+    frame as FrontendXStackFrame
+    currentStackFrame.value = StackFrameUpdate.notifyChanged(frame)
     cs.launch {
-      currentExecutionStack.value = executionStack as FrontendXExecutionStack
-      currentStackFrame.value = StackFrameUpdate(frame as FrontendXStackFrame, true)
-
       XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,
                                                           frame.id, isTopFrame, changedByUser = true)
     }
