@@ -79,7 +79,8 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
-    moduleOrProject.moduleIfExists?.excludeInnerVirtualEnv(sdk)
+    moduleOrProject.project.excludeInnerVirtualEnv(sdk)
+    moduleOrProject.moduleIfExists?.let { sdk.setAssociationToModule(it) }
 
     return Result.success(sdk)
   }
