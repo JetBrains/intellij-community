@@ -14,9 +14,9 @@ interface GrazieCloudConnector {
   fun isAuthorized(): Boolean
 
   /**
-   * Connects to Grazie Cloud
+   * Connects to Grazie Cloud. Returns true if the connection was established successfully and false otherwise.
    */
-  fun connect(project: Project)
+  fun connect(project: Project): Boolean
 
   /**
    * Returns the default value for cloud connection.
@@ -53,7 +53,7 @@ interface GrazieCloudConnector {
       return connector.isAuthorized() && GrazieConfig.get().processing == Processing.Cloud
     }
 
-    fun connect(project: Project): Unit =
+    fun connect(project: Project): Boolean =
       EP_NAME.extensionList.first().connect(project)
 
     fun isCloudEnabledByDefault(): Boolean = EP_NAME.extensionList.first().isCloudEnabledByDefault()

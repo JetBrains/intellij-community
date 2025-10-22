@@ -21,22 +21,23 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.CustomStatusBarWidget
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.IconLabelButton
@@ -53,9 +54,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.awt.event.ItemEvent
 import javax.swing.*
+
+private val logger = logger<GrazieStatusBarWidget>()
 
 class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidget {
   private val widgetComponent by lazy { createComponent() }
@@ -233,6 +235,7 @@ class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidge
     return row {
       button(text = GrazieBundle.message("grazie.connect.to.cloud.button.text")) {
         if (!GrazieCloudConnector.askUserConsentForCloud()) return@button
+        logger.debug { "Connect to Grazie Cloud button started from widget" }
         GrazieCloudConnector.connect(project)
       }.apply {
         applyToComponent {
@@ -291,7 +294,7 @@ class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidge
                   icon(ModifiedGrazieIcons.ForcedLocal).apply {
                     gap(RightGap.SMALL)
                     applyToComponent {
-                      toolTipText = "Using local mode because cloud is not accessible"
+                      toolTipText = GrazieBundle.message("grazie.status.bar.widget.cloud.not.accessible.text")
                     }
                   }
                   label(GrazieBundle.message("grazie.status.bar.widget.local.processing.label.text")).gap(RightGap.SMALL)
@@ -426,51 +429,7 @@ class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidge
     return this
   }
 
-  private fun Row.actionsButtonWithoutDropdownIcon(
-    vararg actions: AnAction,
-    icon: Icon = AllIcons.General.GearPlain,
-  ): Cell<ActionButton> {
-    return buttonWithActionPopup(actions = actions, icon = icon).applyToComponent {
-      action.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-    }
-  }
-
-  private fun Row.buttonWithActionPopup(
-    vararg actions: AnAction,
-    @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
-    icon: Icon = AllIcons.General.GearPlain,
-  ): Cell<ActionButton> {
-    val actionGroup = PopupActionGroup(actions)
-    actionGroup.templatePresentation.icon = icon
-    return cell(ActionButton(
-      actionGroup,
-      actionGroup.templatePresentation.clone(),
-      actionPlace,
-      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
-    ))
-  }
-
-  private class PopupActionGroup(private val actions: Array<out AnAction>) : ActionGroup(), DumbAware {
-    init {
-      isPopup = true
-      templatePresentation.isPerformGroup = actions.isNotEmpty()
-    }
-
-    override fun getChildren(event: AnActionEvent?): Array<out AnAction> = actions
-
-    override fun actionPerformed(event: AnActionEvent) {
-      val popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        null,
-        this,
-        event.dataContext,
-        JBPopupFactory.ActionSelectionAid.MNEMONICS,
-        true
-      )
-      PopupUtil.showForActionButtonEvent(popup, event)
-    }
-  }
-
-  private fun isAuthorized(disposable: Disposable): ComponentPredicate = IsAuthorizedPredicate(disposable)
+  private fun isAuthorized(disposable: Disposable): ComponentPredicate = LoginStatePredicate(disposable) { it.isCloudConnected }
 
   private fun isCloudProcessingSelected(disposable: Disposable): ComponentPredicate {
     return IsCloudProcessingSelectedPredicate(disposable)
@@ -478,16 +437,6 @@ class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidge
 
   private fun isCloudConnectionStable(disposable: Disposable): ComponentPredicate {
     return IsCloudConnectionStablePredicate(disposable)
-  }
-
-  private class IsAuthorizedPredicate(private val disposable: Disposable) : ComponentPredicate() {
-    override fun addListener(listener: (Boolean) -> Unit) {
-      GrazieConfig.subscribe(disposable) {
-        listener(GrazieCloudConnector.isAuthorized())
-      }
-    }
-
-    override fun invoke(): Boolean = GrazieCloudConnector.isAuthorized()
   }
 
   private class IsCloudProcessingSelectedPredicate(private val disposable: Disposable) : ComponentPredicate() {

@@ -17,22 +17,23 @@ private val logger = logger<DefaultGrazieCloudConnector>()
 class DefaultGrazieCloudConnector : GrazieCloudConnector {
   override fun isAuthorized(): Boolean = GrazieLoginManager.state().value.isCloudConnected
 
-  override fun connect(project: Project) {
-    runBlockingModalProcess(project, title = GrazieBundle.message("grazie.cloud.logging.in.progress.title")) {
-      logger.debug { "Connect to Grazie Cloud button clicked" }
-      val state = GrazieLoginManager.logInToCloud(true)
-      logger.debug { "State returned from the cloud login routine: $state" }
-      when (state) {
-        is GrazieLoginState.Jba ->
-          if (state.error != null) {
-            notifyOnLicensingError(state.error)
-          }
-        is GrazieLoginState.Enterprise ->
-          if (state.state.error != null) {
-            notifyOnLicensingError(state.state.error)
-          }
-        else -> Unit
+  override fun connect(project: Project): Boolean = runBlockingModalProcess(project, title = GrazieBundle.message("grazie.cloud.logging.in.progress.title")) {
+    val state = GrazieLoginManager.logInToCloud(true)
+    logger.debug { "State returned from the cloud login routine: $state" }
+    return@runBlockingModalProcess when (state) {
+      is GrazieLoginState.Cloud -> true
+      is GrazieLoginState.Jba -> {
+        state.error?.let { notifyOnLicensingError(it) }
+        false
       }
+      is GrazieLoginState.Enterprise -> {
+        val hasErrors = state.state.error != null
+        if (hasErrors) {
+          notifyOnLicensingError(state.state.error)
+        }
+        !hasErrors
+      }
+      else -> false
     }
   }
 

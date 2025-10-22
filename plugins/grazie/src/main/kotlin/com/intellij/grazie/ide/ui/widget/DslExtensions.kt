@@ -1,15 +1,24 @@
 package com.intellij.grazie.ide.ui.widget
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.not
 import com.intellij.ui.popup.AbstractPopup
+import org.jetbrains.annotations.NonNls
 import java.awt.Point
+import javax.swing.Icon
 import javax.swing.JComponent
 
 internal fun Panel.panel(visibleIf: ComponentPredicate, block: Panel.() -> Unit): Panel = panel(block).visibleIf(visibleIf)
@@ -44,4 +53,48 @@ internal fun JBPopup.showAboveOnTheLeft(component: JComponent, verticalOffset: I
     }
   })
   show(component)
+}
+
+fun Row.actionsButtonWithoutDropdownIcon(
+  vararg actions: AnAction,
+  icon: Icon = AllIcons.General.GearPlain,
+): Cell<ActionButton> {
+  return buttonWithActionPopup(actions = actions, icon = icon).applyToComponent {
+    action.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+  }
+}
+
+private fun Row.buttonWithActionPopup(
+  vararg actions: AnAction,
+  @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
+  icon: Icon = AllIcons.General.GearPlain,
+): Cell<ActionButton> {
+  val actionGroup = PopupActionGroup(actions)
+  actionGroup.templatePresentation.icon = icon
+  return cell(ActionButton(
+    actionGroup,
+    actionGroup.templatePresentation.clone(),
+    actionPlace,
+    ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+  ))
+}
+
+private class PopupActionGroup(private val actions: Array<out AnAction>) : ActionGroup(), DumbAware {
+  init {
+    isPopup = true
+    templatePresentation.isPerformGroup = actions.isNotEmpty()
+  }
+
+  override fun getChildren(event: AnActionEvent?): Array<out AnAction> = actions
+
+  override fun actionPerformed(event: AnActionEvent) {
+    val popup = JBPopupFactory.getInstance().createActionGroupPopup(
+      null,
+      this,
+      event.dataContext,
+      JBPopupFactory.ActionSelectionAid.MNEMONICS,
+      true
+    )
+    PopupUtil.showForActionButtonEvent(popup, event)
+  }
 }
