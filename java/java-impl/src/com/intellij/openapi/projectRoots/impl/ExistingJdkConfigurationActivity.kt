@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.edtWriteAction
@@ -31,7 +31,7 @@ private class ExistingJdkConfigurationActivity : ProjectActivity {
     val jdkPathsToAdd = ArrayList<String>()
 
     // Collect JDKs to register
-    serviceAsync<JdkFinder>().suggestHomePaths().forEach { homePath: String ->
+    serviceAsync<JdkFinder>().suggestHomePaths(project).forEach { homePath: String ->
       if (javaSdk.isValidSdkHome(homePath) && registeredJdks.none {
           FileUtil.toCanonicalPath(it.homePath) == FileUtil.toCanonicalPath(homePath)
         }) {
