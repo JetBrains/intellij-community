@@ -19,7 +19,6 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.execution.wsl.WslProxy;
 import com.intellij.ide.IdleTracker;
@@ -207,43 +206,28 @@ public final class BuildManager implements Disposable {
       return;
     }
 
-    Collection<File> systemDirs = Collections.singleton(LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toFile());
-    if (Boolean.parseBoolean(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
-      final List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
-      if (!distributions.isEmpty()) {
-        systemDirs = new ArrayList<>(systemDirs);
-        for (WSLDistribution distribution : distributions) {
-          final Path wslSystemDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(distribution);
-          if (wslSystemDir != null) {
-            systemDirs.add(wslSystemDir.toFile());
-          }
-        }
-      }
-    }
-
-    for (File buildSystemDir : systemDirs) {
-      File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
-      if (dirs != null) {
-        Instant now = Instant.now();
-        for (File buildDataProjectDir : dirs) {
-          File usageFile = getUsageFile(buildDataProjectDir);
-          if (usageFile.exists()) {
-            final Pair<Date, File> usageData = readUsageFile(usageFile);
-            if (usageData != null) {
-              final File projectFile = usageData.second;
-              if (projectFile != null && !projectFile.exists() ||
-                  Duration.between(usageData.first.toInstant(), now).toDays() > unusedThresholdDays) {
-                LOG.info("Clearing project build data because the project does not exist or was not opened for more than " +
-                         unusedThresholdDays +
-                         " days: " +
-                         buildDataProjectDir);
-                FileUtil.delete(buildDataProjectDir);
-              }
+    File buildSystemDir = LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toFile();
+    File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
+    if (dirs != null) {
+      Instant now = Instant.now();
+      for (File buildDataProjectDir : dirs) {
+        File usageFile = getUsageFile(buildDataProjectDir);
+        if (usageFile.exists()) {
+          final Pair<Date, File> usageData = readUsageFile(usageFile);
+          if (usageData != null) {
+            final File projectFile = usageData.second;
+            if (projectFile != null && !projectFile.exists() ||
+                Duration.between(usageData.first.toInstant(), now).toDays() > unusedThresholdDays) {
+              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " +
+                       unusedThresholdDays +
+                       " days: " +
+                       buildDataProjectDir);
+              FileUtil.delete(buildDataProjectDir);
             }
           }
-          else {
-            updateUsageFile(null, buildDataProjectDir); // set usage stamp to start the countdown
-          }
+        }
+        else {
+          updateUsageFile(null, buildDataProjectDir); // set usage stamp to start the countdown
         }
       }
     }
