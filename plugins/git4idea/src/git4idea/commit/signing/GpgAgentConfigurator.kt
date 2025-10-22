@@ -21,7 +21,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -29,6 +28,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.platform.util.coroutines.flow.debounceBatch
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.io.createParentDirectories
 import git4idea.commands.GitScriptGenerator
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_BACKUP_FILE_NAME
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_FILE_NAME
@@ -61,6 +61,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.exists
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<GpgAgentConfigurator>()
@@ -346,15 +347,12 @@ private class WslGpgAgentCommandExecutor(
   }
 }
 
-internal interface PinentryLauncherGenerator {
-  val executable: GitExecutable
-  fun getScriptTemplate(fallbackPinentryPath: String?): String
+internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutable) {
 
   suspend fun generate(project: Project, gpgAgentPaths: GpgAgentPaths, fallbackPinentryPath: String?) = withContext(Dispatchers.IO) {
     val path = gpgAgentPaths.gpgPinentryAppLauncher
     try {
-      FileUtil.writeToFile(path.toFile(), getScriptTemplate(fallbackPinentryPath))
-      val executable = executable
+      path.createParentDirectories().writeText(getScriptTemplate(fallbackPinentryPath))
       if (executable is GitExecutable.Wsl) {
         val launcherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
         WslGpgAgentCommandExecutor(project, executable).execute("chmod", "+x", launcherConfigPath)
@@ -372,30 +370,32 @@ internal interface PinentryLauncherGenerator {
   fun getCommandLineParameters(): Array<String> {
     return if (LOG.isDebugEnabled) arrayOf("--log") else emptyArray()
   }
-}
 
-internal class PinentryShellScriptLauncherGenerator(override val executable: GitExecutable) :
-  GitScriptGenerator(executable), PinentryLauncherGenerator {
+  fun getCommandLine(): String {
+    val gitScriptGenerator = GitScriptGenerator(executable)
+    return gitScriptGenerator.addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
+  }
 
   @Language("Shell Script")
-  override fun getScriptTemplate(fallbackPinentryPath: String?): String {
-    if (fallbackPinentryPath == null) {
-      return """|#!/bin/sh
-                |${addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)}
-             """.trimMargin()
+  private fun getScriptTemplate(fallbackPinentryPath: String?): String {
+    return if (fallbackPinentryPath == null) {
+      """|#!/bin/sh
+         |${getCommandLine()}
+      """.trimMargin()
     }
-
-    return """|#!/bin/sh
-              |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ]; then
-              |  case "${'$'}$PINENTRY_USER_DATA_ENV" in
-              |    ${PinentryData.PREFIX}*)
-              |      ${addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)}
-              |      exit $?
-              |    ;;
-              |  esac
-              |fi
-              |exec ${CommandLineUtil.posixQuote(fallbackPinentryPath)} "$@"
-           """.trimMargin()
+    else {
+      """|#!/bin/sh
+         |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ]; then
+         |  case "${'$'}$PINENTRY_USER_DATA_ENV" in
+         |    ${PinentryData.PREFIX}*)
+         |      ${getCommandLine()}
+         |      exit $?
+         |    ;;
+         |  esac
+         |fi
+         |exec ${CommandLineUtil.posixQuote(fallbackPinentryPath)} "$@"
+      """.trimMargin()
+    }
   }
 }
 
