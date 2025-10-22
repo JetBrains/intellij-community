@@ -926,15 +926,17 @@ private fun PyClassLikeType.getDunderCallType(resolveContext: PyResolveContext):
   return findMember(PyNames.CALL, resolveContext)
 }
 
+private fun PyCallableParameter.isLegacyPositionalOnly(): Boolean = !isSelf && isPrivate(name.orEmpty())
+
 fun analyzeArguments(
   arguments: List<PyExpression>,
   parameters: List<PyCallableParameter>,
   context: TypeEvalContext,
 ): ArgumentMappingResults {
   val hasSlashParameter = parameters.any { it.parameter is PySlashParameter }
-  var positionalOnlyMode = hasSlashParameter
-  var seenStarArgs = false
-  var seenSingleStar = false
+  val oldStylePositionalOnly = parameters.dropWhile { it.isSelf }.firstOrNull()?.isLegacyPositionalOnly() ?: false
+  var positionalOnlyMode = hasSlashParameter || oldStylePositionalOnly
+  var keywordOnlyMode = false
   var mappedVariadicArgumentsToParameters = false
   val mappedParameters = LinkedHashMap<PyExpression?, PyCallableParameter?>()
   val unmappedParameters = mutableListOf<PyCallableParameter?>()
@@ -957,6 +959,9 @@ fun analyzeArguments(
 
     if (psi is PyNamedParameter || psi == null) {
       val parameterName = parameter.name
+      if (!parameter.isSelf && !hasSlashParameter && !parameter.isLegacyPositionalOnly()) {
+        positionalOnlyMode = false
+      }
       if (parameter.isPositionalContainer()) {
         for (argument in allPositionalArguments) {
           if (argument != null) {
@@ -971,7 +976,7 @@ fun analyzeArguments(
         }
         allPositionalArguments.clear()
         variadicPositionalArguments.clear()
-        seenStarArgs = true
+        keywordOnlyMode = true
       }
       else if (parameter.isKeywordContainer()) {
         for (argument in keywordArguments) {
@@ -983,7 +988,7 @@ fun analyzeArguments(
         keywordArguments.clear()
         variadicKeywordArguments.clear()
       }
-      else if (seenSingleStar) {
+      else if (keywordOnlyMode) {
         val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
         if (keywordArgument != null) {
           mappedParameters.put(keywordArgument, parameter)
@@ -1032,8 +1037,7 @@ fun analyzeArguments(
       }
       else {
         val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
-        val oldStylePositionalOnlyParam = !hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName)
-        if (keywordArgument != null && !oldStylePositionalOnlyParam) {
+        if (keywordArgument != null) {
           mappedParameters.put(keywordArgument, parameter)
         }
         else if (!variadicPositionalArguments.isEmpty() || !variadicKeywordArguments.isEmpty()) {
@@ -1072,7 +1076,7 @@ fun analyzeArguments(
       positionalOnlyMode = false
     }
     else if (psi is PySingleStarParameter) {
-      seenSingleStar = true
+      keywordOnlyMode = true
     }
     else if (!parameter.hasDefaultValue()) {
       unmappedParameters.add(parameter)
