@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.lambda.testFramework` start
+load("@community//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_lambda-testFramework",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "lambda-testFramework_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lambda-testFramework",
+  module_name = "intellij.lambda.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":lambda-testFramework_resources"],
+  kotlinc_opts = ":custom_lambda-testFramework",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:assert_j",
+    "@community//platform/core-api:core",
+    "@community//platform/core-ui",
+    "@community//platform/lang-impl",
+    "@community//platform/platform-api:ide",
+    "@community//platform/editor-ui-api:editor-ui",
+    "@community//platform/editor-ui-ex:editor-ex",
+    "//remote-dev/cwm-model-generated:split-protocol",
+    "@community//platform/testFramework",
+    "@community//platform/code-style-api:codeStyle",
+    "@community//platform/lang-api:lang",
+    "@community//platform/execution-impl",
+    "@community//platform/core-impl",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/remoteDev-util",
+    "@community//platform/analysis-api:analysis",
+    "@community//plugins/performanceTesting/core:performanceTesting",
+    "@community//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "@community//platform/xdebugger-api:debugger",
+    "@community//platform/xdebugger-impl:debugger-impl",
+    "@community//platform/util/concurrency",
+    "@community//platform/usageView",
+    "//remote-dev/rd-ide-model-generated",
+    "@lib//:rd-framework",
+    "@lib//:rd-core",
+    "@lib//:kodein-di-jvm",
+    "@community//platform/remote-driver/client",
+    "@community//tools/intellij.tools.ide.starter:ide-starter",
+    "//tests/intellij.ide.starter.extended:ide-starter-extended",
+    "@community//platform/testFramework/junit5",
+    "@community//libraries/kotlin/reflect",
+    "//remote-dev/cwm-common:split",
+  ]
+)
+### auto-generated section `build intellij.lambda.testFramework` end
