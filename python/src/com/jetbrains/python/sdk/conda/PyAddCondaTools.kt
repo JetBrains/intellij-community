@@ -22,6 +22,7 @@ import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.psi.LanguageLevel
@@ -84,7 +85,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
   sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).onFailure {
-    ShowingMessageErrorSync.emit(it)
+    ShowingMessageErrorSync.emit(it, project)
   }.getOrThrow()
   edtWriteAction {
     sdkModificator.commitChanges()

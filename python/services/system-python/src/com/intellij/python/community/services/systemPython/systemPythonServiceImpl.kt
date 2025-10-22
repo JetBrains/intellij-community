@@ -16,6 +16,7 @@ import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -56,7 +57,9 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
     scope.launch {
       _cacheImpl.complete(getCacheTimeout()?.let { interval ->
         Cache<EelDescriptor, SystemPython>(scope, interval) { eelDescriptor ->
-          searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
+          withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+            searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
+          }
         }
       })
     }

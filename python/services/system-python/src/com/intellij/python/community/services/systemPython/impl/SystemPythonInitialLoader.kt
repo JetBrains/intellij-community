@@ -7,6 +7,8 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.getCacheTimeout
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+import kotlinx.coroutines.withContext
 
 private val logger = fileLogger()
 
@@ -15,6 +17,8 @@ internal class SystemPythonInitialLoader : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (getCacheTimeout() == null) return // Cache is disabled, no need to preload it
     logger.debug("Preloading pythons for $project")
-    SystemPythonService().findSystemPythons(project.getEelDescriptor().toEelApi())
+    withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      SystemPythonService().findSystemPythons(project.getEelDescriptor().toEelApi())
+    }
   }
 }

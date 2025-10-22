@@ -11,6 +11,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +26,8 @@ internal object PythonPackageManagerUIHelpers {
     @NlsContexts.ProgressTitle title: String,
     operation: suspend (() -> PyResult<T>?),
   ): T? = withBackgroundProgress(project = project, title, cancellable = true) {
-    runPackagingOperationMaybeShowErrorDialog(errorSink) {
+    runPackagingOperationMaybeShowErrorDialog(errorSink, project) {
       withContext(Dispatchers.Default) {
-
         operation()
       }
     }
@@ -35,11 +35,12 @@ internal object PythonPackageManagerUIHelpers {
 
   private suspend fun <T> runPackagingOperationMaybeShowErrorDialog(
     errorSink: ErrorSink?,
+    project: Project,
     operation: suspend (() -> PyResult<T>?),
   ): T? {
     val pyResult = operation() ?: return null
     return pyResult.onFailure {
-      errorSink?.emit(it)
+      errorSink?.emit(it, project)
     }.getOrNull()
   }
 

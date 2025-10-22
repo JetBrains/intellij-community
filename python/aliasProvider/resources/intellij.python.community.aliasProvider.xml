@@ -25,6 +25,7 @@
     <module name="intellij.python.community.services.internal.impl"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.community.interpreters"/>
+    <module name="intellij.python.processOutput"/>
   </dependencies>
   <!-- Declare that we support core Python functionality -->
   <module value="com.intellij.modules.python"/>

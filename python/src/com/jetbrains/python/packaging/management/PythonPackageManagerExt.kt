@@ -4,6 +4,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
@@ -15,6 +16,7 @@ import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -28,7 +30,9 @@ fun PythonPackageManager.waitInitBlocking() {
 @ApiStatus.Internal
 fun PythonPackageManager.reloadPackagesBlocking() {
   runBlockingMaybeCancellable {
-    reloadPackages().orThrow()
+    withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      reloadPackages().orThrow()
+    }
   }
 }
 

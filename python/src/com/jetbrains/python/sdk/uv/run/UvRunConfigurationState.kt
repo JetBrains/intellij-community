@@ -77,7 +77,8 @@ fun canRun(
         null -> isError = true
       }
     }
-  } else {
+  }
+  else {
     isError = true
   }
 

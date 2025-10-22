@@ -1442,6 +1442,8 @@ python/python-grazie
 python/python-hatch
 python/python-markdown
 python/python-parser
+python/python-process-output
+python/python-process-output/impl
 python/python-psi-api
 python/python-psi-impl
 python/python-pyproject

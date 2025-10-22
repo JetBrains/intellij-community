@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.errorProcessing
 
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.FlowCollector
 
 /**
@@ -14,4 +15,13 @@ import kotlinx.coroutines.flow.FlowCollector
  *
  * See [PyError]
  */
-typealias ErrorSink = FlowCollector<PyError>
+typealias ErrorSink = FlowCollector<PyErrorDetail>
+
+data class PyErrorDetail(
+  val error: PyError,
+  val project: Project? = null,
+)
+
+suspend fun ErrorSink.emit(error: PyError, project: Project? = null) {
+  emit(PyErrorDetail(error, project))
+}

@@ -53,6 +53,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.services.systemPython" loading="required"/>
     <module name="intellij.python.community.interpreters" loading="required"/>
     <module name="intellij.python.community.aliasProvider" loading="required"/>
+    <module name="intellij.python.processOutput" loading="required"/>
+    <module name="intellij.python.processOutput.impl"/>
     <!--Mini-IDes support community python only-->
     <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->
     <module name="intellij.python.community.plugin.minorRider"/> <!-- Python special support for Rider -->

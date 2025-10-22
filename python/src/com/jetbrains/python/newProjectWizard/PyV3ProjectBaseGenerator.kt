@@ -17,6 +17,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProjectWizard.collector.PyProjectTypeGenerator
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
@@ -71,7 +72,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     coroutineScope.launch {
       val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, supportsNotEmptyModuleStructure).getOr {
         withContext(Dispatchers.EDT) {
-          uiServices.errorSink.emit(it.error)
+          uiServices.errorSink.emit(it.error, project)
         }
         return@launch // Since we failed to generate a project, we do not need to go any further
       }
@@ -94,7 +95,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       uiServices.expandProjectTreeView(project)
       withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
         typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
-          uiServices.errorSink.emit(it)
+          uiServices.errorSink.emit(it, project)
         }
         refreshPaths(project, sdk, "PyV3ProjectBaseGenerator.generateProject")
       }
