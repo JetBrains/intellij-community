@@ -68,6 +68,8 @@
     <registryKey key="terminal.generic.hyperlinks" defaultValue="true"
                  description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
                   Open a new terminal after enabling this option to take effect."/>
+    <registryKey key="terminal.ai.inline.completion.enabled" defaultValue="false"
+                 description="Whether Terminal AI Inline Completion is enabled and visible in the settings"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilterProvider"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
