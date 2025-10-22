@@ -25,7 +25,8 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.NonNls
 
 /**
- * This class is responsible for comparing branches via VCS Log indexes or with `git cherry` operation to find commits already cherry-picked to current branch.
+ * This class is responsible for comparing branches via VCS Log indexes or with `git cherry` operation
+ * to find commits already cherry-picked from [comparedBranch] to target (upstream) branch.
  * The comparison is not just by commit hash, but also by commit message and author and content.
  *
  * @see [com.intellij.vcs.log.data.index.IndexDataGetter]
@@ -34,7 +35,7 @@ internal class DeepComparator(
   private val project: Project,
   private val vcsLogData: VcsLogData,
   private val dataPack: DataPack?,
-  private val repositoriesWithCurrentBranches: Map<GitRepository, String>,
+  private val repositoriesWithTargetBranches: Map<GitRepository, String>,
   private val comparedBranch: String,
 ) {
 
@@ -49,18 +50,18 @@ internal class DeepComparator(
   @RequiresBackgroundThread
   fun compare(): ComparatorResult {
     try {
-      repositoriesWithCurrentBranches.forEach { (repo, currentBranch) ->
+      repositoriesWithTargetBranches.forEach { (repo, targetBranch) ->
         val commits = if (Registry.`is`("git.log.use.index.for.find.picked.commits")) {
           if (Registry.`is`("git.log.fast.find.picked.commits")) {
-            getCommitsByIndexFast(repo.root, comparedBranch, currentBranch)
-            ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch)
+            getCommitsByIndexFast(repo.root, comparedBranch, targetBranch)
+            ?: getCommitsByIndexReliable(repo.root, comparedBranch, targetBranch)
           }
           else {
-            getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch)
+            getCommitsByIndexReliable(repo.root, comparedBranch, targetBranch)
           }
         }
         else {
-          getCommitsByPatch(repo.root, comparedBranch, currentBranch)
+          getCommitsByPatch(repo.root, comparedBranch, targetBranch)
         }
         collectedNonPickedCommits.addAll(commits)
       }
@@ -111,11 +112,11 @@ internal class DeepComparator(
   @Throws(VcsException::class)
   private fun getCommitsFromGit(
     root: VirtualFile,
-    currentBranch: String,
+    targetBranch: String,
     comparedBranch: String,
   ): IntSet {
     val handler = GitLineHandler(project, root, GitCommand.CHERRY)
-    handler.addParameters(currentBranch, comparedBranch) // upstream - current branch; head - compared branch
+    handler.addParameters(targetBranch, comparedBranch) // upstream - target branch; head - compared branch
 
     val pickedCommits = IntOpenHashSet()
     handler.addLineListener { l, _ ->
@@ -158,7 +159,7 @@ internal class DeepComparator(
     sourceBranchCommits.removeAll(match)
     if (!match.isEmpty()) {
       LOG.debug("Using index, detected ${match.size} commits in ${sourceBranchRef.name}#${root.name}" +
-                " that were picked to the current branch" +
+                " that were picked to the target branch" +
                 (if (reliable) " with different patch id but matching cherry-picked suffix"
                 else " with matching author, author time and message"))
     }
