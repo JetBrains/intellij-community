@@ -7,8 +7,10 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.internal.PluginDescriptionDumper.Companion.getDumpFileLocation
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
@@ -20,7 +22,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.lang.UrlClassLoader
@@ -29,25 +30,27 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.relativeTo
 
 private const val DUMP_DESCRIPTORS_PROPERTY = "idea.dump.plugin.descriptors"
-private val targetFile: Path get() = PathManager.getLogDir().resolve("plugin-descriptors-data.json")
 
 private class DumpPluginDescriptorsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun actionPerformed(e: AnActionEvent) {
-    service<PluginDescriptionDumper>().dump(e.project)
+    service<PluginDescriptionDumper>().dump(getDumpFileLocation(), e.project)
   }
 }
 
-private class DumpPluginDescriptorsOnProjectOpenTrigger : ProjectActivity {
-  override suspend fun execute(project: Project) {
+private class DumpPluginDescriptorsOnAppStartTrigger : ApplicationActivity {
+  override suspend fun execute() {
     if (System.getProperty(DUMP_DESCRIPTORS_PROPERTY, "false") == "true") {
+      val dumpPath = getDumpFileLocation()
       val dumper = serviceAsync<PluginDescriptionDumper>()
       dumper.coroutineScope.launch {
-        dumper.dump(null) // FIXME deadlocks in rd, if project is passed
-        logger<DumpPluginDescriptorsAction>().warn("Plugin descriptors data dumped to ${targetFile}")
+        dumper.dump(dumpPath, null)
+        logger<DumpPluginDescriptorsAction>().warn("Plugin descriptors data dumped to ${dumpPath}")
       }
     }
   }
@@ -55,10 +58,17 @@ private class DumpPluginDescriptorsOnProjectOpenTrigger : ProjectActivity {
 
 @Service
 private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
-  fun dump(project: Project?) {
+  companion object {
+    fun getDumpFileLocation(): Path {
+      val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+      return PathManager.getLogDir().resolve("plugin-descriptors-data-$timestamp.json")
+    }
+  }
+
+  fun dump(dumpPath: Path, project: Project?) {
     coroutineScope.launch {
       withContext(Dispatchers.IO) {
-        targetFile.bufferedWriter().use { out ->
+        dumpPath.bufferedWriter().use { out ->
           val writer = JsonFactory().createGenerator(out).setPrettyPrinter(DefaultPrettyPrinter().withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE))
           writer.writeStartArray()
           writer.writePlugins()
@@ -67,7 +77,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
         }
       }
       if (project != null) {
-        val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(targetFile)
+        val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dumpPath)
         if (virtualFile != null) {
           withContext(Dispatchers.EDT) {
             if (!project.isDisposed) {
