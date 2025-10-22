@@ -28,7 +28,8 @@ internal class WelcomeScreenLeftTabActionNew : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     // From com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.LeftPanelDisclosureButtonAction
-    val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
+    val component = e.inputEvent?.component as? JComponent
+                           ?: e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
 
     val actionGroup = ActionManager.getInstance().getAction("NonModalWelcomeScreen.LeftTabActions.New") as ActionGroup
     val step = createStep(actionGroup, e.dataContext, component)
