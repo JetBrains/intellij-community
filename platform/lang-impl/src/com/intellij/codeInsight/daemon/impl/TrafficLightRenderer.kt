@@ -107,10 +107,10 @@ open class TrafficLightRenderer private constructor(
   private fun init(project: Project, document: Document) {
     val model = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
     EdtInvocationManager.invokeLaterIfNeeded(Runnable {
+      if (isDisposed) return@Runnable
       for (rangeHighlighter in model.getAllHighlighters()) {
         incErrorCount(rangeHighlighter, 1)
       }
-      if (isDisposed) return@Runnable
       model.addMarkupModelListener(this, object : MarkupModelListener {
         override fun afterAdded(highlighter: RangeHighlighterEx) {
           incErrorCount(highlighter, 1)
