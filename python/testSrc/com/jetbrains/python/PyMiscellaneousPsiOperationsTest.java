@@ -152,4 +152,57 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
     final PyQualifiedExpression expr = (PyQualifiedExpression)generator.createExpressionFromText(LanguageLevel.PYTHON27, expression);
     assertEquals(expectedQualifiedName, expr.asQualifiedName());
   }
+
+  public void testNamedParameterIsPositionalOnly() {
+    doTestParameterIsPositionalOnly(List.of(false, true, true, false, false), """
+      class C:
+          def func(__self, __a, __b, c, __d):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(true, true), """
+      class C:
+          @staticmethod
+          def func(__self, __a):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true), """
+      class C:
+          @classmethod
+          def func(__self, __a):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(true, true), """
+      def func(__self, __a):
+          pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false, false), """
+      class C:
+          def func(self, __a, *__args, __b):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false, false), """
+      class C:
+          def func(self, __a, *, __b):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false), """
+      class C:
+          def func(self, __a, **__kwargs):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false, false), """
+      class C:
+          def func(self, a, /, __b):
+              pass
+      """);
+  }
+
+  private void doTestParameterIsPositionalOnly(List<Boolean> expected, String testData) {
+    myFixture.configureByText("a.py", testData);
+    PyFunction func = myFixture.findElementByText("func", PyFunction.class);
+    assertNotNull(func);
+    List<Boolean> actual = ContainerUtil.map(func.getParameterList().getParameters(),
+                                             p -> p instanceof PyNamedParameter np && np.isPositionalOnly());
+    assertOrderedEquals(actual, expected);
+  }
 }
