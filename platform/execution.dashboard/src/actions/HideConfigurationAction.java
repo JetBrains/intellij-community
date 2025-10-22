@@ -2,25 +2,24 @@
 package com.intellij.platform.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.dashboard.RunDashboardManager;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.actions.RunDashboardActionUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
+
+import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionUtilsKt.getSelectedNodes;
+import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionUtilsKt.scheduleHideConfiguration;
 
 final class HideConfigurationAction
   extends DumbAwareAction
-  implements ActionRemoteBehaviorSpecification.Frontend{
+  implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -29,8 +28,9 @@ final class HideConfigurationAction
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    List<RunDashboardRunConfigurationNode> nodes = RunDashboardActionUtils.getTargets(e);
-    boolean enabled = e.getProject() != null && !nodes.isEmpty();
+    Project project = e.getProject();
+    List<FrontendRunDashboardService> nodes = project == null ? null : getSelectedNodes(e);
+    boolean enabled = project != null && !nodes.isEmpty();
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(enabled);
     if (enabled) {
@@ -43,8 +43,7 @@ final class HideConfigurationAction
     Project project = e.getProject();
     if (project == null) return;
 
-    List<RunDashboardRunConfigurationNode> nodes = RunDashboardActionUtils.getTargets(e);
-    Set<RunConfiguration> configurations = ContainerUtil.map2Set(nodes, node -> node.getConfigurationSettings().getConfiguration());
-    RunDashboardManager.getInstance(project).hideConfigurations(configurations);
+    List<FrontendRunDashboardService> nodes = getSelectedNodes(e);
+    scheduleHideConfiguration(project, ContainerUtil.map(nodes, it -> it.getRunDashboardServiceDto().getUuid()));
   }
 }
