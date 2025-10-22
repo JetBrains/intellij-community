@@ -179,4 +179,9 @@
                     interface="com.intellij.grazie.cloud.GrazieCloudConnector"
                     dynamic="true"/>
   </extensionPoints>
+
+  <projectListeners>
+    <listener class="com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine$SuggestionCacheInvalidator"
+              topic="com.intellij.spellchecker.settings.CustomDictionarySettingsListener"/>
+  </projectListeners>
 </idea-plugin>

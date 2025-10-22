@@ -39,6 +39,7 @@ import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SpellCheckerEngineListener
 import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
+import com.intellij.spellchecker.settings.CustomDictionarySettingsListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -91,6 +92,12 @@ class GrazieSpellCheckerEngine(
       for (lifecycle in LIFECYCLE_EP_NAME.extensionList) {
         lifecycle.preload(project)
       }
+    }
+  }
+
+  internal class SuggestionCacheInvalidator(private val project: Project): CustomDictionarySettingsListener {
+    override fun customDictionaryPathsChanged(newPaths: List<String>) {
+      getInstance(project).suggestionCache.invalidateAll()
     }
   }
 
