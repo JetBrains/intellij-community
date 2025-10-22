@@ -12,8 +12,18 @@ import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.Frontend
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.launch
 
+internal fun getSelectedNode(e: AnActionEvent): FrontendRunDashboardService? {
+  return getSelectedNodes(e).singleOrNull()
+}
+
 internal fun getSelectedNodes(e: AnActionEvent): List<FrontendRunDashboardService> {
   return ServiceViewActionUtils.getTargets(e, FrontendRunConfigurationNode::class.java).mapNotNull { it.value }
+}
+
+internal fun scheduleEditConfiguration(serviceId: RunDashboardServiceId, project: Project) {
+  RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+    RunDashboardServiceRpc.getInstance().editConfiguration(project.projectId(), serviceId)
+  }
 }
 
 internal fun scheduleUpdateRunConfigurationFolderNames(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, project: Project) {
