@@ -169,6 +169,16 @@ object Execution {
     DataPlacement.AdditionalText(AIA_DESCRIPTION),
   )
 
+  val ACTUAL_SMART_CHAT_ENDPOINTS: TrivialEvalData<List<String>> = EvalDataDescription(
+    name = "Actual smart chat function calls",
+    description = "List of names of smart-chat endpoints, called in chat-session",
+    placement = DataPlacement.AdditionalConcatenatedLines(AIA_ACTUAL_SMART_CHAT_ENDPOINTS),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      renderer = DataRenderer.Lines,
+    ),
+  )
+
   val LLMC_LOG: TrivialEvalData<String> = EvalDataDescription(
     name = "LLMC log",
     description = "LLMC logs during evaluation case",
@@ -396,6 +406,7 @@ object Analysis {
       ProblemIndicator.FromMetric { Metrics.FUNCTION_CALLING }
     )
   )
+
 
   val ACTUAL_FUNCTION_CALLS: TrivialEvalData<List<String>> = EvalDataDescription(
     name = "Actual function calls",
