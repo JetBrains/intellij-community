@@ -74,14 +74,14 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
       (Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) || application.isUnitTestMode)
-      && (SystemInfo.isUnix || executable is GitExecutable.Wsl)
+      && (SystemInfo.isUnix || (executable !is GitExecutable.Unknown && !executable.isLocal))
       && signingIsEnabledInAnyRepo(project)
 
     private fun isUnitTestModeOnUnix(): Boolean =
       SystemInfo.isUnix && application.isUnitTestMode
 
     private fun isRemDevOrWsl(executable: GitExecutable): Boolean =
-      AppMode.isRemoteDevHost() || executable is GitExecutable.Wsl
+      AppMode.isRemoteDevHost() || (executable !is GitExecutable.Unknown && !executable.isLocal)
 
     // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
     private fun signingIsEnabledInAnyRepo(project: Project): Boolean = GitRepositoryManager.getInstance(project)
@@ -177,10 +177,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   private fun createGpgAgentExecutor(executor: GitExecutable): GpgAgentCommandExecutor {
-    if (executor is GitExecutable.Wsl) {
-      return WslGpgAgentCommandExecutor(project, executor)
-    }
-    return LocalGpgAgentCommandExecutor()
+    return GpgAgentCommandExecutorImpl(project, executor)
   }
 
   @VisibleForTesting
@@ -325,23 +322,19 @@ internal interface GpgAgentCommandExecutor {
   fun execute(command: String, vararg params: String): List<String>
 }
 
-private class LocalGpgAgentCommandExecutor : GpgAgentCommandExecutor {
-  override fun execute(command: String, vararg params: String): List<String> {
-    val processOutput = CapturingProcessHandler
-      .Silent(GeneralCommandLine(command).withParameters(*params))
-      .runProcess(10000, true)
-    return processOutput.stdoutLines + processOutput.stderrLines
-  }
-}
-
-private class WslGpgAgentCommandExecutor(
+private class GpgAgentCommandExecutorImpl(
   private val project: Project,
-  private val executable: GitExecutable.Wsl,
+  private val executable: GitExecutable,
 ) : GpgAgentCommandExecutor {
   override fun execute(command: String, vararg params: String): List<String> {
-    val commandLine = executable.createBundledCommandLine(project, command).withParameters(*params)
+    val commandLine = if (executable.isLocal) {
+      GeneralCommandLine(command)
+    }
+    else {
+      executable.createBundledCommandLine(project, command)
+    }
     val processOutput = CapturingProcessHandler
-      .Silent(commandLine)
+      .Silent(commandLine.withParameters(*params))
       .runProcess(10000, true)
     return processOutput.stdoutLines + processOutput.stderrLines
   }
@@ -355,7 +348,7 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
       path.createParentDirectories().writeText(getScriptTemplate(fallbackPinentryPath))
       if (executable is GitExecutable.Wsl) {
         val launcherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
-        WslGpgAgentCommandExecutor(project, executable).execute("chmod", "+x", launcherConfigPath)
+        GpgAgentCommandExecutorImpl(project, executable).execute("chmod", "+x", launcherConfigPath)
       }
       else {
         NioFiles.setExecutable(path)
