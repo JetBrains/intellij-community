@@ -18,8 +18,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
-import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

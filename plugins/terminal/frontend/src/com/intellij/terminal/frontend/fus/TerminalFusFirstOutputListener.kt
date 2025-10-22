@@ -1,11 +1,11 @@
 package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.diagnostic.thisLogger
-import org.jetbrains.plugins.terminal.block.reworked.TerminalContentChangeEvent
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 
 internal class TerminalFusFirstOutputListener(private val startupFusInfo: TerminalStartupFusInfo) : TerminalOutputModelListener {
   /** Guarded by EDT */

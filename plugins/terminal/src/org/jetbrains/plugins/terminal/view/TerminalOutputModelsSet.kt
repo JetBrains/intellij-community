@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.view
 
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
