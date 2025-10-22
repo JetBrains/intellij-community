@@ -3,6 +3,7 @@ package org.jetbrains.uast.java.generate
 
 import com.intellij.codeInsight.BlockUtils
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
@@ -16,6 +17,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.*
+import com.intellij.util.IncorrectOperationException
 import com.intellij.util.asSafely
 import com.siyeh.ig.psiutils.CommentTracker
 import com.siyeh.ig.psiutils.ParenthesesUtils
@@ -99,6 +101,12 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
 
   override fun shortenReference(reference: UReferenceExpression): UReferenceExpression? {
     val sourceReference = reference.sourcePsi ?: return null
+    val styleManager = JavaCodeStyleManager.getInstance(sourceReference.project)
+    return styleManager.shortenClassReferences(sourceReference).toUElementOfType()
+  }
+
+  override fun shortenReference(uDeclaration: UDeclaration): UDeclaration? {
+    val sourceReference = uDeclaration.sourcePsi ?: return null
     val styleManager = JavaCodeStyleManager.getInstance(sourceReference.project)
     return styleManager.shortenClassReferences(sourceReference).toUElementOfType()
   }
@@ -299,6 +307,13 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaULiteralExpression(literalExpr, null)
   }
 
+  override fun createIntegerConstantExpression(integer: Int, context: PsiElement?): UExpression? {
+    return when (val literalExpr = psiFactory.createExpressionFromText("$integer", context)) {
+      is PsiLiteralExpressionImpl -> JavaULiteralExpression(literalExpr, null)
+      else -> null
+    }
+  }
+
   override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
     return when (val literalExpr = psiFactory.createExpressionFromText(long.toString() + "L", context)) {
       is PsiLiteralExpressionImpl -> JavaULiteralExpression(literalExpr, null)
@@ -315,6 +330,35 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
   override fun createComment(text: String, context: PsiElement?): UComment {
     return psiFactory.createCommentFromText(text, context).toUElementOfType()!!
+  }
+
+  override fun createClass(className: String, extends: List<String>, implements: List<String>, context: PsiElement): UClass? {
+    val extendsPart = if (extends.isNotEmpty())
+      " extends " + extends.joinToString()
+    else
+      ""
+
+    val implementsPart = if (implements.isNotEmpty())
+      " implements " + implements.joinToString()
+    else
+      ""
+
+    val classText = """
+      class $className$extendsPart$implementsPart {
+      }
+    """.trimIndent()
+
+    val aFile = PsiFileFactory.getInstance(context.project)
+      .createFileFromText("_Dummy_." + JavaFileType.INSTANCE.defaultExtension,
+                          JavaFileType.INSTANCE,
+                          classText) as PsiJavaFile
+
+    val classes = aFile.getClasses()
+    if (classes.size != 1) {
+      throw IncorrectOperationException("Incorrect class '$classText'")
+    }
+
+    return classes[0].toUElement(UClass::class.java)
   }
 
   private class MethodCallUpgradeHelper(val project: Project, val methodCall: PsiMethodCallExpression, val expectedReturnType: PsiType) {
