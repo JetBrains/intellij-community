@@ -42,6 +42,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/util/jdom",
     "//platform/markdown-utils",
+    "//platform/util/text-matching",
   ],
   exports = ["//plugins/tasks/tasks-core/lib:axis-1-4"]
 )

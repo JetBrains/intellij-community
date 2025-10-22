@@ -65,5 +65,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
   </component>
 </module>
