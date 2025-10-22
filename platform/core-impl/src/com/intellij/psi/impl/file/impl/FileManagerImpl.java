@@ -668,6 +668,17 @@ public final class FileManagerImpl implements FileManagerEx {
     if (useFind) {
       myVFileToViewProviderMap.clear();
     }
+
+    // When some file is moved to another directory, its contexts might change
+    // So, view providers associated with irrelevant contexts should be processed
+    // The best way to deal with such view providers is just to invalidate them.
+    // But PSI clients are not usually ready for that.
+    // So we try to preserve one of them, clearing the context of this lucky view provider and setting its context to `any`.
+    // It is possible to do that if there are no other relevant view providers for this file left.
+    // Also, if there's a view provider with `any` context, there can be no other view providers for this file, so we can silently accept them here.
+    Set<VirtualFile> filesHavingRelevantViewProviders = new HashSet<>();
+    Map<VirtualFile, Entry> irrelevantViewProviders = new LinkedHashMap<>();
+
     for (Iterator<Entry> iterator = fileToPsiFileMap.iterator(); iterator.hasNext();) {
       Entry entry = iterator.next();
       VirtualFile vFile = entry.getFile();
@@ -689,14 +700,37 @@ public final class FileManagerImpl implements FileManagerEx {
         if (!areViewProvidersEquivalent(viewProvider, psiFile1.getViewProvider())) {
           iterator.remove();
         }
-        else {
-          clearPsiCaches(viewProvider);
+
+        clearPsiCaches(viewProvider);
+
+        if (context != CodeInsightContexts.anyContext()) {
+          if (isContextRelevant(vFile, context)) {
+            filesHavingRelevantViewProviders.add(vFile);
+          }
+          else {
+            irrelevantViewProviders.putIfAbsent(vFile, entry);
+            iterator.remove();
+          }
         }
       }
       else if (!evaluateValidity((AbstractFileViewProvider)viewProvider)) {
         iterator.remove();
       }
     }
+
+    if (!irrelevantViewProviders.isEmpty()) {
+      CodeInsightContextManagerImpl codeInsightContextManager = CodeInsightContextManagerImpl.getInstanceImpl(myManager.getProject());
+      irrelevantViewProviders.values().stream()
+        .filter(entry -> !filesHavingRelevantViewProviders.contains(entry.getFile()))
+        .map(entry -> {
+          VirtualFile vFile = entry.getFile();
+          FileViewProvider viewProvider = entry.getProvider();
+          codeInsightContextManager.setCodeInsightContext(viewProvider, CodeInsightContexts.anyContext());
+          return new Entry(vFile, CodeInsightContexts.anyContext(), viewProvider);
+        })
+        .collect(Collectors.toCollection(() -> fileToPsiFileMap));
+    }
+
     myVFileToViewProviderMap.replaceAll(fileToPsiFileMap);
 
     markInvalidations(originalFileToPsiFileMap);

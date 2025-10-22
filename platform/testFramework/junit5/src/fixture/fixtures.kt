@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.Path
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.exists
 
@@ -75,6 +77,22 @@ fun TestFixture<Project>.pathInProjectFixture(path: Path): TestFixture<Path> {
       // will be removed with project directory
     }
   }
+}
+
+@TestOnly
+fun TestFixture<Project>.fileOrDirInProjectFixture(relativePath: String): TestFixture<VirtualFile> = testFixture {
+  val filePath = pathInProjectFixture(Path(relativePath)).init()
+  val file = filePath.refreshAndFindVirtualFileOrDirectory()
+             ?: throw IllegalStateException("File not found: $relativePath, absolutePath: $filePath")
+
+  initialized(file) {}
+}
+
+@TestOnly
+fun TestFixture<Project>.moduleInProjectFixture(name: String): TestFixture<Module> = testFixture {
+  val project = init()
+  val module = ModuleManager.getInstance(project).findModuleByName(name) ?: throw IllegalStateException("Module not found: $name")
+  initialized(module) {}
 }
 
 @TestOnly

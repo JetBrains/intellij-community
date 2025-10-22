@@ -2,13 +2,19 @@
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerEx
@@ -25,6 +31,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 class CodeInsightContextManagerImpl(
@@ -69,6 +76,7 @@ class CodeInsightContextManagerImpl(
       }
     })
     subscribeToChanges()
+    InvalidationBulkFileListener.subscribeToVfsEvents()
   }
 
   private fun subscribeToChanges() {
@@ -222,6 +230,32 @@ class CodeInsightContextManagerImpl(
 
     val effectiveContext = context.takeUnless { it == defaultContext() }
     fileViewProvider.putUserData(codeInsightContextKey, effectiveContext)
+  }
+
+  private class InvalidationBulkFileListener : BulkFileListenerBackgroundable {
+    override fun before(events: List<VFileEvent>) {
+      val moveEvents = events.filterIsInstance<VFileMoveEvent>().ifEmpty { return }
+
+      val projectLocator = ProjectLocator.getInstance()
+      val projects = moveEvents.mapNotNullTo(mutableSetOf()) { projectLocator.guessProjectForFile(it.file) }
+
+      for (project in projects) {
+        val manager = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
+        manager.preferredContext.invalidate()
+        manager.allContexts.invalidate()
+      }
+    }
+
+    companion object {
+      private val subscribed = AtomicBoolean(false)
+
+      fun subscribeToVfsEvents() {
+        // we need only one listener per application
+        if (!subscribed.getAndSet(true)) {
+          ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES_BG, InvalidationBulkFileListener())
+        }
+      }
+    }
   }
 }
 
