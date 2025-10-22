@@ -50,7 +50,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -62,6 +61,10 @@ import java.util.function.Consumer;
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
+
+  //todo to be removed after investigation
+  @ApiStatus.Internal
+  public static final Key<String> FORCE_LOG_STACK_TRACE = Key.create("FORCE_LOG_STACK_TRACE");
 
   private boolean isInsideCommitHandler; //accessed from EDT only
 
@@ -1074,7 +1077,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (commitNecessary) {
       assert !(document instanceof DocumentWindow);
       myUncommittedDocuments.add(document);
-      if (Registry.is("ide.activity.tracking.enable.debug")) {
+      if (Registry.is("ide.activity.tracking.enable.debug") || document.getUserData(FORCE_LOG_STACK_TRACE) != null) {
         myUncommittedDocumentTraces.put(document, new Throwable());
       }
       if (forceCommit) {

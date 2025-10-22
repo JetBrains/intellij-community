@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -18,6 +18,7 @@ import com.intellij.patterns.ObjectPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
@@ -133,7 +134,17 @@ public class CompletionData {
 
     final Document document = insertedElement.getContainingFile().getViewProvider().getDocument();
     assert document != null;
-    LOG.assertTrue(!PsiDocumentManager.getInstance(insertedElement.getProject()).isUncommited(document), "Uncommitted");
+
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(insertedElement.getProject());
+    if (documentManager.isUncommited(document)) {
+      Throwable throwable = null;
+      if (documentManager instanceof PsiDocumentManagerBase base) {
+        Map<Document, Throwable> traces = base.getUncommitedDocumentsWithTraces();
+        throwable = traces.get(document);
+      }
+
+      LOG.error("Uncommitted document", throwable);
+    }
 
     final String prefix = CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;
