@@ -16,8 +16,11 @@ import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.io.IOException
 import java.nio.file.Path
+import kotlin.jvm.Throws
 
 @ApiStatus.Experimental
 interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
@@ -25,10 +28,38 @@ interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
 @ApiStatus.Experimental
 interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 
+/**
+ * Thrown when an EEL cannot be accessed or initialized.
+ *
+ * This exception indicates that the target execution environment (such as a remote machine,
+ * Docker container, or WSL instance) is temporarily or permanently unavailable.
+ *
+ * Common scenarios include:
+ * - Docker daemon connection failures
+ * - Container not found or stopped
+ * - Remote SSH connection issues
+ * - Environment-specific setup errors
+ *
+ * This exception is typically thrown during:
+ * - [EelProvider.tryInitialize] when initializing EEL for a project
+ * - Project opening when the remote environment is unavailable
+ *
+ * The exception should contain a localized user-facing message explaining the specific
+ * reason for unavailability, and optionally wrap the underlying cause.
+ *
+ * @param message Localized user-facing error message explaining why the EEL is unavailable
+ * @param cause Optional underlying exception that caused the unavailability
+ *
+ * @see EelProvider.tryInitialize
+ */
+@ApiStatus.Internal
+class EelUnavailableException(override val message: @Nls String, cause: Throwable? = null) : IOException(message, cause)
+
 @ApiStatus.Internal
 object EelInitialization {
   private val logger = logger<EelInitialization>()
 
+  @Throws(EelUnavailableException::class)
   suspend fun runEelInitialization(path: String) {
     val eels = EelProvider.EP_NAME.extensionList
     eels.forEachConcurrent { eelProvider ->
@@ -38,12 +69,16 @@ object EelInitialization {
       catch (e: CancellationException) {
         throw e
       }
+      catch (e: EelUnavailableException) {
+        throw e
+      }
       catch (e: Throwable) {
         logger.error(e)
       }
     }
   }
 
+  @Throws(EelUnavailableException::class)
   suspend fun runEelInitialization(project: Project) {
     if (project.isDefault) {
       return
@@ -139,6 +174,7 @@ interface EelProvider {
    * This function is called for every opening [Project],
    * so the implementation is expected to exit quickly if it decides that it is not responsible for [path].
    */
+  @Throws(EelUnavailableException::class)
   suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String)
 
   /**

@@ -78,6 +78,7 @@ import com.intellij.platform.*
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
@@ -554,7 +555,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   final override suspend fun openProjectAsync(projectIdentityFile: Path, options: OpenProjectTask): Project? {
     if (projectIdentityFile.fileSystem.javaClass.name == MultiRoutingFileSystem::javaClass.name) {
       span("EelInitialization.runEelInitialization") {
-        EelInitialization.runEelInitialization(projectIdentityFile.toString())
+        try {
+          EelInitialization.runEelInitialization(projectIdentityFile.toString())
+        } catch (e : EelUnavailableException) {
+          LOG.error(e)
+        }
       }
     }
 
