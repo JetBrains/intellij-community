@@ -162,6 +162,7 @@ jvm_library(
     "//plugins/gradle/java",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+    "@lib//:assert_j",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

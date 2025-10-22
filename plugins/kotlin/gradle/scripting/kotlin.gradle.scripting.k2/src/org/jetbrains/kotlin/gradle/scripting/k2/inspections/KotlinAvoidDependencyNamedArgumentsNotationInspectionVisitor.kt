@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
@@ -26,15 +27,34 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
         val ids = args.mapNotNull { it.getArgumentName()?.asName?.identifier }
         if (!setOf("group", "name", "version").containsAll(ids)) return
 
-        holder.registerProblem(
+        holder.problem(
             argList,
-            GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-            GradleDependencyNamedArgumentsFix()
-        )
+            GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor")
+        ).maybeFix(createPotentialFix(argList))
+            .register()
+
+    }
+
+    private fun createPotentialFix(argList: KtValueArgumentList): GradleDependencyNamedArgumentsFix? {
+        val group = findNamedOrPositionalArgument(argList, "group", 0)?.text ?: return null
+        val name = findNamedOrPositionalArgument(argList, "name", 1)?.text ?: return null
+        val version = findNamedOrPositionalArgument(argList, "version", 2)?.text
+
+        // check that all arguments are single-line expressions
+        if (group.contains('\n') || name.contains('\n') || version?.contains('\n') == true) return null
+
+        val factory = KtPsiFactory(holder.project, true)
+        val concatExpr =
+            if (version != null) factory.createExpression("$group + \":\" + $name + \":\" + $version") as KtBinaryExpression
+            else factory.createExpression("$group + \":\" + $name") as KtBinaryExpression
+
+        return GradleDependencyNamedArgumentsFix(concatExpr)
     }
 }
 
-private class GradleDependencyNamedArgumentsFix() : KotlinModCommandQuickFix<KtValueArgumentList>() {
+private class GradleDependencyNamedArgumentsFix(concatExpr: KtBinaryExpression) : KotlinModCommandQuickFix<KtValueArgumentList>() {
+    private val concatExprPointer = concatExpr.createSmartPointer()
+
     override fun getName(): @IntentionName String {
         return CommonQuickFixBundle.message("fix.simplify")
     }
@@ -44,14 +64,8 @@ private class GradleDependencyNamedArgumentsFix() : KotlinModCommandQuickFix<KtV
     }
 
     override fun applyFix(project: Project, element: KtValueArgumentList, updater: ModPsiUpdater) {
-        val group = findNamedOrPositionalArgument(element, "group", 0)?.text ?: return
-        val name = findNamedOrPositionalArgument(element, "name", 1)?.text ?: return
-        val version = findNamedOrPositionalArgument(element, "version", 2)?.text
-
         val factory = KtPsiFactory(project, true)
-        val concatExpr =
-            if (version != null) factory.createExpression("$group + \":\" + $name + \":\" + $version") as KtBinaryExpression
-            else factory.createExpression("$group + \":\" + $name") as KtBinaryExpression
+        val concatExpr = concatExprPointer.element ?: return
         val newArgument = analyze(concatExpr) {
             buildStringTemplateForBinaryExpression(concatExpr)
         }

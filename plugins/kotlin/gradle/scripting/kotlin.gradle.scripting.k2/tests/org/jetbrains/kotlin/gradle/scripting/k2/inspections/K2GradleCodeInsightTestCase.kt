@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleCodeInsightBaseTest
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBaseTest() {
 
     protected fun checkCaret(expression: String) {
-        assertTrue("<caret>" in expression, "Please define caret position in build script.")
+        assertTrue("<caret>" in expression) { "Please define caret position in build script." }
     }
 
     fun testIntention(before: String, after: String, intentionPrefix: String) {
@@ -34,6 +35,20 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
             codeInsightFixture.launchAction(intention)
             codeInsightFixture.checkResult(after)
             gradleFixture.fileFixture.rollback(fileName)
+        }
+    }
+
+    fun testNoIntentions(before: String, intentionPrefix: String) {
+        testNoIntentions("build.gradle.kts", before, intentionPrefix)
+    }
+
+    fun testNoIntentions(fileName: String, before: String, intentionPrefix: String) {
+        checkCaret(before)
+        writeTextAndCommit(fileName, before)
+        runInEdtAndWait {
+            codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle.kts"))
+            val intentions = codeInsightFixture.filterAvailableIntentions(intentionPrefix)
+            assertThat(intentions).isEmpty()
         }
     }
 
