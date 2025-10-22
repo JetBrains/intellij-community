@@ -101,16 +101,16 @@ private class HatchEnvComboBoxListCellRenderer(val contentFlow: StateFlow<PyResu
 private fun <P : PathHolder> Panel.addEnvironmentComboBox(
   model: PythonAddInterpreterModel<P>,
   validationRequestor: DialogValidationRequestor,
-  isValidateOnlyNotExisting: Boolean,
+  isGenerateNewMode: Boolean,
 ): ComboBox<HatchVirtualEnvironment> {
   val environmentAlreadyExists = AtomicBooleanProperty(false)
 
   lateinit var environmentComboBox: ComboBox<HatchVirtualEnvironment>
 
-  val hatchEnvironmentProperty = if (isValidateOnlyNotExisting)
-    model.hatchViewModel.selectedEnvFromExisting
-  else
+  val hatchEnvironmentProperty = if (isGenerateNewMode)
     model.hatchViewModel.selectedEnvFromAvailable
+  else
+    model.hatchViewModel.selectedEnvFromExisting
 
   row(message("sdk.create.custom.hatch.environment")) {
     environmentComboBox = comboBox(emptyList(), HatchEnvComboBoxListCellRenderer(model.hatchViewModel.availableEnvironments))
@@ -123,7 +123,7 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
           component.item == null -> {
             ValidationInfo(message("sdk.create.custom.hatch.error.no.environments.to.select"))
           }
-          isValidateOnlyNotExisting && component.item?.pythonVirtualEnvironment is PythonVirtualEnvironment.Existing -> {
+          isGenerateNewMode && component.item?.pythonVirtualEnvironment is PythonVirtualEnvironment.Existing -> {
             environmentAlreadyExists.set(true)
             ValidationInfo(message("sdk.create.custom.hatch.environment.exists"))
           }
@@ -220,7 +220,7 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
     environmentComboBox = addEnvironmentComboBox(
       model = model,
       validationRequestor = validationRequestor,
-      isValidateOnlyNotExisting = isGenerateNewMode
+      isGenerateNewMode = isGenerateNewMode
     )
 
     if (isGenerateNewMode) {
