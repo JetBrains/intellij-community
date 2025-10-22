@@ -3,14 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -22,9 +20,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsOppositeMultiple
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildWithNullsOppositeMultiple
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentWithNullsOppositeMultiple
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsOppositeMultipleBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultiple
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultipleBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -64,7 +62,7 @@ internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildW
 
 
   internal class Builder(result: ChildWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple, ChildWithNullsOppositeMultipleData>(
-    result), ModifiableChildWithNullsOppositeMultiple {
+    result), ChildWithNullsOppositeMultipleBuilder {
     internal constructor() : this(ChildWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -130,17 +128,17 @@ internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildW
         changedProperty.add("childData")
       }
 
-    override var parentEntity: ModifiableParentWithNullsOppositeMultiple?
+    override var parentEntity: ParentWithNullsOppositeMultipleBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ModifiableParentWithNullsOppositeMultiple)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableParentWithNullsOppositeMultiple)
+                                                                           this) as? ParentWithNullsOppositeMultipleBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentWithNullsOppositeMultipleBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableParentWithNullsOppositeMultiple
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentWithNullsOppositeMultipleBuilder
         }
       }
       set(value) {
@@ -181,7 +179,7 @@ internal class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWit
 
   internal fun isChildDataInitialized(): Boolean = ::childData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildWithNullsOppositeMultiple> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildWithNullsOppositeMultiple> {
     val modifiable = ChildWithNullsOppositeMultipleImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -208,9 +206,9 @@ internal class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWit
     return ChildWithNullsOppositeMultiple::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ChildWithNullsOppositeMultiple(childData, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ModifiableParentWithNullsOppositeMultiple>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ParentWithNullsOppositeMultipleBuilder>().singleOrNull()
     }
   }
 

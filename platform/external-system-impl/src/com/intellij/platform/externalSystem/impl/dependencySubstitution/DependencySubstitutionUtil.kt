@@ -38,7 +38,7 @@ object DependencySubstitutionUtil {
     }
   }
 
-  private fun ModifiableModuleEntity.updateDependencySubstitution(libraryToModuleMap: Map<LibraryId, ModuleId>) {
+  private fun ModuleEntityBuilder.updateDependencySubstitution(libraryToModuleMap: Map<LibraryId, ModuleId>) {
     val substitutions = substitutions.associateByTo(LinkedHashMap()) { it.module to it.scope }
 
     // Tries to replace outdated module substitution by original library

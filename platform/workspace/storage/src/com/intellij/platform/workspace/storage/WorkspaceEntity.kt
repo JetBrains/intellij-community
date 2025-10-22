@@ -126,4 +126,4 @@ public interface WorkspaceEntity {
   }
 }
 
-public typealias ModifiableWorkspaceEntity<T> = WorkspaceEntity.Builder<T>
+public typealias WorkspaceEntityBuilder<T> = WorkspaceEntity.Builder<T>

@@ -2,14 +2,8 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Parent
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.io.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -32,8 +26,8 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
         get() = LibraryId(name, tableId)
 
   //region generated code
-  @Deprecated(message = "Use ModifiableLibraryEntity instead")
-  interface Builder : ModifiableLibraryEntity
+  @Deprecated(message = "Use LibraryEntityBuilder instead")
+  interface Builder : LibraryEntityBuilder
   companion object : EntityType<LibraryEntity, Builder>() {
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
@@ -64,9 +58,9 @@ fun MutableEntityStorage.modifyLibraryEntity(
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var LibraryEntity.Builder.libraryProperties: LibraryPropertiesEntity.Builder?
-  get() = (this as ModifiableLibraryEntity).libraryProperties as LibraryPropertiesEntity.Builder?
+  get() = (this as LibraryEntityBuilder).libraryProperties as LibraryPropertiesEntity.Builder?
   set(value) {
-    (this as ModifiableLibraryEntity).libraryProperties = value
+    (this as LibraryEntityBuilder).libraryProperties = value
   }
 //endregion
 

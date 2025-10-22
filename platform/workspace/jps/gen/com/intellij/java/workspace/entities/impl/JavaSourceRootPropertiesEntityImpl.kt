@@ -2,20 +2,16 @@
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.java.workspace.entities.ModifiableJavaSourceRootPropertiesEntity
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.ModifiableSourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -139,16 +135,16 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
 
       }
 
-    override var sourceRoot: ModifiableSourceRootEntity
+    override var sourceRoot: SourceRootEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(SOURCEROOT_CONNECTION_ID, this) as? ModifiableSourceRootEntity)
-          ?: (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as ModifiableSourceRootEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(SOURCEROOT_CONNECTION_ID, this) as? SourceRootEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as ModifiableSourceRootEntity
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntityBuilder
         }
       }
       set(value) {
@@ -207,7 +203,7 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
 
   internal fun isPackagePrefixInitialized(): Boolean = ::packagePrefix.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<JavaSourceRootPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaSourceRootPropertiesEntity> {
     val modifiable = JavaSourceRootPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -233,9 +229,9 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
     return JavaSourceRootPropertiesEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return JavaSourceRootPropertiesEntity(generated, packagePrefix, entitySource) {
-      parents.filterIsInstance<ModifiableSourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
+      parents.filterIsInstance<SourceRootEntityBuilder>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 

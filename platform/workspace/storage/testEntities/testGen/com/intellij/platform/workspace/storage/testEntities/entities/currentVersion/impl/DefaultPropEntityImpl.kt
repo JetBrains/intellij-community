@@ -3,10 +3,9 @@ package com.intellij.platform.workspace.storage.testEntities.entities.currentVer
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -19,7 +18,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.DefaultPropEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ModifiableDefaultPropEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.DefaultPropEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -64,7 +63,7 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
 
 
   internal class Builder(result: DefaultPropEntityData?) : ModifiableWorkspaceEntityBase<DefaultPropEntity, DefaultPropEntityData>(
-    result), ModifiableDefaultPropEntity {
+    result), DefaultPropEntityBuilder {
     internal constructor() : this(DefaultPropEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -186,7 +185,7 @@ internal class DefaultPropEntityData : WorkspaceEntityData<DefaultPropEntity>() 
   internal fun isSomeListInitialized(): Boolean = ::someList.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DefaultPropEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<DefaultPropEntity> {
     val modifiable = DefaultPropEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -220,7 +219,7 @@ internal class DefaultPropEntityData : WorkspaceEntityData<DefaultPropEntity>() 
     return DefaultPropEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return DefaultPropEntity(someString, someList, constInt, entitySource) {
     }
   }

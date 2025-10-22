@@ -3,14 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersi
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -22,10 +20,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToManyRefEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableAnotherOneToManyRefEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableOneToManyRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToManyRefEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefDataClass
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -65,7 +63,7 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
 
 
   internal class Builder(result: OneToManyRefEntityData?) : ModifiableWorkspaceEntityBase<OneToManyRefEntity, OneToManyRefEntityData>(
-    result), ModifiableOneToManyRefEntity {
+    result), OneToManyRefEntityBuilder {
     internal constructor() : this(OneToManyRefEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -145,18 +143,18 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
 
     // List of non-abstract referenced types
     var _anotherEntity: List<AnotherOneToManyRefEntity>? = emptyList()
-    override var anotherEntity: List<ModifiableAnotherOneToManyRefEntity>
+    override var anotherEntity: List<AnotherOneToManyRefEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(ANOTHERENTITY_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableAnotherOneToManyRefEntity>) +
-          (this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] as? List<ModifiableAnotherOneToManyRefEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<AnotherOneToManyRefEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] as? List<AnotherOneToManyRefEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] as? List<ModifiableAnotherOneToManyRefEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] as? List<AnotherOneToManyRefEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -200,7 +198,7 @@ internal class OneToManyRefEntityData : WorkspaceEntityData<OneToManyRefEntity>(
 
   internal fun isSomeDataInitialized(): Boolean = ::someData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OneToManyRefEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OneToManyRefEntity> {
     val modifiable = OneToManyRefEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -227,7 +225,7 @@ internal class OneToManyRefEntityData : WorkspaceEntityData<OneToManyRefEntity>(
     return OneToManyRefEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return OneToManyRefEntity(someData, entitySource) {
     }
   }

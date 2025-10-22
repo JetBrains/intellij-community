@@ -2,17 +2,14 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Open
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOneEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicIdBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.OneSymbolicId
 
 @GeneratedCodeApiVersion(3)
@@ -49,7 +46,7 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
 
 
   internal class Builder(result: OneEntityWithSymbolicIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithSymbolicId, OneEntityWithSymbolicIdData>(
-    result), ModifiableOneEntityWithSymbolicId {
+    result), OneEntityWithSymbolicIdBuilder {
     internal constructor() : this(OneEntityWithSymbolicIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -125,7 +122,7 @@ internal class OneEntityWithSymbolicIdData : WorkspaceEntityData<OneEntityWithSy
 
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OneEntityWithSymbolicId> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OneEntityWithSymbolicId> {
     val modifiable = OneEntityWithSymbolicIdImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -152,7 +149,7 @@ internal class OneEntityWithSymbolicIdData : WorkspaceEntityData<OneEntityWithSy
     return OneEntityWithSymbolicId::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return OneEntityWithSymbolicId(myName, entitySource) {
     }
   }

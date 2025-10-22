@@ -2,8 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -15,10 +13,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.CompositeBaseEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.CompositeBaseEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionSymbolicId
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableCompositeBaseEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableHeadAbstractionEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -59,7 +57,7 @@ internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstraction
 
 
   internal class Builder(result: HeadAbstractionEntityData?) : ModifiableWorkspaceEntityBase<HeadAbstractionEntity, HeadAbstractionEntityData>(
-    result), ModifiableHeadAbstractionEntity {
+    result), HeadAbstractionEntityBuilder {
     internal constructor() : this(HeadAbstractionEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -125,17 +123,17 @@ internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstraction
         changedProperty.add("data")
       }
 
-    override var child: ModifiableCompositeBaseEntity<out CompositeBaseEntity>?
+    override var child: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID,
-                                                                             this) as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>)
-          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>)
+                                                                             this) as? CompositeBaseEntityBuilder<out CompositeBaseEntity>)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntityBuilder<out CompositeBaseEntity>)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntityBuilder<out CompositeBaseEntity>
         }
       }
       set(value) {
@@ -172,7 +170,7 @@ internal class HeadAbstractionEntityData : WorkspaceEntityData<HeadAbstractionEn
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<HeadAbstractionEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<HeadAbstractionEntity> {
     val modifiable = HeadAbstractionEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -199,7 +197,7 @@ internal class HeadAbstractionEntityData : WorkspaceEntityData<HeadAbstractionEn
     return HeadAbstractionEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return HeadAbstractionEntity(data, entitySource) {
     }
   }

@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.jps.serialization.impl
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.FacetsOrderEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.jps.entities.facetOrder
@@ -26,7 +26,7 @@ internal class FacetsSerializer(
    * This function should return void (Unit)
    * The current result value is a temporal solution to find the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
    */
-  internal fun loadFacetEntities(moduleEntity: ModifiableModuleEntity, facetManagerTag: Element) {
+  internal fun loadFacetEntities(moduleEntity: ModuleEntityBuilder, facetManagerTag: Element) {
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
     loadFacetEntities(facetManagerState.facets, moduleEntity, orderOfFacets)
@@ -43,7 +43,7 @@ internal class FacetsSerializer(
     }
   }
 
-  private fun loadFacetEntities(facetStates: List<FacetState>, moduleEntity: ModifiableModuleEntity, orderOfFacets: MutableList<String>) {
+  private fun loadFacetEntities(facetStates: List<FacetState>, moduleEntity: ModuleEntityBuilder, orderOfFacets: MutableList<String>) {
 
     fun evaluateEntitySource(facetState: FacetState): EntitySource {
       val externalSystemId = facetState.externalSystemId ?: facetState.externalSystemIdInInternalStorage

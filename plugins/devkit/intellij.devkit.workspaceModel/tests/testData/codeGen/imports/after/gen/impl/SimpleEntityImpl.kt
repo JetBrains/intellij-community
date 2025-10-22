@@ -15,9 +15,9 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.test.api.EntityWithManyImports
-import com.intellij.workspaceModel.test.api.ModifiableEntityWithManyImports
-import com.intellij.workspaceModel.test.api.ModifiableSimpleEntity
+import com.intellij.workspaceModel.test.api.EntityWithManyImportsBuilder
 import com.intellij.workspaceModel.test.api.SimpleEntity
+import com.intellij.workspaceModel.test.api.SimpleEntityBuilder
 import java.net.URL
 
 @GeneratedCodeApiVersion(3)
@@ -56,7 +56,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
 
   internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(
-    result), ModifiableSimpleEntity {
+    result), SimpleEntityBuilder {
     internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -135,16 +135,16 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
         if (_diff != null) index(this, "url", value)
       }
 
-    override var parent: ModifiableEntityWithManyImports
+    override var parent: EntityWithManyImportsBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? ModifiableEntityWithManyImports)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ModifiableEntityWithManyImports)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? EntityWithManyImportsBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as EntityWithManyImportsBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ModifiableEntityWithManyImports
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as EntityWithManyImportsBuilder
         }
       }
       set(value) {
@@ -185,7 +185,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SimpleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleEntity> {
     val modifiable = SimpleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -211,9 +211,9 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     return SimpleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SimpleEntity(url, entitySource) {
-      parents.filterIsInstance<ModifiableEntityWithManyImports>().singleOrNull()?.let { this.parent = it }
+      parents.filterIsInstance<EntityWithManyImportsBuilder>().singleOrNull()?.let { this.parent = it }
     }
   }
 

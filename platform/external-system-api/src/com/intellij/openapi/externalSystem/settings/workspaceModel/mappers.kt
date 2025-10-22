@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 fun getExternalProjectsBuildClasspathEntity(
   projectBuildClasspath: Map<String, ExternalProjectBuildClasspathPojo>
-): ModifiableExternalProjectsBuildClasspathEntity {
+): ExternalProjectsBuildClasspathEntityBuilder {
   val classpathEntityMap = projectBuildClasspath.mapValues { getExternalProjectBuildClasspathEntity(it.value) }
   return ExternalProjectsBuildClasspathEntity(
     projectsBuildClasspath = classpathEntityMap,

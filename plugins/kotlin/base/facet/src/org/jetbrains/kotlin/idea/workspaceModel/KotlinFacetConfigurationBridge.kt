@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
@@ -13,12 +13,12 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.serialization.KotlinFacetSettingsWorkspaceModel
 
-class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity, ModifiableKotlinSettingsEntity> {
+class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity, KotlinSettingsEntityBuilder> {
     override val settings: IKotlinFacetSettings by lazy { KotlinFacetSettingsWorkspaceModel(kotlinSettingsEntity) }
 
-    private val kotlinSettingsEntity: ModifiableKotlinSettingsEntity
+    private val kotlinSettingsEntity: KotlinSettingsEntityBuilder
 
-    private constructor(kotlinSettingsEntity: ModifiableKotlinSettingsEntity) : super() {
+    private constructor(kotlinSettingsEntity: KotlinSettingsEntityBuilder) : super() {
         this.kotlinSettingsEntity = kotlinSettingsEntity
     }
 
@@ -81,7 +81,7 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
         kotlinSettingsEntity.name = newName
     }
 
-    override fun getEntityBuilder(moduleEntity: ModifiableModuleEntity): ModifiableKotlinSettingsEntity {
+    override fun getEntityBuilder(moduleEntity: ModuleEntityBuilder): KotlinSettingsEntityBuilder {
         return KotlinSettingsEntity(
             kotlinSettingsEntity.moduleId,
             kotlinSettingsEntity.name,

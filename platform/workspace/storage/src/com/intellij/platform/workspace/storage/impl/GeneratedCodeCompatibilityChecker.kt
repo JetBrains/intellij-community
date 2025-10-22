@@ -62,7 +62,7 @@ internal object GeneratedCodeCompatibilityChecker {
   
   // Something more stable?
   private fun Class<WorkspaceEntity>.toBuilderClass(): Class<*> {
-    return loadClassByName("$packageName.Modifiable$simpleName", classLoader)
+    return loadClassByName("$packageName.${simpleName}Builder", classLoader)
   }
 
   private fun Class<WorkspaceEntity>.toImplClass(): Class<*> {

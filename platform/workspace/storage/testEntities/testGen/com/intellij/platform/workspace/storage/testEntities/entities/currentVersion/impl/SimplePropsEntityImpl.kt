@@ -3,10 +3,9 @@ package com.intellij.platform.workspace.storage.testEntities.entities.currentVer
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -20,8 +19,8 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ModifiableSimplePropsEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimplePropsEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimplePropsEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -77,7 +76,7 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
 
 
   internal class Builder(result: SimplePropsEntityData?) : ModifiableWorkspaceEntityBase<SimplePropsEntity, SimplePropsEntityData>(
-    result), ModifiableSimplePropsEntity {
+    result), SimplePropsEntityBuilder {
     internal constructor() : this(SimplePropsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -245,7 +244,7 @@ internal class SimplePropsEntityData : WorkspaceEntityData<SimplePropsEntity>() 
   internal fun isMapInitialized(): Boolean = ::map.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SimplePropsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimplePropsEntity> {
     val modifiable = SimplePropsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -280,7 +279,7 @@ internal class SimplePropsEntityData : WorkspaceEntityData<SimplePropsEntity>() 
     return SimplePropsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SimplePropsEntity(text, list, set, map, bool, entitySource) {
     }
   }

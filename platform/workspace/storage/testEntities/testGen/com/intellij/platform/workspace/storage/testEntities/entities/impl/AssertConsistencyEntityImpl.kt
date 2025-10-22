@@ -3,10 +3,9 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -17,7 +16,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.AssertConsistencyEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableAssertConsistencyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.AssertConsistencyEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -51,7 +50,7 @@ internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsist
 
 
   internal class Builder(result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity, AssertConsistencyEntityData>(
-    result), ModifiableAssertConsistencyEntity {
+    result), AssertConsistencyEntityBuilder {
     internal constructor() : this(AssertConsistencyEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -123,7 +122,7 @@ internal class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsisten
   var passCheck: Boolean = false
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AssertConsistencyEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<AssertConsistencyEntity> {
     val modifiable = AssertConsistencyEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -150,7 +149,7 @@ internal class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsisten
     return AssertConsistencyEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return AssertConsistencyEntity(passCheck, entitySource) {
     }
   }

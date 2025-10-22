@@ -2,9 +2,9 @@
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
 import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModifiableLibraryEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -35,14 +35,14 @@ interface CustomModuleRootsSerializer {
                          customDir: String?,
                          virtualFileManager: VirtualFileUrlManager): EntitySource?
 
-  fun loadRoots(moduleEntity: ModifiableModuleEntity,
+  fun loadRoots(moduleEntity: ModuleEntityBuilder,
                 reader: JpsFileContentReader,
                 customDir: String?,
                 imlFileUrl: VirtualFileUrl,
                 internalModuleListSerializer: JpsModuleListSerializer?,
                 errorReporter: ErrorReporter,
                 virtualFileManager: VirtualFileUrlManager,
-                moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>) { }
+                moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>) { }
 
   fun saveRoots(module: ModuleEntity,
                 entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,

@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
+import org.jetbrains.kotlin.psi.psiUtil.isPublic
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.io.IOException
 import java.net.URL
@@ -288,7 +290,7 @@ object CodeWriter {
     val metadataStorageImplementation = codeGenerator.generateMetadataStoragesImplementation(objModules, generatorSettings)
     return entitiesImplementations + metadataStorageImplementation
   }
-  
+
   private fun saveCompatibilityCode(ktClasses: Map<String, KtClass>, savedCompatibilityInvokeCode: MutableMap<KtClass, PsiElement>) {
     for (ktClass in ktClasses.values) {
       val companionDeclaration = ktClass.body?.declarations?.find { it is KtObjectDeclaration && it.isCompanion() } as? KtObjectDeclaration
@@ -354,7 +356,7 @@ object CodeWriter {
     code: ObjClassGeneratedCode, generatedFiles: MutableList<KtFile>,
     project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile,
     ktClasses: Map<String, KtClass>, importsByFile: MutableMap<KtFile, Imports>,
-    topLevelDeclarations: MultiMap<KtFile, Pair<KtClass, List<KtDeclaration>>>, psiFactory: KtPsiFactory, 
+    topLevelDeclarations: MultiMap<KtFile, Pair<KtClass, List<KtDeclaration>>>, psiFactory: KtPsiFactory,
     savedCompatibilityInvokeCode: MutableMap<KtClass, PsiElement>,
   ) {
 
@@ -381,8 +383,10 @@ object CodeWriter {
       }
       val psiFactory = KtPsiFactory(apiClass.project)
       val topLevelCode = code.topLevelCode ?: ""
-      val generatedApiFile = psiFactory.createFile("${code.target.name}Api.kt", generatedApiImports.findAndRemoveFqns(topLevelCode))
+      val filename = "${code.target.name}Modifications"
+      val generatedApiFile = psiFactory.createFile("$filename.kt", generatedApiImports.findAndRemoveFqns(topLevelCode))
       generatedApiFile.packageFqName = apiFile.packageFqName
+      generatedApiFile.addBefore(psiFactory.createFileAnnotation("JvmName(\"$filename\")"), generatedApiFile.firstChild)
 
       val compatibilityTopLevelDeclarations = mutableListOf<KtDeclaration>()
       // val allDeclarationsFile = psiFactory.createFile(apiImports.findAndRemoveFqns(topLevelCode))
@@ -394,10 +398,15 @@ object CodeWriter {
           declaration.delete()
           continue
         }
-        
       }
+
       if (compatibilityTopLevelDeclarations.isNotEmpty()) {
         topLevelDeclarations.putValue(apiFile, apiClass to compatibilityTopLevelDeclarations)
+      }
+
+      val visibility = apiClass.visibilityModifierType().takeIf { !apiClass.isPublic }
+      if (visibility != null) {
+        generatedApiFile.declarations.forEach { it.addModifier(visibility) }
       }
 
       val apiTargetDirectory = targetDirectory.parent!!
@@ -468,11 +477,11 @@ object CodeWriter {
     val body = ktClass.getOrCreateBody()
     addGeneratedRegionStartComment(body, builderInterface)
     addGeneratedRegionEndComment(body, companionObject)
-    
+
     val compatibilityInvoke = savedCompatibilityInvokeCode.remove(ktClass) ?: return
     addCompatibilityInvoke(companionObject, compatibilityInvoke, psiFactory)
   }
-  
+
   private fun addCompatibilityInvoke(companionObject: KtObjectDeclaration, compatibilityInvoke: PsiElement, psiFactory: KtPsiFactory) {
     val companionBody = companionObject.getOrCreateBody()
     companionBody.addBefore(compatibilityInvoke, companionBody.rBrace)
@@ -552,7 +561,7 @@ object CodeWriter {
   private val ASTNode.isGeneratedRegionEnd: Boolean
     get() =
       elementType == KtTokens.EOL_COMMENT && text == GENERATED_REGION_END
-  
+
   // compatability region
   private const val GENERATED_COMPATIBILITY_REGION_START = "//region compatibility generated code"
 

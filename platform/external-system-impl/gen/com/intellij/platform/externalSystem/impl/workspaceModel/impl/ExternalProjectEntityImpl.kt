@@ -2,8 +2,8 @@
 package com.intellij.platform.externalSystem.impl.workspaceModel.impl
 
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
+import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityBuilder
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
-import com.intellij.platform.externalSystem.impl.workspaceModel.ModifiableExternalProjectEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -48,7 +48,7 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
 
 
   internal class Builder(result: ExternalProjectEntityData?) : ModifiableWorkspaceEntityBase<ExternalProjectEntity, ExternalProjectEntityData>(
-    result), ModifiableExternalProjectEntity {
+    result), ExternalProjectEntityBuilder {
     internal constructor() : this(ExternalProjectEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,7 +124,7 @@ internal class ExternalProjectEntityData : WorkspaceEntityData<ExternalProjectEn
 
   internal fun isExternalProjectPathInitialized(): Boolean = ::externalProjectPath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ExternalProjectEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExternalProjectEntity> {
     val modifiable = ExternalProjectEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -151,7 +151,7 @@ internal class ExternalProjectEntityData : WorkspaceEntityData<ExternalProjectEn
     return ExternalProjectEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ExternalProjectEntity(externalProjectPath, entitySource) {
     }
   }

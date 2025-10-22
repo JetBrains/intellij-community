@@ -1295,26 +1295,26 @@ com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuil
 - s:create(java.util.Map,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Builder
 - a:getProjectsBuildClasspath():java.util.Map
 com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Builder
-- com.intellij.openapi.externalSystem.settings.workspaceModel.ModifiableExternalProjectsBuildClasspathEntity
+- com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityBuilder
 f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Companion
 - com.intellij.platform.workspace.storage.EntityType
 - f:create(java.util.Map,com.intellij.platform.workspace.storage.EntitySource):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Builder
 - f:create(java.util.Map,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Builder
 - bs:create$default(com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Companion,java.util.Map,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Builder
-f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityApiKt
-- sf:createExternalProjectsBuildClasspathEntity(java.util.Map,com.intellij.platform.workspace.storage.EntitySource):com.intellij.openapi.externalSystem.settings.workspaceModel.ModifiableExternalProjectsBuildClasspathEntity
-- sf:createExternalProjectsBuildClasspathEntity(java.util.Map,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ModifiableExternalProjectsBuildClasspathEntity
-- bs:createExternalProjectsBuildClasspathEntity$default(java.util.Map,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.externalSystem.settings.workspaceModel.ModifiableExternalProjectsBuildClasspathEntity
-- sf:modifyExternalProjectsBuildClasspathEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
-f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntitySource
-- com.intellij.platform.workspace.storage.EntitySource
-- sf:INSTANCE:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntitySource
-com.intellij.openapi.externalSystem.settings.workspaceModel.ModifiableExternalProjectsBuildClasspathEntity
+com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityBuilder
 - com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
 - a:getProjectsBuildClasspath():java.util.Map
 - a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
 - a:setProjectsBuildClasspath(java.util.Map):V
+f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityModifications
+- sf:createExternalProjectsBuildClasspathEntity(java.util.Map,com.intellij.platform.workspace.storage.EntitySource):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityBuilder
+- sf:createExternalProjectsBuildClasspathEntity(java.util.Map,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityBuilder
+- bs:createExternalProjectsBuildClasspathEntity$default(java.util.Map,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityBuilder
+- sf:modifyExternalProjectsBuildClasspathEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
+f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
+- sf:INSTANCE:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntitySource
 com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager
 - a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
 - executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V

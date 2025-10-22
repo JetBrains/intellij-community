@@ -3,14 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -18,7 +16,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityParentList
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableAttachedEntityParentList
+import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityParentListBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -52,7 +50,7 @@ internal class AttachedEntityParentListImpl(private val dataSource: AttachedEnti
 
 
   internal class Builder(result: AttachedEntityParentListData?) : ModifiableWorkspaceEntityBase<AttachedEntityParentList, AttachedEntityParentListData>(
-    result), ModifiableAttachedEntityParentList {
+    result), AttachedEntityParentListBuilder {
     internal constructor() : this(AttachedEntityParentListData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -128,7 +126,7 @@ internal class AttachedEntityParentListData : WorkspaceEntityData<AttachedEntity
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AttachedEntityParentList> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<AttachedEntityParentList> {
     val modifiable = AttachedEntityParentListImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -155,7 +153,7 @@ internal class AttachedEntityParentListData : WorkspaceEntityData<AttachedEntity
     return AttachedEntityParentList::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return AttachedEntityParentList(data, entitySource) {
     }
   }

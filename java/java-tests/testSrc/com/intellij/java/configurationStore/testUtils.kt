@@ -5,10 +5,9 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModifiableLibraryEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
@@ -40,14 +39,14 @@ internal class SampleCustomModuleRootsSerializer : CustomModuleRootsSerializer {
     return SampleDummyParentCustomModuleEntitySource(internalEntitySource)
   }
 
-  override fun loadRoots(moduleEntity: ModifiableModuleEntity,
+  override fun loadRoots(moduleEntity: ModuleEntityBuilder,
                          reader: JpsFileContentReader,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
                          internalModuleListSerializer: JpsModuleListSerializer?,
                          errorReporter: ErrorReporter,
                          virtualFileManager: VirtualFileUrlManager,
-                         moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>) {
+                         moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>) {
   }
 
   override fun saveRoots(module: ModuleEntity,

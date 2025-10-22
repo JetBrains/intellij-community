@@ -160,7 +160,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
                                     orphanage: MutableEntityStorage,
                                     newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
-    val libraries = (newEntities[LibraryEntity::class.java] as? List<ModifiableLibraryEntity>) ?: emptyList()
+    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntityBuilder>) ?: emptyList()
     libraries.forEach {
       val symbolicId = LibraryId(it.name, it.tableId)
       if (symbolicId in builder) {
@@ -259,7 +259,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
     }
 
     fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, source: EntitySource,
-                    virtualFileManager: VirtualFileUrlManager): ModifiableLibraryEntity {
+                    virtualFileManager: VirtualFileUrlManager): LibraryEntityBuilder {
       val roots = ArrayList<LibraryRoot>()
       val excludedRoots = ArrayList<VirtualFileUrl>()
       val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(

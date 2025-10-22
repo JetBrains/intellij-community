@@ -58,7 +58,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
       // Convert it's packaging elements
       it.rootElement!!.forThisAndFullTree {
-        builder.modifyEntity(ModifiablePackagingElementEntity::class.java, it) {
+        builder.modifyEntity(PackagingElementEntityBuilder::class.java, it) {
           this.entitySource = artifactSource
         }
       }
@@ -177,7 +177,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           val rootElement = loadPackagingElement(state.rootElement, entitySource)
           val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
             this.outputUrl = outputUrl
-            this.rootElement = rootElement as ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
+            this.rootElement = rootElement as CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>
           }
           for (propertiesState in state.propertiesList) {
             ArtifactPropertiesEntity(propertiesState.id, entitySource) {
@@ -202,7 +202,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
                                     orphanage: MutableEntityStorage,
                                     newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
     if (preserveOrder) {
-      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ModifiableArtifactsOrderEntity
+      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntityBuilder
       if (order != null) {
         val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
         if (entity != null) {
@@ -228,7 +228,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   }
 
   private fun loadPackagingElement(element: Element,
-                                   source: EntitySource): ModifiablePackagingElementEntity<out PackagingElementEntity> {
+                                   source: EntitySource): PackagingElementEntityBuilder<out PackagingElementEntity> {
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)

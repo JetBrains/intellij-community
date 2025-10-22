@@ -101,9 +101,9 @@ class AbstractChildrenOrderingTest {
       )
     }
 
-    assertEquals("One", entity.children[0].asSafely<ModifiableMiddleEntity>()!!.property)
-    assertEquals("Two", entity.children[1].asSafely<ModifiableMiddleEntity>()!!.property)
-    assertEquals("Three", entity.children[2].asSafely<ModifiableMiddleEntity>()!!.property)
+    assertEquals("One", entity.children[0].asSafely<MiddleEntityBuilder>()!!.property)
+    assertEquals("Two", entity.children[1].asSafely<MiddleEntityBuilder>()!!.property)
+    assertEquals("Three", entity.children[2].asSafely<MiddleEntityBuilder>()!!.property)
   }
 
   @ParameterizedTest

@@ -18,8 +18,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder;
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder;
 import com.intellij.util.indexing.testEntities.IndexingTestEntity;
-import com.intellij.util.indexing.testEntities.IndexingTestEntityApiKt;
-import com.intellij.util.indexing.testEntities.ModifiableIndexingTestEntity;
+import com.intellij.util.indexing.testEntities.IndexingTestEntityBuilder;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar;
@@ -39,6 +38,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProviderMethods.INSTANCE;
+import static com.intellij.util.indexing.testEntities.IndexingTestEntityModifications.createIndexingTestEntity;
 
 public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingServiceTestBase {
   private static final EntitySource ENTITY_SOURCE = new EntitySource() {
@@ -359,15 +359,15 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
   @NotNull
   static IndexingTestEntity createAndRegisterEntity(List<VirtualFileUrl> roots, List<VirtualFileUrl> excludedRoots, Project project) {
-    ModifiableIndexingTestEntity entity = IndexingTestEntityApiKt.createIndexingTestEntity(roots, excludedRoots, ENTITY_SOURCE);
+    IndexingTestEntityBuilder entity = createIndexingTestEntity(roots, excludedRoots, ENTITY_SOURCE);
     return editWorkspaceModel(project, builder -> builder.addEntity(entity));
   }
 
   static void editSingleWorkspaceEntity(@NotNull Project project,
-                                        @NotNull Consumer<? super ModifiableIndexingTestEntity> modification) {
+                                        @NotNull Consumer<? super IndexingTestEntityBuilder> modification) {
     editWorkspaceModel(project, builder -> {
       IndexingTestEntity existingEntity = SequencesKt.first(builder.entities(IndexingTestEntity.class));
-      builder.modifyEntity(ModifiableIndexingTestEntity.class, existingEntity, entityBuilder -> {
+      builder.modifyEntity(IndexingTestEntityBuilder.class, existingEntity, entityBuilder -> {
         modification.accept(entityBuilder);
         return Unit.INSTANCE;
       });

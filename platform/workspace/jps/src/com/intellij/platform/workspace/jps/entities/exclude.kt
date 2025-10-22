@@ -3,7 +3,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
@@ -18,8 +17,8 @@ interface ExcludeUrlEntity : WorkspaceEntity {
   val url: VirtualFileUrl
 
   //region generated code
-  @Deprecated(message = "Use ModifiableExcludeUrlEntity instead")
-  interface Builder : ModifiableExcludeUrlEntity
+  @Deprecated(message = "Use ExcludeUrlEntityBuilder instead")
+  interface Builder : ExcludeUrlEntityBuilder
   companion object : EntityType<ExcludeUrlEntity, Builder>() {
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
@@ -46,16 +45,16 @@ fun MutableEntityStorage.modifyExcludeUrlEntity(
 @Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?
-  get() = (this as ModifiableExcludeUrlEntity).contentRoot as ContentRootEntity.Builder?
+  get() = (this as ExcludeUrlEntityBuilder).contentRoot as ContentRootEntity.Builder?
   set(value) {
-    (this as ModifiableExcludeUrlEntity).contentRoot = value
+    (this as ExcludeUrlEntityBuilder).contentRoot = value
   }
 
 @Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.library: LibraryEntity.Builder?
-  get() = (this as ModifiableExcludeUrlEntity).library as LibraryEntity.Builder?
+  get() = (this as ExcludeUrlEntityBuilder).library as LibraryEntity.Builder?
   set(value) {
-    (this as ModifiableExcludeUrlEntity).library = value
+    (this as ExcludeUrlEntityBuilder).library = value
   }
 //endregion

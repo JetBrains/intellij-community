@@ -116,7 +116,7 @@ internal class WorkspaceFolderImporter(
                       })
   }
 
-  private fun registerSourceRootFolder(contentRootEntity: ModifiableContentRootEntity,
+  private fun registerSourceRootFolder(contentRootEntity: ContentRootEntityBuilder,
                                        folder: ContentRootCollector.SourceFolderResult) {
     val rootTypeId = when (folder.type) {
       JavaSourceRootType.SOURCE -> JAVA_SOURCE_ROOT_ENTITY_TYPE_ID

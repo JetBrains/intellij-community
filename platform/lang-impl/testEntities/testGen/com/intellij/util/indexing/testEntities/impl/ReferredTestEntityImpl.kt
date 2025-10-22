@@ -1,28 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.util.indexing.testEntities.ModifiableReferredTestEntity
 import com.intellij.util.indexing.testEntities.ReferredTestEntity
+import com.intellij.util.indexing.testEntities.ReferredTestEntityBuilder
 import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 
 @GeneratedCodeApiVersion(3)
@@ -65,7 +60,7 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
 
 
   internal class Builder(result: ReferredTestEntityData?) : ModifiableWorkspaceEntityBase<ReferredTestEntity, ReferredTestEntityData>(
-    result), ModifiableReferredTestEntity {
+    result), ReferredTestEntityBuilder {
     internal constructor() : this(ReferredTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -158,7 +153,7 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isFileInitialized(): Boolean = ::file.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ReferredTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ReferredTestEntity> {
     val modifiable = ReferredTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -184,7 +179,7 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
     return ReferredTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ReferredTestEntity(name, file, entitySource) {
     }
   }

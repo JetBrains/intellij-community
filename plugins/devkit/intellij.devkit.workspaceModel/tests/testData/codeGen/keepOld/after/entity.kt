@@ -10,8 +10,8 @@ interface SimpleEntity : WorkspaceEntity {
   val name: String
 
   //region generated code
-  @Deprecated(message = "Use ModifiableSimpleEntity instead")
-  interface Builder : ModifiableSimpleEntity
+  @Deprecated(message = "Use SimpleEntityBuilder instead")
+  interface Builder : SimpleEntityBuilder
   companion object : EntityType<SimpleEntity, Builder>() {
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
@@ -39,9 +39,9 @@ fun MutableEntityStorage.modifySimpleEntity(
 @Deprecated(message = "Use new API instead")
 @Parent
 var SimpleEntity.Builder.simpleParent: SimpleParentByExtension.Builder
-  get() = (this as ModifiableSimpleEntity).simpleParent as SimpleParentByExtension.Builder
+  get() = (this as SimpleEntityBuilder).simpleParent as SimpleParentByExtension.Builder
   set(value) {
-    (this as ModifiableSimpleEntity).simpleParent = value
+    (this as SimpleEntityBuilder).simpleParent = value
   }
 //endregion
 
@@ -50,8 +50,8 @@ interface SimpleParentByExtension : WorkspaceEntity {
   val simpleChild: SimpleEntity?
 
   //region generated code
-  @Deprecated(message = "Use ModifiableSimpleParentByExtension instead")
-  interface Builder : ModifiableSimpleParentByExtension {
+  @Deprecated(message = "Use SimpleParentByExtensionBuilder instead")
+  interface Builder : SimpleParentByExtensionBuilder {
     @Deprecated(message = "Use new API instead")
     fun getSimpleChild(): SimpleEntity.Builder? = simpleChild as SimpleEntity.Builder?
 

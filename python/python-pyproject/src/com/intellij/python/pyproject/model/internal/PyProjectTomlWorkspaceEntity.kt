@@ -1,6 +1,5 @@
 package com.intellij.python.pyproject.model.internal
 
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*

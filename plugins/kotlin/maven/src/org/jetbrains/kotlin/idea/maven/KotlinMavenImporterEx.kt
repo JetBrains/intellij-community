@@ -41,7 +41,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             }.asSequence().asStream()
     }
 
-    private fun createWorkspaceEntity(module: ModuleEntity): ModifiableKotlinSettingsEntity =
+    private fun createWorkspaceEntity(module: ModuleEntity): KotlinSettingsEntityBuilder =
         KotlinSettingsEntity(
             module.symbolicId,
             KotlinFacetType.INSTANCE.presentableName,

@@ -5,8 +5,8 @@ import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableSourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
 import com.intellij.platform.workspace.jps.entities.modifyCustomSourceRootPropertiesEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -115,7 +115,7 @@ object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement> addPropertiesEntity(sourceRootEntity: ModifiableSourceRootEntity,
+  internal fun <P : JpsElement> addPropertiesEntity(sourceRootEntity: SourceRootEntityBuilder,
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (serializer.typeId) {

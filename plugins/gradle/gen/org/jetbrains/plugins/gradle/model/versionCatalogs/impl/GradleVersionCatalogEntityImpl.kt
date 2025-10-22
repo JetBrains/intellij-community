@@ -3,15 +3,12 @@ package org.jetbrains.plugins.gradle.model.versionCatalogs.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -24,9 +21,9 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
-import org.jetbrains.plugins.gradle.model.projectModel.ModifiableGradleBuildEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
 import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity
-import org.jetbrains.plugins.gradle.model.versionCatalogs.ModifiableGradleVersionCatalogEntity
+import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -72,7 +69,7 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
 
 
   internal class Builder(result: GradleVersionCatalogEntityData?) : ModifiableWorkspaceEntityBase<GradleVersionCatalogEntity, GradleVersionCatalogEntityData>(
-    result), ModifiableGradleVersionCatalogEntity {
+    result), GradleVersionCatalogEntityBuilder {
     internal constructor() : this(GradleVersionCatalogEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -163,16 +160,16 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
         if (_diff != null) index(this, "url", value)
       }
 
-    override var build: ModifiableGradleBuildEntity
+    override var build: GradleBuildEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(BUILD_CONNECTION_ID, this) as? ModifiableGradleBuildEntity)
-          ?: (this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as ModifiableGradleBuildEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(BUILD_CONNECTION_ID, this) as? GradleBuildEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as GradleBuildEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as ModifiableGradleBuildEntity
+          this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as GradleBuildEntityBuilder
         }
       }
       set(value) {
@@ -215,7 +212,7 @@ internal class GradleVersionCatalogEntityData : WorkspaceEntityData<GradleVersio
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleVersionCatalogEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleVersionCatalogEntity> {
     val modifiable = GradleVersionCatalogEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -242,9 +239,9 @@ internal class GradleVersionCatalogEntityData : WorkspaceEntityData<GradleVersio
     return GradleVersionCatalogEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return GradleVersionCatalogEntity(name, url, entitySource) {
-      parents.filterIsInstance<ModifiableGradleBuildEntity>().singleOrNull()?.let { this.build = it }
+      parents.filterIsInstance<GradleBuildEntityBuilder>().singleOrNull()?.let { this.build = it }
     }
   }
 

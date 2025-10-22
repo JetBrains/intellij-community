@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.jps.entities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Parent
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -25,8 +24,8 @@ interface ContentRootEntity : WorkspaceEntity {
   val excludedUrls: List<ExcludeUrlEntity>
 
   //region generated code
-  @Deprecated(message = "Use ModifiableContentRootEntity instead")
-  interface Builder : ModifiableContentRootEntity {
+  @Deprecated(message = "Use ContentRootEntityBuilder instead")
+  interface Builder : ContentRootEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
 
@@ -65,18 +64,18 @@ fun MutableEntityStorage.modifyContentRootEntity(
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var ContentRootEntity.Builder.excludeUrlOrder: ExcludeUrlOrderEntity.Builder?
-  get() = (this as ModifiableContentRootEntity).excludeUrlOrder as ExcludeUrlOrderEntity.Builder?
+  get() = (this as ContentRootEntityBuilder).excludeUrlOrder as ExcludeUrlOrderEntity.Builder?
   set(value) {
-    (this as ModifiableContentRootEntity).excludeUrlOrder = value
+    (this as ContentRootEntityBuilder).excludeUrlOrder = value
   }
 
 @get:Internal
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var ContentRootEntity.Builder.sourceRootOrder: SourceRootOrderEntity.Builder?
-  get() = (this as ModifiableContentRootEntity).sourceRootOrder as SourceRootOrderEntity.Builder?
+  get() = (this as ContentRootEntityBuilder).sourceRootOrder as SourceRootOrderEntity.Builder?
   set(value) {
-    (this as ModifiableContentRootEntity).sourceRootOrder = value
+    (this as ContentRootEntityBuilder).sourceRootOrder = value
   }
 //endregion
 
@@ -102,8 +101,8 @@ interface SourceRootEntity : WorkspaceEntity {
   val contentRoot: ContentRootEntity
 
   //region generated code
-  @Deprecated(message = "Use ModifiableSourceRootEntity instead")
-  interface Builder : ModifiableSourceRootEntity {
+  @Deprecated(message = "Use SourceRootEntityBuilder instead")
+  interface Builder : SourceRootEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getContentRoot(): ContentRootEntity.Builder = contentRoot as ContentRootEntity.Builder
 
@@ -142,8 +141,8 @@ fun MutableEntityStorage.modifySourceRootEntity(
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var SourceRootEntity.Builder.customSourceRootProperties: CustomSourceRootPropertiesEntity.Builder?
-  get() = (this as ModifiableSourceRootEntity).customSourceRootProperties as CustomSourceRootPropertiesEntity.Builder?
+  get() = (this as SourceRootEntityBuilder).customSourceRootProperties as CustomSourceRootPropertiesEntity.Builder?
   set(value) {
-    (this as ModifiableSourceRootEntity).customSourceRootProperties = value
+    (this as SourceRootEntityBuilder).customSourceRootProperties = value
   }
 //endregion

@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -13,12 +12,12 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXChildChildEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXChildEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.XChildChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildChildEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -56,7 +55,7 @@ internal class XChildChildEntityImpl(private val dataSource: XChildChildEntityDa
 
 
   internal class Builder(result: XChildChildEntityData?) : ModifiableWorkspaceEntityBase<XChildChildEntity, XChildChildEntityData>(
-    result), ModifiableXChildChildEntity {
+    result), XChildChildEntityBuilder {
     internal constructor() : this(XChildChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -130,16 +129,16 @@ internal class XChildChildEntityImpl(private val dataSource: XChildChildEntityDa
 
       }
 
-    override var parent1: ModifiableXParentEntity
+    override var parent1: XParentEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT1_CONNECTION_ID, this) as? ModifiableXParentEntity)
-          ?: (this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)]!! as ModifiableXParentEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT1_CONNECTION_ID, this) as? XParentEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)]!! as XParentEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)]!! as ModifiableXParentEntity
+          this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)]!! as XParentEntityBuilder
         }
       }
       set(value) {
@@ -170,16 +169,16 @@ internal class XChildChildEntityImpl(private val dataSource: XChildChildEntityDa
         changedProperty.add("parent1")
       }
 
-    override var parent2: ModifiableXChildEntity
+    override var parent2: XChildEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT2_CONNECTION_ID, this) as? ModifiableXChildEntity)
-          ?: (this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)]!! as ModifiableXChildEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT2_CONNECTION_ID, this) as? XChildEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)]!! as XChildEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)]!! as ModifiableXChildEntity
+          this.entityLinks[EntityLink(false, PARENT2_CONNECTION_ID)]!! as XChildEntityBuilder
         }
       }
       set(value) {
@@ -218,7 +217,7 @@ internal class XChildChildEntityImpl(private val dataSource: XChildChildEntityDa
 internal class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<XChildChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<XChildChildEntity> {
     val modifiable = XChildChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -245,10 +244,10 @@ internal class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() 
     return XChildChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return XChildChildEntity(entitySource) {
-      parents.filterIsInstance<ModifiableXParentEntity>().singleOrNull()?.let { this.parent1 = it }
-      parents.filterIsInstance<ModifiableXChildEntity>().singleOrNull()?.let { this.parent2 = it }
+      parents.filterIsInstance<XParentEntityBuilder>().singleOrNull()?.let { this.parent1 = it }
+      parents.filterIsInstance<XChildEntityBuilder>().singleOrNull()?.let { this.parent2 = it }
     }
   }
 

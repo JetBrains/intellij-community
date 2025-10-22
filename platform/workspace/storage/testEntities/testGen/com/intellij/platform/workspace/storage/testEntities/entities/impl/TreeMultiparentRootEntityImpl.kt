@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -13,10 +12,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableTreeMultiparentLeafEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableTreeMultiparentRootEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentRootEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentRootEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentSymbolicId
 
 @GeneratedCodeApiVersion(3)
@@ -59,7 +58,7 @@ internal class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultipa
 
 
   internal class Builder(result: TreeMultiparentRootEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentRootEntity, TreeMultiparentRootEntityData>(
-    result), ModifiableTreeMultiparentRootEntity {
+    result), TreeMultiparentRootEntityBuilder {
     internal constructor() : this(TreeMultiparentRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -138,18 +137,18 @@ internal class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultipa
 
     // List of non-abstract referenced types
     var _children: List<TreeMultiparentLeafEntity>? = emptyList()
-    override var children: List<ModifiableTreeMultiparentLeafEntity>
+    override var children: List<TreeMultiparentLeafEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableTreeMultiparentLeafEntity>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableTreeMultiparentLeafEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<TreeMultiparentLeafEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableTreeMultiparentLeafEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -193,7 +192,7 @@ internal class TreeMultiparentRootEntityData : WorkspaceEntityData<TreeMultipare
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<TreeMultiparentRootEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<TreeMultiparentRootEntity> {
     val modifiable = TreeMultiparentRootEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -220,7 +219,7 @@ internal class TreeMultiparentRootEntityData : WorkspaceEntityData<TreeMultipare
     return TreeMultiparentRootEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return TreeMultiparentRootEntity(data, entitySource) {
     }
   }

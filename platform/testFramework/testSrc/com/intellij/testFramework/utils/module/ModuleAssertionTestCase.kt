@@ -9,8 +9,8 @@ import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.jps.entities.ModifiableContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -32,19 +32,19 @@ abstract class ModuleAssertionTestCase {
   suspend fun WorkspaceModel.update(updater: MutableEntityStorage.() -> Unit) =
     update("Test description", updater)
 
-  fun MutableEntityStorage.addModuleEntity(moduleName: String, relativePath: String, configure: ModifiableContentRootEntity.() -> Unit = {}) {
+  fun MutableEntityStorage.addModuleEntity(moduleName: String, relativePath: String, configure: ContentRootEntityBuilder.() -> Unit = {}) {
     addModuleEntity(moduleName) {
       addContentRoot(relativePath, configure)
     }
   }
 
-  fun MutableEntityStorage.addModuleEntity(moduleName: String, configure: ModifiableModuleEntity.() -> Unit = {}) {
+  fun MutableEntityStorage.addModuleEntity(moduleName: String, configure: ModuleEntityBuilder.() -> Unit = {}) {
     addEntity(ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
       configure()
     })
   }
 
-  fun ModifiableModuleEntity.addContentRoot(relativePath: String, configure: ModifiableContentRootEntity.() -> Unit = {}) {
+  fun ModuleEntityBuilder.addContentRoot(relativePath: String, configure: ContentRootEntityBuilder.() -> Unit = {}) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val contentRootPath = projectRoot.resolve(relativePath).normalize()
     val contentRoot = contentRootPath.toVirtualFileUrl(virtualFileUrlManager)
@@ -53,7 +53,7 @@ abstract class ModuleAssertionTestCase {
     }
   }
 
-  fun ModifiableContentRootEntity.addSourceRoot(typeId: SourceRootTypeId, relativePath: String) {
+  fun ContentRootEntityBuilder.addSourceRoot(typeId: SourceRootTypeId, relativePath: String) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val sourceRootPath = projectRoot.resolve(relativePath).normalize()
     val sourceRoot = sourceRootPath.toVirtualFileUrl(virtualFileUrlManager)
@@ -64,11 +64,11 @@ abstract class ModuleAssertionTestCase {
     addEntity(LibraryEntity(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource))
   }
 
-  fun ModifiableModuleEntity.addLibraryDependency(libraryName: String) {
+  fun ModuleEntityBuilder.addLibraryDependency(libraryName: String) {
     dependencies += LibraryDependency(LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId), exported = false, COMPILE)
   }
 
-  fun ModifiableModuleEntity.addModuleDependency(moduleName: String) {
+  fun ModuleEntityBuilder.addModuleDependency(moduleName: String) {
     dependencies += ModuleDependency(ModuleId(moduleName), exported = false, COMPILE, productionOnTest = false)
   }
 }

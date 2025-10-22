@@ -3,15 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -23,10 +20,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.AbstractChildEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentWithExtensionEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSpecificChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -66,7 +63,7 @@ internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEnti
 
 
   internal class Builder(result: SpecificChildEntityData?) : ModifiableWorkspaceEntityBase<SpecificChildEntity, SpecificChildEntityData>(
-    result), ModifiableSpecificChildEntity {
+    result), SpecificChildEntityBuilder {
     internal constructor() : this(SpecificChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -142,17 +139,16 @@ internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEnti
         changedProperty.add("data")
       }
 
-    override var parent: ModifiableParentWithExtensionEntity
+    override var parent: ParentWithExtensionEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID,
-                                                                           this) as? ModifiableParentWithExtensionEntity)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ModifiableParentWithExtensionEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? ParentWithExtensionEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentWithExtensionEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ModifiableParentWithExtensionEntity
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentWithExtensionEntityBuilder
         }
       }
       set(value) {
@@ -189,7 +185,7 @@ internal class SpecificChildEntityData : WorkspaceEntityData<SpecificChildEntity
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SpecificChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SpecificChildEntity> {
     val modifiable = SpecificChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -216,9 +212,9 @@ internal class SpecificChildEntityData : WorkspaceEntityData<SpecificChildEntity
     return SpecificChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SpecificChildEntity(data, entitySource) {
-      parents.filterIsInstance<ModifiableParentWithExtensionEntity>().singleOrNull()?.let { this.parent = it }
+      parents.filterIsInstance<ParentWithExtensionEntityBuilder>().singleOrNull()?.let { this.parent = it }
     }
   }
 

@@ -85,7 +85,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
   private fun createModuleEntity(
     context: ProjectResolverContext,
     sourceRootData: GradleSourceRootData,
-  ): ModifiableModuleEntity {
+  ): ModuleEntityBuilder {
     val (excluded, sources) = sourceRootData.externalSourceSet.sources.asSequence()
       .flatMap { (type, set) -> set.srcDirs.asSequence().map { it.toPath() to type } }
       .partition { it.second.isExcluded }
@@ -120,7 +120,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     sourceRootData: GradleSourceRootData,
     excludedPath: Path,
-  ): ModifiableExcludeUrlEntity {
+  ): ExcludeUrlEntityBuilder {
     return ExcludeUrlEntity(
       url = context.virtualFileUrl(excludedPath),
       entitySource = sourceRootData.entitySource
@@ -132,7 +132,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
     sourceRootData: GradleSourceRootData,
     sourceRootPath: Path,
     sourceRootType: IExternalSystemSourceType,
-  ): ModifiableSourceRootEntity {
+  ): SourceRootEntityBuilder {
     return SourceRootEntity(
       url = context.virtualFileUrl(sourceRootPath),
       rootTypeId = sourceRootType.toSourceRootTypeId(),
@@ -158,7 +158,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
   private fun createModuleOptionsEntity(
     context: ProjectResolverContext,
     sourceRootData: GradleSourceRootData,
-  ): ModifiableExternalSystemModuleOptionsEntity {
+  ): ExternalSystemModuleOptionsEntityBuilder {
     val externalProject = sourceRootData.externalProject
     val externalSourceSet = sourceRootData.externalSourceSet
     return ExternalSystemModuleOptionsEntity(

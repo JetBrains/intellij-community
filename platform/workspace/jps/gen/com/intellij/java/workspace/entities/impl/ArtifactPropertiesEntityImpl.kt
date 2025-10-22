@@ -2,28 +2,19 @@
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactEntityBuilder
 import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
-import com.intellij.java.workspace.entities.ModifiableArtifactEntity
-import com.intellij.java.workspace.entities.ModifiableArtifactPropertiesEntity
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -138,16 +129,16 @@ internal class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactProp
 
       }
 
-    override var artifact: ModifiableArtifactEntity
+    override var artifact: ArtifactEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ModifiableArtifactEntity)
-          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ModifiableArtifactEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ModifiableArtifactEntity
+          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntityBuilder
         }
       }
       set(value) {
@@ -205,7 +196,7 @@ internal class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactProper
 
   internal fun isProviderTypeInitialized(): Boolean = ::providerType.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ArtifactPropertiesEntity> {
     val modifiable = ArtifactPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -231,10 +222,10 @@ internal class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactProper
     return ArtifactPropertiesEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ArtifactPropertiesEntity(providerType, entitySource) {
       this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
-      parents.filterIsInstance<ModifiableArtifactEntity>().singleOrNull()?.let { this.artifact = it }
+      parents.filterIsInstance<ArtifactEntityBuilder>().singleOrNull()?.let { this.artifact = it }
     }
   }
 

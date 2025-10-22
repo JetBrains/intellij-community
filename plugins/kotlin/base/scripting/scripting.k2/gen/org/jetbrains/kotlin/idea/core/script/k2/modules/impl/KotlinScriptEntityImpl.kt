@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.core.script.k2.modules.impl
 
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -16,8 +15,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityBuilder
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ModifiableKotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData
 
@@ -73,7 +72,7 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
 
 
   internal class Builder(result: KotlinScriptEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptEntity, KotlinScriptEntityData>(
-    result), ModifiableKotlinScriptEntity {
+    result), KotlinScriptEntityBuilder {
     internal constructor() : this(KotlinScriptEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -325,7 +324,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<KotlinScriptEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinScriptEntity> {
     val modifiable = KotlinScriptEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -359,7 +358,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     return KotlinScriptEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return KotlinScriptEntity(virtualFileUrl, dependencies, entitySource) {
       this.configuration = this@KotlinScriptEntityData.configuration
       this.sdkId = this@KotlinScriptEntityData.sdkId

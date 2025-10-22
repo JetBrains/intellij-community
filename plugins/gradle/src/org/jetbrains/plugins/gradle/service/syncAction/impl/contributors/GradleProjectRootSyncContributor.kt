@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.storage.EntitySource
@@ -35,7 +35,7 @@ internal class GradleProjectRootSyncContributor : GradleSyncContributor {
   private fun createModuleEntity(
     context: ProjectResolverContext,
     projectRootData: GradleProjectRootData,
-  ): ModifiableModuleEntity {
+  ): ModuleEntityBuilder {
     return ModuleEntity(
       name = projectRootData.projectRoot.name,
       entitySource = projectRootData.entitySource,

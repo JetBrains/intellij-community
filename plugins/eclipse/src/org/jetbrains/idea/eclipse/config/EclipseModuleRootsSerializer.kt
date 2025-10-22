@@ -73,14 +73,14 @@ internal class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, Stora
     return EclipseProjectFile(classpathUrl, internalEntitySource)
   }
 
-  override fun loadRoots(moduleEntity: ModifiableModuleEntity,
+  override fun loadRoots(moduleEntity: ModuleEntityBuilder,
                          reader: JpsFileContentReader,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
                          internalModuleListSerializer: JpsModuleListSerializer?,
                          errorReporter: ErrorReporter,
                          virtualFileManager: VirtualFileUrlManager,
-                         moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>) {
+                         moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>) {
     val storageRootUrl = getStorageRoot(imlFileUrl, customDir, virtualFileManager)
     val entitySource = moduleEntity.entitySource as EclipseProjectFile
     val contentRootEntity = ContentRootEntity(storageRootUrl, emptyList(), entitySource) {
@@ -122,14 +122,14 @@ internal class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, Stora
   private fun getEmlFileUrl(imlFileUrl: VirtualFileUrl) = imlFileUrl.url.removeSuffix(".iml") + EclipseXml.IDEA_SETTINGS_POSTFIX
 
   private fun loadClasspathTags(classpathTag: Element,
-                                contentRootEntity: ModifiableContentRootEntity,
+                                contentRootEntity: ContentRootEntityBuilder,
                                 storageRootUrl: VirtualFileUrl,
                                 reader: JpsFileContentReader,
                                 relativePathResolver: ModuleRelativePathResolver,
                                 errorReporter: ErrorReporter,
                                 imlFileUrl: VirtualFileUrl,
                                 virtualUrlManager: VirtualFileUrlManager,
-                                moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>) {
+                                moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>) {
     fun reportError(message: @Nls String) {
       errorReporter.reportError(message, storageRootUrl.append(EclipseXml.CLASSPATH_FILE))
     }
@@ -138,7 +138,7 @@ internal class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, Stora
     }
 
     val moduleEntity = contentRootEntity.module
-    fun editEclipseProperties(action: (ModifiableEclipseProjectPropertiesEntity) -> Unit) {
+    fun editEclipseProperties(action: (EclipseProjectPropertiesEntityBuilder) -> Unit) {
       val eclipseProperties = moduleEntity.eclipseProperties
                               ?: EclipseProjectPropertiesEntity(LinkedHashMap(),
                                                                 ArrayList(), ArrayList(),
@@ -147,7 +147,7 @@ internal class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, Stora
                                                                 moduleEntity.entitySource) {
                                 this.module = moduleEntity
                               }
-      action((eclipseProperties as ModifiableEclipseProjectPropertiesEntity))
+      action((eclipseProperties as EclipseProjectPropertiesEntityBuilder))
     }
 
     val storageRootPath = JpsPathUtil.urlToPath(storageRootUrl.url)
@@ -374,7 +374,7 @@ internal class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, Stora
       (sourceRootsOrder as SourceRootOrderEntity.Builder).contentRootEntity = contentRootEntity
     }
 
-    (moduleEntity as ModifiableModuleEntity).dependencies = dependencies
+    (moduleEntity as ModuleEntityBuilder).dependencies = dependencies
   }
 
   private fun findGlobalLibraryLevel(libraryName: String): String? {
@@ -395,7 +395,7 @@ internal class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, Stora
                                  srcUrl: VirtualFileUrl?,
                                  nativeRoot: VirtualFileUrl?,
                                  entryTag: Element,
-                                 moduleEntity: ModifiableModuleEntity,
+                                 moduleEntity: ModuleEntityBuilder,
                                  relativePathResolver: ModuleRelativePathResolver,
                                  virtualUrlManager: VirtualFileUrlManager): ArrayList<LibraryRoot> {
     val roots = ArrayList<LibraryRoot>()

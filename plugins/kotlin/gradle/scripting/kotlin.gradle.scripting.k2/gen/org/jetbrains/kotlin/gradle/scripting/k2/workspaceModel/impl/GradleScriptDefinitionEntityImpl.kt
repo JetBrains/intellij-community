@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -10,8 +9,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity
+import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityBuilder
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId
-import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.ModifiableGradleScriptDefinitionEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
@@ -68,7 +67,7 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
 
 
   internal class Builder(result: GradleScriptDefinitionEntityData?) : ModifiableWorkspaceEntityBase<GradleScriptDefinitionEntity, GradleScriptDefinitionEntityData>(
-    result), ModifiableGradleScriptDefinitionEntity {
+    result), GradleScriptDefinitionEntityBuilder {
     internal constructor() : this(GradleScriptDefinitionEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -185,7 +184,7 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
   internal fun isCompilationConfigurationInitialized(): Boolean = ::compilationConfiguration.isInitialized
   internal fun isHostConfigurationInitialized(): Boolean = ::hostConfiguration.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleScriptDefinitionEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleScriptDefinitionEntity> {
     val modifiable = GradleScriptDefinitionEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -212,7 +211,7 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
     return GradleScriptDefinitionEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return GradleScriptDefinitionEntity(definitionId, compilationConfiguration, hostConfiguration, entitySource) {
       this.evaluationConfiguration = this@GradleScriptDefinitionEntityData.evaluationConfiguration
     }

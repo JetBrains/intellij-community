@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableKeyPropEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -54,7 +54,7 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
 
 
   internal class Builder(result: KeyPropEntityData?) : ModifiableWorkspaceEntityBase<KeyPropEntity, KeyPropEntityData>(
-    result), ModifiableKeyPropEntity {
+    result), KeyPropEntityBuilder {
     internal constructor() : this(KeyPropEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -158,7 +158,7 @@ internal class KeyPropEntityData : WorkspaceEntityData<KeyPropEntity>() {
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<KeyPropEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KeyPropEntity> {
     val modifiable = KeyPropEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -185,7 +185,7 @@ internal class KeyPropEntityData : WorkspaceEntityData<KeyPropEntity>() {
     return KeyPropEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return KeyPropEntity(someInt, text, url, entitySource) {
     }
   }

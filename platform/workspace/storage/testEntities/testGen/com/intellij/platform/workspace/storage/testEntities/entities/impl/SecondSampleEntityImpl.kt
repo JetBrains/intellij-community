@@ -2,18 +2,14 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSecondSampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SecondSampleEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import java.util.UUID
+import com.intellij.platform.workspace.storage.testEntities.entities.SecondSampleEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -47,7 +43,7 @@ internal class SecondSampleEntityImpl(private val dataSource: SecondSampleEntity
 
 
   internal class Builder(result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity, SecondSampleEntityData>(
-    result), ModifiableSecondSampleEntity {
+    result), SecondSampleEntityBuilder {
     internal constructor() : this(SecondSampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -119,7 +115,7 @@ internal class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>(
   var intProperty: Int = 0
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SecondSampleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SecondSampleEntity> {
     val modifiable = SecondSampleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -146,7 +142,7 @@ internal class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>(
     return SecondSampleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SecondSampleEntity(intProperty, entitySource) {
     }
   }

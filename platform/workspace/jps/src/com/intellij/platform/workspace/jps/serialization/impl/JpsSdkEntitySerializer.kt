@@ -6,8 +6,8 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.ModifiableSdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -76,7 +76,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     return LoadingResult(mapOf(SdkEntity::class.java to sdkEntities))
   }
 
-  fun loadSdkEntity(sdkElement: Element, virtualFileManager: VirtualFileUrlManager ): ModifiableSdkEntity {
+  fun loadSdkEntity(sdkElement: Element, virtualFileManager: VirtualFileUrlManager ): SdkEntityBuilder {
     val sdkName = sdkElement.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE)
     val sdkType = sdkElement.getChild(ELEMENT_TYPE).getAttributeValue(ATTRIBUTE_VALUE)
 
@@ -152,7 +152,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
                   sdkEntity.additionalData)
   }
 
-  fun saveSdkEntity(sdkRootElement: Element, sdkEntity: ModifiableSdkEntity) {
+  fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntityBuilder) {
     saveSdkEntity(sdkRootElement,
                   sdkEntity.name,
                   sdkEntity.type,

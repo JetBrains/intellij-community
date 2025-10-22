@@ -5,11 +5,9 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -26,8 +24,8 @@ interface SourceRootOrderEntity : WorkspaceEntity {
   val contentRootEntity: ContentRootEntity
 
   //region generated code
-  @Deprecated(message = "Use ModifiableSourceRootOrderEntity instead")
-  interface Builder : ModifiableSourceRootOrderEntity {
+  @Deprecated(message = "Use SourceRootOrderEntityBuilder instead")
+  interface Builder : SourceRootOrderEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getContentRootEntity(): ContentRootEntity.Builder = contentRootEntity as ContentRootEntity.Builder
 
@@ -79,8 +77,8 @@ interface CustomSourceRootPropertiesEntity : WorkspaceEntity {
   val sourceRoot: SourceRootEntity
 
   //region generated code
-  @Deprecated(message = "Use ModifiableCustomSourceRootPropertiesEntity instead")
-  interface Builder : ModifiableCustomSourceRootPropertiesEntity {
+  @Deprecated(message = "Use CustomSourceRootPropertiesEntityBuilder instead")
+  interface Builder : CustomSourceRootPropertiesEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getSourceRoot(): SourceRootEntity.Builder = sourceRoot as SourceRootEntity.Builder
 
@@ -132,8 +130,8 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
   val contentRoot: ContentRootEntity
 
   //region generated code
-  @Deprecated(message = "Use ModifiableExcludeUrlOrderEntity instead")
-  interface Builder : ModifiableExcludeUrlOrderEntity {
+  @Deprecated(message = "Use ExcludeUrlOrderEntityBuilder instead")
+  interface Builder : ExcludeUrlOrderEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getContentRoot(): ContentRootEntity.Builder = contentRoot as ContentRootEntity.Builder
 

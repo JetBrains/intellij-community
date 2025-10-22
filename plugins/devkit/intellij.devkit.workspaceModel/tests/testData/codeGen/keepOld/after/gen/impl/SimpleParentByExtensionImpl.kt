@@ -1,16 +1,16 @@
 package com.intellij.platform.workspace.jps.entities.impl
 
-import com.intellij.platform.workspace.jps.entities.ModifiableSimpleEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableSimpleParentByExtension
 import com.intellij.platform.workspace.jps.entities.SimpleEntity
+import com.intellij.platform.workspace.jps.entities.SimpleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SimpleParentByExtension
+import com.intellij.platform.workspace.jps.entities.SimpleParentByExtensionBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
@@ -128,16 +128,16 @@ internal class SimpleParentByExtensionImpl(private val dataSource: SimpleParentB
         changedProperty.add("simpleName")
       }
 
-    override var simpleChild: ModifiableSimpleEntity?
+    override var simpleChild: SimpleEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SIMPLECHILD_CONNECTION_ID, this) as? ModifiableSimpleEntity)
-          ?: (this.entityLinks[EntityLink(true, SIMPLECHILD_CONNECTION_ID)] as? ModifiableSimpleEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SIMPLECHILD_CONNECTION_ID, this) as? SimpleEntityBuilder)
+          ?: (this.entityLinks[EntityLink(true, SIMPLECHILD_CONNECTION_ID)] as? SimpleEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(true, SIMPLECHILD_CONNECTION_ID)] as? ModifiableSimpleEntity
+          this.entityLinks[EntityLink(true, SIMPLECHILD_CONNECTION_ID)] as? SimpleEntityBuilder
         }
       }
       set(value) {
@@ -174,7 +174,7 @@ internal class SimpleParentByExtensionData : WorkspaceEntityData<SimpleParentByE
 
   internal fun isSimpleNameInitialized(): Boolean = ::simpleName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SimpleParentByExtension> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleParentByExtension> {
     val modifiable = SimpleParentByExtensionImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -201,7 +201,7 @@ internal class SimpleParentByExtensionData : WorkspaceEntityData<SimpleParentByE
     return SimpleParentByExtension::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SimpleParentByExtension(simpleName, entitySource) {
     }
   }

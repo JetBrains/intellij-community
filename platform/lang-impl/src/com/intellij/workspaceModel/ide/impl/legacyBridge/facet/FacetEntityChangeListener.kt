@@ -211,7 +211,7 @@ class FacetEntityChangeListener(private val project: Project) {
       val moduleEntity = event.storageAfter.resolve(ModuleId(facet.module.name))!!
       val facetConfigurationElement = if (facet is FacetBridge<*, *>) {
         val builder = event.storageAfter.toBuilder()
-        val thief = Ref<ModifiableModuleEntity>()
+        val thief = Ref<ModuleEntityBuilder>()
         builder.modifyModuleEntity(moduleEntity) {
           thief.set(this)
         }

@@ -3,20 +3,18 @@
 package com.intellij.java.impl.dependencySubstitution.impl
 
 import com.intellij.java.impl.dependencySubstitution.LibraryMavenCoordinateEntity
-import com.intellij.java.impl.dependencySubstitution.ModifiableLibraryMavenCoordinateEntity
+import com.intellij.java.impl.dependencySubstitution.LibraryMavenCoordinateEntityBuilder
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableLibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -67,7 +65,7 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
 
 
   internal class Builder(result: LibraryMavenCoordinateEntityData?) : ModifiableWorkspaceEntityBase<LibraryMavenCoordinateEntity, LibraryMavenCoordinateEntityData>(
-    result), ModifiableLibraryMavenCoordinateEntity {
+    result), LibraryMavenCoordinateEntityBuilder {
     internal constructor() : this(LibraryMavenCoordinateEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -135,16 +133,16 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
 
       }
 
-    override var library: ModifiableLibraryEntity
+    override var library: LibraryEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LIBRARY_CONNECTION_ID, this) as? ModifiableLibraryEntity)
-          ?: (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as ModifiableLibraryEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LIBRARY_CONNECTION_ID, this) as? LibraryEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as ModifiableLibraryEntity
+          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntityBuilder
         }
       }
       set(value) {
@@ -190,7 +188,7 @@ internal class LibraryMavenCoordinateEntityData : WorkspaceEntityData<LibraryMav
 
   internal fun isCoordinatesInitialized(): Boolean = ::coordinates.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LibraryMavenCoordinateEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LibraryMavenCoordinateEntity> {
     val modifiable = LibraryMavenCoordinateEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -217,9 +215,9 @@ internal class LibraryMavenCoordinateEntityData : WorkspaceEntityData<LibraryMav
     return LibraryMavenCoordinateEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return LibraryMavenCoordinateEntity(coordinates, entitySource) {
-      parents.filterIsInstance<ModifiableLibraryEntity>().singleOrNull()?.let { this.library = it }
+      parents.filterIsInstance<LibraryEntityBuilder>().singleOrNull()?.let { this.library = it }
     }
   }
 

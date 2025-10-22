@@ -3,23 +3,20 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSampleEntity2
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2Builder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -63,7 +60,7 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
 
 
   internal class Builder(result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2, SampleEntity2Data>(
-    result), ModifiableSampleEntity2 {
+    result), SampleEntity2Builder {
     internal constructor() : this(SampleEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -160,7 +157,7 @@ internal class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SampleEntity2> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SampleEntity2> {
     val modifiable = SampleEntity2Impl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -187,7 +184,7 @@ internal class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
     return SampleEntity2::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SampleEntity2(data, boolData, entitySource) {
       this.optionalData = this@SampleEntity2Data.optionalData
     }

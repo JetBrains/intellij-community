@@ -3,8 +3,8 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildFirstEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildFirstEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildFirstEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEntity
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
@@ -20,7 +20,7 @@ class AbstractTest {
     }
 
     assertTrue(entity.children.isNotEmpty())
-    assertEquals("ChildData", (entity.children.single() as ModifiableChildFirstEntity).firstData)
+    assertEquals("ChildData", (entity.children.single() as ChildFirstEntityBuilder).firstData)
   }
 
   @Test
@@ -30,7 +30,7 @@ class AbstractTest {
     }
 
     assertTrue(entity.children.isNotEmpty())
-    assertEquals("ChildData", (entity.children.single() as ModifiableChildFirstEntity).commonData)
+    assertEquals("ChildData", (entity.children.single() as ChildFirstEntityBuilder).commonData)
   }
 
   @Test

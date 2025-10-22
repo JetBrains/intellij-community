@@ -27,9 +27,9 @@ class MutableStorageTest {
     val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
 
     val entityFromStoreOne = newBuilder.entities(SampleEntity2::class.java).single()
-    val sampleBuilder = entityFromStoreOne.builderFrom(newBuilder) as ModifiableSampleEntity2
+    val sampleBuilder = entityFromStoreOne.builderFrom(newBuilder) as SampleEntity2Builder
     val entityFromStoreTwo = newBuilder.entities(SampleEntity2::class.java).single()
-    val entityTwoBuilder = entityFromStoreTwo.builderFrom(newBuilder) as ModifiableSampleEntity2
+    val entityTwoBuilder = entityFromStoreTwo.builderFrom(newBuilder) as SampleEntity2Builder
 
     newBuilder.modifySampleEntity2(entityFromStoreOne) {
       entitySource = MySource
@@ -84,7 +84,7 @@ class MutableStorageTest {
     builder.addEntity(parentEntity)
 
     val parentEntityFromStore = builder.entities(ParentMultipleEntity::class.java).single()
-    val parentBuilder = parentEntityFromStore.builderFrom(builder) as ModifiableParentMultipleEntity
+    val parentBuilder = parentEntityFromStore.builderFrom(builder) as ParentMultipleEntityBuilder
     assertThrows<IllegalStateException> {
       parentBuilder.parentData = "AnotherParentData"
     }

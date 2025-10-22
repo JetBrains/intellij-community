@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -14,9 +13,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableContentRootTestEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSourceRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -56,7 +55,7 @@ internal class SourceRootTestEntityImpl(private val dataSource: SourceRootTestEn
 
 
   internal class Builder(result: SourceRootTestEntityData?) : ModifiableWorkspaceEntityBase<SourceRootTestEntity, SourceRootTestEntityData>(
-    result), ModifiableSourceRootTestEntity {
+    result), SourceRootTestEntityBuilder {
     internal constructor() : this(SourceRootTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -132,17 +131,17 @@ internal class SourceRootTestEntityImpl(private val dataSource: SourceRootTestEn
         changedProperty.add("data")
       }
 
-    override var contentRoot: ModifiableContentRootTestEntity
+    override var contentRoot: ContentRootTestEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOT_CONNECTION_ID,
-                                                                           this) as? ModifiableContentRootTestEntity)
-          ?: (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ModifiableContentRootTestEntity)
+                                                                           this) as? ContentRootTestEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootTestEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ModifiableContentRootTestEntity
+          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootTestEntityBuilder
         }
       }
       set(value) {
@@ -183,7 +182,7 @@ internal class SourceRootTestEntityData : WorkspaceEntityData<SourceRootTestEnti
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SourceRootTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SourceRootTestEntity> {
     val modifiable = SourceRootTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -210,9 +209,9 @@ internal class SourceRootTestEntityData : WorkspaceEntityData<SourceRootTestEnti
     return SourceRootTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SourceRootTestEntity(data, entitySource) {
-      parents.filterIsInstance<ModifiableContentRootTestEntity>().singleOrNull()?.let { this.contentRoot = it }
+      parents.filterIsInstance<ContentRootTestEntityBuilder>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
 

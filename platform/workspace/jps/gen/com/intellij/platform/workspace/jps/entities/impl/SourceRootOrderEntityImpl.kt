@@ -4,19 +4,16 @@
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableSourceRootOrderEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -31,7 +28,6 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 
 @Internal
 @GeneratedCodeApiVersion(3)
@@ -171,17 +167,17 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
         orderOfSourceRootsUpdater.invoke(value)
       }
 
-    override var contentRootEntity: ModifiableContentRootEntity
+    override var contentRootEntity: ContentRootEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOTENTITY_CONNECTION_ID,
-                                                                           this) as? ModifiableContentRootEntity)
-          ?: (this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)]!! as ModifiableContentRootEntity)
+                                                                           this) as? ContentRootEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)]!! as ContentRootEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)]!! as ModifiableContentRootEntity
+          this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)]!! as ContentRootEntityBuilder
         }
       }
       set(value) {
@@ -218,7 +214,7 @@ internal class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEn
 
   internal fun isOrderOfSourceRootsInitialized(): Boolean = ::orderOfSourceRoots.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SourceRootOrderEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SourceRootOrderEntity> {
     val modifiable = SourceRootOrderEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -251,9 +247,9 @@ internal class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEn
     return SourceRootOrderEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SourceRootOrderEntity(orderOfSourceRoots, entitySource) {
-      parents.filterIsInstance<ModifiableContentRootEntity>().singleOrNull()?.let { this.contentRootEntity = it }
+      parents.filterIsInstance<ContentRootEntityBuilder>().singleOrNull()?.let { this.contentRootEntity = it }
     }
   }
 

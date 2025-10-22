@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -13,10 +12,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOoChildEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOoParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -54,7 +53,7 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
 
 
   internal class Builder(result: OoChildEntityData?) : ModifiableWorkspaceEntityBase<OoChildEntity, OoChildEntityData>(
-    result), ModifiableOoChildEntity {
+    result), OoChildEntityBuilder {
     internal constructor() : this(OoChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -130,16 +129,16 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
         changedProperty.add("childProperty")
       }
 
-    override var parentEntity: ModifiableOoParentEntity
+    override var parentEntity: OoParentEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ModifiableOoParentEntity)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableOoParentEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? OoParentEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableOoParentEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentEntityBuilder
         }
       }
       set(value) {
@@ -176,7 +175,7 @@ internal class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
 
   internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OoChildEntity> {
     val modifiable = OoChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -203,9 +202,9 @@ internal class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
     return OoChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return OoChildEntity(childProperty, entitySource) {
-      parents.filterIsInstance<ModifiableOoParentEntity>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<OoParentEntityBuilder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

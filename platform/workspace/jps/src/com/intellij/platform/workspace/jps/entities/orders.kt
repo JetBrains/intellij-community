@@ -4,11 +4,9 @@ package com.intellij.platform.workspace.jps.entities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -22,8 +20,8 @@ interface FacetsOrderEntity : WorkspaceEntity {
   val moduleEntity: ModuleEntity
 
   //region generated code
-  @Deprecated(message = "Use ModifiableFacetsOrderEntity instead")
-  interface Builder : ModifiableFacetsOrderEntity {
+  @Deprecated(message = "Use FacetsOrderEntityBuilder instead")
+  interface Builder : FacetsOrderEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getModuleEntity(): ModuleEntity.Builder = moduleEntity as ModuleEntity.Builder
 

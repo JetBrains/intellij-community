@@ -1,14 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch.workspace.impl
 
-import com.intellij.ide.scratch.workspace.ModifiableScratchRootsEntity
 import com.intellij.ide.scratch.workspace.ScratchRootsEntity
+import com.intellij.ide.scratch.workspace.ScratchRootsEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -54,7 +53,7 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
 
 
   internal class Builder(result: ScratchRootsEntityData?) : ModifiableWorkspaceEntityBase<ScratchRootsEntity, ScratchRootsEntityData>(
-    result), ModifiableScratchRootsEntity {
+    result), ScratchRootsEntityBuilder {
     internal constructor() : this(ScratchRootsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -153,7 +152,7 @@ internal class ScratchRootsEntityData : WorkspaceEntityData<ScratchRootsEntity>(
 
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ScratchRootsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ScratchRootsEntity> {
     val modifiable = ScratchRootsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -186,7 +185,7 @@ internal class ScratchRootsEntityData : WorkspaceEntityData<ScratchRootsEntity>(
     return ScratchRootsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ScratchRootsEntity(roots, entitySource) {
     }
   }

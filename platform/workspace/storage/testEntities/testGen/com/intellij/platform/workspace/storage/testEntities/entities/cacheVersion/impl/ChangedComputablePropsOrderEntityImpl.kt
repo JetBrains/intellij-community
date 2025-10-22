@@ -11,8 +11,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntityId
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableChangedComputablePropsOrderEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -59,7 +59,7 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
 
 
   internal class Builder(result: ChangedComputablePropsOrderEntityData?) : ModifiableWorkspaceEntityBase<ChangedComputablePropsOrderEntity, ChangedComputablePropsOrderEntityData>(
-    result), ModifiableChangedComputablePropsOrderEntity {
+    result), ChangedComputablePropsOrderEntityBuilder {
     internal constructor() : this(ChangedComputablePropsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -178,7 +178,7 @@ internal class ChangedComputablePropsOrderEntityData : WorkspaceEntityData<Chang
   internal fun isNamesInitialized(): Boolean = ::names.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChangedComputablePropsOrderEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChangedComputablePropsOrderEntity> {
     val modifiable = ChangedComputablePropsOrderEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -212,7 +212,7 @@ internal class ChangedComputablePropsOrderEntityData : WorkspaceEntityData<Chang
     return ChangedComputablePropsOrderEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ChangedComputablePropsOrderEntity(someKey, names, value, entitySource) {
     }
   }

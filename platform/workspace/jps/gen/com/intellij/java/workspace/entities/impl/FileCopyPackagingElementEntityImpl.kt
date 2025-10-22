@@ -2,21 +2,14 @@
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
 import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
-import com.intellij.java.workspace.entities.ModifiableCompositePackagingElementEntity
-import com.intellij.java.workspace.entities.ModifiableFileCopyPackagingElementEntity
 import com.intellij.java.workspace.entities.PackagingElementEntity
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
@@ -24,7 +17,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -129,19 +121,19 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
 
       }
 
-    override var parentEntity: ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>?
+    override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
+                                                                           this) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
           ?: (this.entityLinks[EntityLink(false,
-                                          PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
         }
         else {
           this.entityLinks[EntityLink(false,
-                                      PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -201,7 +193,7 @@ internal class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopy
 
   internal fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FileCopyPackagingElementEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<FileCopyPackagingElementEntity> {
     val modifiable = FileCopyPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -227,10 +219,10 @@ internal class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopy
     return FileCopyPackagingElementEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return FileCopyPackagingElementEntity(filePath, entitySource) {
       this.renamedOutputFileName = this@FileCopyPackagingElementEntityData.renamedOutputFileName
-      this.parentEntity = parents.filterIsInstance<ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 

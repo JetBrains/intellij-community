@@ -17,8 +17,8 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.ModifiableContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -33,7 +33,7 @@ import java.io.File
 private val LOG = logger<EclipseModuleRootsSerializer>()
 
 internal fun convertToJavadocUrl(originalPath: String,
-                                 moduleEntity: ModifiableModuleEntity,
+                                 moduleEntity: ModuleEntityBuilder,
                                  relativePathResolver: ModuleRelativePathResolver,
                                  virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
   val javadocPath = if (!SystemInfo.isWindows) {
@@ -162,7 +162,7 @@ internal fun convertVariablePathToUrl(pathMap: ExpandMacroToPathMap,
 }
 
 internal fun convertRelativePathToUrl(path: String,
-                                      contentRootEntity: ModifiableContentRootEntity,
+                                      contentRootEntity: ContentRootEntityBuilder,
                                       pathResolver: ModuleRelativePathResolver,
                                       virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
   if (!File(path).exists()) {
@@ -188,7 +188,7 @@ internal fun convertRelativePathToUrl(path: String,
 }
 
 private fun findFileUnderContentRoot(path: String,
-                                     contentRootEntity: ModifiableContentRootEntity,
+                                     contentRootEntity: ContentRootEntityBuilder,
                                      virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl? {
   val root = contentRootEntity.url.toPath().toFile()
   val mainRoot = if (root.exists()) root
@@ -200,7 +200,7 @@ private fun findFileUnderContentRoot(path: String,
   return if (file.exists()) convertToRootUrl(file.absolutePath, virtualUrlManager) else null
 }
 
-internal val ModifiableModuleEntity.mainContentRoot: ModifiableContentRootEntity?
+internal val ModuleEntityBuilder.mainContentRoot: ContentRootEntityBuilder?
   get() = contentRoots.firstOrNull() {
     VirtualFileManager.getInstance().findFileByUrl(it.url.url)?.findChild(EclipseXml.PROJECT_FILE) != null
   }

@@ -2,10 +2,10 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleSettingsFacetBridgeEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  * Most often, its implementation comes together with a corresponding [FacetConfigurationBridge] implementation.
  */
 @ApiStatus.Internal
-interface FacetBridge<T : ModuleSettingsFacetBridgeEntity, M : ModifiableModuleSettingsFacetBridgeEntity<T>> {
+interface FacetBridge<T : ModuleSettingsFacetBridgeEntity, M : ModuleSettingsFacetBridgeEntityBuilder<T>> {
   /**
    * Facet configuration
    */
@@ -88,7 +88,7 @@ interface FacetBridge<T : ModuleSettingsFacetBridgeEntity, M : ModifiableModuleS
  * Most often, its implementation comes together with a corresponding [FacetBridge] implementation.
  */
 @ApiStatus.Internal
-interface FacetConfigurationBridge<T : ModuleSettingsFacetBridgeEntity, M : ModifiableModuleSettingsFacetBridgeEntity<T>> {
+interface FacetConfigurationBridge<T : ModuleSettingsFacetBridgeEntity, M : ModuleSettingsFacetBridgeEntityBuilder<T>> {
   /**
    * Initializes this config settings with [moduleEntity] and [entitySource]
    */
@@ -107,5 +107,5 @@ interface FacetConfigurationBridge<T : ModuleSettingsFacetBridgeEntity, M : Modi
   /**
    * Returns the entity holding current configuration
    */
-  fun getEntityBuilder(moduleEntity: ModifiableModuleEntity): M
+  fun getEntityBuilder(moduleEntity: ModuleEntityBuilder): M
 }

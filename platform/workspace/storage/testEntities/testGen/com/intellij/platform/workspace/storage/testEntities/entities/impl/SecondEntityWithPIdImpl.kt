@@ -8,8 +8,8 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSecondEntityWithPId
 import com.intellij.platform.workspace.storage.testEntities.entities.SecondEntityWithPId
+import com.intellij.platform.workspace.storage.testEntities.entities.SecondEntityWithPIdBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SecondPId
 
 @GeneratedCodeApiVersion(3)
@@ -46,7 +46,7 @@ internal class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithP
 
 
   internal class Builder(result: SecondEntityWithPIdData?) : ModifiableWorkspaceEntityBase<SecondEntityWithPId, SecondEntityWithPIdData>(
-    result), ModifiableSecondEntityWithPId {
+    result), SecondEntityWithPIdBuilder {
     internal constructor() : this(SecondEntityWithPIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -122,7 +122,7 @@ internal class SecondEntityWithPIdData : WorkspaceEntityData<SecondEntityWithPId
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SecondEntityWithPId> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SecondEntityWithPId> {
     val modifiable = SecondEntityWithPIdImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -149,7 +149,7 @@ internal class SecondEntityWithPIdData : WorkspaceEntityData<SecondEntityWithPId
     return SecondEntityWithPId::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SecondEntityWithPId(data, entitySource) {
     }
   }

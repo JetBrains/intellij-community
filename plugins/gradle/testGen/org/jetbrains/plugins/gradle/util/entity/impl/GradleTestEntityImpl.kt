@@ -10,8 +10,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntity
+import org.jetbrains.plugins.gradle.util.entity.GradleTestEntityBuilder
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntityId
-import org.jetbrains.plugins.gradle.util.entity.ModifiableGradleTestEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -46,7 +46,7 @@ internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData
 
 
   internal class Builder(result: GradleTestEntityData?) : ModifiableWorkspaceEntityBase<GradleTestEntity, GradleTestEntityData>(
-    result), ModifiableGradleTestEntity {
+    result), GradleTestEntityBuilder {
     internal constructor() : this(GradleTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -123,7 +123,7 @@ internal class GradleTestEntityData : WorkspaceEntityData<GradleTestEntity>() {
 
   internal fun isPhaseInitialized(): Boolean = ::phase.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleTestEntity> {
     val modifiable = GradleTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -149,7 +149,7 @@ internal class GradleTestEntityData : WorkspaceEntityData<GradleTestEntity>() {
     return GradleTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return GradleTestEntity(phase, entitySource) {
     }
   }

@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -14,9 +13,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.KeyChild
+import com.intellij.platform.workspace.storage.testEntities.entities.KeyChildBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.KeyParent
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableKeyChild
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableKeyParent
+import com.intellij.platform.workspace.storage.testEntities.entities.KeyParentBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -59,7 +58,7 @@ internal class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent,
   }
 
 
-  internal class Builder(result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent, KeyParentData>(result), ModifiableKeyParent {
+  internal class Builder(result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent, KeyParentData>(result), KeyParentBuilder {
     internal constructor() : this(KeyParentData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -150,18 +149,18 @@ internal class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent,
 
     // List of non-abstract referenced types
     var _children: List<KeyChild>? = emptyList()
-    override var children: List<ModifiableKeyChild>
+    override var children: List<KeyChildBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableKeyChild>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableKeyChild> ?: emptyList())
+                                                                                  this)!!.toList() as List<KeyChildBuilder>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<KeyChildBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableKeyChild> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<KeyChildBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -207,7 +206,7 @@ internal class KeyParentData : WorkspaceEntityData<KeyParent>() {
   internal fun isKeyFieldInitialized(): Boolean = ::keyField.isInitialized
   internal fun isNotKeyFieldInitialized(): Boolean = ::notKeyField.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<KeyParent> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KeyParent> {
     val modifiable = KeyParentImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -234,7 +233,7 @@ internal class KeyParentData : WorkspaceEntityData<KeyParent>() {
     return KeyParent::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return KeyParent(keyField, notKeyField, entitySource) {
     }
   }

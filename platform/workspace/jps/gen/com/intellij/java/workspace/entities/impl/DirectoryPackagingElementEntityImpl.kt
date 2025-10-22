@@ -2,24 +2,17 @@
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactEntityBuilder
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
 import com.intellij.java.workspace.entities.DirectoryPackagingElementEntity
-import com.intellij.java.workspace.entities.ModifiableArtifactEntity
-import com.intellij.java.workspace.entities.ModifiableCompositePackagingElementEntity
-import com.intellij.java.workspace.entities.ModifiableDirectoryPackagingElementEntity
-import com.intellij.java.workspace.entities.ModifiablePackagingElementEntity
 import com.intellij.java.workspace.entities.PackagingElementEntity
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.java.workspace.entities.PackagingElementEntityBuilder
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyChildren
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyParent
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneParent
@@ -31,8 +24,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -155,19 +146,19 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
 
       }
 
-    override var parentEntity: ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>?
+    override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
+                                                                           this) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
           ?: (this.entityLinks[EntityLink(false,
-                                          PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
         }
         else {
           this.entityLinks[EntityLink(false,
-                                      PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -198,16 +189,16 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
         changedProperty.add("parentEntity")
       }
 
-    override var artifact: ModifiableArtifactEntity?
+    override var artifact: ArtifactEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ModifiableArtifactEntity)
-          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ModifiableArtifactEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ModifiableArtifactEntity
+          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntityBuilder
         }
       }
       set(value) {
@@ -234,18 +225,18 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
         changedProperty.add("artifact")
       }
 
-    override var children: List<ModifiablePackagingElementEntity<out PackagingElementEntity>>
+    override var children: List<PackagingElementEntityBuilder<out PackagingElementEntity>>
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiablePackagingElementEntity<out PackagingElementEntity>>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiablePackagingElementEntity<out PackagingElementEntity>>
+                                                                                  this)!!.toList() as List<PackagingElementEntityBuilder<out PackagingElementEntity>>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntityBuilder<out PackagingElementEntity>>
            ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ModifiablePackagingElementEntity<out PackagingElementEntity>>
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntityBuilder<out PackagingElementEntity>>
           ?: emptyList()
         }
       }
@@ -297,7 +288,7 @@ internal class DirectoryPackagingElementEntityData : WorkspaceEntityData<Directo
 
   internal fun isDirectoryNameInitialized(): Boolean = ::directoryName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DirectoryPackagingElementEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<DirectoryPackagingElementEntity> {
     val modifiable = DirectoryPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -324,10 +315,10 @@ internal class DirectoryPackagingElementEntityData : WorkspaceEntityData<Directo
     return DirectoryPackagingElementEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return DirectoryPackagingElementEntity(directoryName, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>>().singleOrNull()
-      this.artifact = parents.filterIsInstance<ModifiableArtifactEntity>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntityBuilder>().singleOrNull()
     }
   }
 

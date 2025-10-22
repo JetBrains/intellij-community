@@ -136,7 +136,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager
   ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
-    val moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity> = HashMap()
+    val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder> = HashMap()
     val exceptionsCollector = ArrayList<Throwable>()
 
     val externalSerializer = if (context.isExternalStorageEnabled) {
@@ -221,7 +221,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun loadAdditionalContents(
     content: JpsFileContent,
     virtualFileManager: VirtualFileUrlManager,
-    moduleEntity: ModifiableModuleEntity,
+    moduleEntity: ModuleEntityBuilder,
     exceptionCollector: MutableList<Throwable>,
   ) {
     val source = runCatchingXmlIssues(exceptionCollector) {
@@ -246,7 +246,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private class ModuleLoadedInfo(
-    val moduleEntity: ModifiableModuleEntity,
+    val moduleEntity: ModuleEntityBuilder,
     val customRootsSerializer: CustomModuleRootsSerializer?,
     val customDir: String?,
   )
@@ -256,7 +256,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     readerForCustomRootsSerializerOnly: JpsFileContentReader,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager,
-    moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>,
+    moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>,
     exceptionsCollector: MutableList<Throwable>,
   ): ModuleLoadedInfo? {
     if (content == null) {
@@ -360,7 +360,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
    */
   private fun loadContentRoots(
     customRootsSerializer: CustomModuleRootsSerializer?,
-    moduleEntity: ModifiableModuleEntity,
+    moduleEntity: ModuleEntityBuilder,
     content: JpsFileContent,
     readerForCustomRootsSerializerOnly: JpsFileContentReader,
     customDir: String?,
@@ -368,7 +368,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     virtualFileManager: VirtualFileUrlManager,
     contentRootEntitySource: EntitySource,
     loadingAdditionalRoots: Boolean,
-    moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>,
+    moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>,
   ) {
     if (customRootsSerializer != null) {
       customRootsSerializer.loadRoots(moduleEntity, readerForCustomRootsSerializerOnly, customDir, fileUrl, internalModuleListSerializer, errorReporter,
@@ -388,11 +388,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun loadAdditionalContentRoots(
-    moduleEntity: ModifiableModuleEntity,
+    moduleEntity: ModuleEntityBuilder,
     content: JpsFileContent,
     virtualFileManager: VirtualFileUrlManager,
     contentRootEntitySource: EntitySource,
-  ): List<ModifiableContentRootEntity>? {
+  ): List<ContentRootEntityBuilder>? {
     val additionalElements = content.loadComponent(ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME)?.clone()
                              ?: return null
     return loadContentRootEntities(moduleEntity, additionalElements, virtualFileManager, contentRootEntitySource)
@@ -423,7 +423,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   protected open fun loadExternalSystemOptions(
-    module: ModifiableModuleEntity,
+    module: ModuleEntityBuilder,
     content: JpsFileContent,
     externalSystemOptions: Map<String?, String?>,
     externalSystemId: String?,
@@ -450,11 +450,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun loadRootManager(rootManagerElement: Element,
-                              moduleEntity: ModifiableModuleEntity,
+                              moduleEntity: ModuleEntityBuilder,
                               virtualFileManager: VirtualFileUrlManager,
                               contentRootEntitySource: EntitySource,
                               loadingAdditionalRoots: Boolean,
-                              moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>) {
+                              moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>) {
     val contentRoots = loadContentRootEntities(moduleEntity, rootManagerElement, virtualFileManager, contentRootEntitySource)
     moduleEntity.contentRoots += contentRoots
 
@@ -492,7 +492,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                      contentRootEntitySource: EntitySource,
                                      virtualFileManager: VirtualFileUrlManager,
                                      moduleId: ModuleId,
-                                     moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>): List<Result<ModuleDependencyItem>> {
+                                     moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>): List<Result<ModuleDependencyItem>> {
     fun Element.readScope(): DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return DependencyScope.COMPILE
       return try {
@@ -553,10 +553,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     return dependencyItems
   }
 
-  private fun loadContentRootEntities(moduleEntity: ModifiableModuleEntity,
+  private fun loadContentRootEntities(moduleEntity: ModuleEntityBuilder,
                                       rootManagerElement: Element,
                                       virtualFileManager: VirtualFileUrlManager,
-                                      contentRootEntitySource: EntitySource): List<ModifiableContentRootEntity> {
+                                      contentRootEntitySource: EntitySource): List<ContentRootEntityBuilder> {
     val alreadyLoadedContentRoots = moduleEntity.contentRoots.associateBy { it.url.url }
     return rootManagerElement.getChildrenAndDetach(CONTENT_TAG).mapNotNull { contentElement ->
 
@@ -619,7 +619,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     contentElement: Element,
     virtualFileManager: VirtualFileUrlManager,
     entitySource: EntitySource,
-  ): List<ModifiableExcludeUrlEntity> {
+  ): List<ExcludeUrlEntityBuilder> {
     return contentElement
       .getChildren(EXCLUDE_FOLDER_TAG)
       .map { virtualFileManager.getOrCreateFromUrl(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
@@ -632,7 +632,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     contentElement: Element,
     virtualFileManager: VirtualFileUrlManager,
     sourceRootSource: EntitySource,
-  ): List<ModifiableSourceRootEntity> {
+  ): List<SourceRootEntityBuilder> {
 
     return contentElement.getChildren(SOURCE_FOLDER_TAG).map { sourceRootElement ->
       val isTestSource = sourceRootElement.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE)?.toBoolean() == true
@@ -675,7 +675,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
   }
 
-  private fun loadTestModuleProperty(moduleEntity: ModifiableModuleEntity, content: JpsFileContent, entitySource: EntitySource) {
+  private fun loadTestModuleProperty(moduleEntity: ModuleEntityBuilder, content: JpsFileContent, entitySource: EntitySource) {
     val component = content.loadComponent(TEST_MODULE_PROPERTIES_COMPONENT_NAME) ?: return
     val productionModuleName = component.getAttribute(PRODUCTION_MODULE_NAME_ATTRIBUTE).value
     if (productionModuleName.isEmpty()) return
@@ -1215,7 +1215,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   override fun toString(): String = "ModuleListSerializerImpl($fileUrl)"
 }
 
-fun createSourceRootsOrder(orderOfItems: List<VirtualFileUrl>, entitySource: EntitySource): ModifiableSourceRootOrderEntity? {
+fun createSourceRootsOrder(orderOfItems: List<VirtualFileUrl>, entitySource: EntitySource): SourceRootOrderEntityBuilder? {
   if (orderOfItems.size <= 1) return null
 
   return SourceRootOrderEntity(orderOfItems, entitySource)

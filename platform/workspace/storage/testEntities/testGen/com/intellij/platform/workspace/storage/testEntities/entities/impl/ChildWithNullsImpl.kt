@@ -3,14 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -18,7 +16,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNulls
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildWithNulls
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -51,7 +49,7 @@ internal class ChildWithNullsImpl(private val dataSource: ChildWithNullsData) : 
 
 
   internal class Builder(result: ChildWithNullsData?) : ModifiableWorkspaceEntityBase<ChildWithNulls, ChildWithNullsData>(
-    result), ModifiableChildWithNulls {
+    result), ChildWithNullsBuilder {
     internal constructor() : this(ChildWithNullsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -127,7 +125,7 @@ internal class ChildWithNullsData : WorkspaceEntityData<ChildWithNulls>() {
 
   internal fun isChildDataInitialized(): Boolean = ::childData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildWithNulls> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildWithNulls> {
     val modifiable = ChildWithNullsImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -154,7 +152,7 @@ internal class ChildWithNullsData : WorkspaceEntityData<ChildWithNulls>() {
     return ChildWithNulls::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ChildWithNulls(childData, entitySource) {
     }
   }

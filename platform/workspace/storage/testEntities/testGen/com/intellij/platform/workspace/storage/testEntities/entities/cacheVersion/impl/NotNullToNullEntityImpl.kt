@@ -3,10 +3,9 @@ package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersi
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,8 +17,8 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableNotNullToNullEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.NotNullToNullEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.NotNullToNullEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -64,7 +63,7 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
 
 
   internal class Builder(result: NotNullToNullEntityData?) : ModifiableWorkspaceEntityBase<NotNullToNullEntity, NotNullToNullEntityData>(
-    result), ModifiableNotNullToNullEntity {
+    result), NotNullToNullEntityBuilder {
     internal constructor() : this(NotNullToNullEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -185,7 +184,7 @@ internal class NotNullToNullEntityData : WorkspaceEntityData<NotNullToNullEntity
   internal fun isNotNullStringInitialized(): Boolean = ::notNullString.isInitialized
   internal fun isNotNullListInitialized(): Boolean = ::notNullList.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<NotNullToNullEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<NotNullToNullEntity> {
     val modifiable = NotNullToNullEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -219,7 +218,7 @@ internal class NotNullToNullEntityData : WorkspaceEntityData<NotNullToNullEntity
     return NotNullToNullEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return NotNullToNullEntity(notNullString, notNullList, entitySource) {
       this.nullInt = this@NotNullToNullEntityData.nullInt
     }

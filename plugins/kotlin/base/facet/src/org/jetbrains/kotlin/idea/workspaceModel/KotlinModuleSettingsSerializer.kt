@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.serialization.impl.CustomFacetRelatedEntitySerializer
@@ -30,9 +30,9 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         get() = KotlinFacetType.INSTANCE.stringId
 
     override fun loadEntitiesFromFacetState(
-        moduleEntity: ModifiableModuleEntity,
-        facetState: FacetState,
-        evaluateEntitySource: (FacetState) -> EntitySource
+      moduleEntity: ModuleEntityBuilder,
+      facetState: FacetState,
+      evaluateEntitySource: (FacetState) -> EntitySource
     ) {
         val entitySource = evaluateEntitySource(facetState)
         val kotlinSettingsEntity = KotlinSettingsEntity(
@@ -140,7 +140,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
     }
 
     override fun serializeBuilder(entity: WorkspaceEntity.Builder<out KotlinSettingsEntity>, module: ModuleEntity, rootElement: Element): Element {
-        entity as ModifiableKotlinSettingsEntity
+        entity as KotlinSettingsEntityBuilder
 
         KotlinFacetSettings().apply {
             version = entity.version

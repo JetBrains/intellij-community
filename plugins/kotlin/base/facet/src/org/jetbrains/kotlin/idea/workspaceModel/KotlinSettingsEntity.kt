@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.*
@@ -49,8 +49,8 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
         get() = KotlinSettingsId(name, moduleId)
 
     //region generated code
-    @Deprecated(message = "Use ModifiableKotlinSettingsEntity instead")
-    interface Builder : ModifiableKotlinSettingsEntity {
+    @Deprecated(message = "Use KotlinSettingsEntityBuilder instead")
+    interface Builder : KotlinSettingsEntityBuilder {
         @Deprecated(message = "Use new API instead")
         fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
 
@@ -122,7 +122,7 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
             additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled,
             pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init
         )
-        //endregion compatibility generated code  
+        //endregion compatibility generated code
     }
     //endregion
 }
@@ -138,9 +138,9 @@ fun MutableEntityStorage.modifyKotlinSettingsEntity(
 
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.kotlinSettings: List<KotlinSettingsEntity.Builder>
-    get() = (this as ModifiableModuleEntity).kotlinSettings as List<KotlinSettingsEntity.Builder>
+    get() = (this as ModuleEntityBuilder).kotlinSettings as List<KotlinSettingsEntity.Builder>
     set(value) {
-        (this as ModifiableModuleEntity).kotlinSettings = value
+        (this as ModuleEntityBuilder).kotlinSettings = value
     }
 //endregion
 

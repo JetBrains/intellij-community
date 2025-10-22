@@ -2,19 +2,17 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableWithSoftLinkEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -48,7 +46,7 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
 
 
   internal class Builder(result: WithSoftLinkEntityData?) : ModifiableWorkspaceEntityBase<WithSoftLinkEntity, WithSoftLinkEntityData>(
-    result), ModifiableWithSoftLinkEntity {
+    result), WithSoftLinkEntityBuilder {
     internal constructor() : this(WithSoftLinkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -162,7 +160,7 @@ internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<WithSoftLinkEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<WithSoftLinkEntity> {
     val modifiable = WithSoftLinkEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -189,7 +187,7 @@ internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(
     return WithSoftLinkEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return WithSoftLinkEntity(link, entitySource) {
     }
   }

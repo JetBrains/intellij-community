@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -16,10 +15,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWpidSampleEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildWpidSampleEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSampleWithSymbolicIdEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildWpidSampleEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleSymbolicId
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleWithSymbolicIdEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleWithSymbolicIdEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -90,7 +89,7 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
 
 
   internal class Builder(result: SampleWithSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SampleWithSymbolicIdEntity, SampleWithSymbolicIdEntityData>(
-    result), ModifiableSampleWithSymbolicIdEntity {
+    result), SampleWithSymbolicIdEntityBuilder {
     internal constructor() : this(SampleWithSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -239,18 +238,18 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
 
     // List of non-abstract referenced types
     var _children: List<ChildWpidSampleEntity>? = emptyList()
-    override var children: List<ModifiableChildWpidSampleEntity>
+    override var children: List<ChildWpidSampleEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableChildWpidSampleEntity>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildWpidSampleEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<ChildWpidSampleEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildWpidSampleEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildWpidSampleEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildWpidSampleEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -311,7 +310,7 @@ internal class SampleWithSymbolicIdEntityData : WorkspaceEntityData<SampleWithSy
   internal fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
   internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SampleWithSymbolicIdEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SampleWithSymbolicIdEntity> {
     val modifiable = SampleWithSymbolicIdEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -345,7 +344,7 @@ internal class SampleWithSymbolicIdEntityData : WorkspaceEntityData<SampleWithSy
     return SampleWithSymbolicIdEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SampleWithSymbolicIdEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty, entitySource) {
       this.nullableData = this@SampleWithSymbolicIdEntityData.nullableData
     }

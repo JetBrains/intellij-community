@@ -193,7 +193,7 @@ class SoftLinksTest {
     }
     builder.addEntity(softLinkEntity)
 
-    builder.modifyEntity(ModifiableOneEntityWithSymbolicId::class.java, entity) {
+    builder.modifyEntity(OneEntityWithSymbolicIdBuilder::class.java, entity) {
       myName = "AnotherData"
     }
 

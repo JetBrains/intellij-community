@@ -5,7 +5,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
@@ -27,8 +26,8 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val facets: List<FacetEntity>
 
   //region generated code
-  @Deprecated(message = "Use ModifiableModuleEntity instead")
-  interface Builder : ModifiableModuleEntity
+  @Deprecated(message = "Use ModuleEntityBuilder instead")
+  interface Builder : ModuleEntityBuilder
   companion object : EntityType<ModuleEntity, Builder>() {
     @Deprecated(message = "Use new API instead")
     @JvmOverloads
@@ -58,51 +57,51 @@ fun MutableEntityStorage.modifyModuleEntity(
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.customImlData: ModuleCustomImlDataEntity.Builder?
-  get() = (this as ModifiableModuleEntity).customImlData as ModuleCustomImlDataEntity.Builder?
+  get() = (this as ModuleEntityBuilder).customImlData as ModuleCustomImlDataEntity.Builder?
   set(value) {
-    (this as ModifiableModuleEntity).customImlData = value
+    (this as ModuleEntityBuilder).customImlData = value
   }
 
 @get:Internal
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.exModuleOptions: ExternalSystemModuleOptionsEntity.Builder?
-  get() = (this as ModifiableModuleEntity).exModuleOptions as ExternalSystemModuleOptionsEntity.Builder?
+  get() = (this as ModuleEntityBuilder).exModuleOptions as ExternalSystemModuleOptionsEntity.Builder?
   set(value) {
-    (this as ModifiableModuleEntity).exModuleOptions = value
+    (this as ModuleEntityBuilder).exModuleOptions = value
   }
 
 @get:Internal
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.facetOrder: FacetsOrderEntity.Builder?
-  get() = (this as ModifiableModuleEntity).facetOrder as FacetsOrderEntity.Builder?
+  get() = (this as ModuleEntityBuilder).facetOrder as FacetsOrderEntity.Builder?
   set(value) {
-    (this as ModifiableModuleEntity).facetOrder = value
+    (this as ModuleEntityBuilder).facetOrder = value
   }
 
 @get:Internal
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.groupPath: ModuleGroupPathEntity.Builder?
-  get() = (this as ModifiableModuleEntity).groupPath as ModuleGroupPathEntity.Builder?
+  get() = (this as ModuleEntityBuilder).groupPath as ModuleGroupPathEntity.Builder?
   set(value) {
-    (this as ModifiableModuleEntity).groupPath = value
+    (this as ModuleEntityBuilder).groupPath = value
   }
 
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
-  get() = (this as ModifiableModuleEntity).sourceRoots as List<SourceRootEntity.Builder>
+  get() = (this as ModuleEntityBuilder).sourceRoots as List<SourceRootEntity.Builder>
   set(value) {
-    (this as ModifiableModuleEntity).sourceRoots = value
+    (this as ModuleEntityBuilder).sourceRoots = value
   }
 
 @get:Internal
 @set:Internal
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.testProperties: TestModulePropertiesEntity.Builder?
-  get() = (this as ModifiableModuleEntity).testProperties as TestModulePropertiesEntity.Builder?
+  get() = (this as ModuleEntityBuilder).testProperties as TestModulePropertiesEntity.Builder?
   set(value) {
-    (this as ModifiableModuleEntity).testProperties = value
+    (this as ModuleEntityBuilder).testProperties = value
   }
 //endregion

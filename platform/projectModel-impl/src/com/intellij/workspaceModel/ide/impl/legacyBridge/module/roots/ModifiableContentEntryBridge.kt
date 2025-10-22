@@ -155,7 +155,7 @@ internal class ModifiableContentEntryBridge(
     }
   }
 
-  private fun updateContentEntry(updater: ModifiableContentRootEntity.() -> Unit) {
+  private fun updateContentEntry(updater: ContentRootEntityBuilder.() -> Unit) {
     diff.modifyContentRootEntity(currentContentEntry.value.entity, updater)
   }
 

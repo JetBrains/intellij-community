@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleFirstEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildSingleFirstEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleFirstEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentSingleAbEntity
 import org.junit.jupiter.api.Test
@@ -17,7 +17,7 @@ class SingleAbstractTest {
       child = ChildSingleFirstEntity("", "ChildData", MySource)
     }
 
-    assertEquals("ChildData", (entity.child as ModifiableChildSingleFirstEntity).firstData)
+    assertEquals("ChildData", (entity.child as ChildSingleFirstEntityBuilder).firstData)
   }
 
   @Test
@@ -26,7 +26,7 @@ class SingleAbstractTest {
       child = ChildSingleFirstEntity("ChildData", "Data", MySource)
     }
 
-    assertEquals("ChildData", (entity.child as ModifiableChildSingleFirstEntity).commonData)
+    assertEquals("ChildData", (entity.child as ChildSingleFirstEntityBuilder).commonData)
   }
 
   @Test

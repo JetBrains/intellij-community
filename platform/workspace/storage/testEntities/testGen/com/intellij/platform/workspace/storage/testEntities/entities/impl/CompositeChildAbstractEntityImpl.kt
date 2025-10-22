@@ -3,15 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -28,13 +25,13 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.CompositeAbstractEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.CompositeAbstractEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.CompositeChildAbstractEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableCompositeAbstractEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableCompositeChildAbstractEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentChainEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSimpleAbstractEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.CompositeChildAbstractEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentChainEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentChainEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SimpleAbstractEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SimpleAbstractEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -82,7 +79,7 @@ internal class CompositeChildAbstractEntityImpl(private val dataSource: Composit
 
 
   internal class Builder(result: CompositeChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity, CompositeChildAbstractEntityData>(
-    result), ModifiableCompositeChildAbstractEntity {
+    result), CompositeChildAbstractEntityBuilder {
     internal constructor() : this(CompositeChildAbstractEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -147,18 +144,18 @@ internal class CompositeChildAbstractEntityImpl(private val dataSource: Composit
 
       }
 
-    override var parentInList: ModifiableCompositeAbstractEntity<out CompositeAbstractEntity>?
+    override var parentInList: CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTINLIST_CONNECTION_ID,
-                                                                           this) as? ModifiableCompositeAbstractEntity<out CompositeAbstractEntity>)
+                                                                           this) as? CompositeAbstractEntityBuilder<out CompositeAbstractEntity>)
           ?: (this.entityLinks[EntityLink(false,
-                                          PARENTINLIST_CONNECTION_ID)] as? ModifiableCompositeAbstractEntity<out CompositeAbstractEntity>)
+                                          PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntityBuilder<out CompositeAbstractEntity>)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] as? ModifiableCompositeAbstractEntity<out CompositeAbstractEntity>
+          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntityBuilder<out CompositeAbstractEntity>
         }
       }
       set(value) {
@@ -189,18 +186,18 @@ internal class CompositeChildAbstractEntityImpl(private val dataSource: Composit
         changedProperty.add("parentInList")
       }
 
-    override var children: List<ModifiableSimpleAbstractEntity<out SimpleAbstractEntity>>
+    override var children: List<SimpleAbstractEntityBuilder<out SimpleAbstractEntity>>
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableSimpleAbstractEntity<out SimpleAbstractEntity>>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableSimpleAbstractEntity<out SimpleAbstractEntity>>
+                                                                                  this)!!.toList() as List<SimpleAbstractEntityBuilder<out SimpleAbstractEntity>>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<SimpleAbstractEntityBuilder<out SimpleAbstractEntity>>
            ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ModifiableSimpleAbstractEntity<out SimpleAbstractEntity>>
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<SimpleAbstractEntityBuilder<out SimpleAbstractEntity>>
           ?: emptyList()
         }
       }
@@ -234,17 +231,16 @@ internal class CompositeChildAbstractEntityImpl(private val dataSource: Composit
         changedProperty.add("children")
       }
 
-    override var parentEntity: ModifiableParentChainEntity?
+    override var parentEntity: ParentChainEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ModifiableParentChainEntity)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableParentChainEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ParentChainEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentChainEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableParentChainEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentChainEntityBuilder
         }
       }
       set(value) {
@@ -279,7 +275,7 @@ internal class CompositeChildAbstractEntityImpl(private val dataSource: Composit
 internal class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstractEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<CompositeChildAbstractEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<CompositeChildAbstractEntity> {
     val modifiable = CompositeChildAbstractEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -306,10 +302,10 @@ internal class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeC
     return CompositeChildAbstractEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return CompositeChildAbstractEntity(entitySource) {
-      this.parentInList = parents.filterIsInstance<ModifiableCompositeAbstractEntity<out CompositeAbstractEntity>>().singleOrNull()
-      this.parentEntity = parents.filterIsInstance<ModifiableParentChainEntity>().singleOrNull()
+      this.parentInList = parents.filterIsInstance<CompositeAbstractEntityBuilder<out CompositeAbstractEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ParentChainEntityBuilder>().singleOrNull()
     }
   }
 

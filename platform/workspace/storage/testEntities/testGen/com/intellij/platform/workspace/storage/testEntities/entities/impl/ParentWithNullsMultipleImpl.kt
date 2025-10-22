@@ -3,14 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -22,9 +20,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsMultiple
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildWithNullsMultiple
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentWithNullsMultiple
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsMultipleBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsMultiple
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsMultipleBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -64,7 +62,7 @@ internal class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNul
 
 
   internal class Builder(result: ParentWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsMultiple, ParentWithNullsMultipleData>(
-    result), ModifiableParentWithNullsMultiple {
+    result), ParentWithNullsMultipleBuilder {
     internal constructor() : this(ParentWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -143,18 +141,18 @@ internal class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNul
 
     // List of non-abstract referenced types
     var _children: List<ChildWithNullsMultiple>? = emptyList()
-    override var children: List<ModifiableChildWithNullsMultiple>
+    override var children: List<ChildWithNullsMultipleBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableChildWithNullsMultiple>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildWithNullsMultiple> ?: emptyList())
+                                                                                  this)!!.toList() as List<ChildWithNullsMultipleBuilder>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildWithNullsMultipleBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildWithNullsMultiple> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildWithNullsMultipleBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -198,7 +196,7 @@ internal class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNulls
 
   internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ParentWithNullsMultiple> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentWithNullsMultiple> {
     val modifiable = ParentWithNullsMultipleImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -225,7 +223,7 @@ internal class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNulls
     return ParentWithNullsMultiple::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ParentWithNullsMultiple(parentData, entitySource) {
     }
   }

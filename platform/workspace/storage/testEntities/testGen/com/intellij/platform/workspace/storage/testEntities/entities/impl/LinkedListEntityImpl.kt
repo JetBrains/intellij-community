@@ -11,8 +11,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityId
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableLinkedListEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -53,7 +53,7 @@ internal class LinkedListEntityImpl(private val dataSource: LinkedListEntityData
 
 
   internal class Builder(result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity, LinkedListEntityData>(
-    result), ModifiableLinkedListEntity {
+    result), LinkedListEntityBuilder {
     internal constructor() : this(LinkedListEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -181,7 +181,7 @@ internal class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), S
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LinkedListEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LinkedListEntity> {
     val modifiable = LinkedListEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -208,7 +208,7 @@ internal class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), S
     return LinkedListEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return LinkedListEntity(myName, next, entitySource) {
     }
   }

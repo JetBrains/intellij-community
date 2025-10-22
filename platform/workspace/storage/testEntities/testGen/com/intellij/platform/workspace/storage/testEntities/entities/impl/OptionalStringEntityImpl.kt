@@ -3,22 +3,20 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOptionalStringEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalStringEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OptionalStringEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -52,7 +50,7 @@ internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEn
 
 
   internal class Builder(result: OptionalStringEntityData?) : ModifiableWorkspaceEntityBase<OptionalStringEntity, OptionalStringEntityData>(
-    result), ModifiableOptionalStringEntity {
+    result), OptionalStringEntityBuilder {
     internal constructor() : this(OptionalStringEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,7 +122,7 @@ internal class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEnti
   var data: String? = null
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OptionalStringEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OptionalStringEntity> {
     val modifiable = OptionalStringEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -151,7 +149,7 @@ internal class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEnti
     return OptionalStringEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return OptionalStringEntity(entitySource) {
       this.data = this@OptionalStringEntityData.data
     }

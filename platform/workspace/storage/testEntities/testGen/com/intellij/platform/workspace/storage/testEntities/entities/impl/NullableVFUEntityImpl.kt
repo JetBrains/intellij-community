@@ -3,23 +3,20 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableNullableVFUEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.NullableVFUEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.NullableVFUEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -59,7 +56,7 @@ internal class NullableVFUEntityImpl(private val dataSource: NullableVFUEntityDa
 
 
   internal class Builder(result: NullableVFUEntityData?) : ModifiableWorkspaceEntityBase<NullableVFUEntity, NullableVFUEntityData>(
-    result), ModifiableNullableVFUEntity {
+    result), NullableVFUEntityBuilder {
     internal constructor() : this(NullableVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,7 +145,7 @@ internal class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() 
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<NullableVFUEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<NullableVFUEntity> {
     val modifiable = NullableVFUEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -175,7 +172,7 @@ internal class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() 
     return NullableVFUEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return NullableVFUEntity(data, entitySource) {
       this.fileProperty = this@NullableVFUEntityData.fileProperty
     }

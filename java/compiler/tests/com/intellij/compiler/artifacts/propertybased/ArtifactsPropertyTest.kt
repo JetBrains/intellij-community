@@ -737,7 +737,7 @@ class ArtifactsPropertyTest {
     return element to elementName
   }
 
-  private fun createCompositeElementEntity(env: ImperativeCommand.Environment): ModifiableArtifactRootElementEntity {
+  private fun createCompositeElementEntity(env: ImperativeCommand.Environment): ArtifactRootElementEntityBuilder {
     return ArtifactRootElementEntity(TestEntitySource)
   }
 

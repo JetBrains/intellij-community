@@ -2,8 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -20,13 +18,13 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.BaseEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.BaseEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.CompositeBaseEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.CompositeBaseEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableBaseEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableCompositeBaseEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableHeadAbstractionEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableLeftEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -70,8 +68,7 @@ internal class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEnti
   }
 
 
-  internal class Builder(result: LeftEntityData?) : ModifiableWorkspaceEntityBase<LeftEntity, LeftEntityData>(
-    result), ModifiableLeftEntity {
+  internal class Builder(result: LeftEntityData?) : ModifiableWorkspaceEntityBase<LeftEntity, LeftEntityData>(result), LeftEntityBuilder {
     internal constructor() : this(LeftEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -136,17 +133,17 @@ internal class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEnti
 
       }
 
-    override var parentEntity: ModifiableCompositeBaseEntity<out CompositeBaseEntity>?
+    override var parentEntity: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>)
+                                                                           this) as? CompositeBaseEntityBuilder<out CompositeBaseEntity>)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntityBuilder<out CompositeBaseEntity>)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntityBuilder<out CompositeBaseEntity>
         }
       }
       set(value) {
@@ -177,17 +174,17 @@ internal class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEnti
         changedProperty.add("parentEntity")
       }
 
-    override var children: List<ModifiableBaseEntity<out BaseEntity>>
+    override var children: List<BaseEntityBuilder<out BaseEntity>>
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableBaseEntity<out BaseEntity>>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableBaseEntity<out BaseEntity>> ?: emptyList())
+                                                                                  this)!!.toList() as List<BaseEntityBuilder<out BaseEntity>>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<BaseEntityBuilder<out BaseEntity>> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ModifiableBaseEntity<out BaseEntity>> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<BaseEntityBuilder<out BaseEntity>> ?: emptyList()
         }
       }
       set(value) {
@@ -220,16 +217,16 @@ internal class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEnti
         changedProperty.add("children")
       }
 
-    override var parent: ModifiableHeadAbstractionEntity?
+    override var parent: HeadAbstractionEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? ModifiableHeadAbstractionEntity)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? ModifiableHeadAbstractionEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? HeadAbstractionEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? HeadAbstractionEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? ModifiableHeadAbstractionEntity
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? HeadAbstractionEntityBuilder
         }
       }
       set(value) {
@@ -264,7 +261,7 @@ internal class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEnti
 internal class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LeftEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LeftEntity> {
     val modifiable = LeftEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -291,10 +288,10 @@ internal class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
     return LeftEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return LeftEntity(entitySource) {
-      this.parentEntity = parents.filterIsInstance<ModifiableCompositeBaseEntity<out CompositeBaseEntity>>().singleOrNull()
-      this.parent = parents.filterIsInstance<ModifiableHeadAbstractionEntity>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositeBaseEntityBuilder<out CompositeBaseEntity>>().singleOrNull()
+      this.parent = parents.filterIsInstance<HeadAbstractionEntityBuilder>().singleOrNull()
     }
   }
 

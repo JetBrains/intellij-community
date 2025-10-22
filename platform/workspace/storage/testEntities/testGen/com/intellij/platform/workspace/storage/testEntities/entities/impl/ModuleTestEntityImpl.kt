@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -14,11 +13,11 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableContentRootTestEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableFacetTestEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableModuleTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntitySymbolicId
 
 @GeneratedCodeApiVersion(3)
@@ -66,7 +65,7 @@ internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData
 
 
   internal class Builder(result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity, ModuleTestEntityData>(
-    result), ModifiableModuleTestEntity {
+    result), ModuleTestEntityBuilder {
     internal constructor() : this(ModuleTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -156,18 +155,18 @@ internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData
 
     // List of non-abstract referenced types
     var _contentRoots: List<ContentRootTestEntity>? = emptyList()
-    override var contentRoots: List<ModifiableContentRootTestEntity>
+    override var contentRoots: List<ContentRootTestEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableContentRootTestEntity>) +
-          (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ModifiableContentRootTestEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<ContentRootTestEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootTestEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ModifiableContentRootTestEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootTestEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -203,18 +202,18 @@ internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData
 
     // List of non-abstract referenced types
     var _facets: List<FacetTestEntity>? = emptyList()
-    override var facets: List<ModifiableFacetTestEntity>
+    override var facets: List<FacetTestEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableFacetTestEntity>) +
-          (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<ModifiableFacetTestEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<FacetTestEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetTestEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<ModifiableFacetTestEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetTestEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -258,7 +257,7 @@ internal class ModuleTestEntityData : WorkspaceEntityData<ModuleTestEntity>() {
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ModuleTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ModuleTestEntity> {
     val modifiable = ModuleTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -285,7 +284,7 @@ internal class ModuleTestEntityData : WorkspaceEntityData<ModuleTestEntity>() {
     return ModuleTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ModuleTestEntity(name, entitySource) {
     }
   }

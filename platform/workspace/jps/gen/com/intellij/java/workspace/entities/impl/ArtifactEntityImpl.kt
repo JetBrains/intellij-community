@@ -4,23 +4,16 @@ package com.intellij.java.workspace.entities.impl
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
+import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder
 import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+import com.intellij.java.workspace.entities.ArtifactPropertiesEntityBuilder
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
-import com.intellij.java.workspace.entities.ModifiableArtifactEntity
-import com.intellij.java.workspace.entities.ModifiableArtifactOutputPackagingElementEntity
-import com.intellij.java.workspace.entities.ModifiableArtifactPropertiesEntity
-import com.intellij.java.workspace.entities.ModifiableCompositePackagingElementEntity
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneChild
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
@@ -32,7 +25,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -215,19 +207,19 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         if (_diff != null) index(this, "outputUrl", value)
       }
 
-    override var rootElement: ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>?
+    override var rootElement: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ROOTELEMENT_CONNECTION_ID,
-                                                                             this) as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
+                                                                             this) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
           ?: (this.entityLinks[EntityLink(true,
-                                          ROOTELEMENT_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
+                                          ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
         }
         else {
           this.entityLinks[EntityLink(true,
-                                      ROOTELEMENT_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
+                                      ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -256,18 +248,18 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
 
     // List of non-abstract referenced types
     var _customProperties: List<ArtifactPropertiesEntity>? = emptyList()
-    override var customProperties: List<ModifiableArtifactPropertiesEntity>
+    override var customProperties: List<ArtifactPropertiesEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CUSTOMPROPERTIES_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableArtifactPropertiesEntity>) +
-          (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ModifiableArtifactPropertiesEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<ArtifactPropertiesEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ModifiableArtifactPropertiesEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -301,19 +293,18 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         changedProperty.add("customProperties")
       }
 
-    override var artifactOutputPackagingElement: ModifiableArtifactOutputPackagingElementEntity?
+    override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID,
-                                                                             this) as? ModifiableArtifactOutputPackagingElementEntity)
+                                                                             this) as? ArtifactOutputPackagingElementEntityBuilder)
           ?: (this.entityLinks[EntityLink(true,
-                                          ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ModifiableArtifactOutputPackagingElementEntity)
+                                          ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(true,
-                                      ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ModifiableArtifactOutputPackagingElementEntity
+          this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntityBuilder
         }
       }
       set(value) {
@@ -355,7 +346,7 @@ internal class ArtifactEntityData : WorkspaceEntityData<ArtifactEntity>() {
   internal fun isArtifactTypeInitialized(): Boolean = ::artifactType.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ArtifactEntity> {
     val modifiable = ArtifactEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -381,7 +372,7 @@ internal class ArtifactEntityData : WorkspaceEntityData<ArtifactEntity>() {
     return ArtifactEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ArtifactEntity(name, artifactType, includeInProjectBuild, entitySource) {
       this.outputUrl = this@ArtifactEntityData.outputUrl
     }

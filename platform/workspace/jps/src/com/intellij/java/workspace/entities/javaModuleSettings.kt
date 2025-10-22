@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Default
@@ -26,8 +25,8 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   @Default get() = emptyMap()
 
   //region generated code
-  @Deprecated(message = "Use ModifiableJavaModuleSettingsEntity instead")
-  interface Builder : ModifiableJavaModuleSettingsEntity {
+  @Deprecated(message = "Use JavaModuleSettingsEntityBuilder instead")
+  interface Builder : JavaModuleSettingsEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
 
@@ -64,9 +63,9 @@ fun MutableEntityStorage.modifyJavaModuleSettingsEntity(
 
 @Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.javaSettings: JavaModuleSettingsEntity.Builder?
-  get() = (this as ModifiableModuleEntity).javaSettings as JavaModuleSettingsEntity.Builder?
+  get() = (this as ModuleEntityBuilder).javaSettings as JavaModuleSettingsEntity.Builder?
   set(value) {
-    (this as ModifiableModuleEntity).javaSettings = value
+    (this as ModuleEntityBuilder).javaSettings = value
   }
 //endregion
 

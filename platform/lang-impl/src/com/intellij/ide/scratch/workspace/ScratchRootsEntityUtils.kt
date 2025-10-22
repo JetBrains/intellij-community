@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 
-internal fun createScratchRootsEntityForProject(project: Project): ModifiableScratchRootsEntity? {
+internal fun createScratchRootsEntityForProject(project: Project): ScratchRootsEntityBuilder? {
   if (!ScratchFileService.isWorkspaceModelIntegrationEnabled()) return null
   val scratchFileService = ScratchFileService.getInstance()
   val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()

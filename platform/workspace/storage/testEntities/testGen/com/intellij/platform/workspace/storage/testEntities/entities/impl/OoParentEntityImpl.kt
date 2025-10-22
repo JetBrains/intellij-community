@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -13,12 +12,12 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOoChildEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOoChildWithNullableParentEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOoParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -63,7 +62,7 @@ internal class OoParentEntityImpl(private val dataSource: OoParentEntityData) : 
 
 
   internal class Builder(result: OoParentEntityData?) : ModifiableWorkspaceEntityBase<OoParentEntity, OoParentEntityData>(
-    result), ModifiableOoParentEntity {
+    result), OoParentEntityBuilder {
     internal constructor() : this(OoParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -129,16 +128,16 @@ internal class OoParentEntityImpl(private val dataSource: OoParentEntityData) : 
         changedProperty.add("parentProperty")
       }
 
-    override var child: ModifiableOoChildEntity?
+    override var child: OoChildEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? ModifiableOoChildEntity)
-          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableOoChildEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? OoChildEntityBuilder)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? OoChildEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableOoChildEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? OoChildEntityBuilder
         }
       }
       set(value) {
@@ -165,17 +164,17 @@ internal class OoParentEntityImpl(private val dataSource: OoParentEntityData) : 
         changedProperty.add("child")
       }
 
-    override var anotherChild: ModifiableOoChildWithNullableParentEntity?
+    override var anotherChild: OoChildWithNullableParentEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ANOTHERCHILD_CONNECTION_ID,
-                                                                             this) as? ModifiableOoChildWithNullableParentEntity)
-          ?: (this.entityLinks[EntityLink(true, ANOTHERCHILD_CONNECTION_ID)] as? ModifiableOoChildWithNullableParentEntity)
+                                                                             this) as? OoChildWithNullableParentEntityBuilder)
+          ?: (this.entityLinks[EntityLink(true, ANOTHERCHILD_CONNECTION_ID)] as? OoChildWithNullableParentEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(true, ANOTHERCHILD_CONNECTION_ID)] as? ModifiableOoChildWithNullableParentEntity
+          this.entityLinks[EntityLink(true, ANOTHERCHILD_CONNECTION_ID)] as? OoChildWithNullableParentEntityBuilder
         }
       }
       set(value) {
@@ -212,7 +211,7 @@ internal class OoParentEntityData : WorkspaceEntityData<OoParentEntity>() {
 
   internal fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoParentEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OoParentEntity> {
     val modifiable = OoParentEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -239,7 +238,7 @@ internal class OoParentEntityData : WorkspaceEntityData<OoParentEntity>() {
     return OoParentEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return OoParentEntity(parentProperty, entitySource) {
     }
   }

@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -15,10 +14,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableTreeMultiparentLeafEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableTreeMultiparentRootEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentRootEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentRootEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -72,7 +71,7 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
 
 
   internal class Builder(result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity, TreeMultiparentLeafEntityData>(
-    result), ModifiableTreeMultiparentLeafEntity {
+    result), TreeMultiparentLeafEntityBuilder {
     internal constructor() : this(TreeMultiparentLeafEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -149,17 +148,17 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         changedProperty.add("data")
       }
 
-    override var mainParent: ModifiableTreeMultiparentRootEntity?
+    override var mainParent: TreeMultiparentRootEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MAINPARENT_CONNECTION_ID,
-                                                                           this) as? ModifiableTreeMultiparentRootEntity)
-          ?: (this.entityLinks[EntityLink(false, MAINPARENT_CONNECTION_ID)] as? ModifiableTreeMultiparentRootEntity)
+                                                                           this) as? TreeMultiparentRootEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MAINPARENT_CONNECTION_ID)] as? TreeMultiparentRootEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MAINPARENT_CONNECTION_ID)] as? ModifiableTreeMultiparentRootEntity
+          this.entityLinks[EntityLink(false, MAINPARENT_CONNECTION_ID)] as? TreeMultiparentRootEntityBuilder
         }
       }
       set(value) {
@@ -190,17 +189,17 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         changedProperty.add("mainParent")
       }
 
-    override var leafParent: ModifiableTreeMultiparentLeafEntity?
+    override var leafParent: TreeMultiparentLeafEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LEAFPARENT_CONNECTION_ID,
-                                                                           this) as? ModifiableTreeMultiparentLeafEntity)
-          ?: (this.entityLinks[EntityLink(false, LEAFPARENT_CONNECTION_ID)] as? ModifiableTreeMultiparentLeafEntity)
+                                                                           this) as? TreeMultiparentLeafEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, LEAFPARENT_CONNECTION_ID)] as? TreeMultiparentLeafEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, LEAFPARENT_CONNECTION_ID)] as? ModifiableTreeMultiparentLeafEntity
+          this.entityLinks[EntityLink(false, LEAFPARENT_CONNECTION_ID)] as? TreeMultiparentLeafEntityBuilder
         }
       }
       set(value) {
@@ -233,18 +232,18 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
 
     // List of non-abstract referenced types
     var _children: List<TreeMultiparentLeafEntity>? = emptyList()
-    override var children: List<ModifiableTreeMultiparentLeafEntity>
+    override var children: List<TreeMultiparentLeafEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableTreeMultiparentLeafEntity>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableTreeMultiparentLeafEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<TreeMultiparentLeafEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableTreeMultiparentLeafEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -288,7 +287,7 @@ internal class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultipare
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<TreeMultiparentLeafEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<TreeMultiparentLeafEntity> {
     val modifiable = TreeMultiparentLeafEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -315,10 +314,10 @@ internal class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultipare
     return TreeMultiparentLeafEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return TreeMultiparentLeafEntity(data, entitySource) {
-      this.mainParent = parents.filterIsInstance<ModifiableTreeMultiparentRootEntity>().singleOrNull()
-      this.leafParent = parents.filterIsInstance<ModifiableTreeMultiparentLeafEntity>().singleOrNull()
+      this.mainParent = parents.filterIsInstance<TreeMultiparentRootEntityBuilder>().singleOrNull()
+      this.leafParent = parents.filterIsInstance<TreeMultiparentLeafEntityBuilder>().singleOrNull()
     }
   }
 

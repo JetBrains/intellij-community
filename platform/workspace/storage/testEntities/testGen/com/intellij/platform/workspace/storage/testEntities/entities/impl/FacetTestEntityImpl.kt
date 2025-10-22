@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -14,10 +13,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntitySymbolicId
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableFacetTestEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableModuleTestEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -63,7 +62,7 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
 
 
   internal class Builder(result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity, FacetTestEntityData>(
-    result), ModifiableFacetTestEntity {
+    result), FacetTestEntityBuilder {
     internal constructor() : this(FacetTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -151,16 +150,16 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
         changedProperty.add("moreData")
       }
 
-    override var module: ModifiableModuleTestEntity
+    override var module: ModuleTestEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModifiableModuleTestEntity)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleTestEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleTestEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleTestEntity
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntityBuilder
         }
       }
       set(value) {
@@ -203,7 +202,7 @@ internal class FacetTestEntityData : WorkspaceEntityData<FacetTestEntity>() {
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
   internal fun isMoreDataInitialized(): Boolean = ::moreData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FacetTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<FacetTestEntity> {
     val modifiable = FacetTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -230,9 +229,9 @@ internal class FacetTestEntityData : WorkspaceEntityData<FacetTestEntity>() {
     return FacetTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return FacetTestEntity(data, moreData, entitySource) {
-      parents.filterIsInstance<ModifiableModuleTestEntity>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleTestEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
 

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.workspace.jps.entities.ModifiableSdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
@@ -51,7 +51,7 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
       .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
       .map { sdkEntity ->
-        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as ModifiableSdkEntity
+        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntityBuilder
         sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder, environmentName))
       }
       .toList()

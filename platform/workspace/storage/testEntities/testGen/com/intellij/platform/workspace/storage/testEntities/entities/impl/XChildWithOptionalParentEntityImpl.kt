@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -13,10 +12,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXChildWithOptionalParentEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.XChildWithOptionalParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildWithOptionalParentEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -56,7 +55,7 @@ internal class XChildWithOptionalParentEntityImpl(private val dataSource: XChild
 
 
   internal class Builder(result: XChildWithOptionalParentEntityData?) : ModifiableWorkspaceEntityBase<XChildWithOptionalParentEntity, XChildWithOptionalParentEntityData>(
-    result), ModifiableXChildWithOptionalParentEntity {
+    result), XChildWithOptionalParentEntityBuilder {
     internal constructor() : this(XChildWithOptionalParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -122,16 +121,16 @@ internal class XChildWithOptionalParentEntityImpl(private val dataSource: XChild
         changedProperty.add("childProperty")
       }
 
-    override var optionalParent: ModifiableXParentEntity?
+    override var optionalParent: XParentEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(OPTIONALPARENT_CONNECTION_ID, this) as? ModifiableXParentEntity)
-          ?: (this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? ModifiableXParentEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(OPTIONALPARENT_CONNECTION_ID, this) as? XParentEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? XParentEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? ModifiableXParentEntity
+          this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? XParentEntityBuilder
         }
       }
       set(value) {
@@ -172,7 +171,7 @@ internal class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWi
 
   internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<XChildWithOptionalParentEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<XChildWithOptionalParentEntity> {
     val modifiable = XChildWithOptionalParentEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -199,9 +198,9 @@ internal class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWi
     return XChildWithOptionalParentEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return XChildWithOptionalParentEntity(childProperty, entitySource) {
-      this.optionalParent = parents.filterIsInstance<ModifiableXParentEntity>().singleOrNull()
+      this.optionalParent = parents.filterIsInstance<XParentEntityBuilder>().singleOrNull()
     }
   }
 

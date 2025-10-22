@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-class KotlinFacetSettingsWorkspaceModel(val entity: ModifiableKotlinSettingsEntity) : IKotlinFacetSettings {
+class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntityBuilder) : IKotlinFacetSettings {
     private var myUseProjectSettings = entity.useProjectSettings
     override var useProjectSettings: Boolean
         get() = myUseProjectSettings

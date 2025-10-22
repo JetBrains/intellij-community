@@ -2,10 +2,10 @@
 package com.intellij.workspaceModel.ide.java
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
-import com.intellij.java.workspace.entities.ModifiableJavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
 import com.intellij.pom.java.LanguageLevel
 
-public var ModifiableJavaModuleSettingsEntity.languageLevel: LanguageLevel?
+public var JavaModuleSettingsEntityBuilder.languageLevel: LanguageLevel?
   get() = idToLanguageLevel(languageLevelId)
   set(value) {
     languageLevelId = value?.name

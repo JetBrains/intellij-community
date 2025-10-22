@@ -3,10 +3,9 @@ package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersi
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -19,7 +18,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedValueTypeEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableChangedValueTypeEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedValueTypeEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -64,7 +63,7 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
 
 
   internal class Builder(result: ChangedValueTypeEntityData?) : ModifiableWorkspaceEntityBase<ChangedValueTypeEntity, ChangedValueTypeEntityData>(
-    result), ModifiableChangedValueTypeEntity {
+    result), ChangedValueTypeEntityBuilder {
     internal constructor() : this(ChangedValueTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -186,7 +185,7 @@ internal class ChangedValueTypeEntityData : WorkspaceEntityData<ChangedValueType
 
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChangedValueTypeEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChangedValueTypeEntity> {
     val modifiable = ChangedValueTypeEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -220,7 +219,7 @@ internal class ChangedValueTypeEntityData : WorkspaceEntityData<ChangedValueType
     return ChangedValueTypeEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ChangedValueTypeEntity(type, someKey, text, entitySource) {
     }
   }

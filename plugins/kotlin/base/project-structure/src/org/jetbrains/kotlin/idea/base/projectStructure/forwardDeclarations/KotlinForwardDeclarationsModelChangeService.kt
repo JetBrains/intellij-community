@@ -74,7 +74,7 @@ internal class KotlinForwardDeclarationsModelChangeService(
     private fun createEntityStorageChanges(
         workspaceModel: WorkspaceModel,
         nativeKlibs: Map<LibraryEntity, KLibRoot>
-    ): Map<LibraryEntity, ModifiableKotlinForwardDeclarationsWorkspaceEntity> {
+    ): Map<LibraryEntity, KotlinForwardDeclarationsWorkspaceEntityBuilder> {
         val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
         return buildMap {
             for ((libraryEntity, klib) in nativeKlibs) {

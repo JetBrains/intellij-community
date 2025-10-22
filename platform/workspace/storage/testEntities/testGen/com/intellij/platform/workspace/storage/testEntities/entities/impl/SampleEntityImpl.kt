@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -16,9 +15,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSampleEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildSampleEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSampleEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntityBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
 
@@ -92,7 +91,7 @@ internal class SampleEntityImpl(private val dataSource: SampleEntityData) : Samp
 
 
   internal class Builder(result: SampleEntityData?) : ModifiableWorkspaceEntityBase<SampleEntity, SampleEntityData>(
-    result), ModifiableSampleEntity {
+    result), SampleEntityBuilder {
     internal constructor() : this(SampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -242,18 +241,18 @@ internal class SampleEntityImpl(private val dataSource: SampleEntityData) : Samp
 
     // List of non-abstract referenced types
     var _children: List<ChildSampleEntity>? = emptyList()
-    override var children: List<ModifiableChildSampleEntity>
+    override var children: List<ChildSampleEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ModifiableChildSampleEntity>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildSampleEntity> ?: emptyList())
+                                                                                  this)!!.toList() as List<ChildSampleEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildSampleEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildSampleEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildSampleEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -324,7 +323,7 @@ internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   internal fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
   internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SampleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SampleEntity> {
     val modifiable = SampleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -358,7 +357,7 @@ internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     return SampleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SampleEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty, entitySource) {
       this.nullableData = this@SampleEntityData.nullableData
       this.randomUUID = this@SampleEntityData.randomUUID

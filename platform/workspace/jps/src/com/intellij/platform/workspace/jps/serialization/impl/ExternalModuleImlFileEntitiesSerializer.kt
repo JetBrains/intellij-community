@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
@@ -53,7 +53,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return Pair(options, options["externalSystem"])
   }
 
-  override fun loadExternalSystemOptions(module: ModifiableModuleEntity,
+  override fun loadExternalSystemOptions(module: ModuleEntityBuilder,
                                          content: JpsFileContent,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,

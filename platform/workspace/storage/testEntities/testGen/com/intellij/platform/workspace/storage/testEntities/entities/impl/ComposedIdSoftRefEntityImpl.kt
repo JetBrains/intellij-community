@@ -2,19 +2,17 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ComposedId
 import com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableComposedIdSoftRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 
 @GeneratedCodeApiVersion(3)
@@ -57,7 +55,7 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
 
 
   internal class Builder(result: ComposedIdSoftRefEntityData?) : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityData>(
-    result), ModifiableComposedIdSoftRefEntity {
+    result), ComposedIdSoftRefEntityBuilder {
     internal constructor() : this(ComposedIdSoftRefEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -185,7 +183,7 @@ internal class ComposedIdSoftRefEntityData : WorkspaceEntityData<ComposedIdSoftR
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ComposedIdSoftRefEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ComposedIdSoftRefEntity> {
     val modifiable = ComposedIdSoftRefEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -212,7 +210,7 @@ internal class ComposedIdSoftRefEntityData : WorkspaceEntityData<ComposedIdSoftR
     return ComposedIdSoftRefEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ComposedIdSoftRefEntity(myName, link, entitySource) {
     }
   }

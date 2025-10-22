@@ -3,14 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersi
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -22,9 +20,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToOneRefEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableAnotherOneToOneRefEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableOneToOneRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToOneRefEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToOneRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToOneRefEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -69,7 +67,7 @@ internal class AnotherOneToOneRefEntityImpl(private val dataSource: AnotherOneTo
 
 
   internal class Builder(result: AnotherOneToOneRefEntityData?) : ModifiableWorkspaceEntityBase<AnotherOneToOneRefEntity, AnotherOneToOneRefEntityData>(
-    result), ModifiableAnotherOneToOneRefEntity {
+    result), AnotherOneToOneRefEntityBuilder {
     internal constructor() : this(AnotherOneToOneRefEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -154,17 +152,16 @@ internal class AnotherOneToOneRefEntityImpl(private val dataSource: AnotherOneTo
         changedProperty.add("boolean")
       }
 
-    override var parentEntity: ModifiableOneToOneRefEntity
+    override var parentEntity: OneToOneRefEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ModifiableOneToOneRefEntity)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableOneToOneRefEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? OneToOneRefEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OneToOneRefEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableOneToOneRefEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OneToOneRefEntityBuilder
         }
       }
       set(value) {
@@ -203,7 +200,7 @@ internal class AnotherOneToOneRefEntityData : WorkspaceEntityData<AnotherOneToOn
   internal fun isSomeStringInitialized(): Boolean = ::someString.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AnotherOneToOneRefEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<AnotherOneToOneRefEntity> {
     val modifiable = AnotherOneToOneRefEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -230,9 +227,9 @@ internal class AnotherOneToOneRefEntityData : WorkspaceEntityData<AnotherOneToOn
     return AnotherOneToOneRefEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return AnotherOneToOneRefEntity(someString, boolean, entitySource) {
-      parents.filterIsInstance<ModifiableOneToOneRefEntity>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<OneToOneRefEntityBuilder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

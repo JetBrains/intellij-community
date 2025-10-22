@@ -2,11 +2,10 @@
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.ModifiableSourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
@@ -19,8 +18,8 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   val packagePrefix: @NlsSafe String
 
   //region generated code
-  @Deprecated(message = "Use ModifiableJavaSourceRootPropertiesEntity instead")
-  interface Builder : ModifiableJavaSourceRootPropertiesEntity {
+  @Deprecated(message = "Use JavaSourceRootPropertiesEntityBuilder instead")
+  interface Builder : JavaSourceRootPropertiesEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getSourceRoot(): SourceRootEntity.Builder = sourceRoot as SourceRootEntity.Builder
 
@@ -57,9 +56,9 @@ fun MutableEntityStorage.modifyJavaSourceRootPropertiesEntity(
 
 @Deprecated(message = "Use new API instead")
 var SourceRootEntity.Builder.javaSourceRoots: List<JavaSourceRootPropertiesEntity.Builder>
-  get() = (this as ModifiableSourceRootEntity).javaSourceRoots as List<JavaSourceRootPropertiesEntity.Builder>
+  get() = (this as SourceRootEntityBuilder).javaSourceRoots as List<JavaSourceRootPropertiesEntity.Builder>
   set(value) {
-    (this as ModifiableSourceRootEntity).javaSourceRoots = value
+    (this as SourceRootEntityBuilder).javaSourceRoots = value
   }
 //endregion
 
@@ -74,8 +73,8 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
   val relativeOutputPath: @NlsSafe String
 
   //region generated code
-  @Deprecated(message = "Use ModifiableJavaResourceRootPropertiesEntity instead")
-  interface Builder : ModifiableJavaResourceRootPropertiesEntity {
+  @Deprecated(message = "Use JavaResourceRootPropertiesEntityBuilder instead")
+  interface Builder : JavaResourceRootPropertiesEntityBuilder {
     @Deprecated(message = "Use new API instead")
     fun getSourceRoot(): SourceRootEntity.Builder = sourceRoot as SourceRootEntity.Builder
 
@@ -112,9 +111,9 @@ fun MutableEntityStorage.modifyJavaResourceRootPropertiesEntity(
 
 @Deprecated(message = "Use new API instead")
 var SourceRootEntity.Builder.javaResourceRoots: List<JavaResourceRootPropertiesEntity.Builder>
-  get() = (this as ModifiableSourceRootEntity).javaResourceRoots as List<JavaResourceRootPropertiesEntity.Builder>
+  get() = (this as SourceRootEntityBuilder).javaResourceRoots as List<JavaResourceRootPropertiesEntity.Builder>
   set(value) {
-    (this as ModifiableSourceRootEntity).javaResourceRoots = value
+    (this as SourceRootEntityBuilder).javaResourceRoots = value
   }
 //endregion
 
@@ -124,5 +123,5 @@ val SourceRootEntity.javaResourceRoots: List<JavaResourceRootPropertiesEntity>
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
 fun SourceRootEntity.Builder.asJavaSourceRoot(): JavaSourceRootPropertiesEntity.Builder? = javaSourceRoots.firstOrNull()
 fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootPropertiesEntity? = javaResourceRoots.firstOrNull()
-fun ModifiableSourceRootEntity.asJavaSourceRoot(): ModifiableJavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
-fun ModifiableSourceRootEntity.asJavaResourceRoot(): ModifiableJavaResourceRootPropertiesEntity? = javaResourceRoots.firstOrNull()
+fun SourceRootEntityBuilder.asJavaSourceRoot(): JavaSourceRootPropertiesEntityBuilder? = javaSourceRoots.firstOrNull()
+fun SourceRootEntityBuilder.asJavaResourceRoot(): JavaResourceRootPropertiesEntityBuilder? = javaResourceRoots.firstOrNull()

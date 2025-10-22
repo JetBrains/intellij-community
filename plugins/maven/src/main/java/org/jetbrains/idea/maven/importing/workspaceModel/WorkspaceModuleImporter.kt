@@ -370,7 +370,7 @@ internal class WorkspaceModuleImporter(
   }
 
   class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: StandardMavenModuleType) {
-    fun write(entity: ModifiableExternalSystemModuleOptionsEntity) {
+    fun write(entity: ExternalSystemModuleOptionsEntityBuilder) {
       entity.externalSystemModuleVersion = VERSION
       entity.externalSystem = EXTERNAL_SOURCE_ID
       // Can't use 'entity.linkedProjectPath' since it implies directory (and used to set working dir for Run Configurations).

@@ -18,8 +18,8 @@ class KotlinFacetBridge(
     name: String,
     configuration: KotlinFacetConfiguration
 ) : KotlinFacet(module, name, configuration),
-    FacetBridge<KotlinSettingsEntity, ModifiableKotlinSettingsEntity> {
-    override val config: FacetConfigurationBridge<KotlinSettingsEntity, ModifiableKotlinSettingsEntity>
+    FacetBridge<KotlinSettingsEntity, KotlinSettingsEntityBuilder> {
+    override val config: FacetConfigurationBridge<KotlinSettingsEntity, KotlinSettingsEntityBuilder>
         get() = configuration as KotlinFacetConfigurationBridge
 
     override fun updateExistingEntityInStorage(existingFacetEntity: KotlinSettingsEntity, mutableStorage: MutableEntityStorage) {

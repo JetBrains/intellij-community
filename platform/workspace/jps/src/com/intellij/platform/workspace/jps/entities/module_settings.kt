@@ -4,8 +4,6 @@ package com.intellij.platform.workspace.jps.entities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Abstract
 
@@ -15,8 +13,8 @@ interface ModuleSettingsFacetBridgeEntity : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
 
   //region generated code
-  @Deprecated(message = "Use ModifiableModuleSettingsFacetBridgeEntity instead")
-  interface Builder<T : ModuleSettingsFacetBridgeEntity> : ModifiableModuleSettingsFacetBridgeEntity<T>
+  @Deprecated(message = "Use ModuleSettingsFacetBridgeEntityBuilder instead")
+  interface Builder<T : ModuleSettingsFacetBridgeEntity> : ModuleSettingsFacetBridgeEntityBuilder<T>
   companion object : EntityType<ModuleSettingsFacetBridgeEntity, Builder<ModuleSettingsFacetBridgeEntity>>() {
     @Deprecated(message = "Use new API instead")
     @JvmOverloads

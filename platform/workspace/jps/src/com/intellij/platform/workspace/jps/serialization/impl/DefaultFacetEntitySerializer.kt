@@ -25,15 +25,15 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
   // This class is used in concurrent environment, so the map has to be concurrent.
   private val configurationStringInterner = ConcurrentHashMap<String, String>()
 
-  override fun loadEntitiesFromFacetState(moduleEntity: ModifiableModuleEntity,
+  override fun loadEntitiesFromFacetState(moduleEntity: ModuleEntityBuilder,
                                           facetState: FacetState,
                                           evaluateEntitySource: (FacetState) -> EntitySource) {
     loadFacetEntities(moduleEntity, listOf(facetState), null, evaluateEntitySource)
   }
 
-  private fun loadFacetEntities(moduleEntity: ModifiableModuleEntity,
+  private fun loadFacetEntities(moduleEntity: ModuleEntityBuilder,
                                 facetStates: List<FacetState>,
-                                underlyingFacet: ModifiableFacetEntity?,
+                                underlyingFacet: FacetEntityBuilder?,
                                 evaluateEntitySource: (FacetState) -> EntitySource) {
     facetStates.forEach { facetState ->
       val entitySource = evaluateEntitySource(facetState)
@@ -44,7 +44,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       // thus the same root facet will be declared in two places
       val facetEntityTypeId = facetEntityTypes[facetState.facetType]!!
       val newFacetId = FacetId(facetState.name, facetEntityTypeId, ModuleId(moduleEntity.name))
-      var facetEntity: ModifiableFacetEntity? = null
+      var facetEntity: FacetEntityBuilder? = null
       val existingFacet = findFacetById(moduleEntity.facets, newFacetId)
       if (existingFacet != null && configurationXmlTag != null) {
         if (existingFacet.configurationXmlTag == null) {
@@ -68,7 +68,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     }
   }
 
-  private fun findFacetById(facets: List<ModifiableFacetEntity>, id: FacetId): ModifiableFacetEntity? {
+  private fun findFacetById(facets: List<FacetEntityBuilder>, id: FacetId): FacetEntityBuilder? {
     for (facet in facets) {
       if (FacetId(facet.name, facet.typeId, ModuleId(facet.module.name)) == id) return facet
       val subs = findFacetById(facet.childrenFacets, id)
@@ -120,7 +120,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
   }
 
   override fun serializeIntoXmlBuilder(entity: WorkspaceEntity.Builder<out FacetEntity>, module: ModuleEntity): Element {
-    entity as ModifiableFacetEntity
+    entity as FacetEntityBuilder
     return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
   }
 

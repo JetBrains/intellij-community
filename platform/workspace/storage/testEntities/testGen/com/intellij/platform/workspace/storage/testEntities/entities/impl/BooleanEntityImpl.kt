@@ -3,22 +3,20 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableBooleanEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -51,7 +49,7 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
 
 
   internal class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(
-    result), ModifiableBooleanEntity {
+    result), BooleanEntityBuilder {
     internal constructor() : this(BooleanEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -123,7 +121,7 @@ internal class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
   var data: Boolean = false
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<BooleanEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<BooleanEntity> {
     val modifiable = BooleanEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -150,7 +148,7 @@ internal class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
     return BooleanEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return BooleanEntity(data, entitySource) {
     }
   }

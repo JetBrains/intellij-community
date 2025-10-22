@@ -3,22 +3,20 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentWithNullsOppositeMultiple
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultiple
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultipleBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -52,7 +50,7 @@ internal class ParentWithNullsOppositeMultipleImpl(private val dataSource: Paren
 
 
   internal class Builder(result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple, ParentWithNullsOppositeMultipleData>(
-    result), ModifiableParentWithNullsOppositeMultiple {
+    result), ParentWithNullsOppositeMultipleBuilder {
     internal constructor() : this(ParentWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -128,7 +126,7 @@ internal class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentW
 
   internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ParentWithNullsOppositeMultiple> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentWithNullsOppositeMultiple> {
     val modifiable = ParentWithNullsOppositeMultipleImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -155,7 +153,7 @@ internal class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentW
     return ParentWithNullsOppositeMultiple::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ParentWithNullsOppositeMultiple(parentData, entitySource) {
     }
   }

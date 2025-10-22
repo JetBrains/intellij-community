@@ -1,10 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.projectModel.impl
 
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -18,8 +17,8 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
-import org.jetbrains.plugins.gradle.model.projectModel.ModifiableGradleModuleEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -58,7 +57,7 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
 
 
   internal class Builder(result: GradleModuleEntityData?) : ModifiableWorkspaceEntityBase<GradleModuleEntity, GradleModuleEntityData>(
-    result), ModifiableGradleModuleEntity {
+    result), GradleModuleEntityBuilder {
     internal constructor() : this(GradleModuleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -126,16 +125,16 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
 
       }
 
-    override var module: ModifiableModuleEntity
+    override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModifiableModuleEntity)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder
         }
       }
       set(value) {
@@ -218,7 +217,7 @@ internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleModuleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleModuleEntity> {
     val modifiable = GradleModuleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -244,9 +243,9 @@ internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(
     return GradleModuleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return GradleModuleEntity(gradleProjectId, entitySource) {
-      parents.filterIsInstance<ModifiableModuleEntity>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
 

@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.EntitySource
@@ -49,7 +49,7 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsFacetBridgeEntity>
    * @param evaluateEntitySource function which should be invoked to get [com.intellij.platform.workspace.storage.EntitySource]
    * for your entities and externalSystemId which should be stored somewhere in your entities
    */
-  fun loadEntitiesFromFacetState(moduleEntity: ModifiableModuleEntity, facetState: FacetState, evaluateEntitySource: (FacetState) -> EntitySource)
+  fun loadEntitiesFromFacetState(moduleEntity: ModuleEntityBuilder, facetState: FacetState, evaluateEntitySource: (FacetState) -> EntitySource)
 
   /**
    * Create intermediate representation from entities of declared at [rootEntityType] type which will be used for serialization on disk.
