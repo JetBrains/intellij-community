@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
+import com.intellij.remoteDev.tests.impl.utils.serialization.SerializedLambdaLoader
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
@@ -46,13 +47,9 @@ import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
-import java.io.InputStream
-import java.io.ObjectInputStream
-import java.io.ObjectStreamClass
 import java.net.InetAddress
+import java.net.URLClassLoader
 import java.time.LocalTime
-import java.util.*
-import java.util.function.Consumer
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import kotlin.reflect.KClass
@@ -91,16 +88,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         with(lambdaIdeContext) {
           lambda(args = args)
         }
-      }
-    }
-
-    class ClassLoaderObjectInputStream(
-      inputStream: InputStream,
-      private val classLoader: ClassLoader,
-    ) : ObjectInputStream(inputStream) {
-
-      override fun resolveClass(desc: ObjectStreamClass): Class<*> {
-        return Class.forName(desc.name, false, classLoader)
       }
     }
   }
@@ -158,7 +145,11 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
     val namedLambdas = (companionClasses + nestedClasses + testClass)
       .filter { it.isSubclassOf(NamedLambda::class) }
-      .map { it.constructors.single().call(ideContext, testPlugin) as NamedLambda<*> }
+      .mapNotNull {
+        runCatching {
+          it.constructors.single().call(ideContext, testPlugin) as NamedLambda<*> //todo maybe we can filter out constuctor in a more clever way
+        }.getOrNull()
+      }
 
     LOG.info("Found ${namedLambdas.size} lambda classes: ${namedLambdas.joinToString(", ") { it.name() }}")
 
@@ -199,16 +190,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           WinFocusStealer.setFocusStealingEnabled(true)
         }
 
-        val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
-                           ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
-
-        val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
-                         ?: error("Test plugin with test module '$testModuleId' is not found")
-
-        LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
-
-
-        val ideContext = when (session.rdIdeInfo.ideType) {
+        val ideContext = when (session.rdIdeType) {
           LambdaRdIdeType.BACKEND -> LambdaBackendContextClass()
           LambdaRdIdeType.FRONTEND -> LambdaFrontendContextClass()
           LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass()
@@ -216,6 +198,16 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
+          LOG.info("'${parameters.reference}': received lambda execution request")
+
+          val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
+                             ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
+
+          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
+                           ?: error("Test plugin with test module '$testModuleId' is not found")
+
+          LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
+
           val lambdaReference = parameters.reference
           val namedLambdas = findLambdaClasses(lambdaReference = lambdaReference, testPlugin = testPlugin, ideContext = ideContext)
 
@@ -251,7 +243,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             }
           }
           catch (ex: Throwable) {
-            LOG.warn("${session.rdIdeInfo.id}: ${parameters.let { "'$it' " }}hasn't finished successfully", ex)
+            LOG.warn("${session.rdIdeType}: ${parameters.let { "'$it' " }}hasn't finished successfully", ex)
             throw ex
           }
         }
@@ -274,20 +266,12 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
               assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
-              val consumer = run {
-                val old = Thread.currentThread().contextClassLoader
-                Thread.currentThread().contextClassLoader = testPlugin.pluginClassLoader
-                try {
-                  val bytes = Base64.getDecoder().decode(serializedLambda.serializedDataBase64)
-                  ClassLoaderObjectInputStream(bytes.inputStream(), testPlugin.pluginClassLoader!!).use { it.readObject() } as Consumer<Application>
-                }
-                finally {
-                  Thread.currentThread().contextClassLoader = old
-                }
-              }
-
+              val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
               runLogged(serializedLambda.methodName, 1.minutes) {
-                consumer.accept(app)
+                URLClassLoader(urls.toTypedArray(), Thread.currentThread().contextClassLoader).use {
+                  SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it)
+                    .accept(app)
+                }
               }
 
               // Assert state
@@ -295,7 +279,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             }
           }
           catch (ex: Throwable) {
-            LOG.warn("${session.rdIdeInfo.id}: ${serializedLambda.methodName.let { "'$it' " }}hasn't finished successfully", ex)
+            LOG.warn("${session.rdIdeType}: ${serializedLambda.methodName.let { "'$it' " }}hasn't finished successfully", ex)
             throw ex
           }
           return@setSuspend

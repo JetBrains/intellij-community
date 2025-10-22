@@ -13,9 +13,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-open class BackgroundRun(val startResult: Deferred<IDEStartResult>, driverWithoutAwaitedConnection: Driver, val process: IDEHandle) {
+open class BackgroundRun(override val startResult: Deferred<IDEStartResult>, driverWithoutAwaitedConnection: Driver, override val process: IDEHandle) : IBackgroundRun {
 
-  val driver: Driver by lazy {
+  override val driver: Driver by lazy {
     if (!driverWithoutAwaitedConnection.isConnected) {
       runCatching {
         waitFor("Driver is connected", 3.minutes) {
@@ -53,7 +53,7 @@ open class BackgroundRun(val startResult: Deferred<IDEStartResult>, driverWithou
     return ideStartResult
   }
 
-  open fun closeIdeAndWait(closeIdeTimeout: Duration = 1.minutes, takeScreenshot: Boolean = true) {
+  override fun closeIdeAndWait(closeIdeTimeout: Duration, takeScreenshot: Boolean) {
     driver.closeIdeAndWait(closeIdeTimeout, takeScreenshot)
   }
 
@@ -92,7 +92,7 @@ open class BackgroundRun(val startResult: Deferred<IDEStartResult>, driverWithou
     }
   }
 
-  private fun forceKill() {
+  override fun forceKill() {
     logOutput("Performing force kill")
     process.kill()
   }

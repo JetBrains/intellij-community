@@ -11,11 +11,6 @@ object LambdaTestRoot : Root()
 @Suppress("unused")
 object LambdaTestModel : Ext(LambdaTestRoot) {
 
-  private val LambdaRdIdeInfo = structdef {
-    field("id", string)
-    field("ideType", LambdaRdIdeType)
-  }
-
   private val LambdaRdIdeType = enum {
     +"BACKEND"
     +"FRONTEND"
@@ -54,19 +49,20 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     field("parameters", immutableList(LambdaRdKeyValueEntry).nullable)
   }
 
-  private val LambdaRdSerializedLambdaParameters = structdef {
+  private val LambdaRdSerializedLambda = structdef {
     field("clazzName", string)
     field("methodName", string)
     field("serializedDataBase64", string)
+    field("classPath", immutableList(string))
   }
 
   private val LambdaRdTestSession = classdef {
-    field("rdIdeInfo", LambdaRdIdeInfo)
+    field("rdIdeType", LambdaRdIdeType)
     property("ready", bool.nullable)
     signal("sendException", LambdaRdTestSessionException).async
     call("closeAllOpenedProjects", void, bool).async
     call("runLambda", LambdaRdTestActionParameters, void).async
-    call("runSerializedLambda", LambdaRdSerializedLambdaParameters, void).async
+    call("runSerializedLambda", LambdaRdSerializedLambda, void).async
     call("requestFocus", bool, bool).async
     call("isFocused", void, bool).async
     call("visibleFrameNames", void, immutableList(string)).async
