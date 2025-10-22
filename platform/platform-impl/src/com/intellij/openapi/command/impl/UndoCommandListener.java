@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,14 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-final class UndoCommandListener implements CommandListener {
+final class UndoCommandListener implements SeparatedCommandListener {
 
   private static final Logger LOG = Logger.getInstance(UndoCommandListener.class);
 
   private final @Nullable Project project;
   private final @NotNull UndoManagerImpl undoManager;
-
-  private boolean isTransparentActionStarted;
 
   @SuppressWarnings("unused")
   UndoCommandListener(@NotNull Project project) {
@@ -36,56 +32,40 @@ final class UndoCommandListener implements CommandListener {
   }
 
   @Override
-  public void commandStarted(@NotNull CommandEvent event) {
-    if (projectNotDisposed() && !isTransparentActionStarted) {
+  public void onCommandStarted(
+    @Nullable CommandId commandId,
+    @Nullable Project commandProject,
+    @Nullable String commandName,
+    @Nullable Object commandGroupId,
+    @NotNull UndoConfirmationPolicy confirmationPolicy,
+    boolean recordOriginalReference,
+    boolean isTransparent
+  ) {
+    if (projectNotDisposed()) {
       undoManager.onCommandStarted(
-        event.getProject(),
-        event.getCommandName(),
-        event.getCommandGroupId(),
-        event.getUndoConfirmationPolicy(),
-        event.shouldRecordActionForOriginalDocument(),
-        false
+        isTransparent ? project : commandProject,
+        commandName,
+        commandGroupId,
+        confirmationPolicy,
+        recordOriginalReference,
+        isTransparent
       );
     }
   }
 
   @Override
-  public void commandFinished(@NotNull CommandEvent event) {
-    if (projectNotDisposed() && !isTransparentActionStarted) {
+  public void onCommandFinished(
+    @Nullable Project commandProject,
+    @Nullable String commandName,
+    @Nullable Object commandGroupId,
+    boolean isTransparent
+  ) {
+    if (projectNotDisposed()) {
       undoManager.onCommandFinished(
-        event.getProject(),
-        event.getCommandName(),
-        event.getCommandGroupId()
+        isTransparent ? project : commandProject,
+        commandName,
+        commandGroupId
       );
-    }
-  }
-
-  @Override
-  public void undoTransparentActionStarted() {
-    if (projectNotDisposed() && !undoManager.isInsideCommand()) {
-      try {
-        undoManager.onCommandStarted(
-          project,
-          "",
-          null,
-          UndoConfirmationPolicy.DEFAULT,
-          true,
-          true
-        );
-      } finally {
-        isTransparentActionStarted = true;
-      }
-    }
-  }
-
-  @Override
-  public void undoTransparentActionFinished() {
-    if (projectNotDisposed() && isTransparentActionStarted) {
-      try {
-        undoManager.onCommandFinished(project, "", null);
-      } finally {
-        isTransparentActionStarted = false;
-      }
     }
   }
 
