@@ -122,6 +122,11 @@ private class VerticalToolbarLayoutStrategy(
     WelcomeScreenToolbarType.TOOLWINDOW -> 2 // + 3 * 2 = 8, from DarculaDisclosureButtonBorder
   }
 
+  private val unscaledPreferredButtonWidth = when (type) {
+    WelcomeScreenToolbarType.FRAME -> 278
+    WelcomeScreenToolbarType.TOOLWINDOW -> 0
+  }
+
   override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
     val res = mutableListOf<Rectangle>()
 
@@ -147,7 +152,14 @@ private class VerticalToolbarLayoutStrategy(
       width = maxOf(width, preferredSize.width)
       height += preferredSize.height + JBUI.scale(unscaledVerticalGap)
     }
-    if (height > 0) height -= JBUI.scale(unscaledVerticalGap)
+    if (height > 0) {
+      height -= JBUI.scale(unscaledVerticalGap) // the last button needs no gap
+    }
+
+    if (width > 0) {
+      width = maxOf(width, JBUI.scale(unscaledPreferredButtonWidth))
+    }
+
     val result = JBUI.size(width, height)
     JBInsets.addTo(result, toolbar.component.insets)
     return result
