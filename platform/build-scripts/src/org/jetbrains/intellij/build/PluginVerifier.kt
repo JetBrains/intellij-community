@@ -57,6 +57,7 @@ class PluginVerifier internal constructor(
     errFile: Path?,
     outFile: Path?,
     runtimeDir: Path? = null,
+    mute: List<String> = emptyList(),
   ): Boolean {
     val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHomeAndLog(COMMUNITY_ROOT))
 
@@ -72,7 +73,9 @@ class PluginVerifier internal constructor(
         ide.installationPath.pathString,
         "-verification-reports-dir",
         reportDir.pathString,
-        "-offline"
+        "-offline",
+        "-mute",
+        mute.joinToString(","),
       ).plus(
         if (runtimeDir != null) listOf("-runtime-dir", runtimeDir.pathString) else emptyList()
       ),
