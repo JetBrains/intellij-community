@@ -37,4 +37,5 @@ interface RunDashboardServiceRpc : RemoteApi<Unit> {
   suspend fun hideConfigurations(projectId: ProjectId, configurations: List<RunDashboardConfigurationId>)
   suspend fun getRunManagerUpdates(projectId: ProjectId): Flow<Unit>
   suspend fun editConfiguration(projectId: ProjectId, serviceId: RunDashboardServiceId)
+  suspend fun copyConfiguration(projectId: ProjectId, serviceId: RunDashboardServiceId)
 }
