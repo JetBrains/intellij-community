@@ -58,6 +58,9 @@ private class DecompilerInEditorListener : EditorFactoryListener {
 
     // We override this *only* to enforce the nice-looking minimum icon size.
     val statusToolbar = object : EditorInspectionsActionToolbar(defaultActionGroup, editor, editorButtonLook, null, null) {
+
+      override fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation) = true
+
       override fun createIconButton(action: AnAction, place: String, presentation: Presentation, minimumSize: Supplier<out Dimension>): ActionButton {
         return object : ToolbarActionButton(action, presentation, place, minimumSize) {
           override fun getPreferredSize(): Dimension {
