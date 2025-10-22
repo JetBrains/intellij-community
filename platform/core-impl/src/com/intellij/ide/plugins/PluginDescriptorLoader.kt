@@ -865,6 +865,7 @@ fun loadCorePlugin(
       useCoreClassLoader = useCoreClassLoader,
       reader = reader,
       isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+      useModuleDirAsParent = false,
     )
   }
 }
@@ -894,6 +895,7 @@ internal fun loadCoreProductPlugin(
   useCoreClassLoader: Boolean,
   reader: XMLStreamReader2,
   isRunningFromSourcesWithoutDevBuild: Boolean,
+  useModuleDirAsParent: Boolean = true,
 ): PluginMainDescriptor {
   val dataLoader = object : DataLoader {
     override val emptyDescriptorIfCannotResolve: Boolean
@@ -913,7 +915,7 @@ internal fun loadCoreProductPlugin(
     descriptor = descriptor,
     pathResolver = pathResolver,
     moduleDir = libDir,
-    useModuleDirAsParent = true,
+    useModuleDirAsParent = useModuleDirAsParent,
     loadingContext = loadingContext,
     dataLoader = dataLoader,
     isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild,
