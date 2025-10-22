@@ -101,7 +101,7 @@ sealed interface XDebuggerSessionEvent {
   @Serializable
   class StackFrameChanged(
     override val state: XDebugSessionState,
-    val sourcePosition: XSourcePositionDto?,
+    val sourcePositionDto: XSourcePositionDto?,
     val isTopFrame: Boolean,
     val stackFrame: XStackFrameDto?,
   ) : EventWithState
@@ -124,8 +124,8 @@ data class SuspendData(
   val suspendContextDto: XSuspendContextDto,
   val executionStack: XExecutionStackDto?,
   val stackFrame: XStackFrameDto?,
-  val sourcePosition: XSourcePositionDto?,
-  val topSourcePosition: XSourcePositionDto?,
+  val sourcePositionDto: XSourcePositionDto?,
+  val topSourcePositionDto: XSourcePositionDto?,
 )
 
 @ApiStatus.Internal
