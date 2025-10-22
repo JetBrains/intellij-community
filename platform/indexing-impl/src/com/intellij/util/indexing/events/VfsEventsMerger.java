@@ -69,14 +69,25 @@ public final class VfsEventsMerger {
 
   // NB: this code is executed not only during vfs events dispatch (in write action) but also during requestReindex (in read action)
   private void updateChange(int fileId, @NotNull VirtualFile file, @EventMask short mask) {
-    while (true) {
+    while (true) {// CAS-like loop:
       ChangeInfo existingChangeInfo = myChangeInfos.get(fileId);
+      if (existingChangeInfo != null && existingChangeInfo.eventMask == mask) {
+        return;//nothing to update
+      }
+
       ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
-      if(myChangeInfos.put(fileId, newChangeInfo) == existingChangeInfo) {
-        myPublishedEventIndex.incrementAndGet();
-        break;
+      if (existingChangeInfo == null) { //.replace() impl doesn't support oldValue=null, hence the branch:
+        if (myChangeInfos.putIfAbsent(fileId, newChangeInfo) == null) {
+          break;
+        }
+      }
+      else {
+        if (myChangeInfos.replace(fileId, existingChangeInfo, newChangeInfo)) {
+          break;
+        }
       }
     }
+    myPublishedEventIndex.incrementAndGet();
   }
 
   @FunctionalInterface
@@ -162,7 +173,7 @@ public final class VfsEventsMerger {
   private static final short FILE_TRANSIENT_STATE_CHANGED = 8;
 
   @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
-  @interface EventMask { }
+  @interface EventMask {}
 
   @VisibleForTesting
   public static final class ChangeInfo {
