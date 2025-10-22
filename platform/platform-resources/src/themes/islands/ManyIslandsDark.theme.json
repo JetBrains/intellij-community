@@ -89,8 +89,8 @@
       }
     },
 
-    "Borders.color": "#2E3033",
-    "Borders.ContrastBorderColor": "#2E3033",
+    "Borders.color": "BorderDark",
+    "Borders.ContrastBorderColor": "BorderDark",
     "MainWindow.FullScreeControl.Background": "#575A5C",
 
     "MainWindow.Tab": {
@@ -122,7 +122,7 @@
       "Header": {
         "background": "ToolWindowBackground",
         "inactiveBackground": "ToolWindowBackground",
-        "borderColor": "#2E3033"
+        "borderColor": "BorderDark"
       },
       "HeaderTab": {
         "hoverBackground": "HoverBackgroundMid",
