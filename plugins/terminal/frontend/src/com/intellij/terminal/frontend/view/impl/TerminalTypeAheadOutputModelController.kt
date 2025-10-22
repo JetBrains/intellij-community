@@ -10,11 +10,14 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.jediterm.terminal.TextStyle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
@@ -72,7 +75,8 @@ internal class TerminalTypeAheadOutputModelController(
 
     // At this moment we only support type-ahead at the end of the output
     if (outputModel.getTextAfterCursor().isBlank()) {
-      updateOutputModel { outputModel.insertAtCursor(string) }
+      val textStyle = outputModel.predictTextStyleForTypingAt(outputModel.cursorOffset)
+      updateOutputModel { outputModel.insertAtCursor(string, textStyle) }
       delayUpdatesFromBackend()
       LOG.trace { "String typed prediction inserted: '$string'" }
     }
@@ -212,12 +216,41 @@ internal class TerminalTypeAheadOutputModelController(
   }
 }
 
-private fun MutableTerminalOutputModel.insertAtCursor(string: String) {
+/**
+ * Tries to predict the style for the text on [offset] to match the style of the text before it.
+ * Returns null if the style can't be predicted.
+ */
+private fun TerminalOutputModel.predictTextStyleForTypingAt(offset: TerminalOffset): TextStyle? {
+  val lineIndex = getLineByOffset(offset)
+  val lineStartOffset = getStartOfLine(lineIndex)
+  if (offset == lineStartOffset || offset == startOffset) {
+    // We can't predict the style for typing at the beginning of the line / model text
+    return null
+  }
+
+  val previousOffset = offset - 1
+  val textBefore = getText(previousOffset, offset).toString()
+  if (textBefore.any { !it.isLetterOrDigit() }) {
+    // Let's do not predict the style on typing after non-letter/digit characters.
+    // For example, shell can highlight parenthesis differently than the text after them.
+    return null
+  }
+
+  val highlighting = getHighlightingAt(previousOffset)
+  val textStyleAdapter = highlighting?.textAttributesProvider as? TextStyleAdapter ?: return null
+  return textStyleAdapter.style
+}
+
+/**
+ * @param style a text style to apply to the inserted [string]. Null value means to use the default style.
+ */
+private fun MutableTerminalOutputModel.insertAtCursor(string: String, style: TextStyle? = null) {
   withTypeAhead {
     val remainingLinePart = getRemainingLinePart()
     val replaceLength = string.length.coerceAtMost(remainingLinePart.length)
     val replaceOffset = cursorOffset
-    replaceContent(replaceOffset, replaceLength, string, emptyList())
+    val styleRange = style?.let { StyleRange(0, string.length.toLong(), it, ignoreContrastAdjustment = false) }
+    replaceContent(replaceOffset, replaceLength, string, listOfNotNull(styleRange))
     // Do not reuse the cursorOffsetState.value because replaceContent might change it.
     // Instead, compute the new offset using the absolute offsets.
     val newCursorOffset = TerminalOffset.of(replaceOffset.toAbsolute() + string.length).coerceAtMost(endOffset)
