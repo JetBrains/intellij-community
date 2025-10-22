@@ -140,4 +140,12 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
       }
     }
   }
+
+  override suspend fun copyConfiguration(projectId: ProjectId, serviceId: RunDashboardServiceId) {
+    val project = projectId.findProjectOrNull() ?: return
+    val backendService = RunDashboardManagerImpl.getInstance(project).findServiceById(serviceId) ?: return
+    withContext(Dispatchers.EDT) {
+      RunDashboardEditConfigurationUtils.editConfiguration(project, backendService)
+    }
+  }
 }

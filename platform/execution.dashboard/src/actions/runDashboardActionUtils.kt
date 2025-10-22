@@ -26,6 +26,12 @@ internal fun scheduleEditConfiguration(serviceId: RunDashboardServiceId, project
   }
 }
 
+internal fun scheduleCopyConfiguration(serviceId: RunDashboardServiceId, project: Project) {
+  RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+    RunDashboardServiceRpc.getInstance().copyConfiguration(project.projectId(), serviceId)
+  }
+}
+
 internal fun scheduleUpdateRunConfigurationFolderNames(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, project: Project) {
   RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
     RunDashboardServiceRpc.getInstance().updateConfigurationFolderName(serviceIds, newGroupName, project.projectId())
