@@ -177,7 +177,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     }.andTransparent()
       .apply {
         border = JBUI.Borders.empty(13, 12)
-        initDnD(this)
+        initDnD(treeComponent)
       }
   }
 
