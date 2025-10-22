@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -46,62 +47,69 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       }
     }
 
-    var expectedExecutionTree: String
-    when {
-      isGradleAtLeast("4.7") -> expectedExecutionTree =
-        "-\n" +
-        " -successful\n" +
-        "  :api:compileJava\n" +
-        "  :api:processResources\n" +
-        "  :api:classes\n" +
-        "  :api:jar\n" +
-        "  -:impl:compileJava\n" +
-        "   -App.java\n" +
-        "    uses or overrides a deprecated API.\n" +
-        "  :impl:processResources\n" +
-        "  :impl:classes"
-      else -> expectedExecutionTree =
-        "-\n" +
-        " -successful\n" +
-        "  :api:compileJava\n" +
-        "  :api:processResources\n" +
-        "  :api:classes\n" +
-        "  :api:jar\n" +
-        "  :impl:compileJava\n" +
-        "  :impl:processResources\n" +
-        "  -App.java\n" +
-        "   uses or overrides a deprecated API.\n" +
-        "  :impl:classes"
-    }
     compileModules("project.impl.main")
-    assertBuildViewTreeSame(expectedExecutionTree)
-
-    val compilationReportErrors = when {
-      isGradleAtLeast("8.14") -> "\n    invalid method declaration; return type required" +
-                                 "\n    ';' expected"
-      isGradleAtLeast("8.11") -> "\n    ';' expected" +
-                                 "\n    invalid method declaration; return type required"
-      else -> ""
+    assertBuildViewTree {
+      assertNode("successful") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":api:compileJava")
+        assertNode(":api:processResources")
+        assertNode(":api:classes")
+        assertNode(":api:jar")
+        if (isGradleAtLeast("4.7")) {
+          assertNode(":impl:compileJava") {
+            assertNode("App.java") {
+              assertNode("uses or overrides a deprecated API.")
+            }
+          }
+          assertNode(":impl:processResources")
+          assertNode(":impl:classes")
+        }
+        else {
+          assertNode(":impl:compileJava")
+          assertNode(":impl:processResources")
+          assertNode(":impl:classes")
+          assertNode("App.java") {
+            assertNode("uses or overrides a deprecated API.")
+          }
+        }
+      }
     }
 
-    when {
-      isGradleAtLeast("4.7") -> expectedExecutionTree =
-        "-\n" +
-        " -failed\n" +
-        "  -:brokenProject:compileJava\n" +
-        "   -App2.java\n" +
-        "    ';' expected\n" +
-        "    invalid method declaration; return type required$compilationReportErrors"
-      else -> expectedExecutionTree =
-        "-\n" +
-        " -failed\n" +
-        "  :brokenProject:compileJava\n" +
-        "  -App2.java\n" +
-        "   ';' expected\n" +
-        "   invalid method declaration; return type required"
+    fun SimpleTreeAssertion.Node<Nothing?>.assertCompilationReportErrors() {
+      when {
+        isGradleAtLeast("8.14") -> {
+          assertNode("invalid method declaration; return type required")
+          assertNode("';' expected")
+        }
+        isGradleAtLeast("8.11") -> {
+          assertNode("';' expected")
+          assertNode("invalid method declaration; return type required")
+        }
+      }
     }
+
     compileModules("project.brokenProject.main")
-    assertBuildViewTreeSame(expectedExecutionTree)
+    assertBuildViewTree {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        if (isGradleAtLeast("4.7")) {
+          assertNode(":brokenProject:compileJava") {
+            assertNode("App2.java") {
+              assertNode("';' expected")
+              assertNode("invalid method declaration; return type required")
+              assertCompilationReportErrors()
+            }
+          }
+        }
+        else {
+          assertNode(":brokenProject:compileJava")
+          assertNode("App2.java") {
+            assertNode("';' expected")
+            assertNode("invalid method declaration; return type required")
+          }
+        }
+      }
+    }
   }
 
   @Test
@@ -116,16 +124,17 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       }
     }
     compileModules("project.test")
-    assertBuildViewTreeEquals("""
-                              |-
-                              | -successful
-                              |  :compileJava
-                              |  :processResources
-                              |  :classes
-                              |  :compileTestJava
-                              |  :processTestResources
-                              |  :testClasses
-                              """.trimMargin())
+    assertBuildViewTree {
+      assertNode("successful") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode(":processTestResources")
+        assertNode(":testClasses")
+      }
+    }
   }
 
   @Test
@@ -137,15 +146,16 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:4.12")
     }
     compileModules("project.test")
-    assertBuildViewTreeEquals("""
-                              |-
-                              | -failed
-                              |  :compileJava
-                              |  :processResources
-                              |  :classes
-                              |  :compileTestJava
-                              |  Could not resolve junit:junit:4.12 because no repositories are defined
-                              """.trimMargin())
+    assertBuildViewTree {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("Could not resolve junit:junit:4.12 because no repositories are defined")
+      }
+    }
     assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
                                 """
                                 |Could not resolve all files for configuration ':testCompileClasspath'.
@@ -170,16 +180,17 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:4.12")
     }
     compileModules("project.test")
-    assertBuildViewTreeEquals("""
-                              |-
-                              | -failed
-                              |  :compileJava
-                              |  :processResources
-                              |  :classes
-                              |  -:compileTestJava
-                              |   Could not resolve junit:junit:4.12 because no repositories are defined
-                              """.trimMargin()
-    )
+    assertBuildViewTree {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava") {
+          assertNode("Could not resolve junit:junit:4.12 because no repositories are defined")
+        }
+      }
+    }
     val projectQualifier = when {
       isGradleAtLeast("9.0") -> "root project 'project'"
       isGradleAtLeast("8.10") -> "root project :"
@@ -214,15 +225,16 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModules("project.test")
-    assertBuildViewTreeEquals("""
-                              | -
-                              | -failed
-                              |  :compileJava
-                              |  :processResources
-                              |  :classes
-                              |  :compileTestJava
-                              |  Could not resolve junit:junit:99.99
-                              """.trimMargin())
+    assertBuildViewTree {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("Could not resolve junit:junit:99.99")
+      }
+    }
     assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
                                 """|Could not resolve all files for configuration ':testCompileClasspath'.
                                    |> Could not resolve junit:junit:99.99.
@@ -256,6 +268,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     compileModules("project.test")
     assertBuildViewTree {
       assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
         assertNode(":compileJava")
         assertNode(":processResources")
         assertNode(":classes")
@@ -297,16 +310,16 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModules("project.test")
-    assertBuildViewTreeEquals("""
-                              | -
-                              | -failed
-                              |  :compileJava
-                              |  :processResources
-                              |  :classes
-                              |  :compileTestJava
-                              |  Could not resolve junit:junit:99.99
-                              """.trimMargin()
-    )
+    assertBuildViewTree {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("Could not resolve junit:junit:99.99")
+      }
+    }
     val repositoryPrefix = if (isGradleOlderThan("4.8")) " " else "-"
     assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
                                 """Could not resolve all files for configuration ':testCompileClasspath'.
@@ -343,15 +356,17 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModules("project.test")
-    assertBuildViewTreeEquals("""
-                              |-
-                              | -failed
-                              |  :compileJava
-                              |  :processResources
-                              |  :classes
-                              |  -:compileTestJava
-                              |   Could not resolve junit:junit:99.99
-                              """.trimMargin())
+    assertBuildViewTree {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava") {
+          assertNode("Could not resolve junit:junit:99.99")
+        }
+      }
+    }
     val projectQualifier = when {
       isGradleAtLeast("9.0") -> "root project 'project'"
       isGradleAtLeast("8.10") -> "root project :"

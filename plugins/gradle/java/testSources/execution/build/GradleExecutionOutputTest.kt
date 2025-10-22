@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
+import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
@@ -26,6 +27,7 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       executeTasks(":task")
       assertRunViewTree {
         assertNode("successful") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":task")
         }
       }
@@ -58,6 +60,7 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       executeTasks(":failingTask")
       assertRunViewTree {
         assertNode("failed") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":failingTask") {
             assertNode("build.gradle") {
               assertNode("java.lang.Exception: Task failure")
@@ -111,6 +114,7 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       executeTasks(":failingTasksGroup --continue")
       assertRunViewTree {
         assertNode("failed") {
+          assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":failingTask1")
           assertNode(":failingTask2")
         }
