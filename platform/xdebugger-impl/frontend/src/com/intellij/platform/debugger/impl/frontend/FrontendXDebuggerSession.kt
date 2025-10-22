@@ -77,6 +77,9 @@ class FrontendXDebuggerSession private constructor(
   @Volatile
   private var tabInfoInitialized = false
 
+  @Volatile
+  private var isTopFrameSelected = false
+
   private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
   override val runContentDescriptorId: RunContentDescriptorIdImpl? = sessionDto.runContentDescriptorId
   override val id: XDebugSessionId = sessionDto.id
@@ -234,6 +237,7 @@ class FrontendXDebuggerSession private constructor(
       }
       is XDebuggerSessionEvent.StackFrameChanged -> {
         updateState()
+        isTopFrameSelected = isTopFrame
         sourcePositionFlow.value = sourcePosition?.sourcePosition()
         val newFrame = stackFrame?.let {
           suspendContext.value?.getOrCreateStackFrame(it)
@@ -251,6 +255,7 @@ class FrontendXDebuggerSession private constructor(
 
   private fun clearSuspendContext() {
     suspendContext.getAndUpdate { null }?.cancel()
+    isTopFrameSelected = false
     sourcePositionFlow.value = null
     topSourcePositionFlow.value = null
     currentExecutionStack.value = null
@@ -269,6 +274,7 @@ class FrontendXDebuggerSession private constructor(
     }
     currentExecutionStack.value = stack
     currentSuspendContext.activeExecutionStack = stack
+    isTopFrameSelected = stack != null
 
     val frame = stackFrameDto?.let {
       suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
@@ -385,6 +391,7 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
+    isTopFrameSelected = isTopFrame
     currentExecutionStack.value = executionStack as FrontendXExecutionStack
     frame as FrontendXStackFrame
     currentStackFrame.value = StackFrameUpdate.notifyChanged(frame)
@@ -395,8 +402,7 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun isTopFrameSelected(): Boolean {
-    // TODO: [IJPL-177087] this should be reworked after [FrontendXExecutionStack#getTopFrame]
-    return XSourcePosition.isOnTheSameLine(getCurrentStackFrame()?.sourcePosition, getTopFramePosition())
+    return getCurrentStackFrame() != null && isTopFrameSelected
   }
 
   override fun hasSuspendContext(): Boolean {
