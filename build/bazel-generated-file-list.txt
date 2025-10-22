@@ -1171,6 +1171,7 @@ plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1
 plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2
 plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared
 plugins/kotlin/grazie
+plugins/kotlin/grazie/intellij.kotlin.grazie.tests
 plugins/kotlin/highlighting/highlighting-k1
 plugins/kotlin/highlighting/highlighting-k2
 plugins/kotlin/highlighting/highlighting-minimal

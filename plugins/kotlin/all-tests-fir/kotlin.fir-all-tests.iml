@@ -65,5 +65,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.grazie.tests" scope="RUNTIME" />
   </component>
 </module>
