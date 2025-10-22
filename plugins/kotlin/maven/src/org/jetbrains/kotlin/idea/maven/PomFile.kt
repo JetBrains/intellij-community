@@ -39,6 +39,10 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartList
+import java.io.File
+
+private const val KOTLIN_SOURCE_ENTRY = "src/main/kotlin"
+private const val KOTLIN_TEST_SOURCE_ENTRY = "src/test/kotlin"
 
 class PomFile private constructor(private val xmlFile: XmlFile, val domModel: MavenDomProjectModel) {
     constructor(xmlFile: XmlFile) : this(
@@ -214,15 +218,24 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         isTest: Boolean,
         goals: List<String>
     ) {
-        val execution = addExecution(plugin, executionId, phase, goals)
+        val contentEntries = ModuleRootManager.getInstance(module).contentEntries
 
-        val sourceDirs = ModuleRootManager.getInstance(module)
-            .contentEntries
+        val sourceDirs = contentEntries
             .flatMap { it.sourceFolders.filter { it.isRelatedSourceRoot(isTest) } }
-            .mapNotNull { it.file }
+            .mapNotNull { it.file } // filters out source paths for which directories don't exist
             .mapNotNull { VfsUtilCore.getRelativePath(it, xmlFile.virtualFile.parent, '/') }
+            .toMutableSet()
 
-        executionSourceDirs(execution, sourceDirs)
+        // Adds a Kotlin source path if it exists
+        for (contentEntry in contentEntries) {
+            val contentEntryPath = contentEntry.file?.path ?: return
+            val kotlinEntry = if (isTest) KOTLIN_TEST_SOURCE_ENTRY else KOTLIN_SOURCE_ENTRY
+            val file = resolveRelativePath(kotlinEntry, contentEntryPath)
+            if (file.exists()) sourceDirs.add(kotlinEntry) else continue
+        }
+
+        val execution = addExecution(plugin, executionId, phase, goals)
+        executionSourceDirs(execution, sourceDirs.toList())
     }
 
     fun isPluginExecutionMissing(plugin: MavenPlugin?, excludedExecutionId: String, goal: String): Boolean =
@@ -318,7 +331,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             val sourceDirsTag = executionConfiguration(execution, "sourceDirs")
             execution.configuration.createChildTag("sourceDirs")?.let { newSourceDirsTag ->
                 for (dir in sourceDirs) {
-                    newSourceDirsTag.add(newSourceDirsTag.createChildTag("source", dir))
+                    newSourceDirsTag.add(newSourceDirsTag.createChildTag("sourceDir", dir))
                 }
                 sourceDirsTag.replace(newSourceDirsTag)
             }
@@ -729,5 +742,9 @@ private tailrec fun XmlTag.deleteCascade() {
     if (oldParent != null && oldParent.subTags.isEmpty()) {
         oldParent.deleteCascade()
     }
+}
+
+private fun resolveRelativePath(relativePath: String, contentEntryPath: String): File {
+    return File(contentEntryPath, relativePath.replace("/", File.separator))
 }
 
