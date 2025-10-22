@@ -12,6 +12,7 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
@@ -31,16 +32,11 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
 
     PythonSdkUtil.getAllSdks().find { sdk -> sdk.isPoetry && sdk.homePath == pythonBinaryPath.toString() }?.let { return Result.success(it) }
 
-    val module = when (moduleOrProject) {
-      is ModuleOrProject.ModuleAndProject -> {
-        moduleOrProject.module
-      }
-      else -> null
-    }
-    val moduleBasePath = module?.basePath?.let { Path.of(it) } ?: error("module base path is not valid: ${module?.basePath}")
+    val basePathString = moduleOrProject.moduleIfExists?.basePath ?: moduleOrProject.project.basePath
+    val basePath = basePathString?.let { Path.of(it) } ?: error("module base path is not valid: $basePathString")
 
     return createPoetrySdk(
-      moduleBasePath,
+      basePath,
       existingSdks = ProjectJdkTable.getInstance().allJdks.toList(),
       pythonBinaryPath = pythonBinaryPath
     )
