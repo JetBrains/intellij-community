@@ -20,13 +20,13 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Experimental
 open class XDebuggerExecutionStackDescriptionService() {
 
-  protected open suspend fun doGetExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy): XDebuggerExecutionStackDescription = throw IllegalStateException("Not supposed to call this method")
+  protected open suspend fun doGetExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy, forceReevaluation: Boolean): XDebuggerExecutionStackDescription = throw IllegalStateException("Not supposed to call this method")
 
   @Nls
-  fun getExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy): Deferred<XDebuggerExecutionStackDescription> {
+  fun getExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy, forceReevaluation: Boolean = false): Deferred<XDebuggerExecutionStackDescription> {
     val currentSuspendContextCoroutineScope = sessionProxy.currentSuspendContextCoroutineScope ?: throw CancellationException()
     return currentSuspendContextCoroutineScope.async(Dispatchers.Default) {
-      doGetExecutionStackDescription(stack, sessionProxy)
+      doGetExecutionStackDescription(stack, sessionProxy, forceReevaluation)
     }
   }
 
