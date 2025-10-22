@@ -716,7 +716,11 @@
       "StatusBar.background": "AltBackgroundLight",
 
       "ToolWindow.Header.inactiveBackground": "#212326",
-      "ToolWindow.background": "#212326"
+      "ToolWindow.background": "#212326",
+
+      "Borders.color": "#2E3033",
+      "Borders.ContrastBorderColor": "#2E3033",
+      "ToolWindow.Header.borderColor": "#2E3033"
     },
 
     "AlertDialog.background": "PopupBackground"
