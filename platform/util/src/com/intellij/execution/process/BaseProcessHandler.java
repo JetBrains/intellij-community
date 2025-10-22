@@ -79,11 +79,17 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
       try {
         pid = (long)Process.class.getDeclaredMethod("pid").invoke(myProcess);
       }
-      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-        LOG.error("Failed to call Process.pid()", e);
+      catch (IllegalAccessException | NoSuchMethodException | IllegalArgumentException e) {
+        LOG.error("Failed to access Process.pid()", e);
         return null;
       }
-      catch (UnsupportedOperationException e) {
+      catch (InvocationTargetException e) {
+        Throwable targetException = e.getTargetException();
+        if (targetException instanceof UnsupportedOperationException) {
+          // it's a valid result, just ignore it
+        } else {
+          LOG.error("Call to Process.pid() failed", targetException);
+        }
         return null;
       }
     }
