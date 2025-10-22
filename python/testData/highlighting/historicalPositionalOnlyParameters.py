@@ -16,3 +16,4 @@ class A:
     def s1(__b): pass
     @staticmethod
     def s1(a, <warning descr="Positional-only parameter follows parameter that is not positional-only">__b</warning>): pass
+    def __new__(cls, __b): pass
