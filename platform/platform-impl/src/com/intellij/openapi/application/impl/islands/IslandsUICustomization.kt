@@ -131,7 +131,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  private var isBrightCached = false
+
+  private val uiSettings by lazy { UISettings.getInstance() }
+
   private val awtListener = AWTEventListener { event ->
+    if (!isBrightCached && !uiSettings.differentToolwindowBackground) {
+      return@AWTEventListener
+    }
+
     val component = (event as HierarchyEvent).component
     val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
 
@@ -145,7 +153,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   init {
-    if (isManyIslandEnabled && JBColor.isBright()) {
+    if (isManyIslandEnabled) {
+      isBrightCached = JBColor.isBright()
       Toolkit.getDefaultToolkit().addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
     }
 
@@ -160,7 +169,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       val newManyIsland = isManyIslandEnabled
 
-      if (newManyIsland && JBColor.isBright()) {
+      if (newManyIsland) {
+        isBrightCached = JBColor.isBright()
         toolkit.addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
       }
 
