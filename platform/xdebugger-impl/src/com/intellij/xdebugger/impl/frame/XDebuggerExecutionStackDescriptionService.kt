@@ -39,6 +39,6 @@ open class XDebuggerExecutionStackDescriptionService() {
 @ApiStatus.Experimental
 @Serializable
 data class XDebuggerExecutionStackDescription(
-  @SerialName("ShortDescription") @Nls val shortDescription: String,
-  @SerialName("LongDescription") @Nls val longDescription: String
+  @SerialName("ShortDescription") @param:Nls val shortDescription: String,
+  @SerialName("LongDescription") @param:Nls val longDescription: String
 )
