@@ -8,7 +8,6 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -42,6 +41,6 @@ fun TerminalToolWindowTabsManager.findTabByContent(content: Content): TerminalTo
 }
 
 @ApiStatus.Experimental
-interface TerminalTabsManagerListener : EventListener {
+interface TerminalTabsManagerListener {
   fun tabCreated(tab: TerminalToolWindowTab)
 }

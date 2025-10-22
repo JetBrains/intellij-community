@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
@@ -9,9 +10,10 @@ import com.intellij.terminal.frontend.view.TerminalTextSelection
 import com.intellij.terminal.frontend.view.TerminalTextSelectionChangeEvent
 import com.intellij.terminal.frontend.view.TerminalTextSelectionListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
-import com.intellij.util.EventDispatcher
 import com.intellij.util.asDisposable
+import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 
@@ -24,7 +26,7 @@ internal class TerminalTextSelectionModelImpl(
   override val selection: TerminalTextSelection?
     get() = getCurrentSelection()
 
-  private val dispatcher = EventDispatcher.create(TerminalTextSelectionListener::class.java)
+  private val listeners = DisposableWrapperList<TerminalTextSelectionListener>()
 
   init {
     val listener = MyEditorSelectionListener()
@@ -63,7 +65,7 @@ internal class TerminalTextSelectionModelImpl(
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalTextSelectionListener) {
-    dispatcher.addListener(listener, parentDisposable)
+    listeners.add(listener, parentDisposable)
   }
 
   private inner class MyEditorSelectionListener : SelectionListener {
@@ -79,7 +81,9 @@ internal class TerminalTextSelectionModelImpl(
 
       if (newSelection != oldSelection) {
         val event = TerminalTextSelectionChangeEventImpl(outputModel, oldSelection, newSelection)
-        dispatcher.multicaster.selectionChanged(event)
+        fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+          it.selectionChanged(event)
+        }
       }
     }
 
@@ -99,4 +103,8 @@ internal class TerminalTextSelectionModelImpl(
     override val oldSelection: TerminalTextSelection?,
     override val newSelection: TerminalTextSelection?,
   ) : TerminalTextSelectionChangeEvent
+
+  companion object {
+    private val LOG = logger<TerminalTextSelectionModelImpl>()
+  }
 }

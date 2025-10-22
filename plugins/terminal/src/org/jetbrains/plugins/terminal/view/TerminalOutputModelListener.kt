@@ -2,15 +2,15 @@
 package org.jetbrains.plugins.terminal.view
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 /**
  * A listener for terminal output model events.
+ * Any exceptions thrown by the listener are caught and logged to not break the [TerminalOutputModel] consistency.
  *
  * @see TerminalOutputModel.addListener
  */
 @ApiStatus.Experimental
-interface TerminalOutputModelListener : EventListener {
+interface TerminalOutputModelListener {
 
   /**
    * Called before every change in the model content.

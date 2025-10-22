@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.util
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.ProcessTtyConnector
 import com.jediterm.terminal.TtyConnector
@@ -70,3 +72,21 @@ internal fun TtyConnector.getDebugName(): @NonNls String {
 @ApiStatus.Internal
 @JvmField
 val STOP_EMULATOR_TIMEOUT: Duration = Duration.ofMillis(1500)
+
+@ApiStatus.Internal
+fun <T : Any> fireListenersAndLogAllExceptions(
+  listeners: List<T>,
+  logger: Logger,
+  message: String,
+  callListener: (T) -> Unit,
+) {
+  for (listener in listeners) {
+    try {
+      callListener(listener)
+    }
+    catch (e: Exception) {
+      // Even log a cancellation exception because we do not expect it to be thrown from the listener
+      PluginException.logPluginError(logger, message, e, listener.javaClass)
+    }
+  }
+}

@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.terminal.TerminalColorPalette
-import com.intellij.util.EventDispatcher
+import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
@@ -17,6 +17,7 @@ import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
 import org.jetbrains.plugins.terminal.view.*
 
 /**
@@ -32,7 +33,7 @@ class MutableTerminalOutputModelImpl(
 
   private val highlightingsModel = HighlightingsModel()
 
-  private val dispatcher = EventDispatcher.create(TerminalOutputModelListener::class.java)
+  private val listeners = DisposableWrapperList<TerminalOutputModelListener>()
 
   @VisibleForTesting
   var trimmedLinesCount: Long = 0
@@ -148,7 +149,11 @@ class MutableTerminalOutputModelImpl(
     if (cursorOffset == offset) return
     val oldValue = cursorOffset
     this.cursorOffset = offset
-    dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangeEventImpl(this, oldValue, offset))
+
+    val event = TerminalCursorOffsetChangeEventImpl(this, oldValue, offset)
+    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+      it.cursorOffsetChanged(event)
+    }
   }
 
   private fun ensureDocumentHasLine(lineIndex: TerminalLineIndex) {
@@ -302,7 +307,10 @@ class MutableTerminalOutputModelImpl(
   }
 
   private inline fun doSingleDocumentChange(isTypeAhead: Boolean, block: () -> TerminalContentChangeEventImpl): TerminalContentChangeEventImpl {
-    dispatcher.multicaster.beforeContentChanged(this)
+    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling beforeContentChanged event") {
+      it.beforeContentChanged(this)
+    }
+
     check(!contentUpdateInProgress) { "Recursive content updates aren't supported, schedule an update in a separate event if needed" }
     contentUpdateInProgress = true
     val event = try {
@@ -312,7 +320,10 @@ class MutableTerminalOutputModelImpl(
       contentUpdateInProgress = false
     }
     ensureCorrectCursorOffset()
-    dispatcher.multicaster.afterContentChanged(event)
+
+    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+      it.afterContentChanged(event)
+    }
     return event
   }
 
@@ -331,7 +342,7 @@ class MutableTerminalOutputModelImpl(
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
-    dispatcher.addListener(listener, parentDisposable)
+    listeners.add(listener, parentDisposable)
   }
 
   override fun withTypeAhead(block: () -> Unit) {
