@@ -39,7 +39,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -178,22 +177,36 @@ class InternalDecoratorImpl internal constructor(
       return preventRecoloring == true
     }
 
-    internal fun setBackgroundFor(component: Component, bg: Color) {
+    private fun updateBackgroundFor(component: Component): Boolean {
       if (component is ActionButton ||
           component is Divider ||
           component is JTextComponent ||
           component is JComboBox<*> ||
-          component is EditorTextField) return
+          component is EditorTextField) {
+        return false
+      }
       if (component.isBackgroundSet && component.background !is UIResource) {
+        return false
+      }
+      return true
+    }
+
+    private fun setBackgroundFor(component: Component, bg: Color) {
+      if (isRecursiveBackgroundUpdateDisabled(component)) {
         return
       }
-      component.background = bg
+      if (updateBackgroundFor(component)) {
+        component.background = bg
+      }
+      if (component is Container) {
+        for (child in component.components) {
+          setBackgroundFor(child, bg)
+        }
+      }
     }
 
     internal fun setBackgroundRecursively(component: Component, bg: Color) {
-      UIUtil.uiTraverser(component)
-        .expandAndFilter { !isRecursiveBackgroundUpdateDisabled(component) }
-        .forEach { setBackgroundFor(it, bg) }
+      setBackgroundFor(component, bg)
     }
 
     private fun installDefaultFocusTraversalKeys(container: Container, id: Int) {
