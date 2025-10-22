@@ -10,12 +10,14 @@ import com.intellij.tools.ide.starter.bus.shared.server.services.EventsFlowServi
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
-import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
+import io.netty.util.concurrent.DefaultThreadFactory
 import java.net.BindException
+import java.nio.channels.spi.SelectorProvider
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
@@ -29,6 +31,7 @@ object LocalEventBusServer : EventBusServer {
   private var bossGroup: EventLoopGroup? = null
   private var workerGroup: EventLoopGroup? = null
   private var serverChannel: Channel? = null
+  private val threadFactory: DefaultThreadFactory = DefaultThreadFactory("${LocalEventBusServer::class.simpleName}Thread")
 
   override val port: Int
     get() = portsPool[currentPortIndex]
@@ -54,8 +57,16 @@ object LocalEventBusServer : EventBusServer {
     try {
       eventsFlowService = EventsFlowService()
 
-      bossGroup = NioEventLoopGroup(1)
-      workerGroup = NioEventLoopGroup(Runtime.getRuntime().availableProcessors())
+      bossGroup = MultiThreadIoEventLoopGroup(
+        1,
+        threadFactory,
+        NioIoHandler.newFactory(SelectorProvider.provider(), DefaultSelectStrategyFactory.INSTANCE)
+      )
+      workerGroup = MultiThreadIoEventLoopGroup(
+        Runtime.getRuntime().availableProcessors(),
+        threadFactory,
+        NioIoHandler.newFactory(SelectorProvider.provider(), DefaultSelectStrategyFactory.INSTANCE)
+      )
 
       val bootstrap = ServerBootstrap()
       bootstrap.group(bossGroup, workerGroup)

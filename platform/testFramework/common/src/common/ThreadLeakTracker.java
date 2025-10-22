@@ -100,6 +100,7 @@ public final class ThreadLeakTracker {
       JVMResponsivenessMonitor.MONITOR_THREAD_NAME,
       "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
       "Keep-Alive-Timer",
+      "LocalEventBusServerThread", // com.intellij.tools.ide.starter.bus.shared.server.LocalEventBusServer
       "main",
       "Monitor Ctrl-Break",
       "Netty ",
