@@ -89,8 +89,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val isInDevServerMode = AppMode.isRunningFromDevBuild()
     val isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode
     val classpathPathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild)
-    val useCoreClassLoader = platformPrefix.startsWith("CodeServer") ||
-                             java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+    val useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val pathResolver = if (isRunningFromSourcesWithoutDevBuild) {
       RunningFromSourceModuleBasedPathResolver(moduleRepository, fallbackResolver = classpathPathResolver)
     }
@@ -98,7 +97,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       classpathPathResolver
     }
     val corePlugin = scope.async(Dispatchers.IO) {
-      loadCorePlugin(
+      deprecatedLoadCorePluginForModuleBasedLoader(
         platformPrefix = platformPrefix,
         isInDevServerMode = isInDevServerMode,
         isUnitTestMode = isUnitTestMode,
@@ -107,6 +106,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pathResolver = pathResolver,
         useCoreClassLoader = useCoreClassLoader,
         classLoader = mainClassLoader,
+        jarFileForModule = { moduleId, _ -> findProductContentModuleClassesRoot(moduleId) },
       )
     }
     val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)
@@ -309,10 +309,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
   }
 
-  override fun isOptionalProductModule(moduleId: String): Boolean =
-    productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleId))
+  override fun isOptionalProductModule(moduleId: String): Boolean {
+    return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleId))
+  }
 
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
+    return findProductContentModuleClassesRoot(moduleId)
+  }
+
+  private fun findProductContentModuleClassesRoot(moduleId: PluginModuleId): Path? {
     val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.name)).resolvedModule
     if (resolvedModule == null) {
       // https://youtrack.jetbrains.com/issue/CPP-38280

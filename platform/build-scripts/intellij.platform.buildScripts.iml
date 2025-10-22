@@ -419,5 +419,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
   </component>
 </module>

@@ -8,10 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
+import org.jetbrains.intellij.build.productLayout.DEFAULT_BUNDLED_PLUGINS
 
 /**
  * Default bundled plugins for all editions of IntelliJ IDEA.
- * See also [DEFAULT_BUNDLED_PLUGINS].
+ * See also [org.jetbrains.intellij.build.productLayout.DEFAULT_BUNDLED_PLUGINS].
  */
 val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + sequenceOf(
   JavaPluginLayout.MAIN_MODULE_NAME,

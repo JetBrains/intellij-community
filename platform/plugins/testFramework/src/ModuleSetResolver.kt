@@ -18,12 +18,12 @@ fun isModuleSetPath(path: String): Boolean = path.removePrefix("/").startsWith("
  * @return Path to the module set file
  */
 fun resolveModuleSetPath(fileName: String, projectRoot: Path): Path {
-  val communityPath = projectRoot.resolve("community/platform/platform-resources/src/META-INF/$fileName")
-  return if (communityPath.exists()) {
-    communityPath
+  val communityPath = projectRoot.resolve("community/platform/platform-resources/generated/META-INF/$fileName")
+  if (communityPath.exists()) {
+    return communityPath
   }
   else {
-    projectRoot.resolve("licenseCommon/resources/META-INF/$fileName")
+    return projectRoot.resolve("licenseCommon/generated/META-INF/$fileName")
   }
 }
 
@@ -31,7 +31,7 @@ fun resolveModuleSetPath(fileName: String, projectRoot: Path): Path {
  * Resolves a module set name into a list of actual module names, recursively following x-include references.
  *
  * If the moduleName starts with "intellij.moduleSets.", attempts to find and parse the corresponding XML file
- * in community/platform/platform-resources/src/META-INF/ or ultimate/platform-ultimate/resources/META-INF/,
+ * in community/platform/platform-resources/generated/META-INF/ or ultimate/platform-ultimate/resources/META-INF/,
  * then recursively resolves any nested module sets referenced via x-include.
  *
  * @param moduleSetName the name like "intellij.moduleSets.debugger.streams"

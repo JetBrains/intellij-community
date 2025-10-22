@@ -27,7 +27,7 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.readLines
 
 @Serializable
-internal data class Configuration(@JvmField val products: Map<String, ProductConfiguration>)
+internal data class ProductConfigurationRegistry(@JvmField val products: Map<String, ProductConfiguration>)
 
 @Serializable
 internal data class ProductConfiguration(@JvmField val modules: List<String>, @JvmField @SerialName("class") val className: String)
@@ -78,8 +78,8 @@ fun readVmOptions(runDir: Path): List<String> {
     val productJson = productInfoFile.inputStream().use { jsonEncoder.decodeFromStream<ProductInfoData>(it) }
     val macroName = when (OsFamily.currentOs) {
       OsFamily.WINDOWS -> "%IDE_HOME%"
-      OsFamily.MACOS -> "\$APP_PACKAGE/Contents"
-      OsFamily.LINUX -> "\$IDE_HOME"
+      OsFamily.MACOS -> $$"$APP_PACKAGE/Contents"
+      OsFamily.LINUX -> $$"$IDE_HOME"
     }
     result.addAll(productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) })
   }
@@ -99,7 +99,12 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
         createProductProperties = { compilationContext ->
           val configuration = createConfiguration(homePath = request.projectDir, productionClassOutput = request.productionClassOutput)
           val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
-          createProductProperties(productConfiguration = productConfiguration, compilationContext = compilationContext, request = request)
+          createProductProperties(
+            productConfiguration = productConfiguration,
+            moduleOutputProvider = compilationContext,
+            projectDir = request.projectDir,
+            platformPrefix = request.platformPrefix,
+          )
         },
       )
     }
@@ -114,14 +119,14 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
   }
 }
 
-private fun createConfiguration(productionClassOutput: Path, homePath: Path): Configuration {
+private fun createConfiguration(productionClassOutput: Path, homePath: Path): ProductConfigurationRegistry {
   // for compatibility with local runs and runs on CI
   if (System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) == null) {
     System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
   }
 
   val projectPropertiesPath = getProductPropertiesPath(homePath)
-  return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
+  return Json.decodeFromString(ProductConfigurationRegistry.serializer(), Files.readString(projectPropertiesPath))
 }
 
 internal fun getProductPropertiesPath(homePath: Path): Path {
@@ -130,7 +135,7 @@ internal fun getProductPropertiesPath(homePath: Path): Path {
          ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
 }
 
-private fun getProductConfiguration(configuration: Configuration, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
+private fun getProductConfiguration(configuration: ProductConfigurationRegistry, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
   val key = if (baseIdePlatformPrefixForFrontend != null) "$baseIdePlatformPrefixForFrontend$platformPrefix" else platformPrefix
   return configuration.products[key]
          ?: throw ConfigurationException("No production configuration for `$key`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")

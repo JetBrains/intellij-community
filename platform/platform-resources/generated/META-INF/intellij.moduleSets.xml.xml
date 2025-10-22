@@ -1,3 +1,7 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: CommunityModuleSets.main() -->
+<!-- Source: see moduleSet("xml") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <module value="com.intellij.modules.xml"/>
 
@@ -15,7 +19,7 @@
     <module name="intellij.relaxng"/>
     <module name="intellij.xml.impl" loading="embedded"/>
     <module name="intellij.xml.analysis.impl" loading="embedded"/>
-    <module name="intellij.libraries.cglib" loading="embedded"/> <!-- embedded because intellij.xml.dom.impl which depends on it, is also embedded -->
+    <module name="intellij.libraries.cglib" loading="embedded"/>
     <module name="intellij.libraries.xerces" loading="embedded"/>
     <module name="intellij.xml.langInjection"/>
     <module name="intellij.xml.langInjection.xpath"/>

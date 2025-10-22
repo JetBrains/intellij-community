@@ -16,6 +16,8 @@ import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -342,10 +344,43 @@ abstract class ProductProperties {
   open suspend fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
 
   /**
-   * Override this function to provide additional JVM command line arguments which will be added to launchers along with 
+   * Override this function to provide additional JVM command line arguments which will be added to launchers along with
    * [additionalIdeJvmArguments].
    */
   open fun getAdditionalContextDependentIdeJvmArguments(context: BuildContext): List<String> = emptyList()
+
+  /**
+   * Override this method to programmatically specify content modules for the product plugin.xml.
+   *
+   * This provides a way to define content modules in Kotlin code instead of using XML xi:include directives.
+   * The modules specified here will be automatically injected into the product's plugin.xml during build
+   * via `layout.withPatch` mechanism in `processAndGetProductPluginContentModules`.
+   *
+   * You can:
+   * - Reference named module sets (e.g., "essential", "vcs", "xml") which are resolved from
+   *   [org.jetbrains.intellij.build.productLayout.CommunityModuleSets] and UltimateModuleSets registries
+   * - Add individual modules via `additionalModules`
+   * - Exclude specific modules via `excludedModules`
+   * - Override loading modes via `moduleLoadingOverrides`
+   *
+   * The programmatic modules are merged with XML-based xi:includes (both are supported during transition).
+   *
+   * Example:
+   * ```
+   * override fun getProductContentModules() = ProductModulesContentSpec().apply {
+   *   moduleSets = listOf(
+   *     ModuleSet("essential", CommunityModuleSets.essential()),
+   *     ModuleSet("vcs", CommunityModuleSets.vcs())
+   *   )
+   *   additionalModules = listOf(ContentModule("my.custom.module"))
+   *   excludedModules = setOf("intellij.unwanted.module")
+   * }
+   * ```
+   *
+   * @return specification of programmatic content modules, or null to use only XML-based includes
+   * @see org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+   */
+  open fun getProductContentDescriptor(): ProductModulesContentSpec? = null
 
   /**
    * @return custom properties for [com.intellij.platform.buildData.productInfo.ProductInfoData].

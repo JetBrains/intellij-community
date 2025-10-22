@@ -1,6 +1,14 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: CommunityModuleSets.main() -->
+<!-- Source: see moduleSet("ide.common") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/intellij.moduleSets.essential.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.compose.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.grid.core.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.vcs.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.xml.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.duplicates.xml"/>
 
   <content namespace="jetbrains">
     <module name="intellij.platform.lvcs.impl"/>
@@ -15,42 +23,25 @@
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.libraries.microba"/>
-
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.platform.warmup"/>
     <module name="intellij.platform.inspect"/>
     <module name="intellij.settingsSync.core"/>
-    
     <module name="intellij.libraries.lucene.common"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.spellchecker.xml"/>
-
     <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.buildView.backend"/>
     <module name="intellij.platform.buildView.frontend"/>
-
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
-    <module name="intellij.platform.polySymbols.backend" loading="embedded"/> <!--todo: move to essential modules when not embedded-->
-
+    <module name="intellij.platform.polySymbols.backend" loading="embedded"/>
     <module name="intellij.regexp" loading="embedded"/>
-
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
-
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.libraries.grpc.netty.shaded"/>
   </content>
-
-  <xi:include href="/META-INF/intellij.moduleSets.grid.core.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.vcs.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.xml.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.duplicates.xml"/>
-
-  <!-- Note: rd.common is intentionally NOT included in ide.common
-       Reason: Rider uses custom module loading mode due to early backend startup requirements.
-       Products that need rd.common include it explicitly in their product files. -->
-
 </idea-plugin>

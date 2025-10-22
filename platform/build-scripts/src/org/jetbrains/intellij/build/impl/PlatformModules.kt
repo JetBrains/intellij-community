@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -17,13 +17,14 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
-import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.UTIL_RT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
+import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
+import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -551,6 +552,8 @@ private fun computeTransitive(
   }
 }
 
+private val regenerateProductSpec = System.getProperty("intellij.build.regenerate.product.spec") != null
+
 // result _must be_ consistent, do not use Set.of or HashSet here
 private suspend fun processAndGetProductPluginContentModules(
   context: BuildContext,
@@ -565,9 +568,29 @@ private suspend fun processAndGetProductPluginContentModules(
       ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
     ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
 
-    val xml = JDOMUtil.load(file)
-    resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = true)
-    val result = collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+    val xml: Element
+    // process programmatic content modules if defined
+    val programmaticModulesSpec = context.productProperties.getProductContentDescriptor()
+    val result = if (programmaticModulesSpec == null || !regenerateProductSpec) {
+      xml = JDOMUtil.load(file)
+      resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = true)
+      collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+    }
+    else {
+      val sb = StringBuilder()
+      val contentBlocks = buildProductContentXml(
+        spec = programmaticModulesSpec,
+        moduleOutputProvider = context,
+        sb = sb, inlineXmlIncludes = true
+      )
+      Span.current().addEvent("Generated ${contentBlocks.size} content blocks with ${contentBlocks.sumOf { it.modules.size }} total modules")
+
+      xml = JDOMUtil.load(sb)
+      resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = false)
+
+      collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+    }
+
     val data = JDOMUtil.write(xml)
     val fileName = file.fileName.toString()
     layout.withPatch { moduleOutputPatcher, _, _ ->

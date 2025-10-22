@@ -87,6 +87,7 @@ jvm_library(
     "@lib//:platform-build_scripts-netty",
     "@lib//:platform-build_scripts-jetbrains-intellij-deps-coverage-reporter",
     "//libraries/ktor/client",
+    "//platform/plugins/parser/impl",
   ],
   runtime_deps = [
     "//libraries/commons/cli",

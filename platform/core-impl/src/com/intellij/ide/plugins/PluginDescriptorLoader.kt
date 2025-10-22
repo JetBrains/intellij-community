@@ -552,7 +552,7 @@ private suspend fun loadDescriptors(
   return PluginDescriptorLoadingResult.build(discoveredPlugins)
 }
 
-internal fun CoroutineScope.loadPluginDescriptorsImpl(
+internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
   loadingContext: PluginDescriptorLoadingContext,
   isUnitTestMode: Boolean,
   isRunningFromSources: Boolean,
@@ -562,6 +562,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   bundledPluginDir: Path?,
 ): Deferred<List<DiscoveredPluginsList>> {
   val platformPrefix = PlatformUtils.getPlatformPrefix()
+  val jarFileForModule: (PluginModuleId, Path) -> Path? = { moduleId, moduleDir -> moduleDir.resolve("$moduleId.jar") }
 
   if (isUnitTestMode) {
     return loadPluginDescriptorsInDeprecatedUnitTestMode(
@@ -572,6 +573,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       zipPool = zipPool,
       customPluginDir = customPluginDir,
       bundledPluginDir = bundledPluginDir,
+      jarFileForModule = jarFileForModule,
     )
   }
 
@@ -593,6 +595,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       mainClassLoader = mainClassLoader,
       customPluginDir = customPluginDir,
       effectiveBundledPluginDir = effectiveBundledPluginDir,
+      jarFileForModule = jarFileForModule,
     )
   }
   else {
@@ -613,6 +616,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
         else {
           createXmlStreamReader(bytes = bundledPluginClasspathBytes, start = descriptorStart, size = descriptorSize)
         },
+        jarFileForModule = jarFileForModule,
         isRunningFromSourcesWithoutDevBuild = false,
       )
     }
@@ -860,7 +864,7 @@ internal fun loadCoreProductPlugin(
   useCoreClassLoader: Boolean,
   reader: XMLStreamReader2,
   isRunningFromSourcesWithoutDevBuild: Boolean,
-  useModuleDirAsParent: Boolean = true,
+  jarFileForModule: (moduleId: PluginModuleId, moduleDir: Path) -> Path?,
 ): PluginMainDescriptor {
   val dataLoader = object : DataLoader {
     override val emptyDescriptorIfCannotResolve: Boolean
@@ -880,7 +884,7 @@ internal fun loadCoreProductPlugin(
     descriptor = descriptor,
     pathResolver = pathResolver,
     moduleDir = libDir,
-    useModuleDirAsParent = useModuleDirAsParent,
+    jarFileForModule = jarFileForModule,
     loadingContext = loadingContext,
     dataLoader = dataLoader,
     isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild,
@@ -893,14 +897,12 @@ private fun loadContentModuleDescriptors(
   descriptor: PluginMainDescriptor,
   pathResolver: PathResolver,
   moduleDir: Path,
-  useModuleDirAsParent: Boolean,
+  jarFileForModule: (moduleId: PluginModuleId, moduleDir: Path) -> Path?,
   loadingContext: PluginDescriptorLoadingContext,
   dataLoader: DataLoader,
   isRunningFromSourcesWithoutDevBuild: Boolean,
 ) {
   val moduleDirExists = Files.isDirectory(moduleDir)
-  val loadingStrategy = ProductLoadingStrategy.strategy
-
   for (module in descriptor.content.modules) {
     check(module.configFile == null) {
       "product module must not use `/` notation for module descriptor file (configFile=${module.configFile})"
@@ -913,7 +915,7 @@ private fun loadContentModuleDescriptors(
         !isRunningFromSourcesWithoutDevBuild &&
         (moduleId.name.startsWith("intellij.") || moduleId.name.startsWith("fleet.")) &&
         loadProductModule(
-          jarFile = if (useModuleDirAsParent) moduleDir.resolve("$moduleId.jar") else loadingStrategy.findProductContentModuleClassesRoot(moduleId, moduleDir),
+          jarFile = jarFileForModule(moduleId, moduleDir),
           module = module,
           subDescriptorFile = subDescriptorFile,
           loadingContext = loadingContext,
@@ -1057,7 +1059,7 @@ fun loadDescriptorsFromOtherIde(
   val discoveredPlugins = try {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
-      loadPluginDescriptorsImpl(
+      loadPluginDescriptorsForPathBasedLoader(
         loadingContext = loadingContext,
         isUnitTestMode = PluginManagerCore.isUnitTestMode,
         isRunningFromSources = PluginManagerCore.isRunningFromSources(),
@@ -1067,7 +1069,8 @@ fun loadDescriptorsFromOtherIde(
         bundledPluginDir = bundledPluginDir,
       ).await()
     }
-  } finally {
+  }
+  finally {
     loadingContext.close()
     pool.close()
   }
@@ -1104,7 +1107,7 @@ fun loadDescriptorsFromClassPathInTest(
       DiscoveredPluginsList(
         urlToFilename.map { (url, filename) ->
           async(Dispatchers.IO) {
-            loadDescriptorFromResource(
+            testOrDeprecatedLoadDescriptorFromResource(
               resource = url,
               filename = filename,
               loadingContext = loadingContext,
@@ -1156,7 +1159,7 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
 }
 
 // filename - plugin.xml or ${platformPrefix}Plugin.xml
-internal fun loadDescriptorFromResource(
+internal fun testOrDeprecatedLoadDescriptorFromResource(
   resource: URL,
   filename: String,
   loadingContext: PluginDescriptorLoadingContext,
@@ -1230,7 +1233,7 @@ internal fun loadDescriptorFromResource(
         descriptor = descriptor,
         pathResolver = pathResolver,
         moduleDir = libDir.resolve("modules"),
-        useModuleDirAsParent = false,
+        jarFileForModule = { moduleId, moduleDir -> ProductLoadingStrategy.strategy.findProductContentModuleClassesRoot(moduleId, moduleDir) },
         loadingContext = loadingContext,
         dataLoader = dataLoader,
         isRunningFromSourcesWithoutDevBuild = pathResolver.isRunningFromSourcesWithoutDevBuild,

@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeSet
 import java.util.function.Predicate
 import kotlin.io.path.useLines
 
@@ -15,8 +15,8 @@ import kotlin.io.path.useLines
  * Predicate to test if the given plugin should be published to plugins.jetbrains.com
  *
  * @see `build/plugins-autoupload.txt` for the specification
- * @see [org.jetbrains.intellij.build.ProductModulesLayout.buildAllCompatiblePlugins]
- * @see [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish]
+ * @see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.buildAllCompatiblePlugins]
+ * @see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish]
  */
 @Internal
 class PluginAutoPublishList(private val context: BuildContext) : Predicate<PluginLayout> {

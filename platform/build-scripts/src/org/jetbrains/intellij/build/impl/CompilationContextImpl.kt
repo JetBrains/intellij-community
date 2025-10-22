@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
@@ -114,7 +116,7 @@ class CompilationContextImpl private constructor(
   val global: JpsGlobal
     get() = model.global
 
-  private val nameToModule: Map<String?, JpsModule>
+  private val moduleOutputProvider = ModuleOutputProvider.jps(project.modules)
 
   override var classesOutputDirectory: Path
     get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))
@@ -138,15 +140,11 @@ class CompilationContextImpl private constructor(
   @Volatile
   private var cachedJdkHome: Path? = null
 
-  init {
-    val modules = project.modules
-    nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
-  }
-
   override val stableJavaExecutable: Path by lazy {
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
       // blocking doesn't matter, getStableJdkHome is mostly always called before
+      @Suppress("DEPRECATION")
       jdkHome = JdkDownloader.blockingGetJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
@@ -319,23 +317,11 @@ class CompilationContextImpl private constructor(
     Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
 
-  override fun findRequiredModule(name: String): JpsModule {
-    val module = findModule(name)
-    checkNotNull(module) {
-      "Cannot find required module '$name' in the project"
-    }
-    return module
-  }
+  override fun findRequiredModule(name: String): JpsModule = moduleOutputProvider.findRequiredModule(name)
 
-  override fun findModule(name: String): JpsModule? = nameToModule[name.removeSuffix("._test")]
+  override fun findModule(name: String): JpsModule? = moduleOutputProvider.findModule(name)
 
-  override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
-    requireNotNull(url) {
-      "Output directory for ${module.name} isn't set"
-    }
-    return listOf(Path.of(JpsPathUtil.urlToPath(url)))
-  }
+  override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = moduleOutputProvider.getModuleOutputRoots(module, forTests)
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()

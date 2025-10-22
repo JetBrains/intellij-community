@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
-package org.jetbrains.intellij.build
+package org.jetbrains.intellij.build.productLayout
 
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
@@ -11,6 +11,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CommunityRepositoryModules
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -49,13 +52,13 @@ class ProductModulesLayout {
    * You can find the layouts of these bundled plugins in the [pluginLayouts] list.
    * 
    * This property can be used for writing only. 
-   * If you need to read the list of plugins which should be bundled, use [BuildContext.getBundledPluginModules] instead.
+   * If you need to read the list of plugins which should be bundled, use [org.jetbrains.intellij.build.BuildContext.getBundledPluginModules] instead.
    */
   var bundledPluginModules: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS
 
   /**
    * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed into it.
-   * Zip archives of these plugins will be built and placed under [BuildContext.nonBundledPlugins] directory in the build artifacts.
+   * Zip archives of these plugins will be built and placed under [org.jetbrains.intellij.build.BuildContext.nonBundledPlugins] directory in the build artifacts.
    * Layouts of the plugins are specified in [pluginLayouts] list.
    */
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
@@ -111,7 +114,7 @@ class ProductModulesLayout {
   /**
    * If `true` a special xml descriptor in custom plugin repository format will be generated for [pluginModulesToPublish] plugins.
    * This descriptor and the plugin *.zip files can be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file
-   * to allow installing custom plugins directly from the IDE. If [ProprietaryBuildTools.artifactsServer] is specified, `__BUILTIN_PLUGINS_URL__` in
+   * to allow installing custom plugins directly from the IDE. If [org.jetbrains.intellij.build.ProprietaryBuildTools.artifactsServer] is specified, `__BUILTIN_PLUGINS_URL__` in
    * *ApplicationInfo.xml file will be automatically replaced by the plugin repository URL provided by the artifact server.
    *
    * @see [pluginModulesToPublish]

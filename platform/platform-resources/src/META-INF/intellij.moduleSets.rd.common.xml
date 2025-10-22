@@ -1,7 +1,0 @@
-<idea-plugin>
-  <content namespace="jetbrains">
-    <module name="intellij.rd.ide.model.generated"/>
-    <module name="intellij.rd.platform"/>
-    <module name="intellij.rd.ui"/>
-  </content>
-</idea-plugin>

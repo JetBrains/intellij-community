@@ -50,6 +50,7 @@ import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.asArchived
@@ -583,10 +584,15 @@ private suspend fun createBuildContext(
   }
 }
 
-internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, compilationContext: CompilationContext, request: BuildRequest): ProductProperties {
+internal suspend fun createProductProperties(
+  productConfiguration: ProductConfiguration,
+  moduleOutputProvider: ModuleOutputProvider,
+  projectDir: Path,
+  platformPrefix: String?,
+): ProductProperties {
   val classPathFiles = buildList {
     for (moduleName in getBuildModules(productConfiguration)) {
-      addAll(compilationContext.getModuleOutputRoots(compilationContext.findRequiredModule(moduleName)))
+      addAll(moduleOutputProvider.getModuleOutputRoots(moduleOutputProvider.findRequiredModule(moduleName)))
     }
   }
 
@@ -608,7 +614,7 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
       val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
         "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
       }
-      val projectPropertiesPath = getProductPropertiesPath(request.projectDir)
+      val projectPropertiesPath = getProductPropertiesPath(projectDir)
       throw RuntimeException("cannot create product properties, className=$className, projectPropertiesPath=$projectPropertiesPath, classPath=$classPathString, ", e)
     }
 
@@ -619,7 +625,7 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
     catch (_: NoSuchMethodException) {
       lookup
         .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-        .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.projectDir) else request.projectDir)
+        .invoke(if (platformPrefix == "Idea") getCommunityHomePath(projectDir) else projectDir)
     } as ProductProperties
   }
 }

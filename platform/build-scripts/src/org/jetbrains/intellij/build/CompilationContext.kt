@@ -5,13 +5,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
+import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
-interface CompilationContext {
+interface CompilationContext : ModuleOutputProvider {
   val options: BuildOptions
   val messages: BuildMessages
   val paths: BuildPaths
@@ -40,10 +41,6 @@ interface CompilationContext {
 
   suspend fun getOriginalModuleRepository(): OriginalModuleRepository
 
-  fun findRequiredModule(name: String): JpsModule
-
-  fun findModule(name: String): JpsModule?
-
   /**
    * A directory or a .jar file.
    */
@@ -61,8 +58,6 @@ interface CompilationContext {
     val outputRoots = getModuleOutputRoots(module, forTests = true)
     return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
   }
-
-  suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
 
   suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 
