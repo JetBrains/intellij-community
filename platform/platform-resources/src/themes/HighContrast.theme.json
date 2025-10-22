@@ -487,8 +487,7 @@
         "selectedForeground": "#FFFFFF"
       }
     },
-
-
+    "Review.Reaction.Border.Reacted": "#1AEBFF",
     "Tree.modifiedItemForeground": "#4FF0FF",
 
     "TrialWidget": {
