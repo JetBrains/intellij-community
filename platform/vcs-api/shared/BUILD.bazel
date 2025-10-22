@@ -29,6 +29,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.shared` end

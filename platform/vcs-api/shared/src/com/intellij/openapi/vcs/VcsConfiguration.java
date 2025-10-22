@@ -1,30 +1,32 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Service(Service.Level.PROJECT)
-@State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = VcsConfiguration.SETTINGS_KEY, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
+  @ApiStatus.Internal
+  public static final String SETTINGS_KEY = "VcsManagerConfiguration";
+
   private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
   public static final long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
@@ -130,9 +132,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
-  @Transient
-  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new HashMap<>();
-
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
@@ -219,14 +218,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     });
   }
 
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getUpdateOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
   public String getPatchFileExtension() {
     return DEFAULT_PATCH_EXTENSION;
   }
@@ -265,5 +256,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   public boolean isIgnoredUnregisteredRoot(@NotNull String root) {
     return IGNORED_UNREGISTERED_ROOTS.contains(root);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    loadState(new VcsConfiguration());
   }
 }

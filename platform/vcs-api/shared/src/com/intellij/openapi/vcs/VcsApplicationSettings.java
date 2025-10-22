@@ -1,23 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * We don't use roaming type PER_OS - path macros is enough ($USER_HOME$/Dropbox for example)
  */
 @State(
-  name = "VcsApplicationSettings",
+  name = VcsApplicationSettings.SETTINGS_KEY,
   storages = @Storage("vcs.xml"),
   category = SettingsCategory.TOOLS
 )
-public class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
+@Service
+public final class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
+  @ApiStatus.Internal
+  public static final String SETTINGS_KEY = "VcsApplicationSettings";
+
   public String PATCH_STORAGE_LOCATION = null;
   public boolean SHOW_WHITESPACES_IN_LST = true;
   public boolean SHOW_LST_GUTTER_MARKERS = true;
@@ -50,5 +52,10 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   @Override
   public void loadState(@NotNull VcsApplicationSettings state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    loadState(new VcsApplicationSettings());
   }
 }
