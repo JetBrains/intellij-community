@@ -93,10 +93,10 @@ class DirtyFiles {
 class ProjectDirtyFiles {
   private val filesSet: ConcurrentBitSet = ConcurrentBitSet.create()
 
-  fun addFile(fileId: Int) = filesSet.set(fileId)
-  fun containsFile(fileId: Int) = filesSet.get(fileId)
-  fun removeFile(fileId: Int) = filesSet.clear(fileId)
-  fun clear() = filesSet.clear()
+  fun addFile(fileId: Int): Boolean = filesSet.set(fileId)
+  fun containsFile(fileId: Int): Boolean = filesSet.get(fileId)
+  fun removeFile(fileId: Int): Boolean = filesSet.clear(fileId)
+  fun clear(): Unit = filesSet.clear()
 
   fun addFiles(fileIds: Collection<Int>) {
     for (fileId in fileIds) {

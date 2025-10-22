@@ -807,7 +807,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final ThreadLocal<Boolean> myReentrancyGuard = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   @Override
-  public <K> boolean ensureUpToDate(final @NotNull ID<K, ?> indexId,
+  public <K> boolean ensureUpToDate(@NotNull ID<K, ?> indexId,
                                     @Nullable Project project,
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
@@ -1385,7 +1385,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
 
       for (Pair<IndexableFileSet, Project> set : myIndexableSets) {
-        final Project proj = set.second;
+        Project proj = set.second;
         if (proj != null && !proj.equals(project)) {
           continue; // skip this set as associated with a different project
         }
@@ -1802,7 +1802,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
 
-  private void forceUpdate(@Nullable Project project, ProjectFilesCondition filter, final @Nullable VirtualFile restrictedTo) {
+  private void forceUpdate(@Nullable Project project,
+                           @NotNull ProjectFilesCondition filter,
+                           @Nullable VirtualFile restrictedTo) {
     Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
 
     if (!allFilesToUpdate.isEmpty()) {
