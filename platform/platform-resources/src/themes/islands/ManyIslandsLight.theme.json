@@ -232,7 +232,11 @@
       "StatusBar.background": "AltBackgroundDark",
 
       "ToolWindow.Header.inactiveBackground": "#F7F6F8",
-      "ToolWindow.background": "#F7F6F8"
+      "ToolWindow.background": "#F7F6F8",
+
+      "Borders.color": "#E8E9ED",
+      "Borders.ContrastBorderColor": "#E8E9ED",
+      "ToolWindow.Header.borderColor": "#E8E9ED"
     }
   }
 }
