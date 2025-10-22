@@ -91,26 +91,11 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     configure(builder)
 
-    val sdkDownloadTask = jdkIntent.downloadTask
-    val isCreatingNewProject = context.isCreatingNewProject
-
-    if (isCreatingNewProject) {
-      if (sdkDownloadTask is JdkDownloadTask) {
-        // Download the SDK on project creation
-        builder.sdkDownloadedFuture = project.service<JdkDownloadService>()
-          .scheduleDownloadJdkForNewProject(sdkDownloadTask)
-      }
+    if (jdkIntent.downloadTask is JdkDownloadTask) {
+      builder.sdkDownloadedFuture = project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
     }
 
     val module = setupProjectFromBuilder(project, builder)
-
-    if (null != module) {
-      if (!isCreatingNewProject) {
-        if (sdkDownloadTask is JdkDownloadTask) {
-          module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, false)
-        }
-      }
-    }
 
     return module
   }

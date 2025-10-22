@@ -136,13 +136,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
     wizardContext.projectName = entityName
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
-    val sdk = jdkIntentProperty.get().prepareJdk()
-    if (wizardContext.project == null) {
-      wizardContext.projectJdk = sdk
-    }
-    else {
-      moduleBuilder.moduleJdk = sdk
-    }
+    moduleBuilder.moduleJdk = wizardContext.projectJdk
   }
 
   private fun suggestPackageName(): String {

@@ -23,14 +23,12 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionC
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bindEnumStorage
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
@@ -455,14 +453,6 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return suggestGradleHome(context.project) ?: ""
   }
 
-  private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = jdkIntent.downloadTask
-    if (sdkDownloadTask is JdkDownloadTask) {
-      // Download the SDK on project creation
-      module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
-    }
-  }
-
   val gradleVersionToUse: GradleVersion by lazy {
     val rawGradleVersion = when (distributionType) {
       WRAPPER -> gradleVersion
@@ -493,8 +483,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   fun setupProjectFromBuilder(project: Project) {
     val builder = object : AbstractGradleModuleBuilder() {}
 
-    val sdk = if (context.isCreatingNewProject) { context.projectJdk } else { jdkIntent.prepareJdk() }
-    builder.moduleJdk = sdk
+    builder.moduleJdk = context.projectJdk
     builder.sdkDownloadTask = jdkIntent.downloadTask
 
     builder.name = parentStep.name
@@ -518,8 +507,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
 
+    if (jdkIntent.downloadTask != null) {
+      project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
+    }
+
     setupProjectFromBuilder(project, builder)
-      ?.also { startJdkDownloadIfNeeded(it) }
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

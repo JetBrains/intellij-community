@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
@@ -9,7 +9,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ConfigureJdkService
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
@@ -27,11 +26,8 @@ class DownloadJdkAction: AnAction() {
 
     if (downloadExtension != null) {
       downloadExtension.showDownloadUI(sdkType, ProjectSdksModel(), null, project, null, { true }) { task: SdkDownloadTask ->
-        val sdk: Sdk
-        project.service<JdkDownloadService>().apply {
-          sdk = setupInstallableSdk(task)
-          downloadSdk(sdk)
-        }
+        val sdk = JdkDownloadService.setupInstallableSdk(task)
+        project.service<JdkDownloadService>().downloadSdk(sdk)
         project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk, true)
       }
     } else {

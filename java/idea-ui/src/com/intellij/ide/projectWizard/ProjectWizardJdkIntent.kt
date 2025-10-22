@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
+import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.generators.SdkPreIndexingService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
@@ -67,12 +68,20 @@ sealed class ProjectWizardJdkIntent {
       else -> null
     }
 
+  /**
+   * Returns the JDK corresponding to the intent.
+   * For [DetectedJdk] and [DownloadJdk], an incomplete JDK will be created.
+   */
   fun prepareJdk(): Sdk? = when (this) {
     is ExistingJdk -> jdk
     is DetectedJdk -> {
       val sdk = service<AddJdkService>().createIncompleteJdk(home)
       sdk?.let { service<SdkPreIndexingService>().requestPreIndexation(it) }
       sdk
+    }
+    is DownloadJdk -> {
+      val task = downloadTask ?: return null
+      JdkDownloadService.setupInstallableSdk(task)
     }
     else -> null
   }

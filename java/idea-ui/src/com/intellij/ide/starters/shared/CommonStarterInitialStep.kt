@@ -27,8 +27,6 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -152,15 +150,8 @@ abstract class CommonStarterInitialStep(
 
       moduleBuilder.addListener(object : ModuleBuilderListener {
         override fun moduleCreated(module: Module) {
-          val downloadTask = jdkIntentProperty.get().downloadTask ?: return
-          val downloadService = module.project.service<JdkDownloadService>()
-          val jdk = downloadService.setupInstallableSdk(downloadTask)
-          if (wizardContext.isCreatingNewProject) {
-            ProjectRootManager.getInstance(module.project).projectSdk = jdk
-          } else {
-            ModuleRootModificationUtil.setModuleSdk(module, jdk)
-          }
-          downloadService.downloadSdk(jdk)
+          if (jdkIntentProperty.get().downloadTask == null) return
+          module.project.service<JdkDownloadService>().downloadSdk(wizardContext.projectJdk)
         }
       })
     }.bottomGap(BottomGap.SMALL)

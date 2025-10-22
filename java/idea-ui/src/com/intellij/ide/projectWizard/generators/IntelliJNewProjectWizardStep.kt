@@ -217,7 +217,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private fun configureSdk(project: Project, builder: ModuleBuilder) {
     if (!context.isCreatingNewProject) {
       // New module in an existing project: set module JDK
-      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent?.name
+      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent.name
       builder.moduleJdk = if (isSameSdk) null else context.projectJdk
     }
   }
@@ -225,8 +225,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private fun startJdkDownloadIfNeeded(module: Module) {
     val sdkDownloadTask = sdkDownloadTask
     if (sdkDownloadTask is JdkDownloadTask) {
-      // Download the SDK on project creation
-      module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
+      module.project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
     }
   }
 
