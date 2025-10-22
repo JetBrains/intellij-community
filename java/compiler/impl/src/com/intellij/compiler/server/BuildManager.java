@@ -151,7 +151,6 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asNioPath;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -1179,11 +1178,11 @@ public final class BuildManager implements Disposable {
 
     return getRuntimeSdk(project, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION, processed -> {
       // build's fallback SDK choosing policy: select among unprocessed SDKs in the SDK table the oldest possible one that can be used
-      // if project is located in a WSL VM, consider only SDKs, configured in the same WSL VM
-      Predicate<Sdk> wslSdkFilter = getWslSdkFilter(project);
+      // if the project is located within an Eel machine, consider only SDKs configured in the same Eel machine
+      Predicate<Sdk> sdkFilter = getSdkFilter(project);
 
       return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
-        .filter(sdk -> !processed.contains(sdk) && wslSdkFilter.test(sdk))
+        .filter(sdk -> !processed.contains(sdk) && sdkFilter.test(sdk))
         .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
         .filterValues(version -> version != null && version.isAtLeast(MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION))
         .min(Map.Entry.comparingByValue())
@@ -1193,7 +1192,7 @@ public final class BuildManager implements Disposable {
     });
   }
 
-  private static @NotNull Predicate<Sdk> getWslSdkFilter(@NotNull Project project) {
+  private static @NotNull Predicate<Sdk> getSdkFilter(@NotNull Project project) {
     // if WSL is configured, accepts only those SDKs that match project's WSL VM
     Supplier<WSLDistribution> projectWslDistribution = new Supplier<>() {
       private Ref<WSLDistribution> val;
@@ -1203,7 +1202,13 @@ public final class BuildManager implements Disposable {
         return val != null? val.get() : (val = Ref.create(findWSLDistribution(project))).get();
       }
     };
-    return sdk -> Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
+    if (canUseEel()) {
+      // an additional check for WSL distributions is required when "wsl.use.remote.agent.for.nio.filesystem" registry flag is set to false
+      return sdk -> JdkUtil.isCompatible(sdk, project) && Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
+    }
+    else {
+      return sdk -> Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
+    }
   }
 
   public static @NotNull Pair<@NotNull Sdk, @Nullable JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
@@ -1265,7 +1270,7 @@ public final class BuildManager implements Disposable {
   private static @Nullable Pair<Sdk, JavaSdkVersion> getForkedJavacFallbackSdk(@NotNull Project project, int oldestPossibleVersion) {
     // select the oldest SDK version among SDKs that are present in the SDK Table, but not older than <oldestPossibleVersion>
     return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
-      .filter(getWslSdkFilter(project))
+      .filter(getSdkFilter(project))
       .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
       .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
       .min(Map.Entry.comparingByValue())
