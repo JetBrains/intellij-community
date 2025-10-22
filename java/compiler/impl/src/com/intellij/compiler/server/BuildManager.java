@@ -515,12 +515,13 @@ public final class BuildManager implements Disposable {
             boolean changed = data.addDeleted(Iterators.filter(paths.deleted(), PATH_FILTER::test));
             changed |= data.addChanged(Iterators.filter(paths.changed(), PATH_FILTER::test));
             if (changed) {
-              RequestFuture<?> future = myBuildsInProgress.get(entry.getKey());
+              final String projectPath = entry.getKey();
+              RequestFuture<?> future = myBuildsInProgress.get(projectPath);
               if (future != null && !future.isCancelled() && !future.isDone()) {
                 final UUID sessionId = future.getRequestID();
                 final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
                 if (channel != null) {
-                  CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(wslPathMapper(entry.getKey()));
+                  CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(getPathMapperForProject(projectPath));
                   final CmdlineRemoteProto.Message.ControllerMessage message =
                     CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
                       CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT
@@ -545,6 +546,25 @@ public final class BuildManager implements Disposable {
 
   private static @Nullable Project findProjectByProjectPath(@NotNull String projectPath) {
     return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), project -> projectPath.equals(getProjectPath(project)));
+  }
+
+  private static @NotNull Function<String, String> getPathMapperForProject(@NotNull Project project) {
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      return e -> asEelPath(Path.of(e)).toString();
+    }
+    // This handles paths for WSL projects even if "wsl.use.remote.agent.for.nio.filesystem" registry flag is disabled
+    // and `EelPathUtils.isPathLocal(path)` previously returned `true`
+    WSLDistribution distribution = findWSLDistribution(project);
+    return wslPathMapper(distribution);
+  }
+
+  private static @NotNull Function<String, String> getPathMapperForProject(@NotNull String projectPath) {
+    if (canUseEel() && !EelPathUtils.isPathLocal(Path.of(projectPath))) {
+      return e -> asEelPath(Path.of(e)).toString();
+    }
+    // This handles paths for WSL projects even if "wsl.use.remote.agent.for.nio.filesystem" registry flag is disabled
+    // and `EelPathUtils.isPathLocal(path)` previously returned `true`
+    return wslPathMapper(projectPath);
   }
 
   private static @NotNull Function<String, String> wslPathMapper(@Nullable WSLDistribution distribution) {
@@ -857,14 +877,8 @@ public final class BuildManager implements Disposable {
     }
 
     final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, pathMapperBack, isAutomake);
-    Function<String, String> pathMapper;
 
-    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-      pathMapper = e -> asEelPath(Path.of(e)).toString();
-    }
-    else {
-      pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
-    }
+    Function<String, String> pathMapper = getPathMapperForProject(project);
 
     final DelegateFuture _future = new DelegateFuture();
     // by using the same queue that processes events,
@@ -924,7 +938,7 @@ public final class BuildManager implements Disposable {
                      Iterators.collect(Iterators.map(data.myDeleted, InternedPath::getValue), new HashSet<>()));
           }
           needRescan = data.getAndResetRescanFlag();
-          currentFSChanges = needRescan ? null : data.createNextEvent(wslPathMapper(wslDistribution));
+          currentFSChanges = needRescan ? null : data.createNextEvent(pathMapper);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Sending to starting build, ordinal=" + (currentFSChanges == null ? null : currentFSChanges.getOrdinal()));
           }
