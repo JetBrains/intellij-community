@@ -1512,6 +1512,9 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *f:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$Chat
 - sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$Chat
 - f:getHover():com.intellij.ui.JBColor
+*f:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$LineFrame
+- sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$LineFrame
+- f:getBorder():com.intellij.ui.JBColor
 *:com.intellij.collaboration.ui.util.DimensionRestrictions
 - a:getHeight():java.lang.Integer
 - a:getWidth():java.lang.Integer

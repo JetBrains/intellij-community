@@ -102,7 +102,7 @@ class CommentedCodeFrameRenderer(
   }
 
   companion object {
-    private val color: Color = CodeReviewColorUtil.Reaction.borderReacted
+    private val color: Color = CodeReviewColorUtil.Review.LineFrame.border
     private val stroke: Stroke = BasicStroke(JBUIScale.scale(1f))
     private val radius: Int get() = JBUIScale.scale(4)
     private val scrollbarPadding: Int get() = JBUIScale.scale(15)

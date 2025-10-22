@@ -28,6 +28,11 @@
       "since": "[2023.1]"
     },
     {
+      "key": "Review.LineFrame.Border",
+      "description": "Border of the outline around the commented lines",
+      "since": "[2025.3]"
+    },
+    {
       "key": "Review.ChatItem.BubblePanel.Border",
       "description": "Border of the rounded panel for wrapping diffs",
       "since": "[2023.1]"
