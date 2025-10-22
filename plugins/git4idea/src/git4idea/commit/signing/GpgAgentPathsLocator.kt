@@ -3,6 +3,8 @@ package git4idea.commit.signing
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.SystemProperties
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
@@ -19,10 +21,15 @@ internal interface GpgAgentPathsLocatorFactory {
 
 internal class GpgAgentPathsLocatorFactoryImpl: GpgAgentPathsLocatorFactory {
   override fun createPathLocator(project: Project, executor: GitExecutable): GpgAgentPathsLocator {
-    if (executor is GitExecutable.Wsl) {
-      return WslGpgAgentPathsLocator(executor)
+    return when (executor) {
+      is GitExecutable.Wsl -> {
+        WslGpgAgentPathsLocator(executor)
+      }
+      is GitExecutable.Eel -> {
+        EelAgentPathsLocator(executor)
+      }
+      else -> MacAndUnixGpgAgentPathsLocator()
     }
-    return MacAndUnixGpgAgentPathsLocator()
   }
 }
 
@@ -43,6 +50,21 @@ private class MacAndUnixGpgAgentPathsLocator : GpgAgentPathsLocator {
       val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
 
       return GpgAgentPaths.create(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
+    }
+    catch (e: InvalidPathException) {
+      LOG.warn("Cannot resolve path", e)
+      return null
+    }
+  }
+}
+
+private class EelAgentPathsLocator(val gitExecutable: GitExecutable.Eel) : GpgAgentPathsLocator {
+  override fun resolvePaths(): GpgAgentPaths? {
+    try {
+      val gpgAgentHome = gitExecutable.eel.userInfo.home.asNioPath().resolve(GPG_HOME_DIR)
+      val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
+
+      return GpgAgentPaths.create(gpgAgentHome, gpgPinentryAppLauncher.asEelPath().toString())
     }
     catch (e: InvalidPathException) {
       LOG.warn("Cannot resolve path", e)
