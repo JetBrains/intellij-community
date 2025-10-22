@@ -209,11 +209,11 @@ class FrontendXDebuggerSession private constructor(
     }
   }
 
-  private suspend fun XDebuggerSessionEvent.updateCurrents() {
+  private fun XDebuggerSessionEvent.updateCurrents() {
     when (this) {
       is XDebuggerSessionEvent.SessionPaused -> {
         updateState()
-        suspendData.await()?.applyToCurrents()
+        suspendData?.applyToCurrents()
       }
       is XDebuggerSessionEvent.SessionResumed, is XDebuggerSessionEvent.BeforeSessionResume -> {
         updateState()
@@ -235,7 +235,7 @@ class FrontendXDebuggerSession private constructor(
       is XDebuggerSessionEvent.StackFrameChanged -> {
         updateState()
         sourcePositionFlow.value = sourcePosition?.sourcePosition()
-        val newFrame = stackFrame?.await()?.let {
+        val newFrame = stackFrame?.let {
           suspendContext.value?.getOrCreateStackFrame(it)
         }
         currentStackFrame.value = StackFrameUpdate.noNotify(newFrame)
@@ -259,25 +259,31 @@ class FrontendXDebuggerSession private constructor(
 
   private fun SuspendData.applyToCurrents() {
     val (suspendContextDto, executionStackDto, stackFrameDto, sourcePositionDto, topSourcePositionDto) = this
-    val oldSuspendContext = suspendContext.value
-    if (oldSuspendContext == null || suspendContextDto.id != oldSuspendContext.id) {
-      val newSuspendContext = FrontendXSuspendContext(suspendContextDto, project, cs)
-      val previousSuspendContext = suspendContext.getAndUpdate { newSuspendContext }
-      previousSuspendContext?.cancel()
-    }
-    val suspendContextLifetimeScope = suspendContext.value?.lifetimeScope ?: return
-
-    executionStackDto?.let {
-      currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
-        suspendContext.value?.activeExecutionStack = it
-      }
-    }
-    stackFrameDto?.let {
-      val frame = suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
-      currentStackFrame.value = StackFrameUpdate.noNotify(frame)
-    }
+    val currentSuspendContext = getOrCreateSuspendContext(suspendContextDto)
+    val suspendContextLifetimeScope = currentSuspendContext.lifetimeScope
     sourcePositionFlow.value = sourcePositionDto?.sourcePosition()
     topSourcePositionFlow.value = topSourcePositionDto?.sourcePosition()
+
+    val stack = executionStackDto?.let {
+      FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope)
+    }
+    currentExecutionStack.value = stack
+    currentSuspendContext.activeExecutionStack = stack
+
+    val frame = stackFrameDto?.let {
+      suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
+    }
+    currentStackFrame.value = StackFrameUpdate.noNotify(frame)
+  }
+
+  private fun getOrCreateSuspendContext(suspendContextDto: XSuspendContextDto): FrontendXSuspendContext {
+    val oldSuspendContext = suspendContext.value
+    if (oldSuspendContext?.id == suspendContextDto.id) return oldSuspendContext
+
+    val newSuspendContext = FrontendXSuspendContext(suspendContextDto, project, cs)
+    val previousSuspendContext = suspendContext.getAndUpdate { newSuspendContext }
+    previousSuspendContext?.cancel()
+    return newSuspendContext
   }
 
   private fun XDebuggerSessionEvent.dispatch() {

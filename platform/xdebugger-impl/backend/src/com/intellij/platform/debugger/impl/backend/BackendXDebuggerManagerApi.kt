@@ -25,13 +25,16 @@ import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   override suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities) {
@@ -109,8 +112,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   private fun createSessionEvents(currentSession: XDebugSessionImpl, initialSessionState: XDebugSessionState): Flow<XDebuggerSessionEvent> = channelFlow {
     val listener = object : XDebugSessionListener {
       override fun sessionPaused() {
-        val data = async { currentSession.suspendData() }
-        trySend(XDebuggerSessionEvent.SessionPaused(currentSession.state(), data))
+        trySend(XDebuggerSessionEvent.SessionPaused(currentSession.state(), currentSession.suspendData()))
       }
 
       override fun sessionResumed() {
@@ -127,11 +129,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
       override fun stackFrameChanged() {
         val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
-        val stackFrameDto = currentSession.currentStackFrame?.let {
-          async {
-            it.toRpc(suspendScope, currentSession)
-          }
-        }
+        val stackFrameDto = currentSession.currentStackFrame?.toRpc(suspendScope, currentSession)
         trySend(XDebuggerSessionEvent.StackFrameChanged(
           currentSession.state(),
           currentSession.currentPosition?.toRpc(),
