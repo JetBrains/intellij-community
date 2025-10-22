@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -22,4 +23,5 @@ class TaskExecutionSpecImpl(
   override val userData: UserDataHolderBase?,
   override val activateToolWindowBeforeRun: Boolean,
   override val activateToolWindowOnFailure: Boolean,
+  override val navigateToError: ThreeState
 ) : TaskExecutionSpec
