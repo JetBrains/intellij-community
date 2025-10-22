@@ -48,6 +48,7 @@ import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerI
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalAiInlineCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
@@ -311,12 +312,15 @@ class TerminalViewImpl(
         coroutineScope.childScope("TerminalBlocksDecorator")
       )
 
-      configureInlineCompletion(
-        outputEditor,
-        outputModel,
-        shellIntegration,
-        coroutineScope.childScope("TerminalInlineCompletion")
-      )
+      if (TerminalAiInlineCompletion.isEnabled()) {
+        configureInlineCompletion(
+          outputEditor,
+          outputModel,
+          shellIntegration,
+          coroutineScope.childScope("TerminalInlineCompletion")
+        )
+      }
+
       configureCommandCompletion(
         outputEditor,
         sessionModel,
