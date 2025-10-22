@@ -1,0 +1,7 @@
+package jvm
+
+import common.Foo
+
+class Bar : Foo {
+    override val foo get() = ""
+}

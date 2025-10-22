@@ -2,12 +2,10 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2IntentionTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionInInjectionTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiFileIntentionTest
+import org.jetbrains.kotlin.idea.k2.intentions.tests.*
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INTENTIONS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 
@@ -194,6 +192,10 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
 
         testClass<AbstractK2GotoTestOrCodeActionTest> {
             model("${idea}navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+\$"))
+        }
+
+        testClass<AbstractK2MultiModuleIntentionTest> {
+            model("$idea/multiModuleIntention", pattern = DIRECTORY, depth = 1)
         }
     }
 

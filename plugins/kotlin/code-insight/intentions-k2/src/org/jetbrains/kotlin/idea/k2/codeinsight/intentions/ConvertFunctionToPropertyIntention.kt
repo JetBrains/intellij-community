@@ -119,7 +119,7 @@ private fun KaSession.prepareContext(element: KtNamedFunction): Context? {
 
     val functionSymbol = element.symbol
     val affectedCallablesWithSelf = getAffectedCallables(functionSymbol)
-    
+
     val conflictCheckContext = ConflictCheckContext(
         conflicts = conflicts,
         getterName = newGetterName,
@@ -300,21 +300,31 @@ private fun KaSession.addConflictIfSamePropertyFound(
     callableSymbol: KaCallableSymbol,
     context: ConflictCheckContext
 ) {
+    val callableSymbolName = callableSymbol.name
+    val callableSymbolContainingSymbolDefaultType = (callableSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType
     if (callable is KtNamedFunction) {
-        callable.containingKtFile
-            .scopeContext(callable)
-            .compositeScope()
-            .callables { it == callableSymbol.name }
-            .filterIsInstance<KaPropertySymbol>()
-            .find {
-                val receiverType = it.receiverType ?: return@find false
-                (callableSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType?.semanticallyEquals(receiverType)
-                    ?: return@find false
-            }?.let { propertySymbol ->
-                propertySymbol.psi?.let { psiElement ->
-                    reportDeclarationConflict(context.conflicts, declaration = psiElement) { s -> KotlinBundle.message("0.already.exists", s) }
+        // A separate `analyze` is needed to avoid KaBaseIllegalPsiException on analyzing the `callable` as `KtNamedFunction`
+        analyze(callable) {
+            callable.containingKtFile
+                .scopeContext(callable)
+                .compositeScope()
+                .callables { it == callableSymbolName }
+                .filterIsInstance<KaPropertySymbol>()
+                .find {
+                    val receiverType = it.receiverType ?: return@find false
+                    callableSymbolContainingSymbolDefaultType?.semanticallyEquals(receiverType)
+                        ?: return@find false
+                }?.let { propertySymbol ->
+                    propertySymbol.psi?.let { psiElement ->
+                        reportDeclarationConflict(context.conflicts, declaration = psiElement) { s ->
+                            KotlinBundle.message(
+                                "0.already.exists",
+                                s
+                            )
+                        }
+                    }
                 }
-            }
+        }
     } else if (callable is PsiMethod) {
         callable.checkDeclarationConflict(context.getterName, context.conflicts, context.callables)
     }
@@ -339,7 +349,7 @@ private fun getWritable(
     updater: ModPsiUpdater,
 ): Context {
     val (callables, elementsToChange, newName, _, newGetterName) = elementContext
-    
+
     val writableElementsToChange = ElementsToChange().apply {
         kotlinCalls.addAll(elementsToChange.kotlinCalls.map(updater::getWritable))
         kotlinRefsToRename.addAll(
@@ -355,7 +365,7 @@ private fun getWritable(
                 .mapNotNull(PsiElement::getReference)
         )
     }
-    
+
     return Context(
         callables = callables.map(updater::getWritable),
         elementsToChange = writableElementsToChange,
