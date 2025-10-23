@@ -183,7 +183,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
   private suspend fun withProcessIcon(langs: Collection<Lang>, download: suspend (Collection<Lang>) -> Unit): Boolean {
     var failed = false
     try {
-      if (GrazieRemote.allAvailableLocally(langs)) return false
+      if (GrazieRemote.allAvailableLocally(langs)) return true
       val filteredLanguages = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         getLanguagesBasedOnUserAgreement(langs, project)
       }
