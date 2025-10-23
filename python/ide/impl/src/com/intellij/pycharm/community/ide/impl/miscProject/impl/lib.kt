@@ -32,6 +32,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
+import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -67,10 +68,10 @@ suspend fun createMiscProject(
   systemPythonService: SystemPythonService = SystemPythonService(),
   currentProject: Project? = null,
 ): PyResult<Job> {
-  return createProjectAndSdk(projectPath,
-                             confirmInstallation = confirmInstallation,
-                             systemPythonService = systemPythonService,
-                             currentProject = currentProject,
+  return createOrOpenProjectAndSdk(projectPath,
+                                   confirmInstallation = confirmInstallation,
+                                   systemPythonService = systemPythonService,
+                                   currentProject = currentProject,
   ).mapResult { (project, sdk) ->
     Result.Success(scopeProvider(project).launch {
       withBackgroundProgress(project, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
@@ -139,7 +140,7 @@ private suspend fun generateFile(where: Path, templateFileName: TemplateFileName
  * Pythons are searched using [systemPythonService].
  * If no Python found and [confirmInstallation] we install it using [SystemPythonService.getInstaller]
  */
-private suspend fun createProjectAndSdk(
+private suspend fun createOrOpenProjectAndSdk(
   projectPath: Path,
   confirmInstallation: suspend () -> Boolean,
   systemPythonService: SystemPythonService,
@@ -150,6 +151,11 @@ private suspend fun createProjectAndSdk(
     currentProject
   } else {
     openProject(projectPath)
+  }
+
+  val existingSdk = project.pythonSdk
+  if (isAlreadyMiscOrWelcomeScreenProject && existingSdk != null) {
+    return PyResult.success(project to existingSdk)
   }
 
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }

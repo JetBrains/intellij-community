@@ -27,6 +27,7 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -56,10 +57,13 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     val sdk = project.pythonSdk
     thisLogger().debug { "Input: $sdk" }
     /*
-     * Technically, we can end up in a situation when we created a project, but failed to configure SDK for some reason, which would
-     * lead to automatic SDK configuration.
+     * DataSpell skips SDK setup on new project creation, so we need to use auto-detection there. At the same time, with PyCharm we
+     * first open a project and only then persist SDK from the dialog. So at this step we'll have null SDK for new projects.
+     *
+     * Please note, this is a dirty hack and shouldn't be used like this. We expect this whole configurator to be dropped soon, that's
+     * why we're not investing time in doing it properly using ide customizations.
      */
-    if (sdk != null) {
+    if (sdk != null || (isProjectCreatedWithWizard && !PlatformUtils.isDataSpell())) {
       return
     }
     if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
