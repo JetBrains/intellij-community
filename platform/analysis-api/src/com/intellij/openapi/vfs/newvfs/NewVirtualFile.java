@@ -107,6 +107,19 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   }
 
   /**
+   * @return true if VFS _thinks_ it already knows all the children of this file, false otherwise.
+   * It doesn't mean there are no yet-uncached children in the actual underlying FS: VFS may catch up changes
+   * in the underlying FS with delay -- it just means VFS _thinks_ it knows all the children, i.e., it _was_
+   * all the children in the folder at some moment.
+   * It also doesn't mean all those children are now loaded in memory -- they could be in VFS persistent
+   * storage yet.
+   */
+  @ApiStatus.Experimental
+  public boolean allChildrenCached() {
+    return false;
+  }
+
+  /**
    * @return children that VFS already loaded in memory. This may be not all the children in the actual underlying FS,
    * since: (a) FS changes may be caught to VFS with delay (b) some children could be known to VFS, but not loaded
    * in-memory (=stored in VFS persistent storage)

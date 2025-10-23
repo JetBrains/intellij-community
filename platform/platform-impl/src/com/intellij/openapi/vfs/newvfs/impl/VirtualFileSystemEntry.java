@@ -878,6 +878,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     @Override
+    public boolean allChildrenCached() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public @NotNull Collection<VirtualFile> getCachedChildren() {
       throw new UnsupportedOperationException();
     }

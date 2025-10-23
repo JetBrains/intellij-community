@@ -54,6 +54,11 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
+  public boolean allChildrenCached() {
+    return true;
+  }
+
+  @Override
   public @NotNull Collection<VirtualFile> getCachedChildren() {
     return Collections.emptyList();
   }

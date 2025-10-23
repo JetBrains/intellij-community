@@ -983,6 +983,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return directoryData.children.areAllChildrenLoaded();
   }
 
+  @Override
+  public boolean allChildrenCached() {
+    return owningPersistentFS().areChildrenLoaded(this);
+  }
+
   public @Unmodifiable @NotNull List<String> getSuspiciousNames() {
     return directoryData.getAdoptedNames();
   }
