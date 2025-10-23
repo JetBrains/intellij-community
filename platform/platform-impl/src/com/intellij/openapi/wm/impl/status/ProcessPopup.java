@@ -40,6 +40,7 @@ final class ProcessPopup {
   private JBPopup myPopup;
   private boolean myPopupVisible;
   private final TasksFinishedDecorator myTasksFinishedDecorator;
+  private final AnalyzingBannerDecorator myAnalyzingBannerDecorator;
 
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
@@ -52,6 +53,7 @@ final class ProcessPopup {
     }
 
     myTasksFinishedDecorator = new TasksFinishedDecorator(myIndicatorPanel);
+    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> revalidateAll());
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     updateContentUI();
@@ -67,6 +69,7 @@ final class ProcessPopup {
     }
     myIndicatorPanel.add(component);
     myTasksFinishedDecorator.addIndicator(component);
+    myAnalyzingBannerDecorator.addIndicator(indicator);
     revalidateAll();
   }
 
@@ -81,6 +84,7 @@ final class ProcessPopup {
       hideSeparator(myIndicatorPanel.getComponent(0));
     }
     myTasksFinishedDecorator.removeIndicator();
+    myAnalyzingBannerDecorator.removeIndicator(indicator);
     revalidateAll();
   }
 
@@ -144,6 +148,7 @@ final class ProcessPopup {
   }
 
   public void hide() {
+    myAnalyzingBannerDecorator.handlePopupClose();
     if (myPopup != null) {
       myPopupVisible = false;
       myPopup.cancel();
