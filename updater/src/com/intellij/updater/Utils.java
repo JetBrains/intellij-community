@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -327,5 +327,17 @@ public final class Utils {
   public static void pause(long millis) {
     try { Thread.sleep(millis); }
     catch (InterruptedException ignore) { }
+  }
+
+  public static String[] splitVersionString(String version) {
+    var p = version.indexOf('#');
+    if (p > 0) {
+      var nameAndVersion = version.substring(0, p).trim();
+      var buildNumber = version.substring(p + 1);
+      return new String[]{nameAndVersion, buildNumber};
+    }
+    else {
+      return new String[]{version};
+    }
   }
 }

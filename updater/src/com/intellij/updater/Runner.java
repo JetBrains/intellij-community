@@ -1,5 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URI;
@@ -7,8 +9,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
-import java.util.logging.Formatter;
 import java.util.logging.*;
+import java.util.logging.Formatter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -350,6 +352,10 @@ public final class Runner {
         }
 
         applicationResult = PatchFileCreator.apply(preparationResult, resolutions, backupDir, ui);
+
+        if (applicationResult.applied) {
+          postUpdateTasks(ui, dest, preparationResult.patch.getNewBuild());
+        }
       }
       catch (OperationCancelledException e) {
         LOG.log(Level.WARNING, "cancelled", e);
@@ -402,7 +408,6 @@ public final class Runner {
     finally {
       try {
         cleanup(ui);
-        refreshApplicationIcon(dest.toString());
       }
       catch (Throwable t) {
         LOG.log(Level.WARNING, "cleanup failed", t);
@@ -462,6 +467,7 @@ public final class Runner {
       boolean completed = false, needRestore = false;
       Throwable error = null;
       try {
+        var newVersion = (String)null;
         for (File patchFile : patchFiles) {
           PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
 
@@ -473,8 +479,10 @@ public final class Runner {
             error = applicationResult.error;
             throw new OperationCancelledException();
           }
+          newVersion = preparationResult.patch.getNewBuild();
         }
         completed = true;
+        postUpdateTasks(ui, dest, newVersion);
       }
       catch (OperationCancelledException e) {
         LOG.log(Level.WARNING, "cancelled", e);
@@ -532,7 +540,6 @@ public final class Runner {
     finally {
       try {
         cleanup(ui);
-        refreshApplicationIcon(dest.toString());
       }
       catch (Throwable t) {
         LOG.log(Level.WARNING, "cleanup failed", t);
@@ -563,17 +570,17 @@ public final class Runner {
     Utils.cleanup();
   }
 
-  private static void refreshApplicationIcon(String destPath) {
+  private static void postUpdateTasks(UpdaterUI ui, Path targetDir, @Nullable String newVersion) {
     if (Utils.IS_MAC) {
-      try {
-        String applicationPath = destPath.contains("/Contents") ? destPath.substring(0, destPath.lastIndexOf("/Contents")) : destPath;
-        LOG.info("refreshApplicationIcon for: " + applicationPath);
-        Runtime runtime = Runtime.getRuntime();
-        String[] args = {"touch", applicationPath};
-        runtime.exec(args);
-      }
-      catch (IOException e) {
-        LOG.log(Level.WARNING, "refreshApplicationIcon failed", e);
+      PostUpdateTasks.refreshAppBundleIcon(targetDir);
+    }
+    else if (Utils.IS_WINDOWS && newVersion != null) {
+      var parts = Utils.splitVersionString(newVersion);
+      if (parts.length == 2) {
+        ui.startProcess(UpdaterUI.message("updating.shortcuts"));
+        ui.setProgressIndeterminate();
+        PostUpdateTasks.updateWindowsRegistry(targetDir, parts[0], parts[1]);
+        PostUpdateTasks.updateWindowsShortcuts(targetDir, parts[0]);
       }
     }
   }
