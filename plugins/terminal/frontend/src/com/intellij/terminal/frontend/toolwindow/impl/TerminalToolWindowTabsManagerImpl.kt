@@ -187,7 +187,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling tab created event: $tab") {
-      it.tabCreated(tab)
+      it.tabAdded(tab)
     }
   }
 
