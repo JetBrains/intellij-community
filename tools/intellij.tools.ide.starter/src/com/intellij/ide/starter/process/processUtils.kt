@@ -44,11 +44,13 @@ fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
   val substringToSearch: List<String> = listOf("/$IDE_TESTS_SUBSTRING/", "\\$IDE_TESTS_SUBSTRING\\")
   findAndKillProcesses(*substringToSearch.toTypedArray()) { processInfosToKill ->
     if (reportErrors) {
-      CIServer.instance.reportTestFailure("Unexpected running processes were detected after IDE was stopped ${processInfosToKill.joinToString(", ") { it.name }}",
-                                          "Please investigate if it is a product bug, if it is, you can mute the exception and raise a bug," +
-                                          "if it is an expected behaviour, it is recommended to add a call `${::findAndKillProcesses}` with appropriate arguments in @After/@AfterEach.\n" +
-                                          "Processes were collected based on command line, containing '${substringToSearch.joinToString(", ")}'.\n" +
-                                          processInfosToKill.joinToString("\n") { it.description }, details = "")
+      val message = "Unexpected running processes were detected after IDE was stopped ${processInfosToKill.joinToString(", ") { it.name }}"
+      CIServer.instance.reportTestFailure(testName = message,
+                                          message = message + "\n" +
+                                                    "Please investigate if the process should have been stopped together with the IDE, it means it is a bug, you can raise a YT ticket and mute the exception.\n" +
+                                                    "If it is an expected behaviour, it is recommended to add a call `${::findAndKillProcesses}` with appropriate arguments in @After/@AfterEach.\n" +
+                                                    "Processes were collected based on command line, containing '${substringToSearch.joinToString(", ")}'.\n" +
+                                                    processInfosToKill.joinToString("\n") { it.description }, details = "")
     }
   }
 }
