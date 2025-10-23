@@ -117,10 +117,10 @@ fun GHPullRequestReviewThread.mapToRange(
       if (initialEndSide != sideBias) return null
 
       // otherwise, try to map the endLine to the same side as startLine
-      val END = mapToLocation(diffData, StartOrEnd.END, initialStartSide)
+      val end = mapToLocation(diffData, StartOrEnd.END, initialStartSide)
                   ?.takeIf { (endSide, _) -> endSide == initialStartSide }?.second ?: return null
 
-      Triple(initialStartSide, initialStartLine, END)
+      Triple(initialStartSide, initialStartLine, end)
     }
 
   return side to if (startLine <= endLine) {
