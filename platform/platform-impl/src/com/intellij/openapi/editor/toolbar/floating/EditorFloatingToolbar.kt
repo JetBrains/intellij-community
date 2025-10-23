@@ -16,6 +16,7 @@ import com.intellij.openapi.observable.util.whenKeyPressed
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.isComponentUnderMouse
 import com.intellij.openapi.ui.isFocusAncestor
+import com.intellij.openapi.util.Disposer
 import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -28,7 +29,10 @@ import javax.swing.BorderFactory
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
+class EditorFloatingToolbar(editor: EditorImpl) :
+  JPanel(),
+  Disposable {
+
   init {
     layout = FlowLayout(FlowLayout.RIGHT, 20, 20)
     border = BorderFactory.createEmptyBorder()
@@ -41,14 +45,16 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
       override fun extensionAdded(extension: FloatingToolbarProvider, pluginDescriptor: PluginDescriptor) {
         addFloatingToolbarComponent(editor, extension)
       }
-    }, editor.disposable)
+    }, this)
+
+    Disposer.register(editor.disposable, this)
   }
 
   private fun addFloatingToolbarComponent(
     editor: EditorImpl,
     provider: FloatingToolbarProvider,
   ) {
-    editor.disposable.createLifetime().launch {
+    createLifetime().launch {
       val dataContext = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
         editor.dataContext
       }
@@ -58,21 +64,34 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
       if (providerApplicable) {
         withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
           coroutineContext.ensureActive()
-          val disposable = FloatingToolbarProvider.EP_NAME.createExtensionDisposable(
-            extension = provider,
-            parentDisposable = editor.disposable,
-          )
+
+          val extensionDisposable = try {
+            FloatingToolbarProvider.EP_NAME.createExtensionDisposable(
+              extension = provider,
+              parentDisposable = this@EditorFloatingToolbar,
+            )
+          }
+          catch (_: Exception) {
+            null
+          }
+
+          if (extensionDisposable == null)
+            return@withContext
+
           val component = EditorFloatingToolbarComponent(
             editor = editor,
             provider = provider,
-            parentDisposable = disposable,
+            parentDisposable = extensionDisposable,
           )
-          addComponent(component, disposable)
-          provider.register(dataContext, component, disposable)
+
+          addComponent(component, extensionDisposable)
+          provider.register(dataContext, component, extensionDisposable)
         }
       }
     }
   }
+
+  override fun dispose() {}
 
   private class EditorFloatingToolbarComponent(
     editor: EditorImpl,
