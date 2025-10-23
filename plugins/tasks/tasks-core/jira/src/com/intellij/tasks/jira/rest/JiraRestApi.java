@@ -2,7 +2,6 @@
 package com.intellij.tasks.jira.rest;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
@@ -11,6 +10,7 @@ import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraVersion;
 import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
 import com.intellij.tasks.jira.rest.api20alpha1.JiraRestApi20Alpha1;
+import com.intellij.tasks.jira.rest.api3.JiraRestApiCloud3;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.httpclient.NameValuePair;
@@ -35,7 +35,12 @@ public abstract class JiraRestApi extends JiraRemoteApi {
       return new JiraRestApi20Alpha1(repository);
     }
     else if (jiraVersion.getMajorNumber() >= 5) {
-      return new JiraRestApi2(repository);
+      if (repository.isInCloud()) {
+        return new JiraRestApiCloud3(repository);
+      }
+      else {
+        return new JiraRestApi2(repository);
+      }
     }
     else {
       LOG.warn("JIRA below 4.2.0 doesn't support REST API (" + jiraVersion + " used)");
@@ -76,13 +81,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   }
 
   protected @NotNull GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
-    GetMethod method;
-    if (Registry.is("tasks.use.search.jql.api", true)) {
-      method = new GetMethod(myRepository.getRestUrl("search/jql"));
-    }
-    else {
-      method = new GetMethod(myRepository.getRestUrl("search"));
-    }
+    GetMethod method = new GetMethod(myRepository.getRestUrl("search"));
     method.setQueryString(new NameValuePair[]{
       new NameValuePair("jql", jql),
       new NameValuePair("maxResults", String.valueOf(max))

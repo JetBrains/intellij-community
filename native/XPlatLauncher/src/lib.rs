@@ -296,7 +296,7 @@ pub struct ProductInfoCustomCommandField {
 pub trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
     fn get_vm_options(&self) -> Result<Vec<String>>;
-    fn get_properties_file(&self) -> Result<PathBuf>;
+    fn get_custom_properties_file(&self) -> Result<PathBuf>;
     fn get_class_path(&self) -> Result<Vec<String>>;
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)>;
 }
@@ -347,7 +347,7 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &O
     let mut vm_options = configuration.get_vm_options()?;
 
     debug!("Looking for custom properties environment variable");
-    match configuration.get_properties_file() {
+    match configuration.get_custom_properties_file() {
         Ok(path) => {
             debug!("Custom properties file: {:?}", path);
             vm_options.push(jvm_property!("idea.properties.file", path.to_string_checked()?));

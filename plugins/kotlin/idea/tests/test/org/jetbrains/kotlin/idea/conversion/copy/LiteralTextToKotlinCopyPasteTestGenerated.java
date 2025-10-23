@@ -230,6 +230,11 @@ public class LiteralTextToKotlinCopyPasteTestGenerated extends AbstractLiteralTe
         runTest("testData/copyPaste/plainTextLiteral/StacktraceDoublePrefix.txt");
     }
 
+    @TestMetadata("StacktraceLineToSingleQuoted.txt")
+    public void testStacktraceLineToSingleQuoted() throws Exception {
+        runTest("testData/copyPaste/plainTextLiteral/StacktraceLineToSingleQuoted.txt");
+    }
+
     @TestMetadata("StacktraceTriplePrefix.txt")
     public void testStacktraceTriplePrefix() throws Exception {
         runTest("testData/copyPaste/plainTextLiteral/StacktraceTriplePrefix.txt");

@@ -480,7 +480,6 @@ platform/jewel/markdown/extensions/gfm-tables
 platform/jewel/markdown/extensions/images
 platform/jewel/markdown/ide-laf-bridge-styling
 platform/jewel/markdown/int-ui-standalone-styling
-platform/jewel/samples/ide-plugin
 platform/jewel/samples/showcase
 platform/jewel/samples/standalone
 platform/jewel/ui
@@ -865,6 +864,8 @@ plugins/junit/kotlin-tests-shared
 plugins/junit/testFramework
 plugins/junit5_rt
 plugins/junit5_rt_tests
+plugins/junit6_rt
+plugins/junit6_rt_tests
 plugins/junit_rt
 plugins/keymaps/eclipse-keymap
 plugins/keymaps/netbeans5.6-keymap

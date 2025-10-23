@@ -5,6 +5,15 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import javax.accessibility.AccessibleContext
 
 class AccessibleCaretTest : AbstractEditorTest() {
+  fun `test accessible caret property change on left and right arrow press`() {
+    val accessibleCaret = initEditor(3)
+
+    left()
+    assertEquals(2, accessibleCaret.position)
+    right()
+    assertEquals(3, accessibleCaret.position)
+  }
+
   fun `test accessible caret property change on backspace`() {
     val accessibleCaret = initEditor(3)
 
@@ -31,7 +40,7 @@ class AccessibleCaretTest : AbstractEditorTest() {
     initText("12345")
     editor.caretModel.moveToOffset(caretPosition.position)
     editor.contentComponent.accessibleContext.addPropertyChangeListener { evt ->
-      if (evt.propertyName == AccessibleContext.ACCESSIBLE_CARET_PROPERTY) {
+      if (evt.propertyName == AccessibleContext.ACCESSIBLE_CARET_PROPERTY || evt.propertyName == AccessibleContext.ACCESSIBLE_TEXT_PROPERTY) {
         caretPosition.position = evt.newValue as Int
       }
     }

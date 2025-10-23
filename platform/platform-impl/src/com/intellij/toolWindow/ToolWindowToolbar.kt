@@ -12,7 +12,9 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
+import com.intellij.ui.BorderPainter
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.DefaultBorderPainter
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
@@ -39,6 +41,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
   private var hasVisibleButtons = false
   private val visibleButtonsListeners = mutableListOf<() -> Unit>()
+
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
   protected open fun init() {
     layout = myResizeManager.createLayout()
@@ -102,6 +106,11 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
   open fun createBorder():Border = JBUI.Borders.empty()
   open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
+
+  override fun paint(g: Graphics) {
+    super.paint(g)
+    borderPainter.paintAfterChildren(this, g)
+  }
 
   internal abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 

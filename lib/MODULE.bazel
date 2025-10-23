@@ -4528,6 +4528,76 @@ http_file(
 )
 
 http_file(
+  name = "junit-jupiter-api-6_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0.jar",
+  sha256 = "88d690d2d373cd66170770c317977196ce9e465f2388930f4bc9665e887385f6",
+  downloaded_file_path = "junit-jupiter-api-6.0.0.jar"
+)
+
+http_file(
+  name = "junit-platform-commons-6_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0.jar",
+  sha256 = "86e8faf87f3151a3d545850852a0f2cc55ea8a2434eee9e08f83881c52d55992",
+  downloaded_file_path = "junit-platform-commons-6.0.0.jar"
+)
+
+http_file(
+  name = "jspecify-1_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
+  sha256 = "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab",
+  downloaded_file_path = "jspecify-1.0.0.jar"
+)
+
+http_file(
+  name = "junit-jupiter-api-6_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0-sources.jar",
+  sha256 = "52a9bb01e348a87c5743c6555274be8999d72ebdae0db3991b99f24bcd078e5e",
+  downloaded_file_path = "junit-jupiter-api-6.0.0-sources.jar"
+)
+
+http_file(
+  name = "junit-platform-commons-6_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0-sources.jar",
+  sha256 = "eb76cc1b09296370774f1de11c2fa037464753d98f0d542312e270b647a4c106",
+  downloaded_file_path = "junit-platform-commons-6.0.0-sources.jar"
+)
+
+http_file(
+  name = "jspecify-1_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar",
+  sha256 = "adf0898191d55937fb3192ba971826f4f294292c4a960740f3c27310e7b70296",
+  downloaded_file_path = "jspecify-1.0.0-sources.jar"
+)
+
+http_file(
+  name = "junit-platform-launcher-6_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0.jar",
+  sha256 = "5f097b00c6714bb71ecfb5dec62b59bb4c2f789763fafd1ece96c4ef0e6c280f",
+  downloaded_file_path = "junit-platform-launcher-6.0.0.jar"
+)
+
+http_file(
+  name = "junit-platform-engine-6_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0.jar",
+  sha256 = "6f81842e9c13e997cac66b44614522f3639419e2388ae2d000c4bc0a6b92d93f",
+  downloaded_file_path = "junit-platform-engine-6.0.0.jar"
+)
+
+http_file(
+  name = "junit-platform-launcher-6_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0-sources.jar",
+  sha256 = "b5d996a313285657990fd532d3f6375489ea2834f19ea9769d74009e9727fe9e",
+  downloaded_file_path = "junit-platform-launcher-6.0.0-sources.jar"
+)
+
+http_file(
+  name = "junit-platform-engine-6_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0-sources.jar",
+  sha256 = "d324087cbe0b41ea9307c709811233f302346349fac17f2ab4c88f05a188eb79",
+  downloaded_file_path = "junit-platform-engine-6.0.0-sources.jar"
+)
+
+http_file(
   name = "jvm-native-trusted-roots-1_1_7_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.1.7/jvm-native-trusted-roots-1.1.7.jar",
   sha256 = "8d715c487c8908a8b3b1d982f013f5ec39fb9033eb4272fdb251d648b5ede48c",
@@ -6418,13 +6488,6 @@ http_file(
 )
 
 http_file(
-  name = "jspecify-1_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
-  sha256 = "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab",
-  downloaded_file_path = "jspecify-1.0.0.jar"
-)
-
-http_file(
   name = "lifecycle-runtime-desktop-2_9_2_http",
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime-desktop/2.9.2/lifecycle-runtime-desktop-2.9.2.jar",
   sha256 = "2fb49f76d1021792fb359e0a9246c1509f2f5b555f0a46591d24d58deb68bd5c",
@@ -6604,13 +6667,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common-jvm/2.9.2/lifecycle-common-jvm-2.9.2-sources.jar",
   sha256 = "5764b2618dfb88b98668e5e84bec8e5af0e0c168d714687a0a3b3591f669846c",
   downloaded_file_path = "lifecycle-common-jvm-2.9.2-sources.jar"
-)
-
-http_file(
-  name = "jspecify-1_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar",
-  sha256 = "adf0898191d55937fb3192ba971826f4f294292c4a960740f3c27310e7b70296",
-  downloaded_file_path = "jspecify-1.0.0-sources.jar"
 )
 
 http_file(
@@ -12092,48 +12148,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/commonmark/commonmark-ext-gfm-tables/0.24.0/commonmark-ext-gfm-tables-0.24.0-sources.jar",
   sha256 = "15525448cb137992c00ece73d320f45187a187bc906ba967ccc958f42e92c3b9",
   downloaded_file_path = "commonmark-ext-gfm-tables-0.24.0-sources.jar"
-)
-
-http_file(
-  name = "mpfilepicker-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0.jar",
-  sha256 = "93e571b342f2bc87aa192fc7eb6d177ac5075415617824674b0d5fa063840f4e",
-  downloaded_file_path = "mpfilepicker-3.1.0.jar"
-)
-
-http_file(
-  name = "mpfilepicker-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0-sources.jar",
-  sha256 = "d43eca88638794d8ff756d327ed1090632dcfed8ecc43424062932dba3cb212c",
-  downloaded_file_path = "mpfilepicker-3.1.0-sources.jar"
-)
-
-http_file(
-  name = "mpfilepicker-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0.jar",
-  sha256 = "65bb8c814bc66faf28395e7f9d51c74f5cc35d70919c50ea8639388ec46cef2d",
-  downloaded_file_path = "mpfilepicker-jvm-3.1.0.jar"
-)
-
-http_file(
-  name = "mpfilepicker-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0-sources.jar",
-  sha256 = "1f57b5586f0f260f71b073978d1075f40ec8e73c188975aaa99cbf8e8d7bd4a3",
-  downloaded_file_path = "mpfilepicker-jvm-3.1.0-sources.jar"
-)
-
-http_file(
-  name = "lwjgl-3_3_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar",
-  sha256 = "cf83f90e32fb973ff5edfca4ef35f55ca51bb70a579b6a1f290744f552e8e484",
-  downloaded_file_path = "lwjgl-3.3.1.jar"
-)
-
-http_file(
-  name = "lwjgl-3_3_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-sources.jar",
-  sha256 = "30cb8190660bcbe9ce5761690a5abbf45735c9af4d58f61bd568203025fd3a36",
-  downloaded_file_path = "lwjgl-3.3.1-sources.jar"
 )
 
 http_file(

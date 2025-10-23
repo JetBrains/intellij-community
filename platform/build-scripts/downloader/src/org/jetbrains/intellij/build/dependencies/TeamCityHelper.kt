@@ -11,6 +11,9 @@ object TeamCityHelper {
   @JvmField
   val isUnderTeamCity: Boolean = System.getenv("TEAMCITY_VERSION") != null
 
+  @JvmField
+  val isPersonalBuild: Boolean = System.getenv("BUILD_IS_PERSONAL") == "true"
+
   val checkoutDirectory: Path?
     get() {
       if (!isUnderTeamCity) {

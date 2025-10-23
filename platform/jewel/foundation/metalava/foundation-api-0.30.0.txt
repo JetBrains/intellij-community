@@ -1,0 +1,1013 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.foundation {
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class BorderColors {
+    ctor @KotlinOnly public BorderColors(androidx.compose.ui.graphics.Color normal, androidx.compose.ui.graphics.Color focused, androidx.compose.ui.graphics.Color disabled);
+    property public androidx.compose.ui.graphics.Color disabled;
+    property public androidx.compose.ui.graphics.Color focused;
+    property public androidx.compose.ui.graphics.Color normal;
+    field public static final org.jetbrains.jewel.foundation.BorderColors.Companion Companion;
+  }
+
+  public static final class BorderColors.Companion {
+  }
+
+  public final class CompatibilityKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void enableNewSwingCompositing();
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DisabledAppearanceValues {
+    ctor public DisabledAppearanceValues(int brightness, int contrast, int alpha);
+    method public int getAlpha();
+    method public int getBrightness();
+    method public int getContrast();
+    property public int alpha;
+    property public int brightness;
+    property public int contrast;
+    field public static final org.jetbrains.jewel.foundation.DisabledAppearanceValues.Companion Companion;
+  }
+
+  public static final class DisabledAppearanceValues.Companion {
+  }
+
+  public final class DisabledAppearanceValuesKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.DisabledAppearanceValues> getLocalDisabledAppearanceValues();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.DisabledAppearanceValues> LocalDisabledAppearanceValues;
+  }
+
+  @kotlin.RequiresOptIn(level=kotlin.RequiresOptIn.Level.WARNING, message="This is an experimental API for Jewel and is likely to change before becoming stable.") @kotlin.annotation.Target(allowedTargets={kotlin.annotation.AnnotationTarget.CLASS, kotlin.annotation.AnnotationTarget.CONSTRUCTOR, kotlin.annotation.AnnotationTarget.FIELD, kotlin.annotation.AnnotationTarget.FUNCTION, kotlin.annotation.AnnotationTarget.PROPERTY, kotlin.annotation.AnnotationTarget.PROPERTY_GETTER, kotlin.annotation.AnnotationTarget.PROPERTY_SETTER, kotlin.annotation.AnnotationTarget.TYPEALIAS, kotlin.annotation.AnnotationTarget.VALUE_PARAMETER}) public @interface ExperimentalJewelApi {
+  }
+
+  @kotlin.annotation.Target(allowedTargets=kotlin.annotation.AnnotationTarget.CLASS) public @interface GenerateDataFunctions {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GlobalColors {
+    ctor @KotlinOnly public GlobalColors(org.jetbrains.jewel.foundation.BorderColors borders, org.jetbrains.jewel.foundation.OutlineColors outlines, org.jetbrains.jewel.foundation.TextColors text, androidx.compose.ui.graphics.Color panelBackground);
+    method public org.jetbrains.jewel.foundation.BorderColors getBorders();
+    method public org.jetbrains.jewel.foundation.OutlineColors getOutlines();
+    method public org.jetbrains.jewel.foundation.TextColors getText();
+    property public org.jetbrains.jewel.foundation.BorderColors borders;
+    property public org.jetbrains.jewel.foundation.OutlineColors outlines;
+    property public androidx.compose.ui.graphics.Color panelBackground;
+    property public org.jetbrains.jewel.foundation.TextColors text;
+    field public static final org.jetbrains.jewel.foundation.GlobalColors.Companion Companion;
+  }
+
+  public static final class GlobalColors.Companion {
+  }
+
+  public final class GlobalColorsKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.GlobalColors> getLocalGlobalColors();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.GlobalColors> LocalGlobalColors;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GlobalMetrics {
+    ctor @KotlinOnly public GlobalMetrics(androidx.compose.ui.unit.Dp outlineWidth, androidx.compose.ui.unit.Dp rowHeight);
+    property public androidx.compose.ui.unit.Dp outlineWidth;
+    property public androidx.compose.ui.unit.Dp rowHeight;
+    field public static final org.jetbrains.jewel.foundation.GlobalMetrics.Companion Companion;
+  }
+
+  public static final class GlobalMetrics.Companion {
+  }
+
+  public final class GlobalMetricsKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.GlobalMetrics> getLocalGlobalMetrics();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.GlobalMetrics> LocalGlobalMetrics;
+  }
+
+  @kotlin.RequiresOptIn(level=kotlin.RequiresOptIn.Level.WARNING, message="This is an internal API for Jewel and is subject to change without notice.") @kotlin.annotation.Target(allowedTargets={kotlin.annotation.AnnotationTarget.CLASS, kotlin.annotation.AnnotationTarget.CONSTRUCTOR, kotlin.annotation.AnnotationTarget.FIELD, kotlin.annotation.AnnotationTarget.FUNCTION, kotlin.annotation.AnnotationTarget.PROPERTY, kotlin.annotation.AnnotationTarget.PROPERTY_GETTER, kotlin.annotation.AnnotationTarget.PROPERTY_SETTER, kotlin.annotation.AnnotationTarget.TYPEALIAS, kotlin.annotation.AnnotationTarget.VALUE_PARAMETER}) public @interface InternalJewelApi {
+  }
+
+  public final class JewelApiVersionKt {
+    method public static String getApiVersionString(org.jetbrains.jewel.foundation.JewelBuild);
+    property public static String org.jetbrains.jewel.foundation.JewelBuild.apiVersionString;
+  }
+
+  public final class JewelBuild {
+    field public static final org.jetbrains.jewel.foundation.JewelBuild INSTANCE;
+  }
+
+  public final class JewelFlags {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public boolean getUseCustomPopupRenderer();
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public void setUseCustomPopupRenderer(boolean);
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public boolean useCustomPopupRenderer;
+    field public static final org.jetbrains.jewel.foundation.JewelFlags INSTANCE;
+  }
+
+  public final class LocalComponentKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<javax.swing.JComponent> getLocalComponent();
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<javax.swing.JComponent> LocalComponent;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class OutlineColors {
+    ctor @KotlinOnly public OutlineColors(androidx.compose.ui.graphics.Color focused, androidx.compose.ui.graphics.Color focusedWarning, androidx.compose.ui.graphics.Color focusedError, androidx.compose.ui.graphics.Color warning, androidx.compose.ui.graphics.Color error);
+    property public androidx.compose.ui.graphics.Color error;
+    property public androidx.compose.ui.graphics.Color focused;
+    property public androidx.compose.ui.graphics.Color focusedError;
+    property public androidx.compose.ui.graphics.Color focusedWarning;
+    property public androidx.compose.ui.graphics.Color warning;
+    field public static final org.jetbrains.jewel.foundation.OutlineColors.Companion Companion;
+  }
+
+  public static final class OutlineColors.Companion {
+  }
+
+  public abstract sealed class Stroke {
+  }
+
+  public enum Stroke.Alignment {
+    enum_constant public static final org.jetbrains.jewel.foundation.Stroke.Alignment Center;
+    enum_constant public static final org.jetbrains.jewel.foundation.Stroke.Alignment Inside;
+    enum_constant public static final org.jetbrains.jewel.foundation.Stroke.Alignment Outside;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class Stroke.Brush extends org.jetbrains.jewel.foundation.Stroke {
+    method public org.jetbrains.jewel.foundation.Stroke.Alignment getAlignment();
+    method public androidx.compose.ui.graphics.Brush getBrush();
+    property public org.jetbrains.jewel.foundation.Stroke.Alignment alignment;
+    property public androidx.compose.ui.graphics.Brush brush;
+    property public androidx.compose.ui.unit.Dp expand;
+    property public androidx.compose.ui.unit.Dp width;
+  }
+
+  @androidx.compose.runtime.Immutable public static final class Stroke.None extends org.jetbrains.jewel.foundation.Stroke {
+    field public static final org.jetbrains.jewel.foundation.Stroke.None INSTANCE;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class Stroke.Solid extends org.jetbrains.jewel.foundation.Stroke {
+    method public org.jetbrains.jewel.foundation.Stroke.Alignment getAlignment();
+    property public org.jetbrains.jewel.foundation.Stroke.Alignment alignment;
+    property public androidx.compose.ui.graphics.Color color;
+    property public androidx.compose.ui.unit.Dp expand;
+    property public androidx.compose.ui.unit.Dp width;
+  }
+
+  public final class StrokeKt {
+    method public static org.jetbrains.jewel.foundation.Stroke Stroke(float width, androidx.compose.ui.graphics.Brush brush, org.jetbrains.jewel.foundation.Stroke.Alignment alignment, optional float expand);
+    method public static org.jetbrains.jewel.foundation.Stroke Stroke(float width, long color, org.jetbrains.jewel.foundation.Stroke.Alignment alignment, optional float expand);
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class TextColors {
+    ctor @KotlinOnly @Deprecated public TextColors(androidx.compose.ui.graphics.Color normal, androidx.compose.ui.graphics.Color selected, androidx.compose.ui.graphics.Color disabled, androidx.compose.ui.graphics.Color info, androidx.compose.ui.graphics.Color error);
+    ctor @KotlinOnly public TextColors(androidx.compose.ui.graphics.Color normal, androidx.compose.ui.graphics.Color selected, androidx.compose.ui.graphics.Color disabled, androidx.compose.ui.graphics.Color disabledSelected, androidx.compose.ui.graphics.Color info, androidx.compose.ui.graphics.Color error, androidx.compose.ui.graphics.Color warning);
+    property public androidx.compose.ui.graphics.Color disabled;
+    property public androidx.compose.ui.graphics.Color disabledSelected;
+    property public androidx.compose.ui.graphics.Color error;
+    property public androidx.compose.ui.graphics.Color info;
+    property public androidx.compose.ui.graphics.Color normal;
+    property public androidx.compose.ui.graphics.Color selected;
+    property public androidx.compose.ui.graphics.Color warning;
+    field public static final org.jetbrains.jewel.foundation.TextColors.Companion Companion;
+  }
+
+  public static final class TextColors.Companion {
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.actionSystem {
+
+  public interface DataProviderContext {
+    method public <TValue> void lazy(String key, kotlin.jvm.functions.Function0<? extends TValue?> initializer);
+    method public <TValue> void set(String key, TValue? value);
+  }
+
+  @Deprecated public final class DataProviderNode extends androidx.compose.ui.Modifier.Node implements androidx.compose.ui.focus.FocusEventModifierNode androidx.compose.ui.node.TraversableNode {
+    ctor @Deprecated public DataProviderNode(kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.actionSystem.DataProviderContext,kotlin.Unit> dataProvider);
+    method @Deprecated public kotlin.jvm.functions.Function1<org.jetbrains.jewel.foundation.actionSystem.DataProviderContext,kotlin.Unit> getDataProvider();
+    method @Deprecated public boolean getHasFocus();
+    method @Deprecated public org.jetbrains.jewel.foundation.actionSystem.DataProviderNode.TraverseKey getTraverseKey();
+    method @Deprecated public void onFocusEvent(androidx.compose.ui.focus.FocusState focusState);
+    method @Deprecated public void setDataProvider(kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.actionSystem.DataProviderContext,kotlin.Unit>);
+    method @Deprecated public void setHasFocus(boolean);
+    property @Deprecated public kotlin.jvm.functions.Function1<org.jetbrains.jewel.foundation.actionSystem.DataProviderContext,kotlin.Unit> dataProvider;
+    property @Deprecated public boolean hasFocus;
+    property @Deprecated public org.jetbrains.jewel.foundation.actionSystem.DataProviderNode.TraverseKey traverseKey;
+    field @Deprecated public static final org.jetbrains.jewel.foundation.actionSystem.DataProviderNode.TraverseKey TraverseKey;
+  }
+
+  @Deprecated public static final class DataProviderNode.TraverseKey {
+  }
+
+  public final class ProvideDataKt {
+    method public static androidx.compose.ui.Modifier provideData(androidx.compose.ui.Modifier, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.actionSystem.DataProviderContext,kotlin.Unit> dataProvider);
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.code {
+
+  @kotlin.jvm.JvmInline public final value class MimeType {
+    ctor @KotlinOnly public MimeType(String mimeType);
+    method public String base();
+    method public String displayName();
+    field public static final String ATTR_FOLDER_TYPE = "folderType";
+    field public static final String ATTR_ROLE = "role";
+    field public static final String ATTR_ROOT_TAG = "rootTag";
+    field public static final String VALUE_MANIFEST = "manifest";
+    field public static final String VALUE_RESOURCE = "resource";
+  }
+
+  public static final class MimeType.Known {
+    method public String? fromMarkdownLanguageName(String name);
+    property public org.jetbrains.jewel.foundation.code.MimeType AGSL;
+    property public org.jetbrains.jewel.foundation.code.MimeType AIDL;
+    property public org.jetbrains.jewel.foundation.code.MimeType C;
+    property public org.jetbrains.jewel.foundation.code.MimeType CPP;
+    property public org.jetbrains.jewel.foundation.code.MimeType DART;
+    property public org.jetbrains.jewel.foundation.code.MimeType DIFF;
+    property public org.jetbrains.jewel.foundation.code.MimeType GO;
+    property public org.jetbrains.jewel.foundation.code.MimeType GRADLE;
+    property public org.jetbrains.jewel.foundation.code.MimeType GRADLE_KTS;
+    property public org.jetbrains.jewel.foundation.code.MimeType GROOVY;
+    property public org.jetbrains.jewel.foundation.code.MimeType JAVA;
+    property public org.jetbrains.jewel.foundation.code.MimeType JAVASCRIPT;
+    property public org.jetbrains.jewel.foundation.code.MimeType JSON;
+    property public org.jetbrains.jewel.foundation.code.MimeType KOTLIN;
+    property public org.jetbrains.jewel.foundation.code.MimeType MANIFEST;
+    property public org.jetbrains.jewel.foundation.code.MimeType PATCH;
+    property public org.jetbrains.jewel.foundation.code.MimeType PROGUARD;
+    property public org.jetbrains.jewel.foundation.code.MimeType PROPERTIES;
+    property public org.jetbrains.jewel.foundation.code.MimeType PROTO;
+    property public org.jetbrains.jewel.foundation.code.MimeType PYTHON;
+    property public org.jetbrains.jewel.foundation.code.MimeType REGEX;
+    property public org.jetbrains.jewel.foundation.code.MimeType RESOURCE;
+    property public org.jetbrains.jewel.foundation.code.MimeType RUST;
+    property public org.jetbrains.jewel.foundation.code.MimeType SHELL;
+    property public org.jetbrains.jewel.foundation.code.MimeType SQL;
+    property public org.jetbrains.jewel.foundation.code.MimeType SVG;
+    property public org.jetbrains.jewel.foundation.code.MimeType TEXT;
+    property public org.jetbrains.jewel.foundation.code.MimeType TOML;
+    property public org.jetbrains.jewel.foundation.code.MimeType TYPESCRIPT;
+    property public org.jetbrains.jewel.foundation.code.MimeType UNKNOWN;
+    property public org.jetbrains.jewel.foundation.code.MimeType VERSION_CATALOG;
+    property public org.jetbrains.jewel.foundation.code.MimeType XML;
+    property public org.jetbrains.jewel.foundation.code.MimeType YAML;
+    field public static final org.jetbrains.jewel.foundation.code.MimeType.Known INSTANCE;
+  }
+
+  public final class MimeTypeKt {
+    method public static boolean isGradle(String?);
+    method public static boolean isJava(String?);
+    method public static boolean isKotlin(String?);
+    method public static boolean isManifest(String?);
+    method public static boolean isProto(String?);
+    method public static boolean isRegex(String?);
+    method public static boolean isSql(String?);
+    method public static boolean isVersionCatalog(String?);
+    method public static boolean isXml(String?);
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.code.highlighting {
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface CodeHighlighter {
+    method public kotlinx.coroutines.flow.Flow<androidx.compose.ui.text.AnnotatedString> highlight(String code, String? mimeType);
+  }
+
+  public final class CodeHighlighterKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter> getLocalCodeHighlighter();
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter> LocalCodeHighlighter;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class NoOpCodeHighlighter implements org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter {
+    method public kotlinx.coroutines.flow.Flow<androidx.compose.ui.text.AnnotatedString> highlight(String code, String? mimeType);
+    field public static final org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter INSTANCE;
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.layout {
+
+  public final class BasicTableLayoutKt {
+    method @androidx.compose.runtime.Composable public static void BasicTableLayout(int rowCount, int columnCount, long cellBorderColor, optional androidx.compose.ui.Modifier modifier, optional float cellBorderWidth, java.util.List<? extends java.util.List<? extends kotlin.jvm.functions.Function0<kotlin.Unit>>> rows);
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.lazy {
+
+  public class DefaultMacOsSelectableColumnKeybindings extends org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings {
+    ctor public DefaultMacOsSelectableColumnKeybindings();
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isMultiSelectionKeyPressed;
+    property public boolean androidx.compose.ui.input.pointer.PointerKeyboardModifiers.isMultiSelectionKeyPressed;
+    field public static final org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings.Companion Companion;
+  }
+
+  public static final class DefaultMacOsSelectableColumnKeybindings.Companion extends org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings {
+  }
+
+  public class DefaultSelectableColumnKeybindings implements org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings {
+    ctor public DefaultSelectableColumnKeybindings();
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isContiguousSelectionKeyPressed;
+    property public boolean androidx.compose.ui.input.pointer.PointerKeyboardModifiers.isContiguousSelectionKeyPressed;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isEdit;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToFirstItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToLastItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionWithNextItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionWithPreviousItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isMultiSelectionKeyPressed;
+    property public boolean androidx.compose.ui.input.pointer.PointerKeyboardModifiers.isMultiSelectionKeyPressed;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageDownAndExtendSelection;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageDownAndSelectItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageUpAndExtendSelection;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageUpAndSelectItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectAll;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectFirstItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectLastItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectNextItem;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectPreviousItem;
+    field public static final org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings.Companion Companion;
+  }
+
+  public static final class DefaultSelectableColumnKeybindings.Companion extends org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings {
+  }
+
+  public class DefaultSelectableOnKeyEvent implements org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent {
+    ctor public DefaultSelectableOnKeyEvent(org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings);
+    method public org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings getKeybindings();
+    property public org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings;
+    field public static final org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent.Companion Companion;
+  }
+
+  public static final class DefaultSelectableOnKeyEvent.Companion extends org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent {
+  }
+
+  public interface SelectableColumnKeybindings {
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isContiguousSelectionKeyPressed;
+    property public abstract boolean androidx.compose.ui.input.pointer.PointerKeyboardModifiers.isContiguousSelectionKeyPressed;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isEdit;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToFirstItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToLastItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionWithNextItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionWithPreviousItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isMultiSelectionKeyPressed;
+    property public abstract boolean androidx.compose.ui.input.pointer.PointerKeyboardModifiers.isMultiSelectionKeyPressed;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageDownAndExtendSelection;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageDownAndSelectItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageUpAndExtendSelection;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isScrollPageUpAndSelectItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectAll;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectFirstItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectLastItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectNextItem;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectPreviousItem;
+  }
+
+  public interface SelectableColumnOnKeyEvent {
+    method public org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings getKeybindings();
+    method public default void onEdit();
+    method public default void onExtendSelectionToFirst(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onExtendSelectionToLastItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onExtendSelectionWithNextItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onExtendSelectionWithPreviousItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onScrollPageDownAndExtendSelection(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onScrollPageDownAndSelectItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onScrollPageUpAndExtendSelection(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onScrollPageUpAndSelectItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onSelectAll(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onSelectFirstItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> allKeys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onSelectLastItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onSelectNextItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public default void onSelectPreviousItem(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    property public abstract org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings;
+  }
+
+  public final class SelectableLazyColumnKt {
+    method @androidx.compose.runtime.Composable public static void SelectableLazyColumn(optional androidx.compose.ui.Modifier modifier, optional org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, optional org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, optional androidx.compose.foundation.layout.PaddingValues contentPadding, optional boolean reverseLayout, optional kotlin.jvm.functions.Function1<? super java.util.List<java.lang.Integer>,kotlin.Unit> onSelectedIndexesChange, optional androidx.compose.foundation.layout.Arrangement.Vertical verticalArrangement, optional androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.foundation.gestures.FlingBehavior flingBehavior, optional org.jetbrains.jewel.foundation.lazy.tree.KeyActions keyActions, optional org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions pointerEventActions, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,kotlin.Unit> content);
+  }
+
+  public interface SelectableLazyItemScope extends androidx.compose.foundation.lazy.LazyItemScope {
+    method public boolean isActive();
+    method public boolean isSelected();
+    property public abstract boolean isActive;
+    property public abstract boolean isSelected;
+  }
+
+  public abstract sealed class SelectableLazyListKey {
+    method public abstract Object getKey();
+    property public abstract Object key;
+  }
+
+  public static final class SelectableLazyListKey.NotSelectable extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey {
+    ctor public SelectableLazyListKey.NotSelectable(Object key);
+    method public Object getKey();
+    property public Object key;
+  }
+
+  public static final class SelectableLazyListKey.Selectable extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey {
+    ctor public SelectableLazyListKey.Selectable(Object key);
+    method public Object getKey();
+    property public Object key;
+  }
+
+  public interface SelectableLazyListScope {
+    method public void item(Object key, optional Object? contentType, optional boolean selectable, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope,kotlin.Unit> content);
+    method public void items(int count, kotlin.jvm.functions.Function1<? super java.lang.Integer,?> key, optional kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Object?> contentType, optional kotlin.jvm.functions.Function1<? super java.lang.Integer,java.lang.Boolean> selectable, kotlin.jvm.functions.Function2<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope,? super java.lang.Integer,kotlin.Unit> itemContent);
+    method public void stickyHeader(Object key, optional Object? contentType, optional boolean selectable, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope,kotlin.Unit> content);
+  }
+
+  public final class SelectableLazyListScopeKt {
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope SelectableLazyItemScope(androidx.compose.foundation.lazy.LazyItemScope, optional boolean isSelected, optional boolean isActive);
+    method public static <T> void items(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope, java.util.List<? extends T> items, optional kotlin.jvm.functions.Function1<? super T,?> key, optional kotlin.jvm.functions.Function1<? super T,? extends java.lang.Object?> contentType, optional kotlin.jvm.functions.Function1<? super T,java.lang.Boolean> selectable, kotlin.jvm.functions.Function2<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope,? super T,kotlin.Unit> itemContent);
+    method public static <T> void itemsIndexed(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope, java.util.List<? extends T> items, optional kotlin.jvm.functions.Function2<? super java.lang.Integer,? super T,?> key, optional kotlin.jvm.functions.Function2<? super java.lang.Integer,? super T,? extends java.lang.Object?> contentType, optional kotlin.jvm.functions.Function2<? super java.lang.Integer,? super T,java.lang.Boolean> selectable, kotlin.jvm.functions.Function3<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope,? super java.lang.Integer,? super T,kotlin.Unit> itemContent);
+  }
+
+  public final class SelectableLazyListState implements androidx.compose.foundation.gestures.ScrollableState org.jetbrains.jewel.foundation.lazy.SelectableScope {
+    ctor public SelectableLazyListState(androidx.compose.foundation.lazy.LazyListState lazyListState);
+    method public int getFirstVisibleItemIndex();
+    method public int getFirstVisibleItemScrollOffset();
+    method public androidx.compose.foundation.interaction.InteractionSource getInteractionSource();
+    method public Integer? getLastActiveItemIndex();
+    method public androidx.compose.foundation.lazy.LazyListLayoutInfo getLayoutInfo();
+    method public androidx.compose.foundation.lazy.LazyListState getLazyListState();
+    method public java.util.Set<java.lang.Object> getSelectedKeys();
+    method public boolean isKeyboardNavigating();
+    method public suspend Object? scrollToItem(int itemIndex, optional boolean animateScroll, optional int scrollOffset, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public void setKeyboardNavigating(boolean);
+    method public void setLastActiveItemIndex(Integer?);
+    method public void setSelectedKeys(java.util.Set<?>);
+    property public int firstVisibleItemIndex;
+    property public int firstVisibleItemScrollOffset;
+    property public androidx.compose.foundation.interaction.InteractionSource interactionSource;
+    property public boolean isKeyboardNavigating;
+    property public Integer? lastActiveItemIndex;
+    property public androidx.compose.foundation.lazy.LazyListLayoutInfo layoutInfo;
+    property public androidx.compose.foundation.lazy.LazyListState lazyListState;
+    property public java.util.Set<java.lang.Object> selectedKeys;
+  }
+
+  public final class SelectableLazyListStateKt {
+    method public static kotlin.ranges.IntRange getVisibleItemsRange(androidx.compose.foundation.lazy.LazyListState);
+    method public static kotlin.ranges.IntRange getVisibleItemsRange(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.SelectableLazyListState rememberSelectableLazyListState(optional int firstVisibleItemIndex, optional int firstVisibleItemScrollOffset);
+    property public static kotlin.ranges.IntRange androidx.compose.foundation.lazy.LazyListState.visibleItemsRange;
+    property public static kotlin.ranges.IntRange org.jetbrains.jewel.foundation.lazy.SelectableLazyListState.visibleItemsRange;
+  }
+
+  public interface SelectableScope {
+    method public java.util.Set<java.lang.Object> getSelectedKeys();
+    method public void setSelectedKeys(java.util.Set<?>);
+    property public abstract java.util.Set<java.lang.Object> selectedKeys;
+  }
+
+  public enum SelectionMode {
+    enum_constant public static final org.jetbrains.jewel.foundation.lazy.SelectionMode Multiple;
+    enum_constant public static final org.jetbrains.jewel.foundation.lazy.SelectionMode None;
+    enum_constant public static final org.jetbrains.jewel.foundation.lazy.SelectionMode Single;
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.lazy.tree {
+
+  public final class BasicLazyTreeKt {
+  }
+
+  public final class BuildTreeKt {
+    method public static org.jetbrains.jewel.foundation.lazy.tree.Tree<java.io.File> asTree(java.io.File, optional kotlin.jvm.functions.Function1<? super java.io.File,java.lang.Boolean> isOpen);
+    method public static org.jetbrains.jewel.foundation.lazy.tree.Tree<java.io.File> asTree(java.nio.file.Path, optional kotlin.jvm.functions.Function1<? super java.io.File,java.lang.Boolean> isOpen);
+    method public static <T> org.jetbrains.jewel.foundation.lazy.tree.Tree<T> buildTree(kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder<T>,kotlin.Unit> builder);
+  }
+
+  public final class ChildrenGeneratorScope<T> implements org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope<T> {
+    ctor public ChildrenGeneratorScope(org.jetbrains.jewel.foundation.lazy.tree.Tree.Element.Node<T> parentElement);
+    method public void add(org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder.Element<T> element);
+    method public void addLeaf(T data, Object? id);
+    method public void addNode(T data, Object? id, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope<T>,kotlin.Unit> childrenGenerator);
+    method public org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope.ParentInfo<T> getParent();
+    property public org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope.ParentInfo<T> parent;
+  }
+
+  @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class ChildrenGeneratorScope.ParentInfo<T> {
+    ctor public ChildrenGeneratorScope.ParentInfo(T data, int depth, int index);
+    method public T getData();
+    method public int getDepth();
+    method public int getIndex();
+    property public T data;
+    property public int depth;
+    property public int index;
+  }
+
+  public class DefaultMacOsTreeColumnKeybindings extends org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings {
+    ctor public DefaultMacOsTreeColumnKeybindings();
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isMultiSelectionKeyPressed;
+    property public boolean androidx.compose.ui.input.pointer.PointerKeyboardModifiers.isMultiSelectionKeyPressed;
+    field public static final org.jetbrains.jewel.foundation.lazy.tree.DefaultMacOsTreeColumnKeybindings.Companion Companion;
+  }
+
+  public static final class DefaultMacOsTreeColumnKeybindings.Companion extends org.jetbrains.jewel.foundation.lazy.tree.DefaultMacOsTreeColumnKeybindings {
+  }
+
+  public class DefaultSelectableLazyColumnEventAction implements org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions {
+    ctor public DefaultSelectableLazyColumnEventAction();
+    method public void handlePointerEventPress(androidx.compose.ui.input.pointer.PointerEvent pointerEvent, org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState selectableLazyListState, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> allKeys, Object key);
+    method public void onExtendSelectionToKey(Object key, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> allKeys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode);
+    method public void toggleKeySelection(Object key, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> allKeys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState selectableLazyListState, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode);
+  }
+
+  public class DefaultSelectableLazyColumnKeyActions implements org.jetbrains.jewel.foundation.lazy.tree.KeyActions {
+    ctor public DefaultSelectableLazyColumnKeyActions(org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings, optional org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent actions);
+    method public org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent getActions();
+    method public org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings getKeybindings();
+    method public kotlin.jvm.functions.Function1<androidx.compose.ui.input.key.KeyEvent,java.lang.Boolean> handleOnKeyEvent(Object event, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode);
+    property public org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent actions;
+    property public org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings;
+    field public static final org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions.Companion Companion;
+  }
+
+  public static final class DefaultSelectableLazyColumnKeyActions.Companion extends org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions {
+  }
+
+  public final class DefaultTreeViewKeyActions extends org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions {
+    ctor public DefaultTreeViewKeyActions(org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings keybindings, org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewOnKeyEvent actions);
+    method public org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewOnKeyEvent getActions();
+    method public org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings getKeybindings();
+    property public org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewOnKeyEvent actions;
+    property public org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings keybindings;
+  }
+
+  public class DefaultTreeViewKeybindings extends org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings implements org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings {
+    ctor public DefaultTreeViewKeybindings();
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isEdit;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToChild;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToParent;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectChild;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectNextSibling;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectParent;
+    property public boolean androidx.compose.ui.input.key.KeyEvent.isSelectPreviousSibling;
+    field public static final org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings.Companion Companion;
+  }
+
+  public static final class DefaultTreeViewKeybindings.Companion extends org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeybindings {
+  }
+
+  public final class DefaultTreeViewKeybindingsKt {
+    method public static kotlin.jvm.functions.Function1<androidx.compose.ui.input.pointer.PointerKeyboardModifiers,java.lang.Boolean> getDefaultWindowsTreeViewClickModifierHandler();
+    property public static kotlin.jvm.functions.Function1<androidx.compose.ui.input.pointer.PointerKeyboardModifiers,java.lang.Boolean> DefaultWindowsTreeViewClickModifierHandler;
+  }
+
+  public class DefaultTreeViewOnKeyEvent implements org.jetbrains.jewel.foundation.lazy.tree.TreeViewOnKeyEvent {
+    ctor public DefaultTreeViewOnKeyEvent(org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings keybindings, org.jetbrains.jewel.foundation.lazy.tree.TreeState treeState);
+    method public org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings getKeybindings();
+    method public void onSelectChild(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public void onSelectParent(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    property public org.jetbrains.jewel.foundation.lazy.tree.TreeViewKeybindings keybindings;
+  }
+
+  public class DefaultTreeViewPointerEventAction extends org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEventAction {
+    ctor public DefaultTreeViewPointerEventAction(org.jetbrains.jewel.foundation.lazy.tree.TreeState treeState);
+  }
+
+  public interface KeyActions {
+    method public org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent getActions();
+    method public org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings getKeybindings();
+    method public kotlin.jvm.functions.Function1<androidx.compose.ui.input.key.KeyEvent,java.lang.Boolean> handleOnKeyEvent(Object event, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode);
+    property public abstract org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent actions;
+    property public abstract org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings;
+  }
+
+  public final class KeyActionsKt {
+    method public static org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions DefaultTreeViewKeyActions(org.jetbrains.jewel.foundation.lazy.tree.TreeState treeState);
+  }
+
+  public interface PointerEventActions {
+    method public void handlePointerEventPress(androidx.compose.ui.input.pointer.PointerEvent pointerEvent, org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings keybindings, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState selectableLazyListState, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> allKeys, Object key);
+    method public void onExtendSelectionToKey(Object key, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> allKeys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode);
+    method public void toggleKeySelection(Object key, java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> allKeys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState selectableLazyListState, org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode);
+  }
+
+  public final class Tree<T> {
+    method public java.util.List<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>> getRoots();
+    method public boolean isEmpty();
+    method public kotlin.sequences.Sequence<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>> walkBreadthFirst();
+    method public kotlin.sequences.Sequence<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>> walkDepthFirst();
+    property public java.util.List<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>> roots;
+    field public static final org.jetbrains.jewel.foundation.lazy.tree.Tree.Companion Companion;
+  }
+
+  public static final class Tree.Companion {
+  }
+
+  public static sealed interface Tree.Element<T> {
+    method public int getChildIndex();
+    method public T getData();
+    method public int getDepth();
+    method public Object getId();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getNext();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getParent();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getPrevious();
+    method public default Iterable<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>> nextElementsIterable();
+    method public default java.util.List<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>> path();
+    method public default Iterable<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>> previousElementsIterable();
+    method public void setNext(org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>?);
+    method public void setPrevious(org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>?);
+    property public abstract int childIndex;
+    property public abstract T data;
+    property public abstract int depth;
+    property public abstract Object id;
+    property public abstract org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? next;
+    property public abstract org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? parent;
+    property public abstract org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? previous;
+  }
+
+  public static final class Tree.Element.Leaf<T> implements org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T> {
+    ctor public Tree.Element.Leaf(T data, int depth, int childIndex, org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? parent, org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? previous, org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? next, Object id);
+    method public int getChildIndex();
+    method public T getData();
+    method public int getDepth();
+    method public Object getId();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getNext();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getParent();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getPrevious();
+    method public void setNext(org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>?);
+    method public void setPrevious(org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>?);
+    property public int childIndex;
+    property public T data;
+    property public int depth;
+    property public Object id;
+    property public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? next;
+    property public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? parent;
+    property public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? previous;
+  }
+
+  public static final class Tree.Element.Node<T> implements org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T> {
+    ctor public Tree.Element.Node(T data, int depth, int childIndex, org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? parent, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.tree.Tree.Element.Node<T>,? extends java.util.List<? extends org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>>> childrenGenerator, org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? next, org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? previous, Object id);
+    method public void close();
+    method public int getChildIndex();
+    method public java.util.List<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>>? getChildren();
+    method public T getData();
+    method public int getDepth();
+    method public Object getId();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getNext();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getParent();
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? getPrevious();
+    method public void open(optional boolean reloadChildren);
+    method public void setNext(org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>?);
+    method public void setPrevious(org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>?);
+    property public int childIndex;
+    property public java.util.List<org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>>? children;
+    property public T data;
+    property public int depth;
+    property public Object id;
+    property public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? next;
+    property public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? parent;
+    property public org.jetbrains.jewel.foundation.lazy.tree.Tree.Element<T>? previous;
+  }
+
+  public final class TreeBuilder<T> implements org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope<T> {
+    ctor public TreeBuilder();
+    method public void add(org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder.Element<T> element);
+    method public void addLeaf(T data, Object? id);
+    method public void addNode(T data, Object? id, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope<T>,kotlin.Unit> childrenGenerator);
+    method public org.jetbrains.jewel.foundation.lazy.tree.Tree<T> build();
+  }
+
+  public abstract static sealed class TreeBuilder.Element<T> {
+    method public abstract Object? getId();
+    property public abstract Object? id;
+  }
+
+  @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class TreeBuilder.Element.Leaf<T> extends org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder.Element<T> {
+    ctor public TreeBuilder.Element.Leaf(T data, Object? id);
+    method public T getData();
+    method public Object? getId();
+    property public T data;
+    property public Object? id;
+  }
+
+  @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class TreeBuilder.Element.Node<T> extends org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder.Element<T> {
+    ctor public TreeBuilder.Element.Node(T data, Object? id, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope<T>,kotlin.Unit> childrenGenerator);
+    method public kotlin.jvm.functions.Function1<org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope<T>,kotlin.Unit> getChildrenGenerator();
+    method public T getData();
+    method public Object? getId();
+    property public kotlin.jvm.functions.Function1<org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope<T>,kotlin.Unit> childrenGenerator;
+    property public T data;
+    property public Object? id;
+  }
+
+  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class TreeElementState implements org.jetbrains.jewel.foundation.state.FocusableComponentState org.jetbrains.jewel.foundation.state.SelectableComponentState {
+    ctor @KotlinOnly public TreeElementState(kotlin.ULong state);
+    method public long copy(optional boolean enabled, optional boolean focused, optional boolean expanded, optional boolean pressed, optional boolean hovered, optional boolean active, optional boolean selected);
+    property @androidx.compose.runtime.Stable public boolean isActive;
+    property @androidx.compose.runtime.Stable public boolean isEnabled;
+    property @androidx.compose.runtime.Stable public boolean isExpanded;
+    property @androidx.compose.runtime.Stable public boolean isFocused;
+    property @androidx.compose.runtime.Stable public boolean isHovered;
+    property @androidx.compose.runtime.Stable public boolean isPressed;
+    property @androidx.compose.runtime.Stable public boolean isSelected;
+    property public kotlin.ULong state;
+    field public static final org.jetbrains.jewel.foundation.lazy.tree.TreeElementState.Companion Companion;
+  }
+
+  public static final class TreeElementState.Companion {
+    method public long of(optional boolean enabled, optional boolean focused, optional boolean expanded, optional boolean hovered, optional boolean pressed, optional boolean active, optional boolean selected);
+  }
+
+  public interface TreeGeneratorScope<T> {
+    method public void add(org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder.Element<T> element);
+    method public void addLeaf(T data, optional Object? id);
+    method public void addNode(T data, optional Object? id, optional kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope<T>,kotlin.Unit> childrenGenerator);
+  }
+
+  public final class TreeKt {
+    method public static <T> org.jetbrains.jewel.foundation.lazy.tree.Tree<T> emptyTree();
+  }
+
+  public final class TreeState implements androidx.compose.foundation.gestures.ScrollableState org.jetbrains.jewel.foundation.lazy.SelectableScope {
+    ctor public TreeState(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState delegate);
+    method public java.util.Set<java.lang.Object> getOpenNodes();
+    method public void openNodes(java.util.List<?> nodes);
+    method public void setOpenNodes(java.util.Set<?>);
+    method public void toggleNode(Object nodeId);
+    property public java.util.Set<java.lang.Object> openNodes;
+    property public java.util.Set<java.lang.Object> selectedKeys;
+  }
+
+  public final class TreeStateKt {
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.tree.TreeState rememberTreeState(optional androidx.compose.foundation.lazy.LazyListState lazyListState, optional org.jetbrains.jewel.foundation.lazy.SelectableLazyListState selectableLazyListState);
+  }
+
+  public interface TreeViewKeybindings extends org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings {
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToChild;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isExtendSelectionToParent;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectChild;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectNextSibling;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectParent;
+    property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isSelectPreviousSibling;
+  }
+
+  public interface TreeViewOnKeyEvent extends org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent {
+    method public void onSelectChild(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+    method public void onSelectParent(java.util.List<? extends org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey> keys, org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state);
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.modifier {
+
+  public final class ActivationKt {
+    method public static androidx.compose.ui.modifier.ProvidableModifierLocal<java.lang.Boolean> getModifierLocalActivated();
+    method public static androidx.compose.ui.Modifier onActivated(androidx.compose.ui.Modifier, optional boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.Boolean,kotlin.Unit> onChanged);
+    method @androidx.compose.runtime.Stable public static androidx.compose.ui.Modifier trackActivation(androidx.compose.ui.Modifier);
+    method public static androidx.compose.ui.Modifier trackComponentActivation(androidx.compose.ui.Modifier, java.awt.Component awtParent);
+    method public static androidx.compose.ui.Modifier trackWindowActivation(androidx.compose.ui.Modifier, java.awt.Window window);
+    property public static androidx.compose.ui.modifier.ProvidableModifierLocal<java.lang.Boolean> ModifierLocalActivated;
+  }
+
+  public final class BorderKt {
+    method public static androidx.compose.ui.Modifier border(androidx.compose.ui.Modifier, org.jetbrains.jewel.foundation.Stroke stroke, androidx.compose.ui.graphics.Shape shape);
+    method public static androidx.compose.ui.Modifier border(androidx.compose.ui.Modifier, org.jetbrains.jewel.foundation.Stroke.Alignment alignment, float width, androidx.compose.ui.graphics.Brush brush, optional androidx.compose.ui.graphics.Shape shape, optional float expand);
+    method public static androidx.compose.ui.Modifier border(androidx.compose.ui.Modifier, org.jetbrains.jewel.foundation.Stroke.Alignment alignment, float width, long color, optional androidx.compose.ui.graphics.Shape shape, optional float expand);
+  }
+
+  public final class ModifierExtensionsKt {
+    method public static inline androidx.compose.ui.Modifier thenIf(androidx.compose.ui.Modifier, boolean precondition, kotlin.jvm.functions.Function1<? super androidx.compose.ui.Modifier,? extends androidx.compose.ui.Modifier> action);
+  }
+
+  public final class PointerModifiersKt {
+    method public static androidx.compose.ui.Modifier onHover(androidx.compose.ui.Modifier, kotlin.jvm.functions.Function1<? super java.lang.Boolean,kotlin.Unit> onHover);
+    method public static androidx.compose.ui.Modifier onMove(androidx.compose.ui.Modifier, kotlin.jvm.functions.Function1<? super java.awt.event.MouseEvent?,kotlin.Unit> onMove);
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.state {
+
+  public final class CommonStateBitMask {
+    property public kotlin.ULong Active;
+    property public kotlin.ULong Enabled;
+    property public static int FIRST_AVAILABLE_OFFSET;
+    property public kotlin.ULong Focused;
+    property public kotlin.ULong Hovered;
+    property public kotlin.ULong Indeterminate;
+    property public kotlin.ULong Pressed;
+    property public kotlin.ULong Selected;
+    field public static final int FIRST_AVAILABLE_OFFSET = 7; // 0x7
+    field public static final org.jetbrains.jewel.foundation.state.CommonStateBitMask INSTANCE;
+  }
+
+  public interface FocusableComponentState extends org.jetbrains.jewel.foundation.state.InteractiveComponentState {
+    method @androidx.compose.runtime.Composable public default <T> T chooseValue(T normal, T disabled, T focused, T pressed, T hovered, T active);
+    method public boolean isFocused();
+    property public abstract boolean isFocused;
+  }
+
+  public interface InteractiveComponentState {
+    method public boolean isActive();
+    method public boolean isEnabled();
+    method public boolean isHovered();
+    method public boolean isPressed();
+    property public abstract boolean isActive;
+    property public abstract boolean isEnabled;
+    property public abstract boolean isHovered;
+    property public abstract boolean isPressed;
+  }
+
+  public interface SelectableComponentState extends org.jetbrains.jewel.foundation.state.InteractiveComponentState {
+    method public boolean isSelected();
+    property public abstract boolean isSelected;
+  }
+
+  public interface ToggleableComponentState {
+    method public androidx.compose.ui.state.ToggleableState getToggleableState();
+    method public default boolean isSelected();
+    method public default boolean isSelectedOrIndeterminate();
+    property public default boolean isSelected;
+    property public default boolean isSelectedOrIndeterminate;
+    property public abstract androidx.compose.ui.state.ToggleableState toggleableState;
+    field public static final org.jetbrains.jewel.foundation.state.ToggleableComponentState.Companion Companion;
+  }
+
+  public static final class ToggleableComponentState.Companion {
+    method public androidx.compose.ui.state.ToggleableState readToggleableState(long);
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.theme {
+
+  public interface JewelTheme {
+    field public static final org.jetbrains.jewel.foundation.theme.JewelTheme.Companion Companion;
+  }
+
+  public static final class JewelTheme.Companion {
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.text.TextStyle getConsoleTextStyle();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.text.TextStyle getDefaultTextStyle();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.text.TextStyle getEditorTextStyle();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public org.jetbrains.jewel.foundation.GlobalColors getGlobalColors();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public org.jetbrains.jewel.foundation.GlobalMetrics getGlobalMetrics();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public java.util.UUID getInstanceUuid();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public String getName();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isDark();
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isSwingCompatMode();
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.text.TextStyle consoleTextStyle;
+    property public androidx.compose.ui.graphics.Color contentColor;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.text.TextStyle defaultTextStyle;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.text.TextStyle editorTextStyle;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public org.jetbrains.jewel.foundation.GlobalColors globalColors;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public java.util.UUID instanceUuid;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isDark;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public boolean isSwingCompatMode;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public String name;
+  }
+
+  public final class JewelThemeKt {
+    method @androidx.compose.runtime.Composable public static void JewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition theme, boolean swingCompatMode, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void JewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition theme, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void OverrideDarkMode(boolean isDark, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.theme.ThemeColorPalette> getLocalColorPalette();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.text.TextStyle> getLocalConsoleTextStyle();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.graphics.Color> getLocalContentColor();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.text.TextStyle> getLocalEditorTextStyle();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.theme.ThemeIconData> getLocalIconData();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.text.TextStyle> getLocalTextStyle();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<java.util.UUID> getLocalThemeInstanceUuid();
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<java.lang.String> getLocalThemeName();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.theme.ThemeColorPalette> LocalColorPalette;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.text.TextStyle> LocalConsoleTextStyle;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.graphics.Color> LocalContentColor;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.text.TextStyle> LocalEditorTextStyle;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.theme.ThemeIconData> LocalIconData;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<androidx.compose.ui.text.TextStyle> LocalTextStyle;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<java.util.UUID> LocalThemeInstanceUuid;
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<java.lang.String> LocalThemeName;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class ThemeColorPalette {
+    ctor public ThemeColorPalette(java.util.List<androidx.compose.ui.graphics.Color> gray, java.util.List<androidx.compose.ui.graphics.Color> blue, java.util.List<androidx.compose.ui.graphics.Color> green, java.util.List<androidx.compose.ui.graphics.Color> red, java.util.List<androidx.compose.ui.graphics.Color> yellow, java.util.List<androidx.compose.ui.graphics.Color> orange, java.util.List<androidx.compose.ui.graphics.Color> purple, java.util.List<androidx.compose.ui.graphics.Color> teal, java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> rawMap);
+    method public long blue(int index);
+    method public androidx.compose.ui.graphics.Color? blueOrNull(int index);
+    method public java.util.List<androidx.compose.ui.graphics.Color> getBlue();
+    method public java.util.List<androidx.compose.ui.graphics.Color> getGray();
+    method public java.util.List<androidx.compose.ui.graphics.Color> getGreen();
+    method public java.util.List<androidx.compose.ui.graphics.Color> getOrange();
+    method public java.util.List<androidx.compose.ui.graphics.Color> getPurple();
+    method public java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> getRawMap();
+    method public java.util.List<androidx.compose.ui.graphics.Color> getRed();
+    method public java.util.List<androidx.compose.ui.graphics.Color> getTeal();
+    method public java.util.List<androidx.compose.ui.graphics.Color> getYellow();
+    method public long gray(int index);
+    method public androidx.compose.ui.graphics.Color? grayOrNull(int index);
+    method public long green(int index);
+    method public androidx.compose.ui.graphics.Color? greenOrNull(int index);
+    method public androidx.compose.ui.graphics.Color? lookup(String colorKey);
+    method public long orange(int index);
+    method public androidx.compose.ui.graphics.Color? orangeOrNull(int index);
+    method public long purple(int index);
+    method public androidx.compose.ui.graphics.Color? purpleOrNull(int index);
+    method public long red(int index);
+    method public androidx.compose.ui.graphics.Color? redOrNull(int index);
+    method public long teal(int index);
+    method public androidx.compose.ui.graphics.Color? tealOrNull(int index);
+    method public long yellow(int index);
+    method public androidx.compose.ui.graphics.Color? yellowOrNull(int index);
+    property public java.util.List<androidx.compose.ui.graphics.Color> blue;
+    property public java.util.List<androidx.compose.ui.graphics.Color> gray;
+    property public java.util.List<androidx.compose.ui.graphics.Color> green;
+    property public java.util.List<androidx.compose.ui.graphics.Color> orange;
+    property public java.util.List<androidx.compose.ui.graphics.Color> purple;
+    property public java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> rawMap;
+    property public java.util.List<androidx.compose.ui.graphics.Color> red;
+    property public java.util.List<androidx.compose.ui.graphics.Color> teal;
+    property public java.util.List<androidx.compose.ui.graphics.Color> yellow;
+    field public static final org.jetbrains.jewel.foundation.theme.ThemeColorPalette.Companion Companion;
+  }
+
+  public static final class ThemeColorPalette.Companion {
+    method public org.jetbrains.jewel.foundation.theme.ThemeColorPalette getEmpty();
+    property public org.jetbrains.jewel.foundation.theme.ThemeColorPalette Empty;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class ThemeDefinition {
+    ctor @KotlinOnly @Deprecated public ThemeDefinition(String name, boolean isDark, org.jetbrains.jewel.foundation.GlobalColors globalColors, org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics, androidx.compose.ui.text.TextStyle defaultTextStyle, androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.ui.text.TextStyle consoleTextStyle, androidx.compose.ui.graphics.Color contentColor, org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette, org.jetbrains.jewel.foundation.theme.ThemeIconData iconData);
+    ctor @KotlinOnly public ThemeDefinition(String name, boolean isDark, org.jetbrains.jewel.foundation.GlobalColors globalColors, org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics, androidx.compose.ui.text.TextStyle defaultTextStyle, androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.ui.text.TextStyle consoleTextStyle, androidx.compose.ui.graphics.Color contentColor, org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette, org.jetbrains.jewel.foundation.theme.ThemeIconData iconData, org.jetbrains.jewel.foundation.DisabledAppearanceValues disabledAppearanceValues);
+    method public org.jetbrains.jewel.foundation.theme.ThemeColorPalette getColorPalette();
+    method public androidx.compose.ui.text.TextStyle getConsoleTextStyle();
+    method public androidx.compose.ui.text.TextStyle getDefaultTextStyle();
+    method public org.jetbrains.jewel.foundation.DisabledAppearanceValues getDisabledAppearanceValues();
+    method public androidx.compose.ui.text.TextStyle getEditorTextStyle();
+    method public org.jetbrains.jewel.foundation.GlobalColors getGlobalColors();
+    method public org.jetbrains.jewel.foundation.GlobalMetrics getGlobalMetrics();
+    method public org.jetbrains.jewel.foundation.theme.ThemeIconData getIconData();
+    method public String getName();
+    method public boolean isDark();
+    property public org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette;
+    property public androidx.compose.ui.text.TextStyle consoleTextStyle;
+    property public androidx.compose.ui.graphics.Color contentColor;
+    property public androidx.compose.ui.text.TextStyle defaultTextStyle;
+    property public org.jetbrains.jewel.foundation.DisabledAppearanceValues disabledAppearanceValues;
+    property public androidx.compose.ui.text.TextStyle editorTextStyle;
+    property public org.jetbrains.jewel.foundation.GlobalColors globalColors;
+    property public org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics;
+    property public org.jetbrains.jewel.foundation.theme.ThemeIconData iconData;
+    property public boolean isDark;
+    property public String name;
+  }
+
+  @androidx.compose.runtime.Immutable public interface ThemeDescriptor {
+    method public org.jetbrains.jewel.foundation.theme.ThemeColorPalette getColors();
+    method public org.jetbrains.jewel.foundation.theme.ThemeIconData getIconData();
+    method public String getName();
+    method public boolean isDark();
+    property public abstract org.jetbrains.jewel.foundation.theme.ThemeColorPalette colors;
+    property public abstract org.jetbrains.jewel.foundation.theme.ThemeIconData iconData;
+    property public abstract boolean isDark;
+    property public abstract String name;
+  }
+
+  @androidx.compose.runtime.Immutable public final class ThemeIconData {
+    ctor public ThemeIconData(java.util.Map<java.lang.String,java.lang.String> iconOverrides, java.util.Map<java.lang.String,java.lang.String?> colorPalette, java.util.Map<java.lang.String,java.lang.Integer> selectionColorPalette);
+    method public java.util.Map<java.lang.String,java.lang.String?> getColorPalette();
+    method public java.util.Map<java.lang.String,java.lang.String> getIconOverrides();
+    method public java.util.Map<java.lang.String,java.lang.Integer> getSelectionColorPalette();
+    method public java.util.Map<androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.Color> selectionColorMapping();
+    property public java.util.Map<java.lang.String,java.lang.String?> colorPalette;
+    property public java.util.Map<java.lang.String,java.lang.String> iconOverrides;
+    property public java.util.Map<java.lang.String,java.lang.Integer> selectionColorPalette;
+    field public static final org.jetbrains.jewel.foundation.theme.ThemeIconData.Companion Companion;
+  }
+
+  public static final class ThemeIconData.Companion {
+    method public org.jetbrains.jewel.foundation.theme.ThemeIconData getEmpty();
+    property public org.jetbrains.jewel.foundation.theme.ThemeIconData Empty;
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.util {
+
+  @org.jetbrains.annotations.ApiStatus.NonExtendable public abstract class JewelLogger {
+    ctor public JewelLogger();
+    method public final void debug(String? message);
+    method public abstract void debug(String? message, Throwable? t);
+    method public final void debug(Throwable t);
+    method public final void error(String? message);
+    method public abstract void error(String? message, Throwable? t);
+    method public final void error(Throwable t);
+    method public final void info(String? message);
+    method public abstract void info(String? message, Throwable? t);
+    method public final void info(Throwable t);
+    method public final void trace(String? message);
+    method public abstract void trace(String? message, Throwable? t);
+    method public final void trace(Throwable t);
+    method public final void warn(String? message);
+    method public abstract void warn(String? message, Throwable? t);
+    method public final void warn(Throwable t);
+    field public static final org.jetbrains.jewel.foundation.util.JewelLogger.Companion Companion;
+  }
+
+  public static final class JewelLogger.Companion {
+    method public org.jetbrains.jewel.foundation.util.JewelLogger getInstance(Class<? extends java.lang.Object?> clazz);
+    method public org.jetbrains.jewel.foundation.util.JewelLogger getInstance(String category);
+  }
+
+  public final class JewelLoggerKt {
+    method @KotlinOnly public static inline <reified T> org.jetbrains.jewel.foundation.util.JewelLogger myLogger(T);
+  }
+
+}
+

@@ -2,6 +2,7 @@
 package com.intellij.html.embedding
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lexer.HtmlRawTextLexer
@@ -11,9 +12,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType
 import com.intellij.psi.xml.XmlElementType.XML_TEXT
 
-object HtmlRawTextElementType :
-  HtmlCustomEmbeddedContentTokenType("HTML_RAW_TEXT", HTMLLanguage.INSTANCE),
-  IStrongWhitespaceHolderElementType {
+open class HtmlRawTextElementType : HtmlCustomEmbeddedContentTokenType, IStrongWhitespaceHolderElementType {
+
+  constructor(): this("HTML_RAW_TEXT", HTMLLanguage.INSTANCE)
+
+  constructor(debugName: String, language: Language) : super(debugName, language)
 
   override fun parse(builder: PsiBuilder) {
     val start = builder.mark()

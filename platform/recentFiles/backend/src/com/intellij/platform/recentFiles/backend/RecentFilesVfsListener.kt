@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.backend
 
+import com.intellij.ide.actions.shouldUseFallbackSwitcher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
@@ -15,7 +16,7 @@ import com.intellij.platform.recentFiles.shared.FileChangeKind
 
 internal class RecentFilesVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (ApplicationManager.getApplication().isUnitTestMode) return null
+    if (ApplicationManager.getApplication().isUnitTestMode || shouldUseFallbackSwitcher()) return null
 
     val removedFiles = collectRemovedFiles(events)
     val movedFiles = collectMovedFiles(events)

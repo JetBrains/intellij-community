@@ -8,8 +8,7 @@ import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.impl.scaleToHeight
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -94,7 +93,7 @@ internal data class PolySymbolDocumentationImpl(
   private fun StringBuilder.appendDefinition(url2ImageMap: MutableMap<String, Image>): StringBuilder =
     append(DocumentationMarkup.DEFINITION_START)
       .also {
-        icon?.let { appendIcon(it, url2ImageMap).append("&nbsp;&nbsp;") }
+        icon?.let { appendIcon(it, url2ImageMap).append("&nbsp;") }
       }
       .append(definition)
       .append(DocumentationMarkup.DEFINITION_END)
@@ -177,7 +176,7 @@ internal data class PolySymbolDocumentationImpl(
     val bufferedImage = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)
     val g = bufferedImage.createGraphics()
     g.font = UIUtil.getToolTipFont()
-    val height = (g.fontMetrics.getStringBounds("a", g).height / ScaleContext.create().getScale(ScaleType.USR_SCALE)).toInt()
+    val height = g.fontMetrics.getLineMetrics("T", g).height.toInt()
     g.dispose()
     val image = try {
       IconUtil.toBufferedImage(icon.scaleToHeight(height))
@@ -188,8 +187,7 @@ internal data class PolySymbolDocumentationImpl(
     }
     val url = "https://img${url2ImageMap.size}"
     url2ImageMap[url] = image
-    val screenHeight = height * ScaleContext.create().getScale(ScaleType.SYS_SCALE)
-    append("<img src='$url' height=\"$screenHeight\" width=\"${(screenHeight * icon.iconWidth) / icon.iconHeight}\" border=0 />")
+    append("<img src='$url' height=\"$height\" width=\"${(height * icon.iconWidth) / icon.iconHeight}\" border=0 />")
     return this
   }
 

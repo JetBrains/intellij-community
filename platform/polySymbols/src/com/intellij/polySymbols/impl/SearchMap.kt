@@ -107,22 +107,17 @@ internal abstract class SearchMap<T> internal constructor(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
     stack: PolySymbolQueryStack,
-  ): List<PolySymbol> =
+  ): Sequence<PolySymbol> =
     collectPatternsToProcess(qualifiedName)
-      .let {
-        if (it.size > 2)
-          it.asSequence().distinct()
-        else
-          it.asSequence()
-      }
       .innerMapAndFilter(params)
       .flatMap { rootContribution ->
         rootContribution.match(qualifiedName.name, params, stack)
       }
-      .toList()
 
-  private fun collectPatternsToProcess(qualifiedName: PolySymbolQualifiedName): Collection<T> {
-    val toProcess = SmartList<T>()
+  private fun collectPatternsToProcess(qualifiedName: PolySymbolQualifiedName): Sequence<T> {
+    var singleResult: T? = null
+    var multipleResults: MutableSet<T>? = null
+    var size = 0
     for (p in 0..qualifiedName.name.length) {
       val check = SearchMapEntry(qualifiedName.qualifiedKind, CharSequenceSubSequence(qualifiedName.name, 0, p))
       val entry = patterns.ceilingEntry(check)
@@ -130,9 +125,26 @@ internal abstract class SearchMap<T> internal constructor(
           || entry.key.namespace != qualifiedName.namespace
           || entry.key.kind != qualifiedName.kind
           || !entry.key.name.startsWith(check.name)) break
-      if (entry.key.name.length == p) toProcess.addAll(entry.value)
+      if (entry.key.name.length == p && entry.value.isNotEmpty()) {
+        size += entry.value.size
+        if (size > 1) {
+          if (multipleResults == null) {
+            multipleResults = LinkedHashSet()
+            if (singleResult != null) {
+              multipleResults.add(singleResult)
+              singleResult = null
+            }
+          }
+          multipleResults.addAll(entry.value)
+        }
+        else {
+          singleResult = entry.value.first()
+        }
+      }
     }
-    return toProcess
+    return multipleResults?.asSequence()
+           ?: singleResult?.let { sequenceOf(singleResult) }
+           ?: emptySequence()
   }
 
   private fun Sequence<T>.innerMapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> =

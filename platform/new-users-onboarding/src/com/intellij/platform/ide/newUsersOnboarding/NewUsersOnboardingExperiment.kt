@@ -7,7 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -20,7 +20,7 @@ class NewUsersOnboardingExperiment {
    * Since it is not changed during IDE session, better to calculate it once.
    */
   private val isExperimentEnabled: Boolean by lazy {
-    getABExperimentInstance().isExperimentOptionEnabled(NewUsersOnboardingExperimentOption::class.java)
+    ABExperimentOption.NEW_USERS_ONBOARDING.isEnabled()
   }
 
   fun isEnabled(): Boolean {

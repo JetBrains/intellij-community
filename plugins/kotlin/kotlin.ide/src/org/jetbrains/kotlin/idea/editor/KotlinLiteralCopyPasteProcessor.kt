@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,7 +54,14 @@ private fun deduceBlockSelectionWidth(startOffsets: IntArray, endOffsets: IntArr
     }
 }
 
-class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
+@ApiStatus.Internal
+abstract class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
+    enum class EntryProcessingMode {
+        NOT_ESCAPED, ESCAPED
+    }
+
+    abstract val singleQuotedEntryProcessingMode: EntryProcessingMode
+
     override fun preprocessOnCopy(file: PsiFile, startOffsets: IntArray, endOffsets: IntArray, text: String): String? {
         if (file !is KtFile) {
             return null
@@ -141,7 +149,13 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
         TemplateTokenSequence(text, interpolationPrefixLength).forEach {
             when (it) {
                 is LiteralChunk -> StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
-                is EntryChunk -> res.append(it.text)
+                is EntryChunk -> {
+                    when (singleQuotedEntryProcessingMode) {
+                        EntryProcessingMode.NOT_ESCAPED -> res.append(it.text)
+                        EntryProcessingMode.ESCAPED ->
+                            StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
+                    }
+                }
                 is NewLineChunk -> res.append(lineBreak)
             }
             endsInLineBreak = it is NewLineChunk

@@ -16,6 +16,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.CommonProcessors
+import com.intellij.util.CommonProcessors.CollectProcessor
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FilesDeque
 import com.intellij.util.indexing.testEntities.*
@@ -26,6 +27,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.*
+import java.util.Collections.synchronizedList
+import kotlin.text.contains
 
 /**
  * Run with `-cp intellij.idea.ultimate.test.main`
@@ -126,6 +129,24 @@ class SearchInNonIndexableTest() {
     assertThat(fileNames).containsExactlyInAnyOrder("infile1")
   }
 
+  @Test
+  fun `don't traverse non indexable when scope is directory`() {
+    val model = model("a").apply {
+      isProjectScope = false
+      directoryName = baseDir.rootPath.resolve("indexable").toString()
+    }
+
+    val usages = synchronizedList<UsageInfo?>(ArrayList())
+    val consumer: Processor<UsageInfo?> = CollectProcessor<UsageInfo?>(usages)
+    val presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model))
+
+    FindInProjectUtil.findUsages(model, project, consumer, presentation)
+
+    assertThat(usages).isNotEmpty()
+
+    val files = usages.map { baseDir.rootPath.relativize(it!!.virtualFile!!.toNioPath()).toString() }.distinct()
+    assertThat(files).noneMatch { it.contains("non-indexable") }
+  }
 
   private fun model(stringToFind: String): FindModel = FindModel().apply {
     this.stringToFind = stringToFind

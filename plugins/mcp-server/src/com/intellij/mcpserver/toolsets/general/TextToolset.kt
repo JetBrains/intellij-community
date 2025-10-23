@@ -16,6 +16,7 @@ import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -233,12 +234,16 @@ class TextToolset : McpToolset {
 
       withBackgroundProgress(project, FindBundle.message("find.searching.for.string.in.file.progress", searchTextOrRegex, findModel.directoryName
                                                                                                                           ?: FindBundle.message("find.scope.project.title")), cancellable = true) {
-        FindInProjectUtil.findUsages(
-          findModel,
-          project,
-          processor,
-          FindUsagesProcessPresentation(UsageViewPresentation())
-        )
+        coroutineToIndicator { indicator ->
+          FindInProjectUtil.findUsages(
+            findModel,
+            project,
+            indicator,
+            FindUsagesProcessPresentation(UsageViewPresentation()),
+            setOf(),
+            processor,
+          )
+        }
       }
     } == null
 

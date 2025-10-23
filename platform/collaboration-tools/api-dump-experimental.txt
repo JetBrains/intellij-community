@@ -1006,14 +1006,15 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
+- com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.ActiveGutterRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
 - canDoAction(com.intellij.openapi.editor.Editor,java.awt.event.MouseEvent):Z
+- dispose():V
 - doAction(com.intellij.openapi.editor.Editor,java.awt.event.MouseEvent):V
 - getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
-- f:launch(kotlin.coroutines.Continuation):java.lang.Object
 - paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx,kotlin.coroutines.Continuation):java.lang.Object

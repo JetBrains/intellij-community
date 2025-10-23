@@ -53,6 +53,12 @@ class MavenArtifactsProperties {
     module.contentRootsList.urls.all { Path.of(JpsPathUtil.urlToPath(it)).startsWith(context.paths.communityHomeDir) }
   }
 
+  /**
+   * A predicate which returns `true` for modules which Maven artifacts should be validated according to https://central.sonatype.org/publish/requirements
+   */
+  @ApiStatus.Internal
+  var validateForMavenCentralPublication: (JpsModule) -> Boolean = { false }
+
   @ApiStatus.Internal
   var patchCoordinates: (JpsModule, MavenCoordinates) -> MavenCoordinates = { _, coordinates -> coordinates }
 
@@ -66,5 +72,5 @@ class MavenArtifactsProperties {
   var isJavadocJarRequired: (JpsModule) -> Boolean = { false }
 
   @ApiStatus.Internal
-  var validate: (BuildContext, Collection<GeneratedMavenArtifacts>) -> Unit = { _, _ -> }
+  var validate: suspend (BuildContext, Collection<GeneratedMavenArtifacts>) -> Unit = { _, _ -> }
 }

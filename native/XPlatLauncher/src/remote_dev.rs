@@ -1,17 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, fs};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 use anyhow::{bail, Context, Result};
 #[allow(unused_imports)]
 use log::{debug, error, info};
 
-use crate::*;
 use crate::docker::is_running_in_docker;
+use crate::*;
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
@@ -38,6 +38,13 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
             vm_options.push("-Djava.net.preferIPv4Stack=true".to_string())
         }
 
+        let remote_dev_properties = self.get_remote_dev_properties()?;
+        for p in remote_dev_properties {
+            let key = p.key.as_str();
+            let value = p.value.as_str();
+            vm_options.push(format!("-D{key}={value}"));
+        }
+
         if let Some(command) = self.get_args().get(0) {
             match command.as_str() {
                 "remoteDevStatus" | "cwmHostStatus" => {
@@ -57,12 +64,8 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         Ok(vm_options)
     }
 
-    fn get_properties_file(&self) -> Result<PathBuf> {
-        let remote_dev_properties = self.get_remote_dev_properties();
-        let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties?[..])
-            .context("Failed to write remote dev IDE properties file")?;
-
-        Ok(remote_dev_properties_file)
+    fn get_custom_properties_file(&self) -> Result<PathBuf> {
+        bail!("Custom remote dev properties are not needed");
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -70,7 +73,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
-        init_env_vars(&self.default.ide_home).context("Preparing environment variables")?;
+        init_env_vars(&self.default).context("Preparing environment variables")?;
 
         preload_native_libs(&self.default.ide_home).context("Preloading native libraries")?;
         self.default.prepare_for_launch()
@@ -190,9 +193,6 @@ impl RemoteDevLaunchConfiguration {
     fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
         let mut remote_dev_properties = vec![
             // TODO: remove once all of this is disabled for remote dev
-            ("jb.privacy.policy.text", "<!--999.999-->"),
-            ("jb.consents.confirmation.enabled", "false"),
-            ("idea.initially.ask.config", "never"),
             ("ide.show.tips.on.startup.default.value", "false"),
 
             // Prevent CWM plugin from being disabled, as it's required for Remote Dev
@@ -251,57 +251,23 @@ impl RemoteDevLaunchConfiguration {
 
         Ok(result)
     }
-
-    fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
-        let pid = std::process::id();
-        let filename = format!("pid.{pid}.temp.remote-dev.properties");
-        let path = get_temp_system_like_path()?.join(filename);
-
-        if let Some(dir) = path.parent() {
-            fs::create_dir_all(dir)
-                .with_context(|| format!("Failed to create to parent folder for IDE properties file at path {dir:?}"))?
-        }
-
-        let file = File::create(&path)?;
-        let mut writer = BufWriter::new(file);
-
-        // TODO: maybe check the user-set properties file?
-        // let default_properties = self.default.get_properties_file();
-
-        // TODO: use IDE-specific properties file
-        let dist_properties_path = self.default.ide_home.join("bin").join("idea.properties");
-        let dist_properties_file = File::open(dist_properties_path).context("Failed to open IDE properties file")?;
-
-        for l in BufReader::new(dist_properties_file).lines() {
-            writeln!(&mut writer, "{}", l.context("Failed to read IDE properties file")?)?;
-        }
-
-        for p in remote_dev_properties {
-            let key = p.key.as_str();
-            let value = p.value.as_str();
-            writeln!(&mut writer, "{key}={value}")?;
-        }
-
-        writer.flush()?;
-
-        Ok(path)
-    }
 }
 
-fn get_temp_system_like_path() -> Result<PathBuf> {
-    Ok(env::temp_dir())
+fn get_ide_temp_directory(default: &DefaultLaunchConfiguration) -> Result<PathBuf> {
+    Ok(default.user_caches_dir.join("tmp"))
 }
 
 #[cfg(not(target_os = "linux"))]
-fn setup_font_config(_ide_home_path: &Path) -> Result<Option<(String, String)>> {
+fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(String, String)>> {
     // fontconfig is Linux-specific
     Ok(None)
 }
 
 #[cfg(target_os = "linux")]
-fn setup_font_config(ide_home_path: &Path) -> Result<Option<(String, String)>> {
+fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(String, String)>> {
     use std::hash::{Hash, Hasher};
 
+    let ide_home_path = &default.ide_home;
     let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
     if !source_font_config_file.is_file() {
         error!("Missing self-contained font config file at {}; fontconfig setup will be skipped", source_font_config_file.to_string_lossy());
@@ -324,7 +290,7 @@ fn setup_font_config(ide_home_path: &Path) -> Result<Option<(String, String)>> {
 
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     source_font_config_file.hash(&mut hasher);
-    let patched_dir = get_temp_system_like_path()?.join(format!("jbrd-fontconfig-{}", hasher.finish()));
+    let patched_dir = get_ide_temp_directory(default)?.join(format!("jbrd-fontconfig-{}", hasher.finish()));
     fs::create_dir_all(&patched_dir).context("Creating directory for temporary fontconfig")?;
 
     let patched_file_path = patched_dir.join("fonts.conf");
@@ -444,7 +410,7 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars(ide_home_path: &Path) -> Result<()> {
+fn init_env_vars(default: &DefaultLaunchConfiguration) -> Result<()> {
     let mut remote_dev_env_var_values = Vec::new();
 
     if !std::io::stdout().is_terminal() {
@@ -453,7 +419,7 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
 
     // required for the most basic launch (e.g., showing help)
     // as there may be nothing on a user system and we'll crash
-    let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
+    let font_config_env = setup_font_config(default).context("Preparing fontconfig override")?;
     if let Some(vars) = &font_config_env {
         remote_dev_env_var_values.push((&vars.0, &vars.1));
     }

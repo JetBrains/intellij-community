@@ -100,6 +100,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testReimportingWithProfiles() = runBlocking {
+    assumeModel_4_0_0("Autoscanning")
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -267,6 +268,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentVersionProperty() = runBlocking {
+    assumeModel_4_0_0("[FATAL] 'version' contains an expression but should be a constant.")
     val parentPomTemplate =
 
       """
@@ -325,6 +327,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentVersionProperty2() = runBlocking {
+    assumeModel_4_0_0("[FATAL] 'version' contains an expression but should be a constant.")
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

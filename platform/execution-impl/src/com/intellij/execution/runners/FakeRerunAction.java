@@ -97,7 +97,7 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
     DataContext componentDataContext = DataManager.getInstance().getDataContext(component);
     ExecutionEnvironmentProxy proxyFromSelectedContent = EXECUTION_ENVIRONMENT_PROXY.getData(componentDataContext);
     if (proxyFromSelectedContent != null) {
-      return proxyFromContext;
+      return proxyFromSelectedContent;
     }
     ExecutionEnvironment environmentFromSelectedContent = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(componentDataContext);
     if (environmentFromSelectedContent != null) {

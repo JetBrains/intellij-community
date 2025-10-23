@@ -249,6 +249,7 @@
 - s:create(java.lang.String,I,com.intellij.polySymbols.PolySymbol,kotlin.jvm.functions.Function1):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:getAliases():java.util.Set
 - a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
+- a:getCaseSensitive():Z
 - a:getCompleteAfterChars():java.util.Set
 - a:getDisplayName():java.lang.String
 - a:getIcon():javax.swing.Icon
@@ -266,6 +267,7 @@
 - a:withAliasesAdded(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withAliasesReplaced(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withApiStatus(com.intellij.polySymbols.PolySymbolApiStatus):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- a:withCaseSensitive(Z):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withCompleteAfterChar(C):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withCompleteAfterCharsAdded(java.util.List):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withCompleteAfterInsert(Z):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
@@ -299,11 +301,13 @@
 - a:aliases(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:apiStatus(com.intellij.polySymbols.PolySymbolApiStatus):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:build():com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- a:caseSensitive(Z):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:completeAfterChars(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:completeAfterInsert(Z):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:displayName(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:getAliases():java.util.Set
 - a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
+- a:getCaseSensitive():Z
 - a:getCompleteAfterChars():java.util.Set
 - a:getCompleteAfterInsert():Z
 - a:getDisplayName():java.lang.String

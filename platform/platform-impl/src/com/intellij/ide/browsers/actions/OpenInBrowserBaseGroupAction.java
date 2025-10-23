@@ -11,6 +11,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAware;
@@ -22,6 +25,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.CachedValueImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +101,34 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     public OpenInBrowserGroupAction() {
       super(true);
     }
+  }
+
+  public static class OpenInBrowserFloatingToolbarProvider extends AbstractFloatingToolbarProvider {
+    private static final String ACTION_GROUP = "OpenInBrowserEditorContextBarGroup";
+
+    public OpenInBrowserFloatingToolbarProvider() {
+      super(ACTION_GROUP);
+    }
+
+    @Override
+    public boolean isApplicable(@NotNull DataContext dataContext) {
+      boolean suppressed = ContainerUtil.exists(
+        OpenInBrowserFloatingToolbarSuppressor.EP_NAME.getExtensionList(),
+        suppressor -> suppressor.isSuppressed(this, dataContext)
+      );
+
+      return !suppressed && super.isApplicable(dataContext);
+    }
+  }
+
+  public interface OpenInBrowserFloatingToolbarSuppressor {
+    /**
+     * Determines if the floating toolbar should be suppressed.
+     */
+    boolean isSuppressed(FloatingToolbarProvider provider, DataContext dataContext);
+
+    ExtensionPointName<OpenInBrowserFloatingToolbarSuppressor> EP_NAME =
+      ExtensionPointName.create("com.intellij.openInBrowserFloatingToolbarSuppressor");
   }
 
   public static class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {

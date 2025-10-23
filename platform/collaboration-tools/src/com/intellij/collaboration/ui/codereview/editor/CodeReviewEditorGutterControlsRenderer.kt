@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,42 +49,34 @@ class CodeReviewEditorGutterControlsRenderer
 private constructor(
   private val model: CodeReviewEditorGutterControlsModel,
   private val editor: EditorEx,
+  initialState: CodeReviewEditorGutterControlsModel.ControlsState,
 )
-  : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer {
+  : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer, Disposable {
 
   private var hoveredLogicalLine: Int? = null
   private var columnHovered: Boolean = false
 
-  private var state: CodeReviewEditorGutterControlsModel.ControlsState? by observable(null) { _, _, newState ->
+  @set:RequiresEdt
+  private var state: CodeReviewEditorGutterControlsModel.ControlsState by observable(initialState) { _, oldState, newState ->
     hoveredLogicalLine = null
     columnHovered = false
-    if (newState != null) {
+    if (newState != oldState) {
       repaintColumn(editor)
     }
   }
 
   private val hoverHandler = HoverHandler(editor)
 
-  suspend fun launch(): Nothing {
-    withContext(Dispatchers.EDT) {
-      val areaDisposable = Disposer.newDisposable()
-      editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
-      editor.addEditorMouseListener(hoverHandler)
-      editor.addEditorMouseMotionListener(hoverHandler)
+  init {
+    editor.addEditorMouseListener(hoverHandler)
+    editor.addEditorMouseMotionListener(hoverHandler)
 
-      try {
-        model.gutterControlsState.collect {
-          state = it
-        }
-      }
-      finally {
-        withContext(NonCancellable) {
-          editor.removeEditorMouseListener(hoverHandler)
-          editor.removeEditorMouseMotionListener(hoverHandler)
-          Disposer.dispose(areaDisposable)
-        }
-      }
-    }
+    editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(this, ICON_AREA_WIDTH)
+  }
+
+  override fun dispose() {
+    editor.removeEditorMouseListener(hoverHandler)
+    editor.removeEditorMouseMotionListener(hoverHandler)
   }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
@@ -97,7 +91,7 @@ private constructor(
   private fun paintCommentIcons(editor: EditorImpl, g: Graphics, r: Rectangle) {
     val hoveredLine = hoverHandler.calcHoveredLineData()?.logicalLine
     val icon = EditorUIUtil.scaleIcon(CollaborationToolsIcons.Comment, editor)
-    (state ?: return).linesWithComments.forEach { lineIdx ->
+    state.linesWithComments.forEach { lineIdx ->
       if (lineIdx in 0 until editor.document.lineCount && lineIdx != hoveredLine) {
         val yRange = EditorUtil.logicalLineToYRange(editor, lineIdx).first
         val lineCenter = yRange.intervalStart() + editor.lineHeight / 2
@@ -196,7 +190,6 @@ private constructor(
   private inner class HoverHandler(private val editor: EditorEx) : EditorMouseListener, EditorMouseMotionListener {
     fun calcHoveredLineData(): LogicalLineData? {
       val logicalLine = hoveredLogicalLine?.takeIf { it in 0 until editor.document.lineCount } ?: return null
-      val state = state ?: return null
       return LogicalLineData(editor, state, logicalLine, columnHovered)
     }
 
@@ -346,23 +339,59 @@ private constructor(
     }
 
     suspend fun render(model: CodeReviewEditorGutterControlsModel, editor: EditorEx): Nothing {
+      var renderer: InstalledRenderer? = null
+
       withContext(Dispatchers.EDT) {
-        val renderer = CodeReviewEditorGutterControlsRenderer(model, editor)
-        val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
-                                                                 DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                                 HighlighterTargetArea.LINES_IN_RANGE).apply {
-          setGreedyToLeft(true)
-          setGreedyToRight(true)
-          setLineMarkerRenderer(renderer)
-        }
         try {
-          renderer.launch()
-        }
-        finally {
-          withContext(NonCancellable + ModalityState.any().asContextElement()) {
-            highlighter.dispose()
+          model.gutterControlsState.collect { state ->
+            if (state != null) {
+              if (renderer == null) {
+                renderer = InstalledRenderer(model, editor, state)
+              }
+              else {
+                renderer.state = state
+              }
+            }
+            else {
+              renderer?.let {
+                Disposer.dispose(it)
+              }
+            }
           }
         }
+        finally {
+          val renderer = renderer
+          if (renderer != null) {
+            withContext(NonCancellable + ModalityState.any().asContextElement()) {
+              Disposer.dispose(renderer)
+            }
+          }
+        }
+      }
+    }
+
+    private class InstalledRenderer(
+      model: CodeReviewEditorGutterControlsModel,
+      editor: EditorEx,
+      initialState: CodeReviewEditorGutterControlsModel.ControlsState,
+    ) : Disposable {
+      private val renderer = CodeReviewEditorGutterControlsRenderer(model, editor, initialState)
+      private val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
+                                                                       DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                                       HighlighterTargetArea.LINES_IN_RANGE).apply {
+        setGreedyToLeft(true)
+        setGreedyToRight(true)
+        setLineMarkerRenderer(renderer)
+      }
+
+      var state: CodeReviewEditorGutterControlsModel.ControlsState by renderer::state
+
+      init {
+        Disposer.register(this, renderer)
+      }
+
+      override fun dispose() {
+        highlighter.dispose()
       }
     }
   }

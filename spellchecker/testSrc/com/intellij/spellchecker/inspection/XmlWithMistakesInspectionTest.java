@@ -41,6 +41,10 @@ public class XmlWithMistakesInspectionTest extends SpellcheckerInspectionTestCas
     doTest("enumerations.svg");
   }
 
+  public void testDataUrl() {
+    doTest("dataUrl.svg");
+  }
+
   public void testLinkIntegrity() {
     doTest("htmlIntegrity.html");
   }

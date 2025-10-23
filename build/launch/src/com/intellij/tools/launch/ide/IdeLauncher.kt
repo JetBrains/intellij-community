@@ -51,12 +51,9 @@ object IdeLauncher {
         add("-ea")
         add("-Dfus.internal.test.mode=true")
         add("-Didea.updates.url=http://127.0.0.1") // we should not spoil jetstat, which relies on update requests
-        add("-Djb.privacy.policy.text=${quote("<!--999.999-->")}")
-        add("-Djb.consents.confirmation.enabled=false")
         add("-Didea.suppress.statistics.report=true")
         add("-Drsch.send.usage.stat=false")
         add("-Duse.linux.keychain=false")
-        add("-Didea.initially.ask.config=never")
         add("-Didea.home.path=${environmentPaths.sourcesRootFolder}")
         add("-Didea.config.path=${environmentPaths.configFolder}")
         add("-Didea.system.path=${environmentPaths.systemFolder}")

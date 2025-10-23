@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
@@ -25,11 +25,11 @@ class LoggerProviderOverrideTest : BasePlatformTestCase() {
 
   fun installEP() {
     val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint(EP_NAME)
-    ep.registerExtension(TestLoggerProvider(), LoadingOrder.FIRST, project)
+    ep.registerExtension(TestLoggerProvider(), LoadingOrder.FIRST, testRootDisposable)
   }
 
   fun testFUSLoggerProviderOverridden() {
-    val provider = StatisticsEventLogProviderUtil.getEventLogProvider(fusRecorderId)
+    val provider = StatisticsEventLogProviderUtil.getEventLogProvidersExt(fusRecorderId).first()
     assertInstanceOf(provider, TestLoggerProvider::class.java)
   }
 

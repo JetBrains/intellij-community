@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
@@ -20,6 +21,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
@@ -213,11 +215,17 @@ object PluginManagerCore {
   fun isPlatformClass(fqn: String): Boolean =
     fqn.startsWith("java.") || fqn.startsWith("javax.") || fqn.startsWith("kotlin.") || fqn.startsWith("groovy.")
 
-  private fun isVendorItemTrusted(vendorItem: String): Boolean =
-    if (vendorItem.isEmpty()) false
-    else isVendorJetBrains(vendorItem) ||
-         vendorItem == ApplicationInfoImpl.getShadowInstance().companyName ||
-         vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
+  @ApiStatus.Internal
+  fun isVendorItemTrusted(vendorItem: String): Boolean {
+    return if (vendorItem.isBlank()) {
+      false
+    }
+    else {
+      isVendorJetBrains(vendorItem)
+      || vendorItem == ApplicationInfoImpl.getShadowInstance().companyName
+      || vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
+    }
+  }
 
   @JvmStatic
   fun isVendorTrusted(vendor: String): Boolean =
@@ -236,10 +244,24 @@ object PluginManagerCore {
     isDevelopedByJetBrains(plugin.organization)
 
   @JvmStatic
-  fun isDevelopedByJetBrains(vendorString: String?): Boolean = when {
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(plugin: PluginDescriptor): Boolean =
+    CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
+    isDevelopedExclusivelyByJetBrains(plugin.getVendor()) ||
+    isDevelopedExclusivelyByJetBrains(plugin.organization)
+
+  @JvmStatic
+  fun isDevelopedByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, false)
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, true)
+
+  @JvmStatic
+  private fun isDevelopedByJetBrains(vendorString: String?, exclusively: Boolean): Boolean = when {
     vendorString == null -> false
     isVendorJetBrains(vendorString) -> true
-    else -> vendorString.splitToSequence(',').any { isVendorJetBrains(it.trim()) }
+    else -> vendorString.splitToSequence(',').run { if (exclusively) all { isVendorJetBrains(it.trim()) } else any { isVendorJetBrains(it.trim()) } }
   }
 
   @JvmStatic
@@ -881,7 +903,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @Synchronized
   @JvmStatic
-  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = shadowedBundledPlugins.contains(plugin.getPluginId())
+  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = !plugin.isBundled && shadowedBundledPlugins.contains(plugin.getPluginId())
 
   private fun prepareActions(pluginNamesToDisable: Collection<String>, pluginNamesToEnable: Collection<String>): List<Supplier<HtmlChunk>> {
     if (pluginNamesToDisable.isEmpty()) {
@@ -1006,7 +1028,7 @@ fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId, pluginMap: Map<
 }
 
 @ApiStatus.Internal
-fun pluginRequiresUltimatePlugin(plugin: PluginId, 
+fun pluginRequiresUltimatePlugin(plugin: PluginId,
                                  pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
                                  contentModuleMap: Map<String, ContentModuleDescriptor>,
 ): Boolean {
@@ -1024,6 +1046,24 @@ fun pluginRequiresUltimatePlugin(rootDescriptor: IdeaPluginDescriptorImpl,
     when (descriptorImpl.pluginId) {
       ULTIMATE_PLUGIN_ID -> FileVisitResult.TERMINATE
       else -> FileVisitResult.CONTINUE
+    }
+  }
+}
+
+@ApiStatus.Internal
+@IntellijInternalApi
+fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
+  val classLoader = aClass.classLoader
+  when {
+    classLoader is PluginAwareClassLoader -> {
+      val plugin = classLoader.pluginDescriptor
+      return plugin.isBundled && PluginManagerCore.isDevelopedByJetBrains(plugin)
+    }
+    PluginManagerCore.isRunningFromSources() -> {
+      return true
+    }
+    else -> {
+      return PluginUtils.getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass) == null
     }
   }
 }

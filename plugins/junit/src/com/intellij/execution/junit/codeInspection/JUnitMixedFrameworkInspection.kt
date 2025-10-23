@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -12,7 +12,7 @@ import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.JUnitVersion
 import com.intellij.execution.junit.isJUnit3InScope
 import com.intellij.execution.junit.isJUnit4InScope
-import com.intellij.execution.junit.isJUnit5InScope
+import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.jvm.analysis.quickFix.RemoveAnnotationQuickFix
 import com.intellij.jvm.analysis.quickFix.RenameQuickFix
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
@@ -40,7 +40,7 @@ class JUnitMixedFrameworkInspection : JvmLocalInspection() {
     var frameworkCount = 0
     if (isJUnit3InScope(file)) frameworkCount++
     if (isJUnit4InScope(file)) frameworkCount++
-    if (isJUnit5InScope(file)) frameworkCount++
+    if (isJUnit5Or6InScope(file)) frameworkCount++
     return frameworkCount > 1
   }
 

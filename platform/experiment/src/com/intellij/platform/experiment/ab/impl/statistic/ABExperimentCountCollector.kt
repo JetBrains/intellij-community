@@ -4,47 +4,22 @@ package com.intellij.platform.experiment.ab.impl.statistic
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
-import com.intellij.platform.experiment.ab.impl.experiment.OPTION_ID_FREE_GROUP
-import com.intellij.platform.experiment.ab.impl.experiment.getJbABExperimentOptionList
+import com.intellij.platform.experiment.ab.impl.ABExperimentDecision
+import com.intellij.platform.experiment.ab.impl.reportableName
 
 internal object ABExperimentCountCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("experiment.ab", 3)
-
-  /**
-   * For the case when user enables a plugin and then disables it.
-   *
-   * When the plugin is disabled, then a corresponding option is missing and the validation rule will reject such an option id,
-   * because the option is not present at runtime.
-   *
-   * To overcome such cases, an original option id is replaced with an artificial one for statistics.
-   */
-  internal val OPTION_ID_MISSING = ABExperimentOptionId("missing.option")
+  private val GROUP = EventLogGroup("experiment.ab", 4)
 
   private val AB_EXPERIMENT_OPTION_USED = GROUP.registerEvent(
     "option.used",
     EventFields.StringValidatedByCustomRule("id", ABExperimentOptionIdValidationRule::class.java),
-    EventFields.Int("group"),
+    EventFields.Boolean("is_control_group"),
     EventFields.Int("bucket")
   )
 
-  fun logABExperimentOptionUsed(userOptionId: ABExperimentOptionId?, userGroupNumber: Int, userBucketNumber: Int) {
-    if (userOptionId == null) {
-      return
-    }
-
-    if (userOptionId == OPTION_ID_FREE_GROUP) {
-      AB_EXPERIMENT_OPTION_USED.log(userOptionId.value, userGroupNumber, userBucketNumber)
-      return
-    }
-
-    val option = getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
-    if (option != null) {
-      AB_EXPERIMENT_OPTION_USED.log(option.id.value, userGroupNumber, userBucketNumber)
-      return
-    }
-
-    AB_EXPERIMENT_OPTION_USED.log(OPTION_ID_MISSING.value, userGroupNumber, userBucketNumber)
+  fun logABExperimentOptionUsed(decision: ABExperimentDecision) {
+    val optionName = decision.option.reportableName()
+    AB_EXPERIMENT_OPTION_USED.log(optionName, decision.isControlGroup, decision.bucketNumber)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

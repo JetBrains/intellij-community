@@ -276,7 +276,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     assertSize(1, p.testSources)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/test/java"), p.testSources[0])
 
-    forMaven3 {
+    forModel40 {
       assertEquals(1, p.resources.size)
       assertResource(p.resources[0], pathFromBasedir("src/main/resources"),
                      false, null, emptyList(), emptyList())
@@ -285,7 +285,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                      false, null, emptyList(), emptyList())
     }
 
-    forMaven4 {
+    forModel41 {
       assertEquals(2, p.resources.size)
       assertResource(p.resources[0], pathFromBasedir("src/main/resources"),
                      false, null, emptyList(), emptyList())
@@ -966,6 +966,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   @Test
   fun testPropertiesFromParentInParentSection() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'groupId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>${'$'}{groupProp}</groupId>
                        <artifactId>parent</artifactId>

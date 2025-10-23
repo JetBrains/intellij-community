@@ -70,9 +70,6 @@
 
     <globalIndexFilter implementation="org.jetbrains.kotlin.idea.stubindex.KotlinNonSourceRootIndexFilter"/>
 
-    <registryKey key="kotlin.indices.nested.access.enabled"
-                 defaultValue="false"
-                 description="Allows nested indices access" />
     <registryKey key="kotlin.indices.diagnostic.enabled"
                  defaultValue="false"
                  description="Allows indices access diagnostic" />

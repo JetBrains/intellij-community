@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,11 @@ public class TextEditorHolder extends EditorHolder {
       sink.set(CommonDataKeys.PROJECT, project);
       sink.set(OpenFileDescriptor.NAVIGATE_IN_EDITOR, editor);
       sink.set(CommonDataKeys.EDITOR, editor);
-      sink.set(CommonDataKeys.VIRTUAL_FILE, editor.getVirtualFile());
+      VirtualFile virtualFile = editor.getVirtualFile();
+      if (virtualFile != null) {
+        sink.set(CommonDataKeys.VIRTUAL_FILE, virtualFile);
+        sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{virtualFile});
+      }
       sink.set(PlatformCoreDataKeys.FILE_EDITOR,
                TextEditorProvider.getInstance().getTextEditor(editor));
     }

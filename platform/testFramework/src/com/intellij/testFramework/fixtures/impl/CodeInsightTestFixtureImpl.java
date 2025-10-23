@@ -90,6 +90,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -296,9 +297,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Throwable exception = null;
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
-      int oldDelay = settings.getAutoReparseDelay();
       try {
-        settings.setAutoReparseDelay(0);
+        settings.forceUseZeroAutoReparseDelay(true);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
           PsiFile file = filePointer.getElement();
@@ -344,7 +344,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         exception = e;
       }
       finally {
-        settings.setAutoReparseDelay(oldDelay);
+        settings.forceUseZeroAutoReparseDelay(false);
       }
     }
     ExceptionUtil.rethrow(exception);
@@ -1534,7 +1534,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    @NotNull String extension,
                                                    @NotNull Disposable parentDisposable) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (!fileType.equals(fileTypeManager.getFileTypeByExtension(extension))) {
+    var defaultFileType = fileTypeManager.getFileTypeByExtension(extension);
+    if (!fileType.equals(defaultFileType)) {
       WriteAction.runAndWait(() -> {
         fileTypeManager.associateExtension(fileType, extension);
         IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
@@ -1542,6 +1543,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Disposer.register(parentDisposable, () -> {
         WriteAction.runAndWait(() -> {
           fileTypeManager.removeAssociatedExtension(fileType, extension);
+          if (defaultFileType != UnknownFileType.INSTANCE) {
+            fileTypeManager.associateExtension(defaultFileType, extension);
+          }
           IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
         });
       });

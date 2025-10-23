@@ -702,16 +702,15 @@ Android Studio: don't register IntelliJ fork -->
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <bundledColorScheme id="High contrast" path="themes/highContrastScheme.xml"/>
 
-    <themeProvider id="One Island Light" path="/themes/islands/OneIslandLight.theme.json" targetUi="island" restartRequired="true"/>
+    <bundledColorScheme id="Islands Dark" path="/themes/islands/IslandSchemeDark.xml"/>
 
-    <themeProvider id="One Island Dark" path="/themes/islands/OneIslandDark.theme.json" targetUi="island" restartRequired="true"/>
-    <bundledColorScheme id="Island Dark" path="/themes/islands/IslandSchemeDark.xml"/>
-
-    <themeProvider id="Many Islands Dark" path="/themes/islands/ManyIslandsDark.theme.json" targetUi="islands" restartRequired="true"/>
-    <themeProvider id="Many Islands Light" path="/themes/islands/ManyIslandsLight.theme.json" targetUi="islands" restartRequired="true"/>
+    <themeProvider id="Islands Dark" path="/themes/islands/ManyIslandsDark.theme.json" targetUi="islands"/>
+    <themeProvider id="Islands Light" path="/themes/islands/ManyIslandsLight.theme.json" targetUi="islands"/>
 
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
+
+    <themeRemapper implementation="com.intellij.openapi.application.impl.islands.IslandsThemeRemapper"/>
 
     <applicationService serviceInterface="com.intellij.ide.ui.customization.UIThemeCustomizer"
                         serviceImplementation="com.intellij.ide.ui.customization.UIThemeCustomizerImpl" />
@@ -916,6 +915,10 @@ Android Studio: don't register IntelliJ fork -->
       implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"
       id="DefaultFloatingToolbarProvider"/>
 
+    <editorFloatingToolbarProvider
+      implementation="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarProvider"
+      id="OpenInBrowserFloatingToolbarProvider"/>
+
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>
     <bundledKeymap file="Mac OS X.xml"/>
@@ -938,6 +941,8 @@ Android Studio: don't register IntelliJ fork -->
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
                         serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
     -->
+    <applicationService serviceInterface="com.intellij.internal.statistic.JetBrainsConsentProvider"
+                        serviceImplementation="com.intellij.internal.statistic.EmptyJetBrainsConsentProvider"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator"/>
     <statistics.validation.customValidationRuleFactory implementation="com.intellij.configurationStore.statistic.eventLog.SettingsValueValidatorFactory"/>
@@ -961,6 +966,7 @@ Android Studio: don't register IntelliJ fork -->
       implementation="com.intellij.internal.statistic.collectors.fus.otherIde.LaunchJsonUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginsUsagesCollector"
                                            allowOnStartup="true"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.plugins.PluginSyncUsageCollector"/>
     <statistics.applicationUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
@@ -1090,6 +1096,7 @@ Android Studio: don't register IntelliJ fork -->
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
 Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered in androidstudio.xml -->
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider"/>
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.trace.TraceEventLoggerProvider"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.OsDataCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.IdeSessionDataCollector"
@@ -1549,7 +1556,7 @@ Android Studio: b/285867050 -->
     <notificationGroup id="Test Hidden Notification" displayType="NONE" hideFromSettings="true"/>
     <notificationGroup id="Test Notification" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System Messages" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.messages"
-                       notificationIds="cloud.config.alert;glibc.incompatible"/>
+                       notificationIds="cloud.config.alert;glibc.incompatible;reset.auto.reparse.settings.to.default"/>
     <notificationGroup id="Merge Internal Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System shortcuts conflicts" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle"

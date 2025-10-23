@@ -278,6 +278,7 @@ class PluginDependenciesValidator private constructor(
       }
     }
       .withProductMode(productMode)
+      .withDisabledPlugins("com.jetbrains.kmm") // TODO: support incompatible plugins (IJI-2975)
       .withCustomCoreLoader(UrlClassLoader.build().files(corePluginDescription.jpsModulesInClasspath.map { getModuleOutputDir(it) }).get())
     
     return pluginSetBuilder.build()

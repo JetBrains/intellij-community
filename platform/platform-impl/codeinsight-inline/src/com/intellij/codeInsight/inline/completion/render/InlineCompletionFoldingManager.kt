@@ -52,6 +52,10 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
     if (startOffset == lineEnd) {
       return null
     }
+    if (editor.caretModel.offset in (startOffset + 1) until lineEnd) {
+      LOG.debug { "[Inline Completion] Cannot fold a line end because the caret is inside the range." }
+      return null
+    }
 
     if (lineNumber in foldedLines) {
       LOG.error("[Inline Completion] Incorrect state of folding. The same line $lineNumber is folded twice.")

@@ -29,8 +29,10 @@ public class HgDeleteTest extends HgSingleUserTest {
   @Test
   public void testDeleteUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(file);
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.removed("a.txt"));
   }
 
@@ -52,11 +54,13 @@ public class HgDeleteTest extends HgSingleUserTest {
   @Test
   public void testDeleteModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
-    runHgOnProjectRepo("commit", "-m", "added file");
     myChangeListManager.ensureUpToDate();
+    runHgOnProjectRepo("commit", "-m", "added file");
     overwrite(VfsUtilCore.virtualToIoFile(file), "even newer content");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.modified("a.txt"));
     deleteFileInCommand(file);
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.removed("a.txt"));
   }
 
@@ -64,8 +68,10 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testDeleteDirWithFiles() throws Exception {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(parent);
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.removed("com", "a.txt"));
   }
 
@@ -101,8 +107,10 @@ public class HgDeleteTest extends HgSingleUserTest {
   @Test
   public void testJustDeletedAndThenAddedFileShouldNotBePromptedForRemoval() {
     VirtualFile vf = createFileInCommand("a.txt", null);
+    myChangeListManager.ensureUpToDate();
     myChangeListManager.commitFiles(vf);
     deleteFileInCommand(vf);
+    myChangeListManager.ensureUpToDate();
     myChangeListManager.commitFiles(vf);
 
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);

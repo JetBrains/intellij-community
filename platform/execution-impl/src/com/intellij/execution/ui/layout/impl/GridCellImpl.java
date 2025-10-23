@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
@@ -421,6 +422,13 @@ public final class GridCellImpl implements GridCell {
 
     @Override
     protected @NotNull TabPainterAdapter createTabPainterAdapter() {
+      InternalUICustomization customization = InternalUICustomization.getInstance();
+      if (customization != null) {
+        TabPainterAdapter painter = customization.getDebuggerTabPainterAdapter();
+        if (painter != null) {
+          return painter;
+        }
+      }
       return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
     }
 

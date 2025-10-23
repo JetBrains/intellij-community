@@ -210,7 +210,16 @@ public fun retrieveIntAsNonNegativeDpOrUnspecified(key: String): Dp =
  * @throws JewelBridgeException if the key is not found and no default is provided.
  */
 public fun retrieveInsetsAsPaddingValues(key: String, default: PaddingValues? = null): PaddingValues =
-    UIManager.getInsets(key)?.toPaddingValues() ?: default ?: keyNotFound(key, "Insets")
+    retrieveInsetsAsPaddingValuesOrNull(key) ?: default ?: keyNotFound(key, "Insets")
+
+/**
+ * Retrieves insets from the current LaF as [PaddingValues], or null if not found.
+ *
+ * @param key The key to look up the insets with.
+ * @return The insets from the LaF as [PaddingValues], or null if the key is not found.
+ */
+public fun retrieveInsetsAsPaddingValuesOrNull(key: String): PaddingValues? =
+    UIManager.getInsets(key)?.toPaddingValues()
 
 /**
  * Converts a [Insets] to [PaddingValues]. If the receiver is a [JBInsets] instance, this function delegates to the

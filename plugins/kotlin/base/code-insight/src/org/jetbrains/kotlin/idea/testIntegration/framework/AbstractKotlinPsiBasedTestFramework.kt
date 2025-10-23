@@ -20,12 +20,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework {
-    protected abstract val markerClassFqn: String
+    protected abstract val markerClassFqns: Collection<String>
     protected abstract val disabledTestAnnotation: String
     protected abstract val allowTestMethodsInObject: Boolean
 
     protected open fun isFrameworkAvailable(element: KtElement): Boolean =
-        isFrameworkAvailable(element, markerClassFqn, true)
+        markerClassFqns.any { isFrameworkAvailable(element, it, true) }
 
     protected fun isFrameworkAvailable(element: KtElement, markerClassFqn: String, javaOnly: Boolean): Boolean {
         val module = element.module ?: return false

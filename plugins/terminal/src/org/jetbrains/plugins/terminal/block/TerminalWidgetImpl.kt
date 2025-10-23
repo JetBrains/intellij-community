@@ -161,7 +161,7 @@ internal class TerminalWidgetImpl(
 
     override val component: JComponent = object : JPanel() {
       init {
-        background = TerminalUi.defaultBackground()
+        background = TerminalUi.defaultBackgroundLazy()
       }
     }
 

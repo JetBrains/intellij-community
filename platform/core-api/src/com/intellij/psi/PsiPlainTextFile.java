@@ -15,11 +15,13 @@
  */
 package com.intellij.psi;
 
+import com.intellij.model.psi.PsiExternalReferenceHost;
+
 /**
  * Represents a plain-text file (a file belonging to the type "Text files" or a custom
  * file type which has no associated language).
  *
  * @see PsiPlainText
  */
-public interface PsiPlainTextFile extends PsiFile {
+public interface PsiPlainTextFile extends PsiFile, PsiExternalReferenceHost {
 }

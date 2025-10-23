@@ -12,6 +12,9 @@ import java.io.File
 abstract class AbstractLiteralTextToKotlinCopyPasteTest : AbstractCopyPasteTest() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    protected open fun getExpectedFile(testFile: File): File =
+        File(testFile.parent, testFile.nameWithoutExtension + ".expected.kt")
+
     fun doTest(unused: String) {
         val fileName = fileName()
         val targetFileName = fileName.replace(".txt", ".kt")
@@ -33,8 +36,6 @@ abstract class AbstractLiteralTextToKotlinCopyPasteTest : AbstractCopyPasteTest(
         }
 
         val testFile = dataFile()
-        val expectedFile = File(testFile.parent, testFile.nameWithoutExtension + ".expected.kt")
-
-        KotlinTestUtils.assertEqualsToFile(expectedFile, myFixture.file.text)
+        KotlinTestUtils.assertEqualsToFile(getExpectedFile(testFile), myFixture.file.text)
     }
 }

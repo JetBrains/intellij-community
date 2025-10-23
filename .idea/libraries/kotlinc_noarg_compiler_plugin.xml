@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.noarg-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.2.20-ij252-17">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.2.20-ij252-24">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-17/noarg-compiler-plugin-for-ide-2.2.20-ij252-17.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-24/noarg-compiler-plugin-for-ide-2.2.20-ij252-24.jar">
           <sha256sum>eef047a6cbd34ad3db4edd9c934ea5896924f14e856e9c52fb5c4c50e83117f4</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-17/noarg-compiler-plugin-for-ide-2.2.20-ij252-17.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-24/noarg-compiler-plugin-for-ide-2.2.20-ij252-24.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-17/noarg-compiler-plugin-for-ide-2.2.20-ij252-17-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-24/noarg-compiler-plugin-for-ide-2.2.20-ij252-24-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -584,13 +584,13 @@ final class FindInProjectTask {
     else {
       FileBasedIndexEx indexes = (FileBasedIndexEx)FileBasedIndex.getInstance();
       searchItems.addAll(indexes.getIndexableFilesProviders(project));
+
+      if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
+        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.Companion.nonIndexableDequeue(project)).executeSynchronously());
+      }
     }
 
     searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
-
-    if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
-      searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.Companion.nonIndexableDequeue(project)).executeSynchronously());
-    }
 
     return searchItems;
   }

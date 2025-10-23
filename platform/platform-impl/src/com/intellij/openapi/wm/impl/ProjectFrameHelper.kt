@@ -14,6 +14,9 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
@@ -132,6 +135,8 @@ abstract class ProjectFrameHelper internal constructor(
     )
     frameHeaderHelper = coroutineScope.createFrameHeaderHelper(frame, frameDecorator, rootPane)
     installLinuxResizeHandler(coroutineScope, frame, glassPane)
+
+    glassPane.colorfulToolbar = { frameHeaderHelper.isColorfulToolbar() }
 
     frame.setFrameHelper(object : FrameHelper {
       override fun uiDataSnapshot(sink: DataSink) {
@@ -274,6 +279,9 @@ abstract class ProjectFrameHelper internal constructor(
       // or on Windows (for products that don't use a native launcher, e.g., MPS)
       updateAppWindowIcon(frame)
     }
+
+    InternalUICustomization.getInstance()?.configureMainFrame(frame)
+
     return frame
   }
 

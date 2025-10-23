@@ -11,6 +11,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.tabs.impl.IslandsPainterProvider;
 import com.intellij.util.ui.RegionPainter;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -128,9 +129,6 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     THUMB_HOVERED_BACKGROUND
   );
 
-  private static final int LIGHT_ALPHA = SystemInfoRt.isMac ? 120 : 160;
-  private static final int DARK_ALPHA = SystemInfoRt.isMac ? 255 : 180;
-
   ScrollBarPainter(@NotNull Supplier<? extends Component> supplier, @NotNull CoroutineScope coroutineScope) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125, coroutineScope) {
       @Override
@@ -168,6 +166,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
       alpha = Integer.min(alpha, 255);
     }
     else {
+      IslandsPainterProvider provider = IslandsPainterProvider.getInstance();
+      boolean isMac = SystemInfoRt.isMac || (provider != null && provider.useMacScrollBar());
+      int LIGHT_ALPHA = isMac ? 120 : 160;
+      int DARK_ALPHA = isMac ? 255 : 180;
+
       alpha = JBColor.isBright() ? LIGHT_ALPHA : DARK_ALPHA;
     }
 
@@ -242,7 +245,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
       if (ignoreBorder() || fill.getRGB() == draw.getRGB()) draw = null; // without border
 
       int arc = 0;
-      if (SystemInfoRt.isMac) {
+      IslandsPainterProvider provider = IslandsPainterProvider.getInstance();
+      if (SystemInfoRt.isMac || (provider != null && provider.useMacScrollBar())) {
         int margin = macMargin(draw != null);
         x += margin;
         y += margin;

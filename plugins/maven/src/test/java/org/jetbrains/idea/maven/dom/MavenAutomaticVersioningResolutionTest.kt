@@ -10,7 +10,7 @@ import org.junit.Test
 class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
   @Test
   fun testAutomaticParentVersionResolutionForMaven4() = runBlocking {
-    assumeVersionAtLeast("4.0.0-alpha-2")
+    assumeMaven4()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -47,7 +47,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testAutomaticParentVersionResolutionIsNotEnabledForMaven3() = runBlocking {
-    assumeVersionLessThan("4.0.0-alpha-2")
+    assumeMaven3()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

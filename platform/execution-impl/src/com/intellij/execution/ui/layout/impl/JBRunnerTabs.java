@@ -3,6 +3,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ExperimentalUI;
@@ -29,6 +30,13 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
 
   @Override
   protected @NotNull TabPainterAdapter createTabPainterAdapter() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      TabPainterAdapter painter = customization.getDebuggerTabPainterAdapter();
+      if (painter != null) {
+        return painter;
+      }
+    }
     return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
   }
 

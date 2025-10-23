@@ -14,10 +14,10 @@ import kotlin.math.max
 
 @Suppress("unused")
 public val LazyListState.visibleItemsRange: IntRange
-    get() = firstVisibleItemIndex..firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
+    get() = firstVisibleItemIndex until firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
 
 public val SelectableLazyListState.visibleItemsRange: IntRange
-    get() = firstVisibleItemIndex..firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
+    get() = firstVisibleItemIndex until firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
 
 public interface SelectableScope {
     public var selectedKeys: Set<Any>

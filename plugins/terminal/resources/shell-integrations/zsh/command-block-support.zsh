@@ -92,6 +92,7 @@ __jetbrains_intellij_clear_all_and_move_cursor_to_top_left() {
 }
 
 __jetbrains_intellij_command_precmd() {
+  builtin local LAST_EXIT_CODE="$?"
   if [[ -z "${__jetbrains_intellij_initialized-}" ]]; then
     # As `precmd` is executed before each prompt, for the first time it is called after
     # all rc files have been processed and before the first prompt is displayed.
@@ -111,7 +112,6 @@ __jetbrains_intellij_command_precmd() {
 
     builtin return
   fi
-  builtin local LAST_EXIT_CODE="$?"
   if [ ! -z $__JETBRAINS_INTELLIJ_GENERATOR_COMMAND ]
   then
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND

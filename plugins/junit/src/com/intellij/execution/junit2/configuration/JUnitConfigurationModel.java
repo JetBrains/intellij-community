@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -291,7 +291,7 @@ public class JUnitConfigurationModel {
 
       if (myProject.isDefault() ||
           JUnitUtil.isJUnit5(searchScope, myProject) ||
-          TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+          TestObject.hasJupiterEnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
         aModel.addElement(UNIQUE_ID);
         aModel.addElement(TAGS);
       }

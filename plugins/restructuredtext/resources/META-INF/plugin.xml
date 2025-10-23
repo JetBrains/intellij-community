@@ -6,6 +6,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.spellchecker"/>
   </dependencies>
 
   <content>

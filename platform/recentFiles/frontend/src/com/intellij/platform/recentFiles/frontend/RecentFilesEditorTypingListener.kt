@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
@@ -17,6 +18,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(FlowPreview::class)
@@ -26,7 +28,9 @@ private class RecentFilesEditorTypingListener : AnActionListener {
 
   init {
     RecentFilesApplicationCoroutineScopeProvider.getInstance().coroutineScope.launch {
-      recentlyChangedFiles.debounce(1.seconds)
+      val debounceInterval = Registry.intValue("switcher.typing.debounce.interval.ms", 3000)
+      LOG.debug("RecentFilesEditorTypingListener: debounceInterval=$debounceInterval")
+      recentlyChangedFiles.debounce(debounceInterval.milliseconds)
         .collect { (file, project) ->
           LOG.debug("Adding file to the frontend recent files model after typing: ${file.name}")
           FrontendRecentFilesModel.getInstanceAsync(project).applyFrontendChanges(RecentFileKind.RECENTLY_EDITED, listOf(file), FileChangeKind.ADDED)

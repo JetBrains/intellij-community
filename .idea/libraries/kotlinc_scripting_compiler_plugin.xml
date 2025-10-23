@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.scripting-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:2.2.20-ij252-17">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:2.2.20-ij252-24">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-17/scripting-compiler-plugin-for-ide-2.2.20-ij252-17.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-24/scripting-compiler-plugin-for-ide-2.2.20-ij252-24.jar">
           <sha256sum>0700f7b0060a6e1dee7af70d0f49d1ce7d948d57bfc627cc0bfdf4b416177a64</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-17/scripting-compiler-plugin-for-ide-2.2.20-ij252-17.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-24/scripting-compiler-plugin-for-ide-2.2.20-ij252-24.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-17/scripting-compiler-plugin-for-ide-2.2.20-ij252-17-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-24/scripting-compiler-plugin-for-ide-2.2.20-ij252-24-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

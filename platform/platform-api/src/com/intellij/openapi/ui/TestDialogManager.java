@@ -16,7 +16,7 @@ public final class TestDialogManager {
 
   @TestOnly
   public static TestDialog setTestDialog(@Nullable TestDialog newValue) {
-    checkUnitTestMode();
+    checkUnitTestOrHeadlessMode();
     TestDialog oldValue = implementation;
     implementation = newValue;
     return oldValue;
@@ -41,16 +41,18 @@ public final class TestDialogManager {
 
   @TestOnly
   public static TestInputDialog setTestInputDialog(@Nullable TestInputDialog newValue) {
-    checkUnitTestMode();
+    checkUnitTestOrHeadlessMode();
     TestInputDialog oldValue = inputImplementation;
     inputImplementation = newValue;
     return oldValue;
   }
 
-  private static void checkUnitTestMode() {
+  private static void checkUnitTestOrHeadlessMode() {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
-      Logger.getInstance(Messages.class).assertTrue(application.isUnitTestMode(), "This method is available for tests only");
+      Logger.getInstance(Messages.class).assertTrue(
+        application.isUnitTestMode() || application.isHeadlessEnvironment(),
+        "This method is available for tests mode or headless environment");
     }
   }
 }

@@ -1,0 +1,38 @@
+<component name="libraryTable">
+  <library name="JUnit6" type="repository">
+    <properties maven-id="org.junit.jupiter:junit-jupiter-api:6.0.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0.jar">
+          <sha256sum>88d690d2d373cd66170770c317977196ce9e465f2388930f4bc9665e887385f6</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar">
+          <sha256sum>48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0.jar">
+          <sha256sum>86e8faf87f3151a3d545850852a0f2cc55ea8a2434eee9e08f83881c52d55992</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar">
+          <sha256sum>b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar">
+          <sha256sum>1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

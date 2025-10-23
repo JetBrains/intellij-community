@@ -105,12 +105,23 @@ internal object LangDownloader {
 
   private fun doDownload(languages: Collection<Lang>): List<Pair<Lang, Path>> {
     val downloaderService = DownloadableFileService.getInstance()
-    val descriptors = languages
-      .map { downloaderService.createFileDescription(it.remote.url, it.remote.fileName) }
-    val paths = downloaderService
-      .createDownloader(descriptors, msg("grazie.settings.proofreading.languages.download"))
-      .download(GrazieDynamic.dynamicFolder.toFile())
-      .map { it.first.toPath() }
-    return languages.zip(paths)
+    val paths = mutableListOf<Pair<Lang, Path>>()
+    try {
+      languages.forEach { lang ->
+        val folder = GrazieDynamic.dynamicFolder
+        val descriptor = downloaderService.createFileDescription(lang.remote.url, lang.remote.fileName)
+        val path = downloaderService
+          .createDownloader(listOf(descriptor), msg("grazie.settings.proofreading.languages.download"))
+          .download(folder.toFile())
+          .map { it.first.toPath() }
+          .first()
+        paths.add(lang to path)
+      }
+    }
+    catch (e: Throwable) {
+      paths.forEach { NioFiles.deleteRecursively(it.second) }
+      throw IllegalStateException("Failed to download language bundle for languages ${languages.map { it.displayName }}", e)
+    }
+    return paths
   }
 }

@@ -16,7 +16,6 @@ import java.lang.management.*;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -27,8 +26,6 @@ public final class LowMemoryWatcherManager {
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
   private static final long GC_TIME_THRESHOLD = 10_000; //20 seconds
-
-  private final AtomicLong lastGcTime = new AtomicLong();
 
   private final ExecutorService myExecutorService;
 
@@ -53,7 +50,8 @@ public final class LowMemoryWatcherManager {
       SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", backendExecutorService);
 
     myMemoryPoolMXBeansFuture = initializeMXBeanListenersLater(backendExecutorService);
-    lastGcTime.set(getMajorGcTime());
+    //initialize the tracker:
+    gcTracker.trackGcAndGetRecentTime(getMajorGcTime());
   }
 
   private static long getMajorGcTime() {
@@ -98,6 +96,10 @@ public final class LowMemoryWatcherManager {
 
   private static class GcTracker {
     private static final long WINDOW_SIZE_MS = 60_000; // 1 minute
+
+    private long previousUpdateTimestampMs = 0;
+    private long previousAccumulatedGcDurationMs = 0;
+
     private final Queue<GcPeriod> gcPeriods = new LinkedList<>();
 
     private static class GcPeriod {
@@ -110,14 +112,25 @@ public final class LowMemoryWatcherManager {
       }
     }
 
-    public synchronized long trackGcAndGetRecentTime(long currentGcTime, long previousGcTimeValue) {
-      long currentTime = System.currentTimeMillis();
+    public synchronized long trackGcAndGetRecentTime(long accumulatedGcDurationMs) {
+      long currentTimeMs = System.currentTimeMillis();
 
-      if (currentGcTime > previousGcTimeValue) {
-        gcPeriods.offer(new GcPeriod(currentTime, currentGcTime - previousGcTimeValue));
+      if (previousUpdateTimestampMs < currentTimeMs - WINDOW_SIZE_MS) {
+        //do NOT use GC time accumulated over periods longer than WINDOW_SIZE_MS:
+        previousUpdateTimestampMs = currentTimeMs;
+        previousAccumulatedGcDurationMs = accumulatedGcDurationMs;
+        gcPeriods.clear();
+        return 0;
       }
 
-      while (!gcPeriods.isEmpty() && gcPeriods.peek().timestamp < currentTime - WINDOW_SIZE_MS) {
+
+      if (accumulatedGcDurationMs > previousAccumulatedGcDurationMs) {
+        gcPeriods.offer(new GcPeriod(currentTimeMs, accumulatedGcDurationMs - previousAccumulatedGcDurationMs));
+      }
+      previousUpdateTimestampMs = currentTimeMs;
+      previousAccumulatedGcDurationMs = accumulatedGcDurationMs;
+
+      while (!gcPeriods.isEmpty() && gcPeriods.peek().timestamp < currentTimeMs - WINDOW_SIZE_MS) {
         gcPeriods.poll();
       }
 
@@ -137,13 +150,18 @@ public final class LowMemoryWatcherManager {
       boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
 
       if (memoryThreshold || memoryCollectionThreshold) {
-        long currentGcTime = getMajorGcTime();
-        long previousGcTimeValue = lastGcTime.getAndSet(currentGcTime);
-        long recentGcTime = gcTracker.trackGcAndGetRecentTime(currentGcTime, previousGcTimeValue);
+        long accumulatedGcTimeMs = getMajorGcTime();
+        long recentGcTime = gcTracker.trackGcAndGetRecentTime(accumulatedGcTimeMs);
+        //This is not just 'after GC', it is (a lot of time spent on GC recently) AND (memory still low after GC)
+        boolean afterGC = (recentGcTime > GC_TIME_THRESHOLD) && memoryCollectionThreshold;
+        getLogger().info(
+          "LowMemoryNotification{gcTime: " + accumulatedGcTimeMs + "ms, GC load score: " + recentGcTime + "}" +
+          "{threshold: " + memoryThreshold + ", collectionThreshold: " + memoryCollectionThreshold + "}"
+        );
 
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = myExecutorService.submit(() -> myJanitor.accept(recentGcTime > GC_TIME_THRESHOLD));
+            mySubmitted = myExecutorService.submit(() -> myJanitor.accept(afterGC));
             // maybe it's executed too fast or even synchronously
             if (mySubmitted.isDone()) {
               mySubmitted = null;

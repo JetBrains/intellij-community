@@ -54,14 +54,20 @@ class MavenProject(val file: VirtualFile) {
 
   @Throws(IOException::class)
   fun write(out: DataOutputStream) {
-    out.writeUTF(path)
+    try {
+      out.writeUTF(path)
 
-    BufferExposingByteArrayOutputStream().use { bs ->
-      ObjectOutputStream(bs).use { os ->
-        os.writeObject(myState)
-        out.writeInt(bs.size())
-        out.write(bs.internalBuffer, 0, bs.size())
+      BufferExposingByteArrayOutputStream().use { bs ->
+        ObjectOutputStream(bs).use { os ->
+          os.writeObject(myState)
+          out.writeInt(bs.size())
+          out.write(bs.internalBuffer, 0, bs.size())
+        }
       }
+    }
+    catch (e: IOException) {
+      MavenLog.LOG.error("Unable to write project " + file.path, e)
+      throw e
     }
   }
 
@@ -97,7 +103,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateState(
     model: MavenModel,
-    managedDependencies: List<MavenId>,
+    managedDependencies: List<MavenArtifactInfo>,
     dependencyHash: String?,
     readingProblems: Collection<MavenProjectProblem>,
     activatedProfiles: MavenExplicitProfiles,
@@ -588,7 +594,9 @@ class MavenProject(val file: VirtualFile) {
     setState(newState)
   }
 
-  fun findManagedDependency(groupId: String, artifactId: String): MavenId? = myState.managedDependencies["$groupId:$artifactId"]
+  fun findManagedDependencyVersion(groupId: String, artifactId: String): String? = myState.managedDependencies["$groupId:$artifactId"]?.version
+
+  fun managedDependencies(): Map<String, MavenArtifactInfo> = myState.managedDependencies
 
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
     return findDependencies(depProject.mavenId)
@@ -834,7 +842,7 @@ class MavenProject(val file: VirtualFile) {
       state: MavenProjectState,
       incLastReadStamp: Boolean,
       model: MavenModel,
-      managedDependencies: List<MavenId>,
+      managedDependencies: List<MavenArtifactInfo>,
       readingProblems: Collection<MavenProjectProblem>,
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
@@ -857,7 +865,7 @@ class MavenProject(val file: VirtualFile) {
       val newPluginInfos = LinkedHashSet<MavenPluginWithArtifact>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
-      val newManagedDeps = LinkedHashMap<String, MavenId>()
+      val newManagedDeps = HashMap<String, MavenArtifactInfo>(managedDependencies.size)
 
       if (keepPreviousArtifacts) {
         newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
@@ -887,7 +895,10 @@ class MavenProject(val file: VirtualFile) {
       newDependencyTree.addAll(model.dependencyTree)
       newDependencies.addAll(model.dependencies)
       newExtensions.addAll(model.extensions)
-      managedDependencies.forEach { md -> newManagedDeps.put("${md.groupId}:${md.artifactId}", md) }
+
+      for (md in managedDependencies) {
+        newManagedDeps["${md.groupId}:${md.artifactId}"] = md
+      }
 
       val remoteRepositories = ArrayList(newRepositories)
       val remotePluginRepositories = ArrayList(newPluginRepositories)
@@ -896,7 +907,7 @@ class MavenProject(val file: VirtualFile) {
       val pluginInfos = ArrayList(newPluginInfos)
       val extensions = ArrayList(newExtensions)
       val annotationProcessors = ArrayList(newAnnotationProcessors)
-      val managedDependenciesMap = LinkedHashMap(newManagedDeps)
+      val managedDependenciesMap = HashMap(newManagedDeps)
 
       val newDependencyHash = dependencyHash ?: state.dependencyHash
       val lastReadStamp = state.lastReadStamp + if (incLastReadStamp) 1 else 0

@@ -15,8 +15,11 @@ class PolySymbolEnabledLanguage private constructor() : MetaLanguage("PolySymbol
 
   override fun matchesLanguage(language: Language): Boolean =
     language == ANY || Companion.EP_NAME.extensionList
-      .any {
-        when (val l = findLanguageByID(it.language)) {
+      .asSequence()
+      .map { it.language }
+      .distinct()
+      .any { langId ->
+        when (val l = findLanguageByID(langId)) {
           null -> false
           is MetaLanguage -> l.matchesLanguage(language)
           else -> language.isKindOf(l)

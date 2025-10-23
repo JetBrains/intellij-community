@@ -1,3 +1,5 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.settingsSync.core.config
 
 
@@ -36,6 +38,7 @@ import com.intellij.settingsSync.core.auth.SettingsSyncAuthService.PendingUserAc
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.communicator.getAvailableSyncProviders
 import com.intellij.settingsSync.core.config.SettingsSyncEnabler.State
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.MutableCollectionComboBoxModel
@@ -142,11 +145,15 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       val authService = currentUser()?.let { RemoteCommunicatorHolder.getProvider(it.providerCode) } ?.authService
       syncPanelHolder.crossSyncSupported.set(authService?.crossSyncSupported() ?: true)
       val infoRow = row {
+        @Suppress("DialogTitleCapitalization")
         text(message("settings.sync.info.message"))
-        SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.firstOrNull { it.isAvailable() && it.learnMoreLinkPair != null }?.also {
-          val linkPair = it.learnMoreLinkPair!!
-          browserLink(linkPair.first, linkPair.second)
-        }
+        getAvailableSyncProviders()
+          .firstOrNull { it.learnMoreLinkPair != null }
+          ?.also {
+            val linkPair = it.learnMoreLinkPair!!
+            @Suppress("HardCodedStringLiteral")
+            browserLink(linkPair.first, linkPair.second)
+          }
       }
 
       rowsRange {
@@ -495,7 +502,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     val result = suspendCancellableCoroutine<DeleteServerDataResult> { continuation ->
       SettingsSyncEvents.getInstance().fireSettingsChanged(
         SyncSettingsEvent.DeleteServerData { deleteResult ->
-          continuation.resume(deleteResult) { cause -> }
+          continuation.resume(deleteResult) { cause, _, _ -> }
         }
       )
     }
@@ -768,7 +775,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
   }
 
-  // triggers fake action, which causes SettingEditor to update and check if configurable was modified
+  // triggers a fake action, which causes SettingEditor to update and check if configurable was modified
   // must be called on EDT
   private fun triggerUpdateConfigurable() {
     val dumbAwareAction = DumbAwareAction.create(Consumer { _: AnActionEvent? ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.*
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.isJUnit4InScope
-import com.intellij.execution.junit.isJUnit5InScope
+import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.psi.PsiClass
@@ -20,7 +20,7 @@ import org.jetbrains.uast.sourcePsiElement
 class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::class.java) {
   private fun shouldInspect(file: PsiFile): Boolean =
     JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)
-    && isJUnit4InScope(file) && isJUnit5InScope(file)
+    && isJUnit4InScope(file) && isJUnit5Or6InScope(file)
 
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val javaPsi = aClass.javaPsi

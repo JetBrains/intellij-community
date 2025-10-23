@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
-        override val markerClassFqn: String = JUnitUtil.TEST_ANNOTATION
+        override val markerClassFqns: Collection<String> = listOf(JUnitUtil.TEST_ANNOTATION)
         override val disabledTestAnnotation: String = "org.junit.Ignore"
         override val allowTestMethodsInObject: Boolean = false
 

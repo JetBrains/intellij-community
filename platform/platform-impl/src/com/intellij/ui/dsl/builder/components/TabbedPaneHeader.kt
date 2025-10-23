@@ -50,7 +50,6 @@ internal class TabbedPaneHeader : JBTabbedPane() {
 }
 
 private class HeaderTabbedPaneUI : DarculaTabbedPaneUI() {
-
   fun getTabsWidth(): Int {
     val metrics = tabPane.getFontMetrics(tabPane.font)
     return (0 until tabPane.tabCount).sumOf { calculateTabWidth(tabPane.tabPlacement, it, metrics) }

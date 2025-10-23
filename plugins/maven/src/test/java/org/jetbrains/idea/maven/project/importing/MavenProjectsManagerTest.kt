@@ -459,6 +459,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotIgnoreProjectWhenModuleDeletedDuringImport() = runBlocking {
+    assumeModel_4_0_0("IDEA-379195")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

@@ -39,6 +39,8 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
+import com.intellij.util.containers.with
+import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor
 import org.jetbrains.idea.maven.execution.*
@@ -50,6 +52,8 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.io.IOException
+import java.nio.charset.Charset
+import java.nio.charset.UnsupportedCharsetException
 import java.nio.file.Path
 import java.util.function.Function
 import kotlin.io.path.Path
@@ -70,7 +74,15 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
       val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
 
-      val processHandler = runProcessInEel(eelApi, exe, env)
+      val charset = tryToGetCharset(env, eelApi)
+      val envWithCharsets = if (charset != null) {
+        env
+      }
+      else {
+        env.with("JAVA_TOOL_OPTIONS", listOfNotNull(env["JAVA_TOOL_OPTIONS"], "-Dfile.encoding=UTF-8").joinToString(" "))
+      }
+
+      val processHandler = runProcessInEel(eelApi, exe, envWithCharsets, charset ?: Charsets.UTF_8)
       JavaRunConfigurationExtensionManager.instance
         .attachExtensionsToProcess(myConfiguration, processHandler, environment.runnerSettings)
       return@runWithModalProgressBlocking processHandler
@@ -81,16 +93,17 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     eelApi: EelApi,
     exe: String,
     env: Map<String, String>,
+    charset: Charset,
   ): KillableColoredProcessHandler.Silent {
 
 
     val params = collectArguments(eelApi)
 
     return if (isWindows()) {
-      executeBatScriptForWindows(exe, eelApi, env, params)
+      executeBatScriptForWindows(exe, eelApi, env, params, charset)
     }
     else {
-      doRunProcessInEel(eelApi, exe, env, params.list, "$exe ${params.list.joinToString(" ")}", null)
+      doRunProcessInEel(eelApi, exe, env, params.list, "$exe ${params.list.joinToString(" ")}", charset, null)
     }
   }
 
@@ -98,7 +111,8 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     exe: String,
     eelApi: EelApi,
     env: Map<String, String>,
-    params: ParametersList
+    params: ParametersList,
+    charset: Charset,
   ): KillableColoredProcessHandler.Silent {
 
     val isSpyDebug = Registry.`is`("maven.spy.events.debug")
@@ -106,7 +120,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
 
     MavenLog.LOG.debug("Running $tmpFile: ${params.list.joinToString(" ")}")
-    return doRunProcessInEel(eelApi, exe, env, listOf("/c", tmpFile.absolutePath), if (isSpyDebug)  tmpFile.absolutePath else params.list.joinToString(" ")) {
+    return doRunProcessInEel(eelApi, exe, env, listOf("/c", tmpFile.absolutePath), if (isSpyDebug) tmpFile.absolutePath else params.list.joinToString(" "), charset) {
       try {
         tmpFile.delete()
       }
@@ -171,6 +185,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     env: Map<String, String>,
     args: List<String>,
     commandLineToShowUser: String,
+    charset: Charset,
     onTerminate: (() -> Unit)?,
   ): KillableColoredProcessHandler.Silent {
     val processOptions = eelApi.exec.spawnProcess(exe)
@@ -180,7 +195,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
     try {
       val result = processOptions.eelIt()
-      return KillableColoredProcessHandler.Silent(result.convertToJavaProcess(), commandLineToShowUser, Charsets.UTF_8, emptySet())
+      return KillableColoredProcessHandler.Silent(result.convertToJavaProcess(), commandLineToShowUser, charset, emptySet())
         .also {
           it.addProcessListener(object : ProcessListener {
             override fun processTerminated(event: ProcessEvent) {
@@ -194,6 +209,36 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${e.errno}, message:  ${e.message}")
       throw ExecutionException(e.message)
     }
+  }
+
+  private suspend fun tryToGetCharset(env: Map<String, String>, eelApi: EelApi): Charset? {
+    try {
+      extractCharsetFromEnv(env["MAVEN_OPTS"])?.let {
+        MavenLog.LOG.debug("extracted charset $it from MAVEN_OPTS")
+        return Charset.forName(it) }
+      extractCharsetFromEnv(env["JAVA_TOOL_OPTIONS"])?.let {
+        MavenLog.LOG.debug("extracted charset $it from JAVA_TOOL_OPTIONS")
+        return Charset.forName(it) }
+      eelApi.exec.getCodepage()?.let {
+        MavenLog.LOG.debug("extracted charset $it executing command")
+        return Charset.forName(it)
+      }
+    }
+    catch (uce: UnsupportedCharsetException) {
+      MavenLog.LOG.warn("Unsupported charset found, reverting to UTF-8", uce)
+    } catch (epe: ExecuteProcessException) {
+      MavenLog.LOG.warn("Cannot determine process exception", epe)
+    }
+    return null
+  }
+
+
+  private fun extractCharsetFromEnv(envValue: String?): String? {
+    if (envValue == null) return null
+    val prefix = "-Dfile.encoding="
+    val index = envValue.indexOf(prefix)
+    if (index == -1) return null
+    return envValue.substring(index + prefix.length).substringBefore(" ").nullize(true)
   }
 
   override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {

@@ -115,6 +115,14 @@ class UiThemeProviderListManager {
       .mapNotNull { it.theme.get() }
   }
 
+  fun getBundledThemeListForTargetUI(targetUI: TargetUIType): List<UIThemeLookAndFeelInfo> {
+    val themes = mutableListOf<UIThemeLookAndFeelInfo>()
+    getThemeListForTargetUI(targetUI).forEach { info ->
+      if (!info.isThemeFromPlugin) themes.add(info)
+    }
+    return themes
+  }
+
   internal fun themeProviderAdded(provider: UIThemeProvider, pluginDescriptor: PluginDescriptor): LafEntry? {
     if (findLaFByProviderId(provider) != null) {
       // provider is already registered

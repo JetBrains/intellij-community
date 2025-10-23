@@ -167,6 +167,10 @@
                     interface="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="openInBrowserFloatingToolbarSuppressor"
+                    interface="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor"
+                    dynamic="true"/>
+
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
 
     <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean" dynamic="false">

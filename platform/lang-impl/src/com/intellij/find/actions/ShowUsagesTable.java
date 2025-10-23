@@ -19,6 +19,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -174,9 +175,10 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
 
       List<Object> usages = selectedUsages.get();
       if (usages != null) {
+        DataContext dataContext = parameters.editor != null ?
+                                  DataManager.getInstance().getDataContext(parameters.editor.getContentComponent()) : null;
+        var usageInfosToNavigate = new SmartList<UsageInfo>();
         for (Object usage : usages) {
-          DataContext dataContext = parameters.editor != null ?
-                                    DataManager.getInstance().getDataContext(parameters.editor.getContentComponent()) : null;
           if (usage instanceof UsageInfo usageInfo) {
             PsiElement selectedElement = usageInfo.getElement();
             if (selectedElement != null) {
@@ -192,12 +194,13 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
                                                          numberOfLettersTyped,
                                                          selectedElement.getLanguage(), false);
             }
-            UsageNavigation.getInstance(parameters.project).navigate(usageInfo, true, dataContext);
+            usageInfosToNavigate.add(usageInfo);
           }
           else if (usage instanceof Navigatable navigatable) {
             navigateBlocking(parameters.project, navigatable, NavigationOptions.requestFocus(), dataContext);
           }
         }
+        UsageNavigation.getInstance(parameters.project).navigate(usageInfosToNavigate, true, dataContext);
       }
     };
   }

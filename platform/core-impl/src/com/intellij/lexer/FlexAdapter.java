@@ -81,6 +81,22 @@ public class FlexAdapter extends LexerBase {
     return myBufferEnd;
   }
 
+  @Override
+  public @NotNull LexerPosition getCurrentPosition() {
+    locateToken();
+    return new FlexAdapterPosition(myTokenType, myTokenStart, myTokenEnd, myState, myFlex.yystate());
+  }
+
+  @Override
+  public void restore(@NotNull LexerPosition position) {
+    FlexAdapterPosition flexAdapterPosition = (FlexAdapterPosition)position;
+    myFlex.reset(myText, flexAdapterPosition.tokenEnd, getBufferEnd(), flexAdapterPosition.flexState);
+    myTokenStart = flexAdapterPosition.tokenStart;
+    myTokenEnd = flexAdapterPosition.tokenEnd;
+    myTokenType = flexAdapterPosition.currentToken;
+    myState = flexAdapterPosition.state;
+  }
+
   protected void locateToken() {
     if (myTokenType != null) return;
 
@@ -106,5 +122,31 @@ public class FlexAdapter extends LexerBase {
   @Override
   public String toString() {
     return "FlexAdapter for " + myFlex.getClass().getName();
+  }
+
+  private static class FlexAdapterPosition implements LexerPosition {
+    private final IElementType currentToken;
+    private final int tokenStart;
+    private final int tokenEnd;
+    private final int state;
+    private final int flexState;
+
+    private FlexAdapterPosition(IElementType currentToken, int tokenStart, int tokenEnd, int state, int flexState) {
+      this.currentToken = currentToken;
+      this.tokenStart = tokenStart;
+      this.tokenEnd = tokenEnd;
+      this.state = state;
+      this.flexState = flexState;
+    }
+
+    @Override
+    public int getOffset() {
+      return tokenStart;
+    }
+
+    @Override
+    public int getState() {
+      return state;
+    }
   }
 }

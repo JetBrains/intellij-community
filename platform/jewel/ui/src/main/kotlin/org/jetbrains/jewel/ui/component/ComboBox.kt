@@ -80,6 +80,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param popupManager Manager for controlling the popup visibility state
  * @param popupContent Composable content for the popup
  */
+@Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
 @Composable
 public fun ComboBox(
     labelText: String,
@@ -93,20 +94,12 @@ public fun ComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
-    popupManager: PopupManager = remember { PopupManager() },
+    // TODO(JEWEL-983) Address Metalava suppressions
+    @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
     popupContent: @Composable () -> Unit,
 ) {
-    val textColor = if (enabled) Color.Unspecified else style.colors.borderDisabled
     ComboBox(
-        labelContent = {
-            Text(
-                text = labelText,
-                style = textStyle.copy(color = textColor),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag("Jewel.ComboBox.NonEditableText").padding(style.metrics.contentPadding),
-            )
-        },
+        labelContent = { ComboBoxLabelText(labelText, textStyle, style, enabled) },
         popupContent,
         modifier,
         popupModifier,
@@ -297,6 +290,19 @@ public fun ComboBox(
             )
         }
     }
+}
+
+@Composable
+internal fun ComboBoxLabelText(text: String, style: TextStyle, comboBoxStyle: ComboBoxStyle, enabled: Boolean) {
+    val textColor = if (enabled) Color.Unspecified else comboBoxStyle.colors.borderDisabled
+
+    Text(
+        text = text,
+        style = style.copy(color = textColor),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.testTag("Jewel.ComboBox.NonEditableText").padding(comboBoxStyle.metrics.contentPadding),
+    )
 }
 
 /**

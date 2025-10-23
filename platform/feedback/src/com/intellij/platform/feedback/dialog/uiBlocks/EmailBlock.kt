@@ -4,7 +4,6 @@ package com.intellij.platform.feedback.dialog.uiBlocks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.feedback.dialog.TEXT_FIELD_EMAIL_COLUMN_SIZE
-import com.intellij.platform.feedback.dialog.feedbackAgreement
 import com.intellij.platform.feedback.impl.EMAIL_REGEX
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.LicensingFacade
@@ -13,12 +12,13 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import java.util.function.Predicate
 
 class EmailBlock(private val myProject: Project?,
-                 private val showFeedbackSystemInfoDialog: () -> Unit) : FeedbackBlock {
+                 private val feedbackAgreementBlock: Row.(Project?) -> Unit) : FeedbackBlock {
   private var myCheckBoxLabel: @NlsContexts.Checkbox String = CommonFeedbackBundle.message("dialog.feedback.email.checkbox.label")
   private var myProperty: String = LicensingFacade.getInstance()?.getLicenseeEmail().orEmpty()
   private var myCheckBoxEmail: JBCheckBox? = null
@@ -52,9 +52,7 @@ class EmailBlock(private val myProject: Project?,
         }
 
       row {
-        feedbackAgreement(myProject, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
-          showFeedbackSystemInfoDialog()
-        }
+        feedbackAgreementBlock(myProject)
       }.bottomGap(BottomGap.SMALL)
     }
   }

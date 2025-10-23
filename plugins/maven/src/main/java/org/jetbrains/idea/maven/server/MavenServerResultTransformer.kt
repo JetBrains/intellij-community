@@ -17,7 +17,7 @@ interface MavenServerResultTransformer {
     @JvmStatic
     fun transformPaths(transformer: RemotePathTransformerFactory.Transformer, modelToTransformInPlace: MavenModel) {
       if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
-        MavenBuildPathsChange({ transformer.toIdePath(it)!! }, { transformer.canBeRemotePath(it) }).perform(modelToTransformInPlace)
+        MavenBuildPathsChange { transformer.toIdePath(it)!! }.perform(modelToTransformInPlace)
       }
     }
 

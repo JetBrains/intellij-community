@@ -25,6 +25,7 @@ internal object UnsafeAccessing {
 
     private val isAccessibleFieldOffset: Long? by lazy {
         try {
+            @Suppress("DEPRECATION")
             (unsafe as? Unsafe)?.objectFieldOffset(Parent::class.java.getDeclaredField("first"))
         } catch (_: Throwable) {
             null

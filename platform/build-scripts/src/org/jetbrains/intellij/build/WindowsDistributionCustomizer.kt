@@ -47,6 +47,11 @@ open class WindowsDistributionCustomizer {
   var installerImagesPath: String? = null
 
   /**
+   * Set to `false` for products that are not updated with patches.
+   */
+  var publishUninstaller: Boolean = true
+
+  /**
    * List of file extensions (without a leading dot) which the installer will suggest to associate with the product.
    */
   var fileAssociations: List<String> = emptyList()

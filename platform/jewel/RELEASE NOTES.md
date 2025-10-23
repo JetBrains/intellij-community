@@ -1,5 +1,163 @@
 # Jewel Release Notes
 
+## v0.31 (ETA 2025-10-21)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2025.2.4, 2025.3 EAP       | 1.9.0                         |
+
+### ⚠️ Important Changes
+
+* **IJP 251 is no longer supported** as of this release. Jewel policy remains to support the current stable version and the upcoming IJP version.
+* **JEWEL-996** Updated Compose Multiplatform version to 1.9.0 stable ([#3241](https://github.com/JetBrains/intellij-community/pull/3241))
+
+### New features
+
+* **JEWEL-146** Created `SpeedSearchArea` container to provide [speed search](https://www.jetbrains.com/help/idea/speed-search-in-the-tool-windows.html) functionality
+  * Speed search is implemented for `SelectableLazyColumn` (in ([#3214](https://github.com/JetBrains/intellij-community/pull/3214))) and `Tree` (in ([#3242](https://github.com/JetBrains/intellij-community/pull/3242))) components
+  * `ComboBox`es are not yet supported, but should be in 0.32
+  * By default, it does IDE-like "smart matching", implemented by `SpeedSearchMatcher.patternMatcher()`
+  * A more classical substring matching behaviour is also optionally available via `SpeedSearchMatcher.substringMatcher()`
+  * You can implement `SpeedSearchMatcher` to provide your own matching logic
+* **JEWEL-964** Added a `PopupMenu` variant that takes a `PopupPositionProvider` as parameter ([#3202](https://github.com/JetBrains/intellij-community/pull/3202))
+
+### Bug fixes
+
+* **JEWEL-146** Fixed an issue in the `LazyListState.visibleItemsRange` and  `SelectableLazyListState.visibleItemsRange` methods that were returning one more item than they should have ([#3214](https://github.com/JetBrains/intellij-community/pull/3214))
+* **JEWEL-146** Fixed potential crashes in the IDE when reading `ComboBox.padding`, `TabbedPane.tabInsets`, and `SpeedSearch.borderInsets` from the LaF ([#3235](https://github.com/JetBrains/intellij-community/pull/3235))
+* **JEWEL-174** Fixed toolwindows in the IDE not getting focused when clicking in an empty area or a non-focusable child composable ([#3228](https://github.com/JetBrains/intellij-community/pull/3228))
+* **JEWEL-857** Fixed `SimpleListItem`'s semantics to ensure screen readers will read the content description from the children elements ([#3227](https://github.com/JetBrains/intellij-community/pull/3227))
+* **JEWEL-857** Fixed `SelectableLazyColumn`'s semantics to ensure screen readers will read the content description from the children elements ([#3227](https://github.com/JetBrains/intellij-community/pull/3227))
+* **JEWEL-857** Fixed `SelectableLazyColumn`'s semantics to ensure screen readers will read the selected/unselected state of items correctly ([#3227](https://github.com/JetBrains/intellij-community/pull/3227))
+  * If the list uses multiple selection mode, items will be considered as checkboxes
+  * If the list uses single selection mode, items will be considered as radio buttons
+* **JEWEL-914** Fixed the `Chip` component's appearance in the IDE ([#3239](https://github.com/JetBrains/intellij-community/pull/3239))
+* **JEWEL-952** Fixed an issue with menus where multiple sub-menus could be opened at the same time ([#3201](https://github.com/JetBrains/intellij-community/pull/3201))
+* **JEWEL-953** Fixed keyboard navigation on custom native popups, in both standalone and the IDE ([#3208](https://github.com/JetBrains/intellij-community/pull/3208))
+  * Now, clicking the left arrow only closes the top level
+  * Also fixes incorrect popup focus forcing in the IDE
+* **JEWEL-953** Fixed keyboard navigation on custom native popups in standalone to cycle around like it does the IDE ([#3208](https://github.com/JetBrains/intellij-community/pull/3208))
+* **JEWEL-953** Fixed behaviour when `dismissOnClickOutside = false` for custom native popups in standalone ([#3208](https://github.com/JetBrains/intellij-community/pull/3208))
+* **JEWEL-961,JEWEL-984** Fixed issues where `ListComboBox`es were not making focused entries fully visible on keyboard navigation ([#3237](https://github.com/JetBrains/intellij-community/pull/3237))
+* **JEWEL-961,JEWEL-984** Fixed issues with string-based `ListComboBox`es not closing when pressing enter ([#3237](https://github.com/JetBrains/intellij-community/pull/3237))
+* **JEWEL-961,JEWEL-984** Fixed issues in `ListComboBox`es scrolling to only move by one item at a time, to match Swing implementations ([#3237](https://github.com/JetBrains/intellij-community/pull/3237))
+* **JEWEL-962** Fixed `ListComboBox` to properly scroll to ensure the selected item is visible when first opening the popup ([#3243](https://github.com/JetBrains/intellij-community/pull/3243))
+* **JEWEL-962** Fixed `ListComboBox` to properly reset the scroll position when the popup is dismissed ([#3234](https://github.com/JetBrains/intellij-community/pull/3234))
+* **JEWEL-1001** Fixed the text line height calculation in the IDE when the IDE zoom level is not 100% ([#3236](https://github.com/JetBrains/intellij-community/pull/3236))
+* **JEWEL-1002** Fixed an issue that required explicitly providing a theme `instanceUuid` in standalone themes and could cause crashing at startup ([#3216](https://github.com/JetBrains/intellij-community/pull/3216))
+* **JEWEL-1006** Fixed an issue in the custom popup renderer in standalone that was incorrectly triggering the "click outside" callback when a submenu was clicked ([#3238](https://github.com/JetBrains/intellij-community/pull/3238))
+
+### Deprecated API
+
+* **JEWEL-146** Deprecated `SelectableLazyColumn` overload that does not accept an `interactionSource` as parameter ([#3214](https://github.com/JetBrains/intellij-community/pull/3214))
+
+## v0.30 (2025-09-04)
+
+| Supported IJP versions | Compose Multiplatform version |
+|------------------------|-------------------------------|
+| 2025.2.2+, 2025.1.5+   | 1.9.0-beta03                  |
+
+### ⚠️ Important Changes
+
+* **JEWEL-892** All Jewel internal and experimental APIs are now also annotated with the corresponding `ApiStatus` annotation ([#3136](https://github.com/JetBrains/intellij-community/pull/3136))
+  * This means they'll be correctly identified as such by all JetBrains tooling, including the Plugin DevKit and Marketplace.
+* **JEWEL-896** Extracted Coil dependency as a separate library out of the Markdown Images extension, so other plugins can use it too ([`6d9016a`](https://github.com/JetBrains/intellij-community/commit/6d9016a))
+* **JEWEL-897** Experimental API `renderImagesContent` renamed to `renderImageContent` (singular) ([#3145](https://github.com/JetBrains/intellij-community/pull/3145))
+* **JEWEL-915** Removed the experimental `JewelToolWindowNoThemeComposePanel` and `composeForToolWindowWithoutTheme` APIs — they were identical to the non-`ToolWindow` variants ([#3143](https://github.com/JetBrains/intellij-community/pull/3143))
+* **JEWEL-920** The default `Indication` has been set to a no-op implementation in both standalone and bridge, instead of the previous default implementation we inherited from Compose ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+  * We handle visual states separately from the `Indication` API, and as such this would only cause visual issues when using certain modifiers (e.g., `selectable`)
+* **JEWEL-920** The experimental slot-based `ComboBox` overload has changed in a **breaking** way by reordering its parameters ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+* **JEWEL-949** All the experimental `*.render` Markdown renderer APIs have been renamed and have lost the `onTextClick` parameter (non-breaking change) ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+  * They now all have a default implementation that delegates to the new counterparts, ignoring `onTextClick`
+* **JEWEL-949** The experimental `Markdown` and `LazyMarkdown` composables have lost the `onTextClick` parameter (non-breaking change) ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+* **JEWEL-949** The experimental API `ImageRendererExtension.renderImagesContent` was renamed to `renderImageContent` (singular "image") in a **breaking** manner ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+* **JEWEL-949** The experimental `GitHubTableBlockRenderer` has been made private ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+* **JEWEL-963** The 'int-ui-decorated-window' is now obsolete and will be removed in the future ([#3175](https://github.com/JetBrains/intellij-community/pull/3175))
+  * Please update your dependencies to use the 'decorated-window' library directly
+* **JEWEL-963** The 'decorated-window' module does not include the copies from Classes/Interfaces/Methods of JBR-Api ([#3175](https://github.com/JetBrains/intellij-community/pull/3175))
+  * If you need access to any JBR-Api method, please use the official library instead - https://github.com/JetBrains/JetBrainsRuntimeApi
+* **JEWEL-967** Updated CMP version to 1.9.0-beta03 ([#3188](https://github.com/JetBrains/intellij-community/pull/3188))
+* **JEWEL-972** Updated dividers so they are not accessible by screen readers ([#3182](https://github.com/JetBrains/intellij-community/pull/3182))
+* **JEWEL-980** `LocalMessageResourceResolverProvider` was not marked as experimental, but should have. This has been rectified ([#3191](https://github.com/JetBrains/intellij-community/pull/3191))
+* **JEWEL-985** `JewelTheme.instanceUuid` and `LocalThemeInstanceUuid` are now stable ([#3193](https://github.com/JetBrains/intellij-community/pull/3193))
+* **IJPL-200569** Internal classes generated by Compose Compiler Plugin are no longer considered part of the public API ([`161c8f7`](https://github.com/JetBrains/intellij-community/commit/161c8f7))
+* **IJPL-174837** Moved Jewel Showcase sample to the DevKit plugin so it's available in the IDE by default (253+) ([`62c5e21`](https://github.com/JetBrains/intellij-community/commit/161c8f7))
+
+### New features
+
+* **JEWEL-286** Added support for `IconButton`s with a transparent background ([#3129](https://github.com/JetBrains/intellij-community/pull/3129))
+  * Use a regular `IconButton` and set its style to the new `JewelTheme.transparentIconButtonStyle`
+* **JEWEL-686** Added new `Default*Banner` and `Inline*Banner` components with support for automatically hiding the overflowing actions into a dropdown menu ([#3124](https://github.com/JetBrains/intellij-community/pull/3124))
+* **JEWEL-875** Added new slot-based API variants to the default banner that accept a Composable as content, getting feature parity with inline banners ([#3132](https://github.com/JetBrains/intellij-community/pull/3132))
+* **JEWEL-873** Added experimental support for Popups using a native window to standalone, too ([#3153](https://github.com/JetBrains/intellij-community/pull/3153))
+  * Like for the bridge counterpart shipped in 0.29.0, this **experimental** feature is enabled via `JewelFlags`
+  * This feature allows your popups to draw outside your Compose Panel/Window
+  * The implementation is based on `JDialog` and requires one of the following conditions to work:
+    * Use the JetBrains Runtime;
+    * Enabled the `compose.interop.blending` system property;
+    * Set the LaF flag `Panel.background` to a transparent value;
+  * If none of the requirements are met, it falls back to the Compose implementation to avoid UI glitches
+  * Please report any bugs and issues you find in both the standalone and bridge implementations!
+* **JEWEL-877** Added a `Brush.cssLinearGradient()` API that allows you to create CSS-like linear gradients ([#3121](https://github.com/JetBrains/intellij-community/pull/3121))
+  * More info in [this article](https://blog.sebastiano.dev/say-hi-like-youre-ai-gradient-text-in-compose-for-desktop/)
+* **JEWEL-897** You can now include local images in your Markdown content. Simply add your image files (like PNGs, JPGs, or SVGs) to your `src/main/resources` folder and reference them directly. For example, to display `my-logo.png` located in `src/main/resources/images/`, you would write: `![My Logo](images/my-logo.png)` ([#3145](https://github.com/JetBrains/intellij-community/pull/3145))
+* **JEWEL-911** Added `warning` and `disabledSelected` colors to `TextColors` ([#3144](https://github.com/JetBrains/intellij-community/pull/3144))
+* **JEWEL-913** Added a factory function for `InlineMarkdownRenderer` to help you create an inline Markdown renderer ([#3156](https://github.com/JetBrains/intellij-community/pull/3156))
+* **JEWEL-920** Added a simpler Boolean-based variant to `Modifier.outline()` ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+* **JEWEL-943** Added new `InfoText` component to easily show info-styled text ([#3172](https://github.com/JetBrains/intellij-community/pull/3172))
+* **JEWEL-948** Added a new overload for scrollable containers that takes a more general `ScrollableState` parameter, that can be used with all lazy containers, as well as non-lazy containers that want to own their scroll modifier ([#3166](https://github.com/JetBrains/intellij-community/pull/3166))
+* **JEWEL-940** The current Jewel API version is available at runtime through the `JewelBuild.apiVersionString` property ([#3179](https://github.com/JetBrains/intellij-community/pull/3179))
+* **JEWEL-942** Created a new MarkdownText component to allow the use of markdown to easily format text ([#3185](https://github.com/JetBrains/intellij-community/pull/3185))
+  * This method is similar to the "Text" component, but adds the parsing feature
+  * Note that providing a markdown text that renders another component (such as a heading) may cause crashes
+* **JEWEL-947** Added a new `Image` composable that uses Jewel's `IconKey`-based icon loading pipeline to safely load non-icon images in both standalone and bridge modes ([#3180](https://github.com/JetBrains/intellij-community/pull/3180))
+* **JEWEL-950** Added a new overload for `ScrollState`-based scrollable containers that allows users to disable scrolling entirely ([#3168](https://github.com/JetBrains/intellij-community/pull/3168))
+
+### Bug fixes
+
+* **JEWEL-842** Fixed the Markdown editor font ligatures settings to match user's IDE settings with all fonts ([#3163](https://github.com/JetBrains/intellij-community/pull/3163))
+  * We were only enabling/disabling the `liga` feature, now we also toggle `calt`.
+  * Swing/the JBR uses the same two OpenType features, even though there are others too.
+* **JEWEL-854** Scrollbars are now hidden from the accessibility context, preventing focus by screen readers ([#3154](https://github.com/JetBrains/intellij-community/pull/3154))
+* **JEWEL-879** Fixed `Link` not updating its state correctly (hovering, clicking, focusing, etc.) when it is disabled and re-enabled ([#3128](https://github.com/JetBrains/intellij-community/pull/3128))
+* **JEWEL-901** Fixed an issue in the experimental native `Popup` implementation where you needed two clicks to open the popups a second time ([#3131](https://github.com/JetBrains/intellij-community/pull/3131))
+  * The popup was properly getting destroyed on dismissal, but the underlying node wasn't, causing this issue.
+* **JEWEL-911** Fixed `TextColors.info` not being properly set in Darcula ([#3144](https://github.com/JetBrains/intellij-community/pull/3144))
+  * This PR made reading global colours more resilient and accurate in general
+* **JEWEL-916** Fixed a crash in the IntelliJ UI Inspector caused by unexpected null values in `AccessibleContext` when inspecting Jewel UI ([#3142](https://github.com/JetBrains/intellij-community/pull/3142))
+* **JEWEL-917** Fixed a crash with malformed IDE themes that do not declare the `Button.arc` LaF key ([#3147](https://github.com/JetBrains/intellij-community/pull/3147))
+* **JEWEL-918** Fixed the checkbox and radio button appearance in the IDE when using the Darcula theme ([#3148](https://github.com/JetBrains/intellij-community/pull/3148))
+* **JEWEL-920** Fixed a bug in `BasicLazyTree` where the item background state was not properly remembered ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+* **JEWEL-920** Fixed a bug in `ListComboBox` where changing the `itemKeys` parameter value would not be picked up by the component until it exited and re-entered the composition ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+* **JEWEL-920** Fixed a bug in `CircularProgressIndicator` where changing the `frameRetriever` parameter value would not be picked up by the component until it exited and re-entered the composition ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+* **JEWEL-920** Fixed a bug where the `PopupMenu` was over-remembering some internal state ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+* **JEWEL-936** Fixed scrollable containers with `AlwaysVisible` reserving space for the scrollbar even when the content is smaller than the viewport and the scrollbar is not visible ([#3158](https://github.com/JetBrains/intellij-community/pull/3158))
+* **JEWEL-936** Fixed a small bug in height calculation for horizontal scrollable containers in edge conditions ([#3158](https://github.com/JetBrains/intellij-community/pull/3158))
+* **JEWEL-936** Fixed scrollbar appearance and behaviour in standalone mode on Windows and Linux ([#3158](https://github.com/JetBrains/intellij-community/pull/3158))
+* **JEWEL-946** Fixed `SimpleListItem` colours in standalone and bridge ([#3160](https://github.com/JetBrains/intellij-community/pull/3160))
+* **JEWEL-946** Fixed incorrect application of the "active" state in `ListComboBox` items ([#3160](https://github.com/JetBrains/intellij-community/pull/3160))
+* **JEWEL-949** Fixed a bug that made it impossible to select text in a Markdown paragraph that contains one or more links ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+* **JEWEL-949** Fixed a bug where disabled fenced code blocks in Markdown would look "lighter" than indented code blocks ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+* **JEWEL-967** Fixed the Images Markdown extension artifact to correctly declare it depends on Coil3 ([#3188](https://github.com/JetBrains/intellij-community/pull/3188))
+* **JEWEL-968** Fixed the Markdown console font ligatures settings to match user's IDE settings with all fonts ([#3178](https://github.com/JetBrains/intellij-community/pull/3178))
+* **JEWEL-976** Fixed a `ArrayIndexOutOfBoundsException` in `ListComboBox` when passing an out-of-bounds selected index ([#3184](https://github.com/JetBrains/intellij-community/pull/3184))
+* **JEWEL-985** Fixed a number of APIs that were missing the experimental annotations, or were improperly annotated as such: ([#3193](https://github.com/JetBrains/intellij-community/pull/3193))
+  * `LocalCodeHighlighter` and `NoOpCodeHighlighter`
+  * `LocalPopupRenderer`
+* **JEWEL-986** Added missing CMP Resources transitive dependency to the `ui` module's POM ([#3195](https://github.com/JetBrains/intellij-community/pull/3195))
+  * Removed unnecessary dependency on the autolink, strikethrough, and images extensions from the bridge styling module
+  * Added missing dependency on the tables extension to the standalone styling module
+* **JEWEL-989** Fixed `plugin.xml` dependencies for the Markdown styling modules — both standalone and bridge ([#3197](https://github.com/JetBrains/intellij-community/pull/3197))
+
+### Deprecated API
+
+* **JEWEL-686** Deprecated `Banner` APIs that had a composable slot for the actions. Migrate to the versions with `linkActions` and `iconActions` parameters ([#3124](https://github.com/JetBrains/intellij-community/pull/3124))
+* **JEWEL-920** Deprecated several APIs in `Menu.kt` that were left public by mistake so they can be made private as they should, in the future ([#3161](https://github.com/JetBrains/intellij-community/pull/3161))
+* **JEWEL-948** Deprecated `LazyListState`- and `LazyGridState`-based APIs for scrollable containers as they can be trivially migrated to the new `ScrollableState`-based APIs ([#3166](https://github.com/JetBrains/intellij-community/pull/3166))
+* **JEWEL-949** Deprecated all `MarkdownBlockRenderer.render` APIs in favour of the new APIs with better naming, and no `onTextClick` parameter ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+* **JEWEL-949** Deprecated `Markdown` and `LazyMarkdown` overloads with the `onTextClick` parameter ([#3162](https://github.com/JetBrains/intellij-community/pull/3162))
+* **JEWEL-985** Deprecated `LocalMenuManager` as `MenuManager` is also deprecated ([#3193](https://github.com/JetBrains/intellij-community/pull/3193))
+
 ## v0.29 (2025-07-22)
 
 | Supported IJP versions | Compose Multiplatform version |

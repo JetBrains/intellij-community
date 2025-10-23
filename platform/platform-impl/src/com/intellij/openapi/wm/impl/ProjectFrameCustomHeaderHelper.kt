@@ -149,6 +149,11 @@ internal class ProjectFrameCustomHeaderHelper(
     }
   }
 
+  fun isColorfulToolbar(): Boolean {
+    val holder = frameHeaderHelper.toolbarHolder
+    return holder == null || holder.isColorfulToolbar()
+  }
+
   fun getCustomTitleBar(): WindowDecorations.CustomTitleBar? {
     val titlePane = (frameHeaderHelper as? FrameHeaderHelper.Decorated)?.customFrameTitlePane
     return (titlePane as? CustomHeader)?.customTitleBar ?: (titlePane as? MacToolbarFrameHeader)?.customTitleBar

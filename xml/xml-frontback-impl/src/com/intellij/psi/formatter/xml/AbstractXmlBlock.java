@@ -2,6 +2,7 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
+import com.intellij.html.embedding.HtmlRawTextElementType;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -96,7 +97,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected boolean isTextNode(IElementType elementType) {
     return elementType == XmlElementType.XML_TEXT
-           || elementType == XmlElementType.HTML_RAW_TEXT;
+           || elementType instanceof HtmlRawTextElementType;
   }
 
   protected @Nullable Alignment chooseAlignment(@NotNull ASTNode child,
@@ -482,7 +483,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private static boolean isTextOnlyNode(@NotNull ASTNode node) {
     if (node.getPsi() instanceof XmlText
-        || node.getElementType() == XmlElementType.HTML_RAW_TEXT) {
+        || node.getElementType() instanceof HtmlRawTextElementType) {
       return true;
     }
     ASTNode firstChild = node.getFirstChildNode();

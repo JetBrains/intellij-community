@@ -325,7 +325,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       Touchbar.setActions(this, touchbarActions);
     }
 
-    if (ExperimentalUI.isNewUI()) {
+    if (isNewUI) {
       setBackground(JBColor.namedColor("Editor.SearchField.background", JBColor.background()));
     }
 

@@ -301,6 +301,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.getLatest(), false, false);
   }
 
+  // PY-84077
+  public void testExceptClauseMissingParentheses() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
   // PY-52930
   public void testContinueBreakReturnInExceptStar() {
     doTest(LanguageLevel.getLatest(), false, false);

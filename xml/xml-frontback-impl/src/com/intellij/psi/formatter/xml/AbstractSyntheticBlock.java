@@ -2,6 +2,7 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
+import com.intellij.html.embedding.HtmlRawTextElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -102,7 +103,7 @@ public abstract class AbstractSyntheticBlock implements Block {
 
   protected boolean isTextNode(IElementType nodeType) {
     return nodeType == XmlElementType.XML_TEXT ||
-           nodeType == XmlElementType.HTML_RAW_TEXT;
+           nodeType instanceof HtmlRawTextElementType;
   }
 
   public boolean endsWithText() {

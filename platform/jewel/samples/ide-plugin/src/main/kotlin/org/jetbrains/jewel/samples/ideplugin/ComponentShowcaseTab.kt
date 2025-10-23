@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,7 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
@@ -46,16 +50,19 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.CheckboxRow
+import org.jetbrains.jewel.ui.component.Chip
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.DefaultErrorBanner
 import org.jetbrains.jewel.ui.component.DefaultInformationBanner
+import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.DefaultSuccessBanner
 import org.jetbrains.jewel.ui.component.DefaultWarningBanner
 import org.jetbrains.jewel.ui.component.Divider
@@ -69,13 +76,18 @@ import org.jetbrains.jewel.ui.component.InlineSuccessBanner
 import org.jetbrains.jewel.ui.component.InlineWarningBanner
 import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.ListComboBox
+import org.jetbrains.jewel.ui.component.MenuScope
 import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.ToggleableChip
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.items
+import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
@@ -115,10 +127,16 @@ private fun RowScope.ColumnOne() {
         )
 
         var selectedItem by remember { mutableIntStateOf(-1) }
+        val focusRequester = remember { FocusRequester() }
+
         ListComboBox(
             items = remember { listOf("Hello", "World") },
             selectedIndex = selectedItem,
             onSelectedItemChange = { selectedItem = it },
+            modifier =
+                Modifier
+                    .focusRequester(focusRequester)
+                    .onFirstVisible { focusRequester.requestFocus() },
         )
         ListComboBox(
             items = remember { listOf("Hello", "World") },
@@ -235,11 +253,11 @@ private fun RowScope.ColumnOne() {
                     InlineSuccessBanner(
                         text =
                             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
-                                "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
-                                "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
-                                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
-                                "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
-                                "culpa qui officia deserunt mollit anim id est laborum.",
+                            "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
+                            "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+                            "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
+                            "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
+                            "culpa qui officia deserunt mollit anim id est laborum.",
                         linkActions = {
                             action("Action A", onClick = { clickLabel = "Success Inline Action A clicked" })
                             action("Action B", onClick = { clickLabel = "Success Inline Action B clicked" })
@@ -266,6 +284,85 @@ private fun RowScope.ColumnOne() {
                     InlineInformationBanner(text = "This is an information banner in Compose")
                 }
             }
+        }
+        
+        var selected by remember { mutableStateOf("") }
+        DefaultSplitButton(
+            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+            content = { Text("Sub menus") },
+            menuContent = {
+                fun MenuScope.buildSubmenus(stack: List<Int>) {
+                    val stackStr = stack.joinToString(".").let { if (stack.isEmpty()) it else "$it." }
+
+                    repeat(5) {
+                        val number = it + 1
+                        val itemStr = "$stackStr$number"
+
+                        if (stack.size == 4) {
+                            selectableItem(
+                                selected = selected == itemStr,
+                                onClick = {
+                                    selected = itemStr
+                                    JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr") },
+                            ) {
+                                Text("Item $itemStr")
+                            }
+                        } else {
+                            submenu(
+                                submenu = { buildSubmenus(stack + number) },
+                                content = { Text("Submenu $itemStr") },
+                            )
+                        }
+                    }
+
+                    separator()
+
+                    repeat(10) {
+                        val number = it + 1
+                        val itemStr = "${stackStr}other.$number"
+
+                        selectableItem(
+                            selected = selected == itemStr,
+                            onClick = {
+                                selected = itemStr
+                                JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr")
+                            },
+                        ) {
+                            Text("Other Item ${it + 1}")
+                        }
+                    }
+                }
+
+                buildSubmenus(emptyList())
+            },
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            var selectedIndex by remember { mutableStateOf(-1) }
+            RadioButtonChip(selected = selectedIndex == 0, onClick = { selectedIndex = 0 }, enabled = true) {
+                Text("First")
+            }
+
+            RadioButtonChip(selected = selectedIndex == 1, onClick = { selectedIndex = 1 }, enabled = true) {
+                Text("Second")
+            }
+
+            RadioButtonChip(selected = selectedIndex == 2, onClick = { selectedIndex = 2 }, enabled = true) {
+                Text("Third")
+            }
+
+            Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+            var isChecked by remember { mutableStateOf(false) }
+            ToggleableChip(checked = isChecked, onClick = { isChecked = it }, enabled = true) { Text("Toggleable") }
+
+            var count by remember { mutableIntStateOf(1) }
+            Chip(enabled = true, onClick = { count++ }) { Text("Clicks: $count") }
+
+            Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+            Chip(enabled = false, onClick = {}) { Text("Disabled") }
         }
     }
 }

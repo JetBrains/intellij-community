@@ -1,0 +1,860 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.markdown {
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface InlineMarkdown {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.Code implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithTextContent {
+    ctor public InlineMarkdown.Code(String content);
+    method public String getContent();
+    property public String content;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static interface InlineMarkdown.CustomDelimitedNode extends org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    method public default String getClosingDelimiter();
+    method public String getOpeningDelimiter();
+    property public default String closingDelimiter;
+    property public abstract String openingDelimiter;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.Emphasis implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    ctor public InlineMarkdown.Emphasis(String delimiter, java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
+    ctor public InlineMarkdown.Emphasis(String delimiter, org.jetbrains.jewel.markdown.InlineMarkdown... inlineContent);
+    method public String getDelimiter();
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    property public String delimiter;
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+  }
+
+  public static final class InlineMarkdown.HardLineBreak implements org.jetbrains.jewel.markdown.InlineMarkdown {
+    field public static final org.jetbrains.jewel.markdown.InlineMarkdown.HardLineBreak INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.HtmlInline implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithTextContent {
+    ctor public InlineMarkdown.HtmlInline(String content);
+    method public String getContent();
+    property public String content;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.Image implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    ctor public InlineMarkdown.Image(String source, String alt, String? title, java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
+    ctor public InlineMarkdown.Image(String source, String alt, String? title, org.jetbrains.jewel.markdown.InlineMarkdown... inlineContent);
+    method public String getAlt();
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    method public String getSource();
+    method public String? getTitle();
+    property public String alt;
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+    property public String source;
+    property public String? title;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.Link implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    ctor public InlineMarkdown.Link(String destination, String? title, java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
+    ctor public InlineMarkdown.Link(String destination, String? title, org.jetbrains.jewel.markdown.InlineMarkdown... inlineContent);
+    method public String getDestination();
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    method public String? getTitle();
+    property public String destination;
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+    property public String? title;
+  }
+
+  public static final class InlineMarkdown.SoftLineBreak implements org.jetbrains.jewel.markdown.InlineMarkdown {
+    field public static final org.jetbrains.jewel.markdown.InlineMarkdown.SoftLineBreak INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.StrongEmphasis implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    ctor public InlineMarkdown.StrongEmphasis(String delimiter, java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
+    ctor public InlineMarkdown.StrongEmphasis(String delimiter, org.jetbrains.jewel.markdown.InlineMarkdown... inlineContent);
+    method public String getDelimiter();
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    property public String delimiter;
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.Text implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithTextContent {
+    ctor public InlineMarkdown.Text(String content);
+    method public String getContent();
+    property public String content;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface MarkdownBlock {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.BlockQuote implements org.jetbrains.jewel.markdown.MarkdownBlock org.jetbrains.jewel.markdown.WithChildBlocks {
+    ctor public MarkdownBlock.BlockQuote(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> children);
+    ctor public MarkdownBlock.BlockQuote(org.jetbrains.jewel.markdown.MarkdownBlock... children);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getChildren();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> children;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static sealed interface MarkdownBlock.CodeBlock extends org.jetbrains.jewel.markdown.MarkdownBlock {
+    method public String getContent();
+    property public abstract String content;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.CodeBlock.FencedCodeBlock implements org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock {
+    ctor @KotlinOnly public MarkdownBlock.CodeBlock.FencedCodeBlock(String content, org.jetbrains.jewel.foundation.code.MimeType? mimeType);
+    method public String getContent();
+    property public String content;
+    property public org.jetbrains.jewel.foundation.code.MimeType? mimeType;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.CodeBlock.IndentedCodeBlock implements org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock {
+    ctor public MarkdownBlock.CodeBlock.IndentedCodeBlock(String content);
+    method public String getContent();
+    property public String content;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static interface MarkdownBlock.CustomBlock extends org.jetbrains.jewel.markdown.MarkdownBlock {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.Heading implements org.jetbrains.jewel.markdown.MarkdownBlock org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    ctor public MarkdownBlock.Heading(int level, org.jetbrains.jewel.markdown.InlineMarkdown... inlineContent);
+    ctor public MarkdownBlock.Heading(java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent, int level);
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    method public int getLevel();
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+    property public int level;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.HtmlBlock implements org.jetbrains.jewel.markdown.MarkdownBlock {
+    ctor public MarkdownBlock.HtmlBlock(String content);
+    method public String getContent();
+    property public String content;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static sealed interface MarkdownBlock.ListBlock extends org.jetbrains.jewel.markdown.MarkdownBlock org.jetbrains.jewel.markdown.WithChildBlocks {
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> getChildren();
+    method public boolean isTight();
+    property public abstract java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> children;
+    property public abstract boolean isTight;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.ListBlock.OrderedList implements org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock {
+    ctor public MarkdownBlock.ListBlock.OrderedList(boolean isTight, int startFrom, String delimiter, org.jetbrains.jewel.markdown.MarkdownBlock.ListItem... children);
+    ctor public MarkdownBlock.ListBlock.OrderedList(java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> children, boolean isTight, int startFrom, String delimiter);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> getChildren();
+    method public String getDelimiter();
+    method public int getStartFrom();
+    method public boolean isTight();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> children;
+    property public String delimiter;
+    property public boolean isTight;
+    property public int startFrom;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.ListBlock.UnorderedList implements org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock {
+    ctor public MarkdownBlock.ListBlock.UnorderedList(boolean isTight, String marker, org.jetbrains.jewel.markdown.MarkdownBlock.ListItem... children);
+    ctor public MarkdownBlock.ListBlock.UnorderedList(java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> children, boolean isTight, String marker);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> getChildren();
+    method public String getMarker();
+    method public boolean isTight();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock.ListItem> children;
+    property public boolean isTight;
+    property public String marker;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.ListItem implements org.jetbrains.jewel.markdown.MarkdownBlock org.jetbrains.jewel.markdown.WithChildBlocks {
+    ctor public MarkdownBlock.ListItem(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> children, int level);
+    ctor public MarkdownBlock.ListItem(org.jetbrains.jewel.markdown.MarkdownBlock[] children, int level);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getChildren();
+    method public int getLevel();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> children;
+    property public int level;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownBlock.Paragraph implements org.jetbrains.jewel.markdown.MarkdownBlock org.jetbrains.jewel.markdown.WithInlineMarkdown {
+    ctor public MarkdownBlock.Paragraph(java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
+    ctor public MarkdownBlock.Paragraph(org.jetbrains.jewel.markdown.InlineMarkdown... inlineContent);
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownBlock.ThematicBreak implements org.jetbrains.jewel.markdown.MarkdownBlock {
+    field public static final org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak INSTANCE;
+  }
+
+  public final class MarkdownKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void LazyMarkdown(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> markdownBlocks, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.foundation.layout.PaddingValues contentPadding, optional androidx.compose.foundation.lazy.LazyListState state, optional boolean enabled, optional boolean selectable, optional kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, optional kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, optional org.jetbrains.jewel.markdown.rendering.MarkdownStyling markdownStyling, optional org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer blockRenderer);
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void Markdown(@org.intellij.lang.annotations.Language("Markdown") String markdown, optional androidx.compose.ui.Modifier modifier, optional boolean selectable, optional boolean enabled, optional kotlinx.coroutines.CoroutineDispatcher renderingDispatcher, optional kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, optional kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, optional org.jetbrains.jewel.markdown.rendering.MarkdownStyling markdownStyling, optional org.jetbrains.jewel.markdown.processing.MarkdownProcessor processor, optional org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer blockRenderer);
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void Markdown(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> markdownBlocks, String markdown, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional boolean selectable, optional kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, optional kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, optional org.jetbrains.jewel.markdown.rendering.MarkdownStyling markdownStyling, optional org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer blockRenderer);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface MarkdownMode {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownMode.EditorPreview implements org.jetbrains.jewel.markdown.MarkdownMode {
+    ctor public MarkdownMode.EditorPreview(org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer? scrollingSynchronizer);
+    method public org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer? getScrollingSynchronizer();
+    property public org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer? scrollingSynchronizer;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownMode.Standalone implements org.jetbrains.jewel.markdown.MarkdownMode {
+    field public static final org.jetbrains.jewel.markdown.MarkdownMode.Standalone INSTANCE;
+  }
+
+  public final class MarkdownModeKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void WithMarkdownMode(org.jetbrains.jewel.markdown.MarkdownMode mode, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+  }
+
+  public final class SemanticsKt {
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.semantics.SemanticsPropertyKey<java.lang.String> getRawMarkdown();
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static String getRawMarkdown(androidx.compose.ui.semantics.SemanticsPropertyReceiver);
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void setRawMarkdown(androidx.compose.ui.semantics.SemanticsPropertyReceiver, String);
+    property @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.semantics.SemanticsPropertyKey<java.lang.String> RawMarkdown;
+    property @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static String androidx.compose.ui.semantics.SemanticsPropertyReceiver.rawMarkdown;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface WithChildBlocks {
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getChildren();
+    property public abstract java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> children;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface WithInlineMarkdown {
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
+    property public abstract java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface WithTextContent {
+    method public String getContent();
+    property public abstract String content;
+  }
+
+}
+
+package org.jetbrains.jewel.markdown.extensions {
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface ImageRendererExtension {
+    method @androidx.compose.runtime.Composable public androidx.compose.foundation.text.InlineTextContent renderImagesContent(org.jetbrains.jewel.markdown.InlineMarkdown.Image image);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownBlockProcessorExtension {
+    method public boolean canProcess(org.commonmark.node.CustomBlock block);
+    method public org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock? processMarkdownBlock(org.commonmark.node.CustomBlock block, org.jetbrains.jewel.markdown.processing.MarkdownProcessor processor);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownBlockRendererExtension {
+    method public boolean canRender(org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock block);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer blockRenderer, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer, boolean enabled, androidx.compose.ui.Modifier modifier, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownDelimitedInlineProcessorExtension {
+    method public boolean canProcess(org.commonmark.node.Delimited delimited);
+    method public org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode processDelimitedInline(org.commonmark.node.Delimited delimited, org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownDelimitedInlineRendererExtension {
+    method public boolean canRender(org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode node);
+    method public androidx.compose.ui.text.AnnotatedString render(org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode node, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer, org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked);
+  }
+
+  public final class MarkdownKt {
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer> getLocalMarkdownBlockRenderer();
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.MarkdownMode> getLocalMarkdownMode();
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.processing.MarkdownProcessor> getLocalMarkdownProcessor();
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.rendering.MarkdownStyling> getLocalMarkdownStyling();
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer getMarkdownBlockRenderer(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.MarkdownMode getMarkdownMode(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.processing.MarkdownProcessor getMarkdownProcessor(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.rendering.MarkdownStyling getMarkdownStyling(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    property @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer> LocalMarkdownBlockRenderer;
+    property @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.MarkdownMode> LocalMarkdownMode;
+    property @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.processing.MarkdownProcessor> LocalMarkdownProcessor;
+    property @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.rendering.MarkdownStyling> LocalMarkdownStyling;
+    property @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.markdownBlockRenderer;
+    property @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.MarkdownMode org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.markdownMode;
+    property @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.processing.MarkdownProcessor org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.markdownProcessor;
+    property @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.rendering.MarkdownStyling org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.markdownStyling;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownProcessorExtension {
+    method public default org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension? getBlockProcessorExtension();
+    method public default org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension? getDelimitedInlineProcessorExtension();
+    method public default org.commonmark.parser.Parser.ParserExtension? getParserExtension();
+    method public default org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension? getTextRendererExtension();
+    property public default org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension? blockProcessorExtension;
+    property public default org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension? delimitedInlineProcessorExtension;
+    property public default org.commonmark.parser.Parser.ParserExtension? parserExtension;
+    property public default org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension? textRendererExtension;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownRendererExtension {
+    method public default org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension? getBlockRenderer();
+    method public default org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension? getDelimitedInlineRenderer();
+    method public default org.jetbrains.jewel.markdown.extensions.ImageRendererExtension? getImageRendererExtension();
+    property public default org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension? blockRenderer;
+    property public default org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension? delimitedInlineRenderer;
+    property public default org.jetbrains.jewel.markdown.extensions.ImageRendererExtension? imageRendererExtension;
+  }
+
+}
+
+package org.jetbrains.jewel.markdown.processing {
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class MarkdownParserFactory {
+    method public org.commonmark.parser.Parser create(boolean optimizeEdits, optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> extensions, optional kotlin.jvm.functions.Function1<? super org.commonmark.parser.Parser.Builder,? extends org.commonmark.parser.Parser.Builder>? customizeBuilder);
+    field public static final org.jetbrains.jewel.markdown.processing.MarkdownParserFactory INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class MarkdownProcessor {
+    ctor public MarkdownProcessor();
+    ctor public MarkdownProcessor(optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> extensions, optional org.jetbrains.jewel.markdown.MarkdownMode markdownMode, optional org.commonmark.parser.Parser commonMarkParser, optional kotlin.jvm.functions.Function1<? super java.lang.String,org.jetbrains.jewel.foundation.code.MimeType?> languageRecognizer);
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension> getBlockExtensions();
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension> getDelimitedInlineExtensions();
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> getExtensions();
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public operator org.jetbrains.jewel.markdown.processing.MarkdownProcessor plus(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension extension);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> processMarkdownDocument(@org.intellij.lang.annotations.Language("Markdown") String rawMarkdown);
+    method public org.jetbrains.jewel.markdown.processing.MarkdownProcessor withExtension(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension extension);
+    property public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension> blockExtensions;
+    property public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension> delimitedInlineExtensions;
+    property public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> extensions;
+  }
+
+  public final class ProcessingUtilKt {
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> readInlineMarkdown(org.commonmark.node.Node, org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor);
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.InlineMarkdown? toInlineMarkdownOrNull(org.commonmark.node.Node, org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor);
+  }
+
+}
+
+package org.jetbrains.jewel.markdown.rendering {
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public class DefaultInlineMarkdownRenderer implements org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer {
+    ctor public DefaultInlineMarkdownRenderer(java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> rendererExtensions);
+    method protected final java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension> getDelimitedNodeRendererExtensions();
+    method public androidx.compose.ui.text.AnnotatedString renderAsAnnotatedString(Iterable<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineMarkdown, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked);
+    method protected void renderEmphasis(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.InlineMarkdown.Emphasis node, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderHardLineBreak(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderImage(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.InlineMarkdown.Image node, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderInlineCode(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.InlineMarkdown.Code node, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderInlineHtml(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.InlineMarkdown.HtmlInline node, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderLink(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.InlineMarkdown.Link node, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderSoftLineBreak(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderStrongEmphasis(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.InlineMarkdown.StrongEmphasis node, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked, androidx.compose.ui.text.TextStyle currentTextStyle);
+    method protected void renderText(androidx.compose.ui.text.AnnotatedString.Builder, org.jetbrains.jewel.markdown.InlineMarkdown.Text node, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, androidx.compose.ui.text.TextStyle currentTextStyle);
+    property protected final java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension> delimitedNodeRendererExtensions;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public class DefaultMarkdownBlockRenderer implements org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer {
+    ctor public DefaultMarkdownBlockRenderer(org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling, optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> rendererExtensions, optional org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer);
+    method @androidx.compose.runtime.Composable protected final void MaybeScrollingContainer(boolean isScrollable, optional androidx.compose.ui.Modifier modifier, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer createCopy(org.jetbrains.jewel.markdown.rendering.MarkdownStyling? rootStyling, java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension>? rendererExtensions, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer? inlineRenderer);
+    method public org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer getInlineRenderer();
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> getRendererExtensions();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling getRootStyling();
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public operator org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer plus(org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension extension);
+    method @androidx.compose.runtime.Composable public void render(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> blocks, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListItem block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    property public org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer;
+    property public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> rendererExtensions;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface InlineMarkdownRenderer {
+    method public androidx.compose.ui.text.AnnotatedString renderAsAnnotatedString(Iterable<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineMarkdown, org.jetbrains.jewel.markdown.rendering.InlinesStyling styling, boolean enabled, optional kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class InlinesStyling {
+    ctor public InlinesStyling(androidx.compose.ui.text.TextStyle textStyle, androidx.compose.ui.text.SpanStyle inlineCode, androidx.compose.ui.text.SpanStyle link, androidx.compose.ui.text.SpanStyle linkDisabled, androidx.compose.ui.text.SpanStyle linkFocused, androidx.compose.ui.text.SpanStyle linkHovered, androidx.compose.ui.text.SpanStyle linkPressed, androidx.compose.ui.text.SpanStyle linkVisited, androidx.compose.ui.text.SpanStyle emphasis, androidx.compose.ui.text.SpanStyle strongEmphasis, androidx.compose.ui.text.SpanStyle inlineHtml);
+    method public androidx.compose.ui.text.SpanStyle getEmphasis();
+    method public androidx.compose.ui.text.SpanStyle getInlineCode();
+    method public androidx.compose.ui.text.SpanStyle getInlineHtml();
+    method public androidx.compose.ui.text.SpanStyle getLink();
+    method public androidx.compose.ui.text.SpanStyle getLinkDisabled();
+    method public androidx.compose.ui.text.SpanStyle getLinkFocused();
+    method public androidx.compose.ui.text.SpanStyle getLinkHovered();
+    method public androidx.compose.ui.text.SpanStyle getLinkPressed();
+    method public androidx.compose.ui.text.SpanStyle getLinkVisited();
+    method public androidx.compose.ui.text.SpanStyle getStrongEmphasis();
+    method public androidx.compose.ui.text.TextLinkStyles getTextLinkStyles();
+    method public androidx.compose.ui.text.TextStyle getTextStyle();
+    property public androidx.compose.ui.text.SpanStyle emphasis;
+    property public androidx.compose.ui.text.SpanStyle inlineCode;
+    property public androidx.compose.ui.text.SpanStyle inlineHtml;
+    property public androidx.compose.ui.text.SpanStyle link;
+    property public androidx.compose.ui.text.SpanStyle linkDisabled;
+    property public androidx.compose.ui.text.SpanStyle linkFocused;
+    property public androidx.compose.ui.text.SpanStyle linkHovered;
+    property public androidx.compose.ui.text.SpanStyle linkPressed;
+    property public androidx.compose.ui.text.SpanStyle linkVisited;
+    property public androidx.compose.ui.text.SpanStyle strongEmphasis;
+    property public androidx.compose.ui.text.TextLinkStyles textLinkStyles;
+    property public androidx.compose.ui.text.TextStyle textStyle;
+    field public static final org.jetbrains.jewel.markdown.rendering.InlinesStyling.Companion Companion;
+  }
+
+  public static final class InlinesStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownBlockRenderer {
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer createCopy(optional org.jetbrains.jewel.markdown.rendering.MarkdownStyling? rootStyling, optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension>? rendererExtensions, optional org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer? inlineRenderer);
+    method public org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer getInlineRenderer();
+    method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> getRendererExtensions();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling getRootStyling();
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public operator org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer plus(org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension extension);
+    method @androidx.compose.runtime.Composable public void render(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> blocks, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Heading block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.ListItem block, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph block, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph styling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick, androidx.compose.ui.Modifier modifier);
+    method @androidx.compose.runtime.Composable public void renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak styling, boolean enabled, androidx.compose.ui.Modifier modifier);
+    property public abstract org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer;
+    property public abstract java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> rendererExtensions;
+    property public abstract org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer.Companion Companion;
+  }
+
+  public static final class MarkdownBlockRenderer.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class MarkdownStyling {
+    ctor @KotlinOnly public MarkdownStyling(androidx.compose.ui.unit.Dp blockVerticalSpacing, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph paragraph, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading heading, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote blockQuote, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code code, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List list, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image image, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak thematicBreak, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock htmlBlock);
+    method @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public org.jetbrains.jewel.markdown.rendering.InlinesStyling getBaseInlinesStyling();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote getBlockQuote();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code getCode();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading getHeading();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock getHtmlBlock();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image getImage();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List getList();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph getParagraph();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak getThematicBreak();
+    property @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public org.jetbrains.jewel.markdown.rendering.InlinesStyling baseInlinesStyling;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote blockQuote;
+    property public androidx.compose.ui.unit.Dp blockVerticalSpacing;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code code;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading heading;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock htmlBlock;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image image;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List list;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph paragraph;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak thematicBreak;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Companion Companion;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.BlockQuote {
+    ctor @KotlinOnly public MarkdownStyling.BlockQuote(androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp lineWidth, androidx.compose.ui.graphics.Color lineColor, androidx.compose.ui.graphics.PathEffect? pathEffect, androidx.compose.ui.graphics.StrokeCap strokeCap, androidx.compose.ui.graphics.Color textColor);
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.PathEffect? getPathEffect();
+    property public androidx.compose.ui.graphics.Color lineColor;
+    property public androidx.compose.ui.unit.Dp lineWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.PathEffect? pathEffect;
+    property public androidx.compose.ui.graphics.StrokeCap strokeCap;
+    property public androidx.compose.ui.graphics.Color textColor;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.BlockQuote.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Code {
+    ctor public MarkdownStyling.Code(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented indented, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced fenced);
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced getFenced();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented getIndented();
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.MarkdownStyling.Fenced fenced;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.MarkdownStyling.Indented indented;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Code.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Code.Fenced {
+    ctor @KotlinOnly public MarkdownStyling.Code.Fenced(androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.graphics.Shape shape, androidx.compose.ui.graphics.Color background, androidx.compose.ui.unit.Dp borderWidth, androidx.compose.ui.graphics.Color borderColor, boolean fillWidth, boolean scrollsHorizontally, androidx.compose.ui.text.TextStyle infoTextStyle, androidx.compose.foundation.layout.PaddingValues infoPadding, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.Code.MarkdownStyling.InfoPosition infoPosition);
+    method public androidx.compose.ui.text.TextStyle getEditorTextStyle();
+    method public boolean getFillWidth();
+    method public androidx.compose.foundation.layout.PaddingValues getInfoPadding();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition getInfoPosition();
+    method public androidx.compose.ui.text.TextStyle getInfoTextStyle();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public boolean getScrollsHorizontally();
+    method public androidx.compose.ui.graphics.Shape getShape();
+    property public androidx.compose.ui.graphics.Color background;
+    property public androidx.compose.ui.graphics.Color borderColor;
+    property public androidx.compose.ui.unit.Dp borderWidth;
+    property public androidx.compose.ui.text.TextStyle editorTextStyle;
+    property public boolean fillWidth;
+    property public androidx.compose.foundation.layout.PaddingValues infoPadding;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.Code.MarkdownStyling.InfoPosition infoPosition;
+    property public androidx.compose.ui.text.TextStyle infoTextStyle;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public boolean scrollsHorizontally;
+    property public androidx.compose.ui.graphics.Shape shape;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Code.Fenced.Companion {
+  }
+
+  public enum MarkdownStyling.Code.Fenced.InfoPosition {
+    enum_constant public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition BottomCenter;
+    enum_constant public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition BottomEnd;
+    enum_constant public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition BottomStart;
+    enum_constant public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition Hide;
+    enum_constant public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition TopCenter;
+    enum_constant public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition TopEnd;
+    enum_constant public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition TopStart;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Code.Indented {
+    ctor @KotlinOnly public MarkdownStyling.Code.Indented(androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.graphics.Shape shape, androidx.compose.ui.graphics.Color background, androidx.compose.ui.unit.Dp borderWidth, androidx.compose.ui.graphics.Color borderColor, boolean fillWidth, boolean scrollsHorizontally);
+    method public androidx.compose.ui.text.TextStyle getEditorTextStyle();
+    method public boolean getFillWidth();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public boolean getScrollsHorizontally();
+    method public androidx.compose.ui.graphics.Shape getShape();
+    property public androidx.compose.ui.graphics.Color background;
+    property public androidx.compose.ui.graphics.Color borderColor;
+    property public androidx.compose.ui.unit.Dp borderWidth;
+    property public androidx.compose.ui.text.TextStyle editorTextStyle;
+    property public boolean fillWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public boolean scrollsHorizontally;
+    property public androidx.compose.ui.graphics.Shape shape;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Code.Indented.Companion {
+  }
+
+  public static final class MarkdownStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Heading {
+    ctor public MarkdownStyling.Heading(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H1 h1, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H2 h2, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H3 h3, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H4 h4, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H5 h5, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H6 h6);
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H1 getH1();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H2 getH2();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H3 getH3();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H4 getH4();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H5 getH5();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H6 getH6();
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.MarkdownStyling.H1 h1;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.MarkdownStyling.H2 h2;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.MarkdownStyling.H3 h3;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.MarkdownStyling.H4 h4;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.MarkdownStyling.H5 h5;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.MarkdownStyling.H6 h6;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Heading.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Heading.H1 implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN {
+    ctor @KotlinOnly public MarkdownStyling.Heading.H1(org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, androidx.compose.ui.unit.Dp underlineWidth, androidx.compose.ui.graphics.Color underlineColor, androidx.compose.ui.unit.Dp underlineGap, androidx.compose.foundation.layout.PaddingValues padding);
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Color underlineColor;
+    property public androidx.compose.ui.unit.Dp underlineGap;
+    property public androidx.compose.ui.unit.Dp underlineWidth;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H1.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Heading.H1.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Heading.H2 implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN {
+    ctor @KotlinOnly public MarkdownStyling.Heading.H2(org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, androidx.compose.ui.unit.Dp underlineWidth, androidx.compose.ui.graphics.Color underlineColor, androidx.compose.ui.unit.Dp underlineGap, androidx.compose.foundation.layout.PaddingValues padding);
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Color underlineColor;
+    property public androidx.compose.ui.unit.Dp underlineGap;
+    property public androidx.compose.ui.unit.Dp underlineWidth;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H2.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Heading.H2.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Heading.H3 implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN {
+    ctor @KotlinOnly public MarkdownStyling.Heading.H3(org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, androidx.compose.ui.unit.Dp underlineWidth, androidx.compose.ui.graphics.Color underlineColor, androidx.compose.ui.unit.Dp underlineGap, androidx.compose.foundation.layout.PaddingValues padding);
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Color underlineColor;
+    property public androidx.compose.ui.unit.Dp underlineGap;
+    property public androidx.compose.ui.unit.Dp underlineWidth;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H3.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Heading.H3.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Heading.H4 implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN {
+    ctor @KotlinOnly public MarkdownStyling.Heading.H4(org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, androidx.compose.ui.unit.Dp underlineWidth, androidx.compose.ui.graphics.Color underlineColor, androidx.compose.ui.unit.Dp underlineGap, androidx.compose.foundation.layout.PaddingValues padding);
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Color underlineColor;
+    property public androidx.compose.ui.unit.Dp underlineGap;
+    property public androidx.compose.ui.unit.Dp underlineWidth;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H4.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Heading.H4.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Heading.H5 implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN {
+    ctor @KotlinOnly public MarkdownStyling.Heading.H5(org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, androidx.compose.ui.unit.Dp underlineWidth, androidx.compose.ui.graphics.Color underlineColor, androidx.compose.ui.unit.Dp underlineGap, androidx.compose.foundation.layout.PaddingValues padding);
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Color underlineColor;
+    property public androidx.compose.ui.unit.Dp underlineGap;
+    property public androidx.compose.ui.unit.Dp underlineWidth;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H5.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Heading.H5.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Heading.H6 implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.HN {
+    ctor @KotlinOnly public MarkdownStyling.Heading.H6(org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, androidx.compose.ui.unit.Dp underlineWidth, androidx.compose.ui.graphics.Color underlineColor, androidx.compose.ui.unit.Dp underlineGap, androidx.compose.foundation.layout.PaddingValues padding);
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Color underlineColor;
+    property public androidx.compose.ui.unit.Dp underlineGap;
+    property public androidx.compose.ui.unit.Dp underlineWidth;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading.H6.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Heading.H6.Companion {
+  }
+
+  public static sealed interface MarkdownStyling.Heading.HN extends org.jetbrains.jewel.markdown.rendering.WithInlinesStyling org.jetbrains.jewel.markdown.rendering.WithUnderline {
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public abstract androidx.compose.foundation.layout.PaddingValues padding;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.HtmlBlock {
+    ctor @KotlinOnly public MarkdownStyling.HtmlBlock(androidx.compose.ui.text.TextStyle textStyle, androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.graphics.Shape shape, androidx.compose.ui.graphics.Color background, androidx.compose.ui.unit.Dp borderWidth, androidx.compose.ui.graphics.Color borderColor, boolean fillWidth);
+    method public boolean getFillWidth();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.Shape getShape();
+    method public androidx.compose.ui.text.TextStyle getTextStyle();
+    property public androidx.compose.ui.graphics.Color background;
+    property public androidx.compose.ui.graphics.Color borderColor;
+    property public androidx.compose.ui.unit.Dp borderWidth;
+    property public boolean fillWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Shape shape;
+    property public androidx.compose.ui.text.TextStyle textStyle;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.HtmlBlock.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Image {
+    ctor @KotlinOnly public MarkdownStyling.Image(androidx.compose.ui.Alignment alignment, androidx.compose.ui.layout.ContentScale contentScale, androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.graphics.Shape shape, androidx.compose.ui.graphics.Color background, androidx.compose.ui.unit.Dp borderWidth, androidx.compose.ui.graphics.Color borderColor);
+    method public androidx.compose.ui.Alignment getAlignment();
+    method public androidx.compose.ui.layout.ContentScale getContentScale();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.Shape getShape();
+    property public androidx.compose.ui.Alignment alignment;
+    property public androidx.compose.ui.graphics.Color background;
+    property public androidx.compose.ui.graphics.Color borderColor;
+    property public androidx.compose.ui.unit.Dp borderWidth;
+    property public androidx.compose.ui.layout.ContentScale contentScale;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.Shape shape;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Image.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.List {
+    ctor public MarkdownStyling.List(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered ordered, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered unordered);
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered getOrdered();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered getUnordered();
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.MarkdownStyling.Ordered ordered;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.MarkdownStyling.Unordered unordered;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.List.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.List.Ordered {
+    ctor @KotlinOnly public MarkdownStyling.List.Ordered(androidx.compose.ui.text.TextStyle numberStyle, androidx.compose.ui.unit.Dp numberContentGap, androidx.compose.ui.unit.Dp numberMinWidth, androidx.compose.ui.text.style.TextAlign numberTextAlign, androidx.compose.ui.unit.Dp itemVerticalSpacing, androidx.compose.ui.unit.Dp itemVerticalSpacingTight, androidx.compose.foundation.layout.PaddingValues padding, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.List.MarkdownStyling.NumberFormatStyles numberFormatStyles);
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles getNumberFormatStyles();
+    method public androidx.compose.ui.text.TextStyle getNumberStyle();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public androidx.compose.ui.unit.Dp itemVerticalSpacing;
+    property public androidx.compose.ui.unit.Dp itemVerticalSpacingTight;
+    property public androidx.compose.ui.unit.Dp numberContentGap;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.List.MarkdownStyling.NumberFormatStyles numberFormatStyles;
+    property public androidx.compose.ui.unit.Dp numberMinWidth;
+    property public androidx.compose.ui.text.TextStyle numberStyle;
+    property public androidx.compose.ui.text.style.TextAlign numberTextAlign;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.List.Ordered.Companion {
+  }
+
+  @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.List.Ordered.NumberFormatStyles {
+    ctor public MarkdownStyling.List.Ordered.NumberFormatStyles(org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle firstLevel, optional org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle secondLevel, optional org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle thirdLevel);
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle getFirstLevel();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle getSecondLevel();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle getThirdLevel();
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.Ordered.List.MarkdownStyling.NumberFormatStyle firstLevel;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.Ordered.List.MarkdownStyling.NumberFormatStyle secondLevel;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.Ordered.List.MarkdownStyling.NumberFormatStyle thirdLevel;
+  }
+
+  public static sealed interface MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle {
+    method public String formatNumber(int number);
+  }
+
+  public static final class MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle.Alphabetical implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle {
+    method public String formatNumber(int number);
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle.Alphabetical INSTANCE;
+  }
+
+  public static final class MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle.Decimal implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle {
+    method public String formatNumber(int number);
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle.Decimal INSTANCE;
+  }
+
+  public static final class MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle.Roman implements org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle {
+    method public String formatNumber(int number);
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle.Roman INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.List.Unordered {
+    ctor @KotlinOnly public MarkdownStyling.List.Unordered(Character? bullet, androidx.compose.ui.text.TextStyle bulletStyle, androidx.compose.ui.unit.Dp bulletContentGap, androidx.compose.ui.unit.Dp itemVerticalSpacing, androidx.compose.ui.unit.Dp itemVerticalSpacingTight, androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp markerMinWidth, org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.List.MarkdownStyling.BulletCharStyles? bulletCharStyles);
+    method public Character? getBullet();
+    method public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.BulletCharStyles? getBulletCharStyles();
+    method public androidx.compose.ui.text.TextStyle getBulletStyle();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public Character? bullet;
+    property public org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.List.MarkdownStyling.BulletCharStyles? bulletCharStyles;
+    property public androidx.compose.ui.unit.Dp bulletContentGap;
+    property public androidx.compose.ui.text.TextStyle bulletStyle;
+    property public androidx.compose.ui.unit.Dp itemVerticalSpacing;
+    property public androidx.compose.ui.unit.Dp itemVerticalSpacingTight;
+    property public androidx.compose.ui.unit.Dp markerMinWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.Companion Companion;
+  }
+
+  @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.List.Unordered.BulletCharStyles {
+    ctor public MarkdownStyling.List.Unordered.BulletCharStyles();
+    ctor public MarkdownStyling.List.Unordered.BulletCharStyles(optional char firstLevel, optional char secondLevel, optional char thirdLevel);
+    method public char getFirstLevel();
+    method public char getSecondLevel();
+    method public char getThirdLevel();
+    property public char firstLevel;
+    property public char secondLevel;
+    property public char thirdLevel;
+  }
+
+  public static final class MarkdownStyling.List.Unordered.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.Paragraph implements org.jetbrains.jewel.markdown.rendering.WithInlinesStyling {
+    ctor public MarkdownStyling.Paragraph(org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling);
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    property public org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.Paragraph.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class MarkdownStyling.ThematicBreak {
+    ctor @KotlinOnly public MarkdownStyling.ThematicBreak(androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp lineWidth, androidx.compose.ui.graphics.Color lineColor);
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public androidx.compose.ui.graphics.Color lineColor;
+    property public androidx.compose.ui.unit.Dp lineWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    field public static final org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak.Companion Companion;
+  }
+
+  public static final class MarkdownStyling.ThematicBreak.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface WithInlinesStyling {
+    method public org.jetbrains.jewel.markdown.rendering.InlinesStyling getInlinesStyling();
+    property public abstract org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface WithUnderline {
+    property public abstract androidx.compose.ui.graphics.Color underlineColor;
+    property public abstract androidx.compose.ui.unit.Dp underlineGap;
+    property public abstract androidx.compose.ui.unit.Dp underlineWidth;
+  }
+
+}
+
+package org.jetbrains.jewel.markdown.scrolling {
+
+  public final class AutoScrollingUtilKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void AutoScrollableBlock(org.jetbrains.jewel.markdown.MarkdownBlock block, org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer synchronizer, optional androidx.compose.ui.Modifier modifier, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public class ScrollSyncMarkdownBlockRenderer extends org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer {
+    ctor public ScrollSyncMarkdownBlockRenderer(org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling, java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension> renderingExtensions, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public abstract class ScrollingSynchronizer {
+    ctor public ScrollingSynchronizer();
+    method public abstract org.jetbrains.jewel.markdown.MarkdownBlock acceptBlockSpans(org.jetbrains.jewel.markdown.MarkdownBlock block, kotlin.ranges.IntRange sourceRange);
+    method public abstract void acceptGlobalPosition(org.jetbrains.jewel.markdown.MarkdownBlock block, androidx.compose.ui.layout.LayoutCoordinates coordinates);
+    method public abstract void acceptTextLayout(org.jetbrains.jewel.markdown.MarkdownBlock block, androidx.compose.ui.text.TextLayoutResult textLayout);
+    method protected abstract void afterProcessing();
+    method protected abstract void beforeProcessing();
+    method public final <T> T process(kotlin.jvm.functions.Function0<? extends T> action);
+    method public abstract suspend Object? scrollToLine(int sourceLine, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    field public static final org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer.Companion Companion;
+  }
+
+  public static final class ScrollingSynchronizer.Companion {
+    method public org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer? create(androidx.compose.foundation.gestures.ScrollableState scrollState);
+  }
+
+  public static final class ScrollingSynchronizer.LocatableMarkdownBlock implements org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock {
+    ctor public ScrollingSynchronizer.LocatableMarkdownBlock(org.jetbrains.jewel.markdown.MarkdownBlock originalBlock, kotlin.ranges.IntRange lines);
+    method public kotlin.ranges.IntRange getLines();
+    method public org.jetbrains.jewel.markdown.MarkdownBlock getOriginalBlock();
+    property public kotlin.ranges.IntRange lines;
+    property public org.jetbrains.jewel.markdown.MarkdownBlock originalBlock;
+  }
+
+}

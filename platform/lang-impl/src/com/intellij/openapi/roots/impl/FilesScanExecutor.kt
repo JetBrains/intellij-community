@@ -53,6 +53,7 @@ object FilesScanExecutor {
     }
     val results = ArrayList<Future<*>>()
     for (i in 0 until THREAD_COUNT) {
+      // The current Job cancellation will NOT stop the pooled threads. Use 'coroutineToIndicator'.
       results.add(ourExecutor.submit { ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress)) })
     }
 
@@ -110,47 +111,54 @@ object FilesScanExecutor {
     runOnAllThreads {
       runnersCount.incrementAndGet()
       var idle = false
-      while (!stopped.get()) {
-        ProgressManager.checkCanceled()
-        if (deque.peek() == null) {
-          if (!idle) {
-            idle = true
-            idleCount.incrementAndGet()
+      try {
+        while (!stopped.get()) {
+          ProgressManager.checkCanceled()
+          if (deque.peek() == null) {
+            if (!idle) {
+              idle = true
+              idleCount.incrementAndGet()
+            }
+          }
+          else if (idle) {
+            idle = false
+            idleCount.decrementAndGet()
+          }
+          if (idle) {
+            if (idleCount.get() == runnersCount.get() && deque.isEmpty()) break
+            TimeoutUtil.sleep(1L)
+            continue
+          }
+          val item = deque.poll() ?: continue
+          try {
+            if (!processor(item)) {
+              stopped.set(true)
+            }
+            if (exited.get() && !stopped.get()) {
+              throw AssertionError("early exit")
+            }
+          }
+          catch (ex: StopWorker) {
+            deque.addFirst(item)
+            return@runOnAllThreads
+          }
+          catch (ex: ProcessCanceledException) {
+            deque.addFirst(item)
+          }
+          catch (ex: Throwable) {
+            error.compareAndSet(null, ex)
           }
         }
-        else if (idle) {
-          idle = false
-          idleCount.decrementAndGet()
-        }
-        if (idle) {
-          if (idleCount.get() == runnersCount.get() && deque.isEmpty()) break
-          TimeoutUtil.sleep(1L)
-          continue
-        }
-        val item = deque.poll() ?: continue
-        try {
-          if (!processor(item)) {
-            stopped.set(true)
-          }
-          if (exited.get() && !stopped.get()) {
-            throw AssertionError("early exit")
-          }
-        }
-        catch (ex: StopWorker) {
-          deque.addFirst(item)
-          runnersCount.decrementAndGet()
-          return@runOnAllThreads
-        }
-        catch (ex: ProcessCanceledException) {
-          deque.addFirst(item)
-        }
-        catch (ex: Throwable) {
-          error.compareAndSet(null, ex)
+        exited.set(true)
+        if (!deque.isEmpty() && !stopped.get()) {
+          throw AssertionError("early exit")
         }
       }
-      exited.set(true)
-      if (!deque.isEmpty() && !stopped.get()) {
-        throw AssertionError("early exit")
+      finally {
+        if (idle) {
+          idleCount.decrementAndGet()
+        }
+        runnersCount.decrementAndGet()
       }
     }
     ExceptionUtil.rethrowAllAsUnchecked(error.get())

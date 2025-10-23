@@ -855,7 +855,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     val mainSources = arrayOfNotNull(
       "$projectPath/src/main/java",
       mainResources,
-      if (isMaven4) mainResourcesFiltered else null,
+      if (isModel410()) mainResourcesFiltered else null,
       "$projectPath/target/generated-sources/src1",
       "$projectPath/target/generated-sources/src2"
     )
@@ -864,7 +864,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     val testSources = arrayOfNotNull(
       "$projectPath/src/test/java",
       testResources,
-      if (isMaven4) testResourcesFiltered else null,
+      if (isModel410()) testResourcesFiltered else null,
       "$projectPath/target/generated-test-sources/test1",
       "$projectPath/target/generated-test-sources/test2"
     )
@@ -934,7 +934,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     val expectedRoots = ArrayList<String>()
     expectedRoots.add("$projectPath/custom-sources")
     expectedRoots.add("$projectPath/m1/src/main/resources")
-    if (isMaven4) {
+    if (isModel410()) {
       expectedRoots.add("$projectPath/m1/src/main/resources-filtered")
     }
     assertContentRoots(mn("project", "m1.main"), *ArrayUtil.toStringArray(expectedRoots))
@@ -1389,14 +1389,14 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java")
     val expectedResources = ArrayList<String>()
     expectedResources.add("src/main/resources")
-    if (isMaven4) {
+    if (isModel410()) {
       expectedResources.add("src/main/resources-filtered")
     }
     assertContentRootResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedResources))
     assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java")
     val expectedTestResources = ArrayList<String>()
     expectedTestResources.add("src/test/resources")
-    if (isMaven4) {
+    if (isModel410()) {
       expectedTestResources.add("src/test/resources-filtered")
     }
     assertContentRootTestResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedTestResources))
@@ -1410,7 +1410,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
     // but I'm testing the behavior as is in order to preserve it in the new Workspace import
     m1_content_roots.add(m1_standard_test_resources)
-    if (isMaven4) {
+    if (isModel410()) {
       m1_content_roots.add("$m1_standard_test_resources-filtered")
     }
     assertContentRoots(m1_custom_module, *ArrayUtil.toStringArray(m1_content_roots))
@@ -1470,10 +1470,10 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     val expectedRoots = arrayOfNotNull(
       "$projectPath/custom-sources",
       "$projectPath/m1/src/main/resources",
-      maven4orNull("$projectPath/m1/src/main/resources-filtered"),
+      withModel410Only("$projectPath/m1/src/main/resources-filtered"),
       "$projectPath/m1/src/test/java",
       "$projectPath/m1/src/test/resources",
-      maven4orNull("$projectPath/m1/src/test/resources-filtered")
+      withModel410Only("$projectPath/m1/src/test/resources-filtered")
     )
     assertContentRoots(mn("project", "m1-custom"), *expectedRoots)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit3Framework
@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
-        override val markerClassFqn: String
-            get() = JUnitUtil.TEST_CASE_CLASS
+        override val markerClassFqns: Collection<String>
+            get() = listOf(JUnitUtil.TEST_CASE_CLASS)
 
         override val disabledTestAnnotation: String
             get() = throw UnsupportedOperationException("JUnit3 does not support Ignore methods")

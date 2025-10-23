@@ -77,8 +77,6 @@
       <option name="VCS_ANNOTATIONS_COLOR_4" value="fffbcf"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="ffbfc3"/>
 
-      <option name="BLOCK_TERMINAL_DEFAULT_FOREGROUND" value="000000"/>
-      <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="FFFFFF"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="F0F2F5"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="FAFAFA"/>
       <option name="BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND" value="EDF3FF"/>
@@ -1632,8 +1630,6 @@
       <option name="VCS_ANNOTATIONS_COLOR_4" value="484248"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="4c393a"/>
 
-      <option name="BLOCK_TERMINAL_DEFAULT_FOREGROUND" value="DFE1E5"/>
-      <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="1E1F22"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="2B2D30"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="212329"/>
       <option name="BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND" value="25324D"/>

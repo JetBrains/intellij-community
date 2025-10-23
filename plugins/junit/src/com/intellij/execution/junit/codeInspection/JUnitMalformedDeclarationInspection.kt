@@ -58,7 +58,7 @@ class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool(
     )
   )
 
-  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5InScope(file)
+  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5Or6InScope(file)
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
@@ -106,7 +106,7 @@ private class JUnitMalformedSignatureVisitor(
     classRuleSignatureProblem.check(holder, node)
     checkJUnit3Test(node)
     junit4TestProblem.check(holder, node)
-    junit5TestProblem.check(holder, node)
+    junit56TestProblem.check(holder, node)
     return true
   }
 
@@ -155,11 +155,12 @@ private class JUnitMalformedSignatureVisitor(
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
       else if (method.inParameterResolverContext()) method.uastParameters
-      else method.uastParameters.filter { param ->
+      else method.uastParameters.filterIndexed { i, param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
         || param.type.canonicalText == ORG_JUNIT_JUPITER_API_REPETITION_INFO
         || param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
         || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
+        || i == 0 && method.suspendModifierIsAllowed() && method.isSuspendFunction()
         || param.inParameterResolverContext()
       }
     }
@@ -182,9 +183,10 @@ private class JUnitMalformedSignatureVisitor(
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
       else if (method.inParameterResolverContext()) method.uastParameters
-      else method.uastParameters.filter { param ->
+      else method.uastParameters.filterIndexed { i, param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
         || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
+        || i == 0 && method.suspendModifierIsAllowed() && method.isSuspendFunction()
         || param.inParameterResolverContext()
       }
     }
@@ -198,7 +200,7 @@ private class JUnitMalformedSignatureVisitor(
     validParameters = { method -> method.uastParameters.filter { MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations) } }
   )
 
-  private val junit5TestProblem = AnnotatedSignatureProblem(
+  private val junit56TestProblem = AnnotatedSignatureProblem(
     annotations = listOf(ORG_JUNIT_JUPITER_API_TEST),
     shouldBeStatic = false,
     shouldBeVoidType = true,
@@ -207,9 +209,10 @@ private class JUnitMalformedSignatureVisitor(
       if (method.uastParameters.isEmpty()) emptyList()
       else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
       else if (method.inParameterResolverContext()) method.uastParameters
-      else method.uastParameters.filter { param ->
+      else method.uastParameters.filterIndexed { i, param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
         || param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
+        || i == 0 && method.suspendModifierIsAllowed() && method.isSuspendFunction()
         || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
         || param.inParameterResolverContext()
       }
@@ -398,8 +401,19 @@ private class JUnitMalformedSignatureVisitor(
     param.javaPsi?.asSafely<PsiParameter>()?.let { AnnotationUtil.isAnnotated(it, ignorableAnnotations, 0) } == true
   }
 
+  private fun UElement.suspendModifierIsAllowed(): Boolean {
+    val version = getUJUnitVersion(this) ?: return true
+    return version >= JUnitVersion.V_6_X
+  }
+
+  private fun UMethod.isSuspendFunction(): Boolean {
+    if (lang != Language.findLanguageByID("kotlin")) return false
+    if (!javaPsi.modifierList.text.contains("suspend")) return false
+    return uastParameters.firstOrNull()?.type?.canonicalText == COROUTINES_CONTINUATION_TYPE
+  }
+
   private fun checkSuspendFunction(method: UMethod): Boolean {
-    return if (method.lang == Language.findLanguageByID("kotlin") && method.javaPsi.modifierList.text.contains("suspend")) {
+    return if (!method.suspendModifierIsAllowed() && method.isSuspendFunction()) {
       val message = JUnitBundle.message("jvm.inspections.junit.malformed.suspend.function.descriptor")
       holder.registerUProblem(method, message)
       true
@@ -698,7 +712,7 @@ private class JUnitMalformedSignatureVisitor(
       !MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
     } > 1 && !containingClass.inParameterResolverContext()
   }
-  
+
   private fun getPassedParameter(method: PsiMethod): PsiParameter? {
     return method.parameterList.parameters.firstOrNull { param ->
       !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_INFO) &&
@@ -895,7 +909,7 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  class AnnotatedSignatureProblem(
+  inner class AnnotatedSignatureProblem(
     private val annotations: List<String>,
     private val shouldBeStatic: Boolean? = null,
     private val ignoreOnRunWith: Boolean = false,
@@ -1000,7 +1014,7 @@ private class JUnitMalformedSignatureVisitor(
       val problems = modifierProblems(
         visibility, element.visibility, elementIsStatic, javaPsi.containingClass?.let { cls -> TestUtils.testInstancePerClass(cls) } == true
       )
-      if (element.lang == Language.findLanguageByID("kotlin") && element.javaPsi.modifierList.text.contains("suspend")) {
+      if (!element.suspendModifierIsAllowed() && element.isSuspendFunction()) {
         val message = JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.suspend.function.descriptor", annotation
         )
@@ -1015,7 +1029,7 @@ private class JUnitMalformedSignatureVisitor(
         }
         return holder.methodParameterProblem(element, visibility, annotation, problems, params)
       }
-      if (shouldBeVoidType == true && element.returnType != PsiTypes.voidType()) {
+      if (shouldBeVoidType == true && element.returnType != PsiTypes.voidType() && !element.isSuspendFunction()) {
         return holder.methodTypeProblem(element, visibility, annotation, problems, PsiTypes.voidType().name)
       }
       if (shouldBeSubTypeOf?.any { InheritanceUtil.isInheritor(element.returnType, it) } == false) {
@@ -1244,6 +1258,7 @@ private class JUnitMalformedSignatureVisitor(
 
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
+    const val COROUTINES_CONTINUATION_TYPE = "kotlin.coroutines.Continuation<? super kotlin.Unit>"
 
     val checkableRunners = listOf(
       "org.junit.runners.AllTests",

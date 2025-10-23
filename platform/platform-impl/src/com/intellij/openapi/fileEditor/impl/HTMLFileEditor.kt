@@ -197,8 +197,8 @@ internal class HTMLFileEditor(
 
     multiPanel.select(CONTENT_KEY, true)
 
-    if (request.url == null) {
-      contentPanel.loadHTML(request.html!!)
+    if (request.html != null) {
+      contentPanel.loadHTML(request.html, request.url ?: "about:blank")
     }
     else {
       val timeoutText = request.timeoutHtml ?: EditorBundle.message("message.html.editor.timeout")
@@ -206,7 +206,7 @@ internal class HTMLFileEditor(
         delay(Registry.intValue("html.editor.timeout", URL_LOADING_TIMEOUT_MS).milliseconds)
         withContext(Dispatchers.EDT) { contentPanel.loadHTML(timeoutText) }
       })
-      contentPanel.loadURL(request.url)
+      contentPanel.loadURL(request.url!!)
     }
   }
 

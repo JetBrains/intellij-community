@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +21,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
+
+import static com.intellij.ide.plugins.PluginManagerCoreKt.isPlatformOrJetBrainsBundled;
 
 public final class DeviceIdManager {
   private static final Logger LOG = Logger.getInstance(DeviceIdManager.class);
@@ -60,7 +61,7 @@ public final class DeviceIdManager {
       if (token == null) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from unknown class");
       }
-      else if (!PluginInfoDetectorKt.isPlatformOrJetBrainsBundled(token.getClass())) {
+      else if (!isPlatformOrJetBrainsBundled(token.getClass())) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from " + token.getClass().getName());
       }
     }

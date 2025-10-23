@@ -4,10 +4,10 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
+    use crate::utils::*;
     use std::path::PathBuf;
     use std::sync::Mutex;
-    use xplat_launcher::{get_config_home, jvm_property};
-    use crate::utils::*;
+    use xplat_launcher::{get_caches_home, get_config_home, jvm_property};
 
     /// Tests depending on the shared user config directory cannot run concurrently.
     static USER_DIR_LOCK: Mutex<usize> = Mutex::new(0);
@@ -52,13 +52,5 @@ mod tests {
 
         let result = run_launcher(LauncherRunSpec::standard().with_args(&["custom-command"]).assert_status());
         assert!(result.stdout.contains("Custom command: product.property=product.value, custom.property=custom.value"), "Custom system property is not set: {:?}", result);
-    }
-
-    fn get_standard_config_dir() -> PathBuf {
-        get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
-    }
-
-    fn get_custom_config_dir() -> PathBuf {
-        get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTestCustom")
     }
 }

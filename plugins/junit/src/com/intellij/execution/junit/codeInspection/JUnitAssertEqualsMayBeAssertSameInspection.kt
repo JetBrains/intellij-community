@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInspection.*
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.isJUnit3InScope
 import com.intellij.execution.junit.isJUnit4InScope
-import com.intellij.execution.junit.isJUnit5InScope
+import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.jvm.analysis.quickFix.ReplaceCallableExpressionQuickFix
 import com.intellij.jvm.analysis.refactoring.CallChainReplacementInfo
 import com.intellij.jvm.analysis.refactoring.CallReplacementInfo
@@ -18,7 +18,7 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class JUnitAssertEqualsMayBeAssertSameInspection : AbstractBaseUastLocalInspectionTool(), CleanupLocalInspectionTool {
-  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5InScope(file)
+  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5Or6InScope(file)
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR

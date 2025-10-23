@@ -17,10 +17,13 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 
 internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContributor {
   override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, embedder: MavenEmbedderWrapper) {
-    val artifactsInfo = mavenProject.compilerConfigsForCompilePhase()
+    val configs = mavenProject.compilerConfigsForCompilePhase()
+    val artifactsInfo = configs
       .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
       .flatMap { getProcessorArtifactInfos(it, mavenProject) }
 
+
+    val annotationProcessorPathsUseDepMgmt = configs.any { "true".equals(MavenJDOMUtil.findChildValueByPath(it, "annotationProcessorPathsUseDepMgmt", "false"), false) }
 
     val externalArtifacts: MutableList<MavenArtifactInfo> = ArrayList()
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
@@ -35,8 +38,11 @@ internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContr
     }
 
     try {
-      val annotationProcessors = embedder.resolveArtifactsTransitively(ArrayList(externalArtifacts),
-                                                                       ArrayList(mavenProject.remoteRepositories))
+      val managedDeps = if (annotationProcessorPathsUseDepMgmt) mavenProject.managedDependencies() else emptyMap()
+      val annotationProcessors = embedder.resolveProcessorPathEntries(ArrayList(externalArtifacts),
+                                                                      ArrayList(mavenProject.remoteRepositories),
+                                                                      managedDeps,
+                                                                      mavenProject.activatedProfilesIds)
       if (annotationProcessors.problem != null) {
         MavenResolveResultProblemProcessor.notifySyncForProblem(project, annotationProcessors.problem!!)
       }

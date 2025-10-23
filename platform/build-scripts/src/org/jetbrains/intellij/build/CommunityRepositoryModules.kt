@@ -157,6 +157,7 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.junit") { spec ->
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
       spec.withModule("intellij.junit.v5.rt", "junit5-rt.jar")
+      spec.withModule("intellij.junit.v6.rt", "junit6-rt.jar")
     },
     plugin("intellij.testng") { spec ->
       spec.mainJarName = "testng-plugin.jar"

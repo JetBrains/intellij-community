@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.junit.v6.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "junit-v6-rt",
+  module_name = "intellij.junit.v6.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k17",
+  deps = [
+    "//plugins/junit_rt:junit-rt",
+    "//java/java-runtime:rt",
+    "@lib//:junit6Launcher-provided",
+    "@lib//:junit6-provided",
+  ]
+)
+### auto-generated section `build intellij.junit.v6.rt` end
