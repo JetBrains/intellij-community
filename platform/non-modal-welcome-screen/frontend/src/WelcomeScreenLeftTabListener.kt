@@ -5,11 +5,15 @@ import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel.Companion.ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 
 internal class WelcomeScreenLeftTabListener: FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
+    if (!Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false)) {
+      return
+    }
     val isChangedToWelcome = event.newFile?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType
     val isChangedFromWelcome = event.oldFile?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType
     val project = event.manager.project
