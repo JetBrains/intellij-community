@@ -251,6 +251,8 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       PsiElement prevSibling = context.getPrevSibling();
       if (prevSibling instanceof XmlTag) {
         return (XmlTag)prevSibling;
+      } else if (prevSibling instanceof XmlDocument) {
+        context = PsiTreeUtil.prevLeaf(context);
       }
     }
 
