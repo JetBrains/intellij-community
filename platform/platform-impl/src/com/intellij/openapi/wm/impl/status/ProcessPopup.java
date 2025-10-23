@@ -39,6 +39,7 @@ final class ProcessPopup {
   private final JScrollPane myContentPanel;
   private JBPopup myPopup;
   private boolean myPopupVisible;
+  private final TasksFinishedDecorator myTasksFinishedDecorator;
 
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
@@ -49,6 +50,8 @@ final class ProcessPopup {
     if (ExperimentalUI.isNewUI()) {
       myIndicatorPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
     }
+
+    myTasksFinishedDecorator = new TasksFinishedDecorator(myIndicatorPanel);
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     updateContentUI();
@@ -63,6 +66,7 @@ final class ProcessPopup {
       component.setOpaque(false);
     }
     myIndicatorPanel.add(component);
+    myTasksFinishedDecorator.addIndicator(component);
     revalidateAll();
   }
 
@@ -76,6 +80,7 @@ final class ProcessPopup {
     if (index == 0 && myIndicatorPanel.getComponentCount() > 0) {
       hideSeparator(myIndicatorPanel.getComponent(0));
     }
+    myTasksFinishedDecorator.removeIndicator();
     revalidateAll();
   }
 
@@ -166,7 +171,7 @@ final class ProcessPopup {
     }
   }
 
-  private static void hideSeparator(@NotNull Component component) {
+  static void hideSeparator(@NotNull Component component) {
     ProgressPanel panel = ClientProperty.get(component, KEY);
     if (panel != null) {
       panel.setSeparatorEnabled(false);
