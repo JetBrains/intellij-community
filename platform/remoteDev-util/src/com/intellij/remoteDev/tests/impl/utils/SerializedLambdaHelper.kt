@@ -12,17 +12,7 @@ import kotlin.use
  * Executes a given lambda (it must be serializable) inside
  * IntelliJ-based IDE process with a special classloader,
  * where all classes of all plugins are visible.
- *
- * Code is executed in a background thread, the thread is guaranteed
- * to be NOT an EDT/AWT dispatch thread. Use ApplicationManager.getApplication.invoke*
- * methods family and/or Read/Write locks to deal with entities inside IntelliJ.
- *
- * IntelliJ instance is disposed (via Application#exit) after the lambda is completed.
- * It's a responsibility of your test to make sure you are not leaking an alive
- * IDE instance in any possible scenario.
- *
- * You are fine to use any TBE plugin classes from that lambda
- *
+ * 
  * https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html
  */
 
