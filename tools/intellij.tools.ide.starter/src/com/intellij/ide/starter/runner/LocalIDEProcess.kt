@@ -93,7 +93,7 @@ class LocalIDEProcess : IDEProcess {
             onProcessCreated = { process, pid ->
               span.addEvent("process created")
               EventsBus.subscribeOnce(process) { _: IdeExceptionEvent ->
-                if(process.isAlive) {
+                if (process.isAlive) {
                   captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir)
                 }
               }
@@ -135,8 +135,10 @@ class LocalIDEProcess : IDEProcess {
               error.messageText + System.lineSeparator() +
               error.stackTraceContent + System.lineSeparator() +
               (ciFailureDetails ?: ""))
-          } else {
-            throw ExecTimeoutException("Timeout of IDE run '$contextName' for $runTimeout" + System.lineSeparator() + (ciFailureDetails ?: ""))
+          }
+          else {
+            throw ExecTimeoutException("Timeout of IDE run '$contextName' for $runTimeout" + System.lineSeparator() + (ciFailureDetails
+                                                                                                                       ?: ""))
           }
         }
       }
