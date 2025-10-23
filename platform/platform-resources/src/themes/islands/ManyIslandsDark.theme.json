@@ -296,6 +296,7 @@
     "NewUiOnboarding.Dialog.background": "PanelBackground",
     "WelcomeScreen.Details.background": "BackgroundDark",
     "WelcomeScreen.Banner.background": "BackgroundLight",
+    "WelcomeScreen.Projects.actions.background": "#2B2D30",
 
     "Bookmark.MnemonicAssigned.foreground": "#1e1f22",
 
