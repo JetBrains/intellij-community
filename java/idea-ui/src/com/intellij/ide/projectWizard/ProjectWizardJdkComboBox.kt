@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
-import com.intellij.execution.wsl.WslPath
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
@@ -38,12 +37,10 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -150,11 +147,8 @@ fun projectWizardJdkComboBox(
     .validationOnApply {
       val intent = it.selectedItem
 
-      if (isWindows) {
-        // todo: remove this when JDK over Eel is enabled by default
-        val wslJDKValidation = validateJdkAndProjectCompatibility(intent, eelDescriptorProperty.get())
-        if (wslJDKValidation != null) return@validationOnApply wslJDKValidation
-      }
+      val jdkCompatibilityValidation = validateJdkAndProjectCompatibility(intent, eelDescriptorProperty.get())
+      if (jdkCompatibilityValidation != null) return@validationOnApply jdkCompatibilityValidation
 
       if (intent is DownloadJdk) {
         return@validationOnApply validateInstallDir(intent)
@@ -186,17 +180,14 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
     is ExistingJdk -> intent.jdk.homePath
     is DetectedJdk -> intent.home
     else -> null
+  } ?: return null
+
+  val jdkRelatedMachine = Path.of(path).getEelDescriptor().machine
+  val projectRelatedMachine = eelDescriptor.machine
+  if (jdkRelatedMachine != projectRelatedMachine) {
+    return error(JavaUiBundle.message("jdk.incompatible.location.error", jdkRelatedMachine.name, projectRelatedMachine.name))
   }
 
-  //todo this code is temporary and should be removed together with the java.home.finder.use.eel flag
-  val isProjectWSL = eelDescriptor.osFamily != EelOsFamily.Windows && isWindows
-
-  if (path != null && WslPath.isWslUncPath(path) != isProjectWSL) {
-    return when (isProjectWSL) {
-      true -> error(JavaUiBundle.message("jdk.wsl.windows.error"))
-      false -> error(JavaUiBundle.message("jdk.windows.wsl.error"))
-    }
-  }
   return null
 }
 
