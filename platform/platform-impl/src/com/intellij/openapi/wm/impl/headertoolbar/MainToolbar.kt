@@ -33,6 +33,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -295,7 +296,7 @@ class MainToolbar(
     super.paintComponent(g)
     if (!CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen())) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
-      InternalUICustomization.getInstance()?.paintFrameBackground(frame, this, g)
+      InternalUICustomization.getInstance()?.paintFrameBackground(frame as IdeFrame, this, g)
     }
   }
 

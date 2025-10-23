@@ -131,7 +131,7 @@ open class InternalUICustomization {
 
   open fun attachIdeFrameBackgroundPainter(frame: IdeFrame, glassPane: IdeGlassPane): Unit = Unit
 
-  open fun paintFrameBackground(frame: Window, component: Component, g: Graphics2D) {}
+  open fun paintFrameBackground(frame: IdeFrame, component: Component, g: Graphics2D) {}
 
   open fun updateBackgroundPainter() {}
 
