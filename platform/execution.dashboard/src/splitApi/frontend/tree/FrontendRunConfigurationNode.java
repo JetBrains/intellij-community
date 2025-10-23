@@ -2,6 +2,8 @@
 package com.intellij.platform.execution.dashboard.splitApi.frontend.tree;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -9,6 +11,7 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.ui.icons.IconId;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -31,7 +34,7 @@ import java.util.Collections;
 
 import static com.intellij.ide.ui.icons.IconIdKt.icon;
 
-public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDashboardService> {
+public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDashboardService> implements RunDashboardRunConfigurationNode {
   public FrontendRunConfigurationNode(@NotNull Project project, @NotNull FrontendRunDashboardService value) {
     super(project, value);
   }
@@ -46,14 +49,22 @@ public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDa
     return getValue().getRunDashboardServiceDto();
   }
 
+  @Override
   public @Nullable Content getContent() {
     RunContentDescriptor descriptor = getDescriptor();
     return descriptor == null ? null : descriptor.getAttachedContent();
   }
 
+  @Override
   @SuppressWarnings("DataFlowIssue")
   public @Nullable RunContentDescriptor getDescriptor() {
     return FrontendRunDashboardManager.getInstance(getProject()).getServiceRunContentDescriptor(getValue());
+  }
+
+  @Override
+  public RunnerAndConfigurationSettings getConfigurationSettings() {
+    Logger.getInstance(FrontendRunConfigurationNode.class).debug("Deprecated method `getConfigurationSettings` called for " + getService().getName());
+    return null;
   }
 
   public @Nullable RunDashboardRunConfigurationStatus getStatus() {
