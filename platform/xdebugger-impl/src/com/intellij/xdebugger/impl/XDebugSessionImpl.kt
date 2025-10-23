@@ -812,7 +812,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     currentStackFrame = null
     topStackFrame.value = null
     clearActiveNonLineBreakpoint()
-    updateExecutionPosition()
   }
 
   @Deprecated("Update should go via front-end listeners")

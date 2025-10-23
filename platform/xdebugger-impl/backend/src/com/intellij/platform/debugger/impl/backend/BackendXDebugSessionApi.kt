@@ -168,13 +168,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun updateExecutionPosition(sessionId: XDebugSessionId) {
-    val session = sessionId.findValue() ?: return
-    withContext(Dispatchers.EDT) {
-      session.updateExecutionPosition()
-    }
-  }
-
   override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean, changedByUser: Boolean) {
     val session = sessionId.findValue() ?: return
     val executionStackModel = executionStackId.findValue() ?: return
