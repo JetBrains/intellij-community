@@ -43,12 +43,6 @@
     files:
     - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
     reason: <- intellij.python.community.impl
-  - name: kaml
-    files:
-    - name: $MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0/kaml-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/3/snakeyaml-engine-kmp-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1/urlencoder-lib-jvm-1.jar
-    reason: <- intellij.python.community.impl
   - name: libthrift
     files:
     - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar

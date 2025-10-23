@@ -6104,17 +6104,17 @@ http_file(
 )
 
 http_file(
-  name = "com_charleskorn_kaml-kaml-jvm-0_80_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.80.1/kaml-jvm-0.80.1.jar",
-  sha256 = "7e346b94d47fb4e4495ebd6161fd5c6d01659687e93c460bbfd320ba47bea852",
-  downloaded_file_path = "kaml-jvm-0.80.1.jar"
+  name = "com_charleskorn_kaml-kaml-jvm-0_99_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0.jar",
+  sha256 = "bbb3901429952d8b0c5a11776262509142006d3e7e19001946c0393991dd7e10",
+  downloaded_file_path = "kaml-jvm-0.99.0.jar"
 )
 
 http_file(
-  name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_1_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.1.1/snakeyaml-engine-kmp-jvm-3.1.1.jar",
-  sha256 = "733e1347e3ec909e8a7ee199e48a64d0180569461b3bc08c8a6bb1335f5ce1bd",
-  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.1.1.jar"
+  name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1.jar",
+  sha256 = "e85b667e909e0b9eaee7ad0f0b36f47ba3a3a8824f1782718ec2f73d5f3ed741",
+  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.2.1.jar"
 )
 
 http_file(
@@ -6125,17 +6125,17 @@ http_file(
 )
 
 http_file(
-  name = "com_charleskorn_kaml-kaml-jvm-0_80_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.80.1/kaml-jvm-0.80.1-sources.jar",
-  sha256 = "8fb6a48590169c34894f2bb41c9be86069cb4c2f6de5af7123753bf7f6b10818",
-  downloaded_file_path = "kaml-jvm-0.80.1-sources.jar"
+  name = "com_charleskorn_kaml-kaml-jvm-0_99_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0-sources.jar",
+  sha256 = "584a2625cfa0cdf8af0847efa8f22191f939350ea1c3909695cf89088f37bbf8",
+  downloaded_file_path = "kaml-jvm-0.99.0-sources.jar"
 )
 
 http_file(
-  name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_1_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.1.1/snakeyaml-engine-kmp-jvm-3.1.1-sources.jar",
-  sha256 = "8b256b041ae886c593e978db2367139bc47e612de4cf4346292cc8a8d32019c3",
-  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.1.1-sources.jar"
+  name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1-sources.jar",
+  sha256 = "7ba356923fecbce3756549d94022d6cad7bdae65f6c7ccafd6c600f144aaca12",
+  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.2.1-sources.jar"
 )
 
 http_file(
@@ -7196,20 +7196,6 @@ http_file(
 )
 
 http_file(
-  name = "io_ktor-ktor-client-okhttp-jvm-3_1_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-okhttp-jvm/3.1.3/ktor-client-okhttp-jvm-3.1.3.jar",
-  sha256 = "a3c111c85eabb8149c485c275768d57cd96a05b595ca1946781c0d4c5fb1654a",
-  downloaded_file_path = "ktor-client-okhttp-jvm-3.1.3.jar"
-)
-
-http_file(
-  name = "io_ktor-ktor-client-okhttp-jvm-3_1_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-okhttp-jvm/3.1.3/ktor-client-okhttp-jvm-3.1.3-sources.jar",
-  sha256 = "37b7709379bec327c8269c3f5020b16980ed2352057be80e93126542f113e672",
-  downloaded_file_path = "ktor-client-okhttp-jvm-3.1.3-sources.jar"
-)
-
-http_file(
   name = "io_ktor-ktor-serialization-kotlinx-json-jvm-3_1_3_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-json-jvm/3.1.3/ktor-serialization-kotlinx-json-jvm-3.1.3.jar",
   sha256 = "9b810f01caa6e3f27e02d71caba8595e2b4b04071dba16e0e426e20115bed354",
@@ -7511,6 +7497,13 @@ http_file(
 )
 
 http_file(
+  name = "com_squareup_okio-okio-jvm-3_11_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar",
+  sha256 = "2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022",
+  downloaded_file_path = "okio-jvm-3.11.0.jar"
+)
+
+http_file(
   name = "io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0.jar",
   sha256 = "a74b96cb179fe8f872d4e9f03468e0477d32787e9b6430a9d137aafb76012a60",
@@ -7536,6 +7529,13 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar",
   sha256 = "c0086b413bc0abf66c5727adc73ccb8fb0340cd505ef46ec85db5b8b9c7b5958",
   downloaded_file_path = "coil-core-jvm-3.2.0-sources.jar"
+)
+
+http_file(
+  name = "com_squareup_okio-okio-jvm-3_11_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar",
+  sha256 = "4cc11c760166d43da9653a5c27ddbf58a510bb8f35ff1aa3a1676206e56a0e4e",
+  downloaded_file_path = "okio-jvm-3.11.0-sources.jar"
 )
 
 http_file(

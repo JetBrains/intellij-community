@@ -4076,23 +4076,23 @@ jvm_import(
 java_library(
   name = "kaml",
   exports = [
-    ":com_charleskorn_kaml-kaml-jvm-0_80_1_http_import",
-    ":it_krzeminski-snakeyaml-engine-kmp-jvm-3_1_1_http_import",
+    ":com_charleskorn_kaml-kaml-jvm-0_99_0_http_import",
+    ":it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http_import",
     ":net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com_charleskorn_kaml-kaml-jvm-0_80_1_http_import",
-  jar = "@com_charleskorn_kaml-kaml-jvm-0_80_1_http//file",
-  source_jar = "@com_charleskorn_kaml-kaml-jvm-0_80_1_http//file"
+  name = "com_charleskorn_kaml-kaml-jvm-0_99_0_http_import",
+  jar = "@com_charleskorn_kaml-kaml-jvm-0_99_0_http//file",
+  source_jar = "@com_charleskorn_kaml-kaml-jvm-0_99_0_http//file"
 )
 
 jvm_import(
-  name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_1_1_http_import",
-  jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_1_1_http//file",
-  source_jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_1_1_http//file"
+  name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http_import",
+  jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http//file",
+  source_jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http//file"
 )
 
 jvm_import(
@@ -4955,13 +4955,6 @@ jvm_import(
   source_jar = "@io_ktor-ktor-client-mock-jvm-3_1_3_http//file"
 )
 
-jvm_import(
-  name = "ktor-client-okhttp",
-  jar = "@io_ktor-ktor-client-okhttp-jvm-3_1_3_http//file",
-  source_jar = "@io_ktor-ktor-client-okhttp-jvm-3_1_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "ktor-network-tls",
   exports = [
@@ -5176,6 +5169,7 @@ java_library(
     ":io_coil-kt_coil3-coil-compose-jvm-3_2_0_http_import",
     ":io_coil-kt_coil3-coil-jvm-3_2_0_http_import",
     ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
+    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
     ":io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -5197,6 +5191,12 @@ jvm_import(
   name = "io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
   jar = "@io_coil-kt_coil3-coil-core-jvm-3_2_0_http//file",
   source_jar = "@io_coil-kt_coil3-coil-core-jvm-3_2_0_http//file"
+)
+
+jvm_import(
+  name = "com_squareup_okio-okio-jvm-3_11_0_http_import",
+  jar = "@com_squareup_okio-okio-jvm-3_11_0_http//file",
+  source_jar = "@com_squareup_okio-okio-jvm-3_11_0_http//file"
 )
 
 jvm_import(

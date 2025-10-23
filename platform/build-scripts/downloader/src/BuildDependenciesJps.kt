@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.runBlocking
-import okio.Path.Companion.toPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
@@ -32,7 +31,7 @@ object BuildDependenciesJps {
     val allModules = modules.getChildElements("module")
       .mapNotNull { it.getAttribute("filepath") }
     val moduleFile = allModules.singleOrNull { it.endsWith("/${moduleName}.iml") }
-                       ?.replace("\$PROJECT_DIR\$", getSystemIndependentPath(projectHome))
+                       ?.replace($$"$PROJECT_DIR$", getSystemIndependentPath(projectHome))
                      ?: error("Unable to find module '$moduleName' in $modulesXml")
     val modulePath = Path.of(moduleFile)
     check(Files.exists(modulePath)) {
@@ -65,11 +64,11 @@ object BuildDependenciesJps {
       .map {
         it
           .removePrefix("jar:/")
-          .replace("\$MAVEN_REPOSITORY\$", "")
+          .replace($$"$MAVEN_REPOSITORY$", "")
           .trim('!', '/')
       }
       .map { relativePath ->
-        val fileUrl = "file://\$MAVEN_REPOSITORY\$/${relativePath}"
+        val fileUrl = $$"file://$MAVEN_REPOSITORY$/$${relativePath}"
         val remoteUrl = mavenRepositoryUrl.trimEnd('/') + "/${relativePath}"
 
         val localMavenFile = Path.of(getMavenRepositoryPath()).resolve(relativePath)
