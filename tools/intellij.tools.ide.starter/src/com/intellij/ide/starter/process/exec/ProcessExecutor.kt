@@ -193,7 +193,7 @@ class ProcessExecutor(
     @Suppress("BlockingMethodInNonBlockingContext") val process = processBuilder.start()
 
     val processId = process.pid()
-    val onProcessCreatedJob: Job = perClassSupervisorScope.launch(Dispatchers.IO) {
+    val onProcessCreatedJob: Job = perClassSupervisorScope.launch(Dispatchers.IO + CoroutineName("On process $presentableName created job")) {
       if (!silent) logOutput("  ... started external process `$presentableName` with process ID = $processId")
       onProcessCreated(process, processId)
     }
