@@ -1451,6 +1451,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe<AnActionListener>(AnActionListener.TOPIC, this)
       myParent = parent
       setBorder(myParent.border)
+      background = parent.background
     }
 
     override fun getParent(): Container? {
@@ -1475,6 +1476,16 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       if (isPaintParentWhileLoading()) {
         val component = getComponent(0) as JLabel
         component.setLocation(component.getX() + myParent.getWidth(), component.getY())
+      }
+    }
+
+    override fun fillToolBar(actions: List<AnAction>, layoutSecondaries: Boolean) {
+      super.fillToolBar(actions, layoutSecondaries)
+
+      UIUtil.forEachComponentInHierarchy(this) {
+        if (it.background == JBColor.PanelBackground) {
+          it.background = background
+        }
       }
     }
 
