@@ -54,6 +54,11 @@ public final class BuildConsoleUtils {
     print(consoleView, notification, text, true);
   }
 
+  public static void print(@NotNull BuildTextConsoleView consoleView, @NotNull String group, @NotNull BuildIssue buildIssue) {
+    print(consoleView, group, buildIssue, true);
+  }
+
+  @ApiStatus.Internal
   public static void print(
     @NotNull BuildTextConsoleView consoleView, @NotNull String group, @NotNull BuildIssue buildIssue, boolean isErrorOutput
   ) {
