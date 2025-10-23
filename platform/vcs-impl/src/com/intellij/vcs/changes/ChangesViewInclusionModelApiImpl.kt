@@ -5,11 +5,12 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewInclusionModelApi
 import com.intellij.platform.vcs.impl.shared.rpc.InclusionDto
-import com.intellij.vcs.changes.viewModel.BackendRemoteCommitChangesViewModel
+import com.intellij.vcs.changes.viewModel.RpcChangesViewProxy
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 
 internal class ChangesViewInclusionModelApiImpl : ChangesViewInclusionModelApi {
@@ -65,7 +66,7 @@ internal class ChangesViewInclusionModelApiImpl : ChangesViewInclusionModelApi {
   }
 
   private suspend fun getChangesViewModel(project: Project) =
-    project.serviceAsync<BackendCommitChangesViewService>().viewModel as BackendRemoteCommitChangesViewModel
+    project.serviceAsync<ChangesViewManager>().changesView as RpcChangesViewProxy
 
   private fun restoreInclusion(project: Project, inclusion: List<InclusionDto>): List<Any> {
     val changeIdCache = ChangeListChangeIdCache.getInstance(project)

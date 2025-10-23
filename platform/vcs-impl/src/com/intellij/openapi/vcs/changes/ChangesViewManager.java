@@ -47,7 +47,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.changes.BackendChangesView;
+import com.intellij.vcs.changes.viewModel.ChangesViewProxy;
 import com.intellij.vcs.commit.*;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -73,15 +73,15 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   private final @NotNull CoroutineScope myScope;
   private final @NotNull Project myProject;
 
-  private @Nullable BackendChangesView myChangesView;
+  private @Nullable ChangesViewProxy myChangesView;
   private @Nullable ChangesViewToolWindowPanel myToolWindowPanel;
 
   @NotNull
   @RequiresEdt
-  BackendChangesView initChangesView() {
+  ChangesViewProxy initChangesView() {
     if (myChangesView == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization");
-      myChangesView = BackendChangesView.create(myProject, myScope);
+      myChangesView = ChangesViewProxy.create(myProject, myScope);
       activity.end();
     }
     return myChangesView;
@@ -92,7 +92,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     if (myToolWindowPanel == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization");
 
-      BackendChangesView changesView = initChangesView();
+      ChangesViewProxy changesView = initChangesView();
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, changesView);
       Disposer.register(this, panel);
 
@@ -104,6 +104,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
         myChangesView = null;
         myToolWindowPanel = null;
       });
+      Disposer.register(panel, changesView);
 
       activity.end();
     }
@@ -179,25 +180,25 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @Override
   public void scheduleRefresh(@NotNull Runnable callback) {
     if (myChangesView == null) return;
-    myChangesView.getViewModel().scheduleRefreshNow(callback);
+    myChangesView.scheduleRefreshNow(callback);
   }
 
   @Override
   public void scheduleRefresh() {
     if (myChangesView == null) return;
-    myChangesView.getViewModel().scheduleDelayedRefresh();
+    myChangesView.scheduleDelayedRefresh();
   }
 
   @Override
   public void selectFile(VirtualFile vFile) {
     if (myChangesView == null) return;
-    myChangesView.getViewModel().selectFile(vFile);
+    myChangesView.selectFile(vFile);
   }
 
   @Override
   public void selectChanges(@NotNull List<? extends Change> changes) {
     if (myChangesView == null) return;
-    myChangesView.getViewModel().selectChanges(new ArrayList<>(changes));
+    myChangesView.selectChanges(new ArrayList<>(changes));
   }
 
   @Override
@@ -209,7 +210,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @Override
   public void setGrouping(@NotNull String groupingKey) {
     if (myChangesView == null) return;
-    myChangesView.getViewModel().setGrouping(groupingKey);
+    myChangesView.setGrouping(groupingKey);
   }
 
   private void updateCommitWorkflow() {
@@ -231,7 +232,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @Override
   public void resetViewImmediatelyAndRefreshLater() {
     if (myChangesView != null) {
-      myChangesView.getViewModel().resetViewImmediatelyAndRefreshLater();
+      myChangesView.resetViewImmediatelyAndRefreshLater();
     }
   }
 
@@ -305,7 +306,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     private final @NotNull Wrapper myMainPanelContent;
     private final @NotNull BorderLayoutPanel myContentPanel;
 
-    private final @NotNull BackendChangesView myChangesView;
+    private final @NotNull ChangesViewProxy myChangesView;
 
     private final @NotNull ChangesViewCommitPanelSplitter myCommitPanelSplitter;
     private final @NotNull ChangesViewEditorDiffPreview myEditorDiffPreview;
@@ -321,12 +322,12 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     private boolean myDisposed = false;
 
     private ChangesViewToolWindowPanel(@NotNull Project project,
-                                       @NotNull BackendChangesView backendChangesView) {
+                                       @NotNull ChangesViewProxy changesView) {
       super(false, true);
       myProject = project;
       myChangesViewSettings = ChangesViewSettings.getInstance(project);
-      myChangesView = backendChangesView;
-      myChangesView.getViewModel().initPanel();
+      myChangesView = changesView;
+      myChangesView.initPanel();
 
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -346,7 +347,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       myCommitPanelSplitter = new ChangesViewCommitPanelSplitter(myProject);
       Disposer.register(this, myCommitPanelSplitter);
-      myCommitPanelSplitter.setFirstComponent(backendChangesView.getChangesPanel());
+      myCommitPanelSplitter.setFirstComponent(myChangesView.getPanel());
 
       myContentPanel = new BorderLayoutPanel();
       myContentPanel.addToCenter(myCommitPanelSplitter);
@@ -358,17 +359,17 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       Disposer.register(this, myEditorDiffPreview);
 
       // Override the handlers registered by editorDiffPreview
-      myChangesView.getViewModel().getTree().setDoubleClickHandler(e -> {
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(myChangesView.getViewModel().getTree(), e)) return false;
+      myChangesView.getTree().setDoubleClickHandler(e -> {
+        if (EditSourceOnDoubleClickHandler.isToggleEvent(myChangesView.getTree(), e)) return false;
         if (performHoverAction()) return true;
         if (myEditorDiffPreview.handleDoubleClick(e)) return true;
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myChangesView.getViewModel().getTree()), true);
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myChangesView.getTree()), true);
         return true;
       });
-      myChangesView.getViewModel().getTree().setEnterKeyHandler(e -> {
+      myChangesView.getTree().setEnterKeyHandler(e -> {
         if (performHoverAction()) return true;
         if (myEditorDiffPreview.handleEnterKey()) return true;
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myChangesView.getViewModel().getTree()), false);
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myChangesView.getTree()), false);
         return true;
       });
 
@@ -379,7 +380,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     }
 
     private boolean performHoverAction() {
-      ChangesBrowserNode<?> selected = VcsTreeModelData.selected(myChangesView.getViewModel().getTree()).iterateNodes().single();
+      ChangesBrowserNode<?> selected = VcsTreeModelData.selected(myChangesView.getTree()).iterateNodes().single();
       if (selected == null) return false;
 
       for (ChangesViewNodeAction extension : ChangesViewNodeAction.EP_NAME.getExtensions(myProject)) {
@@ -420,7 +421,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     private class ChangesViewEditorDiffPreview extends TreeHandlerEditorDiffPreview {
       private ChangesViewEditorDiffPreview() {
-        super(myChangesView.getViewModel().getTree(), myContentPanel, ChangesViewDiffPreviewHandler.INSTANCE);
+        super(myChangesView.getTree(), myContentPanel, ChangesViewDiffPreviewHandler.INSTANCE);
       }
 
       @Override
@@ -458,7 +459,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       @Override
       protected boolean isOpenPreviewWithSingleClick() {
-        if (myChangesView.getViewModel().isModelUpdateInProgress()) return false;
+        if (myChangesView.isModelUpdateInProgress()) return false;
         if (mySplitterDiffPreview != null && myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return false;
         return super.isOpenPreviewWithSingleClick();
       }
@@ -511,7 +512,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     }
 
     private ChangesViewDiffPreviewProcessor createDiffPreviewProcessor(boolean isInEditor) {
-      ChangesViewDiffPreviewProcessor processor = new ChangesViewDiffPreviewProcessor(myChangesView.getViewModel().getTree(), isInEditor);
+      ChangesViewDiffPreviewProcessor processor = new ChangesViewDiffPreviewProcessor(myChangesView.getTree(), isInEditor);
       this.addListener(new Listener() {
         @Override
         public void allowExcludeFromCommitChanged() {
@@ -549,7 +550,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
         myCommitWorkflowHandler = null;
         myCommitPanel = null;
       }
-      myChangesView.getViewModel().setCommitWorkflowHandler(myCommitWorkflowHandler);
+      myChangesView.setCommitWorkflowHandler(myCommitWorkflowHandler);
 
       myDispatcher.getMulticaster().allowExcludeFromCommitChanged();
       configureToolbars();
@@ -565,12 +566,12 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     private void configureToolbars() {
       boolean isToolbarHorizontal = CommitModeManager.getInstance(myProject).getCurrentCommitMode().useCommitToolWindow();
-      myChangesView.getViewModel().setToolbarHorizontal(isToolbarHorizontal);
+      myChangesView.setToolbarHorizontal(isToolbarHorizontal);
     }
 
     @Override
     public @NotNull List<AnAction> getActions(boolean originalProvider) {
-      return myChangesView.getViewModel().getActions();
+      return myChangesView.getActions();
     }
 
     @Override
@@ -578,7 +579,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       super.uiDataSnapshot(sink);
       sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
       sink.set(ChangesViewDataKeys.SETTINGS, myChangesViewSettings);
-      sink.set(ChangesViewDataKeys.REFRESHER, () -> myChangesView.getViewModel().scheduleRefreshNow(null));
+      sink.set(ChangesViewDataKeys.REFRESHER, () -> myChangesView.scheduleRefreshNow(null));
 
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       DataSink.uiDataSnapshot(sink, myCommitPanel);
@@ -622,6 +623,11 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @Override
   public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     return ChangesViewWorkflowManager.getInstance(myProject).getCommitWorkflowHandler();
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ChangesViewProxy getChangesView() {
+    return myChangesView;
   }
 
   private static boolean isAllowExcludeFromCommit(@Nullable ChangesViewCommitWorkflowHandler handler) {

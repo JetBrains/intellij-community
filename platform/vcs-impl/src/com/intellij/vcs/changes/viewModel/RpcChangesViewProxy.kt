@@ -4,14 +4,14 @@ package com.intellij.vcs.changes.viewModel
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
-import com.intellij.openapi.vcs.changes.InclusionModel
-import com.intellij.openapi.vcs.changes.LocalChangesListView
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.kernel.ids.BackendValueIdType
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
+import com.intellij.ui.split.createComponent
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.JComponent
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -29,11 +30,8 @@ import kotlin.time.Duration.Companion.minutes
  *
  * @see [com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi.getBackendChangesViewEvents]
  */
-internal class BackendRemoteCommitChangesViewModel(private val project: Project, scope: CoroutineScope) : BackendCommitChangesViewModel {
-  private var horizontal: Boolean = true
+internal class RpcChangesViewProxy(private val project: Project, scope: CoroutineScope) : ChangesViewProxy(scope) {
   private val treeView: ChangesListView by lazy { LocalChangesListView(project) }
-
-  private val _inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val _eventsForFrontend =
     MutableSharedFlow<BackendChangesViewEvent>(extraBufferCapacity = DEFAULT_BUFFER_SIZE, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -44,20 +42,25 @@ internal class BackendRemoteCommitChangesViewModel(private val project: Project,
 
   val inclusionModel = MutableStateFlow<InclusionModel?>(null)
 
-  override val inclusionChanged = _inclusionChanged.asSharedFlow()
+  private var _panel: JComponent? = null
+  override val panel: JComponent
+    get() = _panel ?: error("Panel is not initialized yet")
+
+  override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override fun setInclusionModel(model: InclusionModel?) {
     inclusionModel.value = model
   }
 
   override fun initPanel() {
+    val id = storeValueGlobally(scope, Unit, BackendChangesViewValueIdType)
+    ChangesViewSplitComponentBinding.createComponent(project, scope, id)
   }
 
   override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
   }
 
   override fun setToolbarHorizontal(horizontal: Boolean) {
-    this.horizontal = horizontal
   }
 
   override fun getActions(): List<AnAction> = emptyList()
@@ -108,7 +111,7 @@ internal class BackendRemoteCommitChangesViewModel(private val project: Project,
   override fun getTree(): ChangesListView = treeView
 
   fun inclusionChanged() {
-    _inclusionChanged.tryEmit(Unit)
+    inclusionChanged.tryEmit(Unit)
   }
 
   fun refreshPerformed(counter: Int) = refresher.refreshPerformed(counter)
@@ -153,3 +156,5 @@ private class BackendRemoteCommitChangesViewModelRefresher(
     lastAppliedRefresh.update { maxOf(it, counter) }
   }
 }
+
+private object BackendChangesViewValueIdType : BackendValueIdType<ChangesViewId, Unit>(::ChangesViewId)

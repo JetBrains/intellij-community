@@ -12,20 +12,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import javax.swing.tree.TreePath
 
 /**
- * Simply calls delegates to the corresponding [panel] methods.
  * Suitable for the monolith mode only.
  */
-internal class BackendLocalCommitChangesViewModel(val panel: CommitChangesViewWithToolbarPanel) : BackendCommitChangesViewModel {
+internal class LocalChangesViewProxy(override val panel: CommitChangesViewWithToolbarPanel, scope: CoroutineScope) : ChangesViewProxy(scope) {
   private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
-  private val _inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override val inclusionChanged = _inclusionChanged.asSharedFlow()
+  override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override fun setInclusionModel(model: InclusionModel?) {
     panel.changesView.setInclusionModel(model)
@@ -33,7 +31,7 @@ internal class BackendLocalCommitChangesViewModel(val panel: CommitChangesViewWi
 
   override fun initPanel() {
     panel.initPanel(ModelProvider())
-    panel.changesView.setInclusionListener { _inclusionChanged.tryEmit(Unit) }
+    panel.changesView.setInclusionListener { inclusionChanged.tryEmit(Unit) }
   }
 
   override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
