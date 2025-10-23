@@ -9,6 +9,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +40,8 @@ import java.util.List;
  * </pre>
  */
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
+  private static final Logger LOG = Logger.getInstance(TextEditorHighlightingPass.class);
+
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
   protected final @NotNull Document myDocument;
   protected final @NotNull Project myProject;
@@ -163,7 +166,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   @ApiStatus.Internal
   public void setContext(@NotNull CodeInsightContext context) {
-    assert myContext == null : "context is already assigned";
+    LOG.assertTrue(myContext == null, "context is already assigned");
     myContext = context;
   }
 
