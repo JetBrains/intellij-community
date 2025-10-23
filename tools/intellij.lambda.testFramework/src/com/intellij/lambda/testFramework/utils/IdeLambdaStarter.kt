@@ -9,7 +9,9 @@ import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
-import com.intellij.openapi.application.Application
+import com.intellij.remoteDev.tests.LambdaBackendContext
+import com.intellij.remoteDev.tests.LambdaFrontendContext
+import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.LambdaTestsConstants
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.NamedLambda
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
@@ -44,6 +46,7 @@ object IdeLambdaStarter {
       runLambda.startSuspending(rdSession.protocol!!.lifetime,
                                 LambdaRdTestActionParameters(namedLambdaClass.java.canonicalName, params.toLambdaParams()))
     }
+
     suspend fun runLambda(namedLambdaClass: KClass<out NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
       return rdSession.runLambda(namedLambdaClass, params)
     }
@@ -53,16 +56,16 @@ object IdeLambdaStarter {
     }
 
 
-    suspend inline fun LambdaRdTestSession.runSerializedLambda(crossinline lambda: (Application) -> Unit) {
-      val exec = SerializedLambda.fromLambdaWithApplication(lambda)
+    suspend inline fun <T: LambdaIdeContext> LambdaRdTestSession.runSerializedLambda(crossinline lambda: suspend T.() -> Unit) {
+      val exec = SerializedLambda.fromLambdaWithCoroutineScope(lambda)
       runSerializedLambda.startSuspending(rdSession.protocol!!.lifetime, LambdaRdSerializedLambda(exec.clazzName, exec.methodName, exec.serializedDataBase64, exec.classPath.map { it.canonicalPath }))
     }
 
-    suspend inline fun runSerializedLambda(crossinline lambda: (Application) -> Unit) {
+    suspend inline fun runSerializedLambda(crossinline lambda: suspend LambdaFrontendContext.() -> Unit) {
       return rdSession.runSerializedLambda(lambda)
     }
 
-    suspend inline fun runSerializedLambdaInBackend(crossinline lambda: (Application) -> Unit) {
+    suspend inline fun runSerializedLambdaInBackend(crossinline lambda: suspend LambdaBackendContext.() -> Unit) {
       return (backendRdSession ?: rdSession).runSerializedLambda(lambda)
     }
   }

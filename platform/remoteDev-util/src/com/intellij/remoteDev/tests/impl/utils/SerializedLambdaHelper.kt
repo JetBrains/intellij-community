@@ -2,9 +2,9 @@ package com.intellij.remoteDev.tests.impl.utils
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
+import com.intellij.remoteDev.tests.LambdaIdeContext
 import java.io.*
 import java.util.*
-import java.util.function.Consumer
 import kotlin.io.inputStream
 import kotlin.use
 
@@ -15,6 +15,10 @@ import kotlin.use
  * 
  * https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html
  */
+
+fun interface SuspendingSerializableConsumer<T> : Serializable {
+  suspend fun accept(application: T)
+}
 
 data class SerializedLambda(
   val clazzName: String,
@@ -27,9 +31,9 @@ data class SerializedLambda(
       System.setProperty("sun.io.serialization.extendedDebugInfo", "true")
     }
 
-    inline fun fromLambdaWithApplication(crossinline code: (Application) -> Unit): SerializedLambda {
-      val obj = object : Consumer<Application>, Serializable {
-        override fun accept(application: Application) {
+    inline fun <T : LambdaIdeContext> fromLambdaWithCoroutineScope(crossinline code: suspend (T) -> Unit): SerializedLambda {
+      val obj = object : SuspendingSerializableConsumer<T>, Serializable {
+        override suspend fun accept(application: T) {
           code(application)
         }
       }
@@ -60,10 +64,10 @@ class SerializedLambdaLoader {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun load(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): Consumer<Application> {
+  fun <T : LambdaIdeContext> load(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader, context: T? = null): SuspendingSerializableConsumer<T> {
     val inputStream = Base64.getDecoder().decode(stringToDecode).inputStream()
     return ClassLoaderObjectInputStream(inputStream, classLoader)
-      .readObject() as? Consumer<Application> ?: error("Failed to load Consumer<Application> from the lambda")
+             .readObject() as? SuspendingSerializableConsumer<T> ?: error("Failed to load Consumer<Application> from the lambda")
   }
 }
 
@@ -72,7 +76,7 @@ private fun normalizeLambdaClassName(name: String): String {
   return if (slash >= 0) name.substring(0, slash) else name
 }
 
-fun wrapLambda(obj: Consumer<Application>): SerializedLambda {
+fun <T : LambdaIdeContext> wrapLambda(obj: SuspendingSerializableConsumer<T>): SerializedLambda {
   val clazzPath = setOf(SerializedLambdaLoader::class.java, obj.javaClass, Application::class.java)
     .mapNotNull { PathManager.getJarPathForClass(it) }
     .map { File(it) }
@@ -81,7 +85,7 @@ fun wrapLambda(obj: Consumer<Application>): SerializedLambda {
   val persistedLambda: String
   try {
     persistedLambda = SerializedLambdaLoader().save(obj)
-    val reloadedLambda = SerializedLambdaLoader().load(persistedLambda)
+    val reloadedLambda = SerializedLambdaLoader().load<T>(persistedLambda)
     require(reloadedLambda.javaClass == obj.javaClass) {
       "The reloaded lambda should have the same type as the original one. " +
       "Reloaded Type is ${reloadedLambda.javaClass.name}, expected type is ${obj.javaClass.name}"

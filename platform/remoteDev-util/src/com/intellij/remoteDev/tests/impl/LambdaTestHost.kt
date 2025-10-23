@@ -196,17 +196,17 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass()
         }
 
+        val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
+                           ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
+
+        val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
+                         ?: error("Test plugin with test module '$testModuleId' is not found")
+
+        LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
+
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
           LOG.info("'${parameters.reference}': received lambda execution request")
-
-          val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
-                             ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
-
-          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
-                           ?: error("Test plugin with test module '$testModuleId' is not found")
-
-          LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
 
           val lambdaReference = parameters.reference
           val namedLambdas = findLambdaClasses(lambdaReference = lambdaReference, testPlugin = testPlugin, ideContext = ideContext)
@@ -268,9 +268,9 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
               val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
               runLogged(serializedLambda.methodName, 1.minutes) {
-                URLClassLoader(urls.toTypedArray(), Thread.currentThread().contextClassLoader).use {
-                  SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it)
-                    .accept(app)
+                URLClassLoader(urls.toTypedArray(), testPlugin.pluginClassLoader).use {
+                  SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
+                    .accept(ideContext)
                 }
               }
 
