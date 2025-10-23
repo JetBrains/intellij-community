@@ -30,6 +30,6 @@ internal class GitInMemoryRewordOperation(
     val newHead = objectRepo.chainCommits(rewordedTargetCommit, baseToHeadCommitsRange.drop(1))
 
     LOG.info("Finish computing new head for reword operation")
-    return CommitEditingResult(newHead, rewordedTargetCommit)
+    return CommitEditingResult(newHead, requiresWorkingTreeUpdate = false, commitToFocus = rewordedTargetCommit)
   }
 }

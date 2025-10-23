@@ -103,9 +103,9 @@ public final class GitUtil {
     // do nothing
   }
 
-  public static void updateHead(@NotNull GitRepository repository,
-                                @NotNull Hash newObjectId,
-                                @Nullable String reflogMessage) throws VcsException {
+  public static void updateHeadReference(@NotNull GitRepository repository,
+                                         @NotNull Hash newObjectId,
+                                         @Nullable String reflogMessage) throws VcsException {
     Git.getInstance().updateReference(repository, HEAD, newObjectId, reflogMessage).throwOnError();
   }
 
