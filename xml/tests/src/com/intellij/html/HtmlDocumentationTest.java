@@ -152,6 +152,11 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
     );
   }
 
+  public void testInputAttributeQuickDoc() {
+    myFixture.configureByText("attributeQuickDocAtTheEndOfFile.html", "<input type='button' popover<caret>targetaction>");
+    WebTestUtil.checkDocumentationAtCaret(myFixture);
+  }
+
   public void testLookupDocWordCompletions() {
     myFixture.configureByText("test.html", "<html lang='en'>la<caret>n");
     PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
