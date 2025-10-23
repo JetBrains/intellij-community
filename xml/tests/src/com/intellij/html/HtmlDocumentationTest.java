@@ -24,6 +24,8 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.polySymbols.testFramework.WebTestUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+
 public class HtmlDocumentationTest extends BasePlatformTestCase {
   public void testQuickDocumentationHtml5Tag() {
     doTest("""
@@ -138,6 +140,15 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
 
   public void testQuickDocumentationHtml5MediaEvents() {
     doTest("<video on<caret>stalled=''>"
+    );
+  }
+
+  public void testAttributeQuickDocAtTheEndOfFile() {
+    myFixture.configureByText("attributeQuickDocAtTheEndOfFile.html", "<button popovert<caret>");
+    WebTestUtil.checkLookupItems(
+      myFixture, false, false, false, false, false,
+      false, true, false, Collections.emptyList(), Collections.emptyList(),
+      "attributeQuickDocAtTheEndOfFile", "", (item) -> true
     );
   }
 
