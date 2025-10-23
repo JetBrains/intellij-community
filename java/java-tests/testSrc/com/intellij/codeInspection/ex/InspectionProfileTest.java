@@ -11,6 +11,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -1100,6 +1101,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     ep.level = "ERROR";
     ep.enabledByDefault = enabled;
     ep.implementationClass = TestTool.class.getName();
+    ep.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     return new LocalInspectionToolWrapper(ep);
   }
 

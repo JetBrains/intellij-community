@@ -401,7 +401,6 @@ f:com.intellij.codeInsight.daemon.HighlightDisplayKey
 - getID():java.lang.String
 - getShortName():java.lang.String
 - s:register(java.lang.String,com.intellij.openapi.util.Computable,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
-- s:register(java.lang.String,com.intellij.openapi.util.Computable,java.lang.String,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:register(java.lang.String,java.lang.String,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:unregister(java.lang.String):V
 com.intellij.codeInsight.daemon.HighlightingPassesCache

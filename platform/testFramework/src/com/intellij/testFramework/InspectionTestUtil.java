@@ -169,7 +169,7 @@ public final class InspectionTestUtil {
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
       Computable.PredefinedValueComputable<String> displayName = new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName());
-      HighlightDisplayKey.register(shortName, displayName, toolWrapper.getID());
+      HighlightDisplayKey.register(shortName, displayName, toolWrapper.getID(), null, toolWrapper.getDescriptionContextClass());
     }
 
     globalContext.doInspections(scope);

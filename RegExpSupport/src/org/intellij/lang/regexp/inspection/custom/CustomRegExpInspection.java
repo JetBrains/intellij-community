@@ -132,10 +132,10 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
       final String suppressId = configuration.getSuppressId();
       final String name = configuration.getName();
       if (suppressId == null) {
-        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME);
+        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME, null, configuration.getClass());
       }
       else {
-        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
+        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME, configuration.getClass());
       }
     }, ModalityState.nonModal());
   }
