@@ -19,8 +19,12 @@ internal class KotlinSpellcheckingStrategy : SpellcheckingStrategy(), DumbAware 
     private val emptyTokenizer: Tokenizer<PsiElement> = EMPTY_TOKENIZER
 
     override fun getTokenizer(element: PsiElement): Tokenizer<out PsiElement?> {
+        if (useTextLevelSpellchecking() && (element is PsiComment || element is KtLiteralStringTemplateEntry)) {
+            // use [KotlinTextExtractor] and [GrazieTextLevelSpellCheckingExtension] if enabled for non-code constructs
+            return emptyTokenizer
+        }
         return when (element) {
-            is PsiComment if !useTextLevelSpellchecking() -> super.getTokenizer(element)
+            is PsiComment -> super.getTokenizer(element)
             is KtParameter -> {
                 val function = (element.parent as? KtParameterList)?.parent as? KtNamedFunction
                 when {
@@ -36,9 +40,7 @@ internal class KotlinSpellcheckingStrategy : SpellcheckingStrategy(), DumbAware 
                 }
             }
 
-            is KtLiteralStringTemplateEntry if !useTextLevelSpellchecking() && !isInjectedLanguageFragment(element.parent) -> {
-                plainTextTokenizer
-            }
+            is KtLiteralStringTemplateEntry if !isInjectedLanguageFragment(element.parent) -> plainTextTokenizer
 
             else -> emptyTokenizer
         }
