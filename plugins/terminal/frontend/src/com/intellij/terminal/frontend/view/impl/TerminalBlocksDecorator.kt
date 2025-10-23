@@ -102,6 +102,7 @@ internal class TerminalBlocksDecorator(
     bgHighlighter.isGreedyToRight = true
 
     val cornersHighlighter = createCornersHighlighter(startOffset, endOffset).also {
+      it.isGreedyToLeft = true
       it.isGreedyToRight = true
       it.setCustomRenderer(TerminalPromptSeparatorRenderer())
       it.lineMarkerRenderer = TerminalPromptLeftAreaRenderer()
