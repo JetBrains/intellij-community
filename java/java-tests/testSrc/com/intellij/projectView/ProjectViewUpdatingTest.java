@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -15,23 +17,37 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.ui.DeferredIconImpl;
+import com.intellij.ui.icons.CompositeIcon;
+import com.intellij.ui.icons.IconWrapperWithToolTipComposite;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
+  @Override
+  protected boolean isIconRequired() {
+    return true;
+  }
+
   public void testStandardProviders() {
     PsiFile element = JavaDirectoryService.getInstance().getClasses(getPackageDirectory())[0].getContainingFile();
     final AbstractProjectViewPane pane = myStructure.createPane();
@@ -479,6 +495,87 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "    -PsiDirectory: name\n" +
                           "     -I\n" +
                           "      m(): void\n");
+  }
+
+  public void testFolderIcons() {
+    ElementBase.withForcedDeferredIcons(() -> {
+      PsiTestUtil.addResourceContentToRoots(myModule, getContentRoot().findChild("resource"), false);
+      PsiTestUtil.addResourceContentToRoots(myModule, getContentRoot().findChild("testResource"), true);
+      myStructure.setProviders();
+      var pane = myStructure.createPane();
+      var tree = pane.getTree();
+      TreeUtil.promiseExpandAll(tree);
+      PlatformTestUtil.waitWhileBusy(tree);
+      var folderIcons = getFolderIcons(tree);
+      for (var icon : folderIcons) {
+        var iconParts = decomposeIcon(icon.icon());
+        assertThat(iconParts).as(icon.toString()).containsAnyOf(
+          AllIcons.Nodes.Folder,
+          // some icons aren't deferred due to implementation details
+          AllIcons.Nodes.Module,
+          AllIcons.Nodes.Package,
+          AllIcons.Modules.SourceRoot
+        );
+      }
+    });
+  }
+
+  private record FolderIcon(@NotNull PsiDirectory folder, @Nullable Icon icon) { }
+
+  private static @NotNull List<FolderIcon> getFolderIcons(@NotNull JTree tree) {
+    var model = tree.getModel();
+    var root = model.getRoot();
+    var result = new ArrayList<FolderIcon>();
+    getFolderIcons(model, root, result);
+    return result;
+  }
+
+  private static void getFolderIcons(@NotNull TreeModel model, @Nullable Object node, @NotNull ArrayList<FolderIcon> result) {
+    assertThat(result).hasSizeLessThan(1000); // stack overflow protection for broken models
+    if (node == null) return;
+    var childCount = model.getChildCount(node);
+    getFolderIcon(node, result);
+    for (int i = 0; i < childCount; i++) {
+      var child = model.getChild(node, i);
+      getFolderIcons(model, child, result);
+    }
+  }
+
+  private static void getFolderIcon(@NotNull Object node, @NotNull ArrayList<FolderIcon> result) {
+    var userObject = TreeUtil.getUserObject(node);
+    if (!(userObject instanceof ProjectViewNode<?> pvNode)) return;
+    var value = pvNode.getValue();
+    if (!(value instanceof PsiDirectory folder)) return;
+    var presentation = pvNode.getPresentation();
+    result.add(new FolderIcon(folder, presentation.getIcon(false)));
+  }
+
+  private static @NotNull List<Icon> decomposeIcon(@Nullable Icon icon) {
+    var result = new ArrayList<Icon>();
+    decomposeIcon(icon, result);
+    return result;
+  }
+
+  private static void decomposeIcon(@Nullable Icon icon, @NotNull ArrayList<Icon> result) {
+    assertThat(result).hasSizeLessThan(50); // stack overflow protection for badly composed icons
+    if (icon == null) return;
+    if (icon instanceof DeferredIconImpl<?> deferred) {
+      decomposeIcon(deferred.getBaseIcon(), result);
+      return;
+    }
+    if (icon instanceof IconWrapperWithToolTipComposite withToolTip) {
+      decomposeIcon(withToolTip.retrieveIcon(), result);
+      return;
+    }
+    if (!(icon instanceof CompositeIcon composite)) {
+      result.add(icon);
+      return;
+    }
+    var count = composite.getIconCount();
+    for (int i = 0; i < count; i++) {
+      var element = composite.getIcon(i);
+      decomposeIcon(element, result);
+    }
   }
 
   private static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected) {
