@@ -794,7 +794,6 @@
     <changesViewContent id="git.stage" tabName="Staging Area" className="git4idea.index.GitStageContentProvider"
                         predicateClassName="git4idea.index.GitStageContentVisibilityPredicate"
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
-                        displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
     <vcs.changes.changesViewNodeAction implementation="git4idea.merge.GitChangesViewNodeAction"/>
 

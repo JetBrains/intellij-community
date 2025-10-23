@@ -1,20 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangeListChangesSupplier
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
+import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
@@ -41,10 +41,6 @@ class ChangesViewCommitPanel internal constructor(
   private var rootComponent: JComponent? = null
 
   init {
-    val titleUpdater = ChangesViewCommitTabTitleUpdater(project)
-    titleUpdater.initSubscription(this)
-    titleUpdater.updateTitle()
-
     Disposer.register(this, commitMessage)
     setProgressComponent(progressPanel)
 
@@ -60,8 +56,6 @@ class ChangesViewCommitPanel internal constructor(
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
     }
-
-    ChangesViewCommitTabTitleUpdater(project).initSubscription(this)
   }
 
   override val isActive: Boolean get() = component.isVisible
@@ -174,24 +168,3 @@ class ChangesViewCommitPanel internal constructor(
   }
 }
 
-private class ChangesViewCommitTabTitleUpdater(private val project: Project) : ChangesViewContentManagerListener {
-  fun initSubscription(disposable: Disposable) {
-    project.messageBus.connect(disposable).subscribe(ChangesViewContentManagerListener.TOPIC, this)
-  }
-
-  override fun toolWindowMappingChanged() {
-    updateTitle()
-  }
-
-  fun updateTitle() {
-    val tabContent = ChangesViewContentManager.getInstance(project).findContent(LOCAL_CHANGES)
-    if (tabContent != null) {
-      val contentsCount = getToolWindowFor(project, LOCAL_CHANGES)?.contentManager?.contentCount ?: 0
-
-      tabContent.displayName = when {
-        contentsCount == 1 -> null
-        project.isCommitToolWindowShown -> message("tab.title.commit")
-        else ->message("local.changes.tab")
-    }}
-  }
-}

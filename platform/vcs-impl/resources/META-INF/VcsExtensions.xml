@@ -194,7 +194,6 @@
                         className="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentProvider"
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"
                         predicateClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPredicate"
-                        displayNameSupplierClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier"
                         isInCommitToolWindow="true"/>
     <changesViewContent tabName="Shelf"
                         className="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$ContentProvider"

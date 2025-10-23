@@ -162,6 +162,8 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     @Override
     public void preloadTabContent(@NotNull Content content) {
+      new ChangesViewCommitTabTitleUpdater(myProject, LOCAL_CHANGES).init(content);
+
       content.putUserData(Content.TAB_DND_TARGET_KEY, new MyContentDnDTarget(myProject, content));
     }
   }
