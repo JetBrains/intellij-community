@@ -1049,8 +1049,8 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMai
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
       val rootDir = NioFiles.list(outputDir).firstOrNull { it.fileName.toString() != "__index__" }
       if (rootDir != null) {
-        NonShareableJavaZipFilePool().use { pool ->
-          return loadFromPluginDir(dir = rootDir, loadingContext = loadingContext, pool = pool, isUnitTestMode = PluginManagerCore.isUnitTestMode)
+        return NonShareableJavaZipFilePool().use { pool ->
+          loadFromPluginDir(dir = rootDir, loadingContext = loadingContext, pool = pool, isUnitTestMode = PluginManagerCore.isUnitTestMode)
         }
       }
     }
