@@ -342,7 +342,12 @@ object FUSProjectHotStartUpMeasurer {
     withRequiredProjectMarker { projectId ->
       channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime, projectId))
       if (ApplicationManagerEx.isInIntegrationTest()) {
-        val project = ProjectManager.getInstance().openProjects[0]
+        val openProjects = ProjectManager.getInstance().openProjects
+        if (openProjects.size == 0) {
+          thisLogger().warn("No open projects, cannot check the editor state")
+          return@withRequiredProjectMarker
+        }
+        val project = openProjects[0]
         val fileEditorManager = FileEditorManager.getInstance(project)
         checkEditorHasBasicHighlight(file, project, fileEditorManager)
       }
