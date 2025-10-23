@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.AlignX
@@ -43,15 +44,28 @@ internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel 
     }.customize(UnscaledGapsY(bottom = 7))
   }
 
-  val actionManager = ActionManager.getInstance()
-  val group = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
-  val toolbar = createFrameWelcomeScreenVerticalToolbar(group, disposable)
+  if (Registry.`is`("station.enable.welcome.screen.promo")) {
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
+    val toolbar = createFrameWelcomeScreenVerticalToolbar(group, disposable)
 
-  row {
-    cell(toolbar.component)
-      .customize(UnscaledGaps(27))
-      .align(AlignX.CENTER)
-      .resizableColumn()
+    row {
+      cell(toolbar.component)
+        .customize(UnscaledGaps(27))
+        .align(AlignX.CENTER)
+        .resizableColumn()
+    }
+  }
+  else {
+    val (mainActions, moreActions) = createActionToolbars(disposable)
+    panel {
+      row {
+        cell(mainActions).align(AlignX.FILL)
+      }
+    }.align(AlignX.CENTER).customize(UnscaledGaps(27))
+    row {
+      cell(moreActions).align(AlignX.CENTER)
+    }
   }
 }.apply {
   background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
