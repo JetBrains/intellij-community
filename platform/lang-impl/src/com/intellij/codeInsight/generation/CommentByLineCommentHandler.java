@@ -157,6 +157,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
   public void postInvoke() {
     // second pass - determining whether we need to comment or to uncomment
     boolean allLinesCommented = true;
+    boolean allLinesEmpty = true;
     for (Block block : myBlocks) {
       int startLine = block.startLine;
       int endLine = block.endLine;
@@ -196,9 +197,15 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
         }
 
         block.commenters[line - startLine] = commenter;
+
+        boolean isLineEmpty = DocumentUtil.isLineEmpty(document, line);
+        if (!isLineEmpty) {
+          allLinesEmpty = false;
+        }
+
         if (allLinesCommented
             && !isLineCommented(block, line, commenter)
-            && (singleline || !DocumentUtil.isLineEmpty(document, line))) {
+            && (singleline || !isLineEmpty)) {
           allLinesCommented = false;
           if (commenter instanceof IndentedCommenter) {
             final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
@@ -220,7 +227,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     Collections.reverse(myBlocks);
     for (Block block : myBlocks) {
       if (!block.skip) {
-        if (!allLinesCommented) {
+        if (!allLinesCommented || allLinesEmpty) {
           if (!block.commentWithIndent) {
             doDefaultCommenting(block);
           }
