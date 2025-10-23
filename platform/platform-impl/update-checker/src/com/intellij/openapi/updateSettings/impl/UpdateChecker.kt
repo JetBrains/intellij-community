@@ -23,6 +23,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
@@ -189,8 +191,7 @@ object UpdateChecker {
   fun updateAndShowResult(project: Project?, customSettings: UpdateSettings? = null) {
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
       override fun run(indicator: ProgressIndicator) {
-        val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
-        coroutineScope.launch {
+        runBlockingCancellable {
           doUpdateAndShowResult(
             project = getProject(),
             customSettings = customSettings,
