@@ -547,7 +547,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
-    return PluginDownloader.createDownloader(pluginUiModel.getDescriptor(), pluginUiModel.repositoryName, null).checkPluginCanBeDownloaded(null)
+    return PluginDownloader.createDownloader(pluginUiModel, pluginUiModel.repositoryName, null).checkPluginCanBeDownloaded(null)
   }
 
   override suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
