@@ -773,7 +773,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     myPreviewSplitter = new OnePixelSplitter(true, .33f);
     myPreviewSplitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
-    myPreviewSplitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+    myPreviewSplitter.getDivider().setBackground(JBUI.CurrentTheme.Separator.color());
     JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
       @Override
       public Dimension getMinimumSize() {

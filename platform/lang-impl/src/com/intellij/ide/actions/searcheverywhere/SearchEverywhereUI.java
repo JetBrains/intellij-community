@@ -735,7 +735,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     OnePixelSplitter splitter = new OnePixelSplitter(true, .33f);
     splitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
-    splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+    splitter.getDivider().setBackground(JBUI.CurrentTheme.Separator.color());
     splitter.setFirstComponent(resultScroll);
     splitter.setSecondComponent(myUsagePreviewPanel);
 
