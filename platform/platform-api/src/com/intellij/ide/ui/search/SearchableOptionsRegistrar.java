@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import javax.swing.event.DocumentEvent;
 import java.nio.file.Path;
@@ -31,7 +32,7 @@ public abstract class SearchableOptionsRegistrar {
                                                             @NotNull String option,
                                                             @Nullable Project project);
 
-  public abstract @NotNull Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option);
+  public abstract @NotNull @UnmodifiableView Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option);
 
   /**
    * @deprecated Use {@link SearchableOptionContributor}
