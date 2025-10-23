@@ -1,8 +1,8 @@
-package intellij.lambda.tests
+package com.intellij.lambda.tests
 
+import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
-import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.params.ParameterizedTest

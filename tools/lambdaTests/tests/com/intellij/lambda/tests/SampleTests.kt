@@ -1,8 +1,7 @@
-package intellij.lambda.com.intellij.lambda.tests
+package com.intellij.lambda.tests
 
 import com.intellij.ide.plugins.PluginModuleDescriptor
-import com.intellij.ide.starter.extended.allure.IjplComponents
-import com.intellij.ide.starter.extended.remdev.RemoteDevRun
+import com.intellij.ide.starter.junit5.RemoteDevRun
 import com.intellij.lambda.testFramework.junit.MonolithAndSplitModeIdeInstanceInitializer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.currentClassLogger
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 
-@IjplComponents.TODO
 @ExtendWith(RemoteDevRun::class, MonolithAndSplitModeIdeInstanceInitializer::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SampleTests {

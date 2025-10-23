@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.tests.impl.utils.serialization
+package com.intellij.remoteDev.tests.impl.utils
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager

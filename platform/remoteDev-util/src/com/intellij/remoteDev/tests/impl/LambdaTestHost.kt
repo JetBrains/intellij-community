@@ -22,9 +22,9 @@ import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
+import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaLoader
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.impl.utils.serialization.SerializedLambdaLoader
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
