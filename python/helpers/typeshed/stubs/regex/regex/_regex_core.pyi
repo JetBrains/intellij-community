@@ -3,7 +3,47 @@ from collections.abc import Callable
 from typing import Any, AnyStr, Generic
 from typing_extensions import TypeAlias
 
-from .regex import Pattern
+from ._main import Pattern
+
+__all__ = [
+    "A",
+    "ASCII",
+    "B",
+    "BESTMATCH",
+    "D",
+    "DEBUG",
+    "E",
+    "ENHANCEMATCH",
+    "F",
+    "FULLCASE",
+    "I",
+    "IGNORECASE",
+    "L",
+    "LOCALE",
+    "M",
+    "MULTILINE",
+    "P",
+    "POSIX",
+    "R",
+    "REVERSE",
+    "S",
+    "DOTALL",
+    "T",
+    "TEMPLATE",
+    "U",
+    "UNICODE",
+    "V0",
+    "VERSION0",
+    "V1",
+    "VERSION1",
+    "W",
+    "WORD",
+    "X",
+    "VERBOSE",
+    "error",
+    "Scanner",
+    "RegexFlag",
+]
 
 class error(Exception):
     def __init__(self, message: str, pattern: AnyStr | None = None, pos: int | None = None) -> None: ...
@@ -44,42 +84,42 @@ class RegexFlag(enum.IntFlag):
     X = 0x40
     VERBOSE = X
 
-A = RegexFlag.A
 ASCII = RegexFlag.ASCII
-B = RegexFlag.B
 BESTMATCH = RegexFlag.BESTMATCH
-D = RegexFlag.D
 DEBUG = RegexFlag.DEBUG
-E = RegexFlag.E
 ENHANCEMATCH = RegexFlag.ENHANCEMATCH
-F = RegexFlag.F
 FULLCASE = RegexFlag.FULLCASE
-I = RegexFlag.I
 IGNORECASE = RegexFlag.IGNORECASE
-L = RegexFlag.L
 LOCALE = RegexFlag.LOCALE
-M = RegexFlag.M
 MULTILINE = RegexFlag.MULTILINE
-P = RegexFlag.P
 POSIX = RegexFlag.POSIX
-R = RegexFlag.R
 REVERSE = RegexFlag.REVERSE
-T = RegexFlag.T
 TEMPLATE = RegexFlag.TEMPLATE
-S = RegexFlag.S
 DOTALL = RegexFlag.DOTALL
-U = RegexFlag.U
 UNICODE = RegexFlag.UNICODE
-V0 = RegexFlag.V0
-VERSION0 = RegexFlag.VERSION0
-V1 = RegexFlag.V1
-VERSION1 = RegexFlag.VERSION1
-W = RegexFlag.W
-WORD = RegexFlag.WORD
-X = RegexFlag.X
 VERBOSE = RegexFlag.VERBOSE
+VERSION0 = RegexFlag.VERSION0
+VERSION1 = RegexFlag.VERSION1
+WORD = RegexFlag.WORD
+A = RegexFlag.A
+B = RegexFlag.B
+D = RegexFlag.D
+E = RegexFlag.E
+F = RegexFlag.F
+I = RegexFlag.I
+L = RegexFlag.L
+M = RegexFlag.M
+P = RegexFlag.P
+R = RegexFlag.R
+S = RegexFlag.S
+U = RegexFlag.U
+V0 = RegexFlag.V0
+V1 = RegexFlag.V1
+W = RegexFlag.W
+X = RegexFlag.X
+T = RegexFlag.T
 
-DEFAULT_VERSION: RegexFlag
+DEFAULT_VERSION = VERSION1
 
 _Lexicon: TypeAlias = list[tuple[AnyStr, Callable[[Scanner[AnyStr], AnyStr], Any]]]
 

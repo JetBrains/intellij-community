@@ -11,6 +11,69 @@ _T = TypeVar("_T")
 
 __version__: str
 
+# Sync with regex.__init__.__all__
+__all__ = [
+    "cache_all",
+    "compile",
+    "DEFAULT_VERSION",
+    "escape",
+    "findall",
+    "finditer",
+    "fullmatch",
+    "match",
+    "purge",
+    "search",
+    "split",
+    "splititer",
+    "sub",
+    "subf",
+    "subfn",
+    "subn",
+    "template",
+    "Scanner",
+    "A",
+    "ASCII",
+    "B",
+    "BESTMATCH",
+    "D",
+    "DEBUG",
+    "E",
+    "ENHANCEMATCH",
+    "S",
+    "DOTALL",
+    "F",
+    "FULLCASE",
+    "I",
+    "IGNORECASE",
+    "L",
+    "LOCALE",
+    "M",
+    "MULTILINE",
+    "P",
+    "POSIX",
+    "R",
+    "REVERSE",
+    "T",
+    "TEMPLATE",
+    "U",
+    "UNICODE",
+    "V0",
+    "VERSION0",
+    "V1",
+    "VERSION1",
+    "X",
+    "VERBOSE",
+    "W",
+    "WORD",
+    "error",
+    "Regex",
+    "__version__",
+    "__doc__",
+    "RegexFlag",
+    "Pattern",
+    "Match",
+]
+
 def compile(
     pattern: AnyStr | Pattern[AnyStr],
     flags: int = 0,
@@ -312,6 +375,9 @@ def cache_all(value: bool = True) -> None: ...
 @overload
 def cache_all(value: None) -> bool: ...
 def escape(pattern: AnyStr, special_only: bool = True, literal_spaces: bool = False) -> AnyStr: ...
+
+DEFAULT_VERSION = RegexFlag.VERSION0
+
 def template(pattern: AnyStr | Pattern[AnyStr], flags: int = 0) -> Pattern[AnyStr]: ...
 
 Regex = compile

@@ -19,7 +19,7 @@ class _Error(Exception):
     relative_path: deque[str | int]
     schema_path: deque[str | int]
     relative_schema_path: deque[str | int]
-    context: list[ValidationError] | None
+    context: list[ValidationError]
     cause: Exception | None
     validator: Validator | Unset
     validator_value: Any | Unset

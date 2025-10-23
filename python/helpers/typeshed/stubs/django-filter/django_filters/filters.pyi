@@ -303,7 +303,7 @@ class OrderingFilter(BaseCSVFilter, ChoiceFilter):
         field_name: str | None = None,
         lookup_expr: str | None = None,
         *,
-        fields: dict[str, str] | Iterable[tuple[str, str]] = ...,
+        fields: dict[str, str] | Iterable[str] | Iterable[tuple[str, str]] = ...,
         field_labels: dict[str, StrOrPromise] = ...,
         # Inherited from ChoiceFilter
         null_value: Any = ...,  # Null value can be any type (None, empty string, etc.)

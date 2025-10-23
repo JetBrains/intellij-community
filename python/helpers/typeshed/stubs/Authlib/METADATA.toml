@@ -1,4 +1,4 @@
-version = "~= 1.6.4"
+version = "1.6.5"
 upstream_repository = "https://github.com/lepture/authlib"
 requires = ["cryptography"]
 partial_stub = true
