@@ -52,7 +52,7 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
     AppMode.isRemoteDevHost()
   ) return
 
-  val currentDir = PathManager.getHomeDir().parent
+  val currentDir = PathManager.getHomeDir().let { if (OS.CURRENT == OS.macOS) it.parent else it }
   val currentDirName = currentDir.name
   val newDirName = currentDirName.replace(" CE", "").replace(" Community Edition", "")
   if (newDirName == currentDirName) return
