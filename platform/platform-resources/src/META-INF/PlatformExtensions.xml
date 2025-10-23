@@ -669,7 +669,7 @@
                  description="Add icon 'open In right splitter' to recent files menu"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
     <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory"/>
-    <registryKey defaultValue="4" description="Number of primary buttons on welcome screen (other go to 'more actions')" key="welcome.screen.primaryButtonsCount" restartRequired="true"/>
+    <registryKey defaultValue="3" description="Number of primary buttons on welcome screen (other go to 'more actions')" key="welcome.screen.primaryButtonsCount" restartRequired="true"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.survey.IdeSurveyCollector"/>
     <statistics.counterUsagesCollector
