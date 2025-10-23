@@ -12,10 +12,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -256,8 +253,8 @@ public final class ResolveImportUtil {
       return resolveInPackageModule((PyFile)parent, referencedName, containingFile, fileOnly, checkForPackage, withoutStubs,
                                     withoutForeign);
     }
-    else if (parent instanceof PsiDirectory) {
-      return resolveInPackageDirectory(parent, referencedName, containingFile, fileOnly, checkForPackage, withoutStubs, withoutForeign);
+    else if (parent instanceof PsiDirectory parentDir) {
+      return resolveInPackageDirectory(parentDir, referencedName, containingFile, fileOnly, checkForPackage, withoutStubs, withoutForeign);
     }
     else {
       return resolveMemberFromReferenceTypeProviders(parent, referencedName);
@@ -309,7 +306,7 @@ public final class ResolveImportUtil {
     return Lists.newArrayList(results);
   }
 
-  private static @NotNull List<RatedResolveResult> resolveInPackageDirectory(@Nullable PsiElement parent, @NotNull String referencedName,
+  private static @NotNull List<RatedResolveResult> resolveInPackageDirectory(@NotNull PsiFileSystemItem parent, @NotNull String referencedName,
                                                                              @Nullable PsiFile containingFile, boolean fileOnly,
                                                                              boolean checkForPackage, boolean withoutStubs, boolean withoutForeign) {
     final PsiElement parentDir = PyUtil.turnInitIntoDir(parent);
