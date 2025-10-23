@@ -172,7 +172,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     PY-84369
     PY-84374
    */
-  fun softRunCellAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing cell") {
+  fun softRunCellAndWaitExecuted(timeout: Duration = 2.minutes): Unit = step("Executing cell") {
     runCell()
     waitFor(timeout = timeout) {
       val last = notebookCellExecutionInfos.lastOrNull()
@@ -217,7 +217,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     PY-84369
     PY-84374
    */
-  fun softRunAllCellsAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing all cells") {
+  fun softRunAllCellsAndWaitExecuted(timeout: Duration = 2.minutes): Unit = step("Executing all cells") {
     runAllCells()
     waitFor(timeout = timeout) {
       val infos = notebookCellExecutionInfos
@@ -352,13 +352,13 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
-        getAllTexts().first().moveMouse()
+        getAllTexts().first().strictClick()
       }
     }
 
     val newFileButton = x { byAccessibleName("New File or Directory…") }
 
-    waitFor {
+    waitFor(timeout = 30.seconds) {
       newFileButton.present()
     }
     newFileButton.strictClick()
