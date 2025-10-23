@@ -891,7 +891,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   suspend fun closeDialogAndApplyIfNeeded(component: Component? = null) {
     if (component == null) return
-    val settings = DialogWrapper.findInstance(component) ?: return
+    val settings = DialogWrapper.findInstance(component)
     if (settings is SettingsDialog) {
       if (component is JComponent) {
         applyAsync(component)
