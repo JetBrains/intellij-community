@@ -148,6 +148,7 @@
       <synonym key="action.Github.Add.Account.synonym"/>
     </action>
     <group id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
+      <override-text place="GoToAction"/>
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
       <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
@@ -198,7 +199,9 @@
 
     <action id="Github.PullRequest.Open.Link"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPullRequestOpenURLAction"
-            icon="AllIcons.Vcs.Vendors.Github"/>
+            icon="AllIcons.Vcs.Vendors.Github">
+      <synonym key="action.Github.PullRequest.Open.Link.synonym"/>
+    </action>
     <action id="Github.PullRequest.Copy.Link"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPullRequestCopyURLAction"
             icon="AllIcons.Vcs.Vendors.Github"/>
