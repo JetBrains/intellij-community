@@ -4138,7 +4138,8 @@
         "SafariIOS": "18"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-14"
       },
       "doc": "The <strong><code>ViewTransition</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/View_Transition_API\" >View Transition API</a> represents an active view transition, and provides functionality to react to the transition reaching different states (e.g., ready to run the animation, or animation finished) or skip the transition altogether.\n<p>This object type is made available in the following ways:\n<ul>\n<li>In the case of same-document (SPA) transitions, it is returned by the <a href=\"$MDN_URL$/Web/API/Document/startViewTransition\" ><code>document.startViewTransition()</code></a> method.</li>\n<li>In the case of cross-document (MPA) transitions, it is made available:\n<ul>\n<li>In the outgoing page via the <a href=\"$MDN_URL$/Web/API/Window/pageswap_event\" ><code>pageswap</code></a> event object's <a href=\"$MDN_URL$/Web/API/PageSwapEvent/viewTransition\"><code>PageSwapEvent.viewTransition</code></a> property.</li>\n<li>In the inbound page via the <a href=\"$MDN_URL$/Web/API/Window/pagereveal_event\" ><code>pagereveal</code></a> event object's <a href=\"$MDN_URL$/Web/API/PageRevealEvent/viewTransition\"><code>PageRevealEvent.viewTransition</code></a> property.</li>\n</ul>\n</li>\n</ul>\n<p>When a view transition is triggered by a <code>startViewTransition()</code> call (or a page navigation in the case of MPA transitions), a sequence of steps is followed as explained in <a href=\"$MDN_URL$/Web/API/View_Transition_API/Using#the_view_transition_process\">The view transition process</a>. This also explains when the different promises fulfill."
     },
@@ -4158,7 +4159,8 @@
         "SafariIOS": "18"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-14"
       },
       "doc": "The <strong><code>finished</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ViewTransition\"><code>ViewTransition</code></a> interface is a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills once the transition animation is finished, and the new page view is visible and interactive to the user.\n<p><code>finished</code> will only reject in the case of a same-document (SPA) transition, if the callback passed to <a href=\"$MDN_URL$/Web/API/Document/startViewTransition\" ><code>document.startViewTransition()</code></a> throws or returns a promise that rejects. This would indicate that the new state of the page wasn't created.\n<p>If a transition animation fails to start or is skipped during the transition using <a href=\"$MDN_URL$/Web/API/ViewTransition/skipTransition\"><code>ViewTransition.skipTransition()</code></a>, the end state is still reached therefore <code>finished</code> will still fulfill."
     },
@@ -4178,7 +4180,8 @@
         "SafariIOS": "18"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-14"
       },
       "doc": "The <strong><code>ready</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ViewTransition\"><code>ViewTransition</code></a> interface is a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills once the pseudo-element tree is created and the transition animation is about to start.\n<p><code>ready</code> will reject if the transition cannot begin. This can be due to misconfiguration, for example, duplicate <a href=\"$MDN_URL$/Web/CSS/view-transition-name\"><code>view-transition-name</code></a>s, or if the callback passed to <a href=\"$MDN_URL$/Web/API/Document/startViewTransition\"><code>Document.startViewTransition()</code></a> throws or returns a promise that rejects."
     },
@@ -4198,7 +4201,8 @@
         "SafariIOS": "18"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-14"
       },
       "doc": "The <strong><code>skipTransition()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ViewTransition\"><code>ViewTransition</code></a> interface skips the animation part of the view transition, but doesn't skip running the associated view update.",
       "returns": "<code>undefined</code>."
@@ -4219,7 +4223,8 @@
         "SafariIOS": "18"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-14"
       },
       "doc": "The <strong><code>updateCallbackDone</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ViewTransition\"><code>ViewTransition</code></a> interface is a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills when the promise returned by the <a href=\"$MDN_URL$/Web/API/Document/startViewTransition\" ><code>document.startViewTransition()</code></a> method's callback fulfills, or rejects when it rejects.\n<p><code>updateCallbackDone</code> is useful when you don't care about the success/failure of a same-document (SPA) view transition animation, and just want to know if and when the DOM is updated.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn the case of a cross-document (MPA) view transition, the <code>updateCallbackDone</code> promise of the associated <code>ViewTransition</code> is automatically fulfilled.\n</div>"
     },
@@ -15242,10 +15247,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "115",
         "ChromeAndroid": "121",
-        "Edge": "115",
-        "Opera": "101",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -16051,14 +16053,14 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The\n<strong><code>Window.getComputedStyle()</code></strong> method returns an object\ncontaining the values of all CSS properties of an element, after applying active\nstylesheets and resolving any basic computation those values may contain.\n<p>Individual CSS property values are accessed through APIs provided by the returned <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object, or by indexing with CSS property names. The values returned by <code>getComputedStyle</code> are <a href=\"$MDN_URL$/Web/CSS/CSS_cascade/Value_processing#resolved_value\">resolved values</a>.",
+      "doc": "The <strong><code>Window.getComputedStyle()</code></strong> method returns a live read-only <a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> object containing the <a href=\"$MDN_URL$/Web/CSS/CSS_cascade/Value_processing#resolved_value\">resolved values</a> of all CSS properties of an element, after applying active stylesheets and resolving any computation those values may contain.",
       "parameters": {
         "element": "The <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> for which to get the computed style.",
-        "pseudoElt": "A string specifying the pseudo-element to match. Omitted (or <code>null</code>) for\nreal elements."
+        "pseudoElt": "A string specifying the pseudo-element to match.\nOmitted (or <code>null</code>) for real elements."
       },
-      "returns": "A <em>live</em> <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object, which updates automatically when the element's styles are changed.\n<p>Note that:\n<ul>\n<li>The returned <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object contains active values for CSS property <em>longhand</em> names as well as shorthand names. For example, the returned object contains entries for <a href=\"$MDN_URL$/Web/CSS/border-bottom-width\"><code>border-bottom-width</code></a> in addition to the <a href=\"$MDN_URL$/Web/CSS/border-width\"><code>border-width</code></a> and <a href=\"$MDN_URL$/Web/CSS/border\"><code>border</code></a> <a href=\"$MDN_URL$/Web/CSS/CSS_cascade/Shorthand_properties\">shorthand property names</a>.</li>\n<li>Returned values are sometimes deliberately inaccurate. To avoid the \"CSS History Leak\" security issue, browsers may lie about the computed styles for a visited link, returning values as if the user never visited the linked URL. See <a href=\"https://blog.mozilla.org/security/2010/03/31/plugging-the-css-history-leak/\" class=\"external\" target=\"_blank\">Plugging the CSS history leak</a> and <a href=\"https://hacks.mozilla.org/2010/03/privacy-related-changes-coming-to-css-vistited/\" class=\"external\" target=\"_blank\">Privacy-related changes coming to CSS <code>:visited</code></a> for examples of how this is implemented.</li>\n<li>During <a href=\"$MDN_URL$/Web/CSS/CSS_transitions\">CSS transitions</a>, <code>getComputedStyle</code> returns the original property value in Firefox, but the final property value in WebKit.</li>\n<li>In Firefox, properties with the value <code>auto</code> return the used value, not the value <code>auto</code>. So if you apply <code>top:auto</code> and <code>bottom:0</code> on an element with <code>height:30px</code> and a containing block of <code>height:100px</code>, Firefox's computed style for <code>top</code> returns <code>70px</code>, as 100 − 30 = 70.</li>\n<li>For compatibility reasons, serialized color values are expressed as <a href=\"$MDN_URL$/Web/CSS/color_value/rgb\"><code>rgb()</code></a> colors if the alpha channel value is exactly <code>1</code>, and <code>rgba()</code> colors otherwise. In both cases, legacy syntax is used, with commas as separators (for example <code>rgb(255, 0, 0)</code>).</li>\n</ul>\n<p>The returned object is the same <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> type as the object returned from the element's <a href=\"$MDN_URL$/Web/API/HTMLElement/style\" title=\"style\"><code>style</code></a> property. However, the two objects have different purposes:\n<ul>\n<li>The object from <code>getComputedStyle</code> is read-only, and should be used to inspect the element's style — including those set by a <code>&lt;style&gt;</code> element or an external stylesheet.</li>\n<li>The <code>element.style</code> object should be used to <strong>set</strong> styles on that element, or inspect styles directly added to it from JavaScript manipulation or the global <code>style</code> attribute.</li>\n</ul>",
+      "returns": "A <em>live</em> <a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> object, which updates automatically when the element's styles are changed.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nEarlier versions of the specification returned a <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> (from which <a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> is derived).\nSee the <a href=\"#browser_compatibility\">browser compatibility</a> table for browser support information.\n</div>\n<div class=\"notecard warning\">\n<p><strong>Warning:</strong>\nReturned values are sometimes deliberately inaccurate.\nTo avoid the \"CSS History Leak\" security issue, browsers may lie about the computed styles for a visited link, returning values as if the user never visited the linked URL.\nSee <a href=\"https://blog.mozilla.org/security/2010/03/31/plugging-the-css-history-leak/\" class=\"external\" target=\"_blank\">Plugging the CSS history leak</a> and <a href=\"https://hacks.mozilla.org/2010/03/privacy-related-changes-coming-to-css-vistited/\" class=\"external\" target=\"_blank\">Privacy-related changes coming to CSS <code>:visited</code></a> for examples of how this is implemented.\n</div>",
       "throws": {
-        "TypeError": "If the passed object is not an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> or the\n<code>pseudoElt</code> is not a valid pseudo-element selector or is\n<a href=\"$MDN_URL$/Web/CSS/::part\"><code>::part()</code></a> or <a href=\"$MDN_URL$/Web/CSS/::slotted\"><code>::slotted()</code></a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nValid pseudo-element selector refers to syntactic\nvalidity, e.g., <code>::unsupported</code> is considered valid, even though the\npseudo-element itself is not supported.\n</div>"
+        "TypeError": "If the passed object is not an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> or the <code>pseudoElt</code> is not a valid pseudo-element selector or is <a href=\"$MDN_URL$/Web/CSS/::part\"><code>::part()</code></a> or <a href=\"$MDN_URL$/Web/CSS/::slotted\"><code>::slotted()</code></a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nValid pseudo-element selector refers to syntactic validity, e.g., <code>::unsupported</code> is considered valid, even though the pseudo-element itself is not supported.\n</div>"
       }
     },
     "window.getdefaultcomputedstyle": {
@@ -16773,6 +16775,11 @@
     },
     "window.queuemicrotask": {
       "url": "$MDN_URL$/web/api/window/queuemicrotask",
+      "baseline": {
+        "level": "HIGH",
+        "lowDate": "2020-07-28",
+        "highDate": "2023-01-28"
+      },
       "doc": "The <strong><code>queueMicrotask()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> interface\nqueues a microtask to be executed at a safe time prior to control returning to the\nbrowser's event loop.\n<p>The microtask is a short function which will run after\nthe current task has completed its work and when there is no other code waiting to be\nrun before control of the execution context is returned to the browser's event loop.\n<p>This lets your code run without interfering with any other, potentially higher\npriority, code that is pending, but before the browser regains control over the\nexecution context, potentially depending on work you need to complete. You can learn\nmore about how to use microtasks and why you might choose to do so in our <a href=\"$MDN_URL$/Web/API/HTML_DOM_API/Microtask_guide\">microtask guide</a>.\n<p>The importance of microtasks comes in its ability to perform tasks asynchronously but\nin a specific order. See <a href=\"$MDN_URL$/Web/API/HTML_DOM_API/Microtask_guide\">Using microtasks in JavaScript with <code>queueMicrotask()</code></a> for more details.\n<p>Microtasks are especially useful for libraries and frameworks that need to perform\nfinal cleanup or other just-before-rendering tasks.",
       "parameters": {
         "callback": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Function\"><code>function</code></a> to be executed when the browser engine determines it is\nsafe to call your code. Enqueued microtasks are executed after all pending tasks have\ncompleted but before yielding control to the browser's event loop."
@@ -18363,6 +18370,11 @@
     },
     "workerglobalscope.queuemicrotask": {
       "url": "$MDN_URL$/web/api/workerglobalscope/queuemicrotask",
+      "baseline": {
+        "level": "HIGH",
+        "lowDate": "2020-07-28",
+        "highDate": "2023-01-28"
+      },
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is only available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>queueMicrotask()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WorkerGlobalScope\"><code>WorkerGlobalScope</code></a> interface\nqueues a microtask to be executed at a safe time prior to control returning to the\nbrowser's event loop.\n<p>The microtask is a short function which will run after\nthe current task has completed its work and when there is no other code waiting to be\nrun before control of the execution context is returned to the browser's event loop.\n<p>This lets your code run without interfering with any other, potentially higher\npriority, code that is pending, but before the browser regains control over the\nexecution context, potentially depending on work you need to complete. You can learn\nmore about how to use microtasks and why you might choose to do so in our <a href=\"$MDN_URL$/Web/API/HTML_DOM_API/Microtask_guide\">microtask guide</a>.\n<p>The importance of microtasks comes in its ability to perform tasks asynchronously but\nin a specific order. See <a href=\"$MDN_URL$/Web/API/HTML_DOM_API/Microtask_guide\">Using microtasks in JavaScript with <code>queueMicrotask()</code></a> for more details.\n<p>Microtasks are especially useful for libraries and frameworks that need to perform\nfinal cleanup or other just-before-rendering tasks.",
       "parameters": {
         "callback": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Function\"><code>function</code></a> to be executed when the browser engine determines it is\nsafe to call your code. Enqueued microtasks are executed after all pending tasks have\ncompleted but before yielding control to the browser's event loop."
@@ -18846,7 +18858,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "120"
+        "Firefox": "120",
+        "FirefoxAndroid": "122"
       },
       "baseline": {
         "level": "NONE"
@@ -18859,10 +18872,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },

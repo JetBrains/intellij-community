@@ -401,9 +401,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
     val elementDoc = contents.prose.first().getProseContent().appendOtherSections(contents.prose)
 
-    val attributesDoc = contents.prose.filterProseById("attributes", "attributes_for_form_submission", "deprecated_attributes",
-                                                       "obsolete_attributes",
-                                                       "non-standard_attributes")
+    val attributesDoc = contents.prose.filterProseById(
+      "attributes",
+      "individual_attributes",
+      "attributes_for_form_submission",
+      "deprecated_attributes",
+      "obsolete_attributes",
+      "non-standard_attributes",
+    )
       .joinToString("\n") { it.getProseContent().content }
       .let { RawProse(it) }
 
