@@ -682,7 +682,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   override val editorTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(false, false, isManyIslandEnabled)
 
-  override val toolWindowTabPainter: IslandsTabPainter = object : IslandsTabPainter(false) {
+  override val toolWindowTabPainter: IslandsTabPainter = object : IslandsTabPainter(false, false) {
     private val defaultPainter = JBTabPainter.TOOL_WINDOW
 
     override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
