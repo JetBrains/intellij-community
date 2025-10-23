@@ -521,7 +521,7 @@ public final class JBUI {
 
     public static final class CustomFrameDecorations {
       public static @NotNull Color separatorForeground() {
-        return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
+        return Separator.color();
       }
 
       public static @NotNull Color titlePaneButtonHoverBackground() {
@@ -1660,6 +1660,13 @@ public final class JBUI {
         }
 
         public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
+      }
+    }
+
+    public static final class Separator {
+      private Separator() { }
+      public static @NotNull Color color() {
+        return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
       }
     }
 
