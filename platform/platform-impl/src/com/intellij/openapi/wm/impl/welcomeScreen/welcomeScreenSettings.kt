@@ -8,4 +8,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * Number of primary buttons on welcome screen (other go to 'more actions')
  */
 @Internal
-fun getWelcomeScreenPrimaryButtonsNum(): Int = Registry.intValue("welcome.screen.primaryButtonsCount", 4)
+fun getWelcomeScreenPrimaryButtonsNum(): Int {
+  if (Registry.`is`("station.enable.welcome.screen.promo")) {
+    return 4
+  }
+  return Registry.intValue("welcome.screen.primaryButtonsCount", 3)
+}
