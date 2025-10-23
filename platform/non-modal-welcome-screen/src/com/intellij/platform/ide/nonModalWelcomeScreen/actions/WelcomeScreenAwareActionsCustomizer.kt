@@ -1,5 +1,6 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.actions
 
+import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,7 +11,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftTabActionNew
 import org.intellij.lang.annotations.Language
 
@@ -63,7 +64,7 @@ private class WelcomeScreenHiddenActionWithRemoteSpec<T>(val actionWithSpec: T) 
 private open class WelcomeScreenHiddenAction(action: AnAction) : AnActionWrapper(action) {
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project != null && isWelcomeScreenProject(project)) {
+    if (project != null && ProjectViewImpl.getInstance(project).currentViewId == WelcomeScreenLeftPanel.ID) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -78,7 +79,7 @@ private class WelcomeScreenProxyAction(
 ) : DumbAwareAction(action.templatePresentation.text) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
-    if (project != null && isWelcomeScreenProject(project)) {
+    if (project != null && ProjectViewImpl.getInstance(project).currentViewId == WelcomeScreenLeftPanel.ID) {
       welcomeScreenBehaviour.actionPerformed(e)
       return
     }
@@ -87,7 +88,7 @@ private class WelcomeScreenProxyAction(
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project != null && isWelcomeScreenProject(project)) {
+    if (project != null && ProjectViewImpl.getInstance(project).currentViewId == WelcomeScreenLeftPanel.ID) {
       e.presentation.isVisible = isVisible
       welcomeScreenBehaviour.update(e)
       return
