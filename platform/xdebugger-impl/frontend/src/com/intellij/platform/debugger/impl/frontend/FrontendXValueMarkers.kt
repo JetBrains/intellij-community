@@ -9,11 +9,14 @@ import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.ui.JBColor
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 
@@ -25,8 +28,7 @@ internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project
   }
 
   override fun canMarkValue(value: XValue): Boolean {
-    // TODO[IJPL-160146]: Implement canMarkValue
-    return true
+    return FrontendXValue.asFrontendXValueOrNull(value)?.canMarkValue ?: false
   }
 
   override fun markValue(value: XValue, markup: ValueMarkup): Promise<in Any> {
@@ -43,7 +45,8 @@ internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project
   }
 
   override fun clear() {
-    // TODO[IJPL-160146]: Implement clear
+    val debugSessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project) ?: return
+    project.service<FrontendXValueMarkersService>().clear(debugSessionProxy)
   }
 }
 
@@ -64,5 +67,11 @@ private class FrontendXValueMarkersService(project: Project, private val cs: Cor
       Any()
     }
     return valueUnmarked.asCompletableFuture().asPromise()
+  }
+
+  fun clear(debugSessionProxy: XDebugSessionProxy) {
+    cs.launch {
+      XDebuggerValueMarkupApi.getInstance().clear(debugSessionProxy.id)
+    }
   }
 }

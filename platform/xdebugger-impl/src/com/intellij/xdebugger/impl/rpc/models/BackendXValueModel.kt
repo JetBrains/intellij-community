@@ -132,6 +132,9 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
   val valueMarkupFlow: RpcFlow<XValueMarkerDto?> = xValueModel.marker.toRpc()
 
   val textProvider = getTextProviderFlow(xValue, xValueModel)
+  val canMarkValue = xValue.isReady.thenApply {
+    session.getValueMarkers()?.canMarkValue(xValue) ?: false
+  }
 
   return XValueDto(
     xValueModel.id,
@@ -139,6 +142,7 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     canNavigateToSource = xValue.canNavigateToSource(),
     canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
     canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
+    canMarkValue = canMarkValue.asDeferred(),
     valueMarkupFlow,
     xValueModel.presentation.toRpc(),
     xValueModel.getEvaluatorDtoFlow().toRpc(),

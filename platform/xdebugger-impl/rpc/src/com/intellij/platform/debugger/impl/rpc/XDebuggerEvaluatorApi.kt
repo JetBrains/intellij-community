@@ -106,6 +106,7 @@ data class XValueDto(
   val canNavigateToSource: Boolean,
   @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
+  @Serializable(with = DeferredSerializer::class) val canMarkValue: Deferred<Boolean>,
   val valueMark: RpcFlow<XValueMarkerDto?>,
   val presentation: RpcFlow<XValueSerializedPresentation>,
   val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,

@@ -6,9 +6,11 @@ import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.ui.JBColor
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
+import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import org.jetbrains.concurrency.await
 
@@ -30,6 +32,11 @@ internal class BackendXDebuggerValueMarkupApi : XDebuggerValueMarkupApi {
 
     markers.unmarkValue(xValueModel.xValue).await()
     updateMarkersForAllXValueModels(markers, session)
+  }
+
+  override suspend fun clear(xDebugSessionId: XDebugSessionId) {
+    val session = xDebugSessionId.findValue() ?: return
+    session.getValueMarkers()?.clear()
   }
 
   private fun updateMarkersForAllXValueModels(markers: XValueMarkers<*, *>, session: XDebugSessionImpl) {

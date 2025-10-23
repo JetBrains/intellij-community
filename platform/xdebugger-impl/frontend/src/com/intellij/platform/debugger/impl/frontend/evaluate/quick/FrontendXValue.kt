@@ -64,6 +64,10 @@ class FrontendXValue private constructor(
   @Volatile
   private var canNavigateToTypeSource = false
 
+  @Volatile
+  var canMarkValue: Boolean = false
+    private set
+
   private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
     XValueApi.getInstance().computeChildren(xValueDto.id)
   }
@@ -109,6 +113,10 @@ class FrontendXValue private constructor(
 
     cs.launch {
       canNavigateToTypeSource = xValueDto.canNavigateToTypeSource.await()
+    }
+
+    cs.launch {
+      canMarkValue = xValueDto.canMarkValue.await()
     }
   }
 
