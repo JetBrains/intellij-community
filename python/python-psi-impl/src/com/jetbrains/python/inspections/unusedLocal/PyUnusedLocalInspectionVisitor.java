@@ -362,7 +362,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final PsiElement name = typeParameter.getNameIdentifier();
         registerWarning(name != null ? name : element,
                         PyPsiBundle.message("INSP.unused.locals.type.parameter.isnot.used", typeParameter.getName()),
-                        new PyRemoveStatementQuickFix());
+                        new PyRemoveTypeParameterQuickFix());
       }
       else {
         // Local variable or parameter
