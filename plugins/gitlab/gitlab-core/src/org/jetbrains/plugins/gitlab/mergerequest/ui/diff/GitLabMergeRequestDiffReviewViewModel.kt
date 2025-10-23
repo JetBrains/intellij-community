@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffView
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabPersistentMergeRequestChangesViewedState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filterInFile
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil
 import org.jetbrains.plugins.gitlab.mergerequest.util.toLocations
 
@@ -80,9 +81,12 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
     diffVm.draftDiscussions
       .transformConsecutiveSuccesses { filterInFile(change) }
       .stateInNow(cs, ComputedResult.loading())
-  override val newDiscussions: StateFlow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>> =
-    diffVm.newDiscussions.filterInFile(change)
-      .stateInNow(cs, emptyList())
+  override val newDiscussions: StateFlow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>> = discussionsContainer.newDiscussions.map {
+    it.mapNotNull { (position, vm) ->
+      val location = position.mapToLocation(diffData) ?: return@mapNotNull null
+      GitLabMergeRequestDiffNewDiscussionViewModel(vm, location, discussionsViewOption)
+    }
+  }.stateInNow(cs, emptyList())
 
   override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> = GitLabMergeRequestDiscussionUtil
     .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLocations {

@@ -2,16 +2,17 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Side
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.findCumulativeChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +65,8 @@ interface GitLabMergeRequestDiscussionsViewModels {
   }
 }
 
-private val LOG = logger<GitLabMergeRequestDiscussionsViewModelsImpl>()
+fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? =
+  position.mapToLocation(diffData, side)
 
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val project: Project,

@@ -47,7 +47,6 @@ private typealias NewDiscussionsFlow = StateFlow<Collection<GitLabMergeRequestDi
 interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
   val discussions: DiscussionsFlow
   val draftDiscussions: DraftDiscussionsFlow
-  val newDiscussions: NewDiscussionsFlow
 
   fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?>
 
@@ -130,21 +129,13 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
         }
       }
     }.stateInNow(cs, ComputedResult.loading())
-  override val newDiscussions: NewDiscussionsFlow =
-    discussionsContainer.newDiscussions.map { list ->
-      list.mapNotNull { (position, vm) ->
-        val position = position.position
-        val diffDataFlow = createDiffDataFlow(position, selectedChanges)
-        GitLabMergeRequestDiffNewDiscussionViewModel(vm, diffDataFlow, position, discussionsViewOption)
-      }
-    }.stateInNow(cs, emptyList())
 
   private val noteByTrackingId: StateFlow<Map<String, DiffDataMappedGitLabMergeRequestDiffInlayViewModel>> =
-    combine(discussions, draftDiscussions, newDiscussions) { discussionsResult, draftNotesResult, newDiscussions ->
+    combine(discussions, draftDiscussions) { discussionsResult, draftNotesResult ->
       val discussions = discussionsResult.getOrNull() ?: emptyList()
       val draftNotes = draftNotesResult.getOrNull() ?: emptyList()
 
-      (discussions + draftNotes + newDiscussions).associateBy { it.trackingId }
+      (discussions + draftNotes).associateBy { it.trackingId }
     }.stateInNow(cs, emptyMap())
 
   override fun showChange(change: GitLabMergeRequestDiffChangeViewModel, scrollRequest: DiffViewerScrollRequest?) =

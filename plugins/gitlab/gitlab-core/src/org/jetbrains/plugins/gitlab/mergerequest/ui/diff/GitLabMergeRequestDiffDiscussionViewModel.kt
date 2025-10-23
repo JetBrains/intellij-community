@@ -11,7 +11,6 @@ import com.intellij.diff.util.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
-import org.jetbrains.plugins.gitlab.mergerequest.data.getLocation
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.DiffDataMappedGitLabMergeRequestInlayModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
@@ -59,12 +58,11 @@ class GitLabMergeRequestDiffDraftNoteViewModel internal constructor(
 
 class GitLabMergeRequestDiffNewDiscussionViewModel internal constructor(
   base: NewGitLabNoteViewModel,
-  override val diffData: StateFlow<DiffDataMappedGitLabMergeRequestInlayModel.DiffData?>,
-  originalPosition: GitLabNotePosition.WithLine,
+  originalLocation: DiffLineLocation,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
-) : NewGitLabNoteViewModel by base, DiffDataMappedGitLabMergeRequestDiffInlayViewModel {
-  override val location: StateFlow<DiffLineLocation?> = MutableStateFlow(originalPosition.getLocation())
-  override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
+) : NewGitLabNoteViewModel by base {
+  val location: StateFlow<DiffLineLocation?> = MutableStateFlow(originalLocation)
+  val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
 }
 
 private fun mapPositionToDiffLine(
