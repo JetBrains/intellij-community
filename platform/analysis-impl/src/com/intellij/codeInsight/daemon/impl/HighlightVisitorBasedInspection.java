@@ -137,6 +137,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
       psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,
       HighlightInfoUpdater.EMPTY
     );
+    ghp.setContext(context);
 
     InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(
       psiFile, document, null, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors,

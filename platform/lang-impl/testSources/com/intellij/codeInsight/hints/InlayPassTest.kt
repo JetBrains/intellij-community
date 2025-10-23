@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
@@ -180,7 +181,11 @@ class InlayPassTest : BasePlatformTestCase() {
 
   private fun createPass(collectors: List<CollectorWithSettings<*>>): InlayHintsPass {
     val visibleRange = myFixture.editor.calculateVisibleRange()
-    return ActionUtil.underModalProgress(project, "") { InlayHintsPass(myFixture.file, collectors, myFixture.editor, visibleRange, sharedSink) }
+    return ActionUtil.underModalProgress(project, "") {
+      val pass = InlayHintsPass(myFixture.file, collectors, myFixture.editor, visibleRange, sharedSink)
+      pass.setContext(myFixture.file.codeInsightContext)
+      pass
+    }
   }
 
   private fun InlayHintsPass.collectAndApply() {

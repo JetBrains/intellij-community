@@ -246,7 +246,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }
     if (!shouldHighlightFile) {
       // in case when some extension prohibited highlighting, return empty pass to distinguish from error during pass creation and endless restart
-      result.add(new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, document));
+      ProgressableTextEditorHighlightingPass.EmptyPass emptyPass = new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, document);
+      emptyPass.setContext(context);
+      result.add(emptyPass);
     }
     return result;
   }
