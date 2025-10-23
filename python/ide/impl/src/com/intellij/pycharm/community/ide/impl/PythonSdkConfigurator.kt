@@ -59,6 +59,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     /*
      * DataSpell skips SDK setup on new project creation, so we need to use auto-detection there. At the same time, with PyCharm we
      * first open a project and only then persist SDK from the dialog. So at this step we'll have null SDK for new projects.
+     *
+     * Please note, this is a dirty hack and shouldn't be used like this. We expect this whole configurator to be dropped soon, that's
+     * why we're not investing time in doing it properly using ide customizations.
      */
     if (sdk != null || (isProjectCreatedWithWizard && !PlatformUtils.isDataSpell())) {
       return
