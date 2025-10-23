@@ -9,8 +9,8 @@
         <xs:element type="buildType" name="build"/>
         <xs:element type="logoType" name="logo"/>
         <xs:element type="logoType" name="logo-eap" minOccurs="0"/>
-        <xs:element type="logoType" name="logo-free-mode" minOccurs="0"/>
         <xs:element type="logoType" name="logo-simplified" minOccurs="0"/>
+        <xs:element type="logoType" name="logo-subscription-mode" minOccurs="0"/>
         <xs:element type="iconType" name="icon"/>
         <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>
         <xs:element type="namesType" name="names"/>
