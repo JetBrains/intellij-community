@@ -200,14 +200,13 @@ public abstract class XDebuggerPopupPanel {
     }
   }
 
-  private class ActionWrapper extends AnAction implements CustomComponentAction {
+  private class ActionWrapper extends AnActionWrapper implements CustomComponentAction {
     private final AnAction myDelegate;
     private final @NotNull String myActionPlace;
     private @Nullable Component myProvider;
 
     ActionWrapper(AnAction delegate, @NotNull String actionPlace) {
-      super(delegate.getTemplateText());
-      copyFrom(delegate);
+      super(delegate);
       myDelegate = delegate;
       myActionPlace = actionPlace;
     }
@@ -220,30 +219,23 @@ public abstract class XDebuggerPopupPanel {
     public void actionPerformed(@NotNull AnActionEvent e) {
       AnActionEvent delegateEvent = e;
       if (myProvider != null) {
-        delegateEvent = AnActionEvent.createFromAnAction(myDelegate,
-                                                         e.getInputEvent(),
-                                                         myActionPlace,
-                                                         DataManager.getInstance().getDataContext(myProvider));
+        delegateEvent = AnActionEvent.createEvent(
+          DataManager.getInstance().getDataContext(myProvider),
+          e.getPresentation(),
+          myActionPlace,
+          ActionUiKind.NONE,
+          e.getInputEvent()
+        );
       }
-      myDelegate.actionPerformed(delegateEvent);
+      super.actionPerformed(delegateEvent);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      myDelegate.update(e);
+      super.update(e);
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(presentation.isEnabled() && shouldBeVisible(myDelegate));
       presentation.setVisible(presentation.isVisible() && shouldBeVisible(myDelegate));
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return myDelegate.getActionUpdateThread();
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return myDelegate.isDumbAware();
     }
 
     @Override
