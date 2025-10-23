@@ -1859,6 +1859,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/KT36306.kt");
         }
 
+        @TestMetadata("LoadFromIndexAfterTyping.kt")
+        public void testLoadFromIndexAfterTyping() throws Exception {
+            runTest("../completion/testData/handlers/basic/LoadFromIndexAfterTyping.kt");
+        }
+
         @TestMetadata("LocalClassNameWithPackageLevelConflict.kt")
         public void testLocalClassNameWithPackageLevelConflict() throws Exception {
             runTest("../completion/testData/handlers/basic/LocalClassNameWithPackageLevelConflict.kt");
