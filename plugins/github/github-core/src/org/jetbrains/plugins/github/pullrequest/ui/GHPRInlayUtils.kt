@@ -37,6 +37,7 @@ import java.awt.*
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JLayer
+import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
 import kotlin.math.abs
 
@@ -117,6 +118,18 @@ internal object GHPRInlayUtils {
     }
     catch (_: IllegalArgumentException) {
       Cursor.getDefaultCursor()
+    }
+
+    init {
+      SwingUtilities.invokeLater {
+        val point = editorEx.gutterComponentEx.mousePosition
+        if (point != null) {
+          val borders = getYAxisBorders()
+          if (borders != null && point.getEdge(borders) != null) {
+            editorEx.gutterComponentEx.cursor = resizeCursor
+          }
+        }
+      }
     }
 
     override fun mouseDragged(e: EditorMouseEvent) {

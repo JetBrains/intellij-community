@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -31,7 +30,6 @@ import icons.CollaborationToolsIcons
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -257,13 +255,6 @@ private constructor(
       else null
     )
 
-  private val resizeCursor: Cursor = try {
-    Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
-  }
-  catch (_: IllegalArgumentException) {
-    Cursor.getDefaultCursor()
-  }
-
   private val LogicalLineData.toggleCommentAction
     get() = GutterAction(CollaborationToolsIcons.Comment, GutterAction.ActionType.TOGGLE_COMMENT) { unfoldOrToggle(this) }
   private val LogicalLineData.closeNewCommentAction
@@ -273,10 +264,6 @@ private constructor(
     }
   private val LogicalLineData.startNewCommentAction
     get() = GutterAction(AllIcons.General.InlineAdd, GutterAction.ActionType.START_NEW_COMMENT, AllIcons.General.InlineAddHover) {
-      if (model is CodeReviewEditorGutterControlsModel.WithMultilineComments) {
-        val gutterGlassComp = IdeGlassPaneUtil.find(editor.gutterComponentEx)
-        gutterGlassComp.setCursor(resizeCursor, this@CodeReviewEditorGutterControlsRenderer)
-      }
       requestNewComment(logicalLine)
     }
 
