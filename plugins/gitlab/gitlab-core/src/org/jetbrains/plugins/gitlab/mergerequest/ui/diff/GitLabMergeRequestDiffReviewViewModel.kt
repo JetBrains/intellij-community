@@ -98,7 +98,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
     discussionsContainer.newDiscussions
       .map {
         it.keys.mapNotNullTo(mutableSetOf()) {
-          it.position.mapToLocation(diffData) ?: return@mapNotNullTo null
+          it.mapToLocation(diffData) ?: return@mapNotNullTo null
         }
       }
       .stateInNow(cs, emptySet())
