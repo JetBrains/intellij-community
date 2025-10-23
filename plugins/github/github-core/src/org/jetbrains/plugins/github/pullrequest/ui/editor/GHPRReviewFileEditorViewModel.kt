@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
@@ -80,7 +81,7 @@ interface GHPRReviewFileEditorViewModel {
 private val LOG = logger<GHPRReviewFileEditorViewModelImpl>()
 
 internal class GHPRReviewFileEditorViewModelImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
@@ -205,14 +206,16 @@ internal class GHPRReviewFileEditorViewModelImpl(
     }
   }
 
-  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) =
-    threadsVm.newComments.value.firstOrNull {
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
+    val newComment = threadsVm.newComments.value.firstOrNull {
       when (val loc = it.position.value.location) {
         is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
         is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
       }
-    }?.updateLineRange(newLineRange) ?: Unit
-
+    } ?: return
+    newComment.updateLineRange(newLineRange)
+    GHPRStatisticsCollector.logResizedComments(project)
+  }
 
   override fun cancelNewComment(lineIdx: Int) =
     threadsVm.cancelNewComment(change, Side.RIGHT, lineIdx)

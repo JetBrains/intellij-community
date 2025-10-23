@@ -26,7 +26,7 @@ import java.util.*
 
 // TODO: Fix or replace a whole bunch of these statistics as they're no longer being collected since generalizing to Collab Tools
 internal object GHPRStatisticsCollector : CounterUsagesCollector() {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 10)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 11)
 
   private val LOG = logger<GHPRStatisticsCollector>()
 
@@ -42,6 +42,18 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
 
   fun logListOpened(project: Project) {
     LIST_OPENED_EVENT.log(project)
+  }
+  //endregion
+
+  //region: Multiline comments
+  private val COMMENTS_RESIZED_EVENT = COUNTERS_GROUP.registerEvent("comments.resized", "The user resized range of a new comment by dragging its outline across the text")
+  private val MULTILINE_COMMENTS_CREATED = COUNTERS_GROUP.registerEvent("multiline.comments.created", "The user created a new comment that spans multiple lines")
+  fun logResizedComments(project: Project) {
+    COMMENTS_RESIZED_EVENT.log(project)
+  }
+
+  fun logMultilineCommentsCreated(project: Project) {
+    MULTILINE_COMMENTS_CREATED.log(project)
   }
   //endregion
 
