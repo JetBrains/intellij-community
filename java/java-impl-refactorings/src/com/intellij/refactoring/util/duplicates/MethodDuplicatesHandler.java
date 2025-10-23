@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.analysis.AnalysisScope;
@@ -55,6 +55,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     PsiMember member = findMember(editor, file);
+    return isAvailableOn(member);
+  }
+  
+  public static boolean isAvailableOn(PsiMember member) {
     return member != null && getCannotRefactorMessage(member) == null;
   }
 
@@ -100,7 +104,8 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg =
       new BaseAnalysisActionDialog(JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.title", getRefactoringName()),
-                                   JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
+                                   JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, 
+                                   BaseAnalysisActionDialog.standardItems(project, scope, module, element),
                                    AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
       AnalysisScope selectedScope = dlg.getScope(scope);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -386,6 +386,13 @@ public class IntroduceParameterTest extends LightJavaCodeInsightTestCase {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
+  
+  public void testIgnoreDuplicatesInConstructor() {
+    configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+    perform(IntroduceVariableBase.JavaReplaceChoice.ALL, 0, "i", false, false, true, false, 0, true);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+  }
 
   public void testTypeAnnotation() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
@@ -521,7 +528,7 @@ public class IntroduceParameterTest extends LightJavaCodeInsightTestCase {
                                boolean removeLocalVariable,
                                boolean replaceAllOccurrences,
                                boolean declareFinal,
-                               final boolean removeUnusedParameters) {
+                               boolean removeUnusedParameters) {
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiElement element = Objects.requireNonNull(getFile().findElementAt(offset)).getParent();
     assertTrue(element instanceof PsiLocalVariable);
