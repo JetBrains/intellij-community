@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -19,15 +20,16 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.MockFontLayoutService;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -1080,6 +1082,61 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(new VisualPosition(0, 0), caret.getLeadSelectionPosition());
   }
 
+  // IJPL-214455 editor should survive exceptions thrown by document listeners
+  public void testEditorIsNotCorruptedByNPE() {
+    initText("<caret>");
+    //noinspection deprecation
+    getEditor().getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        throw new NullPointerException("dummy");
+      }
+    });
+    assertErrorLogged(NullPointerException.class, () -> type('a'));
+    assertErrorLogged(NullPointerException.class, () -> type('b'));
+    assertErrorLogged(NullPointerException.class, () -> type('c'));
+    checkResultByText("abc<caret>");
+  }
+
+  // IJPL-214455 editor should survive exceptions thrown by document listeners
+  public void testEditorIsNotCorruptedByPCE() {
+    initText("<caret>");
+    //noinspection deprecation
+    getEditor().getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        throw new ProcessCanceledException();
+      }
+    });
+    /* TODO: fix me IJPL-214455
+    assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> type('a'));
+    assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> type('b'));
+    assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> type('c'));
+    checkResultByText("abc<caret>");
+    */
+  }
+
+  // IJPL-214455 editor should survive exceptions thrown by document listeners
+  public void testEditorIsNotCorruptedByNonSuppressibleException() {
+    initText("<caret>");
+    NullPointerException cachedException = new NullPointerException("dummy");
+    //noinspection deprecation
+    getEditor().getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
+        throw cachedException;
+      }
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        throw cachedException;
+      }
+    });
+    assertErrorLoggedTwice(NullPointerException.class, () -> type('a'));
+    assertErrorLoggedTwice(NullPointerException.class, () -> type('b'));
+    assertErrorLoggedTwice(NullPointerException.class, () -> type('c'));
+    checkResultByText("abc<caret>");
+  }
+
   private void dispatchEventToEditor(AWTEvent event) {
     // this method ensures key events are dispatched to editor component, even if it's not focused
     KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(getEditor().getContentComponent(), event);
@@ -1087,5 +1144,29 @@ public class EditorImplTest extends AbstractEditorTest {
 
   private void requestSelectedTextFromEditorViaImeApi() {
     getEditor().getContentComponent().getInputMethodRequests().getSelectedText(null);
+  }
+
+  private static <T extends Throwable> void assertErrorLogged(Class<T> clazz, ThrowableRunnable<?> runnable) {
+    TestLoggerKt.assertErrorLogged(clazz, runnable);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static <T extends Throwable> void assertErrorLoggedAndRethrown(Class<T> clazz, ThrowableRunnable<?> runnable) {
+    assertThrows(clazz, () -> assertErrorLogged(clazz, runnable));
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static <T extends Throwable> void assertErrorLoggedTwice(Class<T> clazz, ThrowableRunnable<?> runnable) {
+    try {
+      assertErrorLogged(clazz, runnable);
+    }
+    catch (TestLoggerFactory.TestLoggerAssertionError ex) {
+      Throwable[] suppressed = ex.getSuppressed();
+      assertSize(2, suppressed);
+      for (Throwable throwable : suppressed) {
+        assertInstanceOf(throwable, LoggedError.class);
+        assertInstanceOf(throwable.getCause(), clazz);
+      }
+    }
   }
 }

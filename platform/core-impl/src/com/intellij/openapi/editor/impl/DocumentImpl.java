@@ -885,7 +885,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       if (myException == null) {
         myException = e;
       }
-      else {
+      else if (myException != e) { // IJPL-214455 addSuppressed may throw IllegalArgumentException leading to broken editor
         myException.addSuppressed(e);
       }
 
