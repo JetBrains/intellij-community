@@ -12,6 +12,7 @@ import com.intellij.ide.impl.ProjectUtil.getActiveProject
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressPaused
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressResumed
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.MergingUpdateChannel
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
@@ -80,6 +82,8 @@ class InfoAndProgressPanel internal constructor(
     @JvmField
     @ApiStatus.Internal
     val FAKE_BALLOON: Any = Any()
+
+    private const val SHOW_ANALYZING_BANNER_ONCE_KEY: String = "SHOW_ANALYZING_BANNER_ONCE_KEY"
 
     private val showCounterInsteadOfMultiProcessLink: Boolean
       get() = Registry.`is`("progresses.show.counter.icon.instead.of.show.link", false)
@@ -233,7 +237,9 @@ class InfoAndProgressPanel internal constructor(
   private fun getPopup(): ProcessPopup {
     var result = popup
     if (result == null) {
-      result = ProcessPopup(this)
+      val propertiesComponent = statusBar.project?.service<PropertiesComponent>()
+      val showAnalyzingBanner = propertiesComponent?.updateValue(SHOW_ANALYZING_BANNER_ONCE_KEY, false) == true
+      result = ProcessPopup(this, showAnalyzingBanner && Registry.`is`("analyzing.progress.explaining.banner.enable"))
       popup = result
     }
     return result
@@ -416,7 +422,8 @@ class InfoAndProgressPanel internal constructor(
     val htmlContent = htmlBody.replace("\n", "<br>")
     val icon = icon ?: if (type == MessageType.INFO) {
       null
-    } else {
+    }
+    else {
       type.defaultIcon
     }
     val balloon = JBPopupFactory.getInstance()
@@ -1258,7 +1265,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
     layout = BorderLayout()
     add(textPanel, BorderLayout.CENTER)
     isOpaque = false
-    setNumber(0, isProgressVisible =false, isPopupShowing = false)
+    setNumber(0, isProgressVisible = false, isPopupShowing = false)
   }
 
   private fun createTextPanel(): TextPanel {
