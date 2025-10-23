@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -236,12 +236,12 @@ public class IdeaGateway {
   }
 
   public static @NotNull Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
+    if (!(f instanceof NewVirtualFile nf) || !f.isValid()) return Collections.emptyList();
     return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
   }
 
   public static @NotNull Iterable<VirtualFile> loadAndIterateChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
+    if (!(f instanceof NewVirtualFile nf) || !f.isValid()) return Collections.emptyList();
     return Arrays.asList(nf.getChildren());
   }
 
