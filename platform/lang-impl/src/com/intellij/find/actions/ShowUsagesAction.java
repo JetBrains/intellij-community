@@ -925,7 +925,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       contentSplitter = new OnePixelSplitter(true, .6f);
       contentSplitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
       contentSplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
-      contentSplitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+      contentSplitter.getDivider().setBackground(JBUI.CurrentTheme.Separator.color());
       builder.setContentSplitter(contentSplitter);
     }
 

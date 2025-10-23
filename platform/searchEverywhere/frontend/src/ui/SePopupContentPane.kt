@@ -950,7 +950,7 @@ class SePopupContentPane(
   private fun createSplitter(): OnePixelSplitter {
     val splitter = OnePixelSplitter(true, .33f)
     splitter.splitterProportionKey = SearchEverywhereUI.SPLITTER_SERVICE_KEY
-    splitter.divider.setBackground(OnePixelDivider.BACKGROUND)
+    splitter.divider.setBackground(JBUI.CurrentTheme.Separator.color())
     splitter.setFirstComponent(resultsScrollPane)
     splitter.setSecondComponent(usagePreviewPanel)
     return splitter
