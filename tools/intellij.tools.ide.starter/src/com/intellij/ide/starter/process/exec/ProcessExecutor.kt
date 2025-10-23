@@ -274,6 +274,10 @@ class ProcessExecutor(
         logError("CatchAll swallowed error: ${t.message}")
         logError(getThrowableText(t))
       }
+      if (onProcessCreatedJob.isActive) {
+        logOutput(" ... cancelling and waiting for process `$onProcessCreatedJob` job ... ")
+        onProcessCreatedJob.cancelAndJoin()
+      }
     }
 
     ioThreads.forEach { catchAll { it.join() } }
