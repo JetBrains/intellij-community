@@ -86,7 +86,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
     highlightOptionToSynonym = emptyMap()
   }
 
-  fun isInitialized(): Boolean = storage?.isCompleted == true
+  override fun isInitialized(): Boolean = storage?.isCompleted == true
 
   @TestOnly
   fun initializeBlocking() {

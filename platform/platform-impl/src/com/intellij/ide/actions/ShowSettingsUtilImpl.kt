@@ -4,6 +4,8 @@ package com.intellij.ide.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.ide.ui.search.SearchUtil
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -452,6 +454,10 @@ private fun useNonModalSettingsWindow(): Boolean {
 // ShowSettingsAction in a deprecated language
 internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(project: Project) {
   project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+    launch {
+      (serviceAsync<SearchableOptionsRegistrar>() as? SearchableOptionsRegistrarImpl)?.initialize()
+    }
+
     if (project.isDefault) {
       serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups(project))
     }

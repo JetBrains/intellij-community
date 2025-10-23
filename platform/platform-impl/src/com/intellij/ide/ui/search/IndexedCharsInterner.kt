@@ -49,11 +49,12 @@ private class StringSet : ObjectOpenHashSet<String?>(10, 0.9f) {
   @JvmField var idToIndex = IntArray(10)
 
   fun getByIndex(index: Int): String {
-    return key[index] as String
+    val set: Array<out Any?> = this.key
+    return set[index] as String
   }
 
   override fun rehash(newCapacity: Int) {
-    val oldSet = this.key
+    val oldSet: Array<out Any?> = this.key
     val oldSize = size
 
     super.rehash(newCapacity)
@@ -69,7 +70,7 @@ private class StringSet : ObjectOpenHashSet<String?>(10, 0.9f) {
 
   fun index(k: String): Int {
     var curr: Any?
-    val key = this.key
+    val key: Array<out Any?> = this.key
     var pos: Int
     if ((key[(HashCommon.mix(k.hashCode()) and mask).also { pos = it }].also { curr = it }) == null) {
       return -1
