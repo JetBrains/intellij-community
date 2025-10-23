@@ -447,6 +447,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   }
 
   private @NotNull Supplier<? extends T> createGetter(@NotNull T interval) {
+    //noinspection rawtypes,unchecked
     return keepIntervalOnWeakReference(interval)
            ? new WeakReferencedGetter<>(interval, myReferenceQueue)
            : (Supplier)interval;
@@ -466,8 +467,10 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   void assertUnderWriteLock() {
     assert l.isWriteLockedByCurrentThread() : l.writeLock();
   }
-  protected void assertNotUnderWriteLock() {
-    assert !l.isWriteLockedByCurrentThread() : l.writeLock();
+  protected void assertMayModify() throws IllegalStateException {
+    if (l.getReadHoldCount() != 0) {
+      throw new IllegalStateException("Must not perform modifications while holding read lock/iterating");
+    }
   }
 
   private void pushDeltaFromRoot(@Nullable IntervalNode<T> node) {
