@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MavenWrapperTestFixture {
   private static final String DISTRIBUTION_URL_PATTERN =
@@ -30,6 +32,8 @@ public class MavenWrapperTestFixture {
     "https://dlcdn.apache.org/maven/maven-4/$version$/binaries/apache-maven-$version$-bin.zip";
   private final Project myProject;
   private final String myMavenVersion;
+
+  private final Pattern SNAPSHOT_REGEX = Pattern.compile("(?<versionWithoutSnapshot>.*)-(?<timestamp>\\d{8}\\.\\d{6})-(?<build>\\d{3})");
 
 
   public MavenWrapperTestFixture(Project project, String mavenVersion) {
@@ -64,7 +68,26 @@ public class MavenWrapperTestFixture {
     if (myMavenVersion.contains("SNAPSHOT")) {
       return createSnapshotUri();
     }
+    var matcher = SNAPSHOT_REGEX.matcher(myMavenVersion);
+
+    if (matcher.matches()) {
+      return createTimestampedSnapshotUri(matcher);
+    }
     return URI.create(DISTRIBUTION_URL_PATTERN.replace("$version$", myMavenVersion));
+  }
+
+  private URI createTimestampedSnapshotUri(Matcher matcher) throws Exception {
+    if (!matcher.matches()) throw new IllegalArgumentException("matcher is not applicable");
+    String versionWithoutSnapshot = matcher.group("versionWithoutSnapshot");
+    String timestamp = matcher.group("timestamp");
+    String build = matcher.group("build");
+    String versionWithSnapshot = versionWithoutSnapshot + "-SNAPSHOT";
+
+    return URI.create(SNAPSHOT_URL_PATTERN
+                        .replace("$version$", versionWithSnapshot)
+                        .replace("$versionWithoutSnapshot$", versionWithoutSnapshot)
+                        .replace("$timestamp$", timestamp)
+                        .replace("$build$", build));
   }
 
   private URI createSnapshotUri() throws Exception {
