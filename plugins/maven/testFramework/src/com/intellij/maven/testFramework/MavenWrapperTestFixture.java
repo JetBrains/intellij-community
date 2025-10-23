@@ -33,7 +33,7 @@ public class MavenWrapperTestFixture {
   private final Project myProject;
   private final String myMavenVersion;
 
-  private final Pattern SNAPSHOT_REGEX = Pattern.compile("(?<versionWithoutSnapshot>.*)-(?<timestamp>\\d{8}\\.\\d{6})-(?<build>\\d{3})");
+  private final Pattern SNAPSHOT_REGEX = Pattern.compile("(?<versionWithoutSnapshot>.*)-(?<timestamp>\\d{8}\\.\\d{6})-(?<build>\\d+)");
 
 
   public MavenWrapperTestFixture(Project project, String mavenVersion) {
