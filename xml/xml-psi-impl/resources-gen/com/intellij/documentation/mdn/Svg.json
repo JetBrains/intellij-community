@@ -27,6 +27,28 @@
       },
       "doc": "The <strong><code>alignment-baseline</code></strong> attribute specifies how an object is aligned with respect to its parent. This property specifies which baseline of this element is to be aligned with the corresponding baseline of the parent. For example, this allows <a href=\"$MDN_URL$/Glossary/Baseline/Typography\">alphabetic baselines</a> in Roman text to stay aligned across font size changes. It defaults to the baseline with the same name as the computed value of the <code>alignment-baseline</code> property.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAs a presentation attribute, <code>alignment-baseline</code> also has a CSS property counterpart: <a href=\"$MDN_URL$/Web/CSS/alignment-baseline\"><code>alignment-baseline</code></a>. When both are specified, the CSS property takes priority.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n</ul>"
     },
+    "autofocus": {
+      "url": "$MDN_URL$/web/svg/reference/attribute/autofocus",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "79",
+        "ChromeAndroid": "79",
+        "Edge": "79",
+        "Firefox": "110",
+        "FirefoxAndroid": "110",
+        "Opera": "66",
+        "Safari": "15.4",
+        "SafariIOS": "15.4"
+      },
+      "baseline": {
+        "level": "HIGH",
+        "lowDate": "2023-02-14",
+        "highDate": "2025-08-14"
+      },
+      "doc": "The <strong><code>autofocus</code></strong> global SVG attribute defines a focusable element to be focused after it's connected to a document. The attribute has no effect if the element is not already focusable.\n<p>The <code>autofocus</code> attribute has an HTML counterpart: <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/autofocus\"><code>autofocus</code></a>. No more than one element in the document may have the <code>autofocus</code> attribute. If applied to multiple elements, the first one will receive focus."
+    },
     "baseline-shift": {
       "url": "$MDN_URL$/web/svg/reference/attribute/baseline-shift",
       "status": [
@@ -852,6 +874,28 @@
       },
       "doc": "The <strong><code>pointer-events</code></strong> attribute is a presentation attribute that allows defining whether or when an element may be the target of a mouse event.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAs a presentation attribute, <code>pointer-events</code> also has a CSS property counterpart: <a href=\"$MDN_URL$/Web/CSS/pointer-events\"><code>pointer-events</code></a>. When both are specified, the CSS property takes priority.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/a\"><code>&lt;a&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/circle\"><code>&lt;circle&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/clipPath\"><code>&lt;clipPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/defs\"><code>&lt;defs&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/ellipse\"><code>&lt;ellipse&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/g\"><code>&lt;g&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/line\"><code>&lt;line&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/marker\"><code>&lt;marker&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/path\"><code>&lt;path&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/polygon\"><code>&lt;polygon&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/polyline\"><code>&lt;polyline&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/switch\"><code>&lt;switch&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
     },
+    "requiredextensions": {
+      "url": "$MDN_URL$/web/svg/reference/attribute/requiredextensions",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "81",
+        "ChromeAndroid": "81",
+        "Edge": "81",
+        "Firefox": "2",
+        "FirefoxAndroid": "4",
+        "Opera": "68",
+        "Safari": "8",
+        "SafariIOS": "8"
+      },
+      "baseline": {
+        "level": "HIGH",
+        "lowDate": "2020-04-13",
+        "highDate": "2022-10-13"
+      },
+      "doc": "The <strong><code>requiredExtensions</code></strong> SVG <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute#conditional_processing_attributes\">conditional processing attribute</a> is a list of space-separated URL values each referencing a language extension. Language extensions are extended capabilities that go beyond those defined by standard browser specifications.\n<p>The value is a space-separated list of URL references identifying the required extensions. If all of the named extensions in the list are supported by the user agent, the element is rendered as usual. If attribute is present but the value is an empty string, or if any of the extensions are not supported by the browser, the browser will skip the element, along with all its descendants, not rendering it.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/a\"><code>&lt;a&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/animate\"><code>&lt;animate&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/animateMotion\"><code>&lt;animateMotion&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/animateTransform\"><code>&lt;animateTransform&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/circle\"><code>&lt;circle&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/clipPath\"><code>&lt;clipPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/defs\"><code>&lt;defs&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/ellipse\"><code>&lt;ellipse&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/g\"><code>&lt;g&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/line\"><code>&lt;line&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/path\"><code>&lt;path&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/polygon\"><code>&lt;polygon&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/polyline\"><code>&lt;polyline&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/set\"><code>&lt;set&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/switch\"><code>&lt;switch&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
+    },
     "requiredfeatures": {
       "url": "$MDN_URL$/web/svg/reference/attribute/requiredfeatures",
       "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>requiredFeatures</code></strong> attribute takes a list of feature strings, with the individual strings separated by white space. It determines whether or not all of the named features are supported by the browser; if all of them are supported, the attribute evaluates to <code>true</code> end the element is rendered; otherwise, the attribute evaluates to <code>false</code> and the current element and its children are skipped and thus will not be rendered. This provides a way to design SVG that gracefully falls back when features aren't available.\n<p>If the attribute is not present, then its implicit evaluated value is <code>true</code>. If a null string or empty string value is given to attribute <code>requiredFeatures</code>, the attribute is evaluate to <code>false</code>.\n<p><code>requiredFeatures</code> is often used in conjunction with the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/switch\"><code>&lt;switch&gt;</code></a> element. If <code>requiredFeatures</code> is used in other situations, it represents a simple switch on the given element whether to render the element or not.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/a\"><code>&lt;a&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/animate\"><code>&lt;animate&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/animateMotion\"><code>&lt;animateMotion&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/animateTransform\"><code>&lt;animateTransform&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/circle\"><code>&lt;circle&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/clipPath\"><code>&lt;clipPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/defs\"><code>&lt;defs&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/ellipse\"><code>&lt;ellipse&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/g\"><code>&lt;g&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/line\"><code>&lt;line&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/path\"><code>&lt;path&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/polygon\"><code>&lt;polygon&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/polyline\"><code>&lt;polyline&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/set\"><code>&lt;set&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/switch\"><code>&lt;switch&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
@@ -1190,6 +1234,28 @@
       },
       "doc": "The <strong><code>text-decoration</code></strong> attribute defines whether text is decorated with an underline, overline and/or strike-through. It is a shorthand for the <a href=\"$MDN_URL$/Web/CSS/text-decoration-line\"><code>text-decoration-line</code></a> and <a href=\"$MDN_URL$/Web/CSS/text-decoration-style\"><code>text-decoration-style</code></a> properties.\n<p>The fill and stroke of the text decoration are given by the fill and stroke of the text at the point where the text decoration is declared.\n<p>The paint order of the text decoration, i.e., the fill and stroke, is determined by the value of the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/paint-order\"><code>paint-order</code></a> attribute at the point where the text decoration is declared.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAs a presentation attribute, <code>text-decoration</code> also has a CSS property counterpart: <a href=\"$MDN_URL$/Web/CSS/text-decoration\"><code>text-decoration</code></a>. When both are specified, the CSS property takes priority.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
     },
+    "text-overflow": {
+      "url": "$MDN_URL$/web/svg/reference/attribute/text-overflow",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "1",
+        "ChromeAndroid": "18",
+        "Edge": "12",
+        "Firefox": "7",
+        "FirefoxAndroid": "7",
+        "Opera": "11",
+        "Safari": "1.3",
+        "SafariIOS": "1"
+      },
+      "baseline": {
+        "level": "HIGH",
+        "lowDate": "2015-07-29",
+        "highDate": "2018-01-29"
+      },
+      "doc": "The SVG <strong><code>text-overflow</code></strong> attribute specifies how text content block elements render when text overflows line boxes. This can happen, for example, when the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/white-space\"><code>white-space</code></a> attribute or <a href=\"$MDN_URL$/Web/CSS/white-space\"><code>CSS property</code></a> has the value <code>nowrap</code>. The property does not apply to pre-formatted text or text situated on a path.\n<p>In SVG, <code>text-overflow</code> has an effect if there is a validly specified wrapping area, regardless of the computed value of the <a href=\"$MDN_URL$/Web/CSS/overflow\"><code>overflow</code></a> property on the text content block element. The effect is purely visual: clipped text is not removed from the DOM, and any ellipsis, if presented, does not itself become part of the DOM. For all the DOM methods, it is as if <code>text-overflow</code> was not applied, and as if the wrapping area did not constrain the text.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAs a presentation attribute, <code>text-overflow</code> also has a CSS property counterpart: <a href=\"$MDN_URL$/Web/CSS/text-overflow\"><code>text-overflow</code></a>. When both are specified, the CSS property takes priority.\n</div>"
+    },
     "text-rendering": {
       "url": "$MDN_URL$/web/svg/reference/attribute/text-rendering",
       "status": [
@@ -1317,6 +1383,28 @@
         "highDate": "2018-01-29"
       },
       "doc": "The <strong><code>visibility</code></strong> attribute lets you control the visibility of graphical elements. With a value of <code>hidden</code> or <code>collapse</code> the current graphics element is invisible.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIf the <code>visibility</code> attribute is set to <code>hidden</code> on a text element, then the text is invisible but still takes up space in text layout calculations.\n</div>\n<p>Depending on the value of attribute <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/pointer-events\"><code>pointer-events</code></a>, graphics elements which have their <code>visibility</code> attribute set to <code>hidden</code> still might receive events.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAs a presentation attribute, <code>visibility</code> also has a CSS property counterpart: <a href=\"$MDN_URL$/Web/CSS/visibility\"><code>visibility</code></a>. When both are specified, the CSS property takes priority.\n</div>"
+    },
+    "white-space": {
+      "url": "$MDN_URL$/web/svg/reference/attribute/white-space",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "1",
+        "ChromeAndroid": "18",
+        "Edge": "12",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
+        "Opera": "4",
+        "Safari": "1",
+        "SafariIOS": "1"
+      },
+      "baseline": {
+        "level": "HIGH",
+        "lowDate": "2015-07-29",
+        "highDate": "2018-01-29"
+      },
+      "doc": "The <strong><code>white-space</code></strong> SVG attribute specifies how <a href=\"$MDN_URL$/Glossary/Whitespace\">white space</a> within text should be handled. This includes whether and how white space inside the element is collapsed and whether lines may wrap at unforced soft wrap opportunities.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAs a presentation attribute, <code>white-space</code> also has a CSS property counterpart: <a href=\"$MDN_URL$/Web/CSS/white-space\"><code>white-space</code></a>. When both are specified, the CSS property takes priority.\n</div>"
     },
     "word-spacing": {
       "url": "$MDN_URL$/web/svg/reference/attribute/word-spacing",
@@ -8161,8 +8249,11 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>&lt;switch&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element evaluates any <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredFeatures\"><code>requiredFeatures</code></a>, <a class=\"page-not-created\" data-href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredExtensions\" ><code>requiredExtensions</code></a> and <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/systemLanguage\"><code>systemLanguage</code></a> attributes on its direct child elements in order, and then renders the first child where these attributes evaluate to true.\n<p>Other direct children will be bypassed and therefore not rendered. If a child element is a container element, like <a href=\"$MDN_URL$/Web/SVG/Reference/Element/g\"><code>&lt;g&gt;</code></a>, then its subtree is also processed/rendered or bypassed/not rendered.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>display</code> and <code>visibility</code> properties have no effect on <code>&lt;switch&gt;</code> element processing. In particular, setting <code>display:none</code> on a child has no effect on the true/false testing for <code>&lt;switch&gt;</code> processing.\n</div>",
+      "doc": "The <strong><code>&lt;switch&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element evaluates any <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredFeatures\"><code>requiredFeatures</code></a>, <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredExtensions\"><code>requiredExtensions</code></a> and <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/systemLanguage\"><code>systemLanguage</code></a> attributes on its direct child elements in order, and then renders the first child where these attributes evaluate to true.\n<p>Other direct children will be bypassed and therefore not rendered. If a child element is a container element, like <a href=\"$MDN_URL$/Web/SVG/Reference/Element/g\"><code>&lt;g&gt;</code></a>, then its subtree is also processed/rendered or bypassed/not rendered.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>display</code> and <code>visibility</code> properties have no effect on <code>&lt;switch&gt;</code> element processing. In particular, setting <code>display:none</code> on a child has no effect on the true/false testing for <code>&lt;switch&gt;</code> processing.\n</div>",
       "attrs": {
+        "requiredextensions": {
+          "url": "$MDN_URL$/web/svg/reference/element/switch#requiredextensions"
+        },
         "systemlanguage": {
           "url": "$MDN_URL$/web/svg/reference/element/switch#systemlanguage",
           "status": [

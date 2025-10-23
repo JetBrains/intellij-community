@@ -1095,7 +1095,8 @@
         "Edge": "133",
         "Firefox": "142",
         "FirefoxAndroid": "142",
-        "Opera": "118"
+        "Opera": "118",
+        "Safari": "preview"
       },
       "doc": "The <strong><code>overallProgress</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Animation\"><code>Animation</code></a> interface returns a number between <code>0</code> and <code>1</code> indicating the animation's overall progress towards its finished state. This is the overall progress across all of the animation's iterations, not each individual iteration.\n<p><code>overallProgress</code> works consistently across all animations, regardless of the type of <a href=\"$MDN_URL$/Web/API/AnimationTimeline\" ><code>timeline</code></a>."
     },
@@ -9299,8 +9300,9 @@
         "SafariIOS": "16.1"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-04-11"
+        "level": "HIGH",
+        "lowDate": "2023-04-11",
+        "highDate": "2025-10-11"
       },
       "doc": "The <strong><code>CanvasRenderingContext2D.createConicGradient()</code></strong> method of the Canvas 2D API creates a gradient around a point with given coordinates.\n<p>This method returns a conic <a href=\"$MDN_URL$/Web/API/CanvasGradient\"><code>CanvasGradient</code></a>. To be applied to a shape, the gradient must first be assigned to the <a href=\"$MDN_URL$/Web/API/CanvasRenderingContext2D/fillStyle\" ><code>fillStyle</code></a> or <a href=\"$MDN_URL$/Web/API/CanvasRenderingContext2D/strokeStyle\" ><code>strokeStyle</code></a> properties.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nGradient coordinates are global, i.e., relative to the current coordinate space. When applied to a shape, the coordinates are NOT relative to the shape's coordinates.\n</div>",
       "parameters": {
@@ -10450,8 +10452,9 @@
         "SafariIOS": "16"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-04-11"
+        "level": "HIGH",
+        "lowDate": "2023-04-11",
+        "highDate": "2025-10-11"
       },
       "doc": "The <strong><code>CanvasRenderingContext2D.roundRect()</code></strong> method of the Canvas 2D API adds a rounded rectangle to the current path.\n<p>The radii of the corners can be specified in much the same way as the CSS <a href=\"$MDN_URL$/Web/CSS/border-radius\"><code>border-radius</code></a> property.\n<p>Like other methods that modify the current path, this method does not directly render anything.\nTo draw the rounded rectangle onto a canvas, you can use the <a href=\"$MDN_URL$/Web/API/CanvasRenderingContext2D/fill\" ><code>fill()</code></a> or <a href=\"$MDN_URL$/Web/API/CanvasRenderingContext2D/stroke\" ><code>stroke()</code></a> methods.",
       "parameters": {
@@ -16104,6 +16107,143 @@
       },
       "doc": "The read-only <strong><code>overrideColors</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontPaletteValuesRule\"><code>CSSFontPaletteValuesRule</code></a> interface is a string containing a list of color index and color pair that are to be used instead. It is specified in the same format as the corresponding <a href=\"$MDN_URL$/Web/CSS/@font-palette-values/override-colors\"><code>override-colors</code></a> descriptor."
     },
+    "cssfunctiondeclarations": {
+      "url": "$MDN_URL$/web/api/cssfunctiondeclarations",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CSSFunctionDeclarations</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/CSS_Object_Model\">CSS Object Model</a> represents a consecutive run of CSS declarations included within a <a href=\"$MDN_URL$/Web/CSS/@function\"><code>@function</code></a> body.\n<p>This can include <a href=\"$MDN_URL$/Web/CSS/CSS_cascading_variables/Using_CSS_custom_properties\">CSS custom properties</a>, and the value of the <code>results</code> descriptor inside the <code>@function</code> body, but it doesn't include blocks such as <a href=\"$MDN_URL$/Web/CSS/@media\"><code>@media</code></a> at-rules that may be included. Such a block, included in the middle of a set of declarations, would cause the body contents to be broken up into separate <code>CSSFunctionDeclarations</code> objects, as seen in our <a href=\"#multiple_cssfunctiondeclarations\">Multiple <code>CSSFunctionDeclarations</code></a> demo."
+    },
+    "cssfunctiondeclarations.style": {
+      "url": "$MDN_URL$/web/api/cssfunctiondeclarations/style",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>style</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFunctionDeclarations\"><code>CSSFunctionDeclarations</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/CSSFunctionDescriptors\"><code>CSSFunctionDescriptors</code></a> object representing the descriptors available in a <a href=\"$MDN_URL$/Web/CSS/@function\"><code>@function</code></a> body."
+    },
+    "cssfunctiondescriptors": {
+      "url": "$MDN_URL$/web/api/cssfunctiondescriptors",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CSSFunctionDescriptors</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/CSS_Object_Model\">CSS Object Model</a> represents the descriptors contained within a set of CSS declarations represented by a <a href=\"$MDN_URL$/Web/API/CSSFunctionDeclarations\"><code>CSSFunctionDeclarations</code></a> object.\n<p>A <code>CSSFunctionDescriptors</code> object is accessed via the <a href=\"$MDN_URL$/Web/API/CSSFunctionDeclarations/style\"><code>CSSFunctionDeclarations.style</code></a> property."
+    },
+    "cssfunctiondescriptors.result": {
+      "url": "$MDN_URL$/web/api/cssfunctiondescriptors/result",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>result</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFunctionDescriptors\"><code>CSSFunctionDescriptors</code></a> interface returns a string representing a <code>result</code> descriptor, if one exists in the associated set of declarations."
+    },
+    "cssfunctionrule": {
+      "url": "$MDN_URL$/web/api/cssfunctionrule",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CSSFunctionRule</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/CSS_Object_Model\">CSS Object Model</a> represents CSS <a href=\"$MDN_URL$/Web/CSS/@function\"><code>@function</code></a> (custom function) <a href=\"$MDN_URL$/Web/CSS/CSS_syntax/At-rule\">at-rules</a>."
+    },
+    "cssfunctionrule.getparameters": {
+      "url": "$MDN_URL$/web/api/cssfunctionrule/getparameters",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>getParameters()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CSSFunctionRule\"><code>CSSFunctionRule</code></a> interface returns an array of objects representing the custom function's parameters.",
+      "returns": "An array of objects containing the following properties:\n<dl>\n<dt id=\"name\"><a href=\"#name\"><code>name</code></a></dt>\n<dd>\n<p>A string representing the name of the function parameter.\n</dd>\n<dt id=\"type\"><a href=\"#type\"><code>type</code></a></dt>\n<dd>\n<p>A string representing the data type of the parameter, or <code>*</code> if no data type was specified.\n</dd>\n<dt id=\"defaultvalue\"><a href=\"#defaultvalue\"><code>defaultValue</code></a></dt>\n<dd>\n<p>A string representing the default value of the parameter, or <code>null</code> if no default value was specified.\n</dd>\n</dl>\n<p>If no parameters were specified in the associated <a href=\"$MDN_URL$/Web/CSS/@function\"><code>@function</code></a> at-rule, an empty array is returned."
+    },
+    "cssfunctionrule.name": {
+      "url": "$MDN_URL$/web/api/cssfunctionrule/name",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>name</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFunctionRule\"><code>CSSFunctionRule</code></a> interface returns a string representing the custom function's name."
+    },
+    "cssfunctionrule.returntype": {
+      "url": "$MDN_URL$/web/api/cssfunctionrule/returntype",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
+        "Opera": "123"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>returnType</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFunctionRule\"><code>CSSFunctionRule</code></a> interface returns a string representing the custom function's return type."
+    },
     "cssgroupingrule": {
       "url": "$MDN_URL$/web/api/cssgroupingrule",
       "status": [
@@ -18352,7 +18492,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>CSSRule</code></strong> interface represents a single CSS rule. There are several types of rules which inherit properties from <code>CSSRule</code>.\n<ul>\n<li><a href=\"$MDN_URL$/Web/API/CSSGroupingRule\"><code>CSSGroupingRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSStyleRule\"><code>CSSStyleRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSImportRule\"><code>CSSImportRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSMediaRule\"><code>CSSMediaRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSFontFaceRule\"><code>CSSFontFaceRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSPageRule\"><code>CSSPageRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSNamespaceRule\"><code>CSSNamespaceRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSKeyframesRule\"><code>CSSKeyframesRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSKeyframeRule\"><code>CSSKeyframeRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSCounterStyleRule\"><code>CSSCounterStyleRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSSupportsRule\"><code>CSSSupportsRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSFontPaletteValuesRule\"><code>CSSFontPaletteValuesRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSLayerBlockRule\"><code>CSSLayerBlockRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSLayerStatementRule\"><code>CSSLayerStatementRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSPropertyRule\"><code>CSSPropertyRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSNestedDeclarations\"><code>CSSNestedDeclarations</code></a></li>\n</ul>"
+      "doc": "The <strong><code>CSSRule</code></strong> interface represents a single CSS rule. There are several types of rules which inherit properties from <code>CSSRule</code>.\n<ul>\n<li><a href=\"$MDN_URL$/Web/API/CSSGroupingRule\"><code>CSSGroupingRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSStyleRule\"><code>CSSStyleRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSImportRule\"><code>CSSImportRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSMediaRule\"><code>CSSMediaRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSFontFaceRule\"><code>CSSFontFaceRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSFunctionDeclarations\"><code>CSSFunctionDeclarations</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSPageRule\"><code>CSSPageRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSNamespaceRule\"><code>CSSNamespaceRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSKeyframesRule\"><code>CSSKeyframesRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSKeyframeRule\"><code>CSSKeyframeRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSCounterStyleRule\"><code>CSSCounterStyleRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSSupportsRule\"><code>CSSSupportsRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSFontPaletteValuesRule\"><code>CSSFontPaletteValuesRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSLayerBlockRule\"><code>CSSLayerBlockRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSLayerStatementRule\"><code>CSSLayerStatementRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSPropertyRule\"><code>CSSPropertyRule</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/CSSNestedDeclarations\"><code>CSSNestedDeclarations</code></a></li>\n</ul>"
     },
     "cssrule.csstext": {
       "url": "$MDN_URL$/web/api/cssrule/csstext",
@@ -18888,7 +19028,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>CSSStyleDeclaration</code></strong> interface represents an object that is a CSS declaration block, and exposes style information and various style-related methods and properties.\n<p>A <code>CSSStyleDeclaration</code> object can be exposed using three different APIs:\n<ul>\n<li>Via <a href=\"$MDN_URL$/Web/API/HTMLElement/style\"><code>HTMLElement.style</code></a>, which deals with the inline styles of a single element (e.g., <code>&lt;div style=\"…\"&gt;</code>).</li>\n<li>Via the <a href=\"$MDN_URL$/Web/API/CSSStyleSheet\"><code>CSSStyleSheet</code></a> API. For example, <code>document.styleSheets[0].cssRules[0].style</code> returns a <code>CSSStyleDeclaration</code> object on the first CSS rule in the document's first stylesheet.</li>\n<li>Via <a href=\"$MDN_URL$/Web/API/Window/getComputedStyle\"><code>Window.getComputedStyle()</code></a>, which exposes the <code>CSSStyleDeclaration</code> object as a <strong>read-only</strong> interface.</li>\n</ul>"
+      "doc": "The <strong><code>CSSStyleDeclaration</code></strong> interface is the base class for objects that represent CSS declaration blocks with different supported sets of CSS style information:\n<ul>\n<li><a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> — CSS styles declared in stylesheet (<a href=\"$MDN_URL$/Web/API/CSSStyleRule/style\"><code>CSSStyleRule.style</code></a>), inline styles for an element such as <a href=\"$MDN_URL$/Web/API/HTMLElement/style\" ><code>HTMLElement</code></a>, <a href=\"$MDN_URL$/Web/API/SVGElement/style\" ><code>SVGElement</code></a>, and <a href=\"$MDN_URL$/Web/API/MathMLElement/style\" ><code>MathMLElement</code></a>, or the computed style for an element returned by <a href=\"$MDN_URL$/Web/API/Window/getComputedStyle\"><code>Window.getComputedStyle()</code></a>.</li>\n<li><a href=\"$MDN_URL$/Web/API/CSSPageDescriptors\"><code>CSSPageDescriptors</code></a> — Styles for CSS <a href=\"$MDN_URL$/Web/CSS/CSS_syntax/At-rule\">at-rules</a>.</li>\n</ul>\n<p>The interface exposes style information and various style-related methods and properties.\nFor example, it provides <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration/getPropertyValue\" ><code>getPropertyValue()</code></a> for getting the value of a dash-named CSS property, such as <code>border-top</code>, which can't be directly accessed using dot notation because of the hyphens in its name.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nEarlier versions of the specification used <code>CSSStyleDeclaration</code> to represent all CSS declaration blocks, and some browsers and browser versions may still do so (check the browser compatibility tables for the above APIs).\nGenerally the same website code will be functional in both old and new versions, but some properties returned in a <code>CSSStyleDeclaration</code> may not be relevant in a particular context.\n</div>"
     },
     "cssstyledeclaration.cssfloat": {
       "url": "$MDN_URL$/web/api/cssstyledeclaration/cssfloat",
@@ -18897,15 +19037,10 @@
         "Deprecated"
       ],
       "compatibility": {
-        "Chrome": "1",
-        "ChromeAndroid": "18",
-        "Edge": "12",
-        "Opera": "12.1",
-        "Safari": "1",
-        "SafariIOS": "1"
-      },
-      "baseline": {
-        "level": "NONE"
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Opera": "12.1"
       },
       "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>cssFloat</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> interface returns the result of invoking <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration/getPropertyValue\"><code>CSSStyleDeclaration.getPropertyValue()</code></a> with <code>float</code> as an argument.\n<p>When setting, it invokes <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration/setProperty\"><code>CSSStyleDeclaration.setProperty()</code></a> with <code>float</code> as the first argument, and the given value as the second argument. The given value must be a valid value for the <a href=\"$MDN_URL$/Web/CSS/float\"><code>float</code></a> property."
     },
@@ -19132,6 +19267,32 @@
         "NoModificationAllowedError DOMException": "Thrown if the property or declaration block is read only."
       }
     },
+    "cssstyleproperties": {
+      "url": "$MDN_URL$/web/api/cssstyleproperties",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Firefox": "144",
+        "FirefoxAndroid": "144",
+        "Safari": "26",
+        "SafariIOS": "26"
+      },
+      "doc": "The <strong><code>CSSStyleProperties</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/CSS_Object_Model\">CSS Object Model (CSSOM)</a> represents inline or computed styles available on an element, or the styles associated with a CSS style rule."
+    },
+    "cssstyleproperties.cssfloat": {
+      "url": "$MDN_URL$/web/api/cssstyleproperties/cssfloat",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Firefox": "144",
+        "FirefoxAndroid": "144",
+        "Safari": "26",
+        "SafariIOS": "26"
+      },
+      "doc": "The <strong><code>cssFloat</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> interface returns the CSS <a href=\"$MDN_URL$/Web/CSS/float\"><code>float</code></a> property.\n<p>This is the result of invoking <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration/getPropertyValue\" ><code>getPropertyValue()</code></a> on the object with <code>float</code> as an argument.\n<p>When setting, it invokes <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration/setProperty\" ><code>setProperty()</code></a> with <code>float</code> as the first argument, and the given value as the second argument.\nThe given value must be a valid value for the <a href=\"$MDN_URL$/Web/CSS/float\"><code>float</code></a> property."
+    },
     "cssstylerule": {
       "url": "$MDN_URL$/web/api/cssstylerule",
       "status": [
@@ -19279,7 +19440,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The read-only <strong><code>style</code></strong> property is the <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> interface for the declaration block of the <a href=\"$MDN_URL$/Web/API/CSSStyleRule\"><code>CSSStyleRule</code></a>."
+      "doc": "The read-only <strong><code>style</code></strong> property is a <a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> object that represents the inline styles of a style rule (<a href=\"$MDN_URL$/Web/API/CSSStyleRule\"><code>CSSStyleRule</code></a>).\n<p>Note that properties that are present on the object for all <a href=\"$MDN_URL$/Web/CSS/Properties\">CSS properties</a> supported by the browser.\nThe properties that are not defined inline in the corresponding CSS declaration are set to the empty string (<code>\"\"</code>)."
     },
     "cssstylerule.stylemap": {
       "url": "$MDN_URL$/web/api/cssstylerule/stylemap",
@@ -22481,7 +22642,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>Document</code></strong> interface represents any web page loaded in the browser and serves as an entry point into the web page's content, which is the <a href=\"$MDN_URL$/Web/API/Document_Object_Model/Using_the_Document_Object_Model#what_is_a_dom_tree\">DOM tree</a>.\n<p>The DOM tree includes elements such as <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/body\"><code>&lt;body&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/table\"><code>&lt;table&gt;</code></a>, among <a href=\"$MDN_URL$/Web/HTML/Reference/Elements\">many others</a>. It provides functionality globally to the document, like how to obtain the page's URL and create new elements in the document.\n<p>The <code>Document</code> interface describes the common properties and methods for any kind of document. Depending on the document's type (e.g., <a href=\"$MDN_URL$/Web/HTML\">HTML</a>, <a href=\"$MDN_URL$/Web/XML\">XML</a>, SVG, …), a larger API is available: HTML documents, served with the <code>\"text/html\"</code> content type, also implement the <a href=\"$MDN_URL$/Web/API/HTMLDocument\"><code>HTMLDocument</code></a> interface, whereas XML and SVG documents implement the <a href=\"$MDN_URL$/Web/API/XMLDocument\"><code>XMLDocument</code></a> interface."
+      "doc": "The <strong><code>Document</code></strong> interface represents any web page loaded in the browser and serves as an entry point into the web page's content, which is the <a href=\"$MDN_URL$/Web/API/Document_Object_Model#what_is_a_dom_tree\">DOM tree</a>.\n<p>The DOM tree includes elements such as <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/body\"><code>&lt;body&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/table\"><code>&lt;table&gt;</code></a>, among <a href=\"$MDN_URL$/Web/HTML/Reference/Elements\">many others</a>. It provides functionality globally to the document, like how to obtain the page's URL and create new elements in the document.\n<p>The <code>Document</code> interface describes the common properties and methods for any kind of document. Depending on the document's type (e.g., <a href=\"$MDN_URL$/Web/HTML\">HTML</a>, <a href=\"$MDN_URL$/Web/XML\">XML</a>, SVG, …), a larger API is available: HTML documents, served with the <code>\"text/html\"</code> content type, also implement the <a href=\"$MDN_URL$/Web/API/HTMLDocument\"><code>HTMLDocument</code></a> interface, whereas XML and SVG documents implement the <a href=\"$MDN_URL$/Web/API/XMLDocument\"><code>XMLDocument</code></a> interface."
     },
     "document.activeelement": {
       "url": "$MDN_URL$/web/api/document/activeelement",
@@ -22503,7 +22664,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>activeElement</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> within the DOM that is receiving keyboard events such as <a href=\"$MDN_URL$/Web/API/Element/keydown_event\" ><code>keydown</code></a> and <a href=\"$MDN_URL$/Web/API/Element/keyup_event\" ><code>keyup</code></a>. This is usually analogous to the focused element.\n<p>Which elements are focusable varies depending on the platform and the browser's current configuration. For example, on Safari, following the behavior of macOS, elements that aren't text input elements are not focusable by default, unless the \"Full Keyboard Access\" setting is enabled in System Preferences.\n<p>Typically a user can press the <kbd>Tab</kbd> key to move the focus around the page among focusable elements, and use keyboard gestures such as <kbd>Space</kbd> or <kbd>Enter</kbd> to simulate clicks on the focused element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nFocus (which element is receiving user input events) is not the same thing as selection (the currently highlighted part of the document). You can get the current selection using <a href=\"$MDN_URL$/Web/API/Window/getSelection\"><code>window.getSelection()</code></a>.\n</div>"
+      "doc": "The <strong><code>activeElement</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> within the DOM that is receiving keyboard events such as <a href=\"$MDN_URL$/Web/API/Element/keydown_event\" ><code>keydown</code></a> and <a href=\"$MDN_URL$/Web/API/Element/keyup_event\" ><code>keyup</code></a>. This is usually analogous to the focused element.\n<p>Which elements are focusable varies depending on the platform and the browser's current configuration. For example, on Safari, following the behavior of macOS, elements that aren't text input elements are not focusable by default, unless the \"Full Keyboard Access\" setting is enabled in System Settings.\n<p>Typically a user can press the <kbd>Tab</kbd> key to move the focus around the page among focusable elements, and use keyboard gestures such as <kbd>Space</kbd> or <kbd>Enter</kbd> to simulate clicks on the focused element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nFocus (which element is receiving user input events) is not the same thing as selection (the currently highlighted part of the document). You can get the current selection using <a href=\"$MDN_URL$/Web/API/Window/getSelection\"><code>window.getSelection()</code></a>.\n</div>"
     },
     "document.adoptedstylesheets": {
       "url": "$MDN_URL$/web/api/document/adoptedstylesheets",
@@ -22663,6 +22824,9 @@
         "Experimental"
       ],
       "compatibility": {},
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>ariaNotify()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> interface specifies that a given string of text should be announced by a <a href=\"$MDN_URL$/Glossary/Screen_reader\">screen reader</a> if available and activated.",
       "parameters": {
         "announcement": "A string specifying the text to be announced.",
@@ -23209,7 +23373,7 @@
       "doc": "The <strong><code>Document.createNodeIterator()</code></strong> method returns a new <a href=\"$MDN_URL$/Web/API/NodeIterator\"><code>NodeIterator</code></a> object.",
       "parameters": {
         "root": "The root node at which to begin the <a href=\"$MDN_URL$/Web/API/NodeIterator\"><code>NodeIterator</code></a>'s traversal.",
-        "whatToShow": "An optional <code>unsigned long</code> representing a bitmask created by\ncombining the constant properties of <code>NodeFilter</code>.\nIt is a convenient way of filtering for certain types of node. It defaults to\n<code>0xFFFFFFFF</code> representing the <code>SHOW_ALL</code> constant.\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Constant</th>\n<th>Numerical value</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>NodeFilter.SHOW_ALL</code></td>\n<td><code>4294967295</code> (that is the max value of <code>unsigned long</code>)</td>\n<td>Shows all nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ATTRIBUTE</code></td>\n<td><code>2</code></td>\n<td>Shows attribute <a href=\"$MDN_URL$/Web/API/Attr\"><code>Attr</code></a> nodes. This is meaningful only when creating a <a href=\"$MDN_URL$/Web/API/TreeWalker\"><code>TreeWalker</code></a> with an <a href=\"$MDN_URL$/Web/API/Attr\"><code>Attr</code></a> node as its root. In this case, it means that the attribute node will appear in the first position of the iteration or traversal. Since attributes are never children of other nodes, they do not appear when traversing over the document tree.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_CDATA_SECTION</code></td>\n<td><code>8</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/CDATASection\"><code>CDATASection</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_COMMENT</code></td>\n<td><code>128</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Comment\"><code>Comment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT</code></td>\n<td><code>256</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_FRAGMENT</code></td>\n<td><code>1024</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentFragment\"><code>DocumentFragment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_TYPE</code></td>\n<td><code>512</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentType\"><code>DocumentType</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ELEMENT</code></td>\n<td><code>1</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY</code> </td>\n<td><code>32</code></td>\n<td>Legacy, no more usable.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY_REFERENCE</code> </td>\n<td><code>16</code></td>\n<td>Legacy, no more usable.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_NOTATION</code> </td>\n<td><code>2048</code></td>\n<td>Legacy, no more usable.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_PROCESSING_INSTRUCTION</code></td>\n<td><code>64</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/ProcessingInstruction\"><code>ProcessingInstruction</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_TEXT</code></td>\n<td><code>4</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Text\"><code>Text</code></a> nodes.</td>\n</tr>\n</tbody>\n</table></figure>",
+        "whatToShow": "An optional <code>unsigned long</code> representing a bitmask created by\ncombining the constant properties of <code>NodeFilter</code>.\nIt is a convenient way of filtering for certain types of node. It defaults to\n<code>0xFFFFFFFF</code> representing the <code>SHOW_ALL</code> constant.\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Constant</th>\n<th>Numerical value</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>NodeFilter.SHOW_ALL</code></td>\n<td><code>0xFFFFFFFF</code></td>\n<td>Shows all nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ATTRIBUTE</code></td>\n<td><code>0x2</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Attr\"><code>Attr</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_CDATA_SECTION</code></td>\n<td><code>0x8</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/CDATASection\"><code>CDATASection</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_COMMENT</code></td>\n<td><code>0x80</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Comment\"><code>Comment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT</code></td>\n<td><code>0x100</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_FRAGMENT</code></td>\n<td><code>0x400</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentFragment\"><code>DocumentFragment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_TYPE</code></td>\n<td><code>0x200</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentType\"><code>DocumentType</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ELEMENT</code></td>\n<td><code>0x1</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY</code> </td>\n<td><code>0x20</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY_REFERENCE</code> </td>\n<td><code>0x10</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_NOTATION</code> </td>\n<td><code>0x800</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_PROCESSING_INSTRUCTION</code></td>\n<td><code>0x40</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/ProcessingInstruction\"><code>ProcessingInstruction</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_TEXT</code></td>\n<td><code>0x4</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Text\"><code>Text</code></a> nodes.</td>\n</tr>\n</tbody>\n</table></figure>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>NodeFilter.SHOW_ATTRIBUTE</code> constant is only effective when the root is an attribute node. Since the parent of any <code>Attr</code> node is always <code>null</code>, <a href=\"$MDN_URL$/Web/API/TreeWalker/nextNode\"><code>TreeWalker.nextNode()</code></a> and <a href=\"$MDN_URL$/Web/API/TreeWalker/previousNode\"><code>TreeWalker.previousNode()</code></a> will never return an <code>Attr</code> node. To traverse <code>Attr</code> nodes, use <a href=\"$MDN_URL$/Web/API/Element/attributes\"><code>Element.attributes</code></a> instead.\n</div>",
         "filter": "A callback function or an object with an <code>acceptNode()</code> method. The function or method will be called for each node in the subtree based at root which is accepted as included by the whatToShow flag to determine whether or not to include it in the list of iterable nodes. The method should return one of <code>NodeFilter.FILTER_ACCEPT</code>, <code>NodeFilter.FILTER_REJECT</code>, or <code>NodeFilter.FILTER_SKIP</code>. See the <a href=\"#examples\">Example</a>.\n<p>For <code>createNodeIterator</code>, the values <code>NodeFilter.FILTER_REJECT</code> and <code>NodeFilter.FILTER_SKIP</code> are equivalent. This node will not be included in the list of iterable nodes, but its children will continue to be iterated over."
       },
       "returns": "A new <a href=\"$MDN_URL$/Web/API/NodeIterator\"><code>NodeIterator</code></a> object."
@@ -23381,7 +23545,7 @@
       "doc": "The <strong><code>Document.createTreeWalker()</code></strong> creator method returns a newly created <a href=\"$MDN_URL$/Web/API/TreeWalker\"><code>TreeWalker</code></a> object.",
       "parameters": {
         "root": "A <a href=\"$MDN_URL$/Web/API/Node\"><code>Node</code></a> representing the root of the <code>TreeWalker</code> object, which is the initial value of <a href=\"$MDN_URL$/Web/API/TreeWalker/currentNode\"><code>TreeWalker.currentNode</code></a>.",
-        "whatToShow": "An <code>unsigned long</code> representing a bitmask created by combining the constant properties of <a href=\"https://dom.spec.whatwg.org/#interface-nodefilter\" class=\"external\" target=\"_blank\"><code>NodeFilter</code></a>. It is a convenient way of filtering for certain types of node. It defaults to <code>0xFFFFFFFF</code>, representing the <code>NodeFilter.SHOW_ALL</code> constant.\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Constant</th>\n<th>Numerical value</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>NodeFilter.SHOW_ALL</code></td>\n<td><code>0xFFFFFFFF</code></td>\n<td>Shows all nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ATTRIBUTE</code></td>\n<td><code>0x2</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Attr\"><code>Attr</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_CDATA_SECTION</code></td>\n<td><code>0x8</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/CDATASection\"><code>CDATASection</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_COMMENT</code></td>\n<td><code>0x80</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Comment\"><code>Comment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT</code></td>\n<td><code>0x100</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_FRAGMENT</code></td>\n<td><code>0x400</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentFragment\"><code>DocumentFragment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_TYPE</code></td>\n<td><code>0x200</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentType\"><code>DocumentType</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ELEMENT</code></td>\n<td><code>0x1</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY</code> </td>\n<td><code>0x20</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY_REFERENCE</code> </td>\n<td><code>0x10</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_NOTATION</code> </td>\n<td><code>0x800</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_PROCESSING_INSTRUCTION</code></td>\n<td><code>0x40</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/ProcessingInstruction\"><code>ProcessingInstruction</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_TEXT</code></td>\n<td><code>0x4</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Text\"><code>Text</code></a> nodes.</td>\n</tr>\n</tbody>\n</table></figure>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSince the parent of any <code>Attr</code> node is always <code>null</code>, <a href=\"$MDN_URL$/Web/API/TreeWalker/nextNode\"><code>TreeWalker.nextNode()</code></a> and <a href=\"$MDN_URL$/Web/API/TreeWalker/previousNode\"><code>TreeWalker.previousNode()</code></a> will never return an <code>Attr</code> node. To traverse <code>Attr</code> nodes, use <a href=\"$MDN_URL$/Web/API/Element/attributes\"><code>Element.attributes</code></a> instead.\n</div>",
+        "whatToShow": "An <code>unsigned long</code> representing a bitmask created by combining the constant properties of <a href=\"https://dom.spec.whatwg.org/#interface-nodefilter\" class=\"external\" target=\"_blank\"><code>NodeFilter</code></a>. It is a convenient way of filtering for certain types of node. It defaults to <code>0xFFFFFFFF</code>, representing the <code>NodeFilter.SHOW_ALL</code> constant.\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Constant</th>\n<th>Numerical value</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>NodeFilter.SHOW_ALL</code></td>\n<td><code>0xFFFFFFFF</code></td>\n<td>Shows all nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ATTRIBUTE</code></td>\n<td><code>0x2</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Attr\"><code>Attr</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_CDATA_SECTION</code></td>\n<td><code>0x8</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/CDATASection\"><code>CDATASection</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_COMMENT</code></td>\n<td><code>0x80</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Comment\"><code>Comment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT</code></td>\n<td><code>0x100</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_FRAGMENT</code></td>\n<td><code>0x400</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentFragment\"><code>DocumentFragment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_TYPE</code></td>\n<td><code>0x200</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentType\"><code>DocumentType</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ELEMENT</code></td>\n<td><code>0x1</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY</code> </td>\n<td><code>0x20</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY_REFERENCE</code> </td>\n<td><code>0x10</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_NOTATION</code> </td>\n<td><code>0x800</code></td>\n<td>Legacy, no longer effective.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_PROCESSING_INSTRUCTION</code></td>\n<td><code>0x40</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/ProcessingInstruction\"><code>ProcessingInstruction</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_TEXT</code></td>\n<td><code>0x4</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Text\"><code>Text</code></a> nodes.</td>\n</tr>\n</tbody>\n</table></figure>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>NodeFilter.SHOW_ATTRIBUTE</code> constant is only effective when the root is an attribute node. Since the parent of any <code>Attr</code> node is always <code>null</code>, <a href=\"$MDN_URL$/Web/API/TreeWalker/nextNode\"><code>TreeWalker.nextNode()</code></a> and <a href=\"$MDN_URL$/Web/API/TreeWalker/previousNode\"><code>TreeWalker.previousNode()</code></a> will never return an <code>Attr</code> node. To traverse <code>Attr</code> nodes, use <a href=\"$MDN_URL$/Web/API/Element/attributes\"><code>Element.attributes</code></a> instead.\n</div>",
         "filter": "A callback function or an object with an <code>acceptNode()</code> method, which returns <code>NodeFilter.FILTER_ACCEPT</code>, <code>NodeFilter.FILTER_REJECT</code>, or <code>NodeFilter.FILTER_SKIP</code>. The function or method will be called for each node in the subtree based at <code>root</code> which is accepted as included by the <code>whatToShow</code> flag to determine whether or not to include it in the list of iterable nodes:\n<ul>\n<li>If the return value is <code>NodeFilter.FILTER_ACCEPT</code>, this node is included.</li>\n<li>If the return value is <code>NodeFilter.FILTER_REJECT</code>, any node in the subtree based at this node is not included.</li>\n<li>If the return value is <code>NodeFilter.FILTER_SKIP</code>, this node is not included.</li>\n</ul>"
       },
       "returns": "A new <a href=\"$MDN_URL$/Web/API/TreeWalker\"><code>TreeWalker</code></a> object."
@@ -25022,7 +25186,8 @@
         "SafariIOS": "18"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-14"
       },
       "doc": "The <strong><code>startViewTransition()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> interface starts a new same-document (SPA) <a href=\"$MDN_URL$/Web/API/View_Transition_API\">view transition</a> and returns a <a href=\"$MDN_URL$/Web/API/ViewTransition\"><code>ViewTransition</code></a> object to represent it.\n<p>When <code>startViewTransition()</code> is invoked, a sequence of steps is followed as explained in <a href=\"$MDN_URL$/Web/API/View_Transition_API/Using#the_view_transition_process\">The view transition process</a>.",
       "parameters": {
@@ -27120,7 +27285,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>DOMParser</code></strong> interface provides\nthe ability to parse <a href=\"$MDN_URL$/Glossary/XML\">XML</a> or <a href=\"$MDN_URL$/Glossary/HTML\">HTML</a> source code from a\nstring into a DOM <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>.\n<p>You can perform the opposite operation—converting a DOM tree into XML or HTML\nsource—using the <a href=\"$MDN_URL$/Web/API/XMLSerializer\"><code>XMLSerializer</code></a> interface.\n<p>In the case of an HTML document, you can also replace portions of the DOM with new DOM\ntrees built from HTML by setting the value of the <a href=\"$MDN_URL$/Web/API/Element/innerHTML\"><code>Element.innerHTML</code></a> and\n<a href=\"$MDN_URL$/Web/API/Element/outerHTML\" ><code>outerHTML</code></a> properties. These properties can also be\nread to fetch HTML fragments corresponding to the corresponding DOM subtree.\n<p>Note that <a href=\"$MDN_URL$/Web/API/XMLHttpRequest\"><code>XMLHttpRequest</code></a> can parse XML and HTML directly\nfrom a URL-addressable resource, returning a <code>Document</code> in its\n<a href=\"$MDN_URL$/Web/API/XMLHttpRequest/response\" ><code>response</code></a> property.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nBe aware that <a href=\"$MDN_URL$/Glossary/Block-level_content\">block-level elements</a>\nlike <code>&lt;p&gt;</code> will be automatically closed if another\nblock-level element is nested inside and therefore parsed before the closing <code>&lt;/p&gt;</code> tag.\n</div>"
+      "doc": "The <strong><code>DOMParser</code></strong> interface provides the ability to parse <a href=\"$MDN_URL$/Glossary/XML\">XML</a> or <a href=\"$MDN_URL$/Glossary/HTML\">HTML</a> source code from a string into a DOM <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>.\n<p>You can perform the opposite operation—converting a DOM tree into XML or HTML source—using the <a href=\"$MDN_URL$/Web/API/XMLSerializer\"><code>XMLSerializer</code></a> interface.\n<p>In the case of an HTML document, you can also replace portions of the DOM with new DOM trees built from HTML by setting the value of the <a href=\"$MDN_URL$/Web/API/Element/innerHTML\"><code>Element.innerHTML</code></a> and <a href=\"$MDN_URL$/Web/API/Element/outerHTML\" ><code>outerHTML</code></a> properties. These properties can also be read to fetch HTML fragments corresponding to the corresponding DOM subtree.\n<p>Note that <a href=\"$MDN_URL$/Web/API/XMLHttpRequest\"><code>XMLHttpRequest</code></a> can parse XML and HTML directly from a URL-addressable resource, returning a <code>Document</code> in its <a href=\"$MDN_URL$/Web/API/XMLHttpRequest/response\" ><code>response</code></a> property.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nBe aware that <a href=\"$MDN_URL$/Glossary/Block-level_content\">block-level elements</a> like <code>&lt;p&gt;</code> will be automatically closed if another block-level element is nested inside and therefore parsed before the closing <code>&lt;/p&gt;</code> tag.\n</div>"
     },
     "domparser.domparser": {
       "url": "$MDN_URL$/web/api/domparser/domparser",
@@ -27165,12 +27330,15 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>parseFromString()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/DOMParser\"><code>DOMParser</code></a> interface parses a string containing either HTML or XML, returning an <a href=\"$MDN_URL$/Web/API/HTMLDocument\"><code>HTMLDocument</code></a> or an <a href=\"$MDN_URL$/Web/API/XMLDocument\"><code>XMLDocument</code></a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <a href=\"$MDN_URL$/Web/API/Document/parseHTMLUnsafe_static\"><code>Document.parseHTMLUnsafe()</code></a> static method provides an ergonomic alternative for parsing HTML strings into a <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>.\n</div>",
+      "doc": "<div class=\"notecard warning\">\n<p><strong>Warning:</strong>\nThis method parses its input as HTML, writing the result into the DOM.\nAPIs like this are known as <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#concepts_and_usage\">injection sinks</a>, and are potentially a vector for <a href=\"$MDN_URL$/Web/Security/Attacks/XSS\">cross-site-scripting (XSS)</a> attacks, if the input originally came from an attacker.\n<p>You can mitigate this risk by always passing <code>TrustedHTML</code> objects instead of strings and <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#using_a_csp_to_enforce_trusted_types\">enforcing trusted types</a>.\nSee <a href=\"#security_considerations\">Security considerations</a> for more information.\n</div>\n<p>The <strong><code>parseFromString()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/DOMParser\"><code>DOMParser</code></a> interface parses an input containing either HTML or XML, returning a <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> with the type given in the <a href=\"$MDN_URL$/Web/API/Document/contentType\" ><code>contentType</code></a> property.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <a href=\"$MDN_URL$/Web/API/Document/parseHTMLUnsafe_static\"><code>Document.parseHTMLUnsafe()</code></a> static method provides an ergonomic alternative for parsing HTML markup into a <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>.\n</div>",
       "parameters": {
-        "string": "The string to be parsed. It must contain either an\n<a href=\"$MDN_URL$/Glossary/HTML\">HTML</a>, <a href=\"$MDN_URL$/Glossary/XML\">xml</a>, <a href=\"$MDN_URL$/Glossary/XHTML\">XHTML</a>, or\n<a href=\"$MDN_URL$/Glossary/SVG\">svg</a> document.",
-        "mimeType": "A string. This string determines whether the XML parser or the HTML parser is used to parse the string. Valid values are:\n<ul>\n<li><code>text/html</code></li>\n<li><code>text/xml</code></li>\n<li><code>application/xml</code></li>\n<li><code>application/xhtml+xml</code></li>\n<li><code>image/svg+xml</code></li>\n</ul>\n<p>A value of <code>text/html</code> will invoke the HTML parser, and the method will return an <a href=\"$MDN_URL$/Web/API/HTMLDocument\"><code>HTMLDocument</code></a>. Any <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/script\"><code>&lt;script&gt;</code></a> element gets marked non-executable, and the contents of <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/noscript\"><code>&lt;noscript&gt;</code></a> are parsed as markup.\n<p>The other valid values (<code>text/xml</code>, <code>application/xml</code>, <code>application/xhtml+xml</code>, and <code>image/svg+xml</code>) are functionally equivalent. They all invoke the XML parser, and the method will return a <a href=\"$MDN_URL$/Web/API/XMLDocument\"><code>XMLDocument</code></a>.\n<p>Any other value is invalid and will cause a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> to be thrown."
+        "input": "A <a href=\"$MDN_URL$/Web/API/TrustedHTML\"><code>TrustedHTML</code></a> or string instance defining HTML to be parsed.\nThe markup must contain either an <a href=\"$MDN_URL$/Glossary/HTML\">HTML</a>, <a href=\"$MDN_URL$/Glossary/XML\">XML</a>, <a href=\"$MDN_URL$/Glossary/XHTML\">XHTML</a>, or <a href=\"$MDN_URL$/Glossary/SVG\">SVG</a> document.",
+        "mimeType": "A string that specifies whether the XML parser or the HTML parser is used to parse the string.\n<p>Allowed values are:\n<ul>\n<li><code>text/html</code></li>\n<li><code>text/xml</code></li>\n<li><code>application/xml</code></li>\n<li><code>application/xhtml+xml</code></li>\n<li><code>image/svg+xml</code></li>\n</ul>"
       },
-      "returns": "An <a href=\"$MDN_URL$/Web/API/HTMLDocument\"><code>HTMLDocument</code></a> or an <a href=\"$MDN_URL$/Web/API/XMLDocument\"><code>XMLDocument</code></a>, depending on the\n<code>mimeType</code> argument."
+      "returns": "A <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> with <a href=\"$MDN_URL$/Web/API/Document/contentType\" title=\"contentType\"><code>contentType</code></a> matching the given <code>mimeType</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe browser may actually return an <a href=\"$MDN_URL$/Web/API/HTMLDocument\"><code>HTMLDocument</code></a> or <a href=\"$MDN_URL$/Web/API/XMLDocument\"><code>XMLDocument</code></a> object.\nThese derive from <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and add no attributes: they are essentially equivalent.\n</div>",
+      "throws": {
+        "TypeError": "This is thrown when:\n<ul>\n<li><code>mimeType</code> is passed a value that is not one of the <a href=\"#mimetype\">allowed values</a>.</li>\n<li><code>input</code> is passed a string value when <a href=\"$MDN_URL$/Web/API/Trusted_Types_API\">Trusted Types</a> are <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#using_a_csp_to_enforce_trusted_types\">enforced by a CSP</a> and no default policy is defined.</li>\n</ul>"
+      }
     },
     "dompoint": {
       "url": "$MDN_URL$/web/api/dompoint",

@@ -9,6 +9,10 @@
   },
   "lang": "en-us",
   "attrs": {
+    "data-_star_": {
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/data-_star_",
+      "doc": "The <strong><code>data-*</code></strong> MathML attributes are called custom data attributes. They let MathML markup and its resulting DOM share information that standard attributes can't, usually for scripting purposes. Their custom data are available via the <a href=\"$MDN_URL$/Web/API/MathMLElement\"><code>MathMLElement</code></a> interface of the element the attributes belong to, with the <a href=\"$MDN_URL$/Web/API/MathMLElement/dataset\"><code>MathMLElement.dataset</code></a> property.\n<p>The <code>*</code> can be replaced by any characters allowed in <a href=\"https://www.w3.org/TR/xml/#NT-Name\" class=\"external\" target=\"_blank\">XML's rules for names</a>, with the following restrictions:\n<ul>\n<li>Can't start with <code>xml</code>.</li>\n<li>No semicolons (<code>;</code>, <code>U+003A</code>).</li>\n<li>No capital <code>A</code> to <code>Z</code> letters.</li>\n</ul>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <a href=\"$MDN_URL$/Web/API/MathMLElement/dataset\"><code>MathMLElement.dataset</code></a> property is a <a href=\"$MDN_URL$/Web/API/DOMStringMap\"><code>DOMStringMap</code></a> that provides the attribute <code>data-test-value</code> via <code>MathMLElement.dataset.testValue</code>. Hyphen characters (<code>-</code>, <code>U+002D</code>) are removed and the next letter is capitalized, resulting in the <a href=\"$MDN_URL$/Glossary/Camel_case\">camel case</a> format.\n</div>\n<p>You can use this attribute with any MathML element."
+    },
     "dir": {
       "url": "$MDN_URL$/web/mathml/reference/global_attributes/dir",
       "status": [
