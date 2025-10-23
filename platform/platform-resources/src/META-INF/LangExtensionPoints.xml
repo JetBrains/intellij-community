@@ -754,6 +754,9 @@
                     qualifiedName="com.intellij.microservices.featuresAvailabilityProvider" dynamic="true"/>
     <extensionPoint interface="com.intellij.microservices.oas.serialization.OasSerializationCompatibilityProvider"
                     qualifiedName="com.intellij.microservices.oasSerializationCompatibilityProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.highlightingProjectOrWorkspaceFileOverride"
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingProjectOrWorkspaceFileOverride"
+                    dynamic="true"/>
 
     <extensionPoint name="saveAndSyncHandlerListener" interface="com.intellij.ide.SaveAndSyncHandlerListener" dynamic="true"/>
   </extensionPoints>
