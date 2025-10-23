@@ -1855,12 +1855,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   /** @return true if the file belongs to the specific project's indexable files set */
   public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {
-    return ContainerUtil.find(myIndexableSets, pair -> pair.second.equals(project) && pair.first.isInSet(file)) != null;
+    return ContainerUtil.exists(myIndexableSets, pair -> pair.second.equals(project) && pair.first.isInSet(file));
   }
 
   /** @return true if the file belongs to _any_ registered project's indexable files set */
   public boolean belongsToIndexableFiles(@NotNull VirtualFile file) {
-    return ContainerUtil.find(myIndexableSets, pair -> pair.first.isInSet(file)) != null;
+    return ContainerUtil.exists(myIndexableSets, pair -> pair.first.isInSet(file));
   }
 
   @Internal
