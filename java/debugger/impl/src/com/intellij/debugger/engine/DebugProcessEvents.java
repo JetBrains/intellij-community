@@ -519,6 +519,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private void processStepEvent(@NotNull SuspendContextImpl suspendContext, StepEvent event) {
     logSuspendContext(suspendContext, () -> "process step event");
     final ThreadReference thread = event.thread();
+
+    Requestor requestor = RequestManagerImpl.findRequestor(event.request());
+    if (requestor != null) {
+      getRequestsManager().deleteRequest(requestor);
+    }
+
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
