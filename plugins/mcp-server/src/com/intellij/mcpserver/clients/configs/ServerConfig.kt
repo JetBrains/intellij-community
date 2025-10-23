@@ -1,13 +1,11 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package com.intellij.mcpserver.clientConfiguration
+package com.intellij.mcpserver.clients.configs
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
-import kotlinx.serialization.json.JsonNames
 
-// used for writing config
 @Serializable
 sealed class ServerConfig
 
@@ -29,26 +27,6 @@ class STDIOServerConfig(
   val args: List<String>? = null,
   val env: Map<String, String>? = null,
 ) : ServerConfig()
-
-// used for reading existing configs
-
-@Serializable
-@JsonIgnoreUnknownKeys
-class ExistingConfig(
-  val command: String? = null,
-  val args: List<String>? = null,
-  val env: Map<String, String>? = null,
-  @JsonNames("url", "serverUrl")
-  val url: String? = null,
-  val type: String? = null,
-)
-
-@JsonIgnoreUnknownKeys
-@Serializable
-data class McpServers(
-  @JsonNames("servers", "mcpServers")
-  val mcpServers: Map<String, ExistingConfig>,
-)
 
 @JsonIgnoreUnknownKeys
 @Serializable
