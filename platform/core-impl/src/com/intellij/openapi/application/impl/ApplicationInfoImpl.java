@@ -37,7 +37,10 @@ import java.util.*;
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   public static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
-  public static final String FREE_MODE_SPLASH_MARKER_FILE_NAME = "splash-free-mode.txt";
+
+  @ApiStatus.Experimental
+  public static final String SUBSCRIPTION_MODE_SPLASH_MARKER_FILE_NAME = "splash-subscription-mode.txt";
+  @ApiStatus.Experimental
   public static final String SIMPLIFIED_SPLASH_MARKER_FILE_NAME = "splash-simplified.txt";
 
   private static final String IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF = "idea.application.info.default.dark.laf";
@@ -62,8 +65,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private @Nullable String splashImageUrl;
-  private @Nullable String freeModeSplashImageUrl;
   private @Nullable String simplifiedSplashImageUrl;
+  private @Nullable String subscriptionModeSplashImageUrl;
   private @Nullable String eapSplashImageUrl;
   private String svgIconUrl;
   private String mySvgEapIconUrl;
@@ -151,8 +154,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        case "logo-free-mode": {
-          freeModeSplashImageUrl = getAttributeValue(child, "url");
+        case "logo-subscription-mode": {
+          subscriptionModeSplashImageUrl = getAttributeValue(child, "url");
         }
         break;
 
@@ -451,17 +454,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @Nullable String getSplashImageUrl() {
     if (isEap && eapSplashImageUrl != null) return eapSplashImageUrl;
 
-    if (freeModeSplashImageUrl != null) {
-      Path markerFile = PathManager.getConfigDir().resolve(FREE_MODE_SPLASH_MARKER_FILE_NAME);
-      if (Files.exists(markerFile)) {
-        return freeModeSplashImageUrl;
-      }
-    }
-
     if (simplifiedSplashImageUrl != null) {
       Path markerFile = PathManager.getConfigDir().resolve(SIMPLIFIED_SPLASH_MARKER_FILE_NAME);
       if (Files.exists(markerFile)) {
         return simplifiedSplashImageUrl;
+      }
+    }
+
+    if (subscriptionModeSplashImageUrl != null) {
+      Path markerFile = PathManager.getConfigDir().resolve(SUBSCRIPTION_MODE_SPLASH_MARKER_FILE_NAME);
+      if (Files.exists(markerFile)) {
+        return subscriptionModeSplashImageUrl;
       }
     }
 
