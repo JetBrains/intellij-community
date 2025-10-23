@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -13,6 +12,7 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
@@ -139,7 +139,7 @@ public abstract class XDebuggerPopupPanel {
     return wrappedActions;
   }
 
-  private static @NotNull JPanel createCustomToolbarComponent(@NotNull AnAction action, @NotNull AnActionLink actionLink) {
+  private static @NotNull JPanel createCustomToolbarComponent(@NotNull AnAction action, @NotNull ActionLink actionLink) {
     JPanel actionPanel = new JPanel(new GridBagLayout());
 
     GridBag gridBag = new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST);
@@ -188,14 +188,18 @@ public abstract class XDebuggerPopupPanel {
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
                      @Nullable Component contextComponent) {
-      super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
+      super(
+        StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)),
+        action,
+        ActionPlaces.UNKNOWN,
+        presentation
+      );
       this.contextComponent = contextComponent;
       setFont(UIUtil.getToolTipFont());
     }
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
-      super.uiDataSnapshot(sink);
       DataSink.uiDataSnapshot(sink, contextComponent);
     }
   }
@@ -213,21 +217,6 @@ public abstract class XDebuggerPopupPanel {
 
     public void setDataProvider(@Nullable Component provider) {
       myProvider = provider;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      AnActionEvent delegateEvent = e;
-      if (myProvider != null) {
-        delegateEvent = AnActionEvent.createEvent(
-          DataManager.getInstance().getDataContext(myProvider),
-          e.getPresentation(),
-          myActionPlace,
-          ActionUiKind.NONE,
-          e.getInputEvent()
-        );
-      }
-      super.actionPerformed(delegateEvent);
     }
 
     @Override
