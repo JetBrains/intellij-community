@@ -125,19 +125,25 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     Project project = psiFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return Collections.emptyList();
-    DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    // in case the inspection is running in batch mode
+
     // todo IJPL-339 figure out what is the correct context here
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
-    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange
+
+    DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
+    // in case the inspection is running in batch mode
+    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange);
+
+    GeneralHighlightingPass ghp = new GeneralHighlightingPass(
+      psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,
+      HighlightInfoUpdater.EMPTY
     );
-    GeneralHighlightingPass ghp =
-    new GeneralHighlightingPass(psiFile, document, startOffset, endOffset, true, visibleRange, null,
-                                runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
-    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(psiFile, document, null, startOffset, endOffset, true,
-                                                                               visibleRange, null,
-                                                                               runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
+
+    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(
+      psiFile, document, null, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors,
+      highlightErrorElements, HighlightInfoUpdater.EMPTY
+    );
     ighp.setContext(context);
+
     String fileName = psiFile.getName();
     List<HighlightInfo> result = new ArrayList<>();
     IJTracer tracer = TelemetryManager.Companion.getTracer(HighlightVisitorScope);
