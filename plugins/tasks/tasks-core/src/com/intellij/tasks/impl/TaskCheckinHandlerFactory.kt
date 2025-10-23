@@ -1,73 +1,50 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.tasks.impl;
+package com.intellij.tasks.impl
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.context.WorkingContextManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.tasks.Task
+import com.intellij.tasks.TaskManager
+import com.intellij.tasks.context.WorkingContextManager
+import java.util.*
 
-import java.util.Date;
+class TaskCheckinHandlerFactory : CheckinHandlerFactory() {
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
+    TaskCheckinHandler(panel)
 
-public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
-
-  @Override
-  public @NotNull CheckinHandler createHandler(final @NotNull CheckinProjectPanel panel, final @NotNull CommitContext commitContext) {
-    return new TaskCheckinHandler(panel);
-  }
-
-  private static class TaskCheckinHandler extends CheckinHandler implements DumbAware {
-    final @NotNull CheckinProjectPanel panel;
-
-    private TaskCheckinHandler(@NotNull CheckinProjectPanel panel) {
-      this.panel = panel;
-    }
-
-    @Override
-    public void checkinSuccessful() {
-      final String message = panel.getCommitMessage();
-      final Project project = panel.getProject();
-      final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
+  private class TaskCheckinHandler(val panel: CheckinProjectPanel) : CheckinHandler(), DumbAware {
+    override fun checkinSuccessful() {
+      val message = panel.getCommitMessage()
+      val project = panel.getProject()
+      val manager = TaskManager.getManager(project) as TaskManagerImpl
       if (manager.getState().saveContextOnCommit) {
-        Task task = findTaskInRepositories(message, manager);
-        if (task == null) {
-          task = manager.createLocalTask(message);
-          ((LocalTaskImpl)task).setClosed(true);
-        }
-        LocalTask localTask = manager.addTask(task);
-        localTask.setUpdated(new Date());
+        val task = findTaskInRepositories(message, manager)
+                   ?: manager.createLocalTask(message)
+                     .also { (it as LocalTaskImpl).isClosed = true }
+        val localTask = manager.addTask(task)
+        localTask.setUpdated(Date())
 
-        ApplicationManager.getApplication().invokeLater(() -> WorkingContextManager.getInstance(project).saveContext(localTask), project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(
+          { WorkingContextManager.getInstance(project).saveContext(localTask) }, project.getDisposed())
       }
     }
   }
+}
 
-  private static @Nullable Task findTaskInRepositories(String message, TaskManager manager) {
-    TaskRepository[] repositories = manager.getAllRepositories();
-    for (TaskRepository repository : repositories) {
-      String id = repository.extractId(message);
-      if (id == null) continue;
-      LocalTask localTask = manager.findTask(id);
-      if (localTask != null) return localTask;
-      try {
-        Task task = repository.findTask(id);
-        if (task != null) {
-          return task;
-        }
-      }
-      catch (Exception ignore) {
-
-      }
+private fun findTaskInRepositories(message: String, manager: TaskManager): Task? {
+  val repositories = manager.getAllRepositories()
+  for (repository in repositories) {
+    val id = repository.extractId(message) ?: continue
+    manager.findTask(id)?.let { return it }
+    try {
+      repository.findTask(id)?.let { return it }
     }
-    return null;
+    catch (_: Exception) {
+    }
   }
+  return null
 }
