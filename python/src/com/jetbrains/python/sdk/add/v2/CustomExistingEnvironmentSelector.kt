@@ -45,10 +45,9 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
         missingExecutableText = message("sdk.create.custom.venv.missing.text", name),
       )
 
-      val nameTitle = name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
       comboBox = pythonInterpreterComboBox(
         model.fileSystem,
-        title = message("sdk.create.custom.existing.env.title", nameTitle),
+        title = message("sdk.create.custom.existing.env.title"),
         selectedSdkProperty = selectedEnv,
         validationRequestor = validationRequestor,
         onPathSelected = model::addManuallyAddedInterpreter,
