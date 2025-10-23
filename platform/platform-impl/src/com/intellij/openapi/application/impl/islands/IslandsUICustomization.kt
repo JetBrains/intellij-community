@@ -751,9 +751,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  override fun paintFrameBackground(frame: Window, component: Component, g: Graphics2D) {
+  override fun paintFrameBackground(frame: IdeFrame, component: Component, g: Graphics2D) {
     if (isManyIslandEnabled && isIslandsGradientEnabled) {
-      islandsGradientPaint(frame as IdeFrame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
+      val point = SwingUtilities.convertPoint(component, 0, 0, frame.component)
+      g.translate(-point.x, -point.y)
+
+      islandsGradientPaint(frame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
+
+      g.translate(point.x, point.y)
     }
   }
 
