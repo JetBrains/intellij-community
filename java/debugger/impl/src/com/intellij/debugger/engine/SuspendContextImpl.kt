@@ -459,6 +459,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
         comparator: Comparator<in JavaExecutionStack>,
         last: Boolean,
       ): CompletableFuture<Boolean> {
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         val futures = threads.filterNotNull().mapNotNull { thread ->
           if (container.isObsolete) return CompletableFuture.completedFuture(false)
           if (!myAddedThreads.add(thread)) return@mapNotNull null
@@ -466,7 +467,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
         }
         return DebuggerUtilsAsync.reschedule(CompletableFuture.allOf(*futures.toTypedArray())).thenApply {
           if (container.isObsolete) return@thenApply true
-          val stacks = futures.map { it.join() }.sortedWith(comparator)
+          val stacks = futures.mapNotNull { it.join() }.sortedWith(comparator)
           container.addExecutionStack(stacks, last)
           true
         }

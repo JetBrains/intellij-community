@@ -36,6 +36,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.jetbrains.jdi.ThreadGroupReferenceImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.Method;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 public class JavaExecutionStack extends XExecutionStack {
   private static final Logger LOG = Logger.getInstance(JavaExecutionStack.class);
@@ -72,14 +74,23 @@ public class JavaExecutionStack extends XExecutionStack {
     myDebugProcess = debugProcess;
   }
 
-  public static CompletableFuture<JavaExecutionStack> create(@NotNull ThreadReferenceProxyImpl threadProxy,
-                                                             @NotNull DebugProcessImpl debugProcess,
-                                                             boolean current) {
+  public static CompletableFuture<@Nullable JavaExecutionStack> create(@NotNull ThreadReferenceProxyImpl threadProxy,
+                                                                       @NotNull DebugProcessImpl debugProcess,
+                                                                       boolean current) {
     return calcRepresentationAsync(threadProxy)
       .thenCombine(calcIconAsync(threadProxy, current),
                    (@NlsContexts.ListItem var text, var icon) -> {
                      return new JavaExecutionStack(text, icon, threadProxy, debugProcess);
-                   });
+                   })
+      .handle((stack, throwable) -> {
+        if (throwable instanceof ObjectCollectedException) {
+          return null;
+        }
+        if (throwable != null) {
+          throw new CompletionException(throwable);
+        }
+        return stack;
+      });
   }
 
   private static Icon calcIcon(ThreadReferenceProxyImpl threadProxy, boolean current) {
