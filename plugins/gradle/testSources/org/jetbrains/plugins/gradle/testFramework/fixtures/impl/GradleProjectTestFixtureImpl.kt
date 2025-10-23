@@ -78,7 +78,7 @@ internal class GradleProjectTestFixtureImpl(
     gradleJvmFixture.withProjectSettingsConfigurator {
       fileFixture = FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
         configureProject()
-        excludeFiles(".gradle", "build")
+        excludeFilePatterns("glob:**/.gradle{,/**}", "glob:**/build{,/**}")
         withGradleWrapper(gradleVersion)
         withFiles { createProjectCaches(it) }
       }
