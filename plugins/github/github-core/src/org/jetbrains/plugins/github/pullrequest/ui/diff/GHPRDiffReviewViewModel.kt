@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
@@ -59,7 +60,7 @@ interface GHPRDiffReviewViewModel {
 }
 
 internal class GHPRDiffReviewViewModelImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
@@ -133,13 +134,16 @@ internal class GHPRDiffReviewViewModelImpl(
     threadsVms.cancelNewComment(change, side, lineIdx)
 
 
-  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) =
-    threadsVms.newComments.value.firstOrNull {
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
+    val newComment = threadsVms.newComments.value.firstOrNull {
       when (val loc = it.position.value.location) {
         is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
         is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
       }
-    }?.updateLineRange(newLineRange) ?: Unit
+    } ?: return
+    newComment.updateLineRange(newLineRange)
+    GHPRStatisticsCollector.logResizedComments(project)
+  }
 
   override val isViewedState: StateFlow<ComputedResult<Boolean>> =
     dataProvider.viewedStateData.viewedStateComputationState

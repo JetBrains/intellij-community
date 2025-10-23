@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -135,6 +136,9 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
       if (isCumulative) {
         val startLine = location.asSafely<GHPRReviewCommentLocation.MultiLine>()?.startLineIdx?.inc() ?: line
         reviewDataProvider.createThread(reviewId, it, line, location.side, startLine, filePath)
+        if (startLine < line) {
+          GHPRStatisticsCollector.logMultilineCommentsCreated(project)
+        }
       }
       else {
         val commitSha = position.value.change.revisionNumberAfter.asString()
