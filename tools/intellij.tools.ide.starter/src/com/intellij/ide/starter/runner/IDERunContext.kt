@@ -246,7 +246,6 @@ data class IDERunContext(
     logsDir: Path,
     jdkHome: Path,
     startConfig: IDEStartConfig,
-    pid: Long,
     process: Process,
     snapshotsDir: Path,
   ) {
