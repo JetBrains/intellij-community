@@ -257,6 +257,13 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       if (declOwner != null && declOwner != owner) {
         readsFromInstruction.addAll(ScopeUtil.getElementsOfAccessType(name, declOwner, ReadWriteInstruction.ACCESS.WRITE));
       }
+      // Type params are not present in CFG
+      else if (owner instanceof PyTypeParameterListOwner typeParameterListOwner &&
+               typeParameterListOwner.getTypeParameterList() != null) {
+        StreamEx.of(typeParameterListOwner.getTypeParameterList().getTypeParameters())
+          .filter(typeParameter -> name.equals(typeParameter.getName()))
+          .forEach(readsFromInstruction::add);
+      }
     }
     ControlFlowUtil.iteratePrev(startInstruction, instructions, inst -> {
       final PsiElement instElement = inst.getElement();
