@@ -105,7 +105,7 @@ private class EventBusServerHandler(
     val path = uri.substringBefore('?')
 
     // Log the complete incoming request for debugging
-    LOG.debug("Incoming request: method=${request.method()}, uri=$uri, headers=${request.headers()}")
+    LOG.debug("Incoming request: method=${request.method()}, path=$path, uri=$uri, headers=${request.headers()}")
 
     try {
       when {
