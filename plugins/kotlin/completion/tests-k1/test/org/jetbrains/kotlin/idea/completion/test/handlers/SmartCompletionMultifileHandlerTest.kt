@@ -64,7 +64,7 @@ class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase(
             val matchedItems = items.filter(::isMatching)
             when (matchedItems.size) {
                 0 -> fail("No matching items found")
-                1 -> CompletionHandlerTestBase.selectItem(myFixture, items[0], Lookup.NORMAL_SELECT_CHAR)
+                1 -> selectItem(items[0], Lookup.NORMAL_SELECT_CHAR)
                 else -> fail("Multiple matching items found")
             }
         }

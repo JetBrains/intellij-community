@@ -17,47 +17,51 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
     protected val fixture: JavaCodeInsightTestFixture
         get() = myFixture
 
-    companion object {
-        fun doTestWithTextLoaded(
-            fileText: String,
-            fixture: JavaCodeInsightTestFixture,
-            completionType: CompletionType,
-            time: Int,
-            lookupString: String?,
-            itemText: String?,
-            tailText: String?,
-            completionChars: String,
-            afterFilePath: String,
-            actions: List<String>? = emptyList(),
-            useExpensiveRenderer: Boolean = false,
-            afterTypingBlock: () -> Unit = {}
-        ) {
-            testWithAutoCompleteSetting(fileText) {
-                for (idx in 0 until completionChars.length - 1) {
-                    fixture.type(completionChars[idx])
-                    afterTypingBlock()
-                }
-
-                if (!actions.isNullOrEmpty()) {
-                    for (action in actions) {
-                        fixture.performEditorAction(action)
-                    }
-                }
-
-                fixture.complete(completionType, time)
-
-                if (lookupString != null || itemText != null || tailText != null) {
-                    val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText, useExpensiveRenderer)
-                    if (item != null) {
-                        selectItem(fixture, item, completionChars.last())
-                    }
-                }
+    fun doTestWithTextLoaded(
+        fileText: String,
+        completionType: CompletionType,
+        time: Int,
+        lookupString: String?,
+        itemText: String?,
+        tailText: String?,
+        completionChars: String,
+        afterFilePath: String,
+        actions: List<String>? = emptyList(),
+        useExpensiveRenderer: Boolean = false,
+        typeAfterCompletion: String? = null,
+        afterTypingBlock: () -> Unit = {}
+    ) {
+        testWithAutoCompleteSetting(fileText) {
+            for (idx in 0 until completionChars.length - 1) {
+                type(completionChars[idx].toString())
                 afterTypingBlock()
-
-                fixture.checkResultByFile(afterFilePath)
             }
-        }
 
+            if (!actions.isNullOrEmpty()) {
+                for (action in actions) {
+                    fixture.performEditorAction(action)
+                }
+            }
+
+            fixture.complete(completionType, time)
+
+            if (typeAfterCompletion != null) {
+                type(typeAfterCompletion)
+            }
+
+            if (lookupString != null || itemText != null || tailText != null) {
+                val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText, useExpensiveRenderer)
+                if (item != null) {
+                    selectItem(item, completionChars.last())
+                }
+            }
+            afterTypingBlock()
+
+            fixture.checkResultByFile(afterFilePath)
+        }
+    }
+
+    companion object {
         fun completionChars(text: String): String {
             val char: String? = InTextDirectivesUtils.findStringWithPrefixes(text, AbstractCompletionHandlerTest.COMPLETION_CHAR_PREFIX)
             val chars: String? = InTextDirectivesUtils.findStringWithPrefixes(text, AbstractCompletionHandlerTest.COMPLETION_CHARS_PREFIX)
@@ -144,19 +148,6 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 error("No element satisfy completion restrictions in:\n$dump")
             }
             return foundElement
-        }
-
-        fun selectItem(fixture: JavaCodeInsightTestFixture, item: LookupElement?, completionChar: Char) {
-            val lookup = (fixture.lookup as LookupImpl)
-            if (lookup.currentItem != item) { // do not touch selection if not changed - important for char filter tests
-                lookup.currentItem = item
-            }
-            lookup.lookupFocusDegree = LookupFocusDegree.FOCUSED
-            if (LookupEvent.isSpecialCompletionChar(completionChar)) {
-                lookup.finishLookup(completionChar)
-            } else {
-                fixture.type(completionChar)
-            }
         }
     }
 }

@@ -4,6 +4,10 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.daemon.impl.EditorTracker
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupFocusDegree
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -365,6 +369,27 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     fun JavaCodeInsightTestFixture.checkResultByFile(file: File) {
         val relativePath = file.toRelativeString(testDataDirectory)
         checkResultByFile(relativePath)
+    }
+
+    /**
+     * Types the characters of [s] into [myFixture].
+     * The purpose is to allow overriding to allow analysis on EDT from the analysis API.
+     */
+    protected open fun type(s: String) {
+        myFixture.type(s)
+    }
+
+    fun selectItem(item: LookupElement?, completionChar: Char) {
+        val lookup = (myFixture.lookup as LookupImpl)
+        if (lookup.currentItem != item) { // do not touch selection if not changed - important for char filter tests
+            lookup.currentItem = item
+        }
+        lookup.lookupFocusDegree = LookupFocusDegree.FOCUSED
+        if (LookupEvent.isSpecialCompletionChar(completionChar)) {
+            lookup.finishLookup(completionChar)
+        } else {
+            type(completionChar.toString())
+        }
     }
 }
 
