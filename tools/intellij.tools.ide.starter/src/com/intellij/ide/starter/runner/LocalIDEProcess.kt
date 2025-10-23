@@ -29,6 +29,7 @@ import com.intellij.tools.ide.util.common.logOutput
 import io.qameta.allure.Allure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -97,8 +98,9 @@ class LocalIDEProcess : IDEProcess {
                   captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir)
                 }
               }
-              EventsBus.postAndWaitProcessing(
-                IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process.toHandle())))
+              runInterruptible {
+                EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process.toHandle())))
+              }
               ideProcessId = getIdeProcessIdWithRetry(process.toProcessInfo())
               startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process.toHandle()), jdkHome, startConfig.workDir, ideProcessId, "ide")
             },
