@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
@@ -315,6 +315,12 @@ public abstract class JBListTable {
     @Override
     public MyTableModel getModel() {
       return (MyTableModel)super.getModel();
+    }
+
+    @Override
+    public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+      super.changeSelection(rowIndex, columnIndex, toggle, extend);
+      scrollRectToVisible(getCellRect(rowIndex, columnIndex, false));
     }
 
     @Override
