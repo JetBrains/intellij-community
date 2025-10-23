@@ -405,6 +405,8 @@ public final class TreeRuleChecker {
       List<ParsedSentence> sentences = entry.getValue();
       if (sentences.isEmpty()) continue;
 
+      int offsetInContent = 0;
+
       List<MatchingResult> matches = doCheck(content, sentences);
       for (int i = 0; i < sentences.size(); i++) {
         ParsedSentence parsed = sentences.get(i);
@@ -423,8 +425,9 @@ public final class TreeRuleChecker {
           .withTree(parsed.tree.withStartOffset(offset))
           .withMetadata(matches.get(i).metadata);
         doc.add(new SentenceWithContent(ds, content, offset, offset + untrimmedRange.getStartOffset()));
+        offsetInContent += ds.text.length();
       }
-      offset += content.length();
+      offset += offsetInContent;
     }
     return doc;
   }
