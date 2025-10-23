@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -464,7 +465,7 @@ internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(proj
       // SwingUtilities must be used here
       SwingUtilities.invokeLater {
         val endTime = System.nanoTime()
-        LOG.debug("Displaying settings dialog took ${(endTime - startTime) / 1_000_000} ms")
+        LOG.debug { "Displaying settings dialog took ${(endTime - startTime) / 1_000_000} ms" }
       }
     }
   }
