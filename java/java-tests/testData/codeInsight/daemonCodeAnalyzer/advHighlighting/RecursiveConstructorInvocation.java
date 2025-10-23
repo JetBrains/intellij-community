@@ -43,3 +43,8 @@ class X {
     <error descr="Cannot assign final field 'value' after chained constructor call">value</error> = 1;
   }
 }
+class Inconceivable {
+  Inconceivable() {
+    this<error descr="Expected no arguments but found 1">(1)</error>;
+  }
+}

@@ -130,8 +130,9 @@ public final class JavaPsiConstructorUtil {
     while (true) {
       PsiMethodCallExpression methodCall = findThisOrSuperCallInConstructor(constructor);
       if (!isChainedConstructorCall(methodCall)) return;
-      PsiMethod method = methodCall.resolveMethod();
-      if (method == null) return;
+      JavaResolveResult resolveResult = methodCall.resolveMethodGenerics();
+      PsiMethod method = (PsiMethod)resolveResult.getElement();
+      if (method == null || !resolveResult.isValidResult()) return;
       if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {
         info.recursivelyCalledConstructor = method;
         return;
