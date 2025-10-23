@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.utils
 
 import com.intellij.openapi.util.NlsSafe
@@ -30,7 +30,7 @@ class MarkdownToHtmlConverter(
 // https://github.com/JetBrains/markdown/issues/72
 private val embeddedHtmlType = IElementType("ROOT")
 
-fun convertMarkdownToHtml(@NlsSafe markdownText: String): @NlsSafe String {
+fun convertMarkdownToHtml(@NlsSafe markdownText: String): String {
   val flavour = GFMFlavourDescriptor()
   val parsedTree = MarkdownParser(flavour).parse(embeddedHtmlType, markdownText)
   return HtmlGenerator(markdownText, parsedTree, flavour).generateHtml()
