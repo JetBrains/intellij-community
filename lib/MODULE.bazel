@@ -14602,17 +14602,17 @@ http_file(
 )
 
 http_file(
-  name = "com_jetbrains_qodana-qodana-sarif-0_2_113_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/qodana/qodana-sarif/0.2.113/qodana-sarif-0.2.113.jar",
-  sha256 = "a9b0cf1484cc68e530fff9b971970eae4c40b40b05336b76043f3a904fed0d78",
-  downloaded_file_path = "qodana-sarif-0.2.113.jar"
+  name = "com_jetbrains_qodana-qodana-sarif-0_2_115_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/qodana/qodana-sarif/0.2.115/qodana-sarif-0.2.115.jar",
+  sha256 = "d4adc9b59fb524337717569800ae58513ef7b9c7c9749b72a4245f13ae932268",
+  downloaded_file_path = "qodana-sarif-0.2.115.jar"
 )
 
 http_file(
-  name = "com_jetbrains_qodana-qodana-sarif-0_2_113-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/qodana/qodana-sarif/0.2.113/qodana-sarif-0.2.113-sources.jar",
-  sha256 = "a8f2451208dd30843227b5fd3b9425f9d8c03d19e968ddb40196021eca79482d",
-  downloaded_file_path = "qodana-sarif-0.2.113-sources.jar"
+  name = "com_jetbrains_qodana-qodana-sarif-0_2_115-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/qodana/qodana-sarif/0.2.115/qodana-sarif-0.2.115-sources.jar",
+  sha256 = "14b871ec8d0a6c6096ee06bd0bf5be57031c178e4dd788ac43d8fa62968fbaf4",
+  downloaded_file_path = "qodana-sarif-0.2.115-sources.jar"
 )
 
 http_file(

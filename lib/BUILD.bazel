@@ -9888,8 +9888,8 @@ jvm_import(
 
 jvm_import(
   name = "qodana-sarif",
-  jar = "@com_jetbrains_qodana-qodana-sarif-0_2_113_http//file",
-  source_jar = "@com_jetbrains_qodana-qodana-sarif-0_2_113_http//file",
+  jar = "@com_jetbrains_qodana-qodana-sarif-0_2_115_http//file",
+  source_jar = "@com_jetbrains_qodana-qodana-sarif-0_2_115_http//file",
   visibility = ["//visibility:public"]
 )
 
