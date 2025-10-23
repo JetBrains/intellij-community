@@ -1169,7 +1169,7 @@ class InfoAndProgressPanel internal constructor(
           }
         }
       })
-      setBorder(JBUI.Borders.empty(0, 20, 0, 4))
+      setBorder(JBUI.Borders.empty(0, 40, 0, 4))
       add(progressIcon)
       progressIcon.isVisible = false
       add(multiProcessLink)
