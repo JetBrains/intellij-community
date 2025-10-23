@@ -31,7 +31,6 @@ class GradleJvmResolver(
   private fun isSdkSupported(javaVersion: JavaVersion): Boolean {
     return GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
            && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
-           && isJavaSupportedByGradleToolingApi(gradleVersion, javaVersion)
            && !javaVersionRestriction.isRestricted(gradleVersion, javaVersion)
   }
 
@@ -75,16 +74,6 @@ class GradleJvmResolver(
         |
       """.trimMargin())
     }
-  }
-
-  private fun isJavaSupportedByGradleToolingApi(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
-    // https://github.com/gradle/gradle/issues/9339
-    if (isGradleAtLeast(gradleVersion, "5.6") && isGradleOlderThan(gradleVersion, "7.3")) {
-      if (javaVersion.feature < 11) {
-        return false
-      }
-    }
-    return true
   }
 
   private fun findSdkHomePathOnDisk(): String? {
