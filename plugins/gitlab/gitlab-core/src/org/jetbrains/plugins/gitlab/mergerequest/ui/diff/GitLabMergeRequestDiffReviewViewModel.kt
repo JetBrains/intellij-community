@@ -14,7 +14,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,7 +22,6 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
-import org.jetbrains.plugins.gitlab.mergerequest.data.findLatestCommitWithChangesTo
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabPersistentMergeRequestChangesViewedState
@@ -61,7 +59,6 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
-  private val parsedChanges: GitBranchComparisonResult,
   private val diffData: GitTextFilePatchWithHistory,
   private val change: RefComparisonChange,
   private val diffVm: GitLabMergeRequestDiffViewModel,
@@ -117,7 +114,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   }
 
   override fun markViewed() {
-    val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, change.filePath) ?: return
+    val sha = mergeRequest.details.value.diffRefs?.headSha ?: return
     persistentChangesViewedState.markViewed(
       mergeRequest.glProject, mergeRequest.iid,
       mergeRequest.gitRepository,

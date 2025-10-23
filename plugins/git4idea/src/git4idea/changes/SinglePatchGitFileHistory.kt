@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 internal class SinglePatchGitFileHistory(private val patch: TextFilePatch) : GitFileHistory {
 
   override fun findStartCommit(): String? = patch.beforeVersionId
+  override fun findLastCommit(): String? = patch.afterVersionId
 
   override fun findFirstParent(commitSha: String): String? = null
 

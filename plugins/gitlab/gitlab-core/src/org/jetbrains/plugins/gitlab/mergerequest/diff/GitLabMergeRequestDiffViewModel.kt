@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
-import com.intellij.collaboration.async.computationStateFlow
-import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.stateInNow
-import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
@@ -22,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -82,36 +78,45 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   project.service<GitLabMergeRequestsPreferences>().diffReviewViewOption
 ) {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
-  private val changesFetchFlow = computationStateFlow(mergeRequest.changes, GitLabMergeRequestChanges::loadRevisionsAndParseChanges)
-  private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
-    .map {
-      { changes: List<RefComparisonChange> ->
-        RefComparisonChangesSorter.Grouping(project, it).sort(changes)
-      }
-    }
 
-  private val delegate: PreLoadingCodeReviewAsyncDiffViewModelDelegate<RefComparisonChange, GitLabMergeRequestDiffChangeViewModel> =
+  private val changesFetchFlow = computationStateFlow(
+    mergeRequest.changes,
+    GitLabMergeRequestChanges::loadRevisionsAndParseChanges
+  )
+
+  private val delegate: PreLoadingCodeReviewAsyncDiffViewModelDelegate<RefComparisonChange, GitLabMergeRequestDiffChangeViewModel> = run {
+    val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
+      .map {
+        { changes: List<RefComparisonChange> ->
+          RefComparisonChangesSorter.Grouping(project, it).sort(changes)
+        }
+      }
+
     PreLoadingCodeReviewAsyncDiffViewModelDelegate.create(changesFetchFlow, changesSorter) { allChanges, change ->
       GitLabMergeRequestDiffChangeViewModelImpl(this, project, allChanges, change)
     }
+  }
 
   override val changes: StateFlow<ComputedResult<CodeReviewDiffProcessorViewModel.State<GitLabMergeRequestDiffChangeViewModel>>?> =
     delegate.changes.stateIn(cs, SharingStarted.Lazily, null)
 
-  // only the selected patches from the comparison changes
-  private val patchesByChangeFlow = combine(changesFetchFlow, changes) { changesResult, selectedChangesResult ->
-    val selectedChanges = selectedChangesResult?.getOrNull()?.selectedChanges?.list?.mapTo(mutableSetOf()) { it.change }
-                          ?: return@combine null
-    val changes = changesResult.getOrNull() ?: return@combine null
+  private val selectedChanges: StateFlow<Map<RefComparisonChange, GitTextFilePatchWithHistory>> =
+    changes.mapState { changeVmsResult ->
+      val changeVms = changeVmsResult?.getOrNull() ?: return@mapState emptyMap()
 
-    changes.patchesByChange.filterKeys { it in selectedChanges }
-  }.stateInNow(cs, null)
+      changeVms.selectedChanges.list.mapNotNull { changeVm ->
+        val change = changeVm.change
+        val diffData = changeVm.diffData ?: return@mapNotNull null
+
+        change to diffData
+      }.toMap()
+    }
 
   override val discussions: DiscussionsFlow =
     discussionsContainer.discussions.transformConsecutiveSuccesses {
       map { list ->
         list.map { vm ->
-          val diffDataFlow = createDiffDataFlow(vm.position, patchesByChangeFlow)
+          val diffDataFlow = createDiffDataFlow(vm.position, selectedChanges)
           GitLabMergeRequestDiffDiscussionViewModel(vm, diffDataFlow, discussionsViewOption)
         }
       }
@@ -120,7 +125,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
     discussionsContainer.draftNotes.transformConsecutiveSuccesses {
       map { list ->
         list.map { vm ->
-          val diffDataFlow = createDiffDataFlow(vm.position, patchesByChangeFlow)
+          val diffDataFlow = createDiffDataFlow(vm.position, selectedChanges)
           GitLabMergeRequestDiffDraftNoteViewModel(vm, diffDataFlow, discussionsViewOption)
         }
       }
@@ -129,7 +134,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
     discussionsContainer.newDiscussions.map { list ->
       list.mapNotNull { (position, vm) ->
         val position = position.position
-        val diffDataFlow = createDiffDataFlow(position, patchesByChangeFlow)
+        val diffDataFlow = createDiffDataFlow(position, selectedChanges)
         GitLabMergeRequestDiffNewDiscussionViewModel(vm, diffDataFlow, position, discussionsViewOption)
       }
     }.stateInNow(cs, emptyList())
@@ -186,18 +191,17 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
             LOG.warn("Empty patch for change $change")
             return@mapScoped null
           }
-          createChangeVm(changes, change, patchWithHistory)
+          createChangeVm(change, patchWithHistory)
         }.stateIn(cs, SharingStarted.WhileSubscribed(5.minutes, ZERO), null)
     }
 
   private fun CoroutineScope.createChangeVm(
-    changes: GitBranchComparisonResult,
     change: RefComparisonChange,
     diffData: GitTextFilePatchWithHistory,
   ) =
     GitLabMergeRequestDiffReviewViewModelImpl(
       project, this,
-      mergeRequest, changes, diffData, change,
+      mergeRequest, diffData, change,
       this@GitLabMergeRequestDiffProcessorViewModelImpl,
       discussionsContainer, discussionsViewOption, avatarIconsProvider
     )
