@@ -93,7 +93,6 @@ private class WelcomeScreenProxyAction(
       return
     }
     action.update(e)
-    welcomeScreenBehaviour.update(e)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
