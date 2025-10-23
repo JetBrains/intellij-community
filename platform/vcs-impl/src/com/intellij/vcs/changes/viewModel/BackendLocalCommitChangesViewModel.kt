@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import javax.swing.tree.TreePath
@@ -22,7 +23,7 @@ import javax.swing.tree.TreePath
  */
 internal class BackendLocalCommitChangesViewModel(val panel: CommitChangesViewWithToolbarPanel) : BackendCommitChangesViewModel {
   private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
-  private val _inclusionChanged = MutableSharedFlow<Unit>()
+  private val _inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override val inclusionChanged = _inclusionChanged.asSharedFlow()
 
