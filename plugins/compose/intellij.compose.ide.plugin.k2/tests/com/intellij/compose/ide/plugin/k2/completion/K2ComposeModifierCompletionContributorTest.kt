@@ -7,6 +7,8 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 
 internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompletionContributorTest() {
   override val pluginMode: KotlinPluginMode
@@ -58,6 +60,7 @@ internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompl
     )
   }
 
+  @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
   fun testModifierImportAliasForProperty() {
     // Prepare
     myFixture.configureByText(
@@ -83,7 +86,7 @@ internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompl
     lookupStrings shouldNotContain "Modifier.extensionFunctionReturnsNonModifier"
 
     // Do
-    myFixture.type("extensionFunction\t")
+    typeAllowingAnalysisOnEDT("extensionFunction\t")
 
     // Check
     myFixture.checkResult(
