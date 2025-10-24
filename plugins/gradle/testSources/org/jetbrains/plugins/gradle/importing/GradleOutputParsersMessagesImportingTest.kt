@@ -78,6 +78,11 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     val className = if (isGradleAtLeast("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
 
     val tryText = when {
+      isGradleAtLeast("9.2") ->
+        """|> Run with --stacktrace option to get the stack trace.
+                                 |> Run with --debug option to get more log output.
+                                 |> Run with --scan to generate a Build Scan (powered by Develocity).
+                                 |> Get more help at https://help.gradle.org."""
       isGradleAtLeast("9.0") ->
         """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
@@ -435,6 +440,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
     assertSyncViewSelectedNode("Cannot get property 'foo' on null object") {
       val trySuggestion = when {
+        isGradleAtLeast("9.2") ->
+          """|> Run with --debug option to get more log output.
+             |> Run with --scan to generate a Build Scan (powered by Develocity).
+             |> Get more help at https://help.gradle.org."""
         isGradleAtLeast("9.0") ->
           """|> Run with --debug option to get more log output.
              |> Run with --scan to generate a Build Scan (Powered by Develocity).

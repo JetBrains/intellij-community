@@ -432,7 +432,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                                 "group = 'myGroup'",
                                 "version = '1.0-SNAPSHOT'",
                                 "dependencies {",
-                                "    api group: 'myGroup.projectA', name: 'ext', version: '1.0-SNAPSHOT'",
+                                "    api 'myGroup.projectA:ext:1.0-SNAPSHOT'",
                                 "}"
                     )
                     .generate());
@@ -489,7 +489,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
         .withJavaPlugin()
         .addGroup("myGroup")
         .addVersion("1.0-SNAPSHOT")
-        .addImplementationDependency(it.code("group: 'myGroup', name: 'project-a', version: '1.0-SNAPSHOT'"));
+        .addImplementationDependency("myGroup:project-a:1.0-SNAPSHOT");
     }));
 
     assertModules("project-a",

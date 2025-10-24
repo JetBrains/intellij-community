@@ -33,10 +33,6 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
     val expectedExtensionMap = buildMap {
       put("ext", "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
       put("idea", "org.gradle.plugins.ide.idea.model.IdeaModel")
-      if (isGradleOlderThan("9.0")) {
-        // See gradle/pull/32742
-        put("defaultArtifacts", "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet")
-      }
       put("reporting", "org.gradle.api.reporting.ReportingExtension")
       if (isGradleAtLeast("4.10")) {
         put("sourceSets", "org.gradle.api.tasks.SourceSetContainer")
@@ -65,6 +61,15 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
       }
       if (isGradleAtLeast("8.5")) {
         put("versionCatalogs", "org.gradle.api.internal.catalog.DefaultDependenciesAccessors\$DefaultVersionCatalogsExtension")
+      }
+      if (isGradleOlderThan("9.0")) {
+        // See gradle/pull/32742
+        put("defaultArtifacts", "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet")
+      }
+      if (isGradleAtLeast("9.2")) {
+        // https://github.com/gradle/gradle/pull/34831
+        // org.gradle.testing.base.internal.DefaultTestingExtension was replaced by org.gradle.testing.base.TestingExtension
+        put("testing", "org.gradle.testing.base.TestingExtension")
       }
     }
 

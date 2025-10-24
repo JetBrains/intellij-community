@@ -764,10 +764,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
               task.code("from sourceSets.test.output");
               return null;
             })
-            .addPostfix("artifacts {",
-                        "    tests testJar",
-                        "    archives testJar",
-                        "}")
+            .addPostfix("artifacts { tests testJar }")
+            .addPostfix("tasks.named(\"assemble\") { dependsOn(testJar) }")
             .addTestImplementationDependency("junit:junit:4.11");
         })
         .project(":impl", it -> {
@@ -1178,10 +1176,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
               task.code("from project.sourceSets.test.output");
               return null;
             })
-            .addPostfix("artifacts {",
-                        "    tests testJar",
-                        "    archives testJar",
-                        "}")
+            .addPostfix("artifacts { tests testJar }")
+            .addPostfix("tasks.named(\"assemble\") { dependsOn(testJar) }")
             .addTestImplementationDependency("junit:junit:4.11");
         })
         .project(":project2", it -> {
