@@ -9,10 +9,9 @@ import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
+import com.intellij.openapi.project.DumbAwareAction import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftTabActionNew
+import com.intellij.util.PlatformUtils
 import org.intellij.lang.annotations.Language
 
 internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
@@ -22,7 +21,7 @@ internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomiz
       replaceExistingAction("RenameProject") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("NewDir") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("NewFile") { WelcomeScreenProxyAction(it, CreateEmptyFileAction()) }
-      if (Registry.`is`("ide.welcome.screen.replace.new.element.action")) {
+      if (!PlatformUtils.isPyCharm()) {
         replaceExistingAction("NewElement") { WelcomeScreenProxyAction(it, WelcomeScreenLeftTabActionNew(), false) }
       }
 
