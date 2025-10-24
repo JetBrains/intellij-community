@@ -19,12 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 
 @Service(Service.Level.PROJECT)
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -41,57 +36,18 @@ public final class LogConsolePreferences extends LogFilterRegistrar {
   public String CUSTOM_FILTER = null;
   public static final @NonNls String ERROR = "ERROR";
   public static final @NonNls String WARNING = "WARNING";
-  private static final @NonNls String WARN = "WARN";
   public static final @NonNls String INFO = "INFO";
   public static final @NonNls String DEBUG = "DEBUG";
   public static final @NonNls String CUSTOM = "CUSTOM";
 
-  /**
-   * Set of patterns to assign severity to given message.
-   */
-  private enum LevelPattern {
+  private static final Map<String, String> levelPatterns = Map.of(
+    "error", ERROR,
+    "fatal", ERROR,
+    "warn", WARNING,
+    "info", INFO,
+    "debug", DEBUG
+  );
 
-    ERROR("ERROR|FATAL", LogConsolePreferences.ERROR),
-    WARNING("WARN", LogConsolePreferences.WARNING), // "|WARNING" omitted since it is covered by "WARN"
-    INFO("INFO", LogConsolePreferences.INFO),
-    DEBUG("DEBUG", LogConsolePreferences.DEBUG);
-
-    private final Pattern myPattern;
-    private final String myType;
-
-    LevelPattern(@NotNull @NonNls String regexp, @NotNull @NonNls String type) {
-      myPattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE);
-      myType = type;
-    }
-
-    public @NotNull Pattern getPattern() {
-      return myPattern;
-    }
-
-    public @NotNull @NonNls String getType() {
-      return myType;
-    }
-
-    public static @Nullable LevelPattern findBestMatchingPattern(@NotNull String text) {
-      return findBestMatchingPattern(text, LevelPattern.values());
-    }
-
-    public static @Nullable LevelPattern findBestMatchingPattern(@NotNull String text, LevelPattern @NotNull [] patterns) {
-      int bestStart = Integer.MAX_VALUE;
-      LevelPattern bestMatch = null;
-      for (LevelPattern next : patterns) {
-        Matcher nextMatcher = next.getPattern().matcher(text);
-        if (nextMatcher.find()) {
-          int nextStart = nextMatcher.start();
-          if (nextStart < bestStart) {
-            bestMatch = next;
-            bestStart = nextStart;
-          }
-        }
-      }
-      return bestMatch;
-    }
-  }
 
   private final List<LogFilterListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(LogConsolePreferences.class);
@@ -143,8 +99,18 @@ public final class LogConsolePreferences extends LogFilterRegistrar {
   }
 
   public static @Nullable String getType(@NotNull String text) {
-    LevelPattern bestMatch = LevelPattern.findBestMatchingPattern(text);
-    return bestMatch == null ? null : bestMatch.getType();
+    final String lowercasedText = text.toLowerCase(Locale.ROOT);
+    int bestStart = text.length();
+    String bestMatchType = null;
+    for (String pattern : levelPatterns.keySet()) {
+      final int patternIndex = lowercasedText.indexOf(pattern, 0, bestStart);
+      if (patternIndex >= 0) {
+        bestMatchType = levelPatterns.get(pattern);
+        bestStart = patternIndex;
+      }
+    }
+
+    return bestMatchType;
   }
 
   public static Key getProcessOutputTypes(String type) {
