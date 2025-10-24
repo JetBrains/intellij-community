@@ -1707,6 +1707,11 @@
       "since": "2023.1"
     },
     {
+      "key": "StatusBar.Widget.hoverInsets",
+      "description": "Insets of the hover area around status bar widgets",
+      "since": "2025.3"
+    },
+    {
       "key": "StripeToolbar.Button.size",
       "description": "Tool window stripe button size",
       "since": "2023.1"

@@ -972,6 +972,10 @@ public final class JBUI {
         return Widget.HOVER_BACKGROUND;
       }
 
+      public static @NotNull Insets hoverInsets() {
+        return insets("StatusBar.Widget.hoverInsets", insets(3, 4, 1, 4));
+      }
+
       public static @NotNull Font font() {
         return getFontWithSizeOffset(fontSizeOffsetKey(), defaultFont());
       }
