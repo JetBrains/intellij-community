@@ -71,10 +71,17 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
   val newDir = currentDir.resolveSibling(newDirName)
   if (Files.exists(newDir)) return
 
-  val renameCommand = listOf("/bin/mv", "-n", currentDir.toString(), newDir.toString())
-  val startCommand = listOf(newDir.resolve("Contents/MacOS/${ApplicationNamesInfo.getInstance().scriptName}").toString()) + args
+  val commands = buildList {
+    add(listOf("/bin/mv", "-n", currentDir.toString(), newDir.toString()))
+    val vmOptionsFile = currentDir.resolveSibling("${currentDirName}.vmoptions")
+    if (Files.exists(vmOptionsFile)) {
+      val newVmOptionsFile = currentDir.resolveSibling("${newDirName}.vmoptions")
+      add(listOf("/bin/mv", "-n", vmOptionsFile.toString(), newVmOptionsFile.toString()))
+    }
+    add(listOf(newDir.resolve("Contents/MacOS/${ApplicationNamesInfo.getInstance().scriptName}").toString()) + args)
+  }
   Restarter.setMainAppArgs(args)  // fallback if the rename fails
-  Restarter.scheduleRestart(false, renameCommand, startCommand)
+  Restarter.scheduleRestart(false, *commands.toTypedArray())
   exitProcess(0)
 }
 
