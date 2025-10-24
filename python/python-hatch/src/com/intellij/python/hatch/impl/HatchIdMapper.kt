@@ -8,4 +8,6 @@ import javax.swing.Icon
 internal class HatchIdMapper : ToolIdToIconMapper {
   override val id: ToolId = HATCH_TOOL_ID
   override val icon: Icon = PythonHatchIcons.Logo
+
+  override val clazz: Class<*> = PythonHatchIcons::class.java
 }

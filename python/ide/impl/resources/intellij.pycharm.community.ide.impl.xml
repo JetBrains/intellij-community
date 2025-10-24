@@ -24,6 +24,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <python.common.toolToIconMapper implementation="com.intellij.pycharm.community.ide.impl.configuration.PyReqToolIdToIconMapper"/>
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>

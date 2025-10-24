@@ -39,6 +39,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//python/common",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

@@ -9,7 +9,12 @@ interface ToolIdToIconMapper {
   val id: ToolId
   val icon: Icon
 
+  /**
+   * Class with icons (jewel requires it)
+   */
+  val clazz: Class<*>
+
   companion object {
-   internal val EP = ExtensionPointName.create<ToolIdToIconMapper>("com.intellij.python.common.toolToIconMapper")
+    internal val EP = ExtensionPointName.create<ToolIdToIconMapper>("com.intellij.python.common.toolToIconMapper")
   }
 }
