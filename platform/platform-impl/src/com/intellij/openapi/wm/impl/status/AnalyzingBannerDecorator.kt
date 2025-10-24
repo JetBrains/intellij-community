@@ -47,7 +47,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
 
   // hides banner on popup close if analyzing completed
   fun handlePopupClose() {
-    if (userClosedBanner() || analyzingComponent != null) {
+    if (analyzingComponent != null) {
       return
     }
     panel.remove(banner)
