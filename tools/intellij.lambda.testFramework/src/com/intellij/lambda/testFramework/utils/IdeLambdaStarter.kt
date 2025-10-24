@@ -1,8 +1,7 @@
 package com.intellij.lambda.testFramework.utils
 
-import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.driver.driver.remoteDev.RemDevDriverRunner
 import com.intellij.ide.starter.driver.engine.BackgroundRun
-import com.intellij.ide.starter.driver.engine.DriverRunner
 import com.intellij.ide.starter.driver.engine.IBackgroundRun
 import com.intellij.ide.starter.driver.engine.LocalDriverRunner
 import com.intellij.ide.starter.ide.IDERemDevTestContext
@@ -25,8 +24,6 @@ import com.intellij.util.io.createDirectories
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.threading.SynchronousScheduler
-import org.kodein.di.direct
-import org.kodein.di.instanceOrNull
 import kotlin.io.path.exists
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -56,7 +53,7 @@ object IdeLambdaStarter {
     }
 
 
-    suspend inline fun <T: LambdaIdeContext> LambdaRdTestSession.runSerializedLambda(crossinline lambda: suspend T.() -> Unit) {
+    suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.runSerializedLambda(crossinline lambda: suspend T.() -> Unit) {
       val exec = SerializedLambda.fromLambdaWithCoroutineScope(lambda)
       runSerializedLambda.startSuspending(rdSession.protocol!!.lifetime, LambdaRdSerializedLambda(exec.clazzName, exec.methodName, exec.serializedDataBase64, exec.classPath.map { it.canonicalPath }))
     }
@@ -78,9 +75,8 @@ object IdeLambdaStarter {
     collectNativeThreads: Boolean = false,
     configure: IDERunContext.() -> Unit = {},
   ): BackgroundRunWithLambda {
-
-    val driverRunner = di.direct.instanceOrNull<DriverRunner>() ?: LocalDriverRunner()
     if (this is IDERemDevTestContext) {
+      val driverRunner = RemDevDriverRunner()
       addCustomFrontendPlugin(ADDITIONAL_LAMBDA_DIR_NAME)
 
       val backendRdSession = setUpRdTestSession(BACKEND)
@@ -90,6 +86,7 @@ object IdeLambdaStarter {
       return BackgroundRunWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession)
     }
 
+    val driverRunner = LocalDriverRunner()
     val monolithRdSession = setUpRdTestSession(MONOLITH)
     val backgroundRun = driverRunner.runIdeWithDriver(this, determineDefaultCommandLineArguments(), emptyList(), runTimeout, useStartupScript = true, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
     return BackgroundRunWithLambda(backgroundRun, monolithRdSession, null)
