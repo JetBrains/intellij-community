@@ -3,8 +3,15 @@ package org.jetbrains.plugins.terminal.session
 
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * The typesafe wrapper for the name of the shell.
+ *
+ * If you receive an instance of [ShellName], it can be suitable to use it in conditions
+ * like `if (shellName == ShellName.ZSH)`.
+ */
 @ApiStatus.Experimental
 sealed interface ShellName {
+  /** The lowercase name of the shell */
   val value: String
 
   companion object {

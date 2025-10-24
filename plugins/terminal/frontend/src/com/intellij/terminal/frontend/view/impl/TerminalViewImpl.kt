@@ -36,6 +36,7 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
@@ -343,8 +344,9 @@ class TerminalViewImpl(
     }
   }
 
-  override fun getCurrentDirectory(): String {
-    return sessionModel.terminalState.value.currentDirectory
+  override fun getCurrentDirectory(): String? {
+    // The initial value of the current directory is an empty string, return null in this case.
+    return sessionModel.terminalState.value.currentDirectory.nullize()
   }
 
   override fun sendText(text: String) {
