@@ -198,7 +198,8 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
       return;
     }
 
-    if (!GpgAgentConfigurator.isEnabled(myProject, myHandler.myExecutable)
+    GitExecutable gitExecutable = myHandler.myExecutable;
+    if (!GpgAgentConfigurator.isEnabled(myProject, gitExecutable)
         || !GpgAgentConfigurator.getInstance(myProject).isConfigured()) {
       return;
     }
@@ -207,7 +208,13 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     if (repo == null) return;
 
     if (GitGpgConfigUtilsKt.isGpgSignEnabledCached(repo)) {
-      PinentryService.PinentryData pinentryData = PinentryService.getInstance(myProject).startSession();
+      PinentryService.PinentryData pinentryData;
+      if (gitExecutable instanceof GitExecutable.Eel) {
+        pinentryData = PinentryService.getInstance(myProject).startSession(((GitExecutable.Eel)gitExecutable).getEel());
+      }
+      else {
+        pinentryData = PinentryService.getInstance(myProject).startSession(null);
+      }
       if (pinentryData != null) {
         myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv());
         Disposer.register(myDisposable, () -> PinentryService.getInstance(myProject).stopSession());

@@ -1,16 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
+import com.intellij.externalProcessAuthHelper.toExternalAppEntry
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi.ExternalCliOptions
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.net.NetUtils
 import git4idea.gpg.CryptoUtils
+import git4idea.gpg.PinentryApp
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -26,6 +33,7 @@ internal class PinentryService(private val cs: CoroutineScope) {
 
   private var serverSocket: ServerSocket? = null
   private var keyPair: KeyPair? = null
+  private var listenJob: Job? = null
 
   private var passwordUiRequester: PasswordUiRequester = DefaultPasswordUiRequester()
 
@@ -35,7 +43,8 @@ internal class PinentryService(private val cs: CoroutineScope) {
   }
 
   @Synchronized
-  fun startSession(): PinentryData? {
+  fun startSession(eelTarget: EelApi?): PinentryData? {
+    if (keyPair != null || listenJob != null) return null
     val publicKeyStr: String?
     try {
       val pair = CryptoUtils.generateKeyPair()
@@ -51,14 +60,33 @@ internal class PinentryService(private val cs: CoroutineScope) {
       return null
     }
     val address = startServer() ?: return null
-
-    return PinentryData(publicKeyStr, address)
+    return if (eelTarget != null) {
+      runBlockingMaybeCancellable {
+        val script = eelTarget.exec.createExternalCli(object : ExternalCliOptions {
+          override val filePrefix = "pinentry-ide"
+          override val envVariablesToCapture: List<String> = listOf(PINENTRY_USER_DATA_ENV)
+        })
+        listenJob = cs.launch {
+          script.consumeInvocations { process ->
+            process.toExternalAppEntry().use { externalAppEntry ->
+              PinentryApp().entryPoint(externalAppEntry)
+            }
+          }
+        }
+        PinentryData(publicKeyStr, address, script.path)
+      }
+    }
+    else {
+      PinentryData(publicKeyStr, address)
+    }
   }
 
   @Synchronized
   fun stopSession() {
     stopServer()
     keyPair = null
+    listenJob?.cancel()
+    listenJob = null
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -156,12 +184,20 @@ internal class PinentryService(private val cs: CoroutineScope) {
     override fun toString(): String = "$host:$port"
   }
 
-  data class PinentryData(val publicKey: String, val address: Address) {
+  data class PinentryData(val publicKey: String, val address: Address, val entrypoint: EelPath? = null) {
 
-    fun toEnv(): String = "$PREFIX$publicKey:$address"
+    fun toEnv(): String {
+      return if (entrypoint != null) {
+        "$ENTRYPOINT_PREFIX$entrypoint:$publicKey:$address"
+      }
+      else {
+        "$PREFIX$publicKey:$address"
+      }
+    }
 
     companion object {
-      const val PREFIX = "IJ_PINENTRY="
+      const val PREFIX = PinentryApp.PREFIX
+      const val ENTRYPOINT_PREFIX = PinentryApp.ENTRYPOINT_PREFIX
     }
   }
 

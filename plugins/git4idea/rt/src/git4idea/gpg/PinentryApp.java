@@ -2,28 +2,46 @@
 package git4idea.gpg;
 
 import externalApp.ExternalApp;
+import externalApp.ExternalAppEntry;
+import externalApp.ExternalCli;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.PublicKey;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-public final class PinentryApp implements ExternalApp {
+public final class PinentryApp implements ExternalApp, ExternalCli {
 
   public static void main(String[] args) throws IOException, URISyntaxException {
-    boolean shouldLog = isLogEnabled(args);
-    File logFile = getCurrentDir().resolve("pinentry-app.log").toFile();
-    File exceptionsLogFile = getCurrentDir().resolve("pinentry-app-exceptions.log").toFile();
+    var exitCode = new PinentryApp().entryPointInternal(ExternalAppEntry.fromMain(args, PinentryApp.class));
+    System.exit(exitCode);
+  }
+
+  @Override
+  public int entryPoint(ExternalAppEntry entry) {
+    try {
+      return entryPointInternal(entry);
+    } catch (IOException | URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static final String PREFIX = "IJ_PINENTRY=";
+  public static final String ENTRYPOINT_PREFIX = "IJ_PINENTRY_ENTRYPOINT=";
+
+  public int entryPointInternal(ExternalAppEntry entry) throws IOException, URISyntaxException {
+    boolean shouldLog = isLogEnabled(entry.getArgs());
+    File logFile = entry.getExecutablePath().getParent().resolve("pinentry-app.log").toFile();
+    File exceptionsLogFile = entry.getExecutablePath().getParent().resolve("pinentry-app-exceptions.log").toFile();
 
     try (FileWriter exceptionsWriter = shouldLog ? new FileWriter(exceptionsLogFile, StandardCharsets.UTF_8) : null) {
-      //noinspection UseOfSystemOutOrSystemErr
       try (FileWriter logWriter = shouldLog ? new FileWriter(logFile, StandardCharsets.UTF_8) : null;
-           BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-           BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8))) {
+           BufferedReader reader = new BufferedReader(new InputStreamReader(entry.getStdin(), StandardCharsets.UTF_8));
+           BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(entry.getStdout(), StandardCharsets.UTF_8))) {
 
         writer.write("OK Pleased to meet you\n");
         writer.flush();
@@ -47,14 +65,20 @@ public final class PinentryApp implements ExternalApp {
           }
           else if (line.startsWith("GETPIN")) {
             try {
-              String pinentryUserData = System.getenv("PINENTRY_USER_DATA");
+              String pinentryUserData = entry.getEnvironment().get("PINENTRY_USER_DATA");
+              List<String> parsedPinentryData;
               if (pinentryUserData == null) {
-                pinentryUserData = "";
+                parsedPinentryData = Collections.emptyList();
               }
-              pinentryUserData = pinentryUserData.replace("IJ_PINENTRY=", "");
-              String[] pinentryData = pinentryUserData.split(":");
-
-              if (pinentryData.length != 3) {
+              else if (pinentryUserData.startsWith(ENTRYPOINT_PREFIX)) {
+                String withoutPrefix = pinentryUserData.replace(ENTRYPOINT_PREFIX, "");
+                parsedPinentryData = Arrays.asList(withoutPrefix.split(":")).subList(1, 4);
+              }
+              else {
+                String withoutPrefix = pinentryUserData.replace(PREFIX, "");
+                parsedPinentryData = Arrays.asList(withoutPrefix.split(":"));
+              }
+              if (parsedPinentryData.size() != 3) {
                 if (shouldLog) {
                   exceptionsWriter
                     .write("Cannot locate address (<public-key>:<host>:<port>) from env variable PINENTRY_USER_DATA. Got " + pinentryUserData + "\n");
@@ -66,10 +90,10 @@ public final class PinentryApp implements ExternalApp {
               String host;
               int port;
               try {
-                String publicKeyStr = pinentryData[0];
+                String publicKeyStr = parsedPinentryData.get(0);
                 publicKey = CryptoUtils.stringToPublicKey(publicKeyStr);
-                host = pinentryData[1];
-                port = Integer.parseInt(pinentryData[2]);
+                host = parsedPinentryData.get(1);
+                port = Integer.parseInt(parsedPinentryData.get(2));
               }
               catch (Exception e) {
                 if (shouldLog) {
@@ -132,6 +156,7 @@ public final class PinentryApp implements ExternalApp {
         }
       }
     }
+    return 0;
   }
 
   private static boolean isLogEnabled(String[] args) {
@@ -142,12 +167,6 @@ public final class PinentryApp implements ExternalApp {
     }
 
     return false;
-  }
-
-  private static Path getCurrentDir() throws URISyntaxException {
-    URI jarPath = PinentryApp.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-
-    return Paths.get(jarPath).getParent();
   }
 
   private static String getStackTrace(Exception e) {

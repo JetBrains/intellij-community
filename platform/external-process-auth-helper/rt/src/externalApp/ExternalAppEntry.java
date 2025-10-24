@@ -3,6 +3,7 @@ package externalApp;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.util.Map;
 
 public interface ExternalAppEntry {
@@ -12,8 +13,13 @@ public interface ExternalAppEntry {
   PrintStream getStderr();
   PrintStream getStdout();
   InputStream getStdin();
+  Path getExecutablePath();
 
   static ExternalAppEntry fromMain(String[] args) {
-    return new ExternalAppEntryImpl(args);
+    return new ExternalAppEntryImpl(args, ExternalApp.class);
+  }
+
+  static ExternalAppEntry fromMain(String[] args, Class<? extends ExternalApp> thisClass) {
+    return new ExternalAppEntryImpl(args, thisClass);
   }
 }

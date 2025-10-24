@@ -173,7 +173,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
   private fun PinentryService.use(block: PinentryService.(PinentryService.PinentryData) -> Unit) {
     try {
-      val pinentryData = startSession()
+      val pinentryData = startSession(null)
       assertNotNull(pinentryData)
       block(pinentryData!!)
     }
