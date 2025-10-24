@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -103,6 +103,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     if (LOG.isDebugEnabled && events.size < 20) {
       for (event in events) LOG.debug("""
   File changed: ${event.path}.
+  requestor:${event.requestor}
   event:$event
   """.trimIndent())
     }
