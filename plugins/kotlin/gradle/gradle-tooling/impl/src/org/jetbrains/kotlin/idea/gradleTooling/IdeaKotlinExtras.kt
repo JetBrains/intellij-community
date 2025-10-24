@@ -39,7 +39,12 @@ class IdeaKotlinExtras private constructor(private val extras: MutableExtras) : 
         private val binaryExtras: ByteArray?,
     ) : Serializable {
         private fun readResolve(): Any {
-            val context = ideaKotlinSerializationContextOrNull ?: return IdeaKotlinExtras(mutableExtrasOf())
+            val context = ideaKotlinSerializationContextOrNull
+            if (context == null) {
+                return if (binaryExtras != null) {
+                    IdeaKotlinExtras(mutableExtrasOf(Companion.binaryExtras withValue binaryExtras))
+                } else IdeaKotlinExtras(mutableExtrasOf())
+            }
             val extrasEntries = if (extras != null) context.Extras(extras)?.entries.orEmpty() else emptySet()
             val binaryExtrasEntries = if (binaryExtras != null) context.Extras(binaryExtras)?.entries.orEmpty() else emptySet()
             return IdeaKotlinExtras((extrasEntries + binaryExtrasEntries).toMutableExtras())
