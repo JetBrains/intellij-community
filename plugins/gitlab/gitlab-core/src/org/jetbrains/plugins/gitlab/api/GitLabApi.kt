@@ -8,6 +8,7 @@ import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadOptionalJsonList
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.annotations.ApiStatus
@@ -17,6 +18,8 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+
+private val LOG: Logger = logger<GitLabApi>()
 
 @ApiStatus.Experimental
 sealed interface GitLabApi : HttpApiHelper {
@@ -48,7 +51,7 @@ internal class GitLabApiImpl(
     serversManager: GitLabServersManager,
     server: GitLabServerPath,
     tokenSupplier: (() -> String)? = null
-  ) : this(serversManager, server, tokenSupplier?.let { httpHelper(it) } ?: httpHelper())
+  ) : this(serversManager, server, tokenSupplier?.let { httpHelper(server, it) } ?: httpHelper())
 
   override suspend fun getMetadata(): GitLabServerMetadata =
     serversManager.getMetadata(this)
@@ -121,14 +124,45 @@ fun <R : Any, MR : GitLabGraphQLMutationResultDTO<R>> HttpResponse<out MR?>.getR
 }
 
 
-private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
-  val authConfigurer = object : AuthorizationConfigurer() {
-    override val authorizationHeaderValue: String
-      get() = HttpSecurityUtil.createBearerAuthHeaderValue(tokenSupplier())
+private fun httpHelper(server: GitLabServerPath, tokenSupplier: () -> String): HttpApiHelper {
+  val authConfigurer = object : HttpRequestConfigurer {
+
+    override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder {
+      val uri = builder.build().uri()
+      if (server.isAuthorizedUrl(uri)) {
+        val token = tokenSupplier()
+        val headerValue = HttpSecurityUtil.createBearerAuthHeaderValue(token)
+        return builder.header(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, headerValue)
+      }
+      else {
+        return builder
+      }
+    }
   }
   val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer(), authConfigurer)
   return HttpApiHelper(logger = logger<GitLabApi>(),
                        requestConfigurer = requestConfigurer)
+}
+
+private fun GitLabServerPath.isAuthorizedUrl(targetUri: URI): Boolean {
+  val serverUri = toURI()
+
+  if (targetUri.host != serverUri.host) {
+    LOG.info("URL $targetUri host does not match the server $serverUri. Authorization will not be granted")
+    return false
+  }
+  if (targetUri.port != serverUri.port) {
+    LOG.info("URL $targetUri port does not match the server $serverUri. Authorization will not be granted")
+    return false
+  }
+  if (targetUri.scheme != null && targetUri.scheme != serverUri.scheme) {
+    LOG.info("URL $targetUri protocol does not match the server $serverUri. Authorization will not be granted")
+    return false
+  }
+  if (serverUri.scheme == "http") {
+    LOG.warn("URL $targetUri use HTTP, not HTTPS, token leak is possible")
+  }
+  return true
 }
 
 private fun httpHelper(): HttpApiHelper {
