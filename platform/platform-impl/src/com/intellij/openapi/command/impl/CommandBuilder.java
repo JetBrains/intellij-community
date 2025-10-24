@@ -72,7 +72,7 @@ final class CommandBuilder {
     this.commandName = commandName;
     this.groupId = commandGroupId;
     this.confirmationPolicy = confirmationPolicy;
-    this.editorProvider = new StableEditorProvider(editorProvider.getCurrentEditor(undoProject));
+    this.editorProvider = editorProvider;
     this.editorStateBefore = currentEditorState();
     this.originalDocument = recordOriginalDocument ? originalDocument() : null;
     this.isTransparent = isTransparent;
@@ -232,6 +232,11 @@ final class CommandBuilder {
     public boolean isCompatible(@NotNull CommandId commandId) {
       return true;
     }
+
+    @Override
+    public long asLong() {
+      return 0;
+    }
   }
 
   private static final class NoEditorProvider implements CurrentEditorProvider {
@@ -240,25 +245,6 @@ final class CommandBuilder {
     @Override
     public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
       throw new UnsupportedOperationException();
-    }
-  }
-
-  private static final class StableEditorProvider implements CurrentEditorProvider {
-    private final @Nullable FileEditor editor;
-
-    StableEditorProvider(@Nullable FileEditor editor) {
-      this.editor = editor;
-    }
-
-    @SuppressWarnings("UsagesOfObsoleteApi")
-    @Override
-    public @Nullable FileEditor getCurrentEditor() {
-      return editor;
-    }
-
-    @Override
-    public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
-      return editor;
     }
   }
 }

@@ -21,6 +21,11 @@ final class CommandIdImpl implements CommandId {
   }
 
   @Override
+  public long asLong() {
+    return id;
+  }
+
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof CommandIdImpl)) {
       return false;

@@ -3,8 +3,10 @@ package com.intellij.openapi.command.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 @ApiStatus.Experimental
@@ -13,6 +15,8 @@ public class CommandIdServiceImpl implements CommandIdService {
 
   // for debug: command - even number, transparent - odd number
   private final AtomicLong idGenerator = new AtomicLong();
+
+  private final AtomicReference<CommandId> forcedCommandId = new AtomicReference<>();
 
   @Override
   public final void _advanceCommandId() {
@@ -26,7 +30,16 @@ public class CommandIdServiceImpl implements CommandIdService {
 
   @Override
   public final @NotNull CommandId _currCommandId() {
-    return new CommandIdImpl(currentId());
+    CommandId forcedCommand = forcedCommandId.get();
+    if (forcedCommand != null) {
+      return forcedCommand;
+    }
+    return CommandId.fromLong(currentId());
+  }
+
+  @Override
+  public void _setForcedCommand(@Nullable CommandId commandId) {
+    forcedCommandId.set(commandId);
   }
 
   protected long currentId() {

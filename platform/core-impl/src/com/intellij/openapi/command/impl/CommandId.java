@@ -8,5 +8,12 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface CommandId {
+
+  static @NotNull CommandId fromLong(long id) {
+    return new CommandIdImpl(id);
+  }
+
   boolean isCompatible(@NotNull CommandId commandId);
+
+  long asLong();
 }

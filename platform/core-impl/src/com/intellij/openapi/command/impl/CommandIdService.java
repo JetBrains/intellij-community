@@ -43,9 +43,18 @@ public interface CommandIdService {
     return null;
   }
 
+  static void setForcedCommand(@Nullable CommandId commandId) {
+    CommandIdService service = getInstance();
+    if (service != null) {
+      service._setForcedCommand(commandId);
+    }
+  }
+
   void _advanceCommandId();
 
   void _advanceTransparentCommandId();
 
   @NotNull CommandId _currCommandId();
+
+  void _setForcedCommand(@Nullable CommandId commandId);
 }
