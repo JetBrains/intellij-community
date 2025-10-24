@@ -23,7 +23,7 @@ import java.util.Collections;
  * The common base interface for all elements of the PSI tree.
  * <p/>
  * Please see <a href="https://plugins.jetbrains.com/docs/intellij/psi-elements.html">IntelliJ Platform Docs</a>
- * for high-level overview.
+ * for a high-level overview.
  */
 public interface PsiElement extends UserDataHolder, Iconable {
   /**
