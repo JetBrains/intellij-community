@@ -10,7 +10,6 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
@@ -56,10 +55,6 @@ internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTar
 
   override fun onShown(scope: CoroutineScope) {
     condaExecutable.initialize(scope)
-    condaExecutable.displayLoaderWhen(
-      loading = model.condaViewModel.condaEnvironmentsLoading,
-      scope = scope,
-    )
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {

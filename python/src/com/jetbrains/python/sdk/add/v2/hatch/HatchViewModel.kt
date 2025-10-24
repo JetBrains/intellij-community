@@ -56,7 +56,7 @@ class HatchViewModel<P : PathHolder>(
 
     hatchExecutable.afterChange { hatchExecutable ->
       if (hatchExecutable?.validationResult?.successOrNull == null) {
-        availableEnvironments.value = null
+        availableEnvironments.value = PyResult.success(emptyList())
         return@afterChange
       }
 

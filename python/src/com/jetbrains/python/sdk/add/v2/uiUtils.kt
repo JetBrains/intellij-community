@@ -178,7 +178,6 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
       return
     }
     interpreter == null -> {
-      icon = AllIcons.General.ShowWarning
       append(message("sdk.create.custom.existing.error.no.interpreters.to.select"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
       return
     }
@@ -304,7 +303,7 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
           when {
             !it.isVisible -> null
             it.isLoading.get() -> ValidationInfo(message("python.add.sdk.panel.wait"))
-            selectedSdkProperty.get() == null -> ValidationInfo(message("sdk.create.custom.existing.error.no.interpreters.to.select"))
+            selectedSdkProperty.get() == null -> ValidationInfo("")
             else -> null
           }
         }

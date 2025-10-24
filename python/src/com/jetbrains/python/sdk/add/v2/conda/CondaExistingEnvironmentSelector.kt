@@ -18,7 +18,6 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -130,10 +129,6 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
       scope = scope,
     )
     condaExecutable.initialize(scope)
-    condaExecutable.displayLoaderWhen(
-      loading = model.condaViewModel.condaEnvironmentsLoading,
-      scope = scope,
-    )
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
