@@ -32,6 +32,7 @@ dependencies {
   implementation "org.kodein.di:kodein-di-jvm:7.20.2"
 
   // TODO: change versions to LATEST-EAP-SNAPSHOT or remove completely in next EAP
+  implementation 'com.jetbrains.intellij.platform:core:LATEST-TRUNK-SNAPSHOT'
   implementation 'com.jetbrains.intellij.driver:driver-model:LATEST-TRUNK-SNAPSHOT'
   implementation 'com.jetbrains.intellij.tools:ide-util-common:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.tools:ide-metrics-collector:LATEST-TRUNK-SNAPSHOT'
