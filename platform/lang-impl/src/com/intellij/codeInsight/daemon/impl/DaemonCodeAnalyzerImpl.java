@@ -64,7 +64,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PsiConsistencyAssertions;
+import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilBase;

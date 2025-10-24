@@ -330,13 +330,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       ProgressManager.checkCanceled();
 
       // even invalid PSI can calculate its text by concatenating its children
-      if (tree != null) return tree.getText();
+      if (tree != null) {
+        return tree.getText();
+      }
 
       throw new PsiInvalidElementAccessException(this);
     }
     String string = getViewProvider().getContents().toString();
     if (tree != null && string.length() != tree.getTextLength()) {
-      PsiConsistencyAssertions.assertNoFileTextMismatch(this, getFileDocument(), string);
+      PsiConsistencyAssertions.assertNoFileTextMismatch(this, tree, string);
     }
     return string;
   }

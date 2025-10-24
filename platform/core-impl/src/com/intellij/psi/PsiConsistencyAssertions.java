@@ -1,16 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.impl.source;
+package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,11 +20,26 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Internal
 public class PsiConsistencyAssertions {
+  public static void assertNoFileTextMismatch(@NotNull PsiFile psiFile, @NotNull ASTNode tree, @NotNull String psiFileText) {
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    Document document = viewProvider instanceof AbstractFileViewProvider
+                        ? ((AbstractFileViewProvider)viewProvider).getCachedDocument()
+                        : FileDocumentManager.getInstance().getCachedDocument(viewProvider.getVirtualFile());
+    if (document == null) {
+      throw new AssertionError("File text mismatch: tree.length=" + tree.getTextLength() +
+                               "; psi.length=" + psiFileText.length() +
+                               "; this=" + psiFile +
+                               "; vp=" + viewProvider);
+    }
+    else {
+      assertNoFileTextMismatch(psiFile, document, psiFileText);
+    }
+  }
   public static void assertNoFileTextMismatch(@NotNull PsiFile psiFile, @NotNull Document document, @Nullable("null means not computed yet") String psiFileText) {
     int docLength = document.getTextLength();
     int psiLength = psiFile.getTextLength();
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(psiFile.getProject());
-    boolean committed = !manager.isUncommited(document);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
+    boolean committed = !documentManager.isUncommited(document);
     FileASTNode node = psiFile.getNode();
     FileViewProvider viewProvider = psiFile.getViewProvider();
     if (docLength == psiLength && committed && (node == null || node.getTextLength() == viewProvider.getContents().length())) {
@@ -33,7 +47,7 @@ public class PsiConsistencyAssertions {
     }
 
     String message = "file text mismatch:";
-    message += "\nmatching=" + (psiFile == manager.getPsiFile(document));
+    message += "\nmatching=" + (psiFile == documentManager.getPsiFile(document));
     message += "\ninjected=" + (document instanceof DocumentWindow);
     message += "\ninjectedFile=" + InjectedLanguageManager.getInstance(psiFile.getProject()).isInjectedFragment(psiFile);
     message += "\ncommitted=" + committed;
