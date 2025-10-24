@@ -40,4 +40,9 @@ object UltimateTestCases : TestCaseTemplate(IdeProductProvider.IU) {
       projectDir = Paths.get(PathManager.getHomePath(), "out/ide-tests/cache/empty-project").createDirectories()
     )
   )
+  val JavaTestProject: TestCase<LocalProjectInfo> = withProject(
+    projectInfo = LocalProjectInfo(
+      projectDir = Paths.get(PathManager.getHomePath(), "out/ide-tests/cache/projects/unpacked/java-ui-automation-data").createDirectories()
+    )
+  )
 }
