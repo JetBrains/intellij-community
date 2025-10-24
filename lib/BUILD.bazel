@@ -4900,27 +4900,13 @@ java_library(
   name = "libraries-compose-foundation-desktop-compose-foundation-desktop",
   exports = [
     ":org_jetbrains_compose_foundation-foundation-desktop-1_10_0-alpha01_http_import",
-    ":androidx_annotation-annotation-jvm-1_9_1_http_import",
-    ":androidx_collection-collection-jvm-1_5_0_http_import",
     ":org_jetbrains_compose_animation-animation-desktop-1_10_0-alpha01_http_import",
     ":org_jetbrains_compose_animation-animation-core-desktop-1_10_0-alpha01_http_import",
     ":org_jetbrains_compose_ui-ui-geometry-desktop-1_10_0-alpha01_http_import",
     ":org_jetbrains_compose_foundation-foundation-layout-desktop-1_10_0-alpha01_http_import",
     ":org_jetbrains_compose_ui-ui-desktop-1_10_0-alpha01_http_import",
-    ":androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http_import",
-    ":org_jspecify-jspecify-1_0_0_http_import",
-    ":androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http_import",
-    ":androidx_arch_core-core-common-2_2_0_http_import",
-    ":androidx_annotation-annotation-1_1_0_http_import",
     ":androidx_lifecycle-lifecycle-viewmodel-desktop-2_10_0-alpha03_http_import",
     ":androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_10_0-alpha03_http_import",
-    ":androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http_import",
-    ":org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha01_http_import",
-    ":androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http_import",
-    ":org_jetbrains_compose_runtime-runtime-saveable-desktop-1_10_0-alpha01_http_import",
-    ":androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http_import",
-    ":androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http_import",
-    ":org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha01_http_import",
     ":org_jetbrains_compose_ui-ui-backhandler-desktop-1_10_0-alpha01_http_import",
     ":org_jetbrains_compose_ui-ui-graphics-desktop-1_10_0-alpha01_http_import",
     ":org_jetbrains_compose_ui-ui-unit-desktop-1_10_0-alpha01_http_import",
@@ -4935,18 +4921,6 @@ jvm_import(
   name = "org_jetbrains_compose_foundation-foundation-desktop-1_10_0-alpha01_http_import",
   jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_10_0-alpha01_http//file",
   source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_10_0-alpha01_http//file"
-)
-
-jvm_import(
-  name = "androidx_annotation-annotation-jvm-1_9_1_http_import",
-  jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
-  source_jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file"
-)
-
-jvm_import(
-  name = "androidx_collection-collection-jvm-1_5_0_http_import",
-  jar = "@androidx_collection-collection-jvm-1_5_0_http//file",
-  source_jar = "@androidx_collection-collection-jvm-1_5_0_http//file"
 )
 
 jvm_import(
@@ -4980,24 +4954,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http_import",
-  jar = "@androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http//file",
-  source_jar = "@androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http//file"
-)
-
-jvm_import(
-  name = "androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http_import",
-  jar = "@androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http//file",
-  source_jar = "@androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http//file"
-)
-
-jvm_import(
-  name = "androidx_annotation-annotation-1_1_0_http_import",
-  jar = "@androidx_annotation-annotation-1_1_0_http//file",
-  source_jar = "@androidx_annotation-annotation-1_1_0_http//file"
-)
-
-jvm_import(
   name = "androidx_lifecycle-lifecycle-viewmodel-desktop-2_10_0-alpha03_http_import",
   jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_10_0-alpha03_http//file",
   source_jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_10_0-alpha03_http//file"
@@ -5007,48 +4963,6 @@ jvm_import(
   name = "androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_10_0-alpha03_http_import",
   jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_10_0-alpha03_http//file",
   source_jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_10_0-alpha03_http//file"
-)
-
-jvm_import(
-  name = "androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http_import",
-  jar = "@androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http//file",
-  source_jar = "@androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha01_http_import",
-  jar = "@org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha01_http//file",
-  source_jar = "@org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha01_http//file"
-)
-
-jvm_import(
-  name = "androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http_import",
-  jar = "@androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http//file",
-  source_jar = "@androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-saveable-desktop-1_10_0-alpha01_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-saveable-desktop-1_10_0-alpha01_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-saveable-desktop-1_10_0-alpha01_http//file"
-)
-
-jvm_import(
-  name = "androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http_import",
-  jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http//file",
-  source_jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http//file"
-)
-
-jvm_import(
-  name = "androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http_import",
-  jar = "@androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http//file",
-  source_jar = "@androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha01_http_import",
-  jar = "@org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha01_http//file",
-  source_jar = "@org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha01_http//file"
 )
 
 jvm_import(
@@ -5091,41 +5005,7 @@ java_library(
   name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
   exports = [
     ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03_http_import",
-    ":com_google_truth-truth-1_0_1_http_import",
-    ":com_google_guava-guava-28_1-android_http_import",
-    ":com_google_guava-failureaccess-1_0_1_http_import",
-    ":com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
-    ":com_google_code_findbugs-jsr305-3_0_2_http_import",
-    ":com_google_j2objc-j2objc-annotations-1_3_http_import",
-    ":org_codehaus_mojo-animal-sniffer-annotations-1_18_http_import",
-    ":org_checkerframework-checker-compat-qual-2_5_5_http_import",
-    ":com_googlecode_java-diff-utils-diffutils-1_3_0_http_import",
-    ":com_google_auto_value-auto-value-annotations-1_6_3_http_import",
-    ":com_google_errorprone-error_prone_annotations-2_3_3_http_import",
     ":org_jetbrains_compose_ui-ui-test-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_ui-ui-desktop-1_9_0-beta03_http_import",
-    ":androidx_lifecycle-lifecycle-common-jvm-2_9_2_http_import",
-    ":org_jspecify-jspecify-1_0_0_http_import",
-    ":androidx_lifecycle-lifecycle-runtime-desktop-2_9_2_http_import",
-    ":androidx_arch_core-core-common-2_2_0_http_import",
-    ":androidx_annotation-annotation-1_1_0_http_import",
-    ":androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_2_http_import",
-    ":androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
-    ":org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_7_3_http_import",
-    ":androidx_savedstate-savedstate-desktop-1_3_1_http_import",
-    ":org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_runtime-runtime-saveable-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_3_2_http_import",
-    ":org_jetbrains_compose_ui-ui-backhandler-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_ui-ui-geometry-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_ui-ui-graphics-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_kotlin-kotlin-stdlib-jdk8-2_1_21_http_import",
-    ":org_jetbrains_kotlin-kotlin-stdlib-jdk7-2_1_21_http_import",
-    ":org_jetbrains_compose_ui-ui-text-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_ui-ui-unit-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_ui-ui-util-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_kotlinx-atomicfu-jvm-0_23_2_http_import",
-    ":org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_8_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -5137,192 +5017,13 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com_google_truth-truth-1_0_1_http_import",
-  jar = "@com_google_truth-truth-1_0_1_http//file",
-  source_jar = "@com_google_truth-truth-1_0_1_http//file"
-)
-
-jvm_import(
-  name = "com_google_guava-guava-28_1-android_http_import",
-  jar = "@com_google_guava-guava-28_1-android_http//file",
-  source_jar = "@com_google_guava-guava-28_1-android_http//file"
-)
-
-jvm_import(
-  name = "com_google_guava-failureaccess-1_0_1_http_import",
-  jar = "@com_google_guava-failureaccess-1_0_1_http//file",
-  source_jar = "@com_google_guava-failureaccess-1_0_1_http//file"
-)
-
-jvm_import(
-  name = "com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
-  jar = "@com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http//file"
-)
-
-jvm_import(
-  name = "com_google_code_findbugs-jsr305-3_0_2_http_import",
-  jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
-  source_jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file"
-)
-
-jvm_import(
-  name = "com_google_j2objc-j2objc-annotations-1_3_http_import",
-  jar = "@com_google_j2objc-j2objc-annotations-1_3_http//file",
-  source_jar = "@com_google_j2objc-j2objc-annotations-1_3_http//file"
-)
-
-jvm_import(
-  name = "org_codehaus_mojo-animal-sniffer-annotations-1_18_http_import",
-  jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_18_http//file",
-  source_jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_18_http//file"
-)
-
-jvm_import(
-  name = "org_checkerframework-checker-compat-qual-2_5_5_http_import",
-  jar = "@org_checkerframework-checker-compat-qual-2_5_5_http//file",
-  source_jar = "@org_checkerframework-checker-compat-qual-2_5_5_http//file"
-)
-
-jvm_import(
-  name = "com_googlecode_java-diff-utils-diffutils-1_3_0_http_import",
-  jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0_http//file",
-  source_jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0_http//file"
-)
-
-jvm_import(
-  name = "com_google_auto_value-auto-value-annotations-1_6_3_http_import",
-  jar = "@com_google_auto_value-auto-value-annotations-1_6_3_http//file",
-  source_jar = "@com_google_auto_value-auto-value-annotations-1_6_3_http//file"
-)
-
-jvm_import(
-  name = "com_google_errorprone-error_prone_annotations-2_3_3_http_import",
-  jar = "@com_google_errorprone-error_prone_annotations-2_3_3_http//file",
-  source_jar = "@com_google_errorprone-error_prone_annotations-2_3_3_http//file"
-)
-
-jvm_import(
   name = "org_jetbrains_compose_ui-ui-test-desktop-1_9_0-beta03_http_import",
   jar = "@org_jetbrains_compose_ui-ui-test-desktop-1_9_0-beta03_http//file",
   source_jar = "@org_jetbrains_compose_ui-ui-test-desktop-1_9_0-beta03_http//file"
 )
 
-jvm_import(
-  name = "org_jetbrains_compose_ui-ui-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "androidx_lifecycle-lifecycle-common-jvm-2_9_2_http_import",
-  jar = "@androidx_lifecycle-lifecycle-common-jvm-2_9_2_http//file",
-  source_jar = "@androidx_lifecycle-lifecycle-common-jvm-2_9_2_http//file"
-)
-
-jvm_import(
-  name = "androidx_lifecycle-lifecycle-runtime-desktop-2_9_2_http_import",
-  jar = "@androidx_lifecycle-lifecycle-runtime-desktop-2_9_2_http//file",
-  source_jar = "@androidx_lifecycle-lifecycle-runtime-desktop-2_9_2_http//file"
-)
-
-jvm_import(
-  name = "androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_2_http_import",
-  jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_2_http//file",
-  source_jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_2_http//file"
-)
-
-jvm_import(
-  name = "androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
-  jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file",
-  source_jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_7_3_http_import",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_7_3_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_7_3_http//file"
-)
-
-jvm_import(
-  name = "androidx_savedstate-savedstate-desktop-1_3_1_http_import",
-  jar = "@androidx_savedstate-savedstate-desktop-1_3_1_http//file",
-  source_jar = "@androidx_savedstate-savedstate-desktop-1_3_1_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_androidx_lifecycle-lifecycle-runtime-compose-desktop-2_9_2_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-saveable-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-saveable-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-saveable-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_3_2_http_import",
-  jar = "@org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_3_2_http//file",
-  source_jar = "@org_jetbrains_androidx_savedstate-savedstate-compose-desktop-1_3_2_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_ui-ui-backhandler-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-backhandler-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-backhandler-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_ui-ui-geometry-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_ui-ui-graphics-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-stdlib-jdk8-2_1_21_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-stdlib-jdk8-2_1_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-jdk8-2_1_21_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-stdlib-jdk7-2_1_21_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-stdlib-jdk7-2_1_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-jdk7-2_1_21_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_ui-ui-text-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-text-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-text-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_ui-ui-unit-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-unit-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-unit-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_ui-ui-util-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-util-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-util-desktop-1_9_0-beta03_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_8_1_http_import",
-  jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_8_1_http//file"
-)
-
 java_library(
-  name = "libraries-compose-runtime-desktop-compose-runtime-desktop",
+  name = "libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
   exports = [
     ":androidx_compose_runtime-runtime-desktop-1_10_0-alpha02_http_import",
     ":androidx_collection-collection-jvm-1_5_0_http_import",
@@ -5339,9 +5040,79 @@ jvm_import(
 )
 
 jvm_import(
+  name = "androidx_collection-collection-jvm-1_5_0_http_import",
+  jar = "@androidx_collection-collection-jvm-1_5_0_http//file",
+  source_jar = "@androidx_collection-collection-jvm-1_5_0_http//file"
+)
+
+jvm_import(
+  name = "androidx_annotation-annotation-jvm-1_9_1_http_import",
+  jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
+  source_jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file"
+)
+
+jvm_import(
   name = "androidx_compose_runtime-runtime-annotation-jvm-1_10_0-alpha02_http_import",
   jar = "@androidx_compose_runtime-runtime-annotation-jvm-1_10_0-alpha02_http//file",
   source_jar = "@androidx_compose_runtime-runtime-annotation-jvm-1_10_0-alpha02_http//file"
+)
+
+java_library(
+  name = "libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+  exports = [
+    ":androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http_import",
+    ":androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http_import",
+    ":androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http_import",
+    ":androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http_import",
+    ":androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http_import",
+    ":androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http_import",
+    ":org_jspecify-jspecify-1_0_0_http_import",
+    ":androidx_arch_core-core-common-2_2_0_http_import",
+    ":androidx_annotation-annotation-1_1_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http_import",
+  jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http//file",
+  source_jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_10_0-alpha02_http//file"
+)
+
+jvm_import(
+  name = "androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http_import",
+  jar = "@androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http//file",
+  source_jar = "@androidx_savedstate-savedstate-compose-desktop-1_4_0-alpha03_http//file"
+)
+
+jvm_import(
+  name = "androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http_import",
+  jar = "@androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http//file",
+  source_jar = "@androidx_savedstate-savedstate-desktop-1_4_0-alpha03_http//file"
+)
+
+jvm_import(
+  name = "androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http_import",
+  jar = "@androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http//file",
+  source_jar = "@androidx_lifecycle-lifecycle-runtime-compose-desktop-2_10_0-alpha03_http//file"
+)
+
+jvm_import(
+  name = "androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http_import",
+  jar = "@androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http//file",
+  source_jar = "@androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http//file"
+)
+
+jvm_import(
+  name = "androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http_import",
+  jar = "@androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http//file",
+  source_jar = "@androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http//file"
+)
+
+jvm_import(
+  name = "androidx_annotation-annotation-1_1_0_http_import",
+  jar = "@androidx_annotation-annotation-1_1_0_http//file",
+  source_jar = "@androidx_annotation-annotation-1_1_0_http//file"
 )
 
 java_library(
@@ -6619,6 +6390,12 @@ jvm_import(
   name = "com_google_guava-guava-25_1-android_http_import",
   jar = "@com_google_guava-guava-25_1-android_http//file",
   source_jar = "@com_google_guava-guava-25_1-android_http//file"
+)
+
+jvm_import(
+  name = "com_google_code_findbugs-jsr305-3_0_2_http_import",
+  jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
+  source_jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file"
 )
 
 jvm_import(
@@ -9939,6 +9716,12 @@ jvm_import(
   name = "com_google_truth-truth-0_42_http_import",
   jar = "@com_google_truth-truth-0_42_http//file",
   source_jar = "@com_google_truth-truth-0_42_http//file"
+)
+
+jvm_import(
+  name = "com_googlecode_java-diff-utils-diffutils-1_3_0_http_import",
+  jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0_http//file",
+  source_jar = "@com_googlecode_java-diff-utils-diffutils-1_3_0_http//file"
 )
 
 jvm_import(
