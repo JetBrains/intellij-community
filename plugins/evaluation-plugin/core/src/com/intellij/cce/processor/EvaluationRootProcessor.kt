@@ -10,7 +10,7 @@ abstract class EvaluationRootProcessor : CodeFragmentProcessor {
 class DefaultEvaluationRootProcessor : EvaluationRootProcessor() {
   private var evaluationRoot: CodeFragment? = null
 
-  override fun process(code: CodeFragment) {
+  override suspend fun processFragment(code: CodeFragment) {
     evaluationRoot = code
   }
 
@@ -20,7 +20,7 @@ class DefaultEvaluationRootProcessor : EvaluationRootProcessor() {
 class EvaluationRootByRangeProcessor(private val startOffset: Int, private val endOffset: Int) : EvaluationRootProcessor() {
   private var evaluationRoot: CodeFragment? = null
 
-  override fun process(code: CodeFragment) {
+  override suspend fun processFragment(code: CodeFragment) {
     evaluationRoot = CodeFragment(startOffset, endOffset - startOffset)
     evaluationRoot?.path = code.path
     evaluationRoot?.text = code.text

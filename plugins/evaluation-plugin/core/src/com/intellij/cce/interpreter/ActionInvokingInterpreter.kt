@@ -11,7 +11,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
                                 private val filter: InterpretFilter,
                                 private val order: InterpretationOrder) {
 
-  fun interpret(fileActions: FileActions, sessionHandler: (Session) -> Unit): List<Session> {
+  suspend fun interpret(fileActions: FileActions, sessionHandler: (Session) -> Unit): List<Session> {
     val actionsInvoker = invokersFactory.createActionsInvoker()
     val featureInvoker = invokersFactory.createFeatureInvoker()
     val fileOpener = FileOpener(fileActions.path, actionsInvoker)
@@ -40,7 +40,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
         }
         is CallFeature -> {
           if (shouldCompleteToken) {
-            val session = featureInvoker.callFeature(action.expectedText, action.offset, action.nodeProperties, action.sessionId.id)
+            val session = featureInvoker.call(action.expectedText, action.offset, action.nodeProperties, action.sessionId.id)
             sessions.add(session)
             sessionHandler(session)
           }

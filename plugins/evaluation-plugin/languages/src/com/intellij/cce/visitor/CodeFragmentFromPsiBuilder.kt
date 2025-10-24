@@ -19,7 +19,7 @@ open class CodeFragmentFromPsiBuilder(private val project: Project, val language
 
   open fun getVisitors(): List<EvaluationVisitor> = EvaluationVisitor.EP_NAME.extensionList
 
-  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment? {
+  override suspend fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment? {
     val psiFile = dumbService.runReadActionInSmartMode<PsiFile?> {
       PsiManager.getInstance(project).findFile(file)
     }

@@ -11,8 +11,7 @@ import com.intellij.cce.report.CardLayout
  * The invocation result is easily presentable as a card in an evaluation report.
  */
 interface PresentableFeatureInvoker : BindingFeatureInvoker {
-  // TODO suspend to get rid of runBlockingCancellable everywhere
-  override fun invoke(properties: TokenProperties): PresentableEvalData
+  override suspend fun invoke(properties: TokenProperties): PresentableEvalData
 }
 
 data class PresentableEvalData(

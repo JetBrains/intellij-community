@@ -1,13 +1,13 @@
 package com.intellij.cce.workspace.storages
 
 interface LogsSaver {
-  fun <T> invokeRememberingLogs(action: () -> T): T
+  suspend fun <T> invokeRememberingLogs(action: suspend () -> T): T
 
   fun save(languageName: String?, trainingPercentage: Int)
 }
 
 class NoLogsSaver : LogsSaver {
-  override fun <T> invokeRememberingLogs(action: () -> T): T = action()
+  override suspend fun <T> invokeRememberingLogs(action: suspend () -> T): T = action()
 
   override fun save(languageName: String?, trainingPercentage: Int) = Unit
 }
@@ -17,7 +17,7 @@ fun logsSaverIf(condition: Boolean, createSaver: () -> LogsSaver): LogsSaver = i
 private fun makeNestingCollector(saverA: LogsSaver,
                                  saverB: LogsSaver
 ) = object : LogsSaver {
-  override fun <T> invokeRememberingLogs(action: () -> T): T {
+  override suspend fun <T> invokeRememberingLogs(action: suspend () -> T): T {
     return saverA.invokeRememberingLogs {
       saverB.invokeRememberingLogs(action)
     }

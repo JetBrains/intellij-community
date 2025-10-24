@@ -11,7 +11,7 @@ sealed interface DatasetRef {
 
   val name: String
 
-  fun prepare(datasetContext: DatasetContext)
+  suspend fun prepare(datasetContext: DatasetContext)
 
   fun resultPath(datasetContext: DatasetContext): Path = datasetContext.path(name)
 
@@ -58,7 +58,7 @@ sealed interface DatasetRef {
 internal data class AbsoluteRef(val relativePath: String) : DatasetRef {
   override val name: String = Path.of(relativePath).name.toString()
 
-  override fun prepare(datasetContext: DatasetContext) {
+  override suspend fun prepare(datasetContext: DatasetContext) {
     val path = resultPath(datasetContext)
     check(path.exists()) {
       "Path ${relativePath} doesn't exist: ${path.absolutePathString()}"
@@ -71,7 +71,7 @@ internal data class AbsoluteRef(val relativePath: String) : DatasetRef {
 internal data class ConfigRelativeRef(val relativePath: String) : DatasetRef {
   override val name: String = Path.of(relativePath).normalize().toString()
 
-  override fun prepare(datasetContext: DatasetContext) {
+  override suspend fun prepare(datasetContext: DatasetContext) {
     val path = resultPath(datasetContext)
 
     check(path.exists()) {
@@ -90,7 +90,7 @@ internal data class ConfigRelativeRef(val relativePath: String) : DatasetRef {
 }
 
 internal data class ExistingRef(override val name: String) : DatasetRef {
-  override fun prepare(datasetContext: DatasetContext) {
+  override suspend fun prepare(datasetContext: DatasetContext) {
     val path = datasetContext.path(name)
 
     check(path.exists()) {
@@ -112,7 +112,7 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
     }
   }
 
-  override fun prepare(datasetContext: DatasetContext) {
+  override suspend fun prepare(datasetContext: DatasetContext) {
     val path = datasetContext.path(name)
 
     if (path.exists()) {
@@ -145,7 +145,7 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
 }
 
 internal data class AiPlatformFileRef(override val name: String): DatasetRef {
-  override fun prepare(datasetContext: DatasetContext) { }
+  override suspend fun prepare(datasetContext: DatasetContext) { }
 }
 
 private val LOG = fileLogger()

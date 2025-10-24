@@ -43,7 +43,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
                                                                  else emptyList()
   private val sessionLookupFilter: SessionLookupsFilter = SessionLookupsFilter(lookupFilters)
 
-  override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
+  override suspend fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val workspaces = inputWorkspaces ?: listOf(workspace)
     val configs = workspaces.map { it.readConfig(feature.getStrategySerializer()) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }

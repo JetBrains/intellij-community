@@ -9,41 +9,29 @@ import com.intellij.cce.util.Progress
 import com.intellij.cce.util.TeamcityProgress
 import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.FutureResult
+import kotlin.coroutines.cancellation.CancellationException
 
 interface BackgroundEvaluationStep : EvaluationStep {
-  fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace
+  suspend fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace
 }
 
-fun EvaluationStep.runInIntellij(project: Project?, workspace: EvaluationWorkspace): EvaluationWorkspace? {
+suspend fun EvaluationStep.run(workspace: EvaluationWorkspace): EvaluationWorkspace? {
   return when (this) {
     is ForegroundEvaluationStep -> start(workspace)
     is BackgroundEvaluationStep -> {
-      val result = FutureResult<EvaluationWorkspace?>()
-      val task = object : Task.Backgroundable(project, name, true) {
-        override fun run(indicator: ProgressIndicator) {
-          createProgress(title).wrapWithProgress {
-            result.set(runInBackground(workspace, it))
-          }
+      createProgress(name).wrapWithProgress {
+        try {
+          runInBackground(workspace, it)
         }
-
-        override fun onCancel() {
-          evaluationAbortedHandler.onCancel(this.title)
-          result.set(null)
+        catch (e: CancellationException) {
+          evaluationAbortedHandler.onCancel(name)
+          throw e
         }
-
-        override fun onThrowable(error: Throwable) {
-          evaluationAbortedHandler.onError(error, this.title)
-          result.set(null)
+        catch (e: Throwable) {
+          evaluationAbortedHandler.onError(e, name)
+          null
         }
       }
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
-      return result.get()
     }
     else -> throw IllegalStateException("Unexpected type of `$this`")
   }
