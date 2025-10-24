@@ -15,7 +15,7 @@ private val focusTraversalCause = setOf(
   FocusEvent.Cause.TRAVERSAL_UP,
   FocusEvent.Cause.TRAVERSAL_DOWN,
   FocusEvent.Cause.TRAVERSAL_FORWARD,
-  FocusEvent.Cause.TRAVERSAL_BACKWARD ,
+  FocusEvent.Cause.TRAVERSAL_BACKWARD,
 )
 
 internal class FormViewEx(elem: Element) : FormView(elem) {
@@ -26,8 +26,10 @@ internal class FormViewEx(elem: Element) : FormView(elem) {
       isFocusable = true
       addFocusListener(object : FocusAdapter() {
         override fun focusGained(e: FocusEvent?) {
-          if (e?.cause in focusTraversalCause)
-            (this@apply as? JComponent)?.scrollRectToVisible(bounds)
+          if (e?.cause in focusTraversalCause
+              // Only react to focus traversal events within the same HtmlPane
+              && e?.oppositeComponent?.parent?.parent == this@apply.parent?.parent
+          ) (this@apply as? JComponent)?.scrollRectToVisible(bounds)
         }
       })
     }
