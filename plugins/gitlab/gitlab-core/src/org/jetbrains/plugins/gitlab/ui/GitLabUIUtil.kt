@@ -21,6 +21,7 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.SimpleInlineTagProvider
+import org.intellij.markdown.html.makeXssSafeDestination
 import org.intellij.markdown.parser.LinkMap
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
@@ -95,7 +96,7 @@ object GitLabUIUtil {
       if (linkDestination.startsWith('!')) {
         val mrIid = linkDestination.substring(1)
         val mrUrl = "$OPEN_MR_LINK_PREFIX$mrIid"
-        visitor.consumeHtml(HtmlChunk.link(mrUrl, "!${mrIid}").toString())
+        visitor.consumeHtml(createLink(mrUrl, "!${mrIid}").toString())
         return
       }
 
@@ -103,7 +104,7 @@ object GitLabUIUtil {
       val fullProjectPath = projectPath.fullPath()
       if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:") ||
           linkDestination.trimStart('/').startsWith(fullProjectPath)) {
-        visitor.consumeHtml(HtmlChunk.link(linkDestination, linkText).toString())
+        visitor.consumeHtml(createLink(linkDestination, linkText).toString())
         return
       }
 
@@ -111,13 +112,16 @@ object GitLabUIUtil {
       try {
         val fileDestination = gitRepository.root.toNioPath().resolve(linkDestination.replace('\\', '/')).toString()
         val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"
-        visitor.consumeHtml(HtmlChunk.link(fileDescription, linkText).toString())
+        visitor.consumeHtml(createLink(fileDescription, linkText).toString())
       }
       catch (e: Exception) {
         // If some error occurred (because the file path is invalid because it's likely a link), just leave it as is
-        visitor.consumeHtml(HtmlChunk.link(linkDestination, linkText).toString())
+        visitor.consumeHtml(createLink(linkDestination, linkText).toString())
       }
       return
     }
+
+    private fun createLink(linkDestination: String, @NlsSafe linkText: String): HtmlChunk.Element =
+      HtmlChunk.link(makeXssSafeDestination(linkDestination).toString(), linkText)
   }
 }
