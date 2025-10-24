@@ -11,6 +11,9 @@ import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 import org.junit.Assume;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,13 +21,16 @@ import java.util.Map;
 import java.util.Objects;
 
 @TestFor(classes = {LocalTerminalDirectRunner.class, LocalTerminalStartCommandBuilder.class})
+@RunWith(JUnit4.class)
 public class TerminalShellCommandTest extends BasePlatformTestCase {
+  @Test
   public void testDontAddAnything() {
     Assume.assumeTrue(SystemInfo.isUnix);
-      doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i", Maps.newHashMap());
-      doTest(new String[]{"myshell", "someargs", "--login"}, "myshell someargs --login", Maps.newHashMap());
+    doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i", Maps.newHashMap());
+    doTest(new String[]{"myshell", "someargs", "--login"}, "myshell someargs --login", Maps.newHashMap());
   }
 
+  @Test
   public void testAddInteractiveOrLogin() {
     Assume.assumeTrue(SystemInfo.isLinux || SystemInfo.isMac);
     if (SystemInfo.isLinux) {
@@ -37,13 +43,14 @@ public class TerminalShellCommandTest extends BasePlatformTestCase {
     }
   }
 
+  @Test
   public void testAddRcConfig() {
     Assume.assumeTrue(SystemInfo.isUnix);
-      hasRcConfig("bash -i", "bash/bash-integration.bash", Maps.newHashMap());
-      hasRcConfig("bash --login", "bash/bash-integration.bash", Maps.newHashMap());
-      Map<String, String> envs = Maps.newHashMap();
-      hasRcConfig("bash --rcfile ~/.bashrc", "bash/bash-integration.bash", envs);
-      assertTrue(envs.get("JEDITERM_USER_RCFILE").contains(".bashrc"));
+    hasRcConfig("bash -i", "bash/bash-integration.bash", Maps.newHashMap());
+    hasRcConfig("bash --login", "bash/bash-integration.bash", Maps.newHashMap());
+    Map<String, String> envs = Maps.newHashMap();
+    hasRcConfig("bash --rcfile ~/.bashrc", "bash/bash-integration.bash", envs);
+    assertTrue(envs.get("JEDITERM_USER_RCFILE").contains(".bashrc"));
   }
 
   private List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
