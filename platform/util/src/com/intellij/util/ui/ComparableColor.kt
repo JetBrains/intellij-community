@@ -36,10 +36,11 @@ interface ComparableColor {
 
     @JvmStatic
     fun equalComparable(c1: Any?, c2: Any?): Boolean {
+      if (c1 === c2) return true
       if (c1 is ComparableColor && c2 is ComparableColor) {
         return c1.colorEquals(c2)
       }
-      if (c1 == null || c2 == null) return c1 === c2
+      if (c1 == null || c2 == null) return false
       return c1.javaClass == c2.javaClass &&
              Comparing.equal(c1, c2)
     }
