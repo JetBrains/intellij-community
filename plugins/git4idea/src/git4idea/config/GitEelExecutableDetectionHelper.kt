@@ -76,7 +76,6 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
       return tryGetEelDescriptor(project, gitDirectory)?.toEelApiBlocking()
     }
 
-    @RequiresBackgroundThread
     @JvmStatic
     fun tryGetEelDescriptor(project: Project?, gitDirectory: Path?): EelDescriptor? {
       val canUseEelForNonLocal = canUseEel()
