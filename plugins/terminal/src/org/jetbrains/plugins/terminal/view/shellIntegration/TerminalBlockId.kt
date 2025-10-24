@@ -4,6 +4,9 @@ package org.jetbrains.plugins.terminal.view.shellIntegration
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * The unique identifier of the terminal block.
+ */
 @ApiStatus.Experimental
 @Serializable
 sealed interface TerminalBlockId
