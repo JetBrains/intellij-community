@@ -139,6 +139,7 @@ class PluginCertificateManager :
   }
 
   override fun disposeUIResources() {
+    super.disposeUIResources()
     Disposer.dispose(myTreeBuilder)
     myTrustManager.removeListener(this)
   }
