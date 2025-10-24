@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -45,11 +46,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -119,17 +116,50 @@ class PythonNewEnvironmentDialogNavigator {
   internal fun restoreLastState(allowedInterpreterTypes: Collection<PythonInterpreterSelectionMode>) {
     val properties = PropertiesComponent.getInstance()
 
-    val modeString = properties.getValue(FAV_MODE) ?: return
-    val mode = PythonInterpreterSelectionMode.valueOf(modeString)
-    if (mode !in allowedInterpreterTypes) return
+    val mode = loadSelectionMode(properties, allowedInterpreterTypes) ?: return
     selectionMode?.set(mode)
 
     if (mode == CUSTOM) {
-      val method = PythonInterpreterSelectionMethod.valueOf(properties.getValue(FAV_METHOD) ?: return)
-      selectionMethod.set(method)
+      restoreCustomModeState(properties)
+    }
+  }
 
-      val manager = PythonSupportedEnvironmentManagers.valueOf(properties.getValue(FAV_MANAGER) ?: return)
-      if (method == CREATE_NEW) newEnvManager.set(manager) else existingEnvManager.set(manager)
+  private fun loadSelectionMode(
+    properties: PropertiesComponent,
+    allowedInterpreterTypes: Collection<PythonInterpreterSelectionMode>
+  ): PythonInterpreterSelectionMode? {
+    val modeString = properties.getValue(FAV_MODE) ?: return null
+    val mode = modeString.toEnumOrNull<PythonInterpreterSelectionMode>() ?: return null
+    return mode.takeIf { it in allowedInterpreterTypes }
+  }
+
+  private fun restoreCustomModeState(properties: PropertiesComponent) {
+    val method = loadSelectionMethod(properties) ?: return
+    selectionMethod.set(method)
+
+    val manager = loadEnvironmentManager(properties) ?: return
+    when (method) {
+      CREATE_NEW -> newEnvManager.set(manager)
+      SELECT_EXISTING -> existingEnvManager.set(manager)
+    }
+  }
+
+  private fun loadSelectionMethod(properties: PropertiesComponent): PythonInterpreterSelectionMethod? {
+    val methodString = properties.getValue(FAV_METHOD) ?: return null
+    return methodString.toEnumOrNull<PythonInterpreterSelectionMethod>()
+  }
+
+  private fun loadEnvironmentManager(properties: PropertiesComponent): PythonSupportedEnvironmentManagers? {
+    val managerString = properties.getValue(FAV_MANAGER) ?: return null
+    return managerString.toEnumOrNull<PythonSupportedEnvironmentManagers>()
+  }
+
+  private inline fun <reified T : Enum<T>> String.toEnumOrNull(): T? {
+    return try {
+      enumValueOf<T>(this)
+    } catch (_: IllegalArgumentException) {
+      thisLogger().debug("Failed to convert '$this' to ${T::class.simpleName}")
+      null
     }
   }
 
