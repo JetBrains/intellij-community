@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -26,11 +27,13 @@ internal class GitLabProjectConnectionManager(project: Project, cs: CoroutineSco
   private val connectionFactory = ValidatingHostedGitRepositoryConnectionFactory(
     { projectsManager },
     { accountManager }
-  ) { glProject, account, tokenState ->
+  ) { glProjectMapping, account, tokenState ->
     val apiClient = service<GitLabApiManager>().getClient(account.server) { tokenState.value }
     val glMetadata = apiClient.getMetadataOrNull()
     val currentUser = apiClient.graphQL.getCurrentUser()
-    GitLabProjectConnection(project, this, glProject, account, currentUser, apiClient, glMetadata, tokenState)
+    val glProject = apiClient.graphQL.findProject(glProjectMapping.repository).body()
+                                       ?: throw error("Unable to load the project")
+    GitLabProjectConnection(project, this, glProjectMapping, glProject, account, currentUser, apiClient, glMetadata, tokenState)
   }
 
   private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(cs, connectionFactory)

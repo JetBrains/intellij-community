@@ -37,7 +37,7 @@ interface GitLabProject {
   fun getLabelsBatches(): Flow<List<GitLabLabelDTO>>
   fun getMembersBatches(): Flow<List<GitLabUserDTO>>
 
-  suspend fun getDefaultBranch(): String?
+  val defaultBranch: String?
   suspend fun isMultipleReviewersAllowed(): Boolean
 
   /**
@@ -59,6 +59,7 @@ class GitLabLazyProject(
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
   override val projectMapping: GitLabProjectMapping,
+  private val initialData: GitLabProjectDTO,
   private val currentUser: GitLabUserDTO,
   private val tokenRefreshFlow: Flow<Unit>,
 ) : GitLabProject {
@@ -73,12 +74,8 @@ class GitLabLazyProject(
   private val emojisRequest = cs.async(start = CoroutineStart.LAZY) {
     serviceAsync<GitLabEmojiService>().emojis.await().map { GitLabReactionImpl(it) }  }
 
-  private val initialData: Deferred<GitLabProjectDTO> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    api.graphQL.findProject(projectCoordinates).body() ?: error("Project not found $projectCoordinates")
-  }
   private val multipleReviewersAllowedRequest = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    val projectDto = initialData.await()
-    loadMultipleReviewersAllowed(projectDto)
+    loadMultipleReviewersAllowed(initialData)
   }
 
   override val mergeRequests by lazy {
@@ -92,7 +89,7 @@ class GitLabLazyProject(
                                             }.map { response -> response.body().map(GitLabUserDTO::fromRestDTO) })
 
   override suspend fun getEmojis(): List<GitLabReaction> = emojisRequest.await()
-  override suspend fun getDefaultBranch(): String? = initialData.await().repository?.rootRef
+  override val defaultBranch: String? = initialData.repository?.rootRef
   override suspend fun isMultipleReviewersAllowed(): Boolean = multipleReviewersAllowedRequest.await()
   override fun getLabelsBatches(): Flow<List<GitLabLabelDTO>> = labelsLoader.getBatches()
   override fun getMembersBatches(): Flow<List<GitLabUserDTO>> = membersLoader.getBatches()

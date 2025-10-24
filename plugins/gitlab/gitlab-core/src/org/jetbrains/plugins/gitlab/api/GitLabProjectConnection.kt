@@ -9,6 +9,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
@@ -24,6 +25,7 @@ class GitLabProjectConnection(
   project: Project,
   private val scope: CoroutineScope,
   override val repo: GitLabProjectMapping,
+  glProject: GitLabProjectDTO,
   override val account: GitLabAccount,
   val currentUser: GitLabUserDTO,
   apiClient: GitLabApi,
@@ -34,7 +36,7 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
+  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, glProject, currentUser, tokenRefreshFlow)
   val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
   val serverVersion: GitLabVersion? = glMetadata?.version
