@@ -11,7 +11,7 @@
     <extensionPoint qualifiedName="org.intellij.intelliLang.injectionConfig"
                     beanClass="org.intellij.plugins.intelliLang.LanguageInjectionConfigBean" dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.intelliLang.fallbackInjectorSuppressor"
-                    beanClass="com.intellij.openapi.util.ClassExtensionPoint"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass"
             implements="org.intellij.plugins.intelliLang.inject.FallbackInjectorSuppressor"/>
