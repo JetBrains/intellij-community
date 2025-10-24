@@ -772,6 +772,8 @@ com.intellij.openapi.fileEditor.impl.EditorWindowHolder
 c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - p:isPaintingOrigin():Z
 - p:paintChildren(java.awt.Graphics):V
+c:com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
+- s:updateModifiedProperty(com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 - sf:openEditor(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request,com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileEditor.FileEditor
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Companion

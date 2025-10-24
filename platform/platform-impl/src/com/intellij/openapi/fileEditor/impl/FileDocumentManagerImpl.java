@@ -462,7 +462,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     });
   }
 
-  private static void updateModifiedProperty(@NotNull VirtualFile file) {
+  public static void updateModifiedProperty(@NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
       for (FileEditor editor : fileEditorManager.getAllEditorList(file)) {
