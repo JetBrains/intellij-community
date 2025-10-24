@@ -55,7 +55,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/usageView",
-    "//tools/lambdaTestFramework:lambda-testFramework",
+    "//tools/intellij.lambda.testFramework:lambda-testFramework",
     "@lib//:junit5Params",
     "@lib//:junit5Pioneer",
     "//libraries/junit5",
