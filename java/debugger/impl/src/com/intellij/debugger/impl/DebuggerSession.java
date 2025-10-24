@@ -706,7 +706,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       }
 
       final ThreadReferenceProxyImpl newThread = suspendContext.getEventThread();
-      if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || !myDebugProcess.isSteppingInProgress()) {
+      if (newThread == null || !myDebugProcess.isSteppingInProgress()) {
         if (suspendContext.threadFilterWasPassed) {
           return true;
         }

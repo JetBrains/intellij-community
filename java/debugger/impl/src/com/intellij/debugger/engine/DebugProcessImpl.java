@@ -203,7 +203,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       public void paused(@NotNull SuspendContext suspendContext) {
         boolean isSuspendAll = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
         if (isSuspendAll && DebuggerUtils.isNewThreadSuspendStateTracking()) {
+          mergeSuspendThreadContextToSuspendAllContext();
           resumeThreadsUnderEvaluationAndExplicitlyResumedAfterPause((SuspendContextImpl)suspendContext);
+          // It deletes suspend-thread stepping in another thread and suspend-all breakpoint is reached
+          getRequestsManager().deleteAllStepRequests();
         }
 
         myThreadBlockedMonitor.stopWatching(!isSuspendAll ? suspendContext.getThread() : null);
@@ -1203,6 +1206,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myWaitFor.waitFor(timeout);
   }
 
+  private void mergeSuspendThreadContextToSuspendAllContext() {
+    boolean wasResumedSuspendThreadPausedContexts = false;
+    for (SuspendContextImpl anotherPausedContext : getSuspendManager().getPausedContexts()) {
+      if (anotherPausedContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD) {
+        getSuspendManager().resume(anotherPausedContext);
+        wasResumedSuspendThreadPausedContexts = true;
+      }
+    }
+    if (wasResumedSuspendThreadPausedContexts) {
+      XDebuggerManagerImpl.getNotificationGroup()
+        .createNotification(JavaDebuggerBundle.message("message.switched.to.suspend.all.context"), MessageType.WARNING)
+        .notify(getProject());
+    }
+    //mySteppingProgressTracker.cancelAllSteppings();
+  }
 
   private void resumeThreadsUnderEvaluationAndExplicitlyResumedAfterPause(@NotNull SuspendContextImpl suspendAllContext) {
     for (SuspendContextImpl suspendContext : mySuspendManager.getEventContexts()) {
