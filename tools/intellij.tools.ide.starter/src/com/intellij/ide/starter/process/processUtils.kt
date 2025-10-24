@@ -42,7 +42,7 @@ fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> =
  */
 fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
   val substringToSearch: List<String> = listOf("/$IDE_TESTS_SUBSTRING/", "\\$IDE_TESTS_SUBSTRING\\")
-  findAndKillProcesses(*substringToSearch.toTypedArray()) { processInfosToKill ->
+  findAndKillProcessesBySubstring(*substringToSearch.toTypedArray()) { processInfosToKill ->
     if (reportErrors) {
       val message = "Unexpected running processes were detected after IDE was stopped ${processInfosToKill.joinToString(", ") { it.name }}"
       CIServer.instance.reportTestFailure(testName = message,
@@ -64,10 +64,16 @@ fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
  *                         to the found processes before attempting to kill them. Defaults to an empty callback.
  * @return `true` if all targeted processes were successfully killed or none were detected; `false` otherwise.
  */
-fun findAndKillProcesses(vararg substringToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
-  val prefix = "Killing process containing '${substringToSearch.joinToString(",")}' in command line"
+fun findAndKillProcessesBySubstring(vararg substringToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+  return findAndKillProcesses(message = "Killing process containing '${substringToSearch.joinToString(",")}' in command line",
+                              filter = { p -> p.arguments.any { arg -> substringToSearch.any { arg.contains(it) } } },
+                              onFoundProcesses = onFoundProcesses)
+}
+
+fun findAndKillProcesses(message: String? = null, filter: Predicate<ProcessInfo>, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+  val prefix = message ?: "Killing process matching '$filter' in command line"
   logOutput("$prefix ...")
-  val processInfosToKill = getProcessList(*substringToSearch)
+  val processInfosToKill = getProcessList(filter)
   if (processInfosToKill.isNotEmpty()) {
     onFoundProcesses.invoke(processInfosToKill)
     logOutput("$prefix: [${processInfosToKill.joinToString(", ")}] will be killed")
