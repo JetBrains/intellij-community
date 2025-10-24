@@ -134,8 +134,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       scope.async {
         if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet }) {
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
-          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, serviceModuleMapping, mainGroupResourceRootSet,
-                                                isBundled = true, pluginDir = null)
+          loadPluginDescriptorFromRuntimeModule(
+            pluginModuleGroup = moduleGroup,
+            context = context,
+            zipFilePool = zipFilePool,
+            serviceModuleMapping = serviceModuleMapping,
+            mainGroupResourceRootSet = mainGroupResourceRootSet,
+            isBundled = true,
+            pluginDir = null,
+          )
         }
         else {
           /* todo: intellij.performanceTesting.async plugin has different distributions for different IDEs, in some IDEs it has dependencies 
@@ -267,11 +274,20 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
-      val resolver = ModuleBasedPluginXmlPathResolver(includedModules,
-                                                      pluginModuleGroup.optionalModuleIds,
-                                                      pluginModuleGroup.notLoadedModuleIds,
-                                                      fallbackResolver)
-      loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
+      val resolver = ModuleBasedPluginXmlPathResolver(
+        includedModules = includedModules,
+        optionalModuleIds = pluginModuleGroup.optionalModuleIds,
+        notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
+        fallbackResolver = fallbackResolver,
+      )
+      loadDescriptorFromDir(
+        dir = mainResourceRoot,
+        loadingContext = context,
+        pool = zipFilePool,
+        pathResolver = resolver,
+        isBundled = isBundled,
+        pluginDir = pluginDir,
+      )
         .also { descriptor ->
           descriptor?.contentModules?.forEach { module ->
             if (module.packagePrefix == null) {
@@ -283,12 +299,26 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
-      val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty())
+      val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty()) {
         defaultResolver
-      else
-        ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, pluginModuleGroup.notLoadedModuleIds, defaultResolver)
+      }
+      else {
+        ModuleBasedPluginXmlPathResolver(
+          includedModules = includedModules,
+          optionalModuleIds = pluginModuleGroup.optionalModuleIds,
+          notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
+          fallbackResolver = defaultResolver,
+        )
+      }
       val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
-      loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
+      loadDescriptorFromJar(
+        file = mainResourceRoot,
+        loadingContext = context,
+        pool = zipFilePool,
+        pathResolver = pathResolver,
+        isBundled = isBundled,
+        pluginDir = pluginDir,
+      )
     }
     val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
       val jarFiles = moduleItem.jarFiles

@@ -4,11 +4,11 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import java.nio.file.Path
 
 /**
- * Implement this interfaces and pass the implementation to [ProprietaryBuildTools] constructor to support scrambling the product
- * JAR files.
+ * Implement this interface and pass the implementation to [ProprietaryBuildTools] constructor to support scrambling the product JAR files.
  */
 interface ScrambleTool {
   /**
@@ -19,7 +19,7 @@ interface ScrambleTool {
   /**
    * Scramble [PluginLayout.mainJarName] in "[BuildPaths.distAllDir]/lib" directory
    */
-  suspend fun scramble(platform: PlatformLayout, context: BuildContext)
+  suspend fun scramble(platform: PlatformLayout, platformFileEntries: List<DistributionFileEntry>, context: BuildContext)
 
   suspend fun scramblePlugin(pluginLayout: PluginLayout, targetDir: Path, additionalPluginDir: Path, layouts: Collection<PluginLayout>, context: BuildContext)
 

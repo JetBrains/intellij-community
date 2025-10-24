@@ -713,14 +713,14 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
     }
 
     val isEmbedded = loadingRule == "embedded"
-    val relativeOutFile = if (isEmbedded && isModuleCloseSource(moduleName, context = context)) {
+    val relativeOutFile = if (isEmbedded && isModuleCloseSource(moduleName = moduleName, context = context)) {
       if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
     }
     else {
       "$moduleName.jar"
     }
 
-    // Extract module set from parent <content> element's source-file attribute
+    // extract module set from parent <content> element's source-file attribute
     val contentElement = moduleElement.parentElement
     val moduleSet = contentElement?.getAttributeValue(SOURCE_FILE_ATTRIBUTE)
     result.add(

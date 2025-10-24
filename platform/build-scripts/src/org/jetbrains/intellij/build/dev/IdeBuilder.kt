@@ -305,12 +305,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     launch(Dispatchers.IO) {
       // ensure platform dist files added to the list
-      platformDistributionEntriesDeferred.await()
+      val platformFileEntries = platformDistributionEntriesDeferred.await()
       // ensure plugin dist files added to the list
       pluginDistributionEntriesDeferred.await()
 
       spanBuilder("scramble platform").use {
-        request.scrambleTool?.scramble(platformLayout.await(), context)
+        request.scrambleTool?.scramble(platform = platformLayout.await(), platformFileEntries = platformFileEntries, context = context)
       }
       copyDistFiles(
         context = context,

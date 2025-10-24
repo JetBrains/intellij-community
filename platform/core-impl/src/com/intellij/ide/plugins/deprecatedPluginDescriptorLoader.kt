@@ -94,7 +94,7 @@ internal fun CoroutineScope.deprecatedLoadPluginDescriptorsWithoutDistIndex(
   effectiveBundledPluginDir: Path,
   jarFileForModule: (PluginModuleId, Path) -> Path?,
 ): Deferred<List<DiscoveredPluginsList>> {
-  PluginManagerCore.logger.warn("Dist index is missing or corrupted; an OLD, DEPRECATED, SOON-TO-BE-UNSUPPORTED implementation will be used")
+  PluginManagerCore.logger.warn("Dist index is missing or corrupted; an OLD, DEPRECATED, SOON-TO-BE-REMOVED implementation will be used")
 
   @Suppress("DEPRECATION")
   val core = deprecatedLoadCoreModules(

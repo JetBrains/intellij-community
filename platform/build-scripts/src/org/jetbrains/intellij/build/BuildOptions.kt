@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.minutes
 
 data class BuildOptions(
   @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
-  @ApiStatus.Internal @JvmField val compressZipFiles: Boolean = true,
+  @ApiStatus.Internal @JvmField var compressZipFiles: Boolean = true,
   /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
   @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
   @ApiStatus.Internal @JvmField val printFreeSpace: Boolean = true,
