@@ -122,7 +122,8 @@ internal class PyCommunityToUnifiedPromoService(val serviceScope: CoroutineScope
           }
           val platformUpdates = UpdateStrategy(build, product, updateSettings, customization).checkForUpdates()
           if (platformUpdates is PlatformUpdates.Loaded &&
-              platformUpdates.updatedChannel.status == ChannelStatus.RELEASE &&
+              (platformUpdates.updatedChannel.status == ChannelStatus.RELEASE ||
+               Registry.`is`("py.community.to.unified.test.ignore.release.channel")) &&
               platformUpdates.newBuild.number.baselineVersion >= 253) {
             availableUpdate = platformUpdates
             return@withTimeout platformUpdates
