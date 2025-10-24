@@ -195,6 +195,6 @@ interface MigrationToSingleProductResourceProvider {
 
   companion object {
     @JvmStatic
-    fun getInstance(): MigrationToSingleProductResourceProvider = service()
+    fun getInstance(): MigrationToSingleProductResourceProvider = service()  // NB: registered only in IU and PY; check before use
   }
 }
