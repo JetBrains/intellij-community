@@ -20,6 +20,10 @@ startup --host_jvm_args=-XX:+UseZGC
 # https://github.com/openjdk/jdk/blob/6705a9255d28f351950e7fbca9d05e73942a4e27/src/java.base/share/classes/sun/nio/fs/AbstractWatchKey.java#L39
 startup --host_jvm_args=-Djdk.nio.file.WatchService.maxEventsPerPoll=1000000  # 1M
 
+# Increase size of per-directory buffer for events to prevent overflow when watching local filesystem for changes on Windows
+# https://github.com/JetBrains/JetBrainsRuntime/blob/d7e087876fa0326af082e705483a079b919242bc/src/java.base/windows/classes/sun/nio/fs/WindowsWatchService.java#L290
+startup --host_jvm_args=-Djdk.nio.file.WatchService.bufferSizeToRetrieveEventsPerDirectory=524288  # 512K
+
 # Disk cache
 common --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
 common:macos --disk_cache=~/Library/Caches/JetBrains/monorepo-bazel-cache
