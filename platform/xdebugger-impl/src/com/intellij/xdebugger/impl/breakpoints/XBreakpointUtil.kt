@@ -300,23 +300,15 @@ object XBreakpointUtil {
     selectTypeByPositionColumn: Boolean,
     editor: Editor?,
   ): List<XLineBreakpointType<*>> {
-    return getAvailableLineBreakpointTypesInfo(project, position, selectTypeByPositionColumn, editor).first
-  }
-
-  private fun getAvailableLineBreakpointTypesInfo(
-    project: Project,
-    position: XSourcePosition,
-    selectTypeByPositionColumn: Boolean,
-    editor: Editor?,
-  ): Pair<List<XLineBreakpointType<*>>, Int> {
     val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-    return getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor,
-                                          XDebuggerUtil.getInstance().lineBreakpointTypes.toList(),
-                                          { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
-                                          { type -> type.priority },
-                                          { callback -> callback() },
-                                          { type, line -> type.canPutAt(position.file, line, project) }
+    val breakpointInfo = getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor,
+                                                        XDebuggerUtil.getInstance().lineBreakpointTypes.toList(),
+                                                        { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
+                                                        { type -> type.priority },
+                                                        { callback -> callback() },
+                                                        { type, line -> type.canPutAt(position.file, line, project) }
     )
+    return breakpointInfo.first
   }
 
   private suspend fun getAvailableLineBreakpointInfoProxy(

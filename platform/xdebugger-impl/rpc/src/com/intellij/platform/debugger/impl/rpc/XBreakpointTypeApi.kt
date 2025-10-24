@@ -5,7 +5,6 @@ import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.util.TextRangeId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -28,9 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XBreakpointTypeApi : RemoteApi<Unit> {
   suspend fun getBreakpointTypeList(project: ProjectId): XBreakpointTypeList
 
-  suspend fun getBreakpointsInfoForLine(projectId: ProjectId, editorId: EditorId, line: Int): XBreakpointsLineInfo
-
-  suspend fun getBreakpointsInfoForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>?
+  suspend fun getBreakpointsInfo(projectId: ProjectId, fileId: VirtualFileId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>?
 
   suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?>
 

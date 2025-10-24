@@ -13,9 +13,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorId
-import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.extensions.ExtensionPointAdapter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -79,39 +76,19 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     )
   }
 
-  override suspend fun getBreakpointsInfoForLine(projectId: ProjectId, editorId: EditorId, line: Int): XBreakpointsLineInfo {
-    val project = projectId.findProjectOrNull() ?: return XBreakpointsLineInfo(listOf(), false)
-    val editor = editorId.findEditorOrNull() ?: return XBreakpointsLineInfo(listOf(), false)
-    val rawInfo: BreakpointsLineRawInfo? = readAction {
-      if (!DocumentUtil.isValidLine(line, editor.document)) return@readAction null
-      blockingContextToIndicator {
-        val position = XDebuggerUtil.getInstance().createPosition(FileDocumentManager.getInstance().getFile(editor.document), line)
-                       ?: return@blockingContextToIndicator null
-        computeBreakpointsLineRawInfo(project, position, editor)
-      }
-    }
-    return rawInfo?.toDto() ?: XBreakpointsLineInfo(listOf(), false)
-  }
-
-  override suspend fun getBreakpointsInfoForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>? {
+  override suspend fun getBreakpointsInfo(projectId: ProjectId, fileId: VirtualFileId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>? {
     val project = projectId.findProjectOrNull() ?: return null
-    val editor = editorId.findEditorOrNull() ?: return null
+    val file = fileId.virtualFile() ?: return null
     val editorBreakpointsRawInfo: List<BreakpointsLineRawInfo?> = readAction {
+      val document = file.findDocument()
       blockingContextToIndicator {
-        val editorBreakpointLinesRawInfo = mutableListOf<BreakpointsLineRawInfo?>()
-        for (line in start..endInclusive) {
-          if (!DocumentUtil.isValidLine(line, editor.document)) {
-            continue
-          }
+        (start..endInclusive).map { line ->
+          if (document == null) return@map null
+          if (!DocumentUtil.isValidLine(line, document)) return@map null
           ProgressManager.checkCanceled()
-          val position = XDebuggerUtil.getInstance().createPosition(FileDocumentManager.getInstance().getFile(editor.document), line)
-          if (position == null) {
-            editorBreakpointLinesRawInfo.add(null)
-            continue
-          }
-          editorBreakpointLinesRawInfo.add(computeBreakpointsLineRawInfo(project, position, editor))
+          val position = XDebuggerUtil.getInstance().createPosition(file, line) ?: return@map null
+          computeBreakpointsLineRawInfo(project, position)
         }
-        editorBreakpointLinesRawInfo
       }
     }
 
@@ -323,8 +300,8 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   }
 
   @RequiresReadLock
-  private fun computeBreakpointsLineRawInfo(project: Project, position: XSourcePosition, editor: Editor): BreakpointsLineRawInfo {
-    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, true, editor)
+  private fun computeBreakpointsLineRawInfo(project: Project, position: XSourcePosition): BreakpointsLineRawInfo {
+    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, true, null)
     val variantsPromise = if (lineBreakpointTypes.isNotEmpty()) {
       XDebuggerUtilImpl.getLineBreakpointVariants(project, lineBreakpointTypes, position).asDeferred()
     }
