@@ -17,22 +17,6 @@
       "compatibility": {},
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>color-profile</code></strong> attribute is used to define which color profile a raster image included through the <a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a> element should use.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> As a presentation attribute, <code>color-profile</code> can be used as a CSS property.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n</ul>"
     },
-    "data-_star_": {
-      "url": "$MDN_URL$/web/svg/attribute/data-_star_",
-      "status": [
-        "Obsolete"
-      ],
-      "compatibility": {
-        "Chrome": "55",
-        "ChromeAndroid": "55",
-        "Edge": "79",
-        "Firefox": "51",
-        "Opera": "42",
-        "Safari": "10",
-        "SafariIOS": "10"
-      },
-      "doc": "The <strong><code>data-*</code></strong> SVG attributes are called custom data attributes. They let SVG markup and its resulting DOM share information that standard attributes can't, usually for scripting purposes. Their custom data are available via the <a href=\"$MDN_URL$/Web/API/SVGElement\"><code>SVGElement</code></a> interface of the element the attributes belong to, with the <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\"><code>HTMLElement.dataset</code></a> property.\n<p>The <code>*</code> can be replaced by any characters allowed in <a href=\"https://www.w3.org/TR/REC-xml/#NT-Name\" class=\"external\" target=\"_blank\">XML's rules for names</a>, with the following restrictions:\n<ul>\n<li>Can't start with <code>xml</code>.</li>\n<li>No semicolons (<code>;</code>, <code>U+003A</code>).</li>\n<li>No capital <code>A</code> to <code>Z</code> letters.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\"><code>HTMLElement.dataset</code></a> property is a <a href=\"$MDN_URL$/Web/API/DOMStringMap\"><code>DOMStringMap</code></a> that provides the attribute <code>data-test-value</code> via <code>SVGElement.dataset.testValue</code>. Hyphen characters (<code>-</code>, <code>U+002D</code>) are removed and the next letter is capitalized, resulting in the <a href=\"$MDN_URL$/Glossary/Camel_case\">camel case</a> format.\n</div>\n<p>You can use this attribute with any SVG element."
-    },
     "enable-background": {
       "url": "$MDN_URL$/web/svg/attribute/enable-background",
       "status": [
@@ -41,32 +25,6 @@
       "compatibility": {},
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>enable-background</code></strong> attribute specifies how the accumulation of the background image is managed.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> As a presentation attribute, <code>enable-background</code> can be used as a CSS property.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/a\"><code>&lt;a&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/defs\"><code>&lt;defs&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/g\"><code>&lt;g&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/marker\"><code>&lt;marker&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/missing-glyph\"><code>&lt;missing-glyph&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/switch\"><code>&lt;switch&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n</ul>"
     },
-    "fill": {
-      "url": "$MDN_URL$/web/svg/attribute/fill",
-      "status": [
-        "Obsolete"
-      ],
-      "compatibility": {
-        "Firefox": "3"
-      },
-      "doc": "The <strong><code>fill</code></strong> attribute has two different meanings. For shapes and text it's a presentation attribute that defines the color (<em>or any SVG paint servers like gradients or patterns</em>) used to paint the element; for animation it defines the final state of the animation.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/circle\"><code>&lt;circle&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/ellipse\"><code>&lt;ellipse&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/path\"><code>&lt;path&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/polygon\"><code>&lt;polygon&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/polyline\"><code>&lt;polyline&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>\n<p>For animation, these elements are using this attribute: <a href=\"$MDN_URL$/Web/SVG/Element/animate\"><code>&lt;animate&gt;</code></a>, <a href=\"$MDN_URL$/Web/SVG/Element/animateMotion\"><code>&lt;animateMotion&gt;</code></a>, <a href=\"$MDN_URL$/Web/SVG/Element/animateTransform\"><code>&lt;animateTransform&gt;</code></a>, and <a href=\"$MDN_URL$/Web/SVG/Element/set\"><code>&lt;set&gt;</code></a>."
-    },
-    "href": {
-      "url": "$MDN_URL$/web/svg/attribute/href",
-      "status": [
-        "Obsolete"
-      ],
-      "compatibility": {
-        "Chrome": "50",
-        "ChromeAndroid": "50",
-        "Edge": "",
-        "Firefox": "51",
-        "Opera": "37",
-        "Safari": "12.1",
-        "SafariIOS": "12.2"
-      },
-      "doc": "The <strong><code>href</code></strong> attribute defines a link to a resource as a reference <a href=\"$MDN_URL$/Web/SVG/Content_type#url\">URL</a>. The exact meaning of that link depends on the context of each element using it.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Specifications before SVG 2 defined an <code><a href=\"$MDN_URL$/Web/SVG/Attribute/xlink:href\">xlink:href</a></code> attribute, which is now rendered obsolete by the <code>href</code> attribute. If you need to support earlier browser versions, the deprecated <code>xlink:href</code> attribute can be used as a fallback in addition to the <code>href</code> attribute, e.g. <code>&lt;use href=\"some-id\" xlink:href=\"some-id\" x=\"5\" y=\"5\" /&gt;</code>.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/a\"><code>&lt;a&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/animate\"><code>&lt;animate&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/animateMotion\"><code>&lt;animateMotion&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/animateTransform\"><code>&lt;animateTransform&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/linearGradient\"><code>&lt;linearGradient&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mpath\"><code>&lt;mpath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/radialGradient\"><code>&lt;radialGradient&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/script\"><code>&lt;script&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/set\"><code>&lt;set&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
-    },
     "kerning": {
       "url": "$MDN_URL$/web/svg/attribute/kerning",
       "status": [
@@ -74,13 +32,6 @@
       ],
       "compatibility": {},
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>kerning</code></strong> attribute indicates whether the spacing between <a href=\"$MDN_URL$/Glossary/Glyph\">glyphs</a> should be adjusted based on kerning tables that are included in the relevant font (i.e., enable auto-kerning) or instead disable auto-kerning and set the spacing between them to a specific length (typically, zero).\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> As a presentation attribute <code>kerning</code> can be used as a CSS property. In CSS the property is called <a href=\"$MDN_URL$/Web/CSS/font-kerning\"><code>font-kerning</code></a>, though.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
-    },
-    "textlength": {
-      "url": "$MDN_URL$/web/svg/attribute/textlength",
-      "status": [
-        "Obsolete"
-      ],
-      "doc": "The <strong><code>textLength</code></strong> attribute, available on SVG <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> and <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a> elements, lets you specify the width of the space into which the text will draw. The <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a> will ensure that the text does not extend farther than that distance, using the method or methods specified by the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/lengthAdjust\">lengthAdjust</a></code> attribute. By default, only the spacing between characters is adjusted, but the glyph size can also be adjusted if you change <code>lengthAdjust</code>.\n<p>By using <code>textLength</code>, you can ensure that your SVG text displays at the same width regardless of conditions including web fonts failing to load (or not having loaded yet).\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
     }
   },
   "tags": {
