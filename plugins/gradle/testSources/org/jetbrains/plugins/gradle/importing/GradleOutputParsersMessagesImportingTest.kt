@@ -514,6 +514,34 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
   }
 
   @Test
+  @TargetVersions("8.14.1")
+  fun `test build output project using incompatible Daemon Jvm criteria`() {
+    val jdkCandidate = requireJdkHome()
+    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkCandidate")
+    createProjectSubFile("gradle/gradle-daemon-jvm.properties", """
+      toolchainUrl.FREE_BSD.AARCH64=https\://api.foojay.io/disco/v3.0/ids/a7054e9c10ec320eaae6cda7777b0342/redirect
+      toolchainUrl.FREE_BSD.X86_64=https\://api.foojay.io/disco/v3.0/ids/c7dbcf54bacc4c888b93cc42ef334a2a/redirect
+      toolchainUrl.LINUX.AARCH64=https\://api.foojay.io/disco/v3.0/ids/a7054e9c10ec320eaae6cda7777b0342/redirect
+      toolchainUrl.LINUX.X86_64=https\://api.foojay.io/disco/v3.0/ids/c7dbcf54bacc4c888b93cc42ef334a2a/redirect
+      toolchainUrl.MAC_OS.AARCH64=https\://api.foojay.io/disco/v3.0/ids/f2eb759b13be68e51cbe892c2e95efbe/redirect
+      toolchainUrl.MAC_OS.X86_64=https\://api.foojay.io/disco/v3.0/ids/9fafe4c46611108fb1379058ea84c17b/redirect
+      toolchainUrl.UNIX.AARCH64=https\://api.foojay.io/disco/v3.0/ids/a7054e9c10ec320eaae6cda7777b0342/redirect
+      toolchainUrl.UNIX.X86_64=https\://api.foojay.io/disco/v3.0/ids/c7dbcf54bacc4c888b93cc42ef334a2a/redirect
+      toolchainUrl.WINDOWS.AARCH64=https\://api.foojay.io/disco/v3.0/ids/832229f0f6f0be60ed817c5a5e5848eb/redirect
+      toolchainUrl.WINDOWS.X86_64=https\://api.foojay.io/disco/v3.0/ids/303c95a051768711e2ec6e0c82bc7dbb/redirect
+      toolchainVersion=25
+    """.trimIndent())
+
+    importProject()
+
+    assertSyncViewNode("Incompatible Gradle JVM") {
+      assertThat(it)
+        .containsOnlyOnce("Your build is currently configured to use incompatible Java 25 and Gradle $gradleVersion. Cannot sync the project")
+        .containsOnlyOnce("The maximum compatible Gradle JVM version is 24")
+    }
+  }
+
+  @Test
   fun `test log level settings in gradle_dot_properties applied`() {
     createProjectSubFile("gradle.properties", "org.gradle.logging.level=debug")
     importProject("""
