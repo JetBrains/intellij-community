@@ -2,8 +2,8 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentPatchVersion
-import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
@@ -36,13 +36,6 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun toggleLineBreakpoint(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XToggleLineBreakpointResponse?
 
-  companion object {
-    @JvmStatic
-    suspend fun getInstance(): XBreakpointTypeApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XBreakpointTypeApi>())
-    }
-  }
-
   suspend fun removeBreakpoint(breakpointId: XBreakpointId)
 
   suspend fun rememberRemovedBreakpoint(breakpointId: XBreakpointId)
@@ -57,6 +50,13 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
    */
   suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, lines: Set<Int>, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>?
   suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantId: XInlineBreakpointVariantId)
+
+  companion object {
+    @JvmStatic
+    suspend fun getInstance(): XBreakpointTypeApi {
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<XBreakpointTypeApi>())
+    }
+  }
 }
 
 @ApiStatus.Internal

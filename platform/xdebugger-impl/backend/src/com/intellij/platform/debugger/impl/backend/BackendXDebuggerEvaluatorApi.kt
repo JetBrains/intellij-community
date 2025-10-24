@@ -6,7 +6,6 @@ import com.intellij.ide.rpc.document
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.XDebuggerBundle
@@ -28,19 +27,19 @@ import org.jetbrains.concurrency.asDeferred
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   override suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult> {
-    return evaluate(frameId, origin) { project, evaluator, callback ->
+    return evaluate(frameId, origin) { evaluator, callback ->
       evaluator.evaluate(expression, callback, position?.sourcePosition())
     }
   }
 
   override suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult> {
-    return evaluate(frameId, origin) { project, evaluator, callback ->
+    return evaluate(frameId, origin) { evaluator, callback ->
       evaluator.evaluate(expression.xExpression(), callback, position?.sourcePosition())
     }
   }
 
   override suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult> {
-    return evaluate(frameId, origin) { project, evaluator, callback ->
+    return evaluate(frameId, origin) { evaluator, callback ->
       val document = documentId.document()!!
       if (evaluator is XDebuggerDocumentOffsetEvaluator) {
         evaluator.evaluate(document, offset, type, callback)
@@ -65,7 +64,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   private suspend fun evaluate(
     frameId: XStackFrameId,
     origin: XEvaluationOrigin,
-    evaluateFun: suspend (Project, XDebuggerEvaluator, XEvaluationCallback) -> Unit,
+    evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,
   ): TimeoutSafeResult<XEvaluationResult> {
     val stackFrameModel = frameId.findValue()
                           ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
@@ -95,7 +94,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       }
     }
     withContext(Dispatchers.EDT) {
-      evaluateFun(session.project, evaluator, callback)
+      evaluateFun(evaluator, callback)
     }
 
     return evaluationResult

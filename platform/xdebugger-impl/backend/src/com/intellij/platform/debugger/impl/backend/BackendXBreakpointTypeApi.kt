@@ -44,8 +44,10 @@ import com.intellij.xdebugger.impl.rpc.sourcePosition
 import fleet.rpc.core.toRpc
 import fleet.util.channels.use
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import org.jetbrains.concurrency.asDeferred
@@ -67,8 +69,9 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
           trySend(getCurrentBreakpointTypeDtos(project))
         }
       })
-      trySend(getCurrentBreakpointTypeDtos(project))
-    }.buffer(1)
+      send(getCurrentBreakpointTypeDtos(project))
+      awaitClose()
+    }.buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     return XBreakpointTypeList(
       initialTypes,
