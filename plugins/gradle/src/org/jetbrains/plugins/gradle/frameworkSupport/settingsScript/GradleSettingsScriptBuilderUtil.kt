@@ -5,7 +5,7 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
 
 fun getFoojayPluginVersion(): String {
-  return "0.8.0"
+  return "1.0.0"
 }
 
 fun isFoojayPluginSupported(gradleVersion: GradleVersion): Boolean {
