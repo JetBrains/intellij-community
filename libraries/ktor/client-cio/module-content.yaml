@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.ktor.client.cio.jar
   modules:
   - name: intellij.libraries.ktor.client.cio
     libraries:

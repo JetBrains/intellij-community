@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.gson.jar
   modules:
   - name: intellij.libraries.gson
   library: gson

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.kotlinx.document.store.mvstore.jar
   modules:
   - name: intellij.libraries.kotlinx.document.store.mvstore
   library: kotlinx-document-store-mvstore

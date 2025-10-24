@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.snakeyaml.engine.jar
   modules:
   - name: intellij.libraries.snakeyaml.engine
   library: snakeyaml-engine

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.caffeine.jar
   modules:
   - name: intellij.libraries.caffeine
   library: caffeine

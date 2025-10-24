@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jackson.dataformat.yaml.jar
   modules:
   - name: intellij.libraries.jackson.dataformat.yaml
   library: jackson-dataformat-yaml

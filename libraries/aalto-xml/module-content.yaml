@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.aalto.xml.jar
   modules:
   - name: intellij.libraries.aalto.xml
   library: aalto-xml

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.execution.process.mediator.client.jar
   modules:
   - name: intellij.execution.process.mediator.client
     libraries:

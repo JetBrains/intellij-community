@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.ion.jar
   modules:
   - name: intellij.libraries.ion
   library: ion

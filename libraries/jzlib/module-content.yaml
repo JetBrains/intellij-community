@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jzlib.jar
   modules:
   - name: intellij.libraries.jzlib
   library: jzlib

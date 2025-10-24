@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.relaxng.jar
   modules:
   - name: intellij.relaxng
     libraries:

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.platform.vcs.log.impl.jar
   modules:
   - name: intellij.platform.vcs.log.impl
   library: kotlinx-coroutines-guava

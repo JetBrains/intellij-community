@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.bouncy.castle.provider.jar
   modules:
   - name: intellij.libraries.bouncy.castle.provider
   library: bouncy-castle-provider

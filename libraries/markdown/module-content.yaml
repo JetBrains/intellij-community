@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.markdown.jar
   modules:
   - name: intellij.libraries.markdown
   library: jetbrains.markdown

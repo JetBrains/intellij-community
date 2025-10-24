@@ -29,7 +29,6 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
   val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
 
-  // Collect all module set data in a single pass for better performance
   val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
   val moduleSetIncludes = TreeMap<String, MutableSet<String>>()
   val directModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
@@ -37,22 +36,24 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
   for (entry in productModules) {
     val chain = entry.first.moduleSet ?: continue
 
-    // Parse chain once
+    // parse chain once
     val parts = chain.split(MODULE_SET_CHAIN_SEPARATOR)
     val moduleSetName = parts.last()
 
-    // Skip non-module-sets
-    if (!moduleSetName.startsWith("intellij.moduleSets.")) continue
+    // skip non-module-sets
+    if (!moduleSetName.startsWith("intellij.moduleSets.")) {
+      continue
+    }
 
-    // Add to allModuleSets (all module sets used by product)
+    // add to allModuleSets (all module sets used by product)
     allModuleSets.computeIfAbsent(moduleSetName) { mutableListOf() }.add(entry)
 
-    // Add to directModuleSets if no separator (directly included by product)
+    // add to directModuleSets if no separator (directly included by product)
     if (parts.size == 1) {
       directModuleSets.computeIfAbsent(moduleSetName) { mutableListOf() }.add(entry)
     }
 
-    // Extract include relationship if chain exists (parent includes child)
+    // extract include relationship if chain exists (parent includes child)
     if (parts.size >= 2) {
       val parentModuleSet = parts[parts.size - 2]
       if (parentModuleSet.startsWith("intellij.moduleSets.")) {
@@ -188,7 +189,7 @@ private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleIt
     for (entry in entries) {
       val file = entry.path
       // the issue is that some modules embedded into some products (Rider), so, name maybe product.jar...
-      val presentablePath = if ((entry as ModuleOwnedFileEntry).owner!!.moduleName == moduleItem.moduleName) {
+      val presentablePath = if (moduleItem.moduleName.contains(".rd.") && (entry as ModuleOwnedFileEntry).owner!!.moduleName == moduleItem.moduleName) {
         "<file>"
       }
       else {

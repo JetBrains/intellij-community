@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.platform.settings.local.jar
   modules:
   - name: intellij.platform.settings.local
     libraries:

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jvm.native.trusted.roots.jar
   modules:
   - name: intellij.libraries.jvm.native.trusted.roots
   library: jvm-native-trusted-roots

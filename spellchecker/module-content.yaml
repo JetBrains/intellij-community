@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.spellchecker.jar
   modules:
   - name: intellij.spellchecker
     libraries:

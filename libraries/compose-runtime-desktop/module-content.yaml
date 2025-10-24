@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.compose.runtime.desktop.jar
   modules:
   - name: intellij.libraries.compose.runtime.desktop
     libraries:

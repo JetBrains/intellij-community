@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.ktor.network.tls.jar
   modules:
   - name: intellij.libraries.ktor.network.tls
   library: ktor-network-tls

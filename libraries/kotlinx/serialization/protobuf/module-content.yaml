@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.kotlinx.serialization.protobuf.jar
   modules:
   - name: intellij.libraries.kotlinx.serialization.protobuf
   library: kotlinx-serialization-protobuf

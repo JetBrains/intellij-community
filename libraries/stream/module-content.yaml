@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.stream.jar
   modules:
   - name: intellij.libraries.stream
   library: StreamEx

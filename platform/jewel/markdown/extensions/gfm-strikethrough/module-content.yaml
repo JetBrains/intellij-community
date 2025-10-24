@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.platform.jewel.markdown.extensions.gfmStrikethrough.jar
   modules:
   - name: intellij.platform.jewel.markdown.extensions.gfmStrikethrough
     libraries:

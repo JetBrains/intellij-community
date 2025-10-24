@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.java.websocket.jar
   modules:
   - name: intellij.libraries.java.websocket
   library: Java-WebSocket
