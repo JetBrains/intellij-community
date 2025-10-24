@@ -44,6 +44,7 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" filepath="$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/network/fleet.util.network.iml" filepath="$PROJECT_DIR$/fleet/util/network/fleet.util.network.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/serialization/fleet.util.serialization.iml" filepath="$PROJECT_DIR$/fleet/util/serialization/fleet.util.serialization.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.testFramework/lambdaTestPlugin/intellij.additional.lambda.tests.plugin.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.testFramework/lambdaTestPlugin/intellij.additional.lambda.tests.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" />
@@ -810,6 +811,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-fir/tests/intellij.kotlin.uast.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-fir/tests/intellij.kotlin.uast.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" filepath="$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.testFramework/intellij.lambda.testFramework.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.testFramework/intellij.lambda.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.tests/intellij.lambda.tests.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.tests/intellij.lambda.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/aalto-xml/intellij.libraries.aalto.xml.iml" filepath="$PROJECT_DIR$/libraries/aalto-xml/intellij.libraries.aalto.xml.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ai.grazie.spell.gec.engine.local/intellij.libraries.ai.grazie.spell.gec.engine.local.iml" filepath="$PROJECT_DIR$/libraries/ai.grazie.spell.gec.engine.local/intellij.libraries.ai.grazie.spell.gec.engine.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/asm/intellij.libraries.asm.iml" filepath="$PROJECT_DIR$/libraries/asm/intellij.libraries.asm.iml" />
@@ -1505,6 +1508,7 @@
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.metrics.collector.starter/intellij.tools.ide.metrics.collector.starter.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.metrics.collector.starter/intellij.tools.ide.metrics.collector.starter.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/commands-model/intellij.tools.ide.performanceTesting.commands.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/commands-model/intellij.tools.ide.performanceTesting.commands.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter/intellij.tools.ide.starter.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter/intellij.tools.ide.starter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.build.server/intellij.tools.ide.starter.build.server.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.build.server/intellij.tools.ide.starter.build.server.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/event-bus/intellij.tools.ide.starter.bus.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/event-bus/intellij.tools.ide.starter.bus.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.driver/intellij.tools.ide.starter.driver.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.driver/intellij.tools.ide.starter.driver.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.junit5/intellij.tools.ide.starter.junit5.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.junit5/intellij.tools.ide.starter.junit5.iml" />
