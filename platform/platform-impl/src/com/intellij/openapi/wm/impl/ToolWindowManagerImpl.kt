@@ -1691,34 +1691,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       SwingUtilities.invokeLater(show)
     }
   }
+  
+  fun getToolWindowButton(toolWindowId: String): JComponent? {
+    val entry = idToEntry.get(toolWindowId) ?: return null
+    return findBallonAlignment(entry, toolWindowId).first
+  }
 
   private fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
     val entry = idToEntry.get(options.toolWindowId)!!
     entry.balloon?.let(Disposer::dispose)
 
+    val (button, position) = findBallonAlignment(entry, options.toolWindowId)
+    
     val anchor = entry.readOnlyWindowInfo.anchor
-    var position = when (anchor) {
-      ToolWindowAnchor.TOP -> Balloon.Position.atRight
-      ToolWindowAnchor.RIGHT -> Balloon.Position.atRight
-      ToolWindowAnchor.BOTTOM -> Balloon.Position.atLeft
-      ToolWindowAnchor.LEFT -> Balloon.Position.atLeft
-      else -> Balloon.Position.atLeft
-    }
-
     val balloon = createBalloon(options, entry)
     val toolWindowPane = getToolWindowPane(entry.readOnlyWindowInfo.safeToolWindowPaneId)
-    val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
-    var button = buttonManager.getSquareStripeFor(entry.readOnlyWindowInfo.anchor).getButtonFor(options.toolWindowId)?.getComponent()
-    if (button == null && entry.readOnlyWindowInfo.anchor == ToolWindowAnchor.BOTTOM) {
-      button = buttonManager.getSquareStripeFor(ToolWindowAnchor.RIGHT).getButtonFor(options.toolWindowId)?.getComponent()
-      if (button != null && button.isShowing) {
-        position = Balloon.Position.atRight
-      }
-    }
-    if (button == null || !button.isShowing) {
-      button = buttonManager.getMoreButton(getMoreButtonSide())
-      position = Balloon.Position.atLeft
-    }
     val show = Runnable {
       val tracker: PositionTracker<Balloon>
       if (entry.toolWindow.isVisible &&
@@ -1757,6 +1744,36 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     else {
       SwingUtilities.invokeLater(show)
     }
+  }
+
+  private fun findBallonAlignment(
+    entry: ToolWindowEntry,
+    toolWindowId: String,
+  ): Pair<JComponent, Balloon.Position> {
+    val anchor = entry.readOnlyWindowInfo.anchor
+    var position = when (anchor) {
+      ToolWindowAnchor.TOP -> Balloon.Position.atRight
+      ToolWindowAnchor.RIGHT -> Balloon.Position.atRight
+      ToolWindowAnchor.BOTTOM -> Balloon.Position.atLeft
+      ToolWindowAnchor.LEFT -> Balloon.Position.atLeft
+      else -> Balloon.Position.atLeft
+    }
+
+    val toolWindowPane = getToolWindowPane(entry.readOnlyWindowInfo.safeToolWindowPaneId)
+    val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
+    var button = buttonManager.getSquareStripeFor(anchor).getButtonFor(toolWindowId)?.getComponent()
+    if (button == null && anchor == ToolWindowAnchor.BOTTOM) {
+      button = buttonManager.getSquareStripeFor(ToolWindowAnchor.RIGHT).getButtonFor(toolWindowId)?.getComponent()
+      if (button != null && button.isShowing) {
+        position = Balloon.Position.atRight
+      }
+    }
+    if (button == null || !button.isShowing) {
+      button = buttonManager.getMoreButton(getMoreButtonSide())
+      position = Balloon.Position.atLeft
+    }
+
+    return Pair<JComponent, Balloon.Position>(button, position)
   }
 
   private fun createPositionTracker(component: Component, anchor: ToolWindowAnchor): PositionTracker<Balloon> {
