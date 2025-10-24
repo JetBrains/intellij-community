@@ -2355,6 +2355,14 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-85078
+  public void testComprehensionIfClauseNarrows() {
+    doTestByText("""
+                   messages = ["a", None, "b"]
+                   "".join(msg for msg in messages if msg) # no warning here
+                   """);
+  }
+
   // PY-38873
   public void testTypedDictWithListField() {
     doTestByText("""
