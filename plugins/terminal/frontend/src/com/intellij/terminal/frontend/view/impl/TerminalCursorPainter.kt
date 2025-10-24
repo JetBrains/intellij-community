@@ -24,10 +24,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
-import org.jetbrains.plugins.terminal.view.TerminalOffset
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.view.*
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -57,6 +54,11 @@ internal class TerminalCursorPainter private constructor(
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
         curCursorState = curCursorState.copy(offset = event.newOffset)
+        updateCursor(curCursorState)
+      }
+
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        curCursorState = curCursorState.copy(offset = outputModel.cursorOffset)
         updateCursor(curCursorState)
       }
     })
