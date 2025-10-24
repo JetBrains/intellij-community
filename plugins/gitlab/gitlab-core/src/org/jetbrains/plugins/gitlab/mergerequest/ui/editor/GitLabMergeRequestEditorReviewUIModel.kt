@@ -115,6 +115,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     changesModel.setChanges(ExcludingApproximateChangedRangesShifter.shift(fileVm.changedRanges, changedRanges).map(Range::asLst))
   }
 
+  override val canNavigate: Boolean get() = fileVm.canNavigate
+
   override fun canGotoNextComment(threadId: String): Boolean = fileVm.lookupNextComment(threadId, ::additionalIsVisible) != null
   override fun canGotoNextComment(line: Int): Boolean = fileVm.lookupNextComment(line.shiftLineFromAfterApproximate(), ::additionalIsVisible) != null
   override fun canGotoPreviousComment(threadId: String): Boolean = fileVm.lookupPreviousComment(threadId, ::additionalIsVisible) != null

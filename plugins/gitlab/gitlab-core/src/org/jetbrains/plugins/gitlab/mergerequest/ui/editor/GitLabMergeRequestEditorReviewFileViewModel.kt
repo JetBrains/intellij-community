@@ -47,6 +47,8 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
   val linesWithDiscussions: StateFlow<Set<Int>>
   val linesWithNewDiscussions: StateFlow<Set<Int>>
 
+  val canNavigate: Boolean
+
   val canComment: StateFlow<Boolean>
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>>
 
@@ -117,6 +119,8 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
       .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLines {
         it.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
       }.stateInNow(cs, emptySet())
+
+  override val canNavigate: Boolean = diffData.isCumulative
 
   override val canComment: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
 

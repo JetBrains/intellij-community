@@ -126,7 +126,6 @@ private class DiffEditorModel(
   private val lineToLocation: (Int) -> DiffLineLocation?,
   @RequiresEdt private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
 ) : GHPRReviewDiffEditorModel {
-
   private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(cs, it) }.stateInNow(cs, emptyList())
   private val newComments = diffVm.newComments.mapStatefulToStateful { MappedNewComment(it) }.stateInNow(cs, emptyList())
   private val aiComments = diffVm.aiComments.mapStatefulToStateful { MappedAIComment(it) }.stateInNow(cs, emptyList())
@@ -222,6 +221,8 @@ private class DiffEditorModel(
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
+
+  override val canNavigate: Boolean get() = diffVm.canNavigate
 
   @RequiresEdt
   override fun canGotoNextComment(threadId: String): Boolean = reviewVm.nextComment(threadId) != null

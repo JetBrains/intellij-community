@@ -158,6 +158,8 @@ private class DiffEditorModel(
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
+  override val canNavigate: Boolean get() = diffReviewVm.isCumulativeChange
+
   override fun canGotoNextComment(threadId: String): Boolean =
     diffReviewVm.nextComment(threadId, ::additionalIsVisible) != null
 

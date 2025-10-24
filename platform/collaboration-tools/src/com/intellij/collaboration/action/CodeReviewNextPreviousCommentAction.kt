@@ -36,8 +36,8 @@ internal class CodeReviewNextCommentAction : CodeReviewNextPreviousCommentAction
 )
 
 internal abstract class CodeReviewNextPreviousCommentAction(
-  private val text: @NlsActions.ActionText String,
-  private val description: @NlsActions.ActionDescription String,
+  text: @NlsActions.ActionText String,
+  description: @NlsActions.ActionDescription String,
   private val canGotoThreadComment: CodeReviewNavigableEditorViewModel.(String) -> Boolean,
   private val canGotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Boolean,
   private val gotoThreadComment: CodeReviewNavigableEditorViewModel.(String) -> Unit,
@@ -50,7 +50,7 @@ internal abstract class CodeReviewNextPreviousCommentAction(
 
     val editor = e.getData(DiffDataKeys.CURRENT_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
     val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
-    if (editor == null || editorModel == null) {
+    if (editor == null || editorModel == null || !editorModel.canNavigate) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -70,7 +70,7 @@ internal abstract class CodeReviewNextPreviousCommentAction(
 
     val editor = e.getData(DiffDataKeys.CURRENT_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
     val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
-    if (editor == null || editorModel == null) return
+    if (editor == null || editorModel == null || !editorModel.canNavigate) return
 
     val focused = findFocusedThreadId(project)
     if (focused != null) {

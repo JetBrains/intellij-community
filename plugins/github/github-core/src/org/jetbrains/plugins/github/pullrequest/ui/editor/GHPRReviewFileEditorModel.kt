@@ -41,6 +41,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
 
   override var shouldHighlightDiffRanges: Boolean by settings::highlightDiffLinesInEditor
 
+  override val canNavigate: Boolean get() = true
+
   @OptIn(ExperimentalCoroutinesApi::class)
   private val linesWithNewCommentsFlow: StateFlow<Set<Int>> =
     fileVm.newComments.flatMapLatest { vms ->

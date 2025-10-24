@@ -196,12 +196,14 @@ internal class GHPRDiffViewModelImpl(
     threadsVm.lookupNextComment(focused, this::threadIsVisible)
 
   override fun nextComment(cursorLocation: UnifiedCodeReviewItemPosition): String? =
+    // TODO: Find a good way to map cursorLocations here (only broken for per-commit nav)
     threadsVm.lookupNextComment(cursorLocation, this::threadIsVisible)
 
   override fun previousComment(focused: String): String? =
     threadsVm.lookupPreviousComment(focused, this::threadIsVisible)
 
   override fun previousComment(cursorLocation: UnifiedCodeReviewItemPosition): String? =
+    // TODO: Find a good way to map cursorLocations here (only broken for per-commit nav)
     threadsVm.lookupPreviousComment(cursorLocation, this::threadIsVisible)
 
   override fun showDiffAtComment(commentId: String) {

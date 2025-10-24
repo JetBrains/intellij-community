@@ -38,9 +38,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEd
 import org.jetbrains.plugins.github.pullrequest.ui.editor.ranges
 
 interface GHPRDiffReviewViewModel {
-  val commentableRanges: List<Range>
   val canComment: Boolean
+  val canNavigate: Boolean
+
+  val commentableRanges: List<Range>
   val changedRanges: List<Range>
+
   val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>>
   val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>>
   val aiComments: StateFlow<Collection<GHPRAICommentViewModel>>
@@ -74,8 +77,10 @@ internal class GHPRDiffReviewViewModelImpl(
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
   private val path get() = relativePath(repository.root, change.filePath)
 
-  override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = threadsVms.canComment
+  override val canNavigate: Boolean = diffData.isCumulative
+
+  override val commentableRanges: List<Range> = diffData.patch.ranges
   override val changedRanges: List<Range> = diffData.patch.hunks.flatMap { hunk -> PatchHunkUtil.getChangeOnlyRanges(hunk) }
 
   @OptIn(ExperimentalCoroutinesApi::class)
