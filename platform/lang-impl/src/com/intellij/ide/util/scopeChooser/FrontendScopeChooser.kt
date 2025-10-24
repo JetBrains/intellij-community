@@ -38,6 +38,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   private val scopeToSeparator: MutableMap<ScopeDescriptor, ListSeparator> = mutableMapOf()
 
   private val comboBox = ComboBox<ScopeDescriptor>(300)
+  private var initialSelection: ScopeDescriptor? = null
   private var selectedItem: ScopeDescriptor?
     get() = comboBox.selectedItem as? ScopeDescriptor
     set(value) {
@@ -61,6 +62,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
 
     val cachedScopes = ScopesStateService.getInstance(project).getCachedScopeDescriptors()
     initItems(cachedScopes)
+    initialSelection = selectedItem
     loadItemsAsync()
 
     add(comboBox, BorderLayout.CENTER)
@@ -84,7 +86,10 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   fun getComboBox(): ComboBox<ScopeDescriptor> = comboBox
 
   private fun initItems(items: List<ScopeDescriptor>, selectedScopeId: String? = null) {
-    val previousSelection = selectedScopeId?.let { scopesMap[it] } ?: selectedItem
+    // Avoid using initial selection as a previous selection
+    // it blocks setting a correct one after receiving data from backend for the first time
+    val previousSelection = selectedScopeId?.let { scopesMap[it] } ?: selectedItem.takeIf { it != initialSelection }
+    initialSelection = null
     comboBox.removeAllItems()
     items.filterOutSeparators().forEach { comboBox.addItem(it) }
     tryToSelectItem(items, previousSelection)
