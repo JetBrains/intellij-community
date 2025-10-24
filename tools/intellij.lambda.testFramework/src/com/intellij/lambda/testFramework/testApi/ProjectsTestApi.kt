@@ -16,15 +16,6 @@ import kotlin.time.Duration.Companion.seconds
 
 fun getProjects(): List<Project> = ProjectManagerEx.getOpenProjects()
 
-/**
- * If there is one project -> this project
- * If there is one FOCUSED project -> this project
- * If there is one project with the name not matching one set in TestProperties.additionalProject -> this project
- * else null
- *
- * @see also getProject()
- */
-
 context(lambdaIdeContext: LambdaIdeContext)
 fun getProjectOrNull(): Project? {
   val projects = getProjects()
