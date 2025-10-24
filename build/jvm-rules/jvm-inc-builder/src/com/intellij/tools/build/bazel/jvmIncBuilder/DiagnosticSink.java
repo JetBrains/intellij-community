@@ -6,4 +6,6 @@ public interface DiagnosticSink {
   void report(Message msg);
 
   boolean hasErrors();
+
+  Iterable<Message> getErrors();
 }
