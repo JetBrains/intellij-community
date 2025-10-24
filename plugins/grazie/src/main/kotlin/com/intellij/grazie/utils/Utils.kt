@@ -2,6 +2,9 @@
 package com.intellij.grazie.utils
 
 import ai.grazie.gec.model.problem.ProblemFix
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -57,3 +60,7 @@ internal fun <T> runBlockingModalProcess(
     project
   )
 }
+
+val isPromotionAllowed: Boolean
+  get() = ApplicationInfoEx.getInstanceEx().isVendorJetBrains
+          || PluginManagerCore.isLoaded(PluginId.getId("com.intellij.marketplace"))

@@ -18,6 +18,7 @@ import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieEnableCloudAction
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
@@ -277,6 +278,7 @@ class CheckerRunner(val text: TextContent) {
       }
     })
     result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
+    result.add(GrazieEnableCloudAction())
     return result.toTypedArray()
   }
 
