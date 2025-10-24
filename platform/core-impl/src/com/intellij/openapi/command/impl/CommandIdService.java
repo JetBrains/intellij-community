@@ -35,12 +35,22 @@ public interface CommandIdService {
     }
   }
 
-  static @Nullable CommandId currCommandId() {
+  static @NotNull CommandId currCommandId() {
     CommandIdService service = getInstance();
     if (service != null) {
       return service._currCommandId();
     }
-    return null;
+    return new CommandId() {
+      @Override
+      public boolean isCompatible(@NotNull CommandId commandId) {
+        return true;
+      }
+
+      @Override
+      public long asLong() {
+        return 0;
+      }
+    };
   }
 
   static void setForcedCommand(@Nullable CommandId commandId) {

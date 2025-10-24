@@ -10,7 +10,6 @@ import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.client.ClientSession;
 import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -352,45 +350,26 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected void onCommandStarted(
-    @Nullable Project commandProject,
-    @Nullable @Command String commandName,
-    @Nullable Object commandGroupId,
-    @NotNull UndoConfirmationPolicy confirmationPolicy,
-    boolean recordOriginalReference,
-    boolean isTransparent
-  ) {
+  protected void onCommandStarted(@NotNull CmdEvent cmdEvent) {
     UndoClientState state = getClientState();
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandStarted(commandProject);
+        undoProvider.commandStarted(cmdEvent.project());
       }
     }
     if (state != null) {
-      state.commandStarted(
-        commandProject,
-        commandName,
-        commandGroupId,
-        getEditorProvider(),
-        confirmationPolicy,
-        recordOriginalReference,
-        isTransparent
-      );
+      state.commandStarted(cmdEvent, getEditorProvider());
     }
   }
 
-  void onCommandFinished(
-    @Nullable Project commandProject,
-    @Nullable @Command String commandName,
-    @Nullable Object commandGroupId
-  ) {
+  void onCommandFinished(@NotNull CmdEvent cmdEvent) {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.commandFinished(commandProject, commandName, commandGroupId);
+      state.commandFinished(cmdEvent);
     }
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandFinished(commandProject);
+        undoProvider.commandFinished(cmdEvent.project());
       }
     }
   }

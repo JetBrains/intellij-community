@@ -1046,12 +1046,12 @@ abstract class ComponentManagerImpl(
             if (impl.startsWith("com.intellij.")) {
               // logged only in the IJ project, let's not spam developers of plugins
               if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) {
-                //LOG.warn(message)
+                LOG.warn(message)
               }
             }
             else if (application == null || application.isUnitTestMode || application.isInternal) {
               // logged only during development, let's not spam users
-              //LOG.warn(message)
+              LOG.warn(message)
             }
           }
         }

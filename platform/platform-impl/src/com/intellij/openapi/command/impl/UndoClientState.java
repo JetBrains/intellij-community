@@ -160,38 +160,22 @@ final class UndoClientState implements Disposable {
     return lastAction == null ? null : lastAction.getCommandName();
   }
 
-  void commandStarted(
-    @Nullable Project commandProject,
-    @Nullable @Command String commandName,
-    @Nullable Object commandGroupId,
-    @NotNull CurrentEditorProvider editorProvider,
-    @NotNull UndoConfirmationPolicy confirmationPolicy,
-    boolean recordOriginalDocument,
-    boolean isTransparent
-  ) {
+  void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
     if (isInsideCommand()) {
       throw new UndoIllegalStateException("Nested command detected, please report the stacktrace");
     }
-    commandBuilder.commandStarted(
-      commandProject,
-      commandName,
-      commandGroupId,
-      confirmationPolicy,
-      editorProvider,
-      recordOriginalDocument,
-      isTransparent
-    );
-    undoSpy.commandStarted(commandProject, commandName, commandGroupId, confirmationPolicy, isTransparent);
+    commandBuilder.commandStarted(cmdEvent, editorProvider);
+    undoSpy.commandStarted(cmdEvent);
   }
 
-  void commandFinished(@Nullable Project commandProject, @Nullable @Command String commandName, @Nullable Object groupId) {
+  void commandFinished(@NotNull CmdEvent cmdEvent) {
     if (!isInsideCommand()) {
       // possible if command listener was added within command
       return;
     }
-    PerformedCommand performedCommand = commandBuilder.commandFinished(commandName, groupId);
+    PerformedCommand performedCommand = commandBuilder.commandFinished(cmdEvent);
     commitCommand(performedCommand);
-    notifyUndoSpy(commandProject, performedCommand);
+    notifyUndoSpy(cmdEvent, performedCommand);
   }
 
   private void commitCommand(@NotNull PerformedCommand performedCommand) {
@@ -206,14 +190,14 @@ final class UndoClientState implements Disposable {
     commandMerger.mergeWithPerformedCommand(performedCommand);
   }
 
-  private void notifyUndoSpy(@Nullable Project commandProject, @NotNull PerformedCommand performedCommand) {
+  private void notifyUndoSpy(@NotNull CmdEvent cmdEvent, @NotNull PerformedCommand performedCommand) {
     for (UndoableAction action : performedCommand.undoableActions()) {
       sharedState.addAction(action);
-      if (commandProject != null) {
-        undoSpy.undoableActionAdded(commandProject, action, UndoableActionType.forAction(action));
+      if (cmdEvent.project() != null) {
+        undoSpy.undoableActionAdded(cmdEvent.project(), action, UndoableActionType.forAction(action));
       }
     }
-    undoSpy.commandFinished(commandProject, performedCommand.commandName(), performedCommand.groupId(), performedCommand.isTransparent());
+    undoSpy.commandFinished(cmdEvent);
   }
 
   void flushCommandMerger(@NotNull UndoCommandFlushReason flushReason) {
@@ -251,11 +235,20 @@ final class UndoClientState implements Disposable {
         action instanceof NonUndoableAction,
         "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())"
       );
-      commandStarted(null, "", null, editorProvider, UndoConfirmationPolicy.DEFAULT, false, false);
+      CmdEvent cmdEvent = CmdEvent.create(
+        CommandIdService.currCommandId(),
+        null,
+        "",
+        null,
+        UndoConfirmationPolicy.DEFAULT,
+        false,
+        false
+      );
+      commandStarted(cmdEvent, editorProvider);
       try {
         commandBuilder.addUndoableAction(action);
       } finally {
-        commandFinished(null, "", null);
+        commandFinished(cmdEvent);
       }
     }
   }

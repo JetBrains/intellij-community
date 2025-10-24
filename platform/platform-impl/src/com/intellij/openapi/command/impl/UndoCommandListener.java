@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,41 +31,21 @@ final class UndoCommandListener implements SeparatedCommandListener {
   }
 
   @Override
-  public void onCommandStarted(
-    @Nullable CommandId commandId,
-    @Nullable Project commandProject,
-    @Nullable String commandName,
-    @Nullable Object commandGroupId,
-    @NotNull UndoConfirmationPolicy confirmationPolicy,
-    boolean recordOriginalReference,
-    boolean isTransparent
-  ) {
+  public void onCommandStarted(@NotNull CmdEvent cmdEvent) {
     if (projectNotDisposed()) {
-      undoManager.onCommandStarted(
-        isTransparent ? project : commandProject,
-        commandName,
-        commandGroupId,
-        confirmationPolicy,
-        recordOriginalReference,
-        isTransparent
-      );
+      undoManager.onCommandStarted(eventWithProject(cmdEvent));
     }
   }
 
   @Override
-  public void onCommandFinished(
-    @Nullable Project commandProject,
-    @Nullable String commandName,
-    @Nullable Object commandGroupId,
-    boolean isTransparent
-  ) {
+  public void onCommandFinished(@NotNull CmdEvent cmdEvent) {
     if (projectNotDisposed()) {
-      undoManager.onCommandFinished(
-        isTransparent ? project : commandProject,
-        commandName,
-        commandGroupId
-      );
+      undoManager.onCommandFinished(eventWithProject(cmdEvent));
     }
+  }
+
+  private @NotNull CmdEvent eventWithProject(@NotNull CmdEvent cmdEvent) {
+    return cmdEvent.isTransparent() ? cmdEvent.withProject(project) : cmdEvent;
   }
 
   private boolean projectNotDisposed() {

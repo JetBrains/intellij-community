@@ -5,11 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 
@@ -104,79 +101,27 @@ public final class CommandSeparator implements CommandListener {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   private void notifyCommandStarted(@NotNull CommandEvent event) {
-    notifyStarted(
-      CommandIdService.currCommandId(),
-      event.getProject(),
-      event.getCommandName(),
-      event.getCommandGroupId(),
-      event.getUndoConfirmationPolicy(),
-      event.shouldRecordActionForOriginalDocument(),
-      false
-    );
+    notifyStarted(createCmdEvent(event));
   }
 
   private void notifyCommandFinished(@NotNull CommandEvent event) {
-    notifyFinished(
-      event.getProject(),
-      event.getCommandName(),
-      event.getCommandGroupId(),
-      false
-    );
+    notifyFinished(createCmdEvent(event));
   }
 
   private void notifyTransparentStarted() {
-    notifyStarted(
-      CommandIdService.currCommandId(),
-      null,
-      "",
-      null,
-      UndoConfirmationPolicy.DEFAULT,
-      false,
-      true
-    );
+    notifyStarted(createTransparentCmdEvent());
   }
 
   private void notifyTransparentFinished() {
-    notifyFinished(
-      null,
-      "",
-      null,
-      true
-    );
+    notifyFinished(createTransparentCmdEvent());
   }
 
-  private void notifyStarted(
-    @Nullable CommandId commandId,
-    @Nullable Project commandProject,
-    @Nullable @NlsContexts.Command String commandName,
-    @Nullable Object commandGroupId,
-    @NotNull UndoConfirmationPolicy confirmationPolicy,
-    boolean recordOriginalReference,
-    boolean isTransparent
-  ) {
-    publisher.onCommandStarted(
-      commandId,
-      commandProject,
-      commandName,
-      commandGroupId,
-      confirmationPolicy,
-      recordOriginalReference,
-      isTransparent
-    );
+  private void notifyStarted(@NotNull CmdEvent cmdEvent) {
+    publisher.onCommandStarted(cmdEvent);
   }
 
-  private void notifyFinished(
-    @Nullable Project commandProject,
-    @Nullable @NlsContexts.Command String commandName,
-    @Nullable Object commandGroupId,
-    boolean isTransparent
-  ) {
-    publisher.onCommandFinished(
-      commandProject,
-      commandName,
-      commandGroupId,
-      isTransparent
-    );
+  private void notifyFinished(@NotNull CmdEvent cmdEvent) {
+    publisher.onCommandFinished(cmdEvent);
   }
 
   private void assertInsideCommand() {
@@ -201,6 +146,30 @@ public final class CommandSeparator implements CommandListener {
     if (transparentStarted) {
       throw new IllegalStateException("Transparent action already started");
     }
+  }
+
+  private static @NotNull CmdEvent createCmdEvent(@NotNull CommandEvent event) {
+    return CmdEvent.create(
+      CommandIdService.currCommandId(),
+      event.getProject(),
+      event.getCommandName(),
+      event.getCommandGroupId(),
+      event.getUndoConfirmationPolicy(),
+      event.shouldRecordActionForOriginalDocument(),
+      false
+    );
+  }
+
+  private static @NotNull CmdEvent createTransparentCmdEvent() {
+    return CmdEvent.create(
+      CommandIdService.currCommandId(),
+      null,
+      "",
+      null,
+      UndoConfirmationPolicy.DEFAULT,
+      false,
+      true
+    );
   }
 
   private static @NotNull SeparatedCommandListener getPublisher() {

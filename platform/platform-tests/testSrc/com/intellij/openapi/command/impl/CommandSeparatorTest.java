@@ -4,10 +4,8 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -186,30 +184,13 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
   private static @NotNull CommandSeparator createSeparator(List<State> output) {
     return new CommandSeparator(new SeparatedCommandListener() {
       @Override
-      public void onCommandStarted(
-        @Nullable CommandId commandId,
-        @Nullable Project commandProject,
-        @Nullable String commandName,
-        @Nullable Object commandGroupId,
-        @NotNull UndoConfirmationPolicy confirmationPolicy,
-        boolean recordOriginalReference,
-        boolean isTransparent
-      ) {
-        output.add(isTransparent ? State.TRANSPARENT_STARTED : State.COMMAND_STARTED);
+      public void onCommandStarted(@NotNull CmdEvent cmdEvent) {
+        output.add(cmdEvent.isTransparent() ? State.TRANSPARENT_STARTED : State.COMMAND_STARTED);
       }
 
       @Override
-      public void onCommandFinished(
-        @Nullable Project commandProject,
-        @Nullable String commandName,
-        @Nullable Object commandGroupId,
-        boolean isTransparent
-      ) {
-        if (isTransparent) {
-          output.add(State.TRANSPARENT_FINISHED);
-        } else {
-          output.add(State.COMMAND_FINISHED);
-        }
+      public void onCommandFinished(@NotNull CmdEvent cmdEvent) {
+        output.add(cmdEvent.isTransparent() ? State.TRANSPARENT_FINISHED : State.COMMAND_FINISHED);
       }
     });
   }

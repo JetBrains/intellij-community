@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.util.ArrayUtil;
@@ -24,12 +23,8 @@ final class CommandBuilder {
   private final boolean isTransparentSupported;
   private final boolean isGroupIdChangeSupported;
 
-  private @Nullable Project commandProject;
+  private @NotNull CmdEvent cmdEvent;
   private @NotNull CurrentEditorProvider editorProvider;
-  private @NotNull CommandId commandId;
-  private @Nullable @Command String commandName;
-  private @Nullable Object groupId;
-  private @NotNull UndoConfirmationPolicy confirmationPolicy;
   private @Nullable EditorAndState editorStateBefore;
   private @Nullable EditorAndState editorStateAfter;
   private @Nullable DocumentReference originalDocument;
@@ -37,7 +32,6 @@ final class CommandBuilder {
   private @NotNull UndoAffectedDocuments affectedDocuments;
   private @NotNull UndoAffectedDocuments additionalAffectedDocuments;
   private boolean isForcedGlobal;
-  private boolean isTransparent;
   private boolean isValid;
   private boolean isInsideCommand;
 
@@ -53,29 +47,15 @@ final class CommandBuilder {
   }
 
   boolean isActive() {
-    return isInsideCommand() && commandProject == undoProject;
+    return isInsideCommand() && cmdEvent.project() == undoProject;
   }
 
-  void commandStarted(
-    @Nullable Project commandProject,
-    @Nullable @Command String commandName,
-    @Nullable Object commandGroupId,
-    @NotNull UndoConfirmationPolicy confirmationPolicy,
-    @NotNull CurrentEditorProvider editorProvider,
-    boolean recordOriginalDocument,
-    boolean isTransparent
-  ) {
+  void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
     assertOutsideCommand();
-    CommandId id = CommandIdService.currCommandId();
-    this.commandId = id == null ? NoCommandId.INSTANCE : id;
-    this.commandProject = commandProject;
-    this.commandName = commandName;
-    this.groupId = commandGroupId;
-    this.confirmationPolicy = confirmationPolicy;
+    this.cmdEvent = cmdEvent;
     this.editorProvider = editorProvider;
     this.editorStateBefore = currentEditorState();
-    this.originalDocument = recordOriginalDocument ? originalDocument() : null;
-    this.isTransparent = isTransparent;
+    this.originalDocument = this.cmdEvent.recordOriginalDocument() ? originalDocument() : null;
     this.isInsideCommand = true;
   }
 
@@ -124,11 +104,10 @@ final class CommandBuilder {
     }
   }
 
-  @NotNull PerformedCommand commandFinished(@Nullable @Command String commandName, @Nullable Object groupId) {
+  @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdEvent) {
     assertInsideCommand();
     if (isGroupIdChangeSupported) {
-      this.commandName = commandName;
-      this.groupId = groupId;
+      this.cmdEvent = cmdEvent;
     }
     this.editorStateAfter = currentEditorState();
     if (originalDocument != null && hasActions() && !isTransparent() && affectedDocuments.affectsOnlyPhysical()) {
@@ -139,10 +118,10 @@ final class CommandBuilder {
 
   private @NotNull PerformedCommand buildAndReset() {
     PerformedCommand performedCommand = new PerformedCommand(
-      commandId,
-      commandName,
-      groupId,
-      confirmationPolicy,
+      cmdEvent.id(),
+      cmdEvent.name(),
+      cmdEvent.groupId(),
+      cmdEvent.confirmationPolicy(),
       editorStateBefore,
       editorStateAfter,
       undoableActions,
@@ -162,7 +141,7 @@ final class CommandBuilder {
   }
 
   private @Nullable DocumentReference originalDocument() {
-    if (undoProject != null && undoProject == commandProject) {
+    if (undoProject != null && undoProject == cmdEvent.project()) {
       // note: originatorReference depends on FocusedComponent :sad_trombone_for_rd:, see IJPL-192250
       return UndoDocumentUtil.getDocReference(undoProject, editorProvider);
     }
@@ -171,9 +150,9 @@ final class CommandBuilder {
 
   private boolean isTransparent() {
     if (isTransparentSupported) {
-      return isTransparent;
+      return cmdEvent.isTransparent();
     }
-    return isTransparent && !hasActions();
+    return cmdEvent.isTransparent() && !hasActions();
   }
 
   private boolean hasChangesOf(@NotNull DocumentReference ref) {
@@ -191,12 +170,8 @@ final class CommandBuilder {
   }
 
   private void reset() {
-    this.commandProject = null;
+    this.cmdEvent = NoEvent.INSTANCE;
     this.editorProvider = NoEditorProvider.INSTANCE;
-    this.commandId = NoCommandId.INSTANCE;
-    this.commandName = null;
-    this.groupId = null;
-    this.confirmationPolicy = UndoConfirmationPolicy.DEFAULT;
     this.editorStateBefore = null;
     this.editorStateAfter = null;
     this.originalDocument = null;
@@ -204,7 +179,6 @@ final class CommandBuilder {
     this.affectedDocuments = new UndoAffectedDocuments();
     this.additionalAffectedDocuments = new UndoAffectedDocuments();
     this.isForcedGlobal = false;
-    this.isTransparent = false;
     this.isValid = true;
     this.isInsideCommand = false;
   }
@@ -225,26 +199,35 @@ final class CommandBuilder {
     return ExternalChangeActionUtil.isExternalChangeInProgress();
   }
 
-  private static final class NoCommandId implements CommandId {
-    static final NoCommandId INSTANCE = new NoCommandId();
+  private static final class NoEvent implements CmdEvent {
+    static final NoEvent INSTANCE = new NoEvent();
 
     @Override
-    public boolean isCompatible(@NotNull CommandId commandId) {
-      return true;
-    }
+    public @NotNull CommandId id() { throw new UnsupportedOperationException(); }
 
     @Override
-    public long asLong() {
-      return 0;
-    }
+    public @Nullable Project project() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @Nullable String name() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @Nullable Object groupId() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @NotNull UndoConfirmationPolicy confirmationPolicy() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public boolean recordOriginalDocument() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public boolean isTransparent() { throw new UnsupportedOperationException(); }
   }
 
   private static final class NoEditorProvider implements CurrentEditorProvider {
     static final CurrentEditorProvider INSTANCE = new NoEditorProvider();
 
     @Override
-    public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
-      throw new UnsupportedOperationException();
-    }
+    public @Nullable FileEditor getCurrentEditor(@Nullable Project project) { throw new UnsupportedOperationException(); }
   }
 }
