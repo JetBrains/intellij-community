@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleLocalFileDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileTextField
 import com.intellij.openapi.project.DumbAwareAction
@@ -25,6 +24,7 @@ import java.awt.event.ActionEvent
 import java.nio.file.Path
 import javax.swing.AbstractAction
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextArea
 
@@ -65,23 +65,32 @@ private class ShowUpdateInfoDialogAction : DumbAwareAction() {
 
     init {
       @Suppress("DialogTitleCapitalization")
-      title = "Updates.xml <channel> Text"
+      title = "Test update dialog"
       init()
     }
 
     override fun createCenterPanel(): JComponent {
-      textArea = JTextArea(40, 100)
+      textArea = JTextArea(30, 80)
       SwingUndoUtil.addUndoRedoActions(textArea)
       textArea.wrapStyleWord = true
       textArea.lineWrap = true
 
-      fileField = FileChooserFactory.getInstance().createFileTextField(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), disposable)
+      fileField = FileChooserFactory.getInstance().createFileTextField(FileChooserDescriptorFactory.singleFile(), disposable)
       val fileCombo = TextFieldWithBrowseButton(fileField.field)
-      fileCombo.addBrowseFolderListener(project, createSingleLocalFileDescriptor().withTitle("Patch File").withDescription("Patch file"))
+      fileCombo.addBrowseFolderListener(project, FileChooserDescriptorFactory.singleFile().withTitle("Patch File").withDescription("Patch file"))
 
       val panel = JPanel(BorderLayout(0, JBUI.scale(10)))
+
+      val labelsPanel = JPanel(BorderLayout(0, JBUI.scale(5)))
+      labelsPanel.add(
+        JLabel("Add updates.xml content or choose a patch file").apply { font = JBUI.Fonts.label().asBold() },
+        BorderLayout.NORTH,
+      )
+      labelsPanel.add(JLabel("Updates.xml <channel> text:"), BorderLayout.SOUTH)
+      panel.add(labelsPanel, BorderLayout.NORTH)
       panel.add(ScrollPaneFactory.createScrollPane(textArea), BorderLayout.CENTER)
       panel.add(LabeledComponent.create(fileCombo, "Patch file:"), BorderLayout.SOUTH)
+      panel.minimumSize = JBUI.size(200, 200)
       return panel
     }
 
@@ -113,9 +122,9 @@ private class ShowUpdateInfoDialogAction : DumbAwareAction() {
     }
 
     override fun doValidate(): ValidationInfo? {
-      val text = textArea.text?.trim() ?: ""
+      val text = getXmlText()
       if (text.isEmpty()) {
-        return ValidationInfo("Please paste something here", textArea)
+        return ValidationInfo("Please paste something here or choose a patch file", textArea)
       }
 
       try {
@@ -131,7 +140,7 @@ private class ShowUpdateInfoDialogAction : DumbAwareAction() {
     override fun getPreferredFocusedComponent() = textArea
     override fun getDimensionServiceKey() = "TEST_UPDATE_INFO_DIALOG"
 
-    fun updateXmlText() = completeUpdateInfoXml(textArea.text?.trim() ?: "")
+    fun updateXmlText() = completeUpdateInfoXml(getXmlText())
     fun forceUpdate() = forceUpdate
     fun patchFilePath() = fileField.field.text.nullize(nullizeSpaces = true)
 
@@ -145,5 +154,22 @@ private class ShowUpdateInfoDialogAction : DumbAwareAction() {
         }
         else -> throw IllegalArgumentException("Unknown root element")
       }
+
+    private fun getXmlText(): String {
+      val text = textArea.text?.trim()
+      if (text?.isNotBlank() == true) return text
+
+      val patchFile = patchFilePath()
+      if (patchFile?.isNotBlank() == true) return xmlTextForPatchUpdate(patchFile)
+
+      return ""
+    }
+
+    private fun xmlTextForPatchUpdate(path: String) = """
+      <channel id="">
+        <build number="1" version="fake version">
+          <message><![CDATA[Test text for the update dialog<br><br>Selected patch path:<br>$path]]></message>
+        </build>
+      </channel>""".trimIndent()
   }
 }
