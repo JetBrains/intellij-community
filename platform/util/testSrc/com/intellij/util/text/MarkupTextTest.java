@@ -18,6 +18,7 @@ public final class MarkupTextTest {
     assertEquals("foo", markupText.toString());
     assertEquals(List.of(new Fragment("foo", MarkupText.Kind.NORMAL)), markupText.fragments());
     assertSame(MarkupText.plainText(""), MarkupText.plainText(""));
+    assertSame(MarkupText.plainText(""), MarkupText.empty());
     assertSame(MarkupText.plainText(""), MarkupText.plainText("").concat("", MarkupText.Kind.GRAYED));
   }
   
@@ -81,6 +82,12 @@ public final class MarkupTextTest {
     assertEquals("Hel[lo ]~~Wor~~[ld]!", text.highlightRange(6, 9, MarkupText.Kind.STRIKEOUT).toString());
     assertEquals("Hel~~lo ~~[World]!", text.highlightRange(3, 6, MarkupText.Kind.STRIKEOUT).toString());
     assertEquals("Hel[lo Wo]~~rld~~!", text.highlightRange(8, 11, MarkupText.Kind.STRIKEOUT).toString());
+  }
+  
+  @Test
+  public void testHighlightAll() {
+    assertSame(MarkupText.empty().highlightAll(MarkupText.Kind.STRONG), MarkupText.empty());
+    assertEquals("**hello**", MarkupText.plainText("hello").highlightAll(MarkupText.Kind.STRONG).toString());
   }
   
   @Test
