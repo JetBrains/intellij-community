@@ -142,37 +142,24 @@ public final class GitUtil {
 
   private static @Nullable Path findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
     EelPath rootPathEel = EelNioBridgeServiceKt.asEelPath(rootPath);
-    // TODO there is no need of processing local case separately
-    if (!(rootPathEel.getDescriptor() instanceof LocalEelDescriptor)) {
-      EelPath eelResolved;
+    EelPath eelResolved;
+    try {
+      eelResolved = EelPath.parse(path, rootPathEel.getDescriptor());
+    }
+    catch (EelPathException e) {
       try {
-        eelResolved = EelPath.parse(path, rootPathEel.getDescriptor());
-      }
-      catch (EelPathException e) {
-        try {
-          eelResolved = rootPathEel.resolve(path);
-        } catch (EelPathException e1) {
-          return null;
-        }
-      }
-      Path result = EelNioBridgeServiceKt.asNioPath(eelResolved);
-      if (Files.isDirectory(result)) {
-        return result;
-      }
-      else {
+        eelResolved = rootPathEel.resolve(path);
+      } catch (EelPathException e1) {
         return null;
       }
     }
-    if (!FileUtil.isAbsolute(path)) {
-      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath.toString(), path), true);
-      path = FileUtil.toSystemIndependentName(canonicalPath);
+    Path result = EelNioBridgeServiceKt.asNioPath(eelResolved);
+    if (Files.isDirectory(result)) {
+      return result;
     }
-
-    Path file = Path.of(path);
-    if (!Files.isDirectory(file)) {
+    else {
       return null;
     }
-    return file;
   }
 
   @ApiStatus.Internal
