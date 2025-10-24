@@ -16,9 +16,9 @@ class ToolValidator<P : PathHolder>(
   override val backProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
   propertyGraph: PropertyGraph,
   val defaultPathSupplier: suspend () -> P?,
-  val pathValidator: suspend (P) -> PyResult<Version> = { fileSystem.getBinaryToExec(it).getToolVersion(toolVersionPrefix) },
+  val toolValidator: suspend (P) -> PyResult<Version> = { fileSystem.getBinaryToExec(it).getToolVersion(toolVersionPrefix) },
 ) : PathValidator<Version, P, ValidatedPath.Executable<P>> {
-  override val isDirtyValue: ObservableMutableProperty<Boolean> = propertyGraph.property(true)
+  override val isDirtyValue: ObservableMutableProperty<Boolean> = propertyGraph.property(false)
   override val isValidationInProgress: Boolean
     get() = validationJob.isActive
 
@@ -44,8 +44,13 @@ class ToolValidator<P : PathHolder>(
           val path = fileSystem.parsePath(input).getOr { error ->
             return@withContext ValidatedPath.Executable<P>(null, error)
           }
-          val validationResult = pathValidator(path)
-          ValidatedPath.Executable(path, validationResult)
+
+          fileSystem.validateExecutable(path).getOr {
+            return@withContext ValidatedPath.Executable(path, it)
+          }
+
+          val toolValidationResult = toolValidator(path)
+          ValidatedPath.Executable(path, toolValidationResult)
         }
 
         withContext(Dispatchers.UI) { backProperty.set(exec) }

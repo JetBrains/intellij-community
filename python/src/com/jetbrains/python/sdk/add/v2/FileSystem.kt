@@ -13,12 +13,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.where
-import com.intellij.python.community.execService.Args
-import com.intellij.python.community.execService.BinOnEel
-import com.intellij.python.community.execService.BinOnTarget
-import com.intellij.python.community.execService.BinaryToExec
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
@@ -48,6 +43,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 
 private val LOG: Logger = fileLogger()
@@ -64,6 +60,7 @@ sealed interface FileSystem<P : PathHolder> {
   val isBrowseable: Boolean
 
   fun parsePath(raw: String): PyResult<P>
+  fun validateExecutable(path: P): PyResult<Unit>
 
   suspend fun getSystemPythonFromSelection(pathToPython: P): PyResult<DetectedSelectableInterpreter<P>>
 
@@ -93,6 +90,14 @@ sealed interface FileSystem<P : PathHolder> {
     }
     catch (e: InvalidPathException) {
       PyResult.localizedError(e.localizedMessage)
+    }
+
+    override fun validateExecutable(path: PathHolder.Eel): PyResult<Unit> {
+      return when {
+        !path.path.exists() -> PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
+        path.path.isDirectory() -> PyResult.localizedError(message("sdk.create.executable.directory.error"))
+        else -> PyResult.success(Unit)
+      }
     }
 
     override suspend fun validateVenv(homePath: PathHolder.Eel): PyResult<Unit> = withContext(Dispatchers.IO) {
@@ -201,6 +206,11 @@ sealed interface FileSystem<P : PathHolder> {
     override fun parsePath(raw: String): PyResult<PathHolder.Target> {
       return PyResult.success(PathHolder.Target(raw))
     }
+
+    /**
+     * Currently, we don't validate executable on target because there is no API to check path existence and its type on target.
+     */
+    override fun validateExecutable(path: PathHolder.Target): PyResult<Unit> = PyResult.success(Unit)
 
     override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
       val pythonBinaryPath = resolvePythonBinary(homePath)

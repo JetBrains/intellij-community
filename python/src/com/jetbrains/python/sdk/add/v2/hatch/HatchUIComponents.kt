@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.FixedComboBoxEditor
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
@@ -73,12 +74,10 @@ private class HatchEnvComboBoxListCellRenderer(val contentFlow: StateFlow<PyResu
         append(message("sdk.create.custom.hatch.environment.loading"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
       }
       is Result.Failure -> {
-        icon = AllIcons.General.ShowWarning
         append(message("sdk.create.custom.hatch.error.no.environments.to.select"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
       }
       is Result.Success -> {
         if (result.result.isEmpty() || value == null) {
-          icon = AllIcons.General.ShowWarning
           append(message("sdk.create.custom.hatch.error.no.environments.to.select"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
         }
         else {
@@ -98,14 +97,36 @@ private class HatchEnvComboBoxListCellRenderer(val contentFlow: StateFlow<PyResu
   }
 }
 
+internal class HatchEnvironmentComboBox<P : PathHolder>(
+  model: PythonAddInterpreterModel<P>,
+) : ComboBox<HatchVirtualEnvironment?>() {
+  init {
+    renderer = HatchEnvComboBoxListCellRenderer(model.hatchViewModel.availableEnvironments)
+    editor = FixedComboBoxEditor()
+  }
+
+  @Synchronized
+  internal fun syncWithEnvs(
+    environmentsResult: PyResult<List<HatchVirtualEnvironment>>,
+    isFilterOnlyExisting: Boolean = false,
+  ) {
+    removeAllItems()
+    val environments = environmentsResult.getOr { return }
+    environments.filter { !isFilterOnlyExisting || it.pythonVirtualEnvironment is PythonVirtualEnvironment.Existing }.forEach {
+      addItem(it)
+    }
+  }
+}
+
+
 private fun <P : PathHolder> Panel.addEnvironmentComboBox(
   model: PythonAddInterpreterModel<P>,
   validationRequestor: DialogValidationRequestor,
   isGenerateNewMode: Boolean,
-): ComboBox<HatchVirtualEnvironment> {
+): HatchEnvironmentComboBox<P> {
   val environmentAlreadyExists = AtomicBooleanProperty(false)
 
-  lateinit var environmentComboBox: ComboBox<HatchVirtualEnvironment>
+  val environmentComboBox = HatchEnvironmentComboBox(model)
 
   val hatchEnvironmentProperty = if (isGenerateNewMode)
     model.hatchViewModel.selectedEnvFromAvailable
@@ -113,7 +134,7 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
     model.hatchViewModel.selectedEnvFromExisting
 
   row(message("sdk.create.custom.hatch.environment")) {
-    environmentComboBox = comboBox(emptyList(), HatchEnvComboBoxListCellRenderer(model.hatchViewModel.availableEnvironments))
+    cell(environmentComboBox)
       .bindItem(hatchEnvironmentProperty)
       .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(hatchEnvironmentProperty))
       .validationInfo { component ->
@@ -121,7 +142,7 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
         when {
           !component.isVisible || !component.isEnabled -> null
           component.item == null -> {
-            ValidationInfo(message("sdk.create.custom.hatch.error.no.environments.to.select"))
+            ValidationInfo("")
           }
           isGenerateNewMode && component.item?.pythonVirtualEnvironment is PythonVirtualEnvironment.Existing -> {
             environmentAlreadyExists.set(true)
@@ -134,7 +155,6 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
       .applyToComponent {
         preferredSize = JBUI.size(preferredSize)
       }
-      .component
   }
 
   row("") {
@@ -171,7 +191,7 @@ private fun <P : PathHolder> Panel.addExecutableSelector(
 }
 
 internal data class HatchFormFields<P : PathHolder>(
-  val environmentComboBox: ComboBox<HatchVirtualEnvironment>,
+  val environmentComboBox: HatchEnvironmentComboBox<P>,
   val basePythonComboBox: PythonInterpreterComboBox<P>?,
   val validatedPathField: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>,
 ) {
@@ -213,7 +233,7 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
     validationRequestor,
     installHatchActionLink
   )
-  var environmentComboBox: ComboBox<HatchVirtualEnvironment> by lateinitVal()
+  var environmentComboBox: HatchEnvironmentComboBox<P> by lateinitVal()
   var basePythonComboBox: PythonInterpreterComboBox<P>? = null
 
   rowsRange {
@@ -236,17 +256,5 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
 
 
   return HatchFormFields(environmentComboBox, basePythonComboBox, executablePath)
-}
-
-@Synchronized
-internal fun ComboBox<HatchVirtualEnvironment>.syncWithEnvs(
-  environmentsResult: PyResult<List<HatchVirtualEnvironment>>,
-  isFilterOnlyExisting: Boolean = false,
-) {
-  removeAllItems()
-  val environments = environmentsResult.getOr { return }
-  environments.filter { !isFilterOnlyExisting || it.pythonVirtualEnvironment is PythonVirtualEnvironment.Existing }.forEach {
-    addItem(it)
-  }
 }
 

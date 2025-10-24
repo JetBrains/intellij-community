@@ -7,6 +7,7 @@ import com.intellij.execution.target.getTargetType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -36,30 +37,23 @@ import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.asDisposable
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import java.awt.AlphaComposite
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
-import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
 import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.math.cos
 
 interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
   val backProperty: ObservableMutableProperty<VP?>
@@ -72,7 +66,9 @@ interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
   }
 }
 
-private class ValidationSuccessExtension<T>(val validationInfo: T) : ExtendableTextComponent.Extension {
+private interface ValidationStatusExtension
+
+private class ValidationSuccessExtension<T>(val validationInfo: T) : ExtendableTextComponent.Extension, ValidationStatusExtension {
   override fun getIcon(hovered: Boolean): Icon = AllIcons.General.GreenCheckmark
   override fun getTooltip(): @NlsContexts.Tooltip String? {
     val tooltip = when (validationInfo) {
@@ -83,67 +79,12 @@ private class ValidationSuccessExtension<T>(val validationInfo: T) : ExtendableT
   }
 }
 
-private object ValidationErrorExtension : ExtendableTextComponent.Extension {
-  override fun getIcon(hovered: Boolean): Icon = AllIcons.Status.FailedInProgress
-}
-
-private object ValidationInProgressExtension : ExtendableTextComponent.Extension {
+private object ValidationInProgressExtension : ExtendableTextComponent.Extension, ValidationStatusExtension {
   override fun getIcon(hovered: Boolean): Icon = AnimatedIcon.Default()
   override fun getTooltip(): @NlsContexts.Tooltip String {
     return message("python.add.sdk.wait.for.validation")
   }
 }
-
-private class DebounceCounterIcon(val icon: Icon, val period: Int) : Icon {
-  private val time: AtomicLong = AtomicLong(System.currentTimeMillis())
-
-  fun reset() {
-    time.set(System.currentTimeMillis())
-  }
-
-  override fun getIconWidth(): Int {
-    return icon.iconWidth
-  }
-
-  override fun getIconHeight(): Int {
-    return icon.iconHeight
-  }
-
-  override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-    assert(period > 0) { "unexpected" }
-    val time = (System.currentTimeMillis() - this.time.get()) % period
-    val alpha = ((cos(2 * Math.PI * time / period) + 1) / 2).toFloat()
-    if (alpha > 0) {
-      if (alpha < 1 && g is Graphics2D) {
-        val g2d = g.create() as Graphics2D
-        try {
-          g2d.composite = AlphaComposite.SrcAtop.derive(alpha)
-          icon.paintIcon(c, g2d, x, y)
-        }
-        finally {
-          g2d.dispose()
-        }
-      }
-      else {
-        icon.paintIcon(c, g, x, y)
-      }
-    }
-  }
-}
-
-private class AnimatedFadingIcon(private val icon: DebounceCounterIcon) : AnimatedIcon(50, icon) {
-  fun reset() {
-    icon.reset()
-  }
-
-  companion object {
-    fun build(icon: Icon, period: Int = VALIDATION_DELAY * 2): AnimatedFadingIcon {
-      return AnimatedFadingIcon(DebounceCounterIcon(icon, period))
-    }
-  }
-}
-
-private const val VALIDATION_DELAY = 2000
 
 @OptIn(FlowPreview::class, ExperimentalAtomicApi::class)
 internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
@@ -170,21 +111,10 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      with(textField as ExtendableTextComponent) {
-        if (extensions.contains(validationWaitExtension)) {
-          doValidate()
-        }
-      }
+      doValidate()
     }
   }.apply {
     registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), this@ValidatedPathField)
-  }
-
-  private val validationWaitIcon = AnimatedFadingIcon.build(AllIcons.Gutter.SuggestedRefactoringBulb)
-  private val validationWaitExtension: ExtendableTextComponent.Extension = ExtendableTextComponent.Extension.create(
-    validationWaitIcon, message("python.add.sdk.wait.for.validation")
-  ) {
-    validationAction.doValidate()
   }
 
   private val fieldAccessor = object : TextComponentAccessor<JTextField> {
@@ -227,27 +157,22 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
 
     pathValidator.isDirtyValue.afterChange(scope.asDisposable()) { isDirtyValue ->
       with(textField as ExtendableTextComponent) {
-        extensions.forEach { removeExtension(it) }
+        extensions
+          .filter { it is ValidationStatusExtension }
+          .forEach { removeExtension(it) }
 
         if (isDirtyValue) {
           if (pathValidator.isValidationInProgress) {
             isEnabled = false
             addExtension(ValidationInProgressExtension)
           }
-          else {
-            addExtension(validationWaitExtension)
-          }
         }
         else {
           editorMode.store(false)
-          browseFolderActionLister?.let { setButtonVisible(true) }
           isEnabled = true
 
           pathValidator.backProperty.get()?.validationResult?.let { validationResult ->
             validationResult
-              .onFailure {
-                addExtension(ValidationErrorExtension)
-              }
               .onSuccess {
                 addExtension(ValidationSuccessExtension(it))
               }
@@ -261,27 +186,20 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
     this.scope = scope
     registerPropertyCallbacks()
 
-    scope.launch {
+    scope.launch(Dispatchers.UI) {
       textInputFlow
         .debounce(50) // setText method is a combination of two calls - remove + insert, should count them as 1
         .map {
           if (it == null) return@map null
 
-          if (editorMode.load()) {
-            validationWaitIcon.reset()
-          }
-          else if ((pathValidator.backProperty.get()?.pathHolder?.toString() ?: "") != it) {
+          if (!editorMode.load() && (pathValidator.backProperty.get()?.pathHolder?.toString() ?: "") != it) {
             editorMode.store(true)
             pathValidator.markDirty()
           }
 
           it
         }
-        .debounce(VALIDATION_DELAY.toLong())
-        .collectLatest {
-          if (it == null) return@collectLatest
-          validationAction.doValidate()
-        }
+        .collect {}
     }
   }
 
@@ -399,8 +317,11 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
           pyErrorMessage != null -> {
             ValidationInfo(pyErrorMessage)
           }
-          pathValidator.isDirtyValue.get() -> {
+          pathValidator.isValidationInProgress -> {
             ValidationInfo(message("python.add.sdk.wait.for.validation"))
+          }
+          pathValidator.isDirtyValue.get() -> {
+            ValidationInfo(message("python.add.sdk.press.enter.to.validate")).asWarning()
           }
           else -> null
         }
