@@ -5,6 +5,7 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
@@ -592,6 +593,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        if (!ClientId.isCurrentlyUnderLocalId) return
         coroutineScope.launch(Dispatchers.EDT) {
           focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
             if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
