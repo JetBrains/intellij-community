@@ -67,6 +67,9 @@ class ModuleBridgeLoaderService : InitProjectActivity {
 
       val start = Milliseconds.now()
 
+      val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
+      globalWorkspaceModel.registerInitializingProjectForUpdatesFromGlobalModel(project)
+
       if (workspaceModel.loadedFromCache) {
         val globalWsmAppliedToProjectWsm = CompletableDeferred<Project>()
         span("modules loading with cache") {
@@ -85,7 +88,6 @@ class ModuleBridgeLoaderService : InitProjectActivity {
             globalWsmAppliedToProjectWsm = globalWsmAppliedToProjectWsm,
           )
         }
-        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
         backgroundWriteAction {
           try {
             globalWorkspaceModel.applyStateToProject(project)
@@ -118,7 +120,6 @@ class ModuleBridgeLoaderService : InitProjectActivity {
         }
         
         // Set the project synchronization job on the global synchronizer to prevent race conditions
-        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
         JpsGlobalModelSynchronizer.getInstance().setProjectSynchronizationJob(projectSyncJob)
       }
 
