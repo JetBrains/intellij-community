@@ -88,6 +88,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.projectId = MavenId(groupId, artifactId, version)
     builder.isInheritGroupId = parentData?.mavenId?.groupId == groupId
     builder.isInheritVersion = parentData?.mavenId?.version == version
+    builder.moduleJdk = context.projectJdk
 
     configure(builder)
 
