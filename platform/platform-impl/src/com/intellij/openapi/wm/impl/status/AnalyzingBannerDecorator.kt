@@ -4,6 +4,8 @@ package com.intellij.openapi.wm.impl.status
 import com.intellij.help.impl.HelpManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.status.ProcessPopup.hideSeparator
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
@@ -21,37 +23,41 @@ import javax.swing.JPanel
  */
 internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePanel: Runnable) {
 
-  private var isBannerShown: Boolean = false
+  // component of analyzing progress,
+  // placed above banner
   private var analyzingComponent: Component? = null
-  private var banner: Component? = createBanner(revalidatePanel)
+
+  private val banner: Component = createBanner(revalidatePanel)
 
 
   fun indicatorAdded(indicator: ProgressComponent) {
-    if (banner == null) return
+    if (userClosedBanner()) return
 
     if (isAnalyzingIndicator(indicator) && analyzingComponent == null) {
       analyzingComponent = indicator.component
       hideSeparator(analyzingComponent!!)
-      isBannerShown = true
 
       panel.add(analyzingComponent, 0, 0)
-      panel.add(banner!!, 1, 1)
+      panel.add(banner, 1, 1)
     }
     hideSeparatorAfterBanner()
   }
 
-  fun indicatorRemoved(indicator: ProgressComponent) {
-    if (banner == null) return
+  fun indicatorRemoved(indicator: ProgressComponent, isShowing: Boolean) {
+    if (userClosedBanner()) return
 
     if (indicator.component == analyzingComponent) {
       analyzingComponent = null
+      if (!isShowing) {
+        removeBanner()
+      }
     }
     hideSeparatorAfterBanner()
   }
 
-  // hides banner on popup close if all processes are finished
+  // hides banner on popup close if analyzing completed
   fun handlePopupClose() {
-    if (banner == null || analyzingComponent != null || !isBannerShown || componentAfterBanner() != null) {
+    if (userClosedBanner() || analyzingComponent != null) {
       return
     }
     removeBanner()
@@ -59,44 +65,20 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
 
   // removes the separator between the first 2 indicators if the banner is shown
   private fun hideSeparatorAfterBanner() {
-    if (!isBannerShown) return
-
-    val componentAfterBanner = componentAfterBanner() ?: return
-    hideSeparator(componentAfterBanner)
+    val index = panel.getComponentZOrder(banner)
+    if (index == -1) return
+    if (panel.componentCount < index + 2) return
+    hideSeparator(panel.getComponent(index + 1))
   }
 
   // removes the banner and inserts the separator between the first 2 indicators
   private fun removeBanner() {
-    val banner = this.banner
-    if (banner == null || !isBannerShown) return
-
-    isBannerShown = false
-    this.banner = null
     panel.remove(banner)
 
     if (analyzingComponent != null && panel.componentCount > 1) {
       showSeparator(panel.getComponent(1))
     }
   }
-
-  private fun componentAfterBanner(): Component? {
-    val index = panel.getComponentZOrder(banner)
-    if (index == -1) return null
-    if (panel.componentCount < index + 2) return null
-    return panel.getComponent(index + 1)
-  }
-
-
-  private fun isAnalyzingIndicator(indicator: ProgressComponent): Boolean {
-    return indicator.info.title == IndexingBundle.message("progress.indexing")
-  }
-
-
-  private fun showSeparator(component: Component) {
-    val panel = ClientProperty.get(component, ProcessPopup.KEY)
-    panel?.setSeparatorEnabled(true)
-  }
-
 
   private fun createBanner(revalidatePanel: Runnable): Component {
     val banner = InlineBanner().apply {
@@ -112,8 +94,10 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
         setOpaque(false)
       }
 
+      // removes banner and prevents showing it again
       setCloseAction {
         removeBanner()
+        PropertiesComponent.getInstance().setValue(USER_CLOSED_ANALYZING_BANNER_KEY, true)
         revalidatePanel.run()
       }
     }
@@ -129,4 +113,22 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
 
     return panel
   }
+}
+
+private fun isAnalyzingIndicator(indicator: ProgressComponent): Boolean {
+  return indicator.info.title == IndexingBundle.message("progress.indexing")
+}
+
+
+private fun showSeparator(component: Component) {
+  val panel = ClientProperty.get(component, ProcessPopup.KEY)
+  panel?.setSeparatorEnabled(true)
+}
+
+
+private const val USER_CLOSED_ANALYZING_BANNER_KEY = "USER_CLOSED_ANALYZING_BANNER_KEY"
+
+private fun userClosedBanner(): Boolean {
+  val bannerWasClosed = PropertiesComponent.getInstance().getBoolean(USER_CLOSED_ANALYZING_BANNER_KEY, false)
+  return bannerWasClosed || !Registry.`is`("analyzing.progress.explaining.banner.enable")
 }
