@@ -6,12 +6,16 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.OptControl;
 import com.intellij.codeInspection.options.OptionController;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -24,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -154,4 +158,24 @@ public final class ModCommandServiceImpl implements ModCommandService {
     }
     return null;
   }
+
+  @Override
+  public @NotNull ModCommand insertText(@NotNull ActionContext context, @NotNull String text, boolean moveAfter) {
+    int offset = context.offset();
+    Document document = context.file().getFileDocument();
+    if (document instanceof DocumentWindow window) {
+      offset = window.injectedToHost(offset);
+      document = window.getDelegate();
+    }
+    String oldText = document.getText();
+    String newText = oldText.substring(0, offset) + text + oldText.substring(offset);
+    VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
+    ModCommand fix = new ModUpdateFileText(file, oldText, newText,
+                                           List.of(new ModUpdateFileText.Fragment(offset, 0, text.length())));
+    if (moveAfter) {
+      fix = fix.andThen(new ModNavigate(file, -1, -1, offset + text.length()));
+    }
+    return fix;
+  }
+
 }

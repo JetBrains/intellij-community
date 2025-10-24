@@ -49,6 +49,11 @@ public interface ModCommandService {
   @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix);
 
   /**
+   * Implementation of ModCommand.insertText; should not be used directly. 
+   */
+  @NotNull ModCommand insertText(@NotNull ActionContext context, @NotNull String text, boolean moveAfter);
+
+  /**
    * Implementation of ModCommand.psiUpdate; should not be used directly.
    */
   @NotNull ModCommand psiUpdate(@NotNull ActionContext context,

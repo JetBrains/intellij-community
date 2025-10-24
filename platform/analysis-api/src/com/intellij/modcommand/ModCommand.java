@@ -250,6 +250,19 @@ public sealed interface ModCommand
   }
 
   /**
+   * Generates a command to inserts the specified text into the current position of the context file 
+   * and optionally moves the cursor after the inserted text.
+   *
+   * @param context the action context where the text will be inserted
+   * @param text the text to be inserted
+   * @param moveAfter whether to move the cursor after the inserted text
+   * @return a {@code ModCommand} to insert the text at the current position and optionally move the caret after it
+   */
+  static @NotNull ModCommand insertText(@NotNull ActionContext context, @NotNull String text, boolean moveAfter) {
+    return ModCommandService.getInstance().insertText(context, text, moveAfter);
+  }
+
+  /**
    * Create an action that depends on a PSI element in the current file.
    *
    * @param element element
