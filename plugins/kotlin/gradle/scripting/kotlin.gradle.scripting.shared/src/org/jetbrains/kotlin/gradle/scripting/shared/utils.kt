@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -14,9 +13,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION
 
 private val sections = arrayListOf("buildscript", "plugins", "initscript", "pluginManagement")
@@ -58,8 +54,8 @@ fun getGradleScriptInputsStamp(
                 }
             }
 
-        val buildRoot = GradleBuildRootsLocator.getInstance(project)?.findScriptBuildRoot(file)?.nearest
-        GradleKotlinScriptConfigurationInputs(result.toString(), givenTimeStamp, buildRoot?.pathPrefix)
+        val buildRoot = GradleBuildRootsLocator.getInstance(project).findScriptBuildRoot(file)?.nearest
+        GradleKotlinScriptConfigurationInputs(result.toString(), givenTimeStamp, buildRoot?.externalProjectPath)
     }
 }
 
@@ -68,6 +64,3 @@ const val minimal_gradle_version_supported: String = "6.0"
 fun kotlinDslScriptsModelImportSupported(gradleVersion: String): Boolean {
     return GradleVersionUtil.isGradleAtLeast(gradleVersion, minimal_gradle_version_supported)
 }
-
-fun getGradleProjectSettings(project: Project): Collection<GradleProjectSettings> =
-    (ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID) as GradleSettings).linkedProjectsSettings

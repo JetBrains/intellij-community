@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.gradle.scripting.k2
 
-import KotlinGradleScriptingBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ImportModuleAction
 import com.intellij.ide.util.PropertiesComponent
@@ -17,6 +16,7 @@ import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*

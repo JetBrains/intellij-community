@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core.script.k1.ucache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.ScriptClassRootsStorage
-import org.jetbrains.kotlin.idea.core.script.shared.DirectScriptInfo
 import org.jetbrains.kotlin.idea.core.script.shared.LightScriptInfo
 import org.jetbrains.kotlin.idea.core.script.v1.logger
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper

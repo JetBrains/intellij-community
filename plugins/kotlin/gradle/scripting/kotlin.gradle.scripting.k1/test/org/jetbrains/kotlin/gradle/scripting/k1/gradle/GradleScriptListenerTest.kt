@@ -7,10 +7,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ui.EDT.dispatchAllInvocationEvents
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
+import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -240,7 +239,7 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
     }
 
     private fun markFileChanged(virtualFile: VirtualFile, ts: Long) {
-        GradleBuildRootsLocator.getInstance(project).fileChanged(virtualFile.path, ts)
+        (GradleBuildRootsLocator.getInstance(project) as? GradleBuildRootsLocatorImpl)?.fileChanged(virtualFile.path, ts)
     }
 
     fun testLoadedConfigurationWhenExternalFileChanged() {

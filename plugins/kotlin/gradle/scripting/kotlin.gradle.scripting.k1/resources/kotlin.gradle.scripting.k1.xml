@@ -21,6 +21,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer"
+                    serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootDataSerializer"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator"
                     serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k1.importing.KotlinDslSyncListener"/>

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared
 
-import KotlinGradleScriptingBundle
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
 import com.intellij.platform.workspace.storage.EntitySource
 import org.jetbrains.kotlin.config.LanguageVersion

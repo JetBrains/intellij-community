@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.idea.core.script.shared.LightScriptInfo
+import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -67,7 +67,7 @@ class GradleScriptInfo(
 
         other as GradleScriptInfo
 
-        if (buildRoot.pathPrefix != other.buildRoot.pathPrefix) return false
+        if (buildRoot.externalProjectPath != other.buildRoot.externalProjectPath) return false
         if (model != other.model) return false
         if (definition != other.definition) return false
 
@@ -75,7 +75,7 @@ class GradleScriptInfo(
     }
 
     override fun hashCode(): Int {
-        var result = buildRoot.pathPrefix.hashCode()
+        var result = buildRoot.externalProjectPath.hashCode()
         result = 31 * result + model.hashCode()
         result = 31 * result + definition.hashCode()
         return result

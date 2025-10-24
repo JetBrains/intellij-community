@@ -83,7 +83,7 @@ class GradleBuildRootIndex(private val project: Project) : StandaloneScriptsUpda
 
     @Synchronized
     fun add(value: GradleBuildRoot): GradleBuildRoot? {
-        val prefix = value.pathPrefix
+        val prefix = value.externalProjectPath
         val old = byWorkingDir.put(prefix, value)
         rebuildProjectRoots()
         log.info("$prefix: $old -> $value")

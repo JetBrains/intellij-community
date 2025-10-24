@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared.definition
 
-import KotlinGradleScriptingBundle
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.externalProjectPath
 import org.jetbrains.kotlin.gradle.scripting.shared.gradle
 import org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfigurationFromDefinition
