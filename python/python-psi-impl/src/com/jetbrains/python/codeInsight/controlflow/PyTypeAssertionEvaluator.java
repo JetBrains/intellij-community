@@ -406,6 +406,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     if (parent instanceof PyConditionalExpression cond && PsiTreeUtil.isAncestor(cond.getCondition(), node, false)) return true;
     if (parent instanceof PyBinaryExpression binExpr && (binExpr.isOperator(PyNames.AND) || binExpr.isOperator(PyNames.OR))) return true;
     if (parent instanceof PyAssertStatement) return true;
+    if (parent instanceof PyGeneratorExpression gen && 
+        ContainerUtil.or(gen.getIfComponents(), it -> PsiTreeUtil.isAncestor(it.getTest(), node, false))) return true;
     return false;
   }
 
