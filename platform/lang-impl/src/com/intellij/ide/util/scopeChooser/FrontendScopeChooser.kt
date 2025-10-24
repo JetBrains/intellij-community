@@ -3,7 +3,9 @@ package com.intellij.ide.util.scopeChooser
 
 import com.intellij.find.FindBundle
 import com.intellij.find.impl.FindAndReplaceExecutor
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.util.whenItemSelected
@@ -66,7 +68,11 @@ class FrontendScopeChooser(private val project: Project, private val preselected
   }
 
   private fun loadItemsAsync() {
-    scopeService.loadItemsAsync(modelId, filterConditionType, onScopesUpdate = { scopeIdToScopeDescriptor, selectedScopeId ->
+    // loadItemsAsync will be executed on asynchronously on background,
+    // it's important to collect data context now,
+    // because it's going to change with opening Find in Files dialog
+    val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync.then { Utils.createAsyncDataContext(it) }
+    scopeService.loadItemsAsync(modelId, filterConditionType, dataContextPromise, onScopesUpdate = { scopeIdToScopeDescriptor, selectedScopeId ->
       scopesMap = scopeIdToScopeDescriptor ?: emptyMap()
       val items = scopesMap.values.toList()
       withContext(Dispatchers.EDT) {
