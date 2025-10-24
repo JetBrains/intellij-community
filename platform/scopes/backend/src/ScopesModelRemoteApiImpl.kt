@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.scopes.backend
 
+import com.intellij.ide.rpc.DataContextId
+import com.intellij.ide.rpc.dataContext
 import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.scopeChooser.*
 import com.intellij.openapi.application.EDT
@@ -23,6 +25,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -38,7 +41,12 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
    */
   private val modelIdToSelectedScopeName = ConcurrentHashMap<String, String>()
 
-  override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>? {
+  override suspend fun createModelAndSubscribe(
+    projectId: ProjectId,
+    modelId: String,
+    filterConditionType: ScopesFilterConditionType,
+    dataContextId: DataContextId?
+  ): Flow<SearchScopesInfo>? {
     val project = projectId.findProjectOrNull() ?: return null
     val model = project.getService(ScopeService::class.java)
       .createModel(EnumSet.of(
@@ -49,7 +57,8 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
       ))
     modelIdToModel[modelId] = model
     val flow = subscribeToModelUpdates(model, modelId, project)
-    model.refreshScopes(null)
+    val dataContext = withContext(Dispatchers.EDT) { dataContextId?.dataContext() }
+    model.refreshScopes(dataContext)
     val scopeFilter = filterConditionType.getScopeFilterByType()
     if (scopeFilter != null) model.setFilter(scopeFilter)
 

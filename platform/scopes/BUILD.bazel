@@ -27,6 +27,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/kernel/shared:kernel",
     "//platform/util/coroutines",
+    "//platform/util/concurrency",
   ]
 )
 ### auto-generated section `build intellij.platform.scopes` end
