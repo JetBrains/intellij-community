@@ -51,11 +51,12 @@ internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project
 }
 
 @Service(Service.Level.PROJECT)
-private class FrontendXValueMarkersService(project: Project, private val cs: CoroutineScope) {
+private class FrontendXValueMarkersService(private val cs: CoroutineScope) {
   fun markValue(value: XValue, markup: ValueMarkup): Promise<Any> {
     val valueMarked = cs.async {
       val marker = XValueMarkerDto(markup.text, markup.color.rpcId(), markup.toolTipText)
-      XDebuggerValueMarkupApi.getInstance().markValue(FrontendXValue.asFrontendXValue(value).xValueDto.id, marker)
+      val xValueId = XDebugManagerProxy.getInstance().getXValueId(value) ?: return@async Any()
+      XDebuggerValueMarkupApi.getInstance().markValue(xValueId, marker)
       marker as Any
     }
     return valueMarked.asCompletableFuture().asPromise()
@@ -63,7 +64,8 @@ private class FrontendXValueMarkersService(project: Project, private val cs: Cor
 
   fun unmarkValue(value: XValue): Promise<in Any> {
     val valueUnmarked = cs.async {
-      XDebuggerValueMarkupApi.getInstance().unmarkValue(FrontendXValue.asFrontendXValue(value).xValueDto.id)
+      val xValueId = XDebugManagerProxy.getInstance().getXValueId(value) ?: return@async Any()
+      XDebuggerValueMarkupApi.getInstance().unmarkValue(xValueId)
       Any()
     }
     return valueUnmarked.asCompletableFuture().asPromise()

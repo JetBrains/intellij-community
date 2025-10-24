@@ -15,6 +15,8 @@ import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
+import com.intellij.xdebugger.impl.withTemporaryXValueId
 import kotlinx.coroutines.flow.Flow
 
 private class FrontendXDebugManagerProxy : XDebugManagerProxy {
@@ -24,9 +26,21 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
            (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
   }
 
+  override fun hasBackendCounterpart(xValue: XValue): Boolean {
+    return FrontendXValue.asFrontendXValueOrNull(xValue) != null
+           || FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
+  }
+
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val valueId = FrontendXValue.asFrontendXValue(value).xValueDto.id
-    return block(valueId)
+    val frontendXValue = FrontendXValue.asFrontendXValueOrNull(value)
+    if (frontendXValue != null) {
+      return block(frontendXValue.xValueDto.id)
+    }
+    else {
+      // Otherwise try to fall back to monolith implementation if possible
+      val monolithSession = XDebugMonolithUtils.findSessionById(session.id) ?: error("XValue is not a FrontendXValue: $value")
+      return withTemporaryXValueId(value, monolithSession, block)
+    }
   }
 
   override fun getXValueId(value: XValue): XValueId? =
@@ -55,9 +69,5 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
 
   override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
     return XDebuggerExecutionPointManager.getInstance(project)
-  }
-
-  override fun hasBackendCounterpart(xValue: XValue): Boolean {
-    return FrontendXValue.asFrontendXValueOrNull(xValue) != null
   }
 }

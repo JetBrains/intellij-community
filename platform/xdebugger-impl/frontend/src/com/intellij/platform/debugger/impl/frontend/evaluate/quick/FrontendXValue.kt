@@ -306,11 +306,6 @@ class FrontendXValue private constructor(
   }
 
   companion object {
-
-    fun asFrontendXValue(value: XValue): FrontendXValue {
-      return asFrontendXValueOrNull(value) ?: error("XValue is not a FrontendXValue: $value")
-    }
-
     fun asFrontendXValueOrNull(value: XValue): FrontendXValue? {
       return value as? FrontendXValue ?: (value as? FrontendXNamedValue)?.delegate
     }

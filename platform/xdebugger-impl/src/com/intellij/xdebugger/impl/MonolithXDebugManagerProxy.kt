@@ -23,6 +23,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 
 private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
@@ -36,9 +37,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
     val sessionImpl = (session as XDebugSessionProxy.Monolith).sessionImpl
-    return withCoroutineScopeForId(block) { scope ->
-      BackendXValueModel(scope, sessionImpl, value, precomputePresentation = false).id
-    }
+    return withTemporaryXValueId(value, sessionImpl, block)
   }
 
   // This method is not supported in monolith mode
@@ -76,6 +75,15 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun hasBackendCounterpart(xValue: XValue): Boolean {
     return true
   }
+}
+
+@ApiStatus.Internal
+suspend fun <T> withTemporaryXValueId(
+  value: XValue,
+  sessionImpl: XDebugSessionImpl,
+  block: suspend (XValueId) -> T,
+): T = withCoroutineScopeForId(block) { scope ->
+  BackendXValueModel(scope, sessionImpl, value, precomputePresentation = false).id
 }
 
 private suspend fun <ID, T> withCoroutineScopeForId(block: suspend (ID) -> T, idProvider: (CoroutineScope) -> ID): T {
