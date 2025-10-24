@@ -3,7 +3,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.NodeWithMeasurableExpand;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -95,8 +95,8 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
       return;
     }
     var value = TreeUtil.getUserObject(path.getLastPathComponent());
-    if (!(value instanceof PsiDirectoryNode)) {
-      return; // Only measure real directory expansion, not, say, classes or external libraries.
+    if (!(value instanceof NodeWithMeasurableExpand)) {
+      return;
     }
     var expandMeasurer = this.expandMeasurer;
     if (expandMeasurer != null) {
