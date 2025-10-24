@@ -48,7 +48,6 @@ dependencies {
   implementation "org.jetbrains.intellij.deps:gradle-api:8.5"
   implementation "org.kodein.di:kodein-di-jvm:7.20.2"
   implementation "org.rauschig:jarchivelib:1.2.0"
-  implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
   implementation "com.jetbrains.qodana:qodana-sarif:0.2.113"
   implementation 'com.github.stephenc.monte:monte-screen-recorder:0.7.7.0'
   implementation "io.opentelemetry:opentelemetry-api:$otel_version"
@@ -64,6 +63,7 @@ dependencies {
   implementation('com.jetbrains.intellij.platform:eel:LATEST-TRUNK-SNAPSHOT')
   implementation('com.jetbrains.intellij.platform:lang-impl:LATEST-TRUNK-SNAPSHOT')
   implementation('com.jetbrains.intellij.platform:core:LATEST-TRUNK-SNAPSHOT')
+  implementation('com.jetbrains.intellij.platform:runtime-repository:LATEST-TRUNK-SNAPSHOT')
   implementation('com.github.oshi:oshi-core:6.8.2')
 }
 

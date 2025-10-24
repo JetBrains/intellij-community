@@ -1,7 +1,9 @@
 package com.intellij.ide.starter.config
 
-import org.jetbrains.intellij.build.ScrambleTool
-
 interface ScrambleToolProvider {
-  fun get(): ScrambleTool? = null
+  /**
+   * The actual return type is org.jetbrains.intellij.build.ScrambleTool
+   * But direct dependency on intellij.platform.buildScripts is impossible in Starter
+   * */
+  fun get(): Any? = null
 }

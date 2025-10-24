@@ -19,7 +19,6 @@ import com.intellij.util.JavaModuleOptions
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.system.OS
-import org.jetbrains.intellij.build.dev.readVmOptions
 import java.io.Closeable
 import java.io.File
 import java.nio.file.Files
@@ -76,7 +75,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
 
     printWarning(ideInfo)
 
-    val defaultVmOptions = readVmOptions(installationDirectory) + getTestVmOptions(installationDirectory)
+    val defaultVmOptions = DevBuildServerRunner.instance.readVmOptions(installationDirectory) + getTestVmOptions(installationDirectory)
 
     @Suppress("IO_FILE_USAGE")
     val classpathArg = getClassPath(ideInfo, installationDirectory).joinToString(File.pathSeparator)
@@ -197,6 +196,10 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
   }
 
   override suspend fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
+    if (DevBuildServerRunner.instance.isDevBuildSupported().not()) {
+      error("Dev build is not supported. Add dependency on intellij.tools.ide.starter.build.server module.")
+    }
+
     val ideWithProvidedAdditionalModules = ideInfo.copy(additionalModules = ideInfo.additionalModules + AdditionalModulesForDevBuildServer.getAdditionalModules(ideInfo))
 
     val existingInstallationPath = cachedInstallationDirectories[ideWithProvidedAdditionalModules]
@@ -206,11 +209,11 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
     }
     else {
       logOutput("startDevBuild IDE: $ideWithProvidedAdditionalModules")
-      DevBuildServerRunner.startDevBuild(ideWithProvidedAdditionalModules).also {
+      DevBuildServerRunner.instance.startDevBuild(ideWithProvidedAdditionalModules).also {
         cachedInstallationDirectories[ideWithProvidedAdditionalModules] = it
       }
     }
-    val suffix = if (ConfigurationStorage.Companion.useDockerContainer()) "-DOCKER" else ""
+    val suffix = if (ConfigurationStorage.useDockerContainer()) "-DOCKER" else ""
     return "LOCAL${suffix}" to resolveLocallyBuiltIDE(ideInfo = ideWithProvidedAdditionalModules, installationDirectory)
   }
 }

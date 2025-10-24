@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.tools.ide.starter.build.server` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_ide-starter-build-server",
+  opt_in = ["kotlin.time.ExperimentalTime"]
+)
 
 resourcegroup(
   name = "ide-starter-build-server_resources",
@@ -12,6 +18,19 @@ jvm_library(
   module_name = "intellij.tools.ide.starter.build.server",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":ide-starter-build-server_resources"]
+  resources = [":ide-starter-build-server_resources"],
+  kotlinc_opts = ":custom_ide-starter-build-server",
+  deps = [
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "//platform/build-scripts",
+    "@lib//:kodein-di-jvm",
+    "//tools/intellij.tools.ide.starter:ide-starter",
+    "//platform/util",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "@lib//:opentelemetry",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Launcher-provided",
+  ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.build.server` end

@@ -82,6 +82,7 @@ var di = DI {
   bindSingleton<JBRDownloader> { StarterJBRDownloader }
   bindSingleton<TargetResolver> { LocalOnlyTargetResolver }
   bindSingleton<ScrambleToolProvider> { object : ScrambleToolProvider {} }
+  bindSingleton<DevBuildServerRunner> { NoOpDevBuildServerRunner }
 }.apply {
   logOutput("Starter DI was initialized")
 }
