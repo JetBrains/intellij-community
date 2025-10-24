@@ -247,7 +247,8 @@
 
       "Borders.color": "#E8E9ED",
       "Borders.ContrastBorderColor": "#E8E9ED",
-      "ToolWindow.Header.borderColor": "#E8E9ED"
+      "ToolWindow.Header.borderColor": "#E8E9ED",
+      "Island.borderColor": "#F7F6F8"
     }
   }
 }

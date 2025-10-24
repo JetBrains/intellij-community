@@ -722,7 +722,8 @@
 
       "Borders.color": "#2E3033",
       "Borders.ContrastBorderColor": "#2E3033",
-      "ToolWindow.Header.borderColor": "#2E3033"
+      "ToolWindow.Header.borderColor": "#2E3033",
+      "Island.borderColor": "#212326"
     },
 
     "AlertDialog.background": "PopupBackground"
