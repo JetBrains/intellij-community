@@ -184,6 +184,10 @@ final class ProcessPopup {
     }
   }
 
+  static boolean isProgressIndicator(@NotNull Component component){
+    return ClientProperty.get(component, KEY) != null;
+  }
+
   private void createPopup(@NotNull JComponent content, @NotNull JComponent focus, boolean requestFocus) {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(content, focus);
     builder.addListener(new JBPopupListener() {
