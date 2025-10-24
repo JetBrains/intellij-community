@@ -4,6 +4,10 @@ package org.jetbrains.plugins.terminal.session
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Terminal content is rendered in a grid of characters.
+ * This class represents the size of the grid.
+ */
 @ApiStatus.Experimental
 @Serializable
 data class TerminalGridSize(
