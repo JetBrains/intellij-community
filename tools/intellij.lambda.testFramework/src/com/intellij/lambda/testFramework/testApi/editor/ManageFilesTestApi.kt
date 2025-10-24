@@ -178,8 +178,8 @@ suspend fun openFile(
     }
     else {
       when (lambdaIdeContext) { //https://youtrack.jetbrains.com/issue/KT-58770/False-positive-Overload-resolution-ambiguity-with-same-named-extension-function-and-lambda-as-parameter
+        is LambdaBackendContext -> doOpenFile(relativePath, project) // backend should be first for monolith runs
         is LambdaFrontendContext -> doOpenFile(relativePath, project)
-        is LambdaBackendContext -> doOpenFile(relativePath, project)
         else -> error("unexpected context")
       }
       waitForExpectedSelectedFile(fileName, checkFocus = requireFocus, project = project)
