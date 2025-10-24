@@ -70,6 +70,7 @@ public final class ActionGroupPanelWrapper {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     actionsListPanel.add(pane, BorderLayout.CENTER);
+    actionsListPanel.setBorder(JBUI.Borders.customLineRight(JBColor.border()));
 
     int width = Math.clamp(Math.round(list.getPreferredSize().getWidth()), JBUIScale.scale(100), JBUIScale.scale(200));
     pane.setPreferredSize(JBUI.size(width + 14, -1));
@@ -102,6 +103,7 @@ public final class ActionGroupPanelWrapper {
         }
       }
     };
+    main.setBorder(JBUI.Borders.customLineTop(JBColor.border()));
     main.add(actionsListPanel, BorderLayout.WEST);
 
     JPanel bottomPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
