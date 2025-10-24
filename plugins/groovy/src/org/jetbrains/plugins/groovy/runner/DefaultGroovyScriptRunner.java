@@ -70,14 +70,6 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull Module module,
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
-                                                  boolean tests) throws CantRunException {
-    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true);
-  }
-
-  public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
-                                                  @NotNull Module module,
-                                                  @NotNull String mainClass,
-                                                  boolean useBundled,
                                                   boolean tests,
                                                   boolean addClasspathToRunner) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);

@@ -218,7 +218,9 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
       module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
                      : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
     );
-    params.setShortenCommandLine(shortenClasspathMode);
+    if (shortenClasspathMode != null) {
+      params.setShortenCommandLine(shortenClasspathMode);
+    }
     configureConfiguration(params, new CommonProgramRunConfigurationParametersDelegate(this) {
       @Override
       public @Nullable String getProgramParameters() {
