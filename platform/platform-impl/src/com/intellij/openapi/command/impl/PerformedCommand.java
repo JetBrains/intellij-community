@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsContexts.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 
 record PerformedCommand(
@@ -17,7 +17,7 @@ record PerformedCommand(
   @NotNull UndoConfirmationPolicy confirmationPolicy,
   @Nullable EditorAndState editorStateBefore,
   @Nullable EditorAndState editorStateAfter,
-  @NotNull Collection<UndoableAction> undoableActions,
+  @NotNull List<UndoableAction> undoableActions,
   @NotNull UndoAffectedDocuments affectedDocuments,
   @NotNull UndoAffectedDocuments additionalAffectedDocuments,
   boolean isTransparent,

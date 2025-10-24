@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.Command;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -30,6 +31,7 @@ public final class CommandMerger {
 
   private final boolean isLocalHistoryActivity;
   private final boolean isTransparentSupported;
+  private final int undoCommandMergeTimeoutNs;
 
   private @NotNull List<CommandId> commandIds = new ArrayList<>();
   private @Nullable @Command String commandName;
@@ -47,6 +49,7 @@ public final class CommandMerger {
   CommandMerger(boolean isLocalHistoryActivity, boolean isTransparentSupported) {
     this.isLocalHistoryActivity = isLocalHistoryActivity;
     this.isTransparentSupported = isTransparentSupported;
+    undoCommandMergeTimeoutNs = Registry.intValue("undo.command.merge.timeout") * 1_000_000;
   }
 
   boolean isUndoAvailable(@NotNull Collection<DocumentReference> refs) {
@@ -67,6 +70,13 @@ public final class CommandMerger {
   @Nullable UndoCommandFlushReason shouldFlush(@NotNull PerformedCommand performedCommand) {
     if (!isCompatible(performedCommand.commandId())) {
       return createFlushReason("INCOMPATIBLE_COMMAND", performedCommand);
+    }
+    if (hasActions() && performedCommand.hasActions()) {
+      UndoableAction lastAction = undoableActions.getLast();
+      long deltaNs = (performedCommand.undoableActions().getFirst().getPerformedNanoTime() - lastAction.getPerformedNanoTime());
+      if (undoCommandMergeTimeoutNs >= 0 && deltaNs > undoCommandMergeTimeoutNs) {
+        return createFlushReason("TIMEOUT", performedCommand);
+      }
     }
     if (isTransparentSupported &&
         performedCommand.isTransparent() &&

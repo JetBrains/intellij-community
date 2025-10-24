@@ -33,7 +33,7 @@ final class CommandBuilder {
   private @Nullable EditorAndState editorStateBefore;
   private @Nullable EditorAndState editorStateAfter;
   private @Nullable DocumentReference originalDocument;
-  private @NotNull Collection<UndoableAction> undoableActions;
+  private @NotNull List<UndoableAction> undoableActions;
   private @NotNull UndoAffectedDocuments affectedDocuments;
   private @NotNull UndoAffectedDocuments additionalAffectedDocuments;
   private boolean isForcedGlobal;
