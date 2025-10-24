@@ -286,7 +286,7 @@ private fun Editor.getExistingInlays(sourceId: String, ignoredProviderIds: Set<S
   ),
 )
 
-/** @return `true` if a suitable inlay was found and updated; `false` otherwise. */
+/** @return an inlay suitable for an update; `null` otherwise. */
 private inline fun <M> findSuitableInlayAndRemoveFromDeleteList(
   offsetToExistingInlays: Int2ObjectOpenHashMap<out SmartList<out Inlay<out DeclarativeInlayRendererBase<M>>>>,
   groupKey: Int,
