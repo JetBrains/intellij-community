@@ -8,6 +8,7 @@
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.community.execService.python"/>
   </dependencies>
 
   <projectListeners>

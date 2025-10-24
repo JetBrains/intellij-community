@@ -176,12 +176,12 @@ fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDat
 
 @Internal
 fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
-  return existingSdks.filter { PythonSdkUtil.isPythonSdk(it) && it.isCondaVirtualEnv && !it.isAssociatedWithAnotherModule(module) }
+  return existingSdks.filter { isPythonSdk(it) && it.isCondaVirtualEnv && !it.isAssociatedWithAnotherModule(module) }
 }
 
 @Internal
 fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
-  return existingSdks.filter { PythonSdkUtil.isPythonSdk(it) && it.isAssociatedWithModule(module) }
+  return existingSdks.filter { isPythonSdk(it) && it.isAssociatedWithModule(module) }
 }
 
 @Internal

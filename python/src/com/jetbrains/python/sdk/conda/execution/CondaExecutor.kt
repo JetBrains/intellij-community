@@ -5,26 +5,21 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.community.execService.BinOnEel
-import com.intellij.python.community.execService.BinOnTarget
-import com.intellij.python.community.execService.BinaryToExec
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ProcessOutputTransformer
-import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
-import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
+import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
 import com.intellij.util.ShellEnvironmentReader
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
-import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.targetEnvConfiguration
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -105,17 +100,18 @@ object CondaExecutor {
     )
   }
 
-  private suspend fun <T> runConda(
-    binaryToExec: BinaryToExec,
-    args: List<String>,
-    condaEnvIdentity: PyCondaEnvIdentity?,
-    timeout: Duration = 15.minutes,
-    transformer: ProcessOutputTransformer<T>,
-  ): PyResult<T> {
+  suspend fun getPythonInfo(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity): PyResult<PythonInfo> {
+    val runArgs = prepareCondaRunArgs(listOf("run"), listOf("python"), envIdentity)
+    return ExecService().validatePythonAndGetInfo(ExecutablePython(binaryToExec, runArgs, emptyMap()))
+  }
+
+  private fun prepareCondaRunArgs(
+    argsBeforeEnv: List<String>, argsAfterEnv: List<String>, condaEnvIdentity: PyCondaEnvIdentity?,
+  ): List<String> {
     val condaEnv = when (condaEnvIdentity) {
       is PyCondaEnvIdentity.UnnamedEnv -> {
         if (condaEnvIdentity.isBase)
-          listOf()
+          emptyList()
         else
           listOf("-p", condaEnvIdentity.envPath)
       }
@@ -125,11 +121,18 @@ object CondaExecutor {
       null -> emptyList()
     }
 
-    val envs = getFixedEnvs(binaryToExec).getOr {
-      return it
-    }
+    return argsBeforeEnv + condaEnv + argsAfterEnv
+  }
 
-    val runArgs = (args + condaEnv).toTypedArray()
+  private suspend fun <T> runConda(
+    binaryToExec: BinaryToExec,
+    args: List<String>,
+    condaEnvIdentity: PyCondaEnvIdentity?,
+    timeout: Duration = 15.minutes,
+    transformer: ProcessOutputTransformer<T>,
+  ): PyResult<T> {
+    val envs = getFixedEnvs(binaryToExec).getOr { return it }
+    val runArgs = prepareCondaRunArgs(args, emptyList(), condaEnvIdentity).toTypedArray()
     return runExecutableWithProgress(binaryToExec, timeout, env = envs, *runArgs, transformer = transformer)
   }
 

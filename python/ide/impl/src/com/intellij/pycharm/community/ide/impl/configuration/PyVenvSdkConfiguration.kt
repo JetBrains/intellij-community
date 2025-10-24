@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.MessageError
@@ -38,7 +39,7 @@ class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     withContext(Dispatchers.IO) {
       getVirtualEnv(module)?.let {
-        EnvCheckerResult.EnvFound("", PyCharmCommunityCustomizationBundle.message("sdk.use.existing.venv", it.name))
+        it.findEnvOrNull(PyCharmCommunityCustomizationBundle.message("sdk.use.existing.venv", it.name))
       } ?: EnvCheckerResult.CannotConfigure
     }
   }

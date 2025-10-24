@@ -16,6 +16,8 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.PipEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
+import com.intellij.pycharm.community.ide.impl.findEnvOrNull
+import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.ui.IdeBorderFactory
@@ -72,10 +74,19 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     when {
       canManage && checkExistence -> {
         PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
-        val envPath = runPipEnv(module.basePath?.toNioPathOrNull(), "--venv").mapSuccess { Path.of(it) }.successOrNull
+        val envPath = runPipEnv(
+          module.basePath?.toNioPathOrNull(),
+          "--venv",
+          transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
+        ).successOrNull
         val path = envPath?.resolvePythonBinary()
-        val envExists = path?.let { LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null } ?: false
-        if (envExists) EnvCheckerResult.EnvFound("", intentionName) else envNotFound
+        val envExists = path?.let {
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null
+        } ?: false
+        if (envExists) {
+          path.findEnvOrNull(intentionName) ?: envNotFound
+        }
+        else envNotFound
       }
       canManage -> envNotFound
       else -> EnvCheckerResult.CannotConfigure

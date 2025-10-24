@@ -9,6 +9,7 @@ import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.service.CliBasedHatchService
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -65,7 +66,7 @@ sealed interface PythonVirtualEnvironment {
    * Represents an existing Python virtual environment.
    * The environment was verified and the Python version was already discovered.
    */
-  data class Existing(override val pythonHomePath: PythonHomePath, val pythonVersion: String) : PythonVirtualEnvironment
+  data class Existing(override val pythonHomePath: PythonHomePath, val pythonInfo: PythonInfo) : PythonVirtualEnvironment
 
   /**
    * Represents a non-existing Python virtual environment.

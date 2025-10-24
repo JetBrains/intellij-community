@@ -83,5 +83,6 @@
     <orderEntry type="module" module-name="intellij.python.community.execService" />
     <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
     <orderEntry type="module" module-name="intellij.python.sdk.ui" />
+    <orderEntry type="module" module-name="intellij.python.community.execService.python" />
   </component>
 </module>

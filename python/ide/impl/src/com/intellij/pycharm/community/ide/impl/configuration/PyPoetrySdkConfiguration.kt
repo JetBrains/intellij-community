@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.jetbrains.python.PyBundle
@@ -78,7 +79,7 @@ class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         val envPath = runPoetry(basePath, "env", "info", "-p")
           .mapSuccess { it.toNioPathOrNull() }
           .getOr { return@reportRawProgress envNotFound }
-        envPath?.resolvePythonBinary()?.let { EnvCheckerResult.EnvFound("", intentionName) } ?: return@reportRawProgress envNotFound
+        envPath?.resolvePythonBinary()?.findEnvOrNull(intentionName) ?: return@reportRawProgress envNotFound
       }
       canManage -> envNotFound
       else -> EnvCheckerResult.CannotConfigure
