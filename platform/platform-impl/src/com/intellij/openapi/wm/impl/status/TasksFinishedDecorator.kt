@@ -4,10 +4,11 @@ package com.intellij.openapi.wm.impl.status
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.wm.impl.status.ProcessPopup.hideSeparator
+import com.intellij.openapi.wm.impl.status.ProcessPopup.isProgressIndicator
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import javax.swing.JComponent
+import java.awt.Component
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -18,22 +19,20 @@ import javax.swing.SwingConstants
  */
 internal class TasksFinishedDecorator(private val panel: JPanel) {
   private val finishedTasksLabel = createTasksFinishedLabel()
-  private var indicators: Int = 0
 
 
-  fun indicatorAdded(component: JComponent) {
-    if (indicators == 0) {
-      panel.remove(finishedTasksLabel)
+  fun indicatorAdded(component: Component) {
+    panel.remove(finishedTasksLabel)
+    if (panel.components.firstOrNull { isProgressIndicator(it) } == component) {
       hideSeparator(component)
     }
-    indicators++
   }
 
   fun indicatorRemoved() {
-    indicators--
-    if (indicators == 0) {
-      panel.add(finishedTasksLabel, 0, 0)
+    if (panel.components.any { isProgressIndicator(it) }) {
+      return
     }
+    panel.add(finishedTasksLabel, 0, 0)
   }
 
 
