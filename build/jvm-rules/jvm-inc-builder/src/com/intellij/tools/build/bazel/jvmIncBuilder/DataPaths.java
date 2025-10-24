@@ -11,6 +11,8 @@ public interface DataPaths {
   String CONFIG_STATE_FILE_NAME = "config-state.dat";
   String DEP_GRAPH_FILE_NAME = "dep-graph.mv";
   String OLD_DEPS_DIR_NAME = "past-deps";
+  String DIAGNOSTIC_FILE_NAME_SUFFIX = "-diagnostic.zip";
+  String PARAMS_FILE_NAME_SUFFIX = ".params";
   String ABI_JAR_SUFFIX = ".abi.jar";
   String DATA_DIR_NAME_SUFFIX = "-ic";
   String KOTLIN_CRI_STORAGE_SUFFIX = "-kotlinCriStorage";
@@ -36,6 +38,11 @@ public interface DataPaths {
 
   static @NotNull Path getConfigStateStoreFile(BuildContext context) {
     return context.getDataDir().resolve(CONFIG_STATE_FILE_NAME);
+  }
+
+  static @NotNull Path getDiagnosticDataPath(BuildContext context) {
+    String artifactName = truncateExtension(context.getOutputZip().getFileName().toString());
+    return context.getDataDir().resolve(artifactName + DIAGNOSTIC_FILE_NAME_SUFFIX);
   }
 
   static @NotNull Path getDepGraphStoreFile(BuildContext context) {
@@ -69,5 +76,10 @@ public interface DataPaths {
    */
   static boolean isLibraryTracked(String path) {
     return path.endsWith(ABI_JAR_SUFFIX);
+  }
+
+  static String truncateExtension(String filename) {
+    int idx = filename.lastIndexOf('.');
+    return idx >= 0? filename.substring(0, idx) : filename;
   }
 }

@@ -3,11 +3,10 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.DiagnosticSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.Message;
+import org.jetbrains.jps.util.Iterators;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.jps.util.Iterators.find;
 
 public final class PostponedDiagnosticSink implements DiagnosticSink {
   private final List<Message> myMessages = new ArrayList<>();
@@ -19,7 +18,12 @@ public final class PostponedDiagnosticSink implements DiagnosticSink {
 
   @Override
   public boolean hasErrors() {
-    return find(myMessages, msg -> msg.getKind() == Message.Kind.ERROR) != null;
+    return !Iterators.isEmpty(getErrors());
+  }
+
+  @Override
+  public Iterable<Message> getErrors() {
+    return Iterators.filter(myMessages, msg -> msg.getKind() == Message.Kind.ERROR);
   }
 
   public void drainTo(DiagnosticSink sink) {

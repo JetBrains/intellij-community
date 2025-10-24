@@ -39,6 +39,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 
 import static org.jetbrains.jps.util.Iterators.*;
 
@@ -187,6 +188,7 @@ public final class LibraryDependenciesUpdater {
         .withAffectionFilter(excludedFrom(processedTargets, context, pathMapper))
         .calculateAffected(!isFullRebuild)
         .withChunkStructureFilter(includedIn(chunkTargets, context, pathMapper))
+        .withLogConsumer(LogConsumer.createJULogConsumer(Level.FINE))
         .get();
       DifferentiateResult diffResult = graph.differentiate(delta, diffParams);
 

@@ -30,6 +30,7 @@ public class BazelIncBuilder {
   private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncBuilder");
   // recompile all, if more than X percent of files has been changed; for incremental tests, set equal to 100
   private static final int RECOMPILE_CHANGED_RATIO_PERCENT = 85;
+  private static final boolean COLLECT_BUILD_DIAGNOSTICS = true;
 
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
@@ -43,6 +44,7 @@ public class BazelIncBuilder {
 
     try (StorageManager storageManager = new StorageManager(context)) {
 
+      BuildDiagnosticCollector diagnosticCollector = COLLECT_BUILD_DIAGNOSTICS? new BuildDiagnosticCollector(context) : null;
       try {
         GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
 
@@ -114,7 +116,7 @@ public class BazelIncBuilder {
 
                 try {
                   Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
-                  srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs);
+                  srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs, diagnosticCollector);
                   if (shouldRecompileAll(srcSnapshotDelta)) {
                     srcSnapshotDelta.markRecompileAll();
                   }
@@ -141,7 +143,7 @@ public class BazelIncBuilder {
             if (!srcSnapshotDelta.isRecompileAll()) {
               DependencyGraph graph = storageManager.getGraph();
               Delta sourceOnlyDelta = graph.createDelta(srcSnapshotDelta.getModified(), srcSnapshotDelta.getDeleted(), true);
-              srcSnapshotDelta = graphUpdater.updateBeforeCompilation(graph, srcSnapshotDelta, sourceOnlyDelta, List.of());
+              srcSnapshotDelta = graphUpdater.updateBeforeCompilation(graph, srcSnapshotDelta, sourceOnlyDelta, List.of(), diagnosticCollector);
               if (shouldRecompileAll(srcSnapshotDelta)) {
                 srcSnapshotDelta.markRecompileAll();
               }
@@ -159,6 +161,9 @@ public class BazelIncBuilder {
         do { // build rounds loop
 
           if (srcSnapshotDelta.isRecompileAll()) {
+            if (isInitialRound && diagnosticCollector != null) {
+              diagnosticCollector.setWholeTargetRebuild(true);
+            }
             storageManager.cleanBuildState();
             modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isLibraryTracked(ns.toString())).getElements();
             deletedLibraries = Set.of();
@@ -239,7 +244,7 @@ public class BazelIncBuilder {
           }
 
           NodeSourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateAfterCompilation(
-            storageManager.getGraph(), srcSnapshotDelta, createGraphDelta(storageManager.getGraph(), srcSnapshotDelta, outSink), diagnostic.hasErrors()
+            storageManager.getGraph(), srcSnapshotDelta, createGraphDelta(storageManager.getGraph(), srcSnapshotDelta, outSink), diagnostic.hasErrors(), diagnosticCollector
           );
 
           if (!diagnostic.hasErrors()) {
@@ -278,7 +283,10 @@ public class BazelIncBuilder {
       finally {
         if (diagnostic instanceof PostponedDiagnosticSink) {
           // report postponed errors, if necessary; ensure all errors are reported before storages are closed
-          ((PostponedDiagnosticSink)diagnostic).drainTo(context);
+          ((PostponedDiagnosticSink) diagnostic).drainTo(context);
+        }
+        if (diagnosticCollector != null) {
+          diagnosticCollector.writeData();
         }
       }
 
