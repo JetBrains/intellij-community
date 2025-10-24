@@ -36,6 +36,8 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -78,7 +80,12 @@ class MarkdownPreviewFileEditor(
   init {
     document.addDocumentListener(ReparseContentDocumentListener(), this)
 
-    coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
+    coroutineScope.launch {
+      mainEditor.filterNotNull().first()
+      coroutineScope.launch(Dispatchers.EDT) {
+        attachHtmlPanel()
+      }
+    }
 
     val messageBusConnection = project.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
