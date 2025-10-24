@@ -21,7 +21,7 @@ internal class TasksFinishedDecorator(private val panel: JPanel) {
   private var indicators: Int = 0
 
 
-  fun addIndicator(component: JComponent) {
+  fun indicatorAdded(component: JComponent) {
     if (indicators == 0) {
       panel.remove(finishedTasksLabel)
       hideSeparator(component)
@@ -29,7 +29,7 @@ internal class TasksFinishedDecorator(private val panel: JPanel) {
     indicators++
   }
 
-  fun removeIndicator() {
+  fun indicatorRemoved() {
     indicators--
     if (indicators == 0) {
       panel.add(finishedTasksLabel, 0, 0)

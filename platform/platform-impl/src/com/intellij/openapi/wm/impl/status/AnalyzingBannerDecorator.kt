@@ -26,7 +26,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
   private var banner: Component? = createBanner(revalidatePanel)
 
 
-  fun addIndicator(indicator: ProgressComponent) {
+  fun indicatorAdded(indicator: ProgressComponent) {
     if (banner == null) return
 
     if (isAnalyzingIndicator(indicator) && analyzingComponent == null) {
@@ -40,7 +40,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
     hideSeparatorAfterBanner()
   }
 
-  fun removeIndicator(indicator: ProgressComponent) {
+  fun indicatorRemoved(indicator: ProgressComponent) {
     if (banner == null) return
 
     if (indicator.component == analyzingComponent) {

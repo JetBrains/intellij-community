@@ -73,9 +73,9 @@ final class ProcessPopup {
       component.setOpaque(false);
     }
     myIndicatorPanel.add(component);
-    myTasksFinishedDecorator.addIndicator(component);
+    myTasksFinishedDecorator.indicatorAdded(component);
     if (myAnalyzingBannerDecorator != null) {
-      myAnalyzingBannerDecorator.addIndicator(indicator);
+      myAnalyzingBannerDecorator.indicatorAdded(indicator);
     }
     revalidateAll();
   }
@@ -90,9 +90,9 @@ final class ProcessPopup {
     if (index == 0 && myIndicatorPanel.getComponentCount() > 0) {
       hideSeparator(myIndicatorPanel.getComponent(0));
     }
-    myTasksFinishedDecorator.removeIndicator();
+    myTasksFinishedDecorator.indicatorRemoved();
     if (myAnalyzingBannerDecorator != null) {
-      myAnalyzingBannerDecorator.removeIndicator(indicator);
+      myAnalyzingBannerDecorator.indicatorRemoved(indicator);
     }
     revalidateAll();
   }
