@@ -8,7 +8,6 @@ import com.intellij.openapi.wm.impl.status.ProcessPopup.isProgressIndicator
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.Component
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -21,11 +20,8 @@ internal class TasksFinishedDecorator(private val panel: JPanel) {
   private val finishedTasksLabel = createTasksFinishedLabel()
 
 
-  fun indicatorAdded(component: Component) {
+  fun indicatorAdded() {
     panel.remove(finishedTasksLabel)
-    if (panel.components.firstOrNull { isProgressIndicator(it) } == component) {
-      hideSeparator(component)
-    }
   }
 
   fun indicatorRemoved() {

@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.status.ProcessPopup.hideSeparator
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.InlineBanner
 import com.intellij.util.indexing.IndexingBundle
@@ -15,12 +14,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.JPanel
 
-/*
- Places analyzing progress indicator on top, adds a banner under it.
- Also handles separators:
-  - There is no separator above and below banner
-  - When banner is removed, the separator between the first 2 progresses should appear
- */
+// Places analyzing progress indicator on top, adds a banner under it
 internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePanel: Runnable) {
 
   // component of analyzing progress,
@@ -33,14 +27,11 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
   fun indicatorAdded(indicator: ProgressComponent) {
     if (userClosedBanner()) return
 
-    if (isAnalyzingIndicator(indicator) && analyzingComponent == null) {
+    if (analyzingComponent == null && isAnalyzingIndicator(indicator)) {
       analyzingComponent = indicator.component
-      hideSeparator(analyzingComponent!!)
-
       panel.add(analyzingComponent, 0, 0)
       panel.add(banner, 1, 1)
     }
-    hideSeparatorAfterBanner()
   }
 
   fun indicatorRemoved(indicator: ProgressComponent, isShowing: Boolean) {
@@ -49,10 +40,9 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
     if (indicator.component == analyzingComponent) {
       analyzingComponent = null
       if (!isShowing) {
-        removeBanner()
+        panel.remove(banner)
       }
     }
-    hideSeparatorAfterBanner()
   }
 
   // hides banner on popup close if analyzing completed
@@ -60,24 +50,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
     if (userClosedBanner() || analyzingComponent != null) {
       return
     }
-    removeBanner()
-  }
-
-  // removes the separator between the first 2 indicators if the banner is shown
-  private fun hideSeparatorAfterBanner() {
-    val index = panel.getComponentZOrder(banner)
-    if (index == -1) return
-    if (panel.componentCount < index + 2) return
-    hideSeparator(panel.getComponent(index + 1))
-  }
-
-  // removes the banner and inserts the separator between the first 2 indicators
-  private fun removeBanner() {
     panel.remove(banner)
-
-    if (analyzingComponent != null && panel.componentCount > 1) {
-      showSeparator(panel.getComponent(1))
-    }
   }
 
   private fun createBanner(revalidatePanel: Runnable): Component {
@@ -96,7 +69,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
 
       // removes banner and prevents showing it again
       setCloseAction {
-        removeBanner()
+        panel.remove(banner)
         PropertiesComponent.getInstance().setValue(USER_CLOSED_ANALYZING_BANNER_KEY, true)
         revalidatePanel.run()
       }
@@ -117,12 +90,6 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePan
 
 private fun isAnalyzingIndicator(indicator: ProgressComponent): Boolean {
   return indicator.info.title == IndexingBundle.message("progress.indexing")
-}
-
-
-private fun showSeparator(component: Component) {
-  val panel = ClientProperty.get(component, ProcessPopup.KEY)
-  panel?.setSeparatorEnabled(true)
 }
 
 
