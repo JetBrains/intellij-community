@@ -1456,6 +1456,9 @@
         <action id="EnableMetalRendering" internal="true" class="com.intellij.ui.EnableMetalRenderingAction">
           <abbreviation value="metal"/>
         </action>
+        <action id="EnableWayland" internal="true" class="com.intellij.ui.EnableWaylandAction">
+          <abbreviation value="wayland"/>
+        </action>
         <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
         <action id="ShowHideDebugInfoInUi" internal="true" class="com.intellij.ide.actions.ShowHideDebugInfoInUiAction"/>
         <separator/>
