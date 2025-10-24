@@ -45,10 +45,12 @@ import kotlin.io.path.Path
 
 private val LOGGER = fileLogger()
 
+internal val PY_REQ_TOOL_ID = ToolId("requirements.txt")
+
 @ApiStatus.Internal
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolId: ToolId = ToolId("PyRequirements") // This is nonsense, but will be dropped soon
+  override val toolId: ToolId = PY_REQ_TOOL_ID // This is nonsense, but will be dropped soon
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module) },

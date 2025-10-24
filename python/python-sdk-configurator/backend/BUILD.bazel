@@ -36,6 +36,9 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//python/python-sdk-configurator/common",
     "//python/common",
+    "//platform/projectModel-impl",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
   ]
 )
 ### auto-generated section `build intellij.python.sdkConfigurator.backend` end

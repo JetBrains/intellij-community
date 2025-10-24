@@ -10,4 +10,5 @@ import javax.swing.Icon
 internal class UvToolIdMapper : ToolIdToIconMapper {
   override val id: ToolId = UV_TOOL_ID
   override val icon: Icon = PythonCommunityImplUVCommonIcons.UV
+  override val clazz: Class<*> = PythonCommunityImplUVCommonIcons::class.java
 }

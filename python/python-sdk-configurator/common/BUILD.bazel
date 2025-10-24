@@ -35,6 +35,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/project/shared:project",
     "//platform/remote-topics/shared:rpc-topics",
+    "//python/common",
   ]
 )
 ### auto-generated section `build intellij.python.sdkConfigurator.common` end

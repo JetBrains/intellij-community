@@ -10,4 +10,5 @@ import javax.swing.Icon
 internal class PoetryToolIdMapper : ToolIdToIconMapper {
   override val id: ToolId = POETRY_TOOL_ID
   override val icon: Icon = PythonCommunityImplPoetryCommonIcons.Poetry
+  override val clazz: Class<*> = PythonCommunityImplPoetryCommonIcons::class.java
 }

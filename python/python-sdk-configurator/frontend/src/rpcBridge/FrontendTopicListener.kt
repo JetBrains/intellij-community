@@ -23,7 +23,7 @@ internal class FrontendTopicListener : ProjectRemoteTopicListener<ModulesDTO> {
       // Ask user to choose modules, then ask backend to configure it
       askUser(project, event) { modulesChosenByUser ->
         scope.launch {
-          SdkConfiguratorBackEndApi().configureSdkAutomatically(project.projectId(), modulesChosenByUser)
+          SdkConfiguratorBackEndApi().configureSdkForModules(project.projectId(), modulesChosenByUser)
         }
       }
     }

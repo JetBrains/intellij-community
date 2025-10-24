@@ -16,6 +16,10 @@
   <extensions defaultExtensionNs="com.intellij.platform">
     <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.ApiProvider"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="1" description="How many SDK lookup processes execute in parallel"
+                 key="intellij.python.sdkConfigurator.backend.sdk.parallel"/>
+  </extensions>
 
   <actions>
     <action class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ConfigureSDKAction" id="ConfigureSDKAction"/>

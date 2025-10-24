@@ -17,8 +17,12 @@ import org.jetbrains.annotations.CheckReturnValue
 @ApiStatus.Internal
 interface PyProjectSdkConfigurationExtension {
   companion object {
-    @JvmStatic
-    val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
+    private val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
+
+    /**
+     * EPs associated by tool id
+     */
+    fun createMap(): Map<ToolId, PyProjectSdkConfigurationExtension> = EP_NAME.extensionList.associateBy { it.toolId }
 
     /**
      * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
