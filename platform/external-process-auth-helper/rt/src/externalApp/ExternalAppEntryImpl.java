@@ -3,14 +3,20 @@ package externalApp;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class ExternalAppEntryImpl implements ExternalAppEntry {
   private final String[] args;
+  private final Class<? extends ExternalApp> externalAppClass;
 
-  ExternalAppEntryImpl(String[] args) {
+  ExternalAppEntryImpl(String[] args, Class<? extends ExternalApp> externalAppClass) {
     this.args = args;
+    this.externalAppClass = externalAppClass;
   }
 
   @Override
@@ -41,5 +47,15 @@ class ExternalAppEntryImpl implements ExternalAppEntry {
   @Override
   public InputStream getStdin() {
     return System.in;
+  }
+
+  @Override
+  public Path getExecutablePath() {
+    try {
+      return Paths.get(this.externalAppClass.getProtectionDomain().getCodeSource().getLocation().toURI());
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

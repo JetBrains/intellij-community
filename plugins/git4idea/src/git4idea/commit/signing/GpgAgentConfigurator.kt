@@ -377,14 +377,15 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
     return gitScriptGenerator.addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
   }
 
-  @Language("Shell Script")
   private fun getScriptTemplate(fallbackPinentryPath: String?): String {
-    return if (fallbackPinentryPath == null) {
-      """|#!/bin/sh
-         |${getCommandLine()}
-      """.trimMargin()
+    // language="Shell Script"
+    val fallbackLine = if (fallbackPinentryPath != null) {
+      """exec ${CommandLineUtil.posixQuote(fallbackPinentryPath)} "$@""""
+    } else {
+      """echo ERR pinentry program is not set"""
     }
-    else {
+    // language="Shell Script"
+    return run {
       """|#!/bin/sh
          |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ]; then
          |  case "${'$'}$PINENTRY_USER_DATA_ENV" in
@@ -392,9 +393,15 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
          |      ${getCommandLine()}
          |      exit $?
          |    ;;
+         |    ${PinentryData.ENTRYPOINT_PREFIX}*)
+         |      EXTERNAL_CLI_ENTRYPOINT=${'$'}{PINENTRY_USER_DATA#IJ_PINENTRY_ENTRYPOINT=}
+         |      EXTERNAL_CLI_ENTRYPOINT=${'$'}{EXTERNAL_CLI_ENTRYPOINT%%:*}
+         |      ${'$'}EXTERNAL_CLI_ENTRYPOINT
+         |      exit $?
+         |    ;;
          |  esac
          |fi
-         |exec ${CommandLineUtil.posixQuote(fallbackPinentryPath)} "$@"
+         |$fallbackLine
       """.trimMargin()
     }
   }

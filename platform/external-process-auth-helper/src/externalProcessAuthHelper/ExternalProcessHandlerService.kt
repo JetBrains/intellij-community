@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper
 
+import com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService.EelExternalAppEntry
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -123,7 +124,8 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
     }
   }
 
-  private class EelExternalAppEntry(val process: EelExecApi.ExternalCliProcess) : ExternalAppEntry, AutoCloseable {
+  @ApiStatus.Internal
+  class EelExternalAppEntry(val process: EelExecApi.ExternalCliProcess) : ExternalAppEntry, AutoCloseable {
     val myStderr: PrintStream = process.stderr.asOutputStream().let(::PrintStream)
     val myStdout: PrintStream = process.stdout.asOutputStream().let(::PrintStream)
     val myStdin: InputStream = process.stdin.consumeAsInputStream()
@@ -133,14 +135,13 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
     override fun getStderr(): PrintStream = myStderr
     override fun getStdout(): PrintStream = myStdout
     override fun getStdin(): InputStream = myStdin
+    override fun getExecutablePath(): Path = process.executableName.asNioPath()
 
     override fun close() {
       stderr.close()
       stdout.close()
     }
   }
-
-  private fun EelExecApi.ExternalCliProcess.toExternalAppEntry() = EelExternalAppEntry(this)
 
   fun registerHandler(handler: T, disposable: Disposable): UUID {
     val key: UUID = UUID.randomUUID()
@@ -234,6 +235,9 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
   private fun runHandler(indicator: EmptyProgressIndicator, uuid: UUID, bodyContent: String): String? =
     ProgressManager.getInstance().runProcess(Computable { externalProcessHandler.invokeHandler(uuid, bodyContent) }, indicator)
 }
+
+@ApiStatus.Internal
+fun EelExecApi.ExternalCliProcess.toExternalAppEntry(): EelExternalAppEntry = EelExternalAppEntry(this)
 
 private val LOG_SERVICE = logger<ExternalProcessHandlerService<*>>()
 
