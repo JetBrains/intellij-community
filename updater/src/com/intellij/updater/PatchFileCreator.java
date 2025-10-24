@@ -140,7 +140,7 @@ public final class PatchFileCreator {
 
     LOG.info(patch.getOldBuild() + " -> " + patch.getNewBuild());
     var oldVersion = Utils.splitVersionString(patch.getOldBuild())[0];
-    var newVersion = Utils.splitVersionString(patch.getOldBuild())[0];
+    var newVersion = Utils.splitVersionString(patch.getNewBuild())[0];
     ui.setDescription(UpdaterUI.message("updating.x.to.y", oldVersion, newVersion));
 
     List<ValidationResult> validationResults = patch.validate(toDir, ui);
