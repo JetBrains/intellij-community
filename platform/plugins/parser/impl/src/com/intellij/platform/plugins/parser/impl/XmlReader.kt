@@ -812,14 +812,15 @@ private fun readInclude(
   }
 
   var readError: IOException? = null
+  val targetPath = LoadPathUtil.toLoadPath(relativePath = path, baseDir = consumer.includeBase)
   val loadedXInclude = try {
-    val targetPath = LoadPathUtil.toLoadPath(relativePath = path, baseDir = consumer.includeBase)
     xIncludeLoader.loadXIncludeReference(path = targetPath)
   }
   catch (e: IOException) {
     readError = e
     null
   }
+
   if (loadedXInclude != null) {
     consumer.pushIncludeBase(LoadPathUtil.getChildBaseDir(base = consumer.includeBase, relativePath = path))
     try {
@@ -840,7 +841,7 @@ private fun readInclude(
     return
   }
   else {
-    throw RuntimeException("Cannot resolve $path (loader=${consumer.xIncludeLoader})", readError)
+    throw RuntimeException("Cannot resolve $path (targetPath=$targetPath, loader=${consumer.xIncludeLoader})", readError)
   }
 }
 

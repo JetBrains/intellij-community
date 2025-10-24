@@ -128,6 +128,7 @@ fun runTestBuild(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   isReproducibilityTestAllowed: Boolean = true,
   checkIntegrityOfEmbeddedFrontend: Boolean = true,
+  checkPrivatePluginModulesAreNotPublic: Boolean = true,
   build: suspend (BuildContext) -> Unit = { buildDistributions(context = it) },
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
@@ -154,6 +155,7 @@ fun runTestBuild(
           traceSpanName = "${testInfo.spanName}#${iterationNumber}",
           writeTelemetry = false,
           checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
+          checkPrivatePluginModulesAreNotPublic = checkPrivatePluginModulesAreNotPublic,
           checkThatBundledPluginInFrontendArePresent = checkIntegrityOfEmbeddedFrontend,
           build = { context ->
             build(context)
@@ -195,6 +197,7 @@ suspend fun runTestBuild(
   testInfo: TestInfo,
   context: suspend () -> BuildContext,
   checkThatBundledPluginInFrontendArePresent: Boolean = true,
+  checkPrivatePluginModulesAreNotPublic: Boolean = true,
   build: suspend (BuildContext) -> Unit = { buildDistributions(it) }
 ) {
   doRunTestBuild(
@@ -203,6 +206,7 @@ suspend fun runTestBuild(
     writeTelemetry = true,
     checkIntegrityOfEmbeddedFrontend = true,
     checkThatBundledPluginInFrontendArePresent = checkThatBundledPluginInFrontendArePresent,
+    checkPrivatePluginModulesAreNotPublic = checkPrivatePluginModulesAreNotPublic,
     build = build,
   )
 }
@@ -215,6 +219,7 @@ private suspend fun doRunTestBuild(
   writeTelemetry: Boolean,
   checkIntegrityOfEmbeddedFrontend: Boolean,
   checkThatBundledPluginInFrontendArePresent: Boolean,
+  checkPrivatePluginModulesAreNotPublic: Boolean = true,
   build: suspend (context: BuildContext) -> Unit,
 ) {
   var outDir: Path? = null
@@ -248,7 +253,9 @@ private suspend fun doRunTestBuild(
           }
         }
 
-        checkPrivatePluginModulesAreNotPublic(context, softly)
+        if (checkPrivatePluginModulesAreNotPublic) {
+          checkPrivatePluginModulesAreNotPublic(context, softly)
+        }
         softly.assertAll()
       }
       catch (e: CancellationException) {

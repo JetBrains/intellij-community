@@ -11,11 +11,12 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.PluginBuildDescriptor
-import org.jetbrains.intellij.build.impl.MODULE_SET_CHAIN_SEPARATOR
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.productLayout.buildModuleSetIncludes
+import org.jetbrains.intellij.build.productLayout.buildModuleToSetMapping
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
@@ -29,36 +30,53 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
   val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
 
+  // Build module-to-set mapping from all configured module sets providers
+  val moduleToSetsMapping = buildModuleToSetMapping(context.productProperties.moduleSetsProviders)
+
   val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
-  val moduleSetIncludes = TreeMap<String, MutableSet<String>>()
-  val directModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
 
+  // Group modules by their module sets using the build-time mapping
   for (entry in productModules) {
-    val chain = entry.first.moduleSet ?: continue
+    val moduleName = entry.first.moduleName
 
-    // parse chain once
-    val parts = chain.split(MODULE_SET_CHAIN_SEPARATOR)
-    val moduleSetName = parts.last()
-
-    // skip non-module-sets
-    if (!moduleSetName.startsWith("intellij.moduleSets.")) {
+    // Look up which module set(s) this module belongs to
+    val moduleSets = moduleToSetsMapping[moduleName]
+    if (moduleSets == null) {
+      // Module not in any module set (e.g., additional product modules)
       continue
     }
 
-    // add to allModuleSets (all module sets used by product)
-    allModuleSets.computeIfAbsent(moduleSetName) { mutableListOf() }.add(entry)
-
-    // add to directModuleSets if no separator (directly included by product)
-    if (parts.size == 1) {
-      directModuleSets.computeIfAbsent(moduleSetName) { mutableListOf() }.add(entry)
+    for (moduleSetName in moduleSets) {
+      allModuleSets.computeIfAbsent(moduleSetName) { mutableListOf() }.add(entry)
     }
+  }
 
-    // extract include relationship if chain exists (parent includes child)
-    if (parts.size >= 2) {
-      val parentModuleSet = parts[parts.size - 2]
-      if (parentModuleSet.startsWith("intellij.moduleSets.")) {
-        moduleSetIncludes.computeIfAbsent(parentModuleSet) { TreeSet() }.add(moduleSetName)
+  // Build module set includes from all configured module sets providers
+  val moduleSetIncludes = buildModuleSetIncludes(context.productProperties.moduleSetsProviders)
+
+  // Filter to only root module sets (not nested in other product module sets)
+  val rootModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
+  val nestedModuleSetNames = mutableSetOf<String>()
+
+  // Recursively collect all nested module sets at any depth
+  fun collectNestedSetsRecursively(moduleSetName: String) {
+    moduleSetIncludes[moduleSetName]?.forEach { nestedSetName ->
+      if (nestedModuleSetNames.add(nestedSetName)) {
+        // Recursively collect nested sets of this nested set
+        collectNestedSetsRecursively(nestedSetName)
       }
+    }
+  }
+
+  // Collect all nested module set names from module sets used by product
+  for (moduleSetName in allModuleSets.keys) {
+    collectNestedSetsRecursively(moduleSetName)
+  }
+
+  // Only include module sets that aren't nested in other product module sets
+  for ((moduleSetName, modules) in allModuleSets) {
+    if (moduleSetName !in nestedModuleSetNames) {
+      rootModuleSets[moduleSetName] = modules
     }
   }
 
@@ -68,16 +86,17 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
     distFiles = context.getDistFiles(os = null, arch = null, libcImpl = null),
     fileToEntry = fileToEntry,
     productModules = productModules,
-    moduleSets = directModuleSets,
+    moduleSets = rootModuleSets,
   )
   zipFileWriter.uncompressedData("platform.yaml", platformData)
   zipFileWriter.uncompressedData("product-modules.yaml", buildProductModuleContentReport(productModules, buildPaths))
 
   // Write module set YAMLs with both direct modules and included module sets
   for ((moduleSetName, modules) in allModuleSets) {
-    val entries = mutableListOf<String>()
+    // Use Set to avoid duplicates (same module can appear in multiple JARs)
+    val entries = TreeSet<String>()
 
-    // Add direct module names
+    // Add direct module names (deduplicated via Set)
     entries.addAll(modules.map { it.first.moduleName })
 
     // Add included module set names (preserving hierarchy)

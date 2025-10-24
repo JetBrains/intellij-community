@@ -70,7 +70,7 @@ suspend fun runApplicationStarter(
   debugPropertyValue?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
   }
-  val actualTimeout = if (debugPropertyValue != null) 20.minutes else timeout
+  val actualTimeout = if (debugPropertyValue == null) timeout else 20.minutes
 
   val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath = classpath, tempDir = tempDir, context = context)
   try {

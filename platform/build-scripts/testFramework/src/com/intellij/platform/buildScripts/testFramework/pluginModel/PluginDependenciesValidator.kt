@@ -375,8 +375,7 @@ class PluginDependenciesValidator private constructor(
     private val customConfigFileToModule: Map<String, String>,
     embeddedContentModules: List<PluginModuleId>,
     private val xIncludeLoader: PluginMainModuleFromSourceXIncludeLoader
-  ) : PathResolver {
-
+  ) : PathResolver, XIncludeLoader by xIncludeLoader {
     private val embeddedContentModules = embeddedContentModules.toSet()
 
     override fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference? {

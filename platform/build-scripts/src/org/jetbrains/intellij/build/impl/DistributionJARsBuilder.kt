@@ -259,6 +259,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     common = common,
     specific = specific,
     additional = additionalDeferred.await(),
+    platformLayout = state.platform,
     context = context,
   )
   common + specific.values.flatten()
@@ -270,6 +271,7 @@ private fun writePluginInfo(
   common: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
   specific: Map<SupportedDistribution, List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>>,
   additional: List<Pair<Path, List<Path>>>?,
+  platformLayout: PlatformLayout,
   context: BuildContext,
 ) {
   val commonClassPath = generatePluginClassPath(pluginEntries = common, moduleOutputPatcher = moduleOutputPatcher)
@@ -282,7 +284,7 @@ private fun writePluginInfo(
     val byteOut = ByteArrayOutputStream()
     val out = DataOutputStream(byteOut)
     val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
-    writePluginClassPathHeader(out = out, isJarOnly = true, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
+    writePluginClassPathHeader(out = out, isJarOnly = true, pluginCount = pluginCount, platformLayout = platformLayout, context = context)
     out.write(commonClassPath)
     additionalClassPath?.let { out.write(it) }
     specificClasspath?.let { out.write(it) }

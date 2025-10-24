@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import org.jetbrains.intellij.build.BuildPaths
 import java.nio.file.Path
 
 /**
@@ -12,7 +13,11 @@ import java.nio.file.Path
  * Products call these functions directly in ProductProperties.getProductContentModules() to create
  * ModuleSet instances that will be automatically injected into the product plugin.xml during build.
  */
-object CommunityModuleSets {
+object CommunityModuleSets : ModuleSetProvider {
+  override fun getOutputDirectory(paths: BuildPaths): Path {
+    return paths.communityHomeDir.resolve("platform/platform-resources/generated")
+  }
+
   /**
    * Main method to regenerate all community module set XML files from Kotlin definitions.
    * Run this whenever module sets are modified to keep XML files in sync.

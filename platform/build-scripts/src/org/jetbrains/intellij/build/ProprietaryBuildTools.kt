@@ -42,9 +42,11 @@ data class ProprietaryBuildTools(
 ) {
   companion object {
     internal val DUMMY_SIGN_TOOL: SignTool = object : SignTool {
-      override val macOsCodesignIdentity: MacOsCodesignIdentity? get() = null
+      override val macOsCodesignIdentity: MacOsCodesignIdentity?
+        get() = null
 
-      override val signNativeFileMode: SignNativeFileMode get() = SignNativeFileMode.DISABLED
+      override val signNativeFileMode: SignNativeFileMode
+        get() = SignNativeFileMode.DISABLED
 
       override suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>) {
         Span.current().addEvent("files won't be signed", Attributes.of(
@@ -54,7 +56,7 @@ data class ProprietaryBuildTools(
       }
 
       override suspend fun signFilesWithGpg(files: List<Path>, context: BuildContext) {
-        signFiles(files, context, persistentMapOf())
+        signFiles(files = files, context = context, options = persistentMapOf())
       }
 
       override suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path {
@@ -65,7 +67,11 @@ data class ProprietaryBuildTools(
     }
 
     val DUMMY: ProprietaryBuildTools = ProprietaryBuildTools(
-      DUMMY_SIGN_TOOL, scrambleTool = null, artifactsServer = null, featureUsageStatisticsProperties = null, licenseServerHost = null
+      signTool = DUMMY_SIGN_TOOL,
+      scrambleTool = null,
+      artifactsServer = null,
+      featureUsageStatisticsProperties = null,
+      licenseServerHost = null
     )
   }
 }

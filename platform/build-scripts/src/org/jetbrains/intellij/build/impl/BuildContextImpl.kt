@@ -144,10 +144,6 @@ class BuildContextImpl internal constructor(
 
   override val isNightlyBuild: Boolean = options.isNightlyBuild || isNightly(buildNumber)
 
-  private fun isNightly(buildNumber: String): Boolean {
-    return buildNumber.count { it == '.' } <= 1
-  }
-
   init {
     @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {
@@ -181,9 +177,17 @@ class BuildContextImpl internal constructor(
       options: BuildOptions = BuildOptions(),
     ): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
-        projectHome, createBuildOutputRootEvaluator(projectHome, productProperties, options), options, setupTracer
+        projectHome = projectHome,
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
+        options = options,
+        setupTracer = setupTracer
       ).asBazelIfNeeded
-      return createContext(compilationContext, projectHome, productProperties, proprietaryBuildTools)
+      return createContext(
+        compilationContext = compilationContext,
+        projectHome = projectHome,
+        productProperties = productProperties,
+        proprietaryBuildTools = proprietaryBuildTools,
+      )
     }
 
     fun createContext(
@@ -203,7 +207,7 @@ class BuildContextImpl internal constructor(
         productProperties.createMacCustomizer(projectHomeAsString),
         proprietaryBuildTools,
         ApplicationInfoPropertiesImpl(compilationContext.project, productProperties, compilationContext.options),
-        jarCacheManager
+        jarCacheManager,
       )
     }
 
@@ -429,7 +433,7 @@ class BuildContextImpl internal constructor(
   }
 
   override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
-    val productModulesFile = findProductModulesFile(this, rootModuleName)
+    val productModulesFile = findProductModulesFile(context = this, clientMainModuleName = rootModuleName)
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
@@ -448,9 +452,9 @@ class BuildContextImpl internal constructor(
   }
 
   override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
-    when {
-      additionalPluginModules.isEmpty() -> return devModeProductRunner.await()
-      else -> return createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
+    return when {
+      additionalPluginModules.isEmpty() -> devModeProductRunner.await()
+      else -> createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
     }
   }
 
@@ -462,8 +466,13 @@ class BuildContextImpl internal constructor(
     attachStdOutToException: Boolean,
   ) {
     runProcess(
-      args, workingDir, timeout, additionalEnvVariables, attachStdOutToException = attachStdOutToException,
-      stdOutConsumer = messages::info, stdErrConsumer = messages::warning,
+      args = args,
+      workingDir = workingDir,
+      timeout = timeout,
+      additionalEnvVariables = additionalEnvVariables,
+      attachStdOutToException = attachStdOutToException,
+      stdOutConsumer = messages::info,
+      stdErrConsumer = messages::warning,
     )
   }
 
@@ -487,4 +496,8 @@ internal fun findProductModulesFile(context: CompilationContext, clientMainModul
 private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path = { project ->
   val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
   projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
+}
+
+private fun isNightly(buildNumber: String): Boolean {
+  return buildNumber.count { it == '.' } <= 1
 }

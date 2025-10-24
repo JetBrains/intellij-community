@@ -16,6 +16,8 @@ import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.ModuleSetProvider
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.jps.model.JpsProject
@@ -503,6 +505,15 @@ abstract class ProductProperties {
       is PluginCreationFail -> result.errorsAndWarnings
     }
   }
+
+  /**
+   * List of module sets providers used to discover and resolve module set relationships.
+   * Used only for packaging tests to group modules by their module sets.
+   *
+   * For community builds: [CommunityModuleSets]
+   * For ultimate builds: both UltimateModuleSets and [CommunityModuleSets]
+   */
+  abstract val moduleSetsProviders: List<ModuleSetProvider>
 }
 
 /**

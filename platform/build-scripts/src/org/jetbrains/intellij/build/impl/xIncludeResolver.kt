@@ -9,7 +9,8 @@ import org.jdom.Element
 import org.jdom.Namespace
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Deque
 
 /**
  * The original element will be mutated in place.
@@ -179,4 +180,128 @@ private fun doResolveNonXIncludeElement(original: Element, bases: Deque<Path>, p
 interface XIncludePathResolver {
   // return null if there is no need to resolve x-include
   fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path?
+}
+
+/**
+ * Resolver that returns JDOM Elements directly instead of file paths.
+ * Useful when working with preloaded/cached XML documents.
+ */
+interface XIncludeElementResolver {
+  // Return the Element for the given href, or null if not found/optional
+  fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element?
+}
+
+/**
+ * Resolve XIncludes using preloaded Elements instead of file paths.
+ * Useful when working with cached/scrambled descriptors already in memory.
+ * The original element will be mutated in place.
+ */
+internal fun resolveNonXIncludeElementFromCache(original: Element, elementResolver: XIncludeElementResolver, trackSourceFile: Boolean = false) {
+  check(!isIncludeElement(original))
+  doResolveNonXIncludeElementFromCache(original = original, elementResolver = elementResolver, trackSourceFile = trackSourceFile)
+}
+
+private fun resolveXIncludeElementFromCache(
+  element: Element,
+  elementResolver: XIncludeElementResolver,
+  trackSourceFile: Boolean
+): MutableList<Element>? {
+  val href = requireNotNull(element.getAttributeValue("href")) { "Missing href attribute" }
+
+  val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
+  if (baseAttribute != null) {
+    throw UnsupportedOperationException("`base` attribute is not supported")
+  }
+
+  val fallbackElement = element.getChild("fallback", element.namespace)
+  val remoteElement = elementResolver.resolveElement(
+    relativePath = href,
+    isOptional = fallbackElement != null,
+    isDynamic = element.getAttribute("includeUnless") != null || element.getAttribute("includeIf") != null,
+  ) ?: return null
+
+  val remoteParsed = extractNeededChildren(element, remoteElement)
+
+  // Add source-file attribute to <content> elements if tracking is enabled
+  if (trackSourceFile) {
+    for (resolvedElement in remoteParsed) {
+      if (resolvedElement.name == "content") {
+        val existingChain = resolvedElement.getAttributeValue(SOURCE_FILE_ATTRIBUTE)
+        // For cached elements, we use href as the source identifier
+        val currentName = href.removeSuffix(".xml")
+
+        if (currentName.startsWith("intellij.moduleSets.")) {
+          val newChain = if (existingChain != null) {
+            "$currentName$MODULE_SET_CHAIN_SEPARATOR$existingChain"
+          }
+          else {
+            currentName
+          }
+          resolvedElement.setAttribute(SOURCE_FILE_ATTRIBUTE, newChain)
+        }
+      }
+    }
+  }
+
+  var i = 0
+  while (true) {
+    if (i >= remoteParsed.size) {
+      break
+    }
+
+    val o = remoteParsed.get(i)
+    if (isIncludeElement(o)) {
+      val elements = resolveXIncludeElementFromCache(
+        element = o,
+        elementResolver = elementResolver,
+        trackSourceFile = trackSourceFile
+      )
+      if (elements != null) {
+        remoteParsed.addAll(i, elements)
+        i += elements.size - 1
+        remoteParsed.removeAt(i)
+      }
+    }
+    else {
+      doResolveNonXIncludeElementFromCache(
+        original = o,
+        elementResolver = elementResolver,
+        trackSourceFile = trackSourceFile
+      )
+    }
+
+    i++
+  }
+
+  for (element in remoteParsed) {
+    element.detach()
+  }
+  return remoteParsed
+}
+
+private fun doResolveNonXIncludeElementFromCache(
+  original: Element,
+  elementResolver: XIncludeElementResolver,
+  trackSourceFile: Boolean
+) {
+  val contentList = original.content
+  for (i in contentList.size - 1 downTo 0) {
+    val content = contentList.get(i)
+    if (content is Element) {
+      if (isIncludeElement(content)) {
+        val result = resolveXIncludeElementFromCache(element = content, elementResolver = elementResolver, trackSourceFile = trackSourceFile)
+        if (result != null) {
+          original.setContent(i, result)
+        }
+      }
+      else {
+        // process child element to resolve possible includes
+        doResolveNonXIncludeElementFromCache(
+          original = content,
+          elementResolver = elementResolver,
+          trackSourceFile = trackSourceFile
+        )
+      }
+    }
+  }
 }

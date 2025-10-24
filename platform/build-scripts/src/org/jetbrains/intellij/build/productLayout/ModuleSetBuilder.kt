@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import org.jetbrains.intellij.build.BuildPaths
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
@@ -22,6 +23,17 @@ data class ModuleSet(
   @JvmField val nestedSets: List<ModuleSet> = emptyList(),
   @JvmField val alias: String? = null,
 )
+
+/**
+ * Interface for module set providers that can generate XML files.
+ * Provides the output directory where generated module set XML files are stored.
+ */
+interface ModuleSetProvider {
+  /**
+   * Returns the path to the META-INF directory where this provider's module set XML files are generated.
+   */
+  fun getOutputDirectory(paths: BuildPaths): Path
+}
 
 /**
  * DSL builder for creating ModuleSets with reduced boilerplate.
@@ -89,6 +101,62 @@ internal fun buildModuleAliasXml(alias: String?): String {
 }
 
 /**
+ * Appends a single module XML element to the StringBuilder.
+ */
+private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
+  sb.append("    <module name=\"${module.name}\"")
+  if (module.loading == ModuleLoadingRule.EMBEDDED) {
+    sb.append(" loading=\"embedded\"")
+  }
+  sb.append("/>")
+  sb.append("\n")
+}
+
+/**
+ * Recursively collects all module aliases from a module set and its nested sets.
+ */
+private fun collectAllAliases(moduleSet: ModuleSet): List<String> {
+  val aliases = mutableListOf<String>()
+  if (moduleSet.alias != null) {
+    aliases.add(moduleSet.alias)
+  }
+  moduleSet.nestedSets.forEach { aliases.addAll(collectAllAliases(it)) }
+  return aliases
+}
+
+/**
+ * Recursively appends modules from a module set, including nested sets.
+ * Handles nested sets at any depth with breadcrumb trail showing full hierarchy.
+ */
+private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, indent: String = "    ", breadcrumb: String = "") {
+  // Get direct modules (not from nested sets)
+  val nestedModuleNames = moduleSet.nestedSets.flatMap { it.modules.map { m -> m.name } }.toHashSet()
+  val directModules = moduleSet.modules.filter { it.name !in nestedModuleNames }
+
+  // Recursively append nested sets first
+  for (nestedSet in moduleSet.nestedSets) {
+    // Build breadcrumb path
+    val nestedBreadcrumb = if (breadcrumb.isEmpty()) {
+      nestedSet.name
+    } else {
+      "$breadcrumb > ${nestedSet.name}"
+    }
+
+    sb.append("$indent<!-- nested: $nestedBreadcrumb -->\n")
+    appendModuleSetContent(sb, nestedSet, indent, nestedBreadcrumb) // RECURSIVE CALL with breadcrumb
+    sb.append("\n")
+  }
+
+  // Then append direct modules
+  if (directModules.isNotEmpty()) {
+    if (moduleSet.nestedSets.isNotEmpty()) {
+      sb.append("$indent<!-- direct modules -->\n")
+    }
+    directModules.forEach { appendModuleXml(sb, it) }
+  }
+}
+
+/**
  * Builds the XML content for a module set.
  *
  * @param moduleSet The module set to build XML for
@@ -96,12 +164,6 @@ internal fun buildModuleAliasXml(alias: String?): String {
  * @return XML string representation of the module set
  */
 internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): String {
-  val hasNestedSets = moduleSet.nestedSets.isNotEmpty()
-
-  // Get direct modules (not from nested sets)
-  val nestedModuleNames = moduleSet.nestedSets.flatMap { it.modules.map { m -> m.name } }.toSet()
-  val directModules = moduleSet.modules.filter { it.name !in nestedModuleNames }
-
   val sb = StringBuilder()
 
   // Add generated file header
@@ -111,47 +173,25 @@ internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): String {
   sb.append("<!-- Source: see moduleSet(\"${moduleSet.name}\") function in ${mainClass}.kt -->\n")
   sb.append("<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->\n")
 
-  // Opening tag
-  if (hasNestedSets) {
-    sb.append("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">")
-  } else {
-    sb.append("<idea-plugin>")
-  }
+  // Opening tag (no xmlns:xi needed since we inline nested sets)
+  sb.append("<idea-plugin>")
   sb.append("\n")
 
-  // Module alias (if present)
-  val aliasXml = buildModuleAliasXml(moduleSet.alias)
-  if (aliasXml.isNotEmpty()) {
-    sb.append(aliasXml)
+  // Output all module aliases (recursively collected from this set and nested sets)
+  val allAliases = collectAllAliases(moduleSet)
+  if (allAliases.isNotEmpty()) {
+    allAliases.forEach { sb.append("  <module value=\"$it\"/>\n") }
     sb.append("\n")
   }
 
-  // `xi:include`s for nested sets
-  if (hasNestedSets) {
-    for (nestedSet in moduleSet.nestedSets) {
-      sb.append("  <xi:include href=\"/META-INF/intellij.moduleSets.${nestedSet.name}.xml\"/>")
-      sb.append("\n")
-    }
-
-    // Add blank line after `xi:include`s if there are direct modules
-    if (directModules.isNotEmpty()) {
-      sb.append("\n")
-    }
-  }
-
-  // Direct content modules
-  if (directModules.isNotEmpty()) {
+  // Collect all modules (nested + direct) and output in a single content block
+  val hasAnyModules = moduleSet.nestedSets.isNotEmpty() || moduleSet.modules.isNotEmpty()
+  if (hasAnyModules) {
     sb.append("  <content namespace=\"jetbrains\">")
     sb.append("\n")
 
-    for (module in directModules) {
-      sb.append("    <module name=\"${module.name}\"")
-      if (module.loading == ModuleLoadingRule.EMBEDDED) {
-        sb.append(" loading=\"embedded\"")
-      }
-      sb.append("/>")
-      sb.append("\n")
-    }
+    // Recursively append all content (handles nested sets at any depth)
+    appendModuleSetContent(sb, moduleSet)
 
     sb.append("  </content>")
     sb.append("\n")
@@ -190,6 +230,99 @@ private fun discoverModuleSets(obj: Any): List<ModuleSet> {
 }
 
 /**
+ * Builds a reverse index mapping each module name to the list of module sets that contain it.
+ * Recursively walks through all module sets and their nested sets.
+ *
+ * This is useful for tracking which module set(s) a module belongs to, especially when
+ * module sets are inlined (no xi:include) and runtime tracking is unavailable.
+ *
+ * @param moduleSetProviders List of objects containing module set definitions (e.g., UltimateModuleSets, CommunityModuleSets)
+ * @return Map from module name to list of module set names (with "intellij.moduleSets." prefix)
+ */
+fun buildModuleToSetMapping(moduleSetProviders: List<Any>): Map<String, List<String>> {
+  val moduleToSets = mutableMapOf<String, MutableList<String>>()
+  val processedSets = mutableSetOf<String>()
+
+  /**
+   * Recursively collects modules from a module set and its nested sets.
+   */
+  fun collectModulesRecursively(set: ModuleSet, setName: String) {
+    // Skip if already processed (prevents duplicates when a module set is both top-level and nested)
+    if (!processedSets.add(setName)) {
+      return
+    }
+
+    // Get direct modules (not from nested sets)
+    val nestedModuleNames = set.nestedSets.flatMap { it.modules.map { m -> m.name } }.toHashSet()
+    val directModules = set.modules.filter { it.name !in nestedModuleNames }
+
+    // Add direct modules to this set
+    for (module in directModules) {
+      moduleToSets.computeIfAbsent(module.name) { mutableListOf() }.add(setName)
+    }
+
+    // Recursively process nested sets
+    for (nestedSet in set.nestedSets) {
+      collectModulesRecursively(nestedSet, "intellij.moduleSets.${nestedSet.name}")
+    }
+  }
+
+  // Process all providers
+  for (provider in moduleSetProviders) {
+    val moduleSets = discoverModuleSets(provider)
+    // Process all top-level module sets from this provider
+    for (moduleSet in moduleSets) {
+      collectModulesRecursively(moduleSet, "intellij.moduleSets.${moduleSet.name}")
+    }
+  }
+
+  return moduleToSets
+}
+
+/**
+ * Builds a mapping of parent module sets to their nested module sets.
+ * This preserves the hierarchical structure after inlining.
+ *
+ * @param moduleSetProviders List of objects containing module set definitions (e.g., UltimateModuleSets, CommunityModuleSets)
+ * @return Map from module set name to set of nested module set names (with "intellij.moduleSets." prefix)
+ */
+fun buildModuleSetIncludes(moduleSetProviders: List<Any>): Map<String, Set<String>> {
+  val moduleSetToIncludes = mutableMapOf<String, MutableSet<String>>()
+  val processedSets = mutableSetOf<String>()
+
+  /**
+   * Recursively collects nested module sets.
+   */
+  fun collectNestedSetsRecursively(set: ModuleSet, setName: String) {
+    // Skip if already processed (prevents duplicates when a module set is both top-level and nested)
+    if (!processedSets.add(setName)) {
+      return
+    }
+
+    if (set.nestedSets.isNotEmpty()) {
+      val includes = moduleSetToIncludes.computeIfAbsent(setName) { mutableSetOf() }
+      for (nestedSet in set.nestedSets) {
+        val nestedSetName = "intellij.moduleSets.${nestedSet.name}"
+        includes.add(nestedSetName)
+        // Recursively process nested sets
+        collectNestedSetsRecursively(nestedSet, nestedSetName)
+      }
+    }
+  }
+
+  // Process all providers
+  for (provider in moduleSetProviders) {
+    val moduleSets = discoverModuleSets(provider)
+    // Process all top-level module sets from this provider
+    for (moduleSet in moduleSets) {
+      collectNestedSetsRecursively(moduleSet, "intellij.moduleSets.${moduleSet.name}")
+    }
+  }
+
+  return moduleSetToIncludes
+}
+
+/**
  * Generates all module set XMLs for the given object.
  * Discovers all ModuleSet functions via reflection, generates XML files, and prints results.
  *
@@ -209,7 +342,7 @@ fun generateAllModuleSets(obj: Any, outputDir: Path, label: String, printSummary
 
   if (printSummary) {
     val result = ModuleSetGenerationResult(label, outputDir, fileResults)
-    printGenerationSummary(listOf(result), null, System.currentTimeMillis() - startTime)
+    printGenerationSummary(moduleSetResults = listOf(result), productResult = null, durationMs = System.currentTimeMillis() - startTime)
   }
 }
 
@@ -222,8 +355,8 @@ fun doGenerateAllModuleSetsInternal(obj: Any, outputDir: Path, label: String): M
 
   val moduleSets = discoverModuleSets(obj)
   val fileResults = moduleSets.map { moduleSet ->
-    generateModuleSetXml(moduleSet, outputDir, label)
+    generateModuleSetXml(moduleSet = moduleSet, outputDir = outputDir, label = label)
   }
 
-  return ModuleSetGenerationResult(label, outputDir, fileResults)
+  return ModuleSetGenerationResult(label = label, outputDir = outputDir, files = fileResults)
 }

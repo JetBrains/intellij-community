@@ -26,6 +26,9 @@ class PlatformLayout : BaseLayout() {
 
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
 
+  @JvmField
+  val cachedDescriptorContainer: CachedDescriptorContainer = CachedDescriptorContainer()
+
   @get:TestOnly
   val excludedProjectLibraries: Sequence<String>
     get() = projectLibraryToPolicy.asSequence().filter { it.value == ProjectLibraryPackagingPolicy.EXCLUDE }.map { it.key }

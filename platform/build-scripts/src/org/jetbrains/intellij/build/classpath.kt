@@ -3,20 +3,32 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
+import org.jdom.CDATA
+import org.jdom.Element
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.intellij.build.impl.CachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.XIncludeElementResolver
+import org.jetbrains.intellij.build.impl.createXIncludePathResolver
+import org.jetbrains.intellij.build.impl.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOwnedFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.impl.resolveNonXIncludeElementFromCache
+import org.jetbrains.intellij.build.impl.toLoadPath
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import java.io.ByteArrayOutputStream
@@ -85,25 +97,95 @@ internal data class PluginBuildDescriptor(
   @JvmField val moduleNames: List<String>,
 )
 
-internal fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolean, pluginCount: Int, moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
+internal fun writePluginClassPathHeader(
+  out: DataOutputStream,
+  isJarOnly: Boolean,
+  pluginCount: Int,
+  platformLayout: PlatformLayout,
+  context: BuildContext,
+) {
   // format version
   out.write(2)
   // jarOnly
   out.write(if (isJarOnly) 1 else 0)
 
-  // main plugin
-  val mainDescriptor = moduleOutputPatcher.getPatchedContent(context.productProperties.applicationInfoModule).let {
-    it.get("META-INF/plugin.xml") ?: it.get("META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+  val mainPluginDescriptorContent = BufferExposingByteArrayOutputStream().use {
+    JDOMUtil.write(createCachedProductDescriptor(platformLayout, context), it)
+    it
   }
 
-  val mainPluginDescriptorContent = requireNotNull(mainDescriptor) {
-    "Cannot find core plugin descriptor (module=${context.productProperties.applicationInfoModule})"
-  }
-  out.writeInt(mainPluginDescriptorContent.size)
-  out.write(mainPluginDescriptorContent)
+  out.writeInt(mainPluginDescriptorContent.size())
+  out.write(mainPluginDescriptorContent.internalBuffer, 0, mainPluginDescriptorContent.size())
 
   // bundled plugin metadata
   out.writeShort(pluginCount)
+}
+
+@VisibleForTesting
+fun createCachedProductDescriptor(platformLayout: PlatformLayout, context: BuildContext): Element {
+  val cachedDescriptorContainer = platformLayout.cachedDescriptorContainer
+  val mainPluginDescriptor = requireNotNull(cachedDescriptorContainer.productDescriptor) {
+    "Cannot find core plugin descriptor (module=${context.productProperties.applicationInfoModule})"
+  }
+
+  val xIncludeResolver = object : XIncludeElementResolver {
+    private val default by lazy {
+      createXIncludePathResolver(
+        includedPlatformModulesPartialList = platformLayout.includedModules.asSequence().map { it.moduleName }.distinct().toList(),
+        context = context,
+      )
+    }
+
+    override fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
+      platformLayout.cachedDescriptorContainer.getCachedFileData(toLoadPath(relativePath))?.let {
+        return JDOMUtil.load(it)
+      }
+      return default.resolvePath(relativePath = relativePath, base = null, isOptional = isOptional, isDynamic = isDynamic)?.let {
+        JDOMUtil.load(it)
+      }
+    }
+  }
+
+  for (content in mainPluginDescriptor.getChildren("content")) {
+    for (moduleElement in content.getChildren("module")) {
+      processProductModule(
+        moduleElement = moduleElement,
+        cachedDescriptorContainer = cachedDescriptorContainer,
+        xIncludeResolver = xIncludeResolver,
+        moduleOutputProvider = context,
+      )
+    }
+  }
+
+  return mainPluginDescriptor
+}
+
+private fun processProductModule(
+  moduleElement: Element,
+  cachedDescriptorContainer: CachedDescriptorContainer,
+  moduleOutputProvider: ModuleOutputProvider,
+  xIncludeResolver: XIncludeElementResolver,
+) {
+  if (!moduleElement.content.isEmpty()) {
+    return
+  }
+
+  val moduleName = moduleElement.getAttributeValue("name") ?: return
+  val descriptorFile = "${moduleName.replace('/', '.')}.xml"
+
+  val cachedFileData = cachedDescriptorContainer.getCachedFileData(descriptorFile)
+  val xml = if (cachedFileData == null) {
+    val file = requireNotNull(findFileInModuleSources(module = moduleOutputProvider.findRequiredModule(moduleName), relativePath = descriptorFile)) {
+      "Cannot find file $descriptorFile in module $moduleName"
+    }
+    JDOMUtil.load(file)
+  }
+  else {
+    JDOMUtil.load(cachedFileData)
+  }
+
+  resolveNonXIncludeElementFromCache(original = xml, elementResolver = xIncludeResolver)
+  moduleElement.setContent(CDATA(JDOMUtil.write(xml)))
 }
 
 internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, moduleOutputPatcher: ModuleOutputPatcher): ByteArray {

@@ -30,11 +30,12 @@ fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): 
 
   val xml = buildModuleSetXml(moduleSet, label)
 
-  // Determine change status
+  // determine change status
   val status = if (Files.exists(outputPath)) {
     val existingContent = Files.readString(outputPath)
     if (existingContent == xml) FileChangeStatus.UNCHANGED else FileChangeStatus.MODIFIED
-  } else {
+  }
+  else {
     FileChangeStatus.CREATED
   }
 
@@ -92,7 +93,7 @@ fun generateProductXml(
   spec: ProductModulesContentSpec,
   productName: String,
   moduleOutputProvider: ModuleOutputProvider,
-  projectRoot: Path
+  projectRoot: Path,
 ): ProductFileResult {
   // Determine which generator to recommend based on plugin.xml file location
   // Community products are under community/ directory, Ultimate products are not

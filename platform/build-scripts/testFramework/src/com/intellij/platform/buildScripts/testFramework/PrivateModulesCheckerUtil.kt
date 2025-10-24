@@ -17,7 +17,9 @@ suspend fun checkPrivatePluginModulesAreNotPublic(
   softly: SoftAssertions,
 ) {
   val privateModules = getPrivateModules(context)
-  if (privateModules.isEmpty()) return
+  if (privateModules.isEmpty()) {
+    return
+  }
 
   val visited = mutableSetOf<JpsModule>()
   val bundledPrivateModules = context.productProperties.productLayout.bundledPluginModules.asSequence()

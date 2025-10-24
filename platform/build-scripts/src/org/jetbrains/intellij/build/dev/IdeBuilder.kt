@@ -266,30 +266,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       )
     }
 
-    launch {
-      val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
-      spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
-        val mainData = generatePluginClassPath(pluginEntries, moduleOutputPatcher)
-        val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
-
-        val byteOut = ByteArrayOutputStream()
-        val out = DataOutputStream(byteOut)
-        val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
-        platformDistributionEntriesDeferred.join()
-        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
-        out.write(mainData)
-        additionalData?.let { out.write(it) }
-        out.close()
-        Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
-      }
-    }
-
     if (context.generateRuntimeModuleRepository) {
       launch {
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
                                      pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
         spanBuilder("generate runtime repository").use(Dispatchers.IO) {
-          generateRuntimeModuleRepositoryForDevBuild(allDistributionEntries, runDir, context)
+          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
       }
     }
@@ -303,22 +285,45 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       )
     }
 
-    launch(Dispatchers.IO) {
+    launch {
       // ensure platform dist files added to the list
       val platformFileEntries = platformDistributionEntriesDeferred.await()
       // ensure plugin dist files added to the list
-      pluginDistributionEntriesDeferred.await()
+      val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
+      val platformLayout = platformLayout.await()
 
+      // must be before generatePluginClassPath, because we modify plugin descriptors (e.g., rename classes)
       spanBuilder("scramble platform").use {
-        request.scrambleTool?.scramble(platform = platformLayout.await(), platformFileEntries = platformFileEntries, context = context)
+        request.scrambleTool?.scramble(platform = platformLayout, platformFileEntries = platformFileEntries, context = context)
       }
-      copyDistFiles(
-        context = context,
-        newDir = runDir,
-        os = request.os,
-        arch = JvmArchitecture.currentJvmArch,
-        libcImpl = LibcImpl.current(OsFamily.currentOs),
-      )
+
+      launch {
+        val (pluginEntries, additionalEntries) = pluginDistributionEntries
+        spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
+          val mainData = generatePluginClassPath(pluginEntries, moduleOutputPatcher)
+          val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
+
+          val byteOut = ByteArrayOutputStream()
+          val out = DataOutputStream(byteOut)
+          val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
+          platformDistributionEntriesDeferred.join()
+          writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, platformLayout = platformLayout, context = context)
+          out.write(mainData)
+          additionalData?.let { out.write(it) }
+          out.close()
+          Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
+        }
+      }
+
+      withContext(Dispatchers.IO) {
+        copyDistFiles(
+          context = context,
+          newDir = runDir,
+          os = request.os,
+          arch = JvmArchitecture.currentJvmArch,
+          libcImpl = LibcImpl.current(OsFamily.currentOs),
+        )
+      }
     }
   }.invokeOnCompletion {
     // close debug logging to prevent locking of the output directory on Windows

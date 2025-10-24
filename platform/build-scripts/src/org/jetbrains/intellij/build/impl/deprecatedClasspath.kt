@@ -8,10 +8,10 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOwnedFileEntry
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
+@Deprecated("Do not use it")
 suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildContext): Collection<String> {
   val contentReport = generateProjectStructureMapping(platformLayout, context)
 

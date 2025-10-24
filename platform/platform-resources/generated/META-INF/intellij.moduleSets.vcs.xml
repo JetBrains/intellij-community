@@ -2,11 +2,18 @@
 <!-- To regenerate, run: CommunityModuleSets.main() -->
 <!-- Source: see moduleSet("vcs") function in CommunityModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/intellij.moduleSets.vcs.shared.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.vcs.frontend.xml"/>
-
+<idea-plugin>
   <content namespace="jetbrains">
+    <!-- nested: vcs.shared -->
+    <module name="intellij.platform.vcs.core" loading="embedded"/>
+    <module name="intellij.platform.vcs.shared" loading="embedded"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+
+    <!-- nested: vcs.frontend -->
+    <module name="intellij.platform.vcs.impl.frontend"/>
+
+    <!-- direct modules -->
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.exec"/>
     <module name="intellij.platform.vcs.impl.lang"/>
