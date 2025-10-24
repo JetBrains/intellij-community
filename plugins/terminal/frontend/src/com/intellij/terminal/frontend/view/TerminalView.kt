@@ -70,9 +70,13 @@ interface TerminalView {
 
   /**
    * Can be used to get or await the shell integration initialization.
-   * Note that it may never complete because the shell integration may be not available
+   *
+   * Note that **it may never complete** because the shell integration may be not available
    * (for example, because of an unsupported shell or environment)
    * or it can be disabled in the Terminal settings ([org.jetbrains.plugins.terminal.TerminalOptionsProvider.shellIntegration]).
+   *
+   * If the started shell supports the shell integration,
+   * it will be initialized before the first prompt is printed in the output.
    *
    * @see TerminalShellIntegration
    */
