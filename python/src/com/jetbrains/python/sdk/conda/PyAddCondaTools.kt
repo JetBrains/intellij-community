@@ -90,7 +90,9 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   edtWriteAction {
     sdkModificator.commitChanges()
   }
-  saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
+  if (targetConfig == null) {
+    saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
+  }
   return sdk
 }
 
@@ -146,7 +148,9 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
     existingSdks = existingSdks,
     project = project,
   )
-  saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
+  if (targetConfig == null) {
+    saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
+  }
 
   return PyResult.success(sdk)
 }
