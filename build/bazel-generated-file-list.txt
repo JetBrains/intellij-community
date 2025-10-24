@@ -1490,6 +1490,7 @@ tools/devLauncher
 tools/devLauncher/tests
 tools/intellij.lambda.testFramework
 tools/intellij.lambda.testFramework/lambdaTestPlugin
+tools/intellij.lambda.tests
 tools/intellij.tools.ide.metrics.benchmark
 tools/intellij.tools.ide.metrics.collector
 tools/intellij.tools.ide.metrics.collector.starter
@@ -1498,7 +1499,6 @@ tools/intellij.tools.ide.starter.build.server
 tools/intellij.tools.ide.starter.driver
 tools/intellij.tools.ide.starter.junit5
 tools/intellij.tools.ide.util.common
-tools/lambdaTests
 tools/launcher-generator
 tools/reproducibleBuilds.diff
 uast/testFramework
