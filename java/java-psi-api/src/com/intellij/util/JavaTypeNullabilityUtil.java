@@ -119,14 +119,17 @@ public final class JavaTypeNullabilityUtil {
 
     if (leftType == null || TypeConversionUtil.isNullType(leftType) ||
         rightType == null || TypeConversionUtil.isNullType(rightType)
-    ) return NullabilityConflict.UNKNOWN;
+    ) {
+      return NullabilityConflict.UNKNOWN;
+    }
 
     if (rightType instanceof PsiIntersectionType) {
       return getNullabilityConflictInTypeArguments(leftType, rightType, checkNotNullToNull);
     }
 
     if (rightType instanceof PsiCapturedWildcardType) {
-      return getNullabilityConflictInAssignment(leftType, ((PsiCapturedWildcardType)rightType).getUpperBound(true), checkNotNullToNull, false);
+      return getNullabilityConflictInAssignment(leftType, ((PsiCapturedWildcardType)rightType).getUpperBound(true), checkNotNullToNull,
+                                                false);
     }
     if (leftType instanceof PsiCapturedWildcardType) {
       return getNullabilityConflictInAssignment(((PsiCapturedWildcardType)leftType).getLowerBound(), rightType, checkNotNullToNull, false);
