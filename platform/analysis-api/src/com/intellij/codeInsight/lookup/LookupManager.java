@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
@@ -27,10 +30,12 @@ public abstract class LookupManager {
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) return null;
 
-    final LookupEx lookup = getInstance(project).getActiveLookup();
-    if (lookup == null) return null;
+    try (AccessToken ignored = ClientId.withExplicitClientId(ClientEditorManager.getClientId(editor))) {
+      final LookupEx lookup = getInstance(project).getActiveLookup();
+      if (lookup == null) return null;
 
-    return lookup.getTopLevelEditor() == InjectedLanguageEditorUtil.getTopLevelEditor(editor) ? lookup : null;
+      return lookup.getTopLevelEditor() == InjectedLanguageEditorUtil.getTopLevelEditor(editor) ? lookup : null;
+    }
   }
 
   public @Nullable LookupEx showLookup(@NotNull Editor editor, LookupElement @NotNull ... items) {
