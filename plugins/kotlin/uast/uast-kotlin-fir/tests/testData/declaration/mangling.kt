@@ -15,5 +15,8 @@ class Foo {
     internal fun bar2(a: Sequence, b: Unresolved) {}
     private fun bar3(x: Foo.Inner, vararg y: Inner) = "str"
 
+    @JvmOverloads
+    internal fun baz(a: Int = 42) {}
+
     class Inner {}
 }

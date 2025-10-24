@@ -16,6 +16,13 @@ public final class Foo {
     private final fun bar3(@org.jetbrains.annotations.NotNull x: Foo.Inner, @org.jetbrains.annotations.NotNull y: Foo.Inner...) : java.lang.String {
         return "str"
     }
+    @kotlin.jvm.JvmOverloads
+    public final fun baz$light_idea_test_case(@org.jetbrains.annotations.NotNull a: int) : void {
+    }
+    @kotlin.jvm.JvmOverloads
+    public final fun baz$light_idea_test_case() : void {
+        UIdentifier (Identifier (`baz$light_idea_test_case`))(42)
+    }
     public fun Foo() = UastEmptyExpression
     public static final class Inner {
         public fun Inner() = UastEmptyExpression
