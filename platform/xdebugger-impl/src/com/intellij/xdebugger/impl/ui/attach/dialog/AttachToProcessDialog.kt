@@ -128,6 +128,7 @@ open class AttachToProcessDialog(
     viewsPanel = panel { row { segmentedButton(allViews) { text = it.getName() }.bind(currentAttachView) } }
 
     northToolbar = createNorthToolbar()
+    northToolbar.targetComponent = viewPanel
     viewPanel.add(filterTextField, "wrap, grow")
     updateProblemStripe()
     currentAttachView.afterChange { updateView(it) }
