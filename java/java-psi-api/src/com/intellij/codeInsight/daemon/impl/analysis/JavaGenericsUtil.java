@@ -6,7 +6,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -319,58 +318,6 @@ public final class JavaGenericsUtil {
    */
   public static @Nullable PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     return getCollectionItemType(expression.getType(), expression.getResolveScope());
-  }
-
-
-  /**
-   * Substitutes all values for type parameters of the {@code baseType} from the {@code derivedType}.
-   *
-   * @return null if the calculation wasn't successful, list of substituted types otherwise.
-   *
-   * @see JavaGenericsUtil#getCollectionItemType(PsiExpression)
-   */
-  public static @Nullable List<@NotNull PsiType> getParentParameterTypeListFromDerivedType(@Nullable PsiType baseType, @Nullable PsiType derivedType) {
-    if (derivedType instanceof PsiClassType) {
-      PsiClass baseClass = PsiTypesUtil.getPsiClass(baseType);
-      if (baseClass == null) return null;
-      final PsiClassType.ClassResolveResult resolveResult = getDerivedClassTypeResolveResult((PsiClassType)derivedType);
-      PsiClass derivedClass = resolveResult.getElement();
-      if (derivedClass == null) return null;
-      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      PsiTypeParameter[] parameters = baseClass.getTypeParameters();
-      PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, derivedClass, substitutor);
-      if (superClassSubstitutor == null) return null;
-      return ContainerUtil.map(
-        parameters, typeParameter -> {
-          PsiType substitutedType = superClassSubstitutor.substitute(typeParameter);
-          return substitutedType == null ? PsiType.getJavaLangObject(derivedClass.getManager(), derivedClass.getResolveScope()) : substitutedType;
-        }
-      );
-    } else if (derivedType instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType)derivedType).getConjuncts()) {
-        List<@NotNull PsiType> candidates = getParentParameterTypeListFromDerivedType(baseType, conjunct);
-        if (candidates != null) return candidates;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Retrieves the resolve result corresponding to the given {@code derivedType}. If the initial resolved
-   * result is a type parameter with an upper bound, then the upper bound is returned, otherwise the initial resolve result.
-   */
-  private static @NotNull PsiClassType.ClassResolveResult getDerivedClassTypeResolveResult(PsiClassType derivedType) {
-    final PsiClassType.ClassResolveResult resolveResult = derivedType.resolveGenerics();
-    PsiClass derivedClass = resolveResult.getElement();
-    if (derivedClass instanceof PsiTypeParameter) {
-      PsiTypeParameter typeParameter = (PsiTypeParameter)derivedClass;
-      PsiClassType[] types = typeParameter.getExtendsListTypes();
-      if (types.length > 1) return PsiClassType.ClassResolveResult.EMPTY;
-      else if (types.length == 1) {
-        return types[0].resolveGenerics();
-      }
-    }
-    return resolveResult;
   }
 
   public static @Nullable PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {

@@ -2,8 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -166,8 +167,10 @@ public final class JavaTypeNullabilityUtil {
   private static @NotNull NullabilityConflict getNullabilityConflictInTypeArguments(@NotNull PsiType leftType,
                                                                                     @NotNull PsiType rightType,
                                                                                     boolean checkNotNullToNull) {
-    List<PsiType> leftParameterTypeList = JavaGenericsUtil.getParentParameterTypeListFromDerivedType(leftType, leftType);
-    List<PsiType> rightParameterTypeList = JavaGenericsUtil.getParentParameterTypeListFromDerivedType(leftType, rightType);
+    PsiClass leftClass = PsiTypesUtil.getPsiClass(leftType);
+    if (leftClass == null) return NullabilityConflict.UNKNOWN;
+    List<PsiType> leftParameterTypeList = getParentParameterTypeListFromDerivedType(leftType, leftClass);
+    List<PsiType> rightParameterTypeList = getParentParameterTypeListFromDerivedType(rightType, leftClass);
     if (leftParameterTypeList == null ||
         rightParameterTypeList == null ||
         leftParameterTypeList.size() != rightParameterTypeList.size()) {
@@ -188,6 +191,18 @@ public final class JavaTypeNullabilityUtil {
     }
 
     return NullabilityConflict.UNKNOWN;
+  }
+
+  private static @Nullable List<@NotNull PsiType> getParentParameterTypeListFromDerivedType(@NotNull PsiType derivedType,
+                                                                                            @NotNull PsiClass superClass) {
+    if (derivedType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)derivedType).getConjuncts()) {
+        List<@NotNull PsiType> candidates = getParentParameterTypeListFromDerivedType(conjunct, superClass);
+        if (candidates != null) return candidates;
+      }
+      return null;
+    }
+    return PsiUtil.substituteTypeParameters(derivedType, superClass, true);
   }
 
   private static boolean isAllowedNullabilityConflictType(boolean checkNotNullToNull, @NotNull NullabilityConflict nullabilityConflict) {
