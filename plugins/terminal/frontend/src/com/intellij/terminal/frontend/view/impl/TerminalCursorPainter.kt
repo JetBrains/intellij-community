@@ -17,7 +17,9 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
@@ -31,6 +33,7 @@ import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 import java.util.concurrent.CopyOnWriteArrayList
 
+@OptIn(AwaitCancellationAndInvoke::class)
 internal class TerminalCursorPainter private constructor(
   private val editor: EditorEx,
   private val outputModel: TerminalOutputModel,
@@ -40,6 +43,7 @@ internal class TerminalCursorPainter private constructor(
   private val listeners = CopyOnWriteArrayList<TerminalCursorPainterListener>()
 
   private var cursorPaintingJob: Job? = null
+  private var curHighlighter: RangeHighlighter? = null
 
   private var curCursorState: CursorState = CursorState(
     offset = outputModel.cursorOffset,
@@ -50,6 +54,11 @@ internal class TerminalCursorPainter private constructor(
 
   init {
     updateCursor(curCursorState)
+
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
+      curHighlighter?.dispose()
+      curHighlighter = null
+    }
 
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
@@ -101,7 +110,12 @@ internal class TerminalCursorPainter private constructor(
 
   @RequiresEdt
   private fun updateCursor(state: CursorState) {
+    // Remove the active highlighter synchronously to avoid the situation when both old and new highlighters are painted.
+    // Can't move highlighter disposing to the painter job, because its cancellation is asynchronous.
+    curHighlighter?.dispose()
+    curHighlighter = null
     cursorPaintingJob?.cancel()
+
     cursorPaintingJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
       paintCursor(state)
     }
@@ -137,38 +151,28 @@ internal class TerminalCursorPainter private constructor(
   }
 
   private suspend fun paintBlinkingCursor(renderer: CursorRenderer, offset: TerminalOffset) {
-    var highlighter: RangeHighlighter? = renderer.installCursorHighlighter(offset)
-    try {
-      val blinkingPeriod = editor.settings.caretBlinkPeriod.toLong()
-      var shouldPaint = false
+    curHighlighter = renderer.installCursorHighlighter(offset)
+    val blinkingPeriod = editor.settings.caretBlinkPeriod.toLong()
+    var shouldPaint = false
 
-      while (true) {
-        delay(blinkingPeriod)
+    while (true) {
+      delay(blinkingPeriod)
 
-        if (shouldPaint) {
-          highlighter = renderer.installCursorHighlighter(offset)
-        }
-        else {
-          highlighter?.dispose()
-          highlighter = null
-        }
-
-        shouldPaint = !shouldPaint
+      if (shouldPaint) {
+        curHighlighter = renderer.installCursorHighlighter(offset)
       }
-    }
-    finally {
-      highlighter?.dispose()
+      else {
+        curHighlighter?.dispose()
+        curHighlighter = null
+      }
+
+      shouldPaint = !shouldPaint
     }
   }
 
   private suspend fun paintStaticCursor(renderer: CursorRenderer, offset: TerminalOffset) {
-    val highlighter = renderer.installCursorHighlighter(offset)
-    try {
-      awaitCancellation()
-    }
-    finally {
-      highlighter.dispose()
-    }
+    curHighlighter = renderer.installCursorHighlighter(offset)
+    awaitCancellation()
   }
 
   private fun getDefaultCursorShape(): CursorShape {
