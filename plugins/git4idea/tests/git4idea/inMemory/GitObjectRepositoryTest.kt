@@ -7,6 +7,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
 import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertMessage
 import git4idea.test.gitAsBytes
 import git4idea.test.tac
 import kotlin.jvm.java
@@ -67,7 +68,7 @@ class GitObjectRepositoryTest : GitSingleRepoTest() {
 
     assertEquals("Commit should have correct tree OID", tree.oid, commit.treeOid)
     assertEquals("Commit should have correct author", SAMPLE_AUTHOR, commit.author)
-    assertEquals("Commit should have correct message", "Test commit message", commit.message.toString(Charsets.UTF_8))
+    assertMessage(commit.message.toString(Charsets.UTF_8), "Test commit message", "Commit should have correct message")
     assertEquals("Commit should have no parents", 0, commit.parentsOids.size)
   }
 
@@ -205,7 +206,7 @@ class GitObjectRepositoryTest : GitSingleRepoTest() {
     val commitOid = repository.commitTree(tree.oid, emptyList(), emptyMessage, SAMPLE_AUTHOR)
     val commit = repository.findCommit(commitOid)
 
-    assertEquals("Commit should have empty message", "", commit.message.toString(Charsets.UTF_8))
+    assertMessage(commit.message.toString(Charsets.UTF_8), "", "Commit should have empty message")
   }
 
   private fun createTreeEntries(blob: GitObject.Blob): Map<GitObject.Tree.FileName, GitObject.Tree.Entry> {

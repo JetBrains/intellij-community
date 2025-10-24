@@ -13,6 +13,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.inMemory.GitCommitMessageFormatter;
 import git4idea.repo.GitProjectConfigurationCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +42,14 @@ public final class GitConfigUtil {
   public static final @NlsSafe String CORE_SSH_COMMAND = "core.sshCommand";
   public static final @NlsSafe String CORE_COMMENT_CHAR = "core.commentChar";
   public static final @NlsSafe String LOG_OUTPUT_ENCODING = "i18n.logoutputencoding";
+  public static final @NlsSafe String COMMIT_CLEANUP = "commit.cleanup";
   public static final @NlsSafe String COMMIT_ENCODING = "i18n.commitencoding";
   public static final @NlsSafe String COMMIT_TEMPLATE = "commit.template";
   public static final @NlsSafe String GPG_PROGRAM = "gpg.program";
   public static final @NlsSafe String GPG_COMMIT_SIGN = "commit.gpgSign";
   public static final @NlsSafe String GPG_COMMIT_SIGN_KEY = "user.signingkey";
+
+  public static final String DEFAULT_COMMENT_CHAR = "#";
 
   private GitConfigUtil() {
   }
@@ -161,6 +165,25 @@ public final class GitConfigUtil {
   public static boolean isRebaseUpdateRefsEnabledCached(@NotNull Project project, @NotNull VirtualFile root) {
     return Boolean.TRUE.equals(getBooleanValue(GitProjectConfigurationCache.getInstance(project)
                                                  .readRepositoryConfig(root, UPDATE_REFS)));
+  }
+
+  @RequiresBackgroundThread
+  public static @NotNull GitCommitMessageFormatter.CleanupMode getCommitMessageCleanupModeCached(@NotNull Project project,
+                                                                                                 @NotNull VirtualFile root) {
+    String mode = GitProjectConfigurationCache.getInstance(project).readRepositoryConfig(root, COMMIT_CLEANUP);
+    return GitCommitMessageFormatter.CleanupMode.parse(mode);
+  }
+
+  @RequiresBackgroundThread
+  public static @NotNull String getCommitMessageCommentCharCached(@NotNull Project project,
+                                                                  @NotNull VirtualFile root) {
+    String commentString = GitProjectConfigurationCache.getInstance(project).readRepositoryConfig(root, CORE_COMMENT_CHAR);
+    if (commentString == null) {
+      return DEFAULT_COMMENT_CHAR;
+    }
+    else {
+      return commentString;
+    }
   }
 
   /**

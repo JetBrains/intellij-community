@@ -118,9 +118,12 @@ internal class GitObjectRepository(val repository: GitRepository) {
     author: GitObject.Commit.Author? = null,
   ): Oid {
     LOG.debug("Starting commitTree operation: treeOid=$treeOid, parents=${parentsOids}")
+    val project = repository.project
+    val root = repository.root
 
+    val formattedMessage = GitCommitMessageFormatter.format(project, root, message.toString(Charsets.UTF_8))
     val messageFile = try {
-      GitCheckinEnvironment.createCommitMessageFile(repository.project, repository.root, message.toString(Charsets.UTF_8))
+      GitCheckinEnvironment.createCommitMessageFile(project, root, formattedMessage)
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -130,7 +133,7 @@ internal class GitObjectRepository(val repository: GitRepository) {
       throw e
     }
 
-    val handler = GitLineHandler(repository.project, repository.root, GitCommand.COMMIT_TREE).apply {
+    val handler = GitLineHandler(project, root, GitCommand.COMMIT_TREE).apply {
       setSilent(true)
       parentsOids.forEach { addParameters("-p", it.hex()) }
       if (author != null) {
@@ -145,7 +148,7 @@ internal class GitObjectRepository(val repository: GitRepository) {
       addAbsoluteFile(messageFile)
       addParameters(treeOid.hex())
 
-      if (message.isEmpty()) { // in this case git will ignore -F and read message from stdin
+      if (formattedMessage.isEmpty()) { // in this case git will ignore -F and read message from stdin
         setInputProcessor(GitHandlerInputProcessorUtil.redirectStream(byteArrayOf().inputStream()))
       }
     }
