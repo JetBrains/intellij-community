@@ -16,8 +16,8 @@ abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : P
    */
   open var inlayHints: Boolean? = null
   var executableDiscoveryMode: ExecutableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
-  var pathToExecutable: String? = null
-  val executablePath: Path? = pathToExecutable?.let { Path(it) }
+  var pathToExecutable: String = ""
+  val executablePath: Path? get() = pathToExecutable.ifEmpty { null }?.let { Path(it) }
   var sdkName: String = DEFAULT_ENVIRONMENT
 
   final override fun getState(): State = this as State
