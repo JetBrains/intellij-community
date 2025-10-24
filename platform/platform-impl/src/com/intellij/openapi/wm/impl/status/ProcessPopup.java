@@ -42,7 +42,7 @@ final class ProcessPopup {
   private final TasksFinishedDecorator myTasksFinishedDecorator;
   private final AnalyzingBannerDecorator myAnalyzingBannerDecorator;
 
-  ProcessPopup(@NotNull InfoAndProgressPanel progressPanel, boolean showAnalyzingBanner) {
+  ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
     myIndicatorPanel = new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
@@ -53,12 +53,7 @@ final class ProcessPopup {
     }
 
     myTasksFinishedDecorator = new TasksFinishedDecorator(myIndicatorPanel);
-    if (showAnalyzingBanner) {
-      myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> revalidateAll());
-    }
-    else {
-      myAnalyzingBannerDecorator = null;
-    }
+    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> revalidateAll());
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     updateContentUI();
@@ -74,9 +69,7 @@ final class ProcessPopup {
     }
     myIndicatorPanel.add(component);
     myTasksFinishedDecorator.indicatorAdded(component);
-    if (myAnalyzingBannerDecorator != null) {
-      myAnalyzingBannerDecorator.indicatorAdded(indicator);
-    }
+    myAnalyzingBannerDecorator.indicatorAdded(indicator);
     revalidateAll();
   }
 
@@ -91,9 +84,7 @@ final class ProcessPopup {
       hideSeparator(myIndicatorPanel.getComponent(0));
     }
     myTasksFinishedDecorator.indicatorRemoved();
-    if (myAnalyzingBannerDecorator != null) {
-      myAnalyzingBannerDecorator.indicatorRemoved(indicator);
-    }
+    myAnalyzingBannerDecorator.indicatorRemoved(indicator, isShowing());
     revalidateAll();
   }
 
@@ -157,10 +148,9 @@ final class ProcessPopup {
   }
 
   public void hide() {
-    if (myAnalyzingBannerDecorator != null) {
-      myAnalyzingBannerDecorator.handlePopupClose();
-    }
     if (myPopup != null) {
+      myAnalyzingBannerDecorator.handlePopupClose();
+
       myPopupVisible = false;
       myPopup.cancel();
       myPopup = null;
