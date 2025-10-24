@@ -104,6 +104,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
             propertyName != state::myHorizontalScrollJump.name &&
             propertyName != state::myIsBlockCursor.name &&
             propertyName != state::myIsFullLineHeightCursor.name &&
+            propertyName != state::myIsAnimatedCaret.name &&
             propertyName != state::myIsWhitespacesShown.name &&
             propertyName != state::myIsLeadingWhitespacesShown.name &&
             propertyName != state::myIsInnerWhitespacesShown.name &&
@@ -128,7 +129,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
           fireEditorRefresh()
         }
 
-        if (propertyName == state::myIsBlockCursor.name ||
+        if (propertyName == state::myIsBlockCursor.name || propertyName == state::myIsAnimatedCaret.name ||
             propertyName == state::myIsFullLineHeightCursor.name) {
           editor?.updateCaretCursor()
           editor?.contentComponent?.repaint()
@@ -449,6 +450,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun setFullLineHeightCursor(`val`: Boolean) {
     state.myIsFullLineHeightCursor = `val`
+  }
+
+  override fun isAnimatedCaret(): Boolean {
+    return state.myIsAnimatedCaret
   }
 
   override fun isCaretRowShown(): Boolean {

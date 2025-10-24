@@ -3173,21 +3173,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
+
   private void setCursorPosition() {
-    List<CaretRectangle> caretPoints = new ArrayList<>();
-    for (Caret caret : getCaretModel().getAllCarets()) {
-      boolean isRtl = caret.isAtRtlLocation();
-      VisualPosition caretPosition = caret.getVisualPosition();
-      Point2D pos1 = visualPositionToPoint2D(caretPosition.leanRight(!isRtl));
-      Point2D pos2 = visualPositionToPoint2D(new VisualPosition(caretPosition.line,
-                                                                Math.max(0, caretPosition.column + (isRtl ? -1 : 1)), isRtl));
-      float width = (float)Math.abs(pos2.getX() - pos1.getX());
-      if (!isRtl && myInlayModel.hasInlineElementAt(caretPosition)) {
-        width = Math.min(width, (float)Math.ceil(myView.getPlainSpaceWidth()));
-      }
-      caretPoints.add(new CaretRectangle(pos1, width, caret, isRtl));
+    if (!getSettings().isAnimatedCaret()) {
+      EditorCaretMoveService.setCursorPositionImmediately(this);
+      return;
     }
-    myCaretCursor.setPositions(caretPoints.toArray(new CaretRectangle[0]));
+    synchronized (caretMoveService) {
+      caretMoveService.setEditor(this);
+      caretMoveService.setCursorPosition();
+    }
   }
 
   @Override
@@ -3288,11 +3284,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public final @Nullable Caret myCaret;
     public final boolean myIsRtl;
 
-    private CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
+    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
       myPoint = point;
       myWidth = Math.max(width, 2);
       myCaret = caret;
       myIsRtl = isRtl;
+    }
+
+    Point2D getPoint() {
+      return myPoint;
     }
   }
 
@@ -3347,7 +3347,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private void setPositions(CaretRectangle @NotNull [] locations) {
+    void setPositions(CaretRectangle @NotNull [] locations) {
       myStartTime = System.currentTimeMillis();
       myLocations = locations;
     }

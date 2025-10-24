@@ -32,6 +32,7 @@ private val model:EditorSettingsExternalizable
 private val myCbBlinkCaret                            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.caret.blinking.ms"), model::isBlinkCaret, model::setBlinkCaret)
 private val myCbBlockCursor                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.block.caret"), model::isBlockCursor, model::setBlockCursor)
 private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
+private val myCbAnimatedCaret                         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.animated.caret"), model::isAnimatedCaret, model::setAnimatedCaret)
 private val myCbHighlightSelectionOccurrences         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.selection.occurrences"), model::isHighlightSelectionOccurrences, model::setHighlightSelectionOccurrences)
 private val myCbRightMargin                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.right.margin"), model::isRightMarginShown, model::setRightMarginShown)
 private val myCbShowLineNumbers                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.line.numbers"), model::isLineNumbersShown, model::setLineNumbersShown)
@@ -72,6 +73,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCbFullLineHeightCursor)
+      }
+      row {
+        checkBox(myCbAnimatedCaret)
       }
       row {
         checkBox(myCbHighlightSelectionOccurrences)

@@ -132,6 +132,8 @@ public interface EditorSettings {
   boolean isFullLineHeightCursor();
   void setFullLineHeightCursor(boolean fullLineHeightCursor);
 
+  boolean isAnimatedCaret();
+
   boolean isCaretRowShown();
   void setCaretRowShown(boolean caretRowShown);
 

@@ -158,6 +158,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myIsSmartHome: Boolean by property { EditorSettingsExternalizable.getInstance().isSmartHome }
   var myIsBlockCursor: Boolean by property { EditorSettingsExternalizable.getInstance().isBlockCursor }
   var myIsFullLineHeightCursor: Boolean by property { EditorSettingsExternalizable.getInstance().isFullLineHeightCursor }
+  var myIsAnimatedCaret: Boolean by property { EditorSettingsExternalizable.getInstance().isAnimatedCaret }
   var myCaretRowShown: Boolean by property { EditorSettingsExternalizable.getInstance().isCaretRowShown }
   var myIsWhitespacesShown: Boolean by property { EditorSettingsExternalizable.getInstance().isWhitespacesShown }
   var myIsLeadingWhitespacesShown: Boolean by property { EditorSettingsExternalizable.getInstance().isLeadingWhitespacesShown }
