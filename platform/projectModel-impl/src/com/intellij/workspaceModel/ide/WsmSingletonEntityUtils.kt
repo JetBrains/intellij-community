@@ -14,9 +14,11 @@ object WsmSingletonEntityUtils {
 
   fun <E : WorkspaceEntity> getSingleEntity(storage: EntityStorage, entityClass: Class<E>): E? {
     val entities = storage.entities(entityClass).toList()
-    LOG.assertTrue(entities.size <= 1) {
-      "There were several entities of type $entityClass while only one was expected. " +
-      "Entities: ${entities}"
+    if (entities.size > 1) {
+      LOG.error(
+        "There were several entities of type $entityClass while only one was expected. " +
+        "Entities: ${entities}"
+      )
     }
     return entities.firstOrNull()
   }
