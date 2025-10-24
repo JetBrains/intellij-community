@@ -125,7 +125,11 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
   classLoader: ClassLoader,
   jarFileForModule: (PluginModuleId, Path) -> Path?,
 ): Deferred<DiscoveredPluginsList> {
-  val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode)
+  val pathResolver = ClassPathXmlPathResolver(
+    classLoader = classLoader,
+    isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+    isOptionalProductModule = { ProductLoadingStrategy.strategy.isOptionalProductModule(it) },
+  )
   val useCoreClassLoader = pathResolver.isRunningFromSourcesWithoutDevBuild || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
 
   if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {

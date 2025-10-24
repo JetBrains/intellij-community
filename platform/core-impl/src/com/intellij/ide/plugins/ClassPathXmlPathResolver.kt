@@ -15,6 +15,7 @@ import java.io.InputStream
 class ClassPathXmlPathResolver(
   private val classLoader: ClassLoader,
   @JvmField val isRunningFromSourcesWithoutDevBuild: Boolean,
+  private val isOptionalProductModule: (moduleId: String) -> Boolean,
 ) : PathResolver {
   override val isFlat: Boolean
     get() = true
@@ -57,7 +58,7 @@ class ClassPathXmlPathResolver(
             `package` = "unresolved.$moduleId"
           }
         }
-        ProductLoadingStrategy.strategy.isOptionalProductModule(moduleId) -> {
+        isOptionalProductModule(moduleId) -> {
           // this check won't be needed when we are able to load optional modules directly from product-modules.xml
           log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
           return PluginDescriptorBuilder.builder().apply {

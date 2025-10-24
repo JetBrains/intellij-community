@@ -88,7 +88,11 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val platformPrefix = PlatformUtils.getPlatformPrefix()
     val isInDevServerMode = AppMode.isRunningFromDevBuild()
     val isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode
-    val classpathPathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild)
+    val classpathPathResolver = ClassPathXmlPathResolver(
+      classLoader = mainClassLoader,
+      isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild,
+      isOptionalProductModule = { moduleId -> this@ModuleBasedProductLoadingStrategy.isOptionalProductModule(moduleId) },
+    )
     val useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val pathResolver = if (isRunningFromSourcesWithoutDevBuild) {
       RunningFromSourceModuleBasedPathResolver(moduleRepository, fallbackResolver = classpathPathResolver)
@@ -189,10 +193,12 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     return scope.async { DiscoveredPluginsList(deferredDescriptors.awaitAll().filterNotNull(), PluginsSourceContext.Custom) }
   }
 
-  private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,
-                                                              repositoryPaths: List<Path>,
-                                                              context: PluginDescriptorLoadingContext,
-                                                              zipFilePool: ZipEntryResolverPool): Collection<Deferred<PluginMainDescriptor?>> {
+  private fun loadPluginDescriptorsFromAdditionalRepositories(
+    scope: CoroutineScope,
+    repositoryPaths: List<Path>,
+    context: PluginDescriptorLoadingContext,
+    zipFilePool: ZipEntryResolverPool,
+  ): Collection<Deferred<PluginMainDescriptor?>> {
     val repositoriesByPaths = scope.async {
       val repositoriesByPaths = repositoryPaths.associateWith {
         try {
