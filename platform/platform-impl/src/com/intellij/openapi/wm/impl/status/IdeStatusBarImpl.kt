@@ -53,6 +53,7 @@ import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -65,6 +66,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseEvent
+import java.awt.geom.RoundRectangle2D
 import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
@@ -583,8 +585,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
       return
     }
 
-    val bounds = effectComponent.bounds
-    val point = RelativePoint(effectComponent.parent, bounds.location).getPoint(this)
+    val highlightBounds = effectComponent.bounds
+    val point = RelativePoint(effectComponent.parent, highlightBounds.location).getPoint(this)
     val widgetEffect = ClientProperty.get(effectComponent, WIDGET_EFFECT_KEY)
     val bg = if (widgetEffect == WidgetEffect.PRESSED) {
       JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND
@@ -594,10 +596,28 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     }
     if (!ExperimentalUI.isNewUI() && getUI() is StatusBarUI) {
       point.y += StatusBarUI.BORDER_WIDTH.get()
-      bounds.height -= StatusBarUI.BORDER_WIDTH.get()
+      highlightBounds.height -= StatusBarUI.BORDER_WIDTH.get()
     }
+    highlightBounds.location = point
     g.color = bg
-    g.fillRect(point.x, point.y, bounds.width, bounds.height)
+    if (ExperimentalUI.isNewUI()) {
+      JBInsets.removeFrom(highlightBounds, effectComponent.insets)
+      JBInsets.addTo(highlightBounds, JBUI.CurrentTheme.StatusBar.hoverInsets())
+      val g2 = g.create() as Graphics2D
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+        val arc = scale(4).toFloat()
+        val shape: RoundRectangle2D = RoundRectangle2D.Float(highlightBounds.x.toFloat(), highlightBounds.y.toFloat(), highlightBounds.width.toFloat(), highlightBounds.height.toFloat(), arc, arc)
+        g2.fill(shape)
+      }
+      finally {
+        g2.dispose()
+      }
+    }
+    else {
+      g.fillRect(highlightBounds.x, highlightBounds.y, highlightBounds.width, highlightBounds.height)
+    }
   }
 
   override fun paintChildren(g: Graphics) {
@@ -1053,10 +1073,12 @@ private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
 }
 
 @ApiStatus.Internal
-class VisibleProgress(val title: @NlsContexts.ProgressTitle String,
-                      val clientId: ClientId?,
-                      val canceler: (() -> Unit)?,
-                      val state: Flow<ProgressState> /* finite */) {
+class VisibleProgress(
+  val title: @NlsContexts.ProgressTitle String,
+  val clientId: ClientId?,
+  val canceler: (() -> Unit)?,
+  val state: Flow<ProgressState>, /* finite */
+) {
   override fun toString(): String {
     return "VisibleProgress['$title', ${if (canceler == null) "non-" else ""}cancelable]"
   }
@@ -1099,8 +1121,10 @@ private fun createVisibleProgress(progressModel: ProgressModel, info: TaskInfo, 
                          state = state)
 }
 
-private class ProgressSetChangeEvent(private val newProgress: Triple<TaskInfo, ProgressModel, ClientId?>?,
-                                     private val existingProgresses: List<Pair<TaskInfo, ProgressModel>>) {
+private class ProgressSetChangeEvent(
+  private val newProgress: Triple<TaskInfo, ProgressModel, ClientId?>?,
+  private val existingProgresses: List<Pair<TaskInfo, ProgressModel>>,
+) {
   val newVisibleProgress by lazy {
     newProgress?.let { createVisibleProgress(it.second, it.first, it.third) }
   }

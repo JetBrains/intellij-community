@@ -4606,6 +4606,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$StatusBar
 - s:font():java.awt.Font
 - s:fontSizeOffsetKey():java.lang.String
 - s:hoverBackground():java.awt.Color
+- s:hoverInsets():java.awt.Insets
 com.intellij.util.ui.JBUI$CurrentTheme$StatusBar$Breadcrumbs
 - sf:CHEVRON_INSET:com.intellij.util.ui.JBValue
 - sf:FLOATING_BACKGROUND:java.awt.Color
