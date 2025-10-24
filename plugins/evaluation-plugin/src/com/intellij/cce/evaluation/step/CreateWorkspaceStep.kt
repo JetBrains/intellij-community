@@ -11,7 +11,7 @@ abstract class CreateWorkspaceStep(
   private val handler: TwoWorkspaceHandler
 ) : BackgroundEvaluationStep {
 
-  override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
+  override suspend fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val newWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
     handler.invoke(workspace, newWorkspace, progress)
     return newWorkspace

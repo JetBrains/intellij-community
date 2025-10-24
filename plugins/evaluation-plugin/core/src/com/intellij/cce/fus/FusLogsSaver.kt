@@ -25,7 +25,7 @@ class FusLogsSaver(private val finalStorageDir: Path, private val allowedGroups:
     require(finalStorageDir.exists())
   }
 
-  override fun <T> invokeRememberingLogs(action: () -> T): T {
+  override suspend fun <T> invokeRememberingLogs(action: suspend () -> T): T {
     val logFilter: (LogEvent) -> Boolean = if (allowedGroups != null) { log -> log.group.id in allowedGroups }
     else { _ -> true }
 

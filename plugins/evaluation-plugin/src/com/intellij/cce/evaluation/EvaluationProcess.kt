@@ -1,25 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
+import com.intellij.cce.evaluation.step.run
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
 import kotlin.system.measureTimeMillis
 
 class EvaluationProcess private constructor (
-  private val environment: EvaluationEnvironment,
   private val steps: List<EvaluationStep>,
   private val finalStep: FinishEvaluationStep?
 ) {
   companion object {
-    fun build(environment: EvaluationEnvironment, stepFactory: StepFactory, init: Builder.() -> Unit): EvaluationProcess {
+    suspend fun build(environment: EvaluationEnvironment, stepFactory: StepFactory, init: Builder.() -> Unit): EvaluationProcess {
       environment.initialize(stepFactory.datasetContext)
       val builder = Builder()
       builder.init()
-      return builder.build(environment, stepFactory)
+      return builder.build(stepFactory)
     }
   }
 
-  fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
+  suspend fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
     val stats = mutableMapOf<String, Long>()
     var currentWorkspace = workspace
     var hasError = false
@@ -27,7 +27,7 @@ class EvaluationProcess private constructor (
       if (hasError && step !is UndoableEvaluationStep.UndoStep) continue
       println("Starting step: ${step.name} (${step.description})")
       val duration = measureTimeMillis {
-        val result = environment.execute(step, currentWorkspace)
+        val result = step.run(currentWorkspace)
         if (result == null) {
           hasError = true
         } else {
@@ -47,7 +47,7 @@ class EvaluationProcess private constructor (
     var shouldGenerateReports: Boolean = false
     var shouldReorderElements: Boolean = false
 
-    fun build(environment: EvaluationEnvironment, factory: StepFactory): EvaluationProcess {
+    fun build(factory: StepFactory): EvaluationProcess {
       val steps = mutableListOf<EvaluationStep>()
       val isTestingEnvironment = ApplicationManager.getApplication().isUnitTestMode
 
@@ -92,7 +92,7 @@ class EvaluationProcess private constructor (
           steps.add(step.undoStep())
       }
 
-      return EvaluationProcess(environment, steps, factory.finishEvaluationStep().takeIf { !isTestingEnvironment })
+      return EvaluationProcess(steps, factory.finishEvaluationStep().takeIf { !isTestingEnvironment })
     }
   }
 }
