@@ -39,6 +39,11 @@ class MLEventLoggerProvider : StatisticsEventLoggerProvider(
     return isRecordEnabled() && StatisticsUploadAssistant.isSendAllowed()
   }
 
+  override fun isLoggingAlwaysActive(): Boolean {
+    return true // necessary for JCP AI analytics, otherwise the events from this logger are not forwarded to [statistic.eventLog.externalListenerProvider]
+    // also take a look at [com.intellij.ml.llm.core.statistics.fus.jcp.JcpEventsInterceptor]
+  }
+
   companion object {
     const val ML_RECORDER_ID = "ML"
   }
