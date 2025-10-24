@@ -121,22 +121,25 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       pushAssertion(lhs, myPositive, context -> PyBuiltinCache.getInstance(lhs).getNoneType());
       return;
     }
-
-    pushAssertion(lhs, myPositive, context -> getLiteralType(rhs, context));
+    final boolean positive = myPositive;
+    pushAssertion(lhs, myPositive, context -> {
+      PyType type = getLiteralType(rhs, context);
+      return positive || type instanceof PyLiteralType ? type : null;
+    });
   }
 
   private void processIn(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
     if (rhs instanceof PyTupleExpression || rhs instanceof PyListLiteralExpression || rhs instanceof PySetLiteralExpression) {
+      final boolean positive = myPositive;
       pushAssertion(lhs, myPositive, (TypeEvalContext context) -> {
-        PyExpression[] elements = ((PySequenceExpression)rhs).getElements();
-        List<PyType> types = new ArrayList<>(elements.length);
+        final PyExpression[] elements = ((PySequenceExpression)rhs).getElements();
+        final List<PyType> types = new ArrayList<>(elements.length);
+        final PyClassType noneType = PyBuiltinCache.getInstance(rhs).getNoneType();
         for (PyExpression element : elements) {
-          PyType type =
-            PyLiteralType.isNone(element) ? PyBuiltinCache.getInstance(element).getNoneType() : getLiteralType(element, context);
-          if (type == null) {
-            return null;
+          final PyType type = PyLiteralType.isNone(element) ? noneType : getLiteralType(element, context);
+          if (type != null && (positive || type == noneType || type instanceof PyLiteralType)) {
+            types.add(type);
           }
-          types.add(type);
         }
         return PyUnionType.union(types);
       });

@@ -647,6 +647,22 @@ async def nosupAssertFalse(b):
     );
   }
 
+  // PY-83625
+  public void testNoUnreachableAfterIsBetweenLiteralUnionVariables() {
+    doTestByText(
+      """
+        from typing import Literal
+
+        Value = Literal[1, 2]
+
+        def f(t: Value, data: list[Value]):
+            for item in data:
+                if item is t:
+                    return
+                print("reachable")"""
+    );
+  }
+
   // PY-48760
   public void testContinueInCaseClause() {
     doTest();
