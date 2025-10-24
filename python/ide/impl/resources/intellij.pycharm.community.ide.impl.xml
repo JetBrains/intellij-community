@@ -10,6 +10,7 @@
     <module name="intellij.python.sdk.ui"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.community.impl.uv.common"/>
+    <module name="intellij.python.community.execService.python"/>
   </dependencies>
 
   <projectListeners>

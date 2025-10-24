@@ -8,6 +8,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.where
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -26,9 +28,13 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
 @Internal
-suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> {
+suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> =
+  runPipEnv(dirPath, args = args, transformer = ZeroCodeStdoutTransformer)
+
+@Internal
+suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
   val executable = getPipEnvExecutable().getOr { return it }
-  return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args)
+  return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args, transformer = transformer)
 }
 
 /**

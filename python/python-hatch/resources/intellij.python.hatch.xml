@@ -6,6 +6,7 @@
     <module name="intellij.python.sdk.ui"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.common"/>
+    <module name="intellij.python.community.execService.python"/>
   </dependencies>
 
   <extensions defaultExtensionNs="Pythonid">

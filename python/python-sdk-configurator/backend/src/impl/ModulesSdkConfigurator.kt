@@ -65,7 +65,7 @@ internal class ModulesSdkConfigurator private constructor(
       when (createInfo) {
         is ModuleCreateInfo.CreateSdkInfoWrapper -> {
           val version = when (val r = createInfo.createSdkInfo) {
-            is CreateSdkInfo.ExistingEnv -> r.version
+            is CreateSdkInfo.ExistingEnv -> r.pythonInfo.languageLevel.toPythonVersion()
             is CreateSdkInfo.WillCreateEnv -> null
           }
           ModuleDTO(moduleName, createInfo.toolId.id, version, children[moduleName]!!.toList().sorted())
@@ -165,12 +165,12 @@ internal class ModulesSdkConfigurator private constructor(
           val createInfo = (modules[module.name] ?: error("No create info for module $module, caller broke the contract"))
           when (createInfo) {
             is ModuleCreateInfo.CreateSdkInfoWrapper -> {
-              when (val r = createInfo.createSdkInfo.sdkCreator(false)) {
+              when (val r = createInfo.createSdkInfo.createSdkWithoutConfirmation()) {
                 is Result.Failure -> { //TODO: Show SDK creation error?
                   logger.warn("Failed to create SDK for ${module.name}: ${r.error}")
                 }
                 is Result.Success -> {
-                  val sdk = r.result!! // can't be `null` and will be non-null soon
+                  val sdk = r.result
                   ModuleRootModificationUtil.setModuleSdk(module, sdk)
                 }
               }

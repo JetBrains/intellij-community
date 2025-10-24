@@ -50,7 +50,7 @@ class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
       canManage && checkExistence -> {
         val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull().getOrLogException(LOGGER)?.pythonVirtualEnvironment
         when (defaultEnv) {
-          is PythonVirtualEnvironment.Existing -> EnvCheckerResult.EnvFound("", intentionName)
+          is PythonVirtualEnvironment.Existing -> EnvCheckerResult.EnvFound(defaultEnv.pythonInfo, intentionName)
           is PythonVirtualEnvironment.NotExisting, null -> envNotFound
         }
       }
