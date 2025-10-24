@@ -44,7 +44,7 @@ import java.nio.file.Path
  *    }
  * ```
  * */
-var di = DI {
+private var _di = DI {
   bindSingleton<GlobalPaths> { StarterGlobalPaths() }
   bindSingleton<CIServer> { NoCIServer }
   bindSingleton<ErrorReporter> { ErrorReporterToCI }
@@ -86,3 +86,17 @@ var di = DI {
 }.apply {
   logOutput("Starter DI was initialized")
 }
+
+private val lock = Any()
+
+var di: DI = _di
+  set(value) {
+    synchronized(lock) {
+      field = value
+      logOutput(
+        """Starter DI was updated by: 
+        |${Thread.currentThread().stackTrace.copyOfRange(2, 4).joinToString(separator = "\n") { "- $it" }}"""
+          .trimMargin()
+      )
+    }
+  }
