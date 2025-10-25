@@ -21,6 +21,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   @get:JvmName("myProject")
   val project: Project get() = gradleFixture.project
   val module: Module get() = gradleFixture.module
+  val mainModule: Module get() = gradleFixture.mainModule
   val projectRoot: VirtualFile get() = gradleFixture.fileFixture.root
   val projectPath: String get() = projectRoot.path
 

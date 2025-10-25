@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.service.execution.loadApplicationInitScript
 /**
  * @author Vladislav.Soroka
  */
-open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<ApplicationConfiguration>() {
+open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider() {
 
   override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
     return task.runProfile.javaClass == ApplicationConfiguration::class.java

@@ -19,5 +19,13 @@ interface GradleProjectTestFixture : IdeaTestFixture {
 
   val project: Project
 
+  /**
+   * Root module of the project.
+   */
   val module: Module
+
+  /**
+   * Main module of the project, `"${project.name}.main"`
+   */
+  val mainModule: Module
 }

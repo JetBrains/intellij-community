@@ -56,6 +56,13 @@ internal class GradleProjectTestFixtureImpl(
       "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
+  override val mainModule: Module
+    get() {
+      return project.modules.single {
+        it.name == "${project.name}.main"
+      }
+    }
+
   override val module: Module
     get() = project.modules.single { it.name == project.name }
 

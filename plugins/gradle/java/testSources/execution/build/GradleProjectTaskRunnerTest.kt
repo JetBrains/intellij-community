@@ -32,7 +32,7 @@ class GradleProjectTaskRunnerTest : GradleProjectTaskRunnerTestCase() {
     delegatedBuild: Boolean, delegatedRun: Boolean,
     shouldBuild: Boolean, shouldRun: Boolean,
   ) {
-    testEmptyProject(gradleVersion) {
+    testJavaProject(gradleVersion) {
       Disposer.newDisposable().use { testDisposable ->
         val configurationType = ApplicationConfigurationType.getInstance()
         setupGradleDelegationMode(delegatedBuild, delegatedRun, testDisposable)
@@ -47,11 +47,11 @@ class GradleProjectTaskRunnerTest : GradleProjectTaskRunnerTestCase() {
     gradleVersion: GradleVersion,
     delegatedBuild: Boolean, delegatedRun: Boolean,
   ) {
-    testEmptyProject(gradleVersion) {
+    testJavaProject(gradleVersion) {
       Disposer.newDisposable().use { testDisposable ->
         val configurationType = JavaScratchConfigurationType.getInstance()
         setupGradleDelegationMode(delegatedBuild, delegatedRun, testDisposable)
-        assertGradleProjectTaskRunnerCanRun(configurationType, shouldBuild = false, shouldRun = false)
+        assertGradleProjectTaskRunnerCanRun(configurationType, expectedShouldBuild = false, expectedShouldRun = false)
       }
     }
   }

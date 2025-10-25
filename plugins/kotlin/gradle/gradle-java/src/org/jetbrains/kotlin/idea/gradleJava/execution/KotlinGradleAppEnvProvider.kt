@@ -16,7 +16,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 /**
  * This provider is responsible for building [ExecutionEnvironment] for Kotlin JVM modules to be run using Gradle.
  */
-class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<KotlinRunConfiguration>() {
+class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider() {
 
     override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
         return task.runProfile is KotlinRunConfiguration

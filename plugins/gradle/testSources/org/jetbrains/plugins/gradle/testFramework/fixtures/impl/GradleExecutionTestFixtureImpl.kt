@@ -7,8 +7,10 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.awaitProjectActivity
@@ -66,15 +68,14 @@ class GradleExecutionTestFixtureImpl(
 
   override fun createExecutionEnvironment(
     runnerSettings: RunnerAndConfigurationSettings,
-    isDebug: Boolean
+    isDebug: Boolean,
   ): ExecutionEnvironment {
     val executorId = if (isDebug) DefaultDebugExecutor.EXECUTOR_ID else DefaultRunExecutor.EXECUTOR_ID
     val runnerId = if (isDebug) ExternalSystemConstants.DEBUG_RUNNER_ID else ExternalSystemConstants.RUNNER_ID
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId)!!
-    val runner = ProgramRunner.getRunner(executorId, runnerSettings.configuration)!!
-    val environment = ExecutionEnvironment(executor, runner, runnerSettings, project)
+    val environment = runReadAction { ExecutionEnvironmentBuilder.create(executor, runnerSettings).build() }
 
-    Assertions.assertEquals(runnerId, runner.runnerId)
+    Assertions.assertEquals(runnerId, environment.runner.runnerId)
 
     return environment
   }
