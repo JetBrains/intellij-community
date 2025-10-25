@@ -30,10 +30,11 @@ data class DeprecatedXmlInclude(
  */
 class ProductModulesContentSpec(
   /**
-   * Product module alias for `<module value="..."/>` declaration (e.g., "com.jetbrains.gateway").
-   * This will be generated as the first element in the programmatic content.
+   * Product module aliases for `<module value="..."/>` declarations (e.g., "com.jetbrains.gateway", "com.intellij.modules.idea").
+   * These will be generated as the first elements in the programmatic content.
+   * Multiple aliases can be specified by calling alias() multiple times in the DSL.
    */
-  @JvmField val productModuleAlias: String?,
+  @JvmField val productModuleAliases: List<String>,
 
   /**
    * XML includes to add (xi:include directives).
@@ -72,7 +73,7 @@ class ProductModulesContentSpec(
  * DSL builder for creating ProductModulesContentSpec with reduced boilerplate.
  */
 class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
-  private var productModuleAlias: String? = null
+  private val productModuleAliases = mutableListOf<String>()
   private val xmlIncludes = mutableListOf<DeprecatedXmlInclude>()
   private val moduleSets = mutableListOf<ModuleSet>()
   private val additionalModules = mutableListOf<ContentModule>()
@@ -80,11 +81,13 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   private val loadingOverrides = mutableMapOf<String, ModuleLoadingRule>()
 
   /**
-   * Set the product module alias for `<module value="..."/>` declaration.
+   * Add a product module alias for `<module value="..."/>` declaration.
+   * Can be called multiple times to add multiple aliases.
    * Example: alias("com.jetbrains.gateway")
+   * Example: alias("com.intellij.modules.idea")
    */
   fun alias(value: String) {
-    productModuleAlias = value
+    productModuleAliases.add(value)
   }
 
   /**
@@ -120,6 +123,13 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   }
 
   /**
+   * Add an individual module with REQUIRED loading to additionalModules.
+   */
+  fun requiredModule(name: String) {
+    additionalModules.add(ContentModule(name, ModuleLoadingRule.REQUIRED))
+  }
+
+  /**
    * Exclude a module from the final set.
    */
   fun exclude(moduleName: String) {
@@ -136,10 +146,10 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   @PublishedApi
   internal fun build(): ProductModulesContentSpec {
     return ProductModulesContentSpec(
-      productModuleAlias = productModuleAlias,
-      deprecatedXmlIncludes = xmlIncludes,
-      moduleSets = moduleSets,
-      additionalModules = additionalModules,
+      productModuleAliases = java.util.List.copyOf(productModuleAliases),
+      deprecatedXmlIncludes = java.util.List.copyOf(xmlIncludes),
+      moduleSets = java.util.List.copyOf(moduleSets),
+      additionalModules = java.util.List.copyOf(additionalModules),
       excludedModules = excludedModules,
       moduleLoadingOverrides = loadingOverrides,
     )

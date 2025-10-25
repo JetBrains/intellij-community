@@ -6,9 +6,9 @@
   <module value="com.intellij.modules.xml"/>
 
   <content namespace="jetbrains">
-    <!-- nested: essential -->
-    <!-- nested: essential > libraries -->
-    <!-- nested: essential > libraries > libraries.core -->
+    <!-- <editor-fold desc="nested: essential"> -->
+    <!-- <editor-fold desc="nested: essential > libraries"> -->
+    <!-- <editor-fold desc="nested: essential > libraries > libraries.core"> -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
@@ -81,27 +81,32 @@
     <module name="intellij.libraries.winp" loading="embedded"/>
     <module name="intellij.libraries.xtext.xbase" loading="embedded"/>
     <module name="intellij.libraries.xz" loading="embedded"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: essential > libraries > libraries.ktor -->
+    <!-- <editor-fold desc="nested: essential > libraries > libraries.ktor"> -->
     <module name="intellij.libraries.ktor.io" loading="embedded"/>
     <module name="intellij.libraries.ktor.utils" loading="embedded"/>
     <module name="intellij.libraries.ktor.network.tls" loading="embedded"/>
     <module name="intellij.libraries.ktor.client" loading="embedded"/>
     <module name="intellij.libraries.ktor.client.cio" loading="embedded"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: essential > libraries > libraries.misc -->
+    <!-- <editor-fold desc="nested: essential > libraries > libraries.misc"> -->
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.xml.rpc"/>
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.opencsv"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: essential > libraries > libraries.temporaryBundled -->
+    <!-- <editor-fold desc="nested: essential > libraries > libraries.temporaryBundled"> -->
     <module name="intellij.libraries.jettison" loading="embedded"/>
     <module name="intellij.libraries.xstream" loading="embedded"/>
     <module name="intellij.libraries.commons.text"/>
+    <!-- </editor-fold> -->
 
+    <!-- </editor-fold> -->
 
-    <!-- direct modules -->
+    <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
@@ -159,8 +164,10 @@
     <module name="intellij.platform.rpc.topics" loading="embedded"/>
     <module name="intellij.platform.rpc.topics.backend"/>
     <module name="intellij.platform.rpc.topics.frontend"/>
+    <!-- </editor-fold> -->
+    <!-- </editor-fold> -->
 
-    <!-- nested: compose -->
+    <!-- <editor-fold desc="nested: compose"> -->
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.libraries.coil"/>
     <module name="intellij.platform.compose"/>
@@ -177,25 +184,29 @@
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
     <module name="intellij.platform.jewel.markdown.core"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: grid.core -->
+    <!-- <editor-fold desc="nested: grid.core"> -->
     <module name="intellij.grid"/>
     <module name="intellij.grid.types"/>
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.impl"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: vcs -->
-    <!-- nested: vcs > vcs.shared -->
+    <!-- <editor-fold desc="nested: vcs"> -->
+    <!-- <editor-fold desc="nested: vcs > vcs.shared"> -->
     <module name="intellij.platform.vcs.core" loading="embedded"/>
     <module name="intellij.platform.vcs.shared" loading="embedded"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: vcs > vcs.frontend -->
+    <!-- <editor-fold desc="nested: vcs > vcs.frontend"> -->
     <module name="intellij.platform.vcs.impl.frontend"/>
+    <!-- </editor-fold> -->
 
-    <!-- direct modules -->
+    <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.exec"/>
     <module name="intellij.platform.vcs.impl.lang"/>
@@ -207,8 +218,10 @@
     <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs" loading="embedded"/>
+    <!-- </editor-fold> -->
+    <!-- </editor-fold> -->
 
-    <!-- nested: xml -->
+    <!-- <editor-fold desc="nested: xml"> -->
     <module name="intellij.xml.dom" loading="embedded"/>
     <module name="intellij.xml.dom.impl" loading="embedded"/>
     <module name="intellij.xml.structureView" loading="embedded"/>
@@ -226,11 +239,13 @@
     <module name="intellij.libraries.xerces" loading="embedded"/>
     <module name="intellij.xml.langInjection"/>
     <module name="intellij.xml.langInjection.xpath"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: duplicates -->
+    <!-- <editor-fold desc="nested: duplicates"> -->
     <module name="intellij.platform.duplicates.analysis" loading="embedded"/>
+    <!-- </editor-fold> -->
 
-    <!-- direct modules -->
+    <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
@@ -263,5 +278,6 @@
     <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.libraries.grpc.netty.shaded"/>
+    <!-- </editor-fold> -->
   </content>
 </idea-plugin>

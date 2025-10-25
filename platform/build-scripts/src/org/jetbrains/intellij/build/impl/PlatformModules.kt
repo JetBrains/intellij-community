@@ -571,29 +571,37 @@ private suspend fun processAndGetProductPluginContentModules(
 
     val originalContent: String
     val xml: Element
+    val moduleToSetChainMapping: Map<String, List<String>>?
     // process programmatic content modules if defined
     val programmaticModulesSpec = context.productProperties.getProductContentDescriptor()
     if (programmaticModulesSpec == null || !regenerateProductSpec) {
       originalContent = Files.readString(file)
       xml = JDOMUtil.load(originalContent)
       resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = true)
+      moduleToSetChainMapping = null
     }
     else {
       val sb = StringBuilder()
-      val contentBlocks = buildProductContentXml(
+      val result = buildProductContentXml(
         spec = programmaticModulesSpec,
         moduleOutputProvider = context,
         sb = sb,
         inlineXmlIncludes = true,
       )
-      Span.current().addEvent("Generated ${contentBlocks.size} content blocks with ${contentBlocks.sumOf { it.modules.size }} total modules")
+      Span.current().addEvent("Generated ${result.contentBlocks.size} content blocks with ${result.contentBlocks.sumOf { it.modules.size }} total modules")
 
       originalContent = sb.toString()
       xml = JDOMUtil.load(sb)
       resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = false)
+      moduleToSetChainMapping = result.moduleToSetChainMapping
     }
 
-    val moduleItems = collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+    val moduleItems = collectAndEmbedProductModules(
+      root = xml,
+      xIncludePathResolver = xIncludePathResolver,
+      context = context,
+      moduleToSetChainOverride = moduleToSetChainMapping
+    )
     val data = JDOMUtil.write(xml)
     if (data != originalContent) {
       layout.withPatch { moduleOutputPatcher, _, _ ->
@@ -715,7 +723,12 @@ private fun getModuleDescriptor(moduleName: String, jpsModuleName: String, xIncl
   return xml
 }
 
-private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Set<ModuleItem> {
+private suspend fun collectAndEmbedProductModules(
+  root: Element,
+  xIncludePathResolver: XIncludePathResolver,
+  context: BuildContext,
+  moduleToSetChainOverride: Map<String, List<String>>? = null
+): Set<ModuleItem> {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val contentModuleFilter = context.getContentModuleFilter()
   val moduleItems = LinkedHashSet<ModuleItem>()
@@ -729,6 +742,7 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
         frontendModuleFilter = frontendModuleFilter,
         result = moduleItems,
         xIncludePathResolver = xIncludePathResolver,
+        moduleToSetChainOverride = moduleToSetChainOverride,
       )
     }
   }
@@ -742,6 +756,7 @@ private fun processProductModule(
   frontendModuleFilter: FrontendModuleFilter,
   result: LinkedHashSet<ModuleItem>,
   xIncludePathResolver: XIncludePathResolver,
+  moduleToSetChainOverride: Map<String, List<String>>? = null,
 ) {
   val moduleElement = iterator.next()
   val moduleName = moduleElement.getAttributeValue("name") ?: return
@@ -762,9 +777,8 @@ private fun processProductModule(
     "$moduleName.jar"
   }
 
-  // extract module set from parent <content> element's source-file attribute
-  val contentElement = moduleElement.parentElement
-  val moduleSet = contentElement?.getAttributeValue(SOURCE_FILE_ATTRIBUTE)
+  // extract module set from override mapping (for programmatic spec)
+  val moduleSet = moduleToSetChainOverride?.get(moduleName)
   result.add(
     ModuleItem(
       moduleName = moduleName,

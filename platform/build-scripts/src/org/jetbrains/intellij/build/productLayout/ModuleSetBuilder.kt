@@ -91,14 +91,6 @@ inline fun moduleSet(name: String, alias: String? = null, block: ModuleSetBuilde
   return ModuleSet(name, modules, nestedSets, alias)
 }
 
-/**
- * Builds a `<module value="..."/>` declaration if alias is provided.
- * @param alias The module alias (e.g., "com.intellij.modules.xml")
- * @return XML string, or empty string if alias is null
- */
-internal fun buildModuleAliasXml(alias: String?): String {
-  return if (alias == null) "" else "  <module value=\"$alias\"/>\n"
-}
 
 /**
  * Appends a single module XML element to the StringBuilder.
@@ -112,17 +104,6 @@ private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
   sb.append("\n")
 }
 
-/**
- * Recursively collects all module aliases from a module set and its nested sets.
- */
-private fun collectAllAliases(moduleSet: ModuleSet): List<String> {
-  val aliases = mutableListOf<String>()
-  if (moduleSet.alias != null) {
-    aliases.add(moduleSet.alias)
-  }
-  moduleSet.nestedSets.forEach { aliases.addAll(collectAllAliases(it)) }
-  return aliases
-}
 
 /**
  * Recursively appends modules from a module set, including nested sets.
@@ -130,8 +111,7 @@ private fun collectAllAliases(moduleSet: ModuleSet): List<String> {
  */
 private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, indent: String = "    ", breadcrumb: String = "") {
   // Get direct modules (not from nested sets)
-  val nestedModuleNames = moduleSet.nestedSets.flatMap { it.modules.map { m -> m.name } }.toHashSet()
-  val directModules = moduleSet.modules.filter { it.name !in nestedModuleNames }
+  val directModules = getDirectModules(moduleSet)
 
   // Recursively append nested sets first
   for (nestedSet in moduleSet.nestedSets) {
@@ -142,17 +122,26 @@ private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, inde
       "$breadcrumb > ${nestedSet.name}"
     }
 
-    sb.append("$indent<!-- nested: $nestedBreadcrumb -->\n")
-    appendModuleSetContent(sb, nestedSet, indent, nestedBreadcrumb) // RECURSIVE CALL with breadcrumb
+    withEditorFold(sb, indent, "nested: $nestedBreadcrumb") {
+      appendModuleSetContent(sb, nestedSet, indent, nestedBreadcrumb) // RECURSIVE CALL with breadcrumb
+    }
     sb.append("\n")
   }
 
   // Then append direct modules
   if (directModules.isNotEmpty()) {
     if (moduleSet.nestedSets.isNotEmpty()) {
-      sb.append("$indent<!-- direct modules -->\n")
+      withEditorFold(sb, indent, "direct modules") {
+        for (module in directModules) {
+          appendModuleXml(sb, module)
+        }
+      }
     }
-    directModules.forEach { appendModuleXml(sb, it) }
+    else {
+      for (module in directModules) {
+        appendModuleXml(sb, module)
+      }
+    }
   }
 }
 
@@ -180,19 +169,16 @@ internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): String {
   // Output all module aliases (recursively collected from this set and nested sets)
   val allAliases = collectAllAliases(moduleSet)
   if (allAliases.isNotEmpty()) {
-    allAliases.forEach { sb.append("  <module value=\"$it\"/>\n") }
+    sb.append(buildModuleAliasesXml(allAliases))
     sb.append("\n")
   }
 
-  // Collect all modules (nested + direct) and output in a single content block
+  // Generate content blocks with source-file attributes for tracking
   val hasAnyModules = moduleSet.nestedSets.isNotEmpty() || moduleSet.modules.isNotEmpty()
   if (hasAnyModules) {
     sb.append("  <content namespace=\"jetbrains\">")
     sb.append("\n")
-
-    // Recursively append all content (handles nested sets at any depth)
     appendModuleSetContent(sb, moduleSet)
-
     sb.append("  </content>")
     sb.append("\n")
   }
@@ -227,99 +213,6 @@ private fun discoverModuleSets(obj: Any): List<ModuleSet> {
     }
   }
   return result
-}
-
-/**
- * Builds a reverse index mapping each module name to the list of module sets that contain it.
- * Recursively walks through all module sets and their nested sets.
- *
- * This is useful for tracking which module set(s) a module belongs to, especially when
- * module sets are inlined (no xi:include) and runtime tracking is unavailable.
- *
- * @param moduleSetProviders List of objects containing module set definitions (e.g., UltimateModuleSets, CommunityModuleSets)
- * @return Map from module name to list of module set names (with "intellij.moduleSets." prefix)
- */
-fun buildModuleToSetMapping(moduleSetProviders: List<Any>): Map<String, List<String>> {
-  val moduleToSets = mutableMapOf<String, MutableList<String>>()
-  val processedSets = mutableSetOf<String>()
-
-  /**
-   * Recursively collects modules from a module set and its nested sets.
-   */
-  fun collectModulesRecursively(set: ModuleSet, setName: String) {
-    // Skip if already processed (prevents duplicates when a module set is both top-level and nested)
-    if (!processedSets.add(setName)) {
-      return
-    }
-
-    // Get direct modules (not from nested sets)
-    val nestedModuleNames = set.nestedSets.flatMap { it.modules.map { m -> m.name } }.toHashSet()
-    val directModules = set.modules.filter { it.name !in nestedModuleNames }
-
-    // Add direct modules to this set
-    for (module in directModules) {
-      moduleToSets.computeIfAbsent(module.name) { mutableListOf() }.add(setName)
-    }
-
-    // Recursively process nested sets
-    for (nestedSet in set.nestedSets) {
-      collectModulesRecursively(nestedSet, "intellij.moduleSets.${nestedSet.name}")
-    }
-  }
-
-  // Process all providers
-  for (provider in moduleSetProviders) {
-    val moduleSets = discoverModuleSets(provider)
-    // Process all top-level module sets from this provider
-    for (moduleSet in moduleSets) {
-      collectModulesRecursively(moduleSet, "intellij.moduleSets.${moduleSet.name}")
-    }
-  }
-
-  return moduleToSets
-}
-
-/**
- * Builds a mapping of parent module sets to their nested module sets.
- * This preserves the hierarchical structure after inlining.
- *
- * @param moduleSetProviders List of objects containing module set definitions (e.g., UltimateModuleSets, CommunityModuleSets)
- * @return Map from module set name to set of nested module set names (with "intellij.moduleSets." prefix)
- */
-fun buildModuleSetIncludes(moduleSetProviders: List<Any>): Map<String, Set<String>> {
-  val moduleSetToIncludes = mutableMapOf<String, MutableSet<String>>()
-  val processedSets = mutableSetOf<String>()
-
-  /**
-   * Recursively collects nested module sets.
-   */
-  fun collectNestedSetsRecursively(set: ModuleSet, setName: String) {
-    // Skip if already processed (prevents duplicates when a module set is both top-level and nested)
-    if (!processedSets.add(setName)) {
-      return
-    }
-
-    if (set.nestedSets.isNotEmpty()) {
-      val includes = moduleSetToIncludes.computeIfAbsent(setName) { mutableSetOf() }
-      for (nestedSet in set.nestedSets) {
-        val nestedSetName = "intellij.moduleSets.${nestedSet.name}"
-        includes.add(nestedSetName)
-        // Recursively process nested sets
-        collectNestedSetsRecursively(nestedSet, nestedSetName)
-      }
-    }
-  }
-
-  // Process all providers
-  for (provider in moduleSetProviders) {
-    val moduleSets = discoverModuleSets(provider)
-    // Process all top-level module sets from this provider
-    for (moduleSet in moduleSets) {
-      collectNestedSetsRecursively(moduleSet, "intellij.moduleSets.${moduleSet.name}")
-    }
-  }
-
-  return moduleSetToIncludes
 }
 
 /**

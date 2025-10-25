@@ -219,7 +219,7 @@ class ModuleItem(
   // for one module, maybe several JARs - that's why `relativeOutputPath` is included in hash code
   @JvmField val relativeOutputFile: String,
   @JvmField val reason: String?,
-  @JvmField val moduleSet: String? = null,
+  @JvmField val moduleSet: List<String>? = null,
 ) {
   init {
     require(!moduleName.isEmpty()) {

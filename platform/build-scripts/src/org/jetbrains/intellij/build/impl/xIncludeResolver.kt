@@ -26,9 +26,6 @@ private fun isIncludeElement(element: Element): Boolean {
   return element.name == "include" && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE
 }
 
-internal const val SOURCE_FILE_ATTRIBUTE = "source-file"
-internal const val MODULE_SET_CHAIN_SEPARATOR = " <- "
-
 private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathResolver: XIncludePathResolver, trackSourceFile: Boolean): MutableList<Element>? {
   val base = bases.peek()
   val href = requireNotNull(element.getAttributeValue("href")) { "Missing href attribute" }
@@ -50,30 +47,6 @@ private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathRes
 
   val remoteElement = parseRemote(bases = bases, remote = remote, fallbackElement = fallbackElement, pathResolver = pathResolver, trackSourceFile = trackSourceFile) ?: return null
   val remoteParsed = extractNeededChildren(element, remoteElement)
-
-  // Add source-file attribute to <content> elements if tracking is enabled
-  // Build chain incrementally by prepending to existing chains to preserve include hierarchy
-  // Strip .xml extension here so downstream code doesn't need to
-  // Only add module set files to chain (skip product files)
-  if (trackSourceFile) {
-    for (resolvedElement in remoteParsed) {
-      if (resolvedElement.name == "content") {
-        val existingChain = resolvedElement.getAttributeValue(SOURCE_FILE_ATTRIBUTE)
-        val currentName = remote.fileName.toString().removeSuffix(".xml")
-
-        // Only add to chain if it's a module set file
-        if (currentName.startsWith("intellij.moduleSets.")) {
-          val newChain = if (existingChain != null) {
-            "$currentName$MODULE_SET_CHAIN_SEPARATOR$existingChain"
-          }
-          else {
-            currentName
-          }
-          resolvedElement.setAttribute(SOURCE_FILE_ATTRIBUTE, newChain)
-        }
-      }
-    }
-  }
 
   var i = 0
   while (true) {
@@ -221,27 +194,6 @@ private fun resolveXIncludeElementFromCache(
   ) ?: return null
 
   val remoteParsed = extractNeededChildren(element, remoteElement)
-
-  // Add source-file attribute to <content> elements if tracking is enabled
-  if (trackSourceFile) {
-    for (resolvedElement in remoteParsed) {
-      if (resolvedElement.name == "content") {
-        val existingChain = resolvedElement.getAttributeValue(SOURCE_FILE_ATTRIBUTE)
-        // For cached elements, we use href as the source identifier
-        val currentName = href.removeSuffix(".xml")
-
-        if (currentName.startsWith("intellij.moduleSets.")) {
-          val newChain = if (existingChain != null) {
-            "$currentName$MODULE_SET_CHAIN_SEPARATOR$existingChain"
-          }
-          else {
-            currentName
-          }
-          resolvedElement.setAttribute(SOURCE_FILE_ATTRIBUTE, newChain)
-        }
-      }
-    }
-  }
 
   var i = 0
   while (true) {

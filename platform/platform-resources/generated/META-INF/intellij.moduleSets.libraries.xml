@@ -4,7 +4,7 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <!-- nested: libraries.core -->
+    <!-- <editor-fold desc="nested: libraries.core"> -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
@@ -77,24 +77,28 @@
     <module name="intellij.libraries.winp" loading="embedded"/>
     <module name="intellij.libraries.xtext.xbase" loading="embedded"/>
     <module name="intellij.libraries.xz" loading="embedded"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: libraries.ktor -->
+    <!-- <editor-fold desc="nested: libraries.ktor"> -->
     <module name="intellij.libraries.ktor.io" loading="embedded"/>
     <module name="intellij.libraries.ktor.utils" loading="embedded"/>
     <module name="intellij.libraries.ktor.network.tls" loading="embedded"/>
     <module name="intellij.libraries.ktor.client" loading="embedded"/>
     <module name="intellij.libraries.ktor.client.cio" loading="embedded"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: libraries.misc -->
+    <!-- <editor-fold desc="nested: libraries.misc"> -->
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.xml.rpc"/>
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.opencsv"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: libraries.temporaryBundled -->
+    <!-- <editor-fold desc="nested: libraries.temporaryBundled"> -->
     <module name="intellij.libraries.jettison" loading="embedded"/>
     <module name="intellij.libraries.xstream" loading="embedded"/>
     <module name="intellij.libraries.commons.text"/>
+    <!-- </editor-fold> -->
 
   </content>
 </idea-plugin>

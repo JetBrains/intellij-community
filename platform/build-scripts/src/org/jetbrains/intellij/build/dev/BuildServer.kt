@@ -7,8 +7,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuildOptions
@@ -17,6 +15,9 @@ import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.jsonEncoder
+import org.jetbrains.intellij.build.productLayout.PRODUCT_REGISTRY_PATH
+import org.jetbrains.intellij.build.productLayout.ProductConfiguration
+import org.jetbrains.intellij.build.productLayout.ProductConfigurationRegistry
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
@@ -26,13 +27,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.readLines
 
-@Serializable
-internal data class ProductConfigurationRegistry(@JvmField val products: Map<String, ProductConfiguration>)
-
-@Serializable
-internal data class ProductConfiguration(@JvmField val modules: List<String>, @JvmField @SerialName("class") val className: String)
-
-private const val PRODUCTS_PROPERTIES_PATH = "build/dev-build.json"
 
 /**
  * Custom path for product properties
@@ -132,13 +126,13 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Pr
 internal fun getProductPropertiesPath(homePath: Path): Path {
   // handle a custom product properties path
   return System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
-         ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+         ?: homePath.resolve(PRODUCT_REGISTRY_PATH)
 }
 
 private fun getProductConfiguration(configuration: ProductConfigurationRegistry, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
   val key = if (baseIdePlatformPrefixForFrontend != null) "$baseIdePlatformPrefixForFrontend$platformPrefix" else platformPrefix
   return configuration.products[key]
-         ?: throw ConfigurationException("No production configuration for `$key`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
+         ?: throw ConfigurationException("No production configuration for `$key`; please add to `${PRODUCT_REGISTRY_PATH}` if needed")
 }
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

@@ -4,8 +4,8 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <!-- nested: libraries -->
-    <!-- nested: libraries > libraries.core -->
+    <!-- <editor-fold desc="nested: libraries"> -->
+    <!-- <editor-fold desc="nested: libraries > libraries.core"> -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
@@ -78,27 +78,32 @@
     <module name="intellij.libraries.winp" loading="embedded"/>
     <module name="intellij.libraries.xtext.xbase" loading="embedded"/>
     <module name="intellij.libraries.xz" loading="embedded"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: libraries > libraries.ktor -->
+    <!-- <editor-fold desc="nested: libraries > libraries.ktor"> -->
     <module name="intellij.libraries.ktor.io" loading="embedded"/>
     <module name="intellij.libraries.ktor.utils" loading="embedded"/>
     <module name="intellij.libraries.ktor.network.tls" loading="embedded"/>
     <module name="intellij.libraries.ktor.client" loading="embedded"/>
     <module name="intellij.libraries.ktor.client.cio" loading="embedded"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: libraries > libraries.misc -->
+    <!-- <editor-fold desc="nested: libraries > libraries.misc"> -->
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.xml.rpc"/>
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.opencsv"/>
+    <!-- </editor-fold> -->
 
-    <!-- nested: libraries > libraries.temporaryBundled -->
+    <!-- <editor-fold desc="nested: libraries > libraries.temporaryBundled"> -->
     <module name="intellij.libraries.jettison" loading="embedded"/>
     <module name="intellij.libraries.xstream" loading="embedded"/>
     <module name="intellij.libraries.commons.text"/>
+    <!-- </editor-fold> -->
 
+    <!-- </editor-fold> -->
 
-    <!-- direct modules -->
+    <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
@@ -156,5 +161,6 @@
     <module name="intellij.platform.rpc.topics" loading="embedded"/>
     <module name="intellij.platform.rpc.topics.backend"/>
     <module name="intellij.platform.rpc.topics.frontend"/>
+    <!-- </editor-fold> -->
   </content>
 </idea-plugin>
