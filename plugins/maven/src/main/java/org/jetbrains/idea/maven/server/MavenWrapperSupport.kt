@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -30,10 +29,7 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 @State(name = "MavenWrapperMapping",
        storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)],
@@ -50,6 +46,10 @@ internal class MavenWrapperMapping : PersistentStateComponent<MavenWrapperMappin
 
   override fun loadState(state: State) {
     myState.mapping.putAll(state.mapping)
+  }
+
+  fun invalidate() {
+    myState.mapping.clear()
   }
 
   companion object {
@@ -74,7 +74,7 @@ internal class MavenWrapperSupport {
       indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.downloading.from", urlString) }
       try {
         HttpRequests.request(urlString)
-          .tuner{
+          .tuner {
             val username = Environment.getVariable("MVNW_USERNAME")
             val password = Environment.getVariable("MVNW_PASSWORD")
             if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
@@ -177,6 +177,7 @@ internal class MavenWrapperSupport {
     }
   }
 
+
   private fun getZipFile(distributionUrl: String, project: Project): Path {
     val baseName: String = getDistName(distributionUrl)
     val distName: String = FileUtil.getNameWithoutExtension(baseName)
@@ -208,13 +209,13 @@ internal class MavenWrapperSupport {
     private val DISTRIBUTION_URL_PROPERTY = "distributionUrl"
 
     @JvmStatic
-    fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
+    fun getWrapperDistributionUrl(baseDir: Path?): String? {
       try {
         val wrapperProperties = getWrapperProperties(baseDir) ?: return null
 
         val properties = Properties()
 
-        val stream = ByteArrayInputStream(wrapperProperties.contentsToByteArray(true))
+        val stream = ByteArrayInputStream(wrapperProperties.readBytes())
         properties.load(stream)
         val configuredProperty = properties.getProperty(DISTRIBUTION_URL_PROPERTY)
         val urlBase = Environment.getVariable("MVNW_REPOURL")
@@ -233,13 +234,13 @@ internal class MavenWrapperSupport {
     }
 
     @JvmStatic
-    fun showUnsecureWarning(console: MavenSyncConsole, mavenProjectMultimodulePath: VirtualFile?) {
+    fun showUnsecureWarning(console: MavenSyncConsole, mavenProjectMultimodulePath: Path?) {
       val properties = getWrapperProperties(mavenProjectMultimodulePath)
 
-      val line = properties?.inputStream?.bufferedReader(properties.charset)?.readLines()?.indexOfFirst {
+      val line = properties?.readLines()?.indexOfFirst {
         it.startsWith(DISTRIBUTION_URL_PROPERTY)
       } ?: -1
-      val position = properties?.let { FilePosition(it.toNioPath().toFile(), line, 0) }
+      val position = properties?.let { FilePosition(it.toFile(), line, 0) }
       console.addWarning(SyncBundle.message("maven.sync.wrapper.http.title"),
                          SyncBundle.message("maven.sync.wrapper.http.description"),
                          position)
@@ -253,6 +254,7 @@ internal class MavenWrapperSupport {
     fun setDistributionPath(project: Project, urlString: String, path: Path) {
       MavenWrapperMapping.getInstance().myState.mapping[createDistributionKey(project, urlString)] = path.toAbsolutePath().toString()
     }
+
 
     @JvmStatic
     fun getCurrentDistribution(project: Project, urlString: String): MavenDistribution? {
@@ -272,7 +274,7 @@ internal class MavenWrapperSupport {
     }
 
     @JvmStatic
-    fun getWrapperProperties(baseDir: VirtualFile?) =
-      baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties")
+    fun getWrapperProperties(baseDir: Path?): Path? =
+      baseDir?.resolve(".mvn")?.resolve("wrapper")?.resolve("maven-wrapper.properties")
   }
 }

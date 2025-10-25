@@ -758,6 +758,13 @@ abstract class MavenTestCase : UsefulTestCase() {
     assumeTrue("Unable to run the test in non-local environment: $cause", LocalEelDescriptor == project.getEelDescriptor())
   }
 
+  protected fun setRawPomFile(content: String) {
+    Files.write(projectPom.toNioPath(), content.toByteArray(StandardCharsets.UTF_8))
+    projectRoot.refresh(false, false)
+    val f = projectRoot.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml in vfs")
+    refreshFiles(listOf(f))
+  }
+
   companion object {
     @Language("XML")
     fun createPomXml(modelVersion: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {

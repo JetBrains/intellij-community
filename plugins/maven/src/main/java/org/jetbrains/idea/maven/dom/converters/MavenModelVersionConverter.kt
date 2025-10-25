@@ -21,9 +21,10 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenModelVersionConverter : MavenConstantListConverter() {
+class MavenModelVersionConverter : MavenConstantListConverter(false) {
   override fun getValues(context: ConvertContext): Collection<String> {
     return if (isAtLeastMaven4(context.getFile().getVirtualFile(), context.getProject())) {
       VALUES_MAVEN_4
@@ -43,7 +44,9 @@ class MavenModelVersionConverter : MavenConstantListConverter() {
   }
 
   override fun getErrorMessage(s: String?, context: ConvertContext): String? {
-    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context))
+    val project = context.project
+    val version = MavenDistributionsCache.getInstance(project).getMavenDistribution(context.file.virtualFile).version
+    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context), version)
   }
 
   companion object {

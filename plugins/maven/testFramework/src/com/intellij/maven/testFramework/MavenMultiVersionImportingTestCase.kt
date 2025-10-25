@@ -468,7 +468,8 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       }.toList()
     }
 
-    internal fun getActualVersion(version: String): String {
+    @JvmStatic
+    protected fun getActualVersion(version: String): String {
       if (version == "bundled") {
         return MavenDistributionsCache.resolveEmbeddedMavenHome().version!!
       }

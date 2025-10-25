@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
@@ -8,7 +9,7 @@ import java.nio.file.Path
 interface MavenDistribution {
   val name: String
   val mavenHome: Path
-  val version: String?
+  val version: @NlsSafe String?
   fun isValid(): Boolean
   fun compatibleWith(mavenDistribution: MavenDistribution): Boolean
 }

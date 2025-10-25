@@ -139,31 +139,6 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
     checkHighlighting()
   }
 
-  @Test
-  fun testUnknownModelVersionMaven4() = runBlocking {
-    assumeMaven4()
-    fixture.saveText(projectPom,
-                     """
-                         <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-                           <modelVersion><error descr="Unsupported model version. Only versions [4.0.0, 4.1.0] are supported.">666</error></modelVersion>
-                           <artifactId>foo</artifactId>
-                         </project>
-                         """.trimIndent())
-    checkHighlighting()
-  }
-
-  @Test
-  fun testModelVersion41isUnsupportedInMaven3() = runBlocking {
-    assumeMaven3()
-    fixture.saveText(projectPom,
-                     """
-                         <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-                           <modelVersion><error descr="Unsupported model version. Only versions [4.0.0] are supported.">4.1.0</error></modelVersion>
-                           <artifactId>foo</artifactId>
-                         </project>
-                         """.trimIndent())
-    checkHighlighting()
-  }
 
   @Test
   fun testModelVersion41isSupportedInMaven4() = runBlocking {
