@@ -57,7 +57,7 @@ internal interface ProcessOutputController {
 
     fun collapseAllContexts()
     fun expandAllContexts()
-    fun selectProcess(process: LoggedProcess)
+    fun selectProcess(process: LoggedProcess?)
     fun toggleTreeFilter(filter: TreeFilter)
     fun toggleOutputFilter(filter: OutputFilter)
     fun toggleProcessInfo()
@@ -185,26 +185,27 @@ class ProcessOutputControllerService(
     }
 
     override fun collapseAllContexts() {
-        processTreeUiState.treeState.openNodes.forEach {
-            processTreeUiState.treeState.toggleNode(it)
-        }
+        processTreeUiState.treeState.openNodes = setOf()
 
         ProcessOutputUsageCollector.treeCollapseAllClicked()
     }
 
     override fun expandAllContexts() {
-        loggedProcesses.value
-            .mapNotNull { it.traceContext }
-            .toSet()
-            .subtract(processTreeUiState.treeState.openNodes)
-            .forEach {
-                processTreeUiState.treeState.toggleNode(it)
-            }
+        processTreeUiState.treeState.openNodes =
+            processTreeUiState.tree.value
+                .walkDepthFirst()
+                .mapNotNull {
+                    when (val data = it.data) {
+                        is TreeNode.Context -> data.traceContext
+                        is TreeNode.Process -> null
+                    }
+                }
+                .toSet()
 
         ProcessOutputUsageCollector.treeExpandAllClicked()
     }
 
-    override fun selectProcess(process: LoggedProcess) {
+    override fun selectProcess(process: LoggedProcess?) {
         selectedProcess.value = process
         ProcessOutputUsageCollector.treeProcessSelected()
     }
