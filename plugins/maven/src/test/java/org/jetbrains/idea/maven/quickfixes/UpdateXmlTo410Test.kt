@@ -9,7 +9,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.quickfix.UpdateXmlsTo410
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XLMNS
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS
 import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XSD
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -42,9 +42,9 @@ class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase() {
 
     readAction {
       val updatedProjectTag = xmlFile.document?.rootTag
-      assertEquals(MavenConstants.MAVEN_4_XLMNS, updatedProjectTag?.getAttribute("xmlns")?.value)
+      assertEquals(MavenConstants.MAVEN_4_XMLNS, updatedProjectTag?.getAttribute("xmlns")?.value)
       assertEquals("http://www.w3.org/2001/XMLSchema-instance", updatedProjectTag?.getAttribute("xmlns:xsi")?.value)
-      assertEquals("$MAVEN_4_XLMNS $MAVEN_4_XSD", updatedProjectTag?.getAttribute("xsi:schemaLocation")?.value)
+      assertEquals("$MAVEN_4_XMLNS $MAVEN_4_XSD", updatedProjectTag?.getAttribute("xsi:schemaLocation")?.value)
       assertEquals(MavenConstants.MODEL_VERSION_4_1_0,
                    updatedProjectTag?.findFirstSubTag("modelVersion")?.value?.text)
     }

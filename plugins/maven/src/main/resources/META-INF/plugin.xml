@@ -58,7 +58,8 @@
 
     <extensionPoint name="mavenAdditionalHighlighter" interface="org.jetbrains.idea.maven.dom.MavenAdditionalHightligher" dynamic="true"/>
 
-    <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator" dynamic="true"/>
+    <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator"
+                    dynamic="true"/>
   </extensionPoints>
 
   <dependencies>
@@ -227,6 +228,14 @@
                      key="inspection.redundant.groupId.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection"/>
+    <localInspection language="XML" shortName="MavenRedundantVersion" bundle="messages.MavenDomBundle"
+                     key="inspection.redundant.version.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantVersionInspection"/>
+    <localInspection language="XML" shortName="MavenNoRootDefined" bundle="messages.MavenDomBundle"
+                     key="inspection.no.root.defined.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNoRootDefinedInspection"/>
     <localInspection language="XML" shortName="MavenPropertyInParent" bundle="messages.MavenDomBundle"
                      key="inspection.property.in.parent.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
@@ -246,6 +255,26 @@
                      key="inspection.wrong.model.version"
                      groupKey="inspection.group" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewModelVersionInOldSchemaInspection"/>
+
+    <localInspection language="XML" shortName="MavenNewModelVersionInOldMaven" bundle="messages.MavenDomBundle"
+                     key="inspection.new.model.version.with.old.maven"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewModelVersionInOldMavenInspection"/>
+
+    <localInspection language="XML" shortName="MavenBomPackagingInOldSchema" bundle="messages.MavenDomBundle"
+                     key="inspection.new.packaging.in.old.model.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenBomPackagingInOldSchema"/>
+
+    <localInspection language="XML" shortName="Maven4RedundantParentCoordinates" bundle="messages.MavenDomBundle"
+                     key="inspection.redundant.parent.coordinates.maven.4"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.Maven4RedundantParentCoordinatesInspection"/>
+
+    <localInspection language="XML" shortName="MavenModulesInMaven4" bundle="messages.MavenDomBundle"
+                     key="inspection.modules.tag.in.maven.4"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenModulesInMaven4Inspection"/>
 
     <xml.xmlExtension implementation="org.jetbrains.idea.maven.dom.MavenXmlExtension"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
@@ -316,6 +345,12 @@
     <codeInsight.unresolvedReferenceQuickFixProvider
       implementation="org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFixProvider"/>
 
+    <codeInsight.declarativeInlayProvider language="XML"
+                                          implementationClass="org.jetbrains.idea.maven.dom.inlay.MavenModelVersionInlayHintProvider"
+                                          providerId="maven.pom.model.version.hints" group="OTHER_GROUP" isEnabledByDefault="true"
+                                          bundle="messages.MavenDomBundle" nameKey="maven.version.inlay.hint.name"
+                                          descriptionKey="maven.version.inlay.hint.description"/>
+
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoFileContributor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContributor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContributor"/>
@@ -351,6 +386,10 @@
     <statistics.validation.customValidationRule
       implementation="org.jetbrains.idea.maven.statistics.MavenLibraryCoordinatesWhitelistValidationRule"/>
 
+
+    <editorFactoryListener implementation="org.jetbrains.idea.maven.editor.MavenModelVersionEditorFactoryListener"/>
+    <registryKey key="maven.sync.model.editing" defaultValue="true"
+                 description="Synchronize editing model and xmlns in pom.xml"/>
 
     <registryKey key="maven.collect.local.stat" defaultValue="false"
                  description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
@@ -1000,5 +1039,10 @@
     <listener class="org.jetbrains.idea.maven.plugins.compatibility.PluginCompatibilityConfiguratorListener"
               topic="org.jetbrains.idea.maven.project.MavenSyncListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
+
+    <listener class="org.jetbrains.idea.maven.editor.MavenModelVersionSynchronizerService$MyCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+    <listener class="org.jetbrains.idea.maven.editor.MavenModelVersionSynchronizerService$MyDynamicPluginListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 </idea-plugin>

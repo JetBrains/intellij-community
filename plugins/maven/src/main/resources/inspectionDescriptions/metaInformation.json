@@ -13,11 +13,19 @@
       "codeQualityCategory": "Sanity"
     },
     {
+      "id": "MavenRedundantVersion",
+      "codeQualityCategory": "Sanity"
+    },
+    {
       "id": "MavenDuplicatePluginInspection",
       "codeQualityCategory": "Sanity"
     },
     {
       "id": "MavenParentMissedVersionInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "Maven4RedundantParentCoordinates",
       "codeQualityCategory": "Sanity"
     },
     {
@@ -30,6 +38,10 @@
     },
     {
       "id": "MavenNewElementsInOldSchema",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MavenNoRootDefined",
       "codeQualityCategory": "Reliability"
     }
   ]

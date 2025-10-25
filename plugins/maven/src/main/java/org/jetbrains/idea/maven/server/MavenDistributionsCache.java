@@ -50,6 +50,7 @@ public final class MavenDistributionsCache {
   }
 
   public void cleanCaches() {
+    MavenWrapperDownloader.invalidateCaches();
     mySettingsDistribution.drop();
     myWorkingDirToMultiModuleMap.clear();
     myMultimoduleDirToWrapperedMavenDistributionsMap.clear();
@@ -107,6 +108,20 @@ public final class MavenDistributionsCache {
     return myVmSettingsMap.computeIfAbsent(multiModuleDir, MavenExternalParameters::readJvmConfigOptions);
   }
 
+
+  public @NotNull MavenDistribution getMavenDistribution(@Nullable VirtualFile file) {
+    if (!useWrapper() || file == null) {
+      return mySettingsDistribution.getValue();
+    }
+
+    if (file.isDirectory()) {
+      return getMavenDistribution(file.getPath());
+    }
+    else {
+      return getMavenDistribution(file.getParent());
+    }
+  }
+
   public @NotNull MavenDistribution getMavenDistribution(@Nullable String workingDirectory) {
     if (!useWrapper() || workingDirectory == null) {
       return mySettingsDistribution.getValue();
@@ -145,7 +160,8 @@ public final class MavenDistributionsCache {
     if (PluginManagerCore.isRunningFromSources()) { // running from sources
       Path mavenPath = mySourcePath.getValue();
       return new LocalMavenDistribution(mavenPath, BundledMaven3.INSTANCE.getTitle());
-    } else if (mavenPlugin != null) { // running with production classloading. Use maven3 folder inside maven plugin layout
+    }
+    else if (mavenPlugin != null) { // running with production classloading. Use maven3 folder inside maven plugin layout
       Path pathToBundledMaven = mavenPlugin.getPluginPath().resolve("lib").resolve("maven3");
       return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
     }
@@ -163,11 +179,12 @@ public final class MavenDistributionsCache {
 
   @Nullable
   String getWrapperDistributionUrl(String multimoduleDirectory) {
-    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(multimoduleDirectory);
-    if (baseDir == null) {
-      return null;
-    }
-    return MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
+    return getWrapperDistributionUrl(Path.of(multimoduleDirectory));
+  }
+
+  @Nullable
+  String getWrapperDistributionUrl(Path multimoduleDirectory) {
+    return MavenWrapperSupport.getWrapperDistributionUrl(multimoduleDirectory);
   }
 
   private @NotNull String resolveMultiModuleDirectory(@NotNull String workingDirectory) {
@@ -176,10 +193,10 @@ public final class MavenDistributionsCache {
       return FileUtilRt.toSystemIndependentName(calculateMultimoduleDirUpToFileTree(workingDirectory));
     }
     return FileUtilRt.toSystemIndependentName(manager.getRootProjects().stream()
-                                              .map(MavenProject::getDirectory)
-                                              .filter(rpDirectory -> FileUtil.isAncestor(rpDirectory, workingDirectory, false))
-                                              .findFirst()
-                                              .orElseGet(() -> calculateMultimoduleDirUpToFileTree(workingDirectory)));
+                                                .map(MavenProject::getDirectory)
+                                                .filter(rpDirectory -> FileUtil.isAncestor(rpDirectory, workingDirectory, false))
+                                                .findFirst()
+                                                .orElseGet(() -> calculateMultimoduleDirUpToFileTree(workingDirectory)));
   }
 
   private @NotNull String calculateMultimoduleDirUpToFileTree(String directory) {
