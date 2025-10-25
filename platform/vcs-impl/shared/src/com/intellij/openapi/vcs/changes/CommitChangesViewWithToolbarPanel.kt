@@ -6,7 +6,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -37,7 +36,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private val REFRESH_DELAY = 100.milliseconds
 
 @ApiStatus.Internal
-open class CommitChangesViewWithToolbarPanel(
+abstract class CommitChangesViewWithToolbarPanel(
   changesView: ChangesListView,
   protected val cs: CoroutineScope,
 ) : ChangesViewPanel(changesView) {
@@ -47,8 +46,6 @@ open class CommitChangesViewWithToolbarPanel(
   private val refresher = SingleTaskRunner(cs) {
     refreshView()
   }
-
-  private var modelProvider: ModelProvider? = null
 
   init {
     refresher.start()
@@ -60,9 +57,7 @@ open class CommitChangesViewWithToolbarPanel(
   }
 
   @RequiresEdt
-  fun initPanel(modelProvider: ModelProvider) {
-    this.modelProvider = modelProvider
-
+  open fun initPanel() {
     cs.launch(Dispatchers.UI) {
       ChangeListsViewModel.getInstance(project).changeListManagerState.collectLatest {
         changesView.repaint()
@@ -86,8 +81,6 @@ open class CommitChangesViewWithToolbarPanel(
 
     toolbarActionGroup.addAll(createChangesToolbarActions(changesView))
 
-    Initializer.EP_NAME.forEachExtensionSafe { it.init(cs, this) }
-
     ChangesViewModifier.KEY.addChangeListener(project, { resetViewImmediatelyAndRefreshLater() }, cs.asDisposable())
     project.messageBus.connect(cs).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifierListener { scheduleRefresh() })
 
@@ -95,7 +88,7 @@ open class CommitChangesViewWithToolbarPanel(
   }
 
   @CalledInAny
-  fun scheduleRefresh(){
+  fun scheduleRefresh() {
     scheduleRefresh(withDelay = true)
   }
 
@@ -128,10 +121,8 @@ open class CommitChangesViewWithToolbarPanel(
   @RequiresBackgroundThread
   private suspend fun refreshView() {
     if (!cs.isActive || !project.isInitialized || application.isUnitTestMode) return
-    val modelProvider = modelProvider ?: return
-
     val (modelData, model) = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
-      val modelData = modelProvider.getModelData()
+      val modelData = getModelData()
 
       modelData to ChangesViewUtil.createTreeModel(
         project,
@@ -148,11 +139,14 @@ open class CommitChangesViewWithToolbarPanel(
       TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).use {
         changesView.updateTreeModel(model, ChangesViewTreeStateStrategy())
         checkCanceled()
-        modelProvider.synchronizeInclusion(modelData.changeLists, modelData.unversionedFiles)
+        synchronizeInclusion(modelData.changeLists, modelData.unversionedFiles)
       }
     }
   }
 
+  abstract fun getModelData(): ModelData
+
+  abstract fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>)
 
   /**
    * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)
@@ -188,22 +182,10 @@ open class CommitChangesViewWithToolbarPanel(
     }
   }
 
-  interface ModelProvider {
-    fun getModelData(): ModelData
-
-    fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>)
-
-    class ModelData(val changeLists: List<LocalChangeList>,
-                    val unversionedFiles: List<FilePath>,
-                    val ignoredFiles: List<FilePath>,
-                    val isAllowExcludeFromCommit: () -> Boolean)
-  }
-
-  interface Initializer {
-    fun init(scope: CoroutineScope, panel: CommitChangesViewWithToolbarPanel)
-
-    companion object {
-      internal val EP_NAME = ExtensionPointName<Initializer>("com.intellij.vcs.commitChangesViewInitializer")
-    }
-  }
+  class ModelData(
+    val changeLists: List<LocalChangeList>,
+    val unversionedFiles: List<FilePath>,
+    val ignoredFiles: List<FilePath>,
+    val isAllowExcludeFromCommit: () -> Boolean,
+  )
 }

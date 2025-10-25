@@ -2,7 +2,9 @@
 package com.intellij.platform.vcs.impl.frontend.changes
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.platform.project.projectId
@@ -27,6 +29,14 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     cs.launch {
       subscribeToBackendEvents()
     }
+  }
+
+  override fun getModelData(): ModelData {
+    val changeLists = ChangeListsViewModel.getInstance(project).changeLists.value
+    return ModelData(changeLists.lists, emptyList(), emptyList()) { true }
+  }
+
+  override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
   }
 
   private suspend fun subscribeToBackendEvents() {

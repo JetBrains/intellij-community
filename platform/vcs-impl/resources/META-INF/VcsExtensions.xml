@@ -383,8 +383,6 @@
     <projectService
       serviceInterface="com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider"
       serviceImplementation="com.intellij.openapi.vcs.changes.ChangesListManagerStateProviderImpl"/>
-
-    <vcs.commitChangesViewInitializer implementation="com.intellij.openapi.vcs.changes.ui.BackendCommitChangesViewWithToolbarInitializer"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

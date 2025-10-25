@@ -12,7 +12,6 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import com.intellij.ui.split.createComponent
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -55,9 +54,6 @@ internal class RpcChangesViewProxy(private val project: Project, scope: Coroutin
   override fun initPanel() {
     val id = storeValueGlobally(scope, Unit, BackendChangesViewValueIdType)
     ChangesViewSplitComponentBinding.createComponent(project, scope, id)
-  }
-
-  override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
   }
 
   override fun setToolbarHorizontal(horizontal: Boolean) {

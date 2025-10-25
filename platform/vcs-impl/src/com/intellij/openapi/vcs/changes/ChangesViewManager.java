@@ -550,7 +550,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
         myCommitWorkflowHandler = null;
         myCommitPanel = null;
       }
-      myChangesView.setCommitWorkflowHandler(myCommitWorkflowHandler);
 
       myDispatcher.getMulticaster().allowExcludeFromCommitChanged();
       configureToolbars();

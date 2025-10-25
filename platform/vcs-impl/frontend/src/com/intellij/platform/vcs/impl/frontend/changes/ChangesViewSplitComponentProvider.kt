@@ -2,12 +2,8 @@
 package com.intellij.platform.vcs.impl.frontend.changes
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesViewId
 import com.intellij.openapi.vcs.changes.ChangesViewSplitComponentBinding
-import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
-import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.ui.split.SplitComponentBinding
 import com.intellij.ui.split.SplitComponentProvider
 import kotlinx.coroutines.CoroutineScope
@@ -18,18 +14,7 @@ internal class ChangesViewSplitComponentProvider : SplitComponentProvider<Change
 
   override fun createComponent(project: Project, scope: CoroutineScope, modelId: ChangesViewId): JComponent {
     val panel = FrontendCommitChangesViewWithToolbarPanel.create(project, scope)
-    panel.initPanel(object : CommitChangesViewWithToolbarPanel.ModelProvider {
-      override fun getModelData(): CommitChangesViewWithToolbarPanel.ModelProvider.ModelData {
-        val changeLists = ChangeListsViewModel.getInstance(project).changeLists.value
-        return CommitChangesViewWithToolbarPanel.ModelProvider.ModelData(changeLists.lists,
-                                                                         emptyList(),
-                                                                         emptyList()) { true }
-      }
-
-      override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
-      }
-    })
-
+    panel.initPanel()
     return panel
   }
 }

@@ -4,14 +4,14 @@ package com.intellij.vcs.changes.viewModel
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
+import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.util.ui.tree.TreeUtil.*
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,8 +21,6 @@ import javax.swing.tree.TreePath
  * Suitable for the monolith mode only.
  */
 internal class LocalChangesViewProxy(override val panel: CommitChangesViewWithToolbarPanel, scope: CoroutineScope) : ChangesViewProxy(scope) {
-  private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
-
   override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override fun setInclusionModel(model: InclusionModel?) {
@@ -30,12 +28,8 @@ internal class LocalChangesViewProxy(override val panel: CommitChangesViewWithTo
   }
 
   override fun initPanel() {
-    panel.initPanel(ModelProvider())
+    panel.initPanel()
     panel.changesView.setInclusionListener { inclusionChanged.tryEmit(Unit) }
-  }
-
-  override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
-    commitWorkflowHandler = handler
   }
 
   override fun setToolbarHorizontal(horizontal: Boolean) {
@@ -103,24 +97,4 @@ internal class LocalChangesViewProxy(override val panel: CommitChangesViewWithTo
   }
 
   override fun getTree(): ChangesListView = panel.changesView
-
-  private inner class ModelProvider : CommitChangesViewWithToolbarPanel.ModelProvider {
-    override fun getModelData(): CommitChangesViewWithToolbarPanel.ModelProvider.ModelData {
-      val project = panel.project
-      val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-      val changeLists = changeListManager.changeLists
-      val unversionedFiles = changeListManager.unversionedFilesPaths
-
-      val ignoredFiles = if (ChangesViewSettings.getInstance(project).showIgnored) changeListManager.ignoredFilePaths else emptyList()
-      return CommitChangesViewWithToolbarPanel.ModelProvider.ModelData(
-        changeLists,
-        unversionedFiles,
-        ignoredFiles,
-      ) { commitWorkflowHandler?.isActive == true }
-    }
-
-    override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
-      commitWorkflowHandler?.synchronizeInclusion(changeLists, unversionedFiles)
-    }
-  }
 }
