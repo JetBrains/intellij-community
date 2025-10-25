@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.readLineAsync
+import com.intellij.util.io.toByteArray
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.Exe
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +25,9 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -196,24 +199,17 @@ private class LoggingInputStream(
 ) : InputStream() {
   private val bytes = ByteStreams.newDataOutput()
   private var tail = 0
+  private var closed = AtomicBoolean(false)
 
   val byteArray
     get() = bytes.toByteArray()
 
   override fun read(): Int {
-    val byte = try {
-      backingInputStream.read()
+    if (closed.get()) {
+      return -1
     }
-    catch (e: IOException) {
-      // ugly hack; but the Process' `.destroy` methods abruptly close
-      // the stream, making all pending readers throw an exception.
-      // we can handle this case as legal here
-      if (e.message == "Stream closed") {
-        return -1
-      }
 
-      throw e
-    }
+    val byte = backingInputStream.read()
 
     if (tail < LoggingLimits.MAX_OUTPUT_SIZE && byte != -1) {
       bytes.write(byte)
@@ -221,6 +217,39 @@ private class LoggingInputStream(
     }
 
     return byte
+  }
+
+  /**
+   * Chunked read. The read bytes are also logged into the corresponding byte stream. If limit of [LoggingLimits.MAX_OUTPUT_SIZE] is
+   * reached, then the logged bytes are truncated.
+   */
+  override fun read(b: ByteArray, off: Int, len: Int): Int {
+    if (closed.get()) {
+      return -1
+    }
+
+    val finalLen = backingInputStream.read(b, off, len)
+
+    if (finalLen != -1) {
+      val truncatedLen = if (tail + finalLen > LoggingLimits.MAX_OUTPUT_SIZE) {
+        LoggingLimits.MAX_OUTPUT_SIZE - tail
+      }
+      else {
+        finalLen
+      }
+
+      if (truncatedLen > 0) {
+        bytes.write(b, off, truncatedLen)
+        tail += truncatedLen
+      }
+    }
+
+    return finalLen
+  }
+
+  override fun close() {
+    closed.set(true)
+    super.close()
   }
 }
 

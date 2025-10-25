@@ -78,7 +78,7 @@ internal abstract class ProcessOutputTest {
             controllerSpy.expandAllContexts()
         }
 
-        override fun selectProcess(process: LoggedProcess) {
+        override fun selectProcess(process: LoggedProcess?) {
             controllerSpy.selectProcess(process)
         }
 

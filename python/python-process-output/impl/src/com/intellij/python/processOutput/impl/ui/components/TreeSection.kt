@@ -90,6 +90,8 @@ internal fun TreeSection(controller: ProcessOutputController) {
 
                                 if (node is TreeNode.Process) {
                                     controller.selectProcess(node.process)
+                                } else {
+                                    controller.selectProcess(null)
                                 }
                             },
                             style = LazyTreeStyle(
