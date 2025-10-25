@@ -1454,7 +1454,8 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
   }
 }
 
-private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
+@ApiStatus.Internal
+abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
     if (!LineStatusTrackerBaseContentUtil.isSupported(project, file)) return false
     return LineStatusTrackerBaseContentUtil.isTracked(project, file)

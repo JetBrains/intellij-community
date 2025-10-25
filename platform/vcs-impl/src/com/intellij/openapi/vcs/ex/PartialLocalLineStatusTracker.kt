@@ -1092,8 +1092,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   companion object {
     private val LOG: Logger = Logger.getInstance(ChangelistsLocalLineStatusTracker::class.java)
 
+    @ApiStatus.Internal
     @JvmStatic
-    internal fun createTracker(project: Project,
+    fun createTracker(project: Project,
                                document: Document,
                                virtualFile: VirtualFile): ChangelistsLocalLineStatusTracker {
       return ChangelistsLocalLineStatusTracker(project, document, virtualFile)
