@@ -617,6 +617,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
         },
         jarFileForModule = jarFileForModule,
         isRunningFromSourcesWithoutDevBuild = false,
+        isDeprecatedLoader = false,
       )
     }
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
@@ -863,6 +864,7 @@ internal fun loadCoreProductPlugin(
   useCoreClassLoader: Boolean,
   reader: XMLStreamReader2,
   isRunningFromSourcesWithoutDevBuild: Boolean,
+  isDeprecatedLoader: Boolean,
   jarFileForModule: (moduleId: PluginModuleId, moduleDir: Path) -> Path?,
 ): PluginMainDescriptor {
   val dataLoader = object : DataLoader {
@@ -889,6 +891,7 @@ internal fun loadCoreProductPlugin(
     dataLoader = dataLoader,
     xIncludeLoader = xIncludeLoader,
     isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild,
+    isDeprecatedLoader = isDeprecatedLoader,
   )
   loadPluginDependencyDescriptors(descriptor = descriptor, loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
@@ -903,6 +906,7 @@ private fun loadContentModuleDescriptors(
   dataLoader: DataLoader,
   xIncludeLoader: XIncludeLoader,
   isRunningFromSourcesWithoutDevBuild: Boolean,
+  isDeprecatedLoader: Boolean,
 ) {
   val moduleDirExists = Files.isDirectory(moduleDir)
   for (module in descriptor.content.modules) {
@@ -913,8 +917,11 @@ private fun loadContentModuleDescriptors(
     val moduleId = module.moduleId
     val subDescriptorFile = "${moduleId.name}.xml"
 
+    @Suppress("SpellCheckingInspection")
     if (moduleDirExists &&
         !isRunningFromSourcesWithoutDevBuild &&
+        // module-based loader is not supported, descriptorContent maybe null
+        (!isDeprecatedLoader || module.descriptorContent != null) &&
         (moduleId.name.startsWith("intellij.") || moduleId.name.startsWith("fleet.")) &&
         loadProductModule(
           jarFile = jarFileForModule(moduleId, moduleDir),
@@ -1238,6 +1245,7 @@ internal fun testOrDeprecatedLoadDescriptorFromResource(
         dataLoader = dataLoader,
         xIncludeLoader = createXIncludeLoader(pathResolver, dataLoader),
         isRunningFromSourcesWithoutDevBuild = pathResolver.isRunningFromSourcesWithoutDevBuild,
+        isDeprecatedLoader = true,
       )
     }
     loadPluginDependencyDescriptors(descriptor = descriptor, loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)

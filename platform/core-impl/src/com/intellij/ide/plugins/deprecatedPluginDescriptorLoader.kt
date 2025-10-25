@@ -31,6 +31,7 @@ fun deprecatedLoadCorePluginForModuleBasedLoader(
       reader = reader,
       jarFileForModule = jarFileForModule,
       isRunningFromSourcesWithoutDevBuild = false,
+      isDeprecatedLoader = true
     )
   }
   else {
@@ -43,6 +44,7 @@ fun deprecatedLoadCorePluginForModuleBasedLoader(
       reader = reader,
       jarFileForModule = jarFileForModule,
       isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+      isDeprecatedLoader = true,
     )
   }
 }
@@ -142,6 +144,7 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
         reader = reader,
         jarFileForModule = jarFileForModule,
         isRunningFromSourcesWithoutDevBuild = false,
+        isDeprecatedLoader = true,
       )
       DiscoveredPluginsList(Java11Shim.INSTANCE.listOf(corePlugin), PluginsSourceContext.Product)
     }
@@ -157,6 +160,7 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
       reader = reader,
       jarFileForModule = jarFileForModule,
       isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+      isDeprecatedLoader = true,
     )
   }
 

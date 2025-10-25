@@ -31,40 +31,29 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
   val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
 
   // Group modules by their module sets using chain from ModuleItem.moduleSet
-  for (entry in productModules) {
-    val chainList = entry.first.moduleSet
-    if (chainList == null) {
+  for ((moduleItem, distEntries) in productModules) {
+    val chain = moduleItem.moduleSet
+    if (chain == null) {
       // Module not in any module set (e.g., additional product modules)
       continue
     }
 
     // Module should be included in all sets in its chain
-    for (setName in chainList) {
-      allModuleSets.computeIfAbsent(setName) { mutableListOf() }.add(entry)
+    for (setName in chain) {
+      allModuleSets.computeIfAbsent(setName) { mutableListOf() }.add(moduleItem to distEntries)
     }
   }
 
   // Determine root vs nested module sets by using chain from ModuleItem.moduleSet
   // A set is nested if it appears after another set in any chain (e.g., [A, B] means B is nested)
-  val nestedModuleSetNames = mutableSetOf<String>()
-  for ((_, modules) in allModuleSets) {
-    for ((item) in modules) {
-      val chainList = item.moduleSet ?: continue
-
-      // Mark all sets except the first in chain as nested
-      for (i in 1 until chainList.size) {
-        nestedModuleSetNames.add(chainList[i])
-      }
-    }
-  }
+  // All sets after position 0 in any module's chain are considered nested
+  val nestedModuleSetNames = productModules
+    .mapNotNull { it.first.moduleSet }  // Get all chains
+    .flatMap { it.drop(1) }  // Take all sets except the first (root)
+    .toSet()
 
   // Filter to only root module sets (not nested in other product module sets)
-  val rootModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
-  for ((moduleSetName, modules) in allModuleSets) {
-    if (moduleSetName !in nestedModuleSetNames) {
-      rootModuleSets[moduleSetName] = modules
-    }
-  }
+  val rootModuleSets = allModuleSets.filterKeys { it !in nestedModuleSetNames }.toSortedMap()
 
   val platformData = buildPlatformContentReport(
     contentReport = contentReport,
@@ -86,18 +75,19 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
     val directModules = modules.filter { it.first.moduleSet?.lastOrNull() == moduleSetName }
     entries.addAll(directModules.map { it.first.moduleName })
 
-    // Extract nested set names from chains
-    val nestedSets = mutableSetOf<String>()
-    for ((item) in modules) {
-      val chainList = item.moduleSet ?: continue
-
-      // Find position of current set in chain
-      val currentIndex = chainList.indexOf(moduleSetName)
-      if (currentIndex != -1 && currentIndex < chainList.size - 1) {
-        // Add the immediate child (next in chain)
-        nestedSets.add(chainList[currentIndex + 1])
+    // Extract immediate child sets (sets that directly follow this set in any chain)
+    // Example: if chain is [parent, current, child, grandchild], only add 'child'
+    val nestedSets = modules
+      .mapNotNull { it.first.moduleSet }
+      .mapNotNull { chain ->
+        val currentIndex = chain.indexOf(moduleSetName)
+        if (currentIndex != -1 && currentIndex < chain.size - 1) {
+          chain[currentIndex + 1]  // Return immediate child
+        } else {
+          null
+        }
       }
-    }
+      .toSet()
     entries.addAll(nestedSets)
 
     val out = ByteArrayOutputStream()
