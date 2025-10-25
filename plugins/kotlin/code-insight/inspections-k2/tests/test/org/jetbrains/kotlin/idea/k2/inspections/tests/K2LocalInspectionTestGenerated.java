@@ -4305,6 +4305,45 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality")
+    public static class StringReferentialEquality extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("nonStringComparison.kt")
+        public void testNonStringComparison() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/nonStringComparison.kt");
+        }
+
+        @TestMetadata("nullComparison.kt")
+        public void testNullComparison() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/nullComparison.kt");
+        }
+
+        @TestMetadata("referentialEquals.kt")
+        public void testReferentialEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/referentialEquals.kt");
+        }
+
+        @TestMetadata("referentialEqualsNullable.kt")
+        public void testReferentialEqualsNullable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/referentialEqualsNullable.kt");
+        }
+
+        @TestMetadata("referentialNotEquals.kt")
+        public void testReferentialNotEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/referentialNotEquals.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf")
     public static class SuspiciousCascadingIf extends AbstractK2LocalInspectionTest {
         @java.lang.Override
