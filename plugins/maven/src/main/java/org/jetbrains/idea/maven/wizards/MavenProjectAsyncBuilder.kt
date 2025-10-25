@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -158,7 +157,7 @@ class MavenProjectAsyncBuilder {
     tree.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE)
 
     generalSettings.updateFromMavenConfig(files)
-    updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings)
+    updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings, rootDirectory)
     MavenSettingsCache.getInstance(project).reloadAsync()
 
     val manager = MavenProjectsManager.getInstance(project)
@@ -210,6 +209,7 @@ class MavenProjectAsyncBuilder {
     project: Project,
     generalSettings: MavenGeneralSettings,
     importingSettings: MavenImportingSettings,
+    rootDirectory: Path,
   ) {
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
     settings.generalSettings = generalSettings
@@ -218,7 +218,7 @@ class MavenProjectAsyncBuilder {
     if (!settingsFile.isNullOrBlank()) {
       settings.generalSettings.setUserSettingsFile(settingsFile.trim { it <= ' ' })
     }
-    val distributionUrl = getWrapperDistributionUrl(project.guessProjectDir())
+    val distributionUrl = getWrapperDistributionUrl(rootDirectory)
     if (distributionUrl != null) {
       settings.generalSettings.mavenHomeType = MavenWrapper
     }

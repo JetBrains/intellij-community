@@ -1,16 +1,15 @@
 package org.jetbrains.idea.maven.inspections.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
+import org.jetbrains.idea.maven.dom.inspections.MavenRedundantVersionInspection
 import org.junit.Test
 
-class MavenRedundantGroupIdTest : MavenDomTestCase() {
+class MavenRedundantVersionTest : MavenDomTestCase() {
   override fun setUp() {
     super.setUp()
 
-    fixture.enableInspections(MavenRedundantGroupIdInspection::class.java)
+    fixture.enableInspections(MavenRedundantVersionInspection::class.java)
 
     runBlocking {
       importProjectAsync("""
@@ -37,13 +36,13 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
     createProjectPom("""
                        <groupId>childGroupId</groupId>
                        <artifactId>childA</artifactId>
-                       <version>1.0</version>
+                       <version>2.0</version>
                          
-                      <parent>
-                        <groupId><error descr="Project 'my.group:parent:1.0' not found">my.group</error></groupId>
+                       <parent>
+                         <groupId><error descr="Project 'my.group:parent:1.0' not found">my.group</error></groupId>
                         <artifactId><error descr="Project 'my.group:parent:1.0' not found">parent</error></artifactId>
                         <version><error descr="Project 'my.group:parent:1.0' not found">1.0</error></version>
-                      </parent>
+                       </parent>
                        """.trimIndent())
 
     checkHighlighting()
@@ -52,15 +51,14 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
   @Test
   fun testHighlighting3() = runBlocking {
     createProjectPom("""
-                       <warning><groupId>my.group</groupId></warning>
                        <artifactId>childA</artifactId>
-                       <version>1.0</version>
+                       <warning descr="Definition of version is redundant, because it's inherited from the parent"><version>1.0</version></warning>
                          
                        <parent>
-                        <groupId><error descr="Project 'my.group:parent:1.0' not found">my.group</error></groupId>
-                        <artifactId><error descr="Project 'my.group:parent:1.0' not found">parent</error></artifactId>
-                        <version><error descr="Project 'my.group:parent:1.0' not found">1.0</error></version>
-                      </parent>
+                         <groupId><error descr="Project 'my.group:parent:1.0' not found">my.group</error></groupId>
+                         <artifactId><error descr="Project 'my.group:parent:1.0' not found">parent</error></artifactId>
+                         <version><error descr="Project 'my.group:parent:1.0' not found">1.0</error></version>
+                       </parent>
                        """.trimIndent())
 
     checkHighlighting()
@@ -70,12 +68,11 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
   fun testQuickFix() = runBlocking {
     createProjectPom("""
                        <artifactId>childA</artifactId>
-                       <groupId>mavenParen<caret>t</groupId>
-                       <version>1.0</version>
-                         
+                       <groupId>mavenParent</groupId>
+                       <version<caret>>1.0</version>
                        <parent>
                          <groupId>mavenParent</groupId>
-                         <artifactId>childA</artifactId>
+                         <artifactId>mavenParent</artifactId>
                          <version>1.0</version>
                        </parent>
                        """.trimIndent())
@@ -83,21 +80,16 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
     fixture.configureFromExistingVirtualFile(projectPom)
     fixture.doHighlighting()
 
-    val intention =  fixture.availableIntentions.singleOrNull{it.text.startsWith("Remove ") && it.text.contains("groupId")}
+    val intention =  fixture.availableIntentions.singleOrNull{it.text.startsWith("Remove ") && it.text.contains("version")}
     assertNotNull("Cannot find intention", intention)
     fixture.launchAction(intention!!)
 
-
-    //doPostponedFormatting(myProject)
-    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
-
     fixture.checkResult(createPomXml("""
                                                        <artifactId>childA</artifactId>
-                                                           <version>1.0</version>
-                                                         
-                                                       <parent>
+                                                       <groupId>mavenParent</groupId>
+                                                           <parent>
                                                          <groupId>mavenParent</groupId>
-                                                         <artifactId>childA</artifactId>
+                                                         <artifactId>mavenParent</artifactId>
                                                          <version>1.0</version>
                                                        </parent>
                                                        """.trimIndent()))

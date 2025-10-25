@@ -8,8 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XLMNS
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_3_XMLNS
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_3_XMLNS_HTTPS
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS_HTTPS
 import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XSD
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XSD_HTTPS
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 
 class UpdateXmlsTo410 : LocalQuickFix {
@@ -24,16 +28,7 @@ class UpdateXmlsTo410 : LocalQuickFix {
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
 
     val rootTag = findProjectTag(descriptor) ?: return
-    val xmlnsXsi = rootTag.getAttribute("xmlns:xsi")
-    rootTag.setAttribute("xmlns", MAVEN_4_XLMNS)
-    if (xmlnsXsi == null) {
-      rootTag.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-    }
-    rootTag.setAttribute("xsi:schemaLocation", "$MAVEN_4_XLMNS $MAVEN_4_XSD")
-    val modelVersion = rootTag.findSubTags("modelVersion")
-    if (modelVersion.isNotEmpty()) {
-      modelVersion.forEach { it.value.setText(MavenConstants.MODEL_VERSION_4_1_0) }
-    }
+    updateTagTo410(rootTag)
   }
 
   private fun findProjectTag(descriptor: ProblemDescriptor): XmlTag? {
@@ -45,4 +40,32 @@ class UpdateXmlsTo410 : LocalQuickFix {
     return null
   }
 
+  companion object {
+    fun updateTagTo410(rootTag: XmlTag) {
+      val xmlnsXsi = rootTag.getAttribute("xmlns:xsi")
+      val xmlns = rootTag.getAttribute("xmlns")?.value
+      if(xmlns.isNullOrBlank()|| xmlns == MAVEN_3_XMLNS) {
+        rootTag.setAttribute("xmlns", MAVEN_4_XMLNS)
+      } else if(xmlns == MAVEN_3_XMLNS_HTTPS) {
+        rootTag.setAttribute("xmlns", MAVEN_4_XMLNS_HTTPS)
+      }
+
+      if (xmlnsXsi == null) {
+        rootTag.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+      }
+
+      val schemaLocation =  rootTag.getAttribute("xsi:schemaLocation")?.value
+
+      if(schemaLocation.isNullOrBlank() || schemaLocation.startsWith(MAVEN_3_XMLNS)) {
+        rootTag.setAttribute("xsi:schemaLocation", "$MAVEN_4_XMLNS $MAVEN_4_XSD")
+      } else if(schemaLocation.startsWith(MAVEN_3_XMLNS_HTTPS)) {
+        rootTag.setAttribute("xsi:schemaLocation", "$MAVEN_4_XMLNS_HTTPS $MAVEN_4_XSD_HTTPS")
+      }
+
+      val modelVersion = rootTag.findSubTags("modelVersion")
+      if (modelVersion.isNotEmpty()) {
+        modelVersion.forEach { it.value.setText(MavenConstants.MODEL_VERSION_4_1_0) }
+      }
+    }
+  }
 }

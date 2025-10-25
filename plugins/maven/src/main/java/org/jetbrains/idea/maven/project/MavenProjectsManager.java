@@ -122,7 +122,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
 
-
   @Override
   public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
@@ -159,7 +158,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Deprecated(forRemoval = true)
   public File getLocalRepository() {
-      return MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo().toFile();
+    return MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo().toFile();
   }
 
   public Path getRepositoryPath() {
@@ -254,6 +253,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
     }
   }
+
   private void initProjectsTree() {
     initLock.lock();
     try {
@@ -289,12 +289,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     Update update = new Update(this) {
       @Override
       public void run() {
-       saveTree();
+        saveTree();
       }
     };
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       mySaveQueue.queue(update);
-    } else {
+    }
+    else {
       MergingQueueUtil.queueTracked(mySaveQueue, update);
     }
   }
@@ -383,7 +384,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!isInitialized()) {
       doInit();
       doActivate();
-      var distributionUrl = getWrapperDistributionUrl(ProjectUtil.guessProjectDir(myProject));
+      var baseDir = ProjectUtil.guessProjectDir(myProject);
+
+      var distributionUrl = baseDir == null ? null : getWrapperDistributionUrl(baseDir.toNioPath());
       if (distributionUrl != null) {
         getGeneralSettings().setMavenHomeType(MavenWrapper.INSTANCE);
       }
@@ -662,8 +665,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void updateProjectTargetFolders() {
-      if (myProject.isDisposed()) return;
-      MavenProjectImporter.scheduleUpdateTargetFolders(myProject);
+    if (myProject.isDisposed()) return;
+    MavenProjectImporter.scheduleUpdateTargetFolders(myProject);
   }
 
   @ApiStatus.Internal
