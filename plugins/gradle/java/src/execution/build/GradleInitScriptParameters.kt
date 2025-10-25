@@ -16,4 +16,6 @@ interface GradleInitScriptParameters {
   val javaExePath: String
   val sourceSetName: String
   val javaModuleName: String?
+  val useManifestJar: Boolean?
+  val useArgsFile: Boolean?
 }

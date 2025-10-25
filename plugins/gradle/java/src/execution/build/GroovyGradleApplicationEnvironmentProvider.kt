@@ -21,8 +21,8 @@ class GroovyGradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironm
       definitions = params.definitions,
       intelliJRtPath = null,
       workingDirectory = params.workingDirectory,
-      useManifestJar = false,
-      useArgsFile = false,
+      useManifestJar = params.useManifestJar ?: false,
+      useArgsFile = params.useArgsFile ?: false,
       useClasspathFile = false,
       javaModuleName = params.javaModuleName
     )

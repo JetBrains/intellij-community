@@ -110,6 +110,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .withMainClass(mainClass)
       .withJavaModuleName(javaModuleName)
       .withSourceSetName(sourceSetName)
+      .withUseManifestJar(params.isUseClasspathJar)
+      .withUseArgsFile(params.isArgFile)
       .withJavaConfiguration(project, runProfile)
 
     val initScript = generateInitScript(builder.build())
@@ -178,6 +180,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     private lateinit var javaExePath: String
     private lateinit var sourceSetName: String
     private var javaModuleName: String? = null
+    private var useManifestJar: Boolean? = false
+    private var useArgsFile: Boolean? = false
 
     fun build(): GradleInitScriptParameters {
       return GradleInitScriptParametersImpl(configuration,
@@ -190,7 +194,9 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                             mainClass,
                                             javaExePath,
                                             sourceSetName,
-                                            javaModuleName
+                                            javaModuleName,
+                                            useManifestJar,
+                                            useArgsFile
       )
     }
 
@@ -238,6 +244,16 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       this.sourceSetName = sourceSetName
       return this
     }
+
+    fun withUseManifestJar(useManifestJar: Boolean?): GradleInitScriptParametersBuilder {
+      this.useManifestJar = useManifestJar
+      return this
+    }
+
+    fun withUseArgsFile(useArgsFile: Boolean?): GradleInitScriptParametersBuilder {
+      this.useArgsFile = useArgsFile
+      return this
+    }
   }
 
   private class GradleInitScriptParametersImpl(
@@ -252,5 +268,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     override val javaExePath: String,
     override val sourceSetName: String,
     override val javaModuleName: String?,
+    override val useManifestJar: Boolean?,
+    override val useArgsFile: Boolean?,
   ) : GradleInitScriptParameters
 }
