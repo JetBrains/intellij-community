@@ -602,6 +602,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
     val descriptorStart = bundledPluginClasspathBytes.size - byteInput.available()
     input.skipBytes(descriptorSize)
     val core = async {
+      val isGateway = PlatformUtils.isGateway()
       loadCoreProductPlugin(
         loadingContext = loadingContext,
         pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSourcesWithoutDevBuild = false, isOptionalProductModule = { false }),
@@ -609,7 +610,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
         // GatewayStarter.kt adds JARs from the main IDE to the classpath and runs it with platformPrefix=Gateway.
         // So, there are two plugin.xml files in the product classpath (IDEA's one and Gateway's one - our cache contains product's ones).
         // (Gateway will be removed soon).
-        reader = if (PlatformUtils.isGateway()) {
+        reader = if (isGateway) {
           getResourceReader(path = PluginManagerCore.PLUGIN_XML_PATH, classLoader = mainClassLoader)!!
         }
         else {
@@ -617,7 +618,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
         },
         jarFileForModule = jarFileForModule,
         isRunningFromSourcesWithoutDevBuild = false,
-        isDeprecatedLoader = false,
+        isDeprecatedLoader = isGateway,
       )
     }
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
