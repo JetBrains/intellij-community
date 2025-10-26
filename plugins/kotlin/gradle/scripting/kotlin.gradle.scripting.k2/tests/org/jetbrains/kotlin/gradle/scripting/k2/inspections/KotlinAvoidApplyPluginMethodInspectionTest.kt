@@ -511,6 +511,260 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         }
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testValPluginName(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    dependencies {
+                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:1.0")
+                    }
+                }
+                val pluginName = "org.real.plugin"
+                <weak_warning>apply(plugin = pluginName)</weak_warning>
+                """.trimIndent()
+            )
+            testIntention(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    dependencies {
+                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:1.0")
+                    }
+                }
+                val pluginName = "org.real.plugin"
+                apply(plugin = pluginName)<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    id("org.real.plugin") version "1.0"
+                }
+                
+                val pluginName = "org.real.plugin"
+                
+                """.trimIndent(),
+                "Move plugin to the plugins block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testValClasspathVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                $$"""
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val version = "1.0"
+                    dependencies {
+                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:$version")
+                    }
+                }
+                <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
+                """.trimIndent()
+            )
+            testIntention(
+                $$"""
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val version = "1.0"
+                    dependencies {
+                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:$version")
+                    }
+                }
+                apply(plugin = "org.real.plugin")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    id("org.real.plugin") version "1.0"
+                }
+                
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val version = "1.0"
+                }
+                
+                """.trimIndent(),
+                "Move plugin to the plugins block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testValClasspath(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val classpathString = "org.real.plugin:org.real.plugin.gradle.plugin:1.0"
+                    dependencies {
+                        classpath(classpathString)
+                    }
+                }
+                <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
+                """.trimIndent()
+            )
+            testIntention(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val classpathString = "org.real.plugin:org.real.plugin.gradle.plugin:1.0"
+                    dependencies {
+                        classpath(classpathString)
+                    }
+                }
+                apply(plugin = "org.real.plugin")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    id("org.real.plugin") version "1.0"
+                }
+                
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val classpathString = "org.real.plugin:org.real.plugin.gradle.plugin:1.0"
+                }
+                
+                """.trimIndent(),
+                "Move plugin to the plugins block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testValClasspathVersionNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val version = "1.0"
+                    dependencies {
+                        classpath(group = "org.real.plugin", name = "org.real.plugin.gradle.plugin", version = version)
+                    }
+                }
+                <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
+                """.trimIndent()
+            )
+            testIntention(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val version = "1.0"
+                    dependencies {
+                        classpath(group = "org.real.plugin", name = "org.real.plugin.gradle.plugin", version = version)
+                    }
+                }
+                apply(plugin = "org.real.plugin")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    id("org.real.plugin") version "1.0"
+                }
+                
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val version = "1.0"
+                }
+                
+                """.trimIndent(),
+                "Move plugin to the plugins block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testValClasspathGroupNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val group = "org.real.plugin"
+                    dependencies {
+                        classpath(group = group, name = "org.real.plugin.gradle.plugin", version = "1.0")
+                    }
+                }
+                <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
+                """.trimIndent()
+            )
+            testIntention(
+                """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val group = "org.real.plugin"
+                    dependencies {
+                        classpath(group = group, name = "org.real.plugin.gradle.plugin", version = "1.0")
+                    }
+                }
+                apply(plugin = "org.real.plugin")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    id("org.real.plugin") version "1.0"
+                }
+                
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    
+                    val group = "org.real.plugin"
+                }
+                
+                """.trimIndent(),
+                "Move plugin to the plugins block"
+            )
+        }
+    }
+
     companion object {
         private val EMPTY_PROJECT_WITH_BUILD_FILE = GradleTestFixtureBuilder.create("empty-project-with-build-file") { gradleVersion ->
             withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
