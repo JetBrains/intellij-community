@@ -4305,6 +4305,55 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/arrayHashCode")
+    public static class ArrayHashCode extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("genericTypeArray.kt")
+        public void testGenericTypeArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/genericTypeArray.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/intArray.kt");
+        }
+
+        @TestMetadata("multidimensionalArrayContentDeepHashCode.kt")
+        public void testMultidimensionalArrayContentDeepHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/multidimensionalArrayContentDeepHashCode.kt");
+        }
+
+        @TestMetadata("multidimensionalArrayContentHashCode.kt")
+        public void testMultidimensionalArrayContentHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/multidimensionalArrayContentHashCode.kt");
+        }
+
+        @TestMetadata("noInspection.kt")
+        public void testNoInspection() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/noInspection.kt");
+        }
+
+        @TestMetadata("nullableArray.kt")
+        public void testNullableArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/nullableArray.kt");
+        }
+
+        @TestMetadata("simpleArray.kt")
+        public void testSimpleArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/simpleArray.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality")
     public static class StringReferentialEquality extends AbstractK2LocalInspectionTest {
         @java.lang.Override

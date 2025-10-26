@@ -70,6 +70,55 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/arrayHashCode")
+    public static class ArrayHashCode extends AbstractLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("genericTypeArray.kt")
+        public void testGenericTypeArray() throws Exception {
+            runTest("testData/inspectionsLocal/arrayHashCode/genericTypeArray.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("testData/inspectionsLocal/arrayHashCode/intArray.kt");
+        }
+
+        @TestMetadata("multidimensionalArrayContentDeepHashCode.kt")
+        public void testMultidimensionalArrayContentDeepHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/arrayHashCode/multidimensionalArrayContentDeepHashCode.kt");
+        }
+
+        @TestMetadata("multidimensionalArrayContentHashCode.kt")
+        public void testMultidimensionalArrayContentHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/arrayHashCode/multidimensionalArrayContentHashCode.kt");
+        }
+
+        @TestMetadata("noInspection.kt")
+        public void testNoInspection() throws Exception {
+            runTest("testData/inspectionsLocal/arrayHashCode/noInspection.kt");
+        }
+
+        @TestMetadata("nullableArray.kt")
+        public void testNullableArray() throws Exception {
+            runTest("testData/inspectionsLocal/arrayHashCode/nullableArray.kt");
+        }
+
+        @TestMetadata("simpleArray.kt")
+        public void testSimpleArray() throws Exception {
+            runTest("testData/inspectionsLocal/arrayHashCode/simpleArray.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/arrayInDataClass")
     public static class ArrayInDataClass extends AbstractLocalInspectionTest {
         @java.lang.Override
