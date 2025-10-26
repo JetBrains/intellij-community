@@ -392,6 +392,8 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val replaceField = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
   val matchesLabel = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
   val nextOccurrenceButton = actionButton { byAccessibleName("Next Occurrence") }
+  val previousOccurrenceButton = actionButton { byAccessibleName("Previous Occurrence") }
+  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
