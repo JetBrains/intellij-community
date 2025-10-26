@@ -16,14 +16,12 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinFirConstantExpressionEvaluator
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CORE_PLUGIN_SHORT_NAMES
 
 class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
-    private val constEvaluator = KotlinFirConstantExpressionEvaluator()
 
     override fun visitCallExpression(expression: KtCallExpression) {
         analyze(expression) {
@@ -51,11 +49,11 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
         // check that only the plugin id is passed as an argument
         if (pluginArgument?.getArgumentName()?.asName?.identifier != "plugin") return null
 
-        val pluginNameExpr = pluginArgument.getArgumentExpression() as? KtStringTemplateExpression ?: return null
-        val pluginName = constEvaluator.computeConstantExpression(pluginNameExpr, false) as? String ?: return null
+        val pluginNameExpr = pluginArgument.getArgumentExpression() ?: return null
+        val pluginName = pluginNameExpr.evaluateString() ?: return null
 
         // no version required if it's a core plugin
-        if (GRADLE_CORE_PLUGIN_SHORT_NAMES.contains(pluginName)) return PluginFixInfo(pluginNameExpr.text, null, null)
+        if (GRADLE_CORE_PLUGIN_SHORT_NAMES.contains(pluginName)) return PluginFixInfo(pluginName, null, null)
 
         val buildScriptBlock = holder.file.asSafely<KtFile>()?.findScriptInitializer("buildscript")?.getBlock() ?: return null
 
@@ -67,7 +65,7 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
         val pluginDependenciesBlock = buildScriptBlock.findBlock("dependencies") ?: return null
         val (psiElement, version) = findPluginClasspathDependency(pluginDependenciesBlock, pluginName) ?: return null
 
-        return PluginFixInfo(pluginNameExpr.text, version, psiElement)
+        return PluginFixInfo(pluginName, version, psiElement)
     }
 
     private fun findPluginClasspathDependency(
@@ -82,20 +80,17 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
             val version = when (depType) {
                 DependencyType.SINGLE_ARGUMENT -> {
                     val arg = args.firstOrNull()?.getArgumentExpression() ?: return@firstNotNullOfOrNull null
-                    val classpath = constEvaluator.computeConstantExpression(arg, false) as? String
-                        ?: return@firstNotNullOfOrNull null
+                    val classpath = arg.evaluateString() ?: return@firstNotNullOfOrNull null
                     val split = classpath.split(":")
                     if (split.size == 3 && split.first() == pluginName) split.last()
                     else return@firstNotNullOfOrNull null
                 }
 
                 DependencyType.NAMED_ARGUMENTS -> {
-                    val group = findNamedOrPositionalArgument(argList, "group", 0)
-                        ?.let { constEvaluator.computeConstantExpression(it, false) as? String }
+                    val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
                         ?: return@firstNotNullOfOrNull null
                     if (group != pluginName) return@firstNotNullOfOrNull null
-                    findNamedOrPositionalArgument(argList, "version", 2)
-                        ?.let { constEvaluator.computeConstantExpression(it, false) as? String }
+                    findNamedOrPositionalArgument(argList, "version", 2)?.evaluateString()
                         ?: return@firstNotNullOfOrNull null
                 }
 
@@ -120,7 +115,7 @@ private class GradleMoveApplyPluginToPluginsBlockFix(
         val classpathCallElement = PsiTreeUtil.findSameElementInCopy(pluginFixInfo.classpathCallElement?.element, file)
 
         val pluginsBlock = file.findScriptInitializer("plugins")?.getBlock()
-        val pluginIdCallText = "id(${pluginFixInfo.nameText})${pluginFixInfo.versionString?.let { " version \"$it\"" } ?: ""}"
+        val pluginIdCallText = "id(\"${pluginFixInfo.name}\")${pluginFixInfo.versionString?.let { " version \"$it\"" } ?: ""}"
         // add the plugin to the plugins block or create the block if it's missing with the plugin declaration
         if (pluginsBlock != null) {
             pluginsBlock.add(psiFactory.createNewLine(1))
@@ -149,7 +144,7 @@ private class GradleMoveApplyPluginToPluginsBlockFix(
 }
 
 private data class PluginFixInfo(
-    val nameText: String,
+    val name: String,
     val versionString: String?,
     val classpathCallElement: SmartPsiElementPointer<KtCallExpression>?
 )
