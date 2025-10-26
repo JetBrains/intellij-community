@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":compose-foundation-desktop-junit_resources"],
   exports = [
+    "//libraries/compose-foundation-desktop",
     "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
     "@lib//:kotlinx-coroutines-test",
     "//libraries/junit4",
