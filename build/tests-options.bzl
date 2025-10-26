@@ -84,13 +84,34 @@ def _normalize_runtime_dep(dep):
         return "@community//platform/util:util-tests_test_lib"
     return dep
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], **kwargs):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], sandbox = False, env = {}):
     # Merge user-provided args with our default ones
     all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
     all_args = JAVA_TEST_ARGS + args
 
     normalized_runtime_deps = [_normalize_runtime_dep(d) for d in runtime_deps]
     all_runtime_deps = depset(TEST_FRAMEWORK_DEPS + normalized_runtime_deps).to_list()
+
+    all_data = list(data)
+    all_tags = list(tags)
+    all_env = dict(env)
+
+    # required for com.intellij.openapi.projectRoots.impl.JavaSdkImpl.internalJdkAnnotationsPath
+    # almost all tests in monorepo need it, so we add it to all tests
+    all_data.append("@community//java:mockJDK")
+
+    # handled by com.intellij.tests.JUnit5BazelRunner.main
+    all_env["JB_TEST_SANDBOX"] = str(sandbox)
+
+    if sandbox:
+        if "block-network" not in all_tags:
+            all_tags.append("block-network")
+
+        if "no-sandbox" in all_tags:
+            fail("sandboxed (by sandbox parameter to jps_test) tests should not have no-sandbox tag")
+    else:
+        # so com.intellij.tests.JUnit5BazelRunner.guessBazelWorkspaceDir will find a real workspace root
+        all_data.append("@community//:intellij.idea.community.main.iml")
 
     # https://bazel.build/reference/be/java#java_test
     # https://bazel.build/reference/be/common-definitions#common-attributes-tests
@@ -104,13 +125,8 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
         # settings size also sets test timeout to 1 hours
         # which is also a reasonable tests timeout for current state of things
         size = "enormous",
-        tags = tags,
-        data = [
-            # so com.intellij.tests.JUnit5BazelRunner.guessBazelWorkspaceDir will find a real workspace root
-            "@community//:intellij.idea.community.main.iml",
-            # required for com.intellij.openapi.projectRoots.impl.JavaSdkImpl.internalJdkAnnotationsPath
-            "@community//java:mockJDK",
-        ] + data,
+        tags = all_tags,
+        data = all_data,
+        env = all_env,
         use_testrunner = False,
-        **kwargs
     )

@@ -50,7 +50,6 @@ public final class JUnit5BazelRunner {
   private static final String jbEnvPrintTestSrcDirContent = "JB_TEST_PRINT_TEST_SRCDIR_CONTENT";
   private static final String jbEnvPrintEnv = "JB_TEST_PRINT_ENV";
   private static final String jbEnvPrintSystemProperties = "JB_TEST_PRINT_SYSTEM_PROPERTIES";
-  // true by default. try as much as possible to run tests in sandbox
   private static final String jbEnvSandbox = "JB_TEST_SANDBOX";
   private static final String jbEnvXmlOutputFile = "JB_XML_OUTPUT_FILE";
   // Enable IntelliJ Service Messages stream from test process
@@ -138,7 +137,11 @@ public final class JUnit5BazelRunner {
       Path tempDir = getBazelTempDir();
 
       String jbEnvSandboxValue = System.getenv(jbEnvSandbox);
-      boolean sandbox = Boolean.parseBoolean(jbEnvSandboxValue != null ? jbEnvSandboxValue : "true");
+      if (jbEnvSandboxValue == null) {
+        throw new RuntimeException("Missing " + jbEnvSandbox + " env variable in bazel test environment");
+      }
+
+      boolean sandbox = Boolean.parseBoolean(jbEnvSandboxValue);
       System.err.println("Use sandbox: " + sandbox);
 
       if (sandbox) {

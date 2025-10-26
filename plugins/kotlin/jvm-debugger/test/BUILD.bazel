@@ -18,9 +18,7 @@ jps_test(
     "@community//plugins/kotlin/jvm-debugger/test:testData",
     "@community//plugins/kotlin/idea/tests:testData",
   ] + all_test_dep_targets,
-  tags = [
-    "block-network",
-  ],
+  sandbox = True,
 )
 
 ### skip generation section `test kotlin.jvm-debugger.test`
