@@ -167,28 +167,32 @@
                      key="inspection.display.name.avoid.apply.plugin.method" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection"
+                     isInternal="true"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidRepositoriesInBuildGradle"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.avoid.repositories.in.build.gradle" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"
+                     isInternal="true"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateDependencies"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.avoid.duplicate.dependencies" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"
+                     isInternal="true"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingGroupAndDescription"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.task.missing.group.and.description" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingGroupAndDescriptionInspection"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingGroupAndDescriptionInspection"
+                     isInternal="true"/>
 
   </extensions>
 </idea-plugin>
