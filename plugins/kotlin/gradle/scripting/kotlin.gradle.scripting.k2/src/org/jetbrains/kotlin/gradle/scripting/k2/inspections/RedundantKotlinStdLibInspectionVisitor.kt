@@ -17,7 +17,6 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.toml.getResolvedDependency
 import org.jetbrains.plugins.gradle.toml.getResolvedPlugin
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.evaluateString
 import org.jetbrains.uast.toUElementOfType
 
 class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
@@ -50,7 +49,7 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
         val arg = argList.arguments.singleOrNull()?.getArgumentExpression() ?: return null
 
         // try single string case
-        arg.toUElementOfType<UExpression>()?.evaluateString()?.let { stringValue ->
+        arg.evaluateString()?.let { stringValue ->
             return parseKotlinStdLibVersionFromString(stringValue)
         }
         // try kotlin("stdlib", version) case
@@ -70,12 +69,12 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
         val argNames = args.mapNotNull { it.getArgumentName()?.asName?.identifier }.toSet()
         if (REQUIRED_NAMED_ARGS != argNames) return null
 
-        val group = findNamedOrPositionalArgument(argList, "group", 0)
-            .toUElementOfType<UExpression>()?.evaluateString() ?: return null
-        val name = findNamedOrPositionalArgument(argList, "name", 1)
-            .toUElementOfType<UExpression>()?.evaluateString() ?: return null
-        val version = findNamedOrPositionalArgument(argList, "version", 2)
-            .toUElementOfType<UExpression>()?.evaluateString() ?: return null
+        val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
+            ?: return null
+        val name = findNamedOrPositionalArgument(argList, "name", 1)?.evaluateString()
+            ?: return null
+        val version = findNamedOrPositionalArgument(argList, "version", 2)?.evaluateString()
+            ?: return null
 
         return if (isKotlinStdLib(group, name)) version else null
     }
@@ -84,12 +83,8 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
         val kotlinCallArgs = kotlinCall.valueArgumentList?.arguments ?: return null
         if (kotlinCallArgs.size != 2) return null
 
-        val kotlinId = kotlinCallArgs[0].getArgumentExpression()
-            .toUElementOfType<UExpression>()?.evaluateString() ?: return null
-
-        return if (kotlinId == "stdlib") {
-            kotlinCallArgs[1].getArgumentExpression().toUElementOfType<UExpression>()?.evaluateString()
-        } else null
+        val kotlinId = kotlinCallArgs[0].getArgumentExpression()?.evaluateString() ?: return null
+        return if (kotlinId == "stdlib") kotlinCallArgs[1].getArgumentExpression()?.evaluateString() else null
     }
 
     private fun extractVersionFromVersionCatalog(catalogExpression: KtDotQualifiedExpression): String? {
@@ -139,17 +134,13 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
     }
 
     private fun extractVersionFromIdPlugin(parsedCallChain: List<ChainedMethodCallPart>, firstCall: ChainedMethodCallPart): String? {
-        if (firstCall.arguments.firstOrNull().toUElementOfType<UExpression>()?.evaluateString() != KOTLIN_JVM_PLUGIN) return null
-        return parsedCallChain.find { it.methodName == "version" }
-            ?.arguments?.singleOrNull()?.toUElementOfType<UExpression>()
-            ?.evaluateString()
+        if (firstCall.arguments.firstOrNull()?.evaluateString() != KOTLIN_JVM_PLUGIN) return null
+        return parsedCallChain.find { it.methodName == "version" }?.arguments?.singleOrNull()?.evaluateString()
     }
 
     private fun extractVersionFromKotlinPlugin(parsedCallChain: List<ChainedMethodCallPart>, firstCall: ChainedMethodCallPart): String? {
-        if (firstCall.arguments.firstOrNull().toUElementOfType<UExpression>()?.evaluateString() != "jvm") return null
-        return parsedCallChain.find { it.methodName == "version" }
-            ?.arguments?.singleOrNull()?.toUElementOfType<UExpression>()
-            ?.evaluateString()
+        if (firstCall.arguments.firstOrNull()?.evaluateString() != "jvm") return null
+        return parsedCallChain.find { it.methodName == "version" }?.arguments?.singleOrNull()?.evaluateString()
     }
 
     private fun extractVersionFromAliasPlugin(firstCall: ChainedMethodCallPart): String? {

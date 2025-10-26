@@ -79,6 +79,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//plugins/gradle/java",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/uast/uast-kotlin-base",
   ]
 )
 
@@ -163,6 +164,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "@lib//:assert_j",
+    "@lib//:junit5Pioneer",
+    "//plugins/kotlin/uast/uast-kotlin-base",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

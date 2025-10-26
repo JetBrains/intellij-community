@@ -11,6 +11,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_DEPENDENCY
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.evaluateString
+import org.jetbrains.uast.kotlin.KotlinStringTemplateUPolyadicExpression
+import org.jetbrains.uast.toUElementOfType
 
 internal const val KOTLIN_GROUP_ID: String = "org.jetbrains.kotlin"
 internal const val GRADLE_KOTLIN_PACKAGE: String = "org.gradle.kotlin.dsl"
@@ -68,3 +72,13 @@ internal fun KtScriptInitializer.getBlock(): KtBlockExpression? =
 internal fun KtCallExpression.getBlock(): KtBlockExpression? =
     (valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression
         ?: lambdaArguments.lastOrNull()?.getLambdaExpression()?.bodyExpression
+
+internal fun KtExpression.evaluateString(): String? {
+    val uExpression = this.toUElementOfType<UExpression>() ?: return null
+    val string = uExpression.evaluateString()
+    if (string != null) return string
+
+    val parts = (uExpression as? KotlinStringTemplateUPolyadicExpression)?.operands?.map { it.evaluateString() } ?: return null
+    return if (parts.any { it == null }) null
+    else parts.joinToString("")
+}

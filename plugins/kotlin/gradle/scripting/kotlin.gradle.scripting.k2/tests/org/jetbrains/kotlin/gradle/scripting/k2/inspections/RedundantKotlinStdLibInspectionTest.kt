@@ -687,6 +687,280 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
         }
     }
 
+    // STRING RESOLVING
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val coordinates = "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+                dependencies {
+                    <warning>api(coordinates)</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val coordinates = "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
+                dependencies {
+                    api(coordinates)
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameGroupVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val group = "org.jetbrains.kotlin"
+                dependencies {
+                    <warning>api("$group:kotlin-stdlib:2.2.0")</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentGroupVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val group = "org.other.kotlin"
+                dependencies {
+                    api("$group:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameNameVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val name = "kotlin-stdlib"
+                dependencies {
+                    <warning>api("org.jetbrains.kotlin:$name:2.2.0")</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentNameVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val name = "kotlin-stdlib-jdk8"
+                dependencies {
+                    api("org.jetbrains.kotlin:$name:2.2.0")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameVersionVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val version = "2.2.0"
+                dependencies {
+                    <warning>api("org.jetbrains.kotlin:kotlin-stdlib:$version")</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentVersionVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val version = "2.1.0"
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:$version")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameGroupValNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val group = "org.jetbrains.kotlin"
+                dependencies {
+                    <warning>api(group = group, name = "kotlin-stdlib", version = "2.2.0")</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentGroupValNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val group = "org.other.kotlin"
+                dependencies {
+                    api(group = group, name = "kotlin-stdlib", version = "2.2.0")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameNameValNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val name = "kotlin-stdlib"
+                dependencies {
+                    <warning>api(group = "org.jetbrains.kotlin", name = name, version = "2.2.0")</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentNameValNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val name = "kotlin-stdlib-jdk8"
+                dependencies {
+                    api(group = "org.jetbrains.kotlin", name = name, version = "2.2.0")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameVersionValNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val version = "2.2.0"
+                dependencies {
+                    <warning>api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = version)</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentVersionValNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                $$"""
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val version = "2.1.0"
+                dependencies {
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = version)
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testKotlinMethodSameNameVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val kotlinStdlib = "stdlib"
+                dependencies {
+                    <warning>api(kotlin(kotlinStdlib, "2.2.0"))</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testKotlinMethodSameVersionVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val version = "2.2.0"
+                dependencies {
+                    <warning>api(kotlin("stdlib", version))</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testKotlinMethodDifferentVersionVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val version = "2.1.0"
+                dependencies {
+                    api(kotlin("stdlib", version))
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testQuickFixRemove(gradleVersion: GradleVersion) {
