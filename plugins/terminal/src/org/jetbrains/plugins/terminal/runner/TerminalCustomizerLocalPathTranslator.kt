@@ -12,6 +12,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.runner.TerminalCustomizerLocalPathTranslator.Companion.PATH_LIKE_ENV_NAMES
 import java.nio.file.InvalidPathException
@@ -128,6 +129,9 @@ internal class TerminalCustomizerLocalPathTranslator(
       translateWindowsDrivePathToMountedWslPath(path)?.let {
         return it
       }
+      translateWslUncPathWithSamePrefix(pathString)?.let {
+        return it
+      }
       LOG.debug(e) { "Failed to convert $path to EelPath ($descriptor), adding it as is (without translation)" }
       return pathString
     }
@@ -151,17 +155,46 @@ internal class TerminalCustomizerLocalPathTranslator(
    * @return The WSL-mounted path if translation succeeds, or null otherwise.
    */
   private fun translateWindowsDrivePathToMountedWslPath(path: Path): String? {
-    if (descriptor is EelPathBoundDescriptor &&
-        descriptor::class.java.name == "com.intellij.platform.ide.impl.wsl.WslEelDescriptor" &&
-        OSAgnosticPathUtil.isAbsoluteDosPath(path.toString())) {
-      val wslPath = WslPath.parseWindowsUncPath(descriptor.rootPath.toString())
-      if (wslPath == null) {
-        LOG.warn("Failed to parse ${descriptor.rootPath} as WSL UNC path")
+    val wslEelDescriptor = asWslEelDescriptorSafely() ?: return null
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(path.toString())) {
+      val wslPath = WslPath.parseWindowsUncPath(wslEelDescriptor.rootPath.toString()) ?: run {
+        LOG.warn("Failed to parse ${wslEelDescriptor.rootPath} as WSL UNC path")
         return null
       }
       return wslPath.distribution.getWslPath(path)
     }
     return null
+  }
+
+  /**
+   * Translates a Windows WSL UNC path with prefix different to the prefix of `WslEelDescriptor#rootPath`.
+   *
+   * For example, it will translate `\\wsl$\Ubuntu\home\user\dir` to `/home/user/dir`
+   * for `WslEelDescriptor#rootPath=\\wsl.localhost\Ubuntu`.
+   */
+  private fun translateWslUncPathWithSamePrefix(pathString: String): String? {
+    val wslEelDescriptor = asWslEelDescriptorSafely() ?: return null
+    val path = WslPath.parseWindowsUncPath(pathString) ?: return null
+    val eelRootPath = WslPath.parseWindowsUncPath(wslEelDescriptor.rootPath.toString()) ?: return null
+    if (path.distributionId == eelRootPath.distributionId && path.wslRoot != eelRootPath.wslRoot) {
+      check(pathString.startsWith(path.wslRoot))
+      val newPathString = eelRootPath.wslRoot + pathString.substring(path.wslRoot.length)
+      try {
+        val newPath = Path.of(newPathString)
+        return newPath.asEelPath(descriptor).toString()
+      }
+      catch (e: Exception) {
+        LOG.debug(e) { "Failed to translate $newPathString after changing wsl prefix" }
+        return pathString
+      }
+    }
+    return null
+  }
+
+  private fun asWslEelDescriptorSafely(): EelPathBoundDescriptor? {
+    return descriptor.asSafely<EelPathBoundDescriptor>()?.takeIf {
+      it::class.java.name == "com.intellij.platform.ide.impl.wsl.WslEelDescriptor"
+    }
   }
 
   private fun joinEntries(entriesLeft: String, entriesRight: String): String {
