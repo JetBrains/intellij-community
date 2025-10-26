@@ -2,18 +2,20 @@
 package com.intellij.formatting.service
 
 import com.intellij.CodeStyleBundle
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.formatting.FormattingContext
 import com.intellij.formatting.service.AsyncDocumentFormattingService.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -21,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +37,10 @@ import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.TimeSource
 
 @ApiStatus.Internal
-class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
+class AsyncDocumentFormattingSupportImpl(
+  private val service: AsyncDocumentFormattingService,
+  private val coroutineScope: CoroutineScope
+) : AsyncDocumentFormattingSupport {
   private val pendingRequests: ConcurrentHashMap<Document, FormattingRequestImpl> = ConcurrentHashMap()
 
   @Synchronized
@@ -64,13 +70,27 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         runAsyncFormatBlocking(formattingRequest)
       }
       else {
-        withCurrentThreadCoroutineScopeBlocking {
-          // UNDISPATCHED start: formattingTask.run must be called even if the currentThreadCoroutineScope is already canceled
-          currentThreadCoroutineScope().launch(start = CoroutineStart.UNDISPATCHED) {
-            runAsyncFormat(formattingRequest)
-          }
-        }
+        launchAsyncFormat(formattingRequest)
       }
+    }
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun launchAsyncFormat(formattingRequest: FormattingRequestImpl) {
+    // UNDISPATCHED start: formattingTask.run must be called even if the currentThreadCoroutineScope is already canceled
+    val coroutineStart = CoroutineStart.UNDISPATCHED
+    val coroutineScope = if (currentThreadContext().isStructuredAsyncDocumentFormatting()) {
+      currentThreadCoroutineScope()
+    }
+    else {
+      coroutineScope.childScope(
+        name = "Non-structured async document formatting: ${getName(service)}",
+        context = Dispatchers.Default + ModalityState.defaultModalityState().asContextElement(),
+        supervisor = false,
+      )
+    }
+    coroutineScope.launch(start = coroutineStart) {
+      runAsyncFormat(formattingRequest)
     }
   }
 
@@ -165,7 +185,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       )
     }
 
-    @OptIn(DelicateCoroutinesApi::class) // GlobalScope, CoroutineStart.ATOMIC
+    @OptIn(DelicateCoroutinesApi::class) // CoroutineStart.ATOMIC
     suspend fun runAndAwaitTask() = coroutineScope {
       val task = checkNotNull(task)
       val taskDispatcher = if (isSync) {
@@ -176,14 +196,16 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         Dispatchers.IO
       }
       // There is an existing contract that a task that was already created is also started.
-      // GlobalScope is used here to prevent cancellation before that can happen.
-      val taskJob = GlobalScope.launch(taskDispatcher) {
+      // taskJob is detached here to prevent cancellation before that can happen.
+      @Suppress("RAW_SCOPE_CREATION")
+      val taskJob = CoroutineScope(coroutineContext.minusKey(Job) + taskDispatcher).launch {
         try {
           coroutineToIndicatorIfNeeded(task.isRunUnderProgress) {
             taskStarted.complete(Unit)
             task.run()
           }
-        } catch (t: Throwable) {
+        }
+        catch (t: Throwable) {
           // unblock waiter if failure happened before `taskStarted.complete(Unit)` could run
           taskStarted.completeExceptionally(t)
           throw t
