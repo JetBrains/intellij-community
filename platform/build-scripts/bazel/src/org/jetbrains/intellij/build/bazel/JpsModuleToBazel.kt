@@ -19,7 +19,10 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.moveTo
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 /**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1
@@ -180,29 +183,36 @@ internal class JpsModuleToBazel {
       )
 
       val skippedModules = moduleList.skippedModules
+      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
 
+      val fileContent = jsonSerializer.encodeToString(
+        serializer = jsonSerializer.serializersModule.serializer(),
+        value = TargetsFile(
+          modules = targets.associate { moduleTarget ->
+            moduleTarget.moduleDescriptor.module.name to TargetsFileModuleDescription(
+              productionTargets = moduleTarget.productionTargets,
+              productionJars = moduleTarget.productionJars,
+              testTargets = moduleTarget.testTargets,
+              testJars = moduleTarget.testJars,
+              exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
+            )
+          } + skippedModules.associateWith { emptyModule },
+          projectLibraries = libs.asSequence().mapNotNull {
+            if (it.target.isModuleLibrary) return@mapNotNull null
+            return@mapNotNull it.target.jpsName to "${it.target.container.repoLabel}//:${it.target.targetName}"
+          }.sortedBy { it.first }.toMap()
+        )
+      )
+
+      if (file.isRegularFile() && file.readText() == fileContent) {
+        println("No changes in $file")
+        return
+      }
+
+      println("Writing targets info to $file")
       val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
       try {
-        val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
-
-        Files.writeString(
-          tempFile, jsonSerializer.encodeToString<TargetsFile>(
-          serializer = jsonSerializer.serializersModule.serializer(),
-          value = TargetsFile(
-            modules = targets.associate { moduleTarget ->
-              moduleTarget.moduleDescriptor.module.name to TargetsFileModuleDescription(
-                productionTargets = moduleTarget.productionTargets,
-                productionJars = moduleTarget.productionJars,
-                testTargets = moduleTarget.testTargets,
-                testJars = moduleTarget.testJars,
-                exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
-              )
-            } + skippedModules.associateWith { emptyModule },
-            projectLibraries = libs.asSequence().mapNotNull {
-              if (it.target.isModuleLibrary) return@mapNotNull null
-              return@mapNotNull it.target.jpsName to "${it.target.container.repoLabel}//:${it.target.targetName}"
-            }.sortedBy { it.first }.toMap()
-          )))
+        tempFile.writeText(fileContent)
         tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       } finally {
         tempFile.deleteIfExists()
