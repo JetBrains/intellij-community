@@ -706,6 +706,7 @@ suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathRe
 
 // see isV2ModulePath
 internal fun toLoadPath(relativePath: String): String {
+  @Suppress("SpellCheckingInspection")
   return when {
     relativePath[0] == '/' -> relativePath.substring(1)
     relativePath.startsWith("intellij.") || relativePath.startsWith("fleet.") -> relativePath
