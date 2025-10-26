@@ -13,7 +13,6 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.io.unmapBuffer
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.StringWriter
@@ -33,10 +32,10 @@ internal class AddDependencyToImlByUsage {
   companion object {
     @JvmStatic
     fun main(args: Array<String>) {
-      val m2Repo = getMavenRepositoryPath()
+      val m2Repo = Path.of(System.getProperty("user.home"), ".m2/repository")
       //val projectDir = Path.of(PathManager.getHomePath())
       val projectDir = Path.of("${System.getProperty("user.home")}/projects/idea")
-      val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo), true)
+      val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo.toString()), true)
 
       val items = listOf(
         //"intellij.platform.editor",
