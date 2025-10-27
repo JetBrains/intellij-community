@@ -69,9 +69,11 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - s:builder():com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
 - concat(com.intellij.openapi.util.text.MarkupText):com.intellij.openapi.util.text.MarkupText
 - concat(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
+- s:empty():com.intellij.openapi.util.text.MarkupText
 - equals(java.lang.Object):Z
 - fragments():java.util.List
 - hashCode():I
+- highlightAll(com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
 - highlightRange(I,I,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
 - isEmpty():Z
 - length():I

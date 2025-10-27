@@ -1207,6 +1207,49 @@ public final class PsiUtil extends PsiUtilCore {
     return type != null ? type : substituteTypeParameter(psiType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, eraseTypeParameter);
   }
 
+  /**
+   * Substitutes all values for type parameters of the {@code superClass} from the {@code derivedType}.
+   *
+   * @return null if the calculation wasn't successful, list of substituted types otherwise.
+   */
+  @Contract("null, _, _-> null")
+  public static @Nullable List<@NotNull PsiType> substituteTypeParameters(@Nullable PsiType derivedType, @NotNull PsiClass superClass, boolean eraseTypeParameter) {
+    if (derivedType == null) return null;
+    PsiClassType.ClassResolveResult resolveResult = getDerivedClassTypeResolveResult(derivedType);
+    if (resolveResult == null) return null;
+    PsiClass derivedClass = resolveResult.getElement();
+    if (derivedClass == null) return null;
+    PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    PsiTypeParameter[] parameters = superClass.getTypeParameters();
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(superClass, derivedClass, substitutor);
+    List<@NotNull PsiType> typeParameterList = ContainerUtil.mapNotNull(
+      parameters, typeParameter -> {
+        return substituteType(typeParameter, superClassSubstitutor, eraseTypeParameter);
+      }
+    );
+    if (typeParameterList.size() != parameters.length) return null;
+    return typeParameterList;
+  }
+
+  /**
+   * Retrieves the resolve result corresponding to the given {@code derivedType}. If the initial resolved
+   * result is a type parameter with an upper bound, then the upper bound is returned, otherwise the initial resolve result.
+   */
+  private static @Nullable PsiClassType.ClassResolveResult getDerivedClassTypeResolveResult(@Nullable PsiType derivedType) {
+    final PsiClassType.ClassResolveResult resolveResult = resolveClass(derivedType);
+    if (resolveResult == PsiClassType.ClassResolveResult.EMPTY) return null;
+    PsiClass derivedClass = resolveResult.getElement();
+    if (derivedClass instanceof PsiTypeParameter) {
+      PsiTypeParameter typeParameter = (PsiTypeParameter)derivedClass;
+      PsiClassType[] types = typeParameter.getExtendsListTypes();
+      if (types.length > 1) return PsiClassType.ClassResolveResult.EMPTY;
+      else if (types.length == 1) {
+        return types[0].resolveGenerics();
+      }
+    }
+    return resolveResult;
+  }
+
   @Contract("null, _, _, _ -> null")
   public static @Nullable PsiType substituteTypeParameter(@Nullable PsiType psiType, @NotNull String superClass, int typeParamIndex, boolean eraseTypeParameter) {
     PsiClassType.ClassResolveResult classResolveResult = resolveClass(psiType);
@@ -1242,9 +1285,16 @@ public final class PsiUtil extends PsiUtilCore {
     if (parameters.length <= typeParamIndex) return PsiType.getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope());
 
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, classResolveResult.getSubstitutor());
-    PsiType type = substitutor.substitute(parameters[typeParamIndex]);
+    return substituteType(parameters[typeParamIndex], substitutor, eraseTypeParameter);
+  }
+
+  private static @Nullable PsiType substituteType(@NotNull PsiTypeParameter typeParameter,
+                                                  @Nullable PsiSubstitutor substitutor,
+                                                  boolean eraseTypeParameter) {
+    if (substitutor == null) return null;
+    PsiType type = substitutor.substitute(typeParameter);
     if (type == null && eraseTypeParameter) {
-      return TypeConversionUtil.typeParameterErasure(parameters[typeParamIndex]);
+      return TypeConversionUtil.typeParameterErasure(typeParameter);
     }
     return type;
   }

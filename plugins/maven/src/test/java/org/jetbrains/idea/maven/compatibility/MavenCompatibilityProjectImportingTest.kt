@@ -57,7 +57,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
   @Before
   fun before() = runBlocking {
-    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion)
+    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion!!)
     myWrapperTestFixture!!.setUp()
 
 

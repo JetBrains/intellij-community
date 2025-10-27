@@ -8,6 +8,8 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
@@ -39,17 +41,24 @@ abstract class AbstractCoroutineAgentAttachTest : JavaModuleTestCase() {
             }
     }
 
-    private fun attachLibrary(model: ModifiableRootModel, libraryName: String, classes: List<Path>) {
+    private fun attachLibrary(model: ModifiableRootModel, libraryName: String, classes: List<Path>, testOnly: Boolean) {
         ConfigLibraryUtil.addLibrary(model, libraryName) {
             classes.forEach { addRoot(it, OrderRootType.CLASSES) }
         }
+
+        if (testOnly) {
+            model.orderEntries.filterIsInstance<LibraryOrderEntry>()
+                .filter { it.libraryName == libraryName }.forEach {
+                    it.scope = DependencyScope.TEST
+                }
+        }
     }
 
-    protected fun Module.attachLibrary(libraryName: String, classes: List<Path>) {
+    protected fun Module.attachLibrary(libraryName: String, classes: List<Path>, testOnly: Boolean = false) {
         runWriteAction {
             val model = ModuleRootManager.getInstance(this).modifiableModel
             try {
-                attachLibrary(model, libraryName, classes)
+                attachLibrary(model, libraryName, classes, testOnly)
             }
             finally {
                 model.commit()
@@ -57,23 +66,24 @@ abstract class AbstractCoroutineAgentAttachTest : JavaModuleTestCase() {
         }
     }
 
-    protected fun Module.attachKotlinStdlib() =
+    protected fun Module.attachKotlinStdlib(testOnly: Boolean = false) =
         attachLibrary(
             KOTLIN_LIBRARY_NAME,
             listOf(
                 TestKotlinArtifacts.kotlinStdlibJdk8_2_1_21,
                 TestKotlinArtifacts.kotlinStdlib_2_1_21,
                 TestKotlinArtifacts.annotations13
-            )
+            ),
+            testOnly
         )
 
-    protected fun Module.attachKotlinxCoroutines() =
+    protected fun Module.attachKotlinxCoroutines(testOnly: Boolean = false) =
         attachLibrary(
             KOTLINX_COROUTINES_LIBRARY_NAME,
             listOf(
-                TestKotlinArtifacts.kotlinxCoroutinesCore_1_10_2,
-                TestKotlinArtifacts.kotlinxCoroutinesCoreJvm_1_10_2,
-            )
+                TestKotlinArtifacts.kotlinxCoroutinesCoreJvm_1_10_2
+            ),
+            testOnly
         )
 
 
@@ -121,6 +131,9 @@ class CoroutineAgentAttachImlProjectTest : AbstractCoroutineAgentAttachTest() {
             "module2" -> {
                 module.attachKotlinStdlib()
             }
+            "java_module_with_coroutines_in_test" -> {
+                module.attachKotlinxCoroutines(true)
+            }
         }
     }
 
@@ -151,6 +164,15 @@ class CoroutineAgentAttachImlProjectTest : AbstractCoroutineAgentAttachTest() {
         connectDebuggerAndCheckVmParams(
             findRunConfiguration("JavaMain"),
             coroutineAgentShouldBeAttached = true
+        )
+    }
+
+    // Coroutine debug agent should not be applied to the non-test run configuration,
+    // if the corotuine dependency is test-only
+    fun testDebugJavaModuleWithCoroutinesDependencyInTests() {
+        connectDebuggerAndCheckVmParams(
+            findRunConfiguration("JavaMainWithCoroutinesInTests"),
+            coroutineAgentShouldBeAttached = false
         )
     }
 }

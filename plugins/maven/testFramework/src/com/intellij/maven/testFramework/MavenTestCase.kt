@@ -85,7 +85,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   var modelVersion: String
     get() = myModelVersion ?: MavenConstants.MODEL_VERSION_4_0_0
-    set(value : String) {
+    set(value: String) {
       myModelVersion = value
     }
 
@@ -124,6 +124,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun useModel410() {
     myModelVersion = "4.1.0"
   }
+
   override fun setUp() {
     super.setUp()
 
@@ -646,6 +647,13 @@ abstract class MavenTestCase : UsefulTestCase() {
     for (i in expected.indices) {
       val expectedElement = expected[i]
       val actualElement = actualList[i]
+      if (actualElement != expectedElement) {
+        failNotEquals(
+          "collections have different elements or order",
+          expected.joinToString("\n"),
+          actual.joinToString("\n"),
+        )
+      }
       assertEquals(s, expectedElement, actualElement)
     }
   }
@@ -745,7 +753,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun getRelativePath(base: Path, path: String) : String {
+  protected fun getRelativePath(base: Path, path: String): String {
     return base.relativize(Path.of(path)).toCanonicalPath()
   }
 

@@ -8,6 +8,13 @@
   "ui": {
     "ToolWindow": {
       "background": "#FFFFFF"
+    },
+
+    "CombinedDiff": {
+      "BlockBorder": {
+        "selectedActiveColor": "#A0BDF8",
+        "selectedInactiveColor": "#C9CCD6"
+      }
     }
   },
 
@@ -29,12 +36,5 @@
     "#f98b9eb3": "#f1a4b2",
     "#f4af3db3": "#ecc27d",
     "#b99bf8b3": "#b49ee2"
-  },
-
-  "CombinedDiff": {
-    "BlockBorder": {
-      "selectedActiveColor": "#A0BDF8",
-      "selectedInactiveColor": "#C9CCD6"
-    }
   }
 }
