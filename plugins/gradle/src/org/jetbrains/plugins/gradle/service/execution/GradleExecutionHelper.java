@@ -240,8 +240,8 @@ public final class GradleExecutionHelper {
           context.setBuildEnvironment(buildEnvironment);
           return action.apply(connection);
         }
-        catch (CancellationException ce) {
-          throw ce;
+        catch (CancellationException | ExternalSystemException e) {
+          throw e;
         }
         catch (Exception ex) {
           throw GradleProjectResolver.createProjectResolverChain()
@@ -558,6 +558,9 @@ public final class GradleExecutionHelper {
         modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
 
         buildEnvironment = modelBuilder.get();
+      }
+      catch (ExternalSystemException e) {
+        throw e;
       }
       catch (Exception ex) {
         throw new RuntimeException("Failed to obtain build environment from Gradle daemon.", ex);
