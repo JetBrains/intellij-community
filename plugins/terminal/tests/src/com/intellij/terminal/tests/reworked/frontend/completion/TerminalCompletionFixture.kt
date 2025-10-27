@@ -61,7 +61,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     Registry.get("terminal.type.ahead").setValue(true, testRootDisposable)
     TerminalCommandCompletion.enableForTests(testRootDisposable)
     // Terminal completion might still be disabled if not supported yet on some OS.
-    Assume.assumeTrue(TerminalCommandCompletion.isEnabled())
+    Assume.assumeTrue(TerminalCommandCompletion.isEnabled(project))
   }
 
   suspend fun awaitShellIntegrationFeaturesInitialized() {

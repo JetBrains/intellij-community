@@ -410,7 +410,7 @@ internal open class TerminalEventsHandlerImpl(
     val project = editor.project ?: return
     val shellIntegration = shellIntegrationDeferred?.getNow() ?: return
     if (editor.isOutputModelEditor
-        && TerminalCommandCompletion.isEnabled()
+        && TerminalCommandCompletion.isEnabled(project)
         && TerminalOptionsProvider.instance.showCompletionPopupAutomatically
         && shellIntegration.outputStatus.value == TerminalOutputStatus.TypingCommand
         && canTriggerCompletion(charTyped)

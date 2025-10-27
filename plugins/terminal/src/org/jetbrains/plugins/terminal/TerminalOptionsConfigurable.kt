@@ -184,7 +184,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 actionId = "Terminal.EnterCommandCompletion"
               )
             }
-          }.visible(TerminalCommandCompletion.isEnabled())
+          }.visible(TerminalCommandCompletion.isEnabled(project))
 
           TerminalCloudCompletionSettingsProvider.getProvider()?.addSettingsRow(this)
         }.bottomGap(BottomGap.NONE)
