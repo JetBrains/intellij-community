@@ -1084,7 +1084,10 @@ class InfoAndProgressPanel internal constructor(
 
           if (showCounterInsteadOfMultiProcessLink && counterComponent.isVisible) {
             progressIcon.isVisible = false
-            setBounds(counterComponent, rightX, centerY, null, true)
+            rightX = setBounds(counterComponent, rightX, centerY, null, true)
+
+            progressIcon.isVisible = true
+            setBounds(progressIcon, rightX, centerY, null, true)
             return
           }
           // With showCounterInsteadOfMultiProcessLink and !counterLabel.isVisible (single progress)
