@@ -25,35 +25,35 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
   return entries.mapNotNull { (it as? ModuleOutputEntry)?.owner?.moduleName }.distinct()
 }
 
-internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
-  val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
-
+private fun buildModuleSetHierarchy(
+  productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>
+): Pair<Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>>, Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>>> {
   val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
+  val nestedModuleSetNames = mutableSetOf<String>()
 
-  // Group modules by their module sets using chain from ModuleItem.moduleSet
+  // Single pass: Group modules by their module sets AND identify nested sets
   for ((moduleItem, distEntries) in productModules) {
-    val chain = moduleItem.moduleSet
-    if (chain == null) {
-      // Module not in any module set (e.g., additional product modules)
-      continue
-    }
+    val chain = moduleItem.moduleSet ?: continue // Module not in any module set
 
     // Module should be included in all sets in its chain
-    for (setName in chain) {
+    // Sets after position 0 are nested (e.g., [A, B] means B is nested)
+    for ((index, setName) in chain.withIndex()) {
       allModuleSets.computeIfAbsent(setName) { mutableListOf() }.add(moduleItem to distEntries)
+      if (index > 0) {
+        nestedModuleSetNames.add(setName)
+      }
     }
   }
 
-  // Determine root vs nested module sets by using chain from ModuleItem.moduleSet
-  // A set is nested if it appears after another set in any chain (e.g., [A, B] means B is nested)
-  // All sets after position 0 in any module's chain are considered nested
-  val nestedModuleSetNames = productModules
-    .mapNotNull { it.first.moduleSet }  // Get all chains
-    .flatMap { it.drop(1) }  // Take all sets except the first (root)
-    .toSet()
-
   // Filter to only root module sets (not nested in other product module sets)
   val rootModuleSets = allModuleSets.filterKeys { it !in nestedModuleSetNames }.toSortedMap()
+
+  return allModuleSets to rootModuleSets
+}
+
+internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
+  val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
+  val (allModuleSets, rootModuleSets) = buildModuleSetHierarchy(productModules)
 
   val platformData = buildPlatformContentReport(
     contentReport = contentReport,
@@ -71,30 +71,26 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
     // Use Set to avoid duplicates (same module can appear in multiple JARs)
     val entries = TreeSet<String>()
 
-    // Add direct module names only (modules where this set is the deepest/last in chain)
-    val directModules = modules.filter { it.first.moduleSet?.lastOrNull() == moduleSetName }
-    entries.addAll(directModules.map { it.first.moduleName })
+    // Single pass: Add direct modules AND immediate child sets
+    for ((moduleItem, _) in modules) {
+      val chain = moduleItem.moduleSet ?: continue
 
-    // Extract immediate child sets (sets that directly follow this set in any chain)
-    // Example: if chain is [parent, current, child, grandchild], only add 'child'
-    val nestedSets = modules
-      .mapNotNull { it.first.moduleSet }
-      .mapNotNull { chain ->
-        val currentIndex = chain.indexOf(moduleSetName)
-        if (currentIndex != -1 && currentIndex < chain.size - 1) {
-          chain[currentIndex + 1]  // Return immediate child
-        } else {
-          null
-        }
+      // Add direct module if this is the deepest/last set in chain
+      if (chain.lastOrNull() == moduleSetName) {
+        entries.add(moduleItem.moduleName)
       }
-      .toSet()
-    entries.addAll(nestedSets)
+
+      // Add immediate child set if exists
+      // Example: if chain is [parent, current, child, grandchild], only add 'child'
+      val currentIndex = chain.indexOf(moduleSetName)
+      if (currentIndex != -1 && currentIndex < chain.size - 1) {
+        entries.add(chain[currentIndex + 1])
+      }
+    }
 
     val out = ByteArrayOutputStream()
     createYamlGenerator(out).use { writer ->
-      writer.writeStartArray()
-      entries.sorted().forEach(writer::writeString)
-      writer.writeEndArray()
+      writeStringArray(writer, entries)
     }
 
     zipFileWriter.uncompressedData("moduleSets/$moduleSetName.yaml", out.toByteArray())
@@ -111,8 +107,7 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
   writer.writeStartArray()
   val written = HashSet<String>()
   for ((plugin, entries) in pluginToEntries) {
-    val key = plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
-    if (!written.add(key)) {
+    if (!written.add(createPluginKey(plugin))) {
       // duplicate, e.g. OS-specific plugin
       continue
     }
@@ -140,36 +135,22 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
 
     val contentModuleReason = "<- ${plugin.layout.mainModule} (plugin content)"
 
-    writer.writeArrayFieldStart("content")
-    for ((filePath, fileEntries) in fileToEntry) {
-      writer.writeStartObject()
-      writer.writeStringField("name", filePath)
-      writeProjectLibs(entries = fileEntries, writer = writer, buildPaths = buildPaths, isInner = false)
-
-      if (fileEntries.all { it is ModuleLibraryFileEntry }) {
-        writeSeparatePackedModuleLibrary(fileEntries = fileEntries, writer = writer, buildPaths = buildPaths)
-        writer.writeEndObject()
-        continue
-      }
-
+    writeContentEntries(writer, fileToEntry, buildPaths) { w, entries ->
       writeModules(
-        writer = writer,
-        fileEntries = fileEntries,
+        writer = w,
+        fileEntries = entries,
         buildPaths = buildPaths,
         reasonFilter = { it.reason != contentModuleReason },
       )
       writeModules(
-        writer = writer,
-        fileEntries = fileEntries,
+        writer = w,
+        fileEntries = entries,
         reasonFilter = { it.reason == contentModuleReason },
         buildPaths = buildPaths,
         fieldName = "contentModules",
         writeReason = false,
       )
-
-      writer.writeEndObject()
     }
-    writer.writeEndArray()
 
     writer.writeEndObject()
   }
@@ -208,23 +189,10 @@ private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleIt
     writer.writeStartObject()
     writer.writeStringField("mainModule", moduleItem.moduleName)
 
-    writer.writeArrayFieldStart("content")
-    for ((filePath, fileEntries) in fileToEntry) {
-      writer.writeStartObject()
-      writer.writeStringField("name", filePath)
-      writeProjectLibs(entries = fileEntries, writer = writer, buildPaths = buildPaths, isInner = false)
-
-      if (fileEntries.all { it is ModuleLibraryFileEntry }) {
-        writeSeparatePackedModuleLibrary(fileEntries = fileEntries, writer = writer, buildPaths = buildPaths)
-        writer.writeEndObject()
-        continue
-      }
-
+    writeContentEntries(writer = writer, fileToEntry = fileToEntry, buildPaths = buildPaths) { w, entries ->
       // module maybe embedded in one product and not embedded in another one (rider case)
-      writeModules(writer = writer, fileEntries = fileEntries, buildPaths = buildPaths, writeReason = false)
-      writer.writeEndObject()
+      writeModules(writer = w, fileEntries = entries, buildPaths = buildPaths, writeReason = false)
     }
-    writer.writeEndArray()
 
     writer.writeEndObject()
   }
@@ -275,8 +243,7 @@ private fun buildPlatformContentReport(
   fun writeWithoutDuplicates(pairs: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>) {
     val written = HashSet<String>()
     for ((plugin, _) in pairs) {
-      val key = plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
-      if (!written.add(key)) {
+      if (!written.add(createPluginKey(plugin))) {
         // duplicate, e.g. OS-specific plugin
         continue
       }
@@ -328,34 +295,31 @@ private fun groupPlatformEntries(
   return fileToEntry to productModuleToEntries.toList().sortedBy { it.first.moduleName }
 }
 
+private fun collectModulesInUsedSets(
+  productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>,
+  moduleSets: Map<String, *>,
+): Set<String> {
+  val usedSetNames = moduleSets.keys  // Already a Set
+  return productModules
+    .asSequence()
+    .filter { (item) -> item.moduleSet?.any { it in usedSetNames } == true }
+    .mapTo(mutableSetOf()) { it.first.moduleName }
+}
+
 private fun writeProductModules(
   writer: YAMLGenerator,
   productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>,
   kind: String,
   moduleSets: Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>>,
 ) {
-  writer.writeArrayFieldStart(if (kind == ModuleIncludeReasons.PRODUCT_MODULES) "productModules" else "productEmbeddedModules")
+  val fieldName = if (kind == ModuleIncludeReasons.PRODUCT_MODULES) "productModules" else "productEmbeddedModules"
+  writer.writeArrayFieldStart(fieldName)
+
   if (kind == ModuleIncludeReasons.PRODUCT_MODULES) {
-    for (moduleSetName in moduleSets.keys) {
-      writer.writeString(moduleSetName)
-    }
+    moduleSets.keys.forEach(writer::writeString)
   }
 
-  // Get all module names that are in module sets USED BY THIS PRODUCT
-  // Check if any root set name appears in the module's chain
-  val modulesInUsedSets = mutableSetOf<String>()
-  for ((item) in productModules) {
-    val chainList = item.moduleSet
-    if (chainList != null) {
-      // Check if any root set is in the chain
-      for (moduleSetName in moduleSets.keys) {
-        if (moduleSetName in chainList) {
-          modulesInUsedSets.add(item.moduleName)
-          break
-        }
-      }
-    }
-  }
+  val modulesInUsedSets = collectModulesInUsedSets(productModules, moduleSets)
 
   for ((item) in productModules) {
     // Only write individual modules that aren't in any USED module set
@@ -366,27 +330,17 @@ private fun writeProductModules(
   writer.writeEndArray()
 }
 
-private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): String {
-  if (file.startsWith(MAVEN_REPO)) {
-    return $$"$MAVEN_REPOSITORY$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, '/')
-  }
-  val projectHome = buildPaths.projectHome
-  if (file.startsWith(projectHome)) {
-    return $$"$PROJECT_DIR$/" + projectHome.relativize(file).toString()
-  }
-  else {
-    val buildOutputDir = buildPaths.buildOutputDir
-    return when {
-      file.startsWith(buildOutputDir) -> buildOutputDir.relativize(file).toString()
-      extraRoot != null && file.startsWith(extraRoot) -> extraRoot.relativize(file).toString()
-      else -> file.toString()
-    }
-  }
-}
-
 private fun shortenAndNormalizePath(file: Path, buildPaths: BuildPaths, extraRoot: Path? = null): String {
-  val result = shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, '/')
-  return if (result.startsWith("temp/")) result.substring("temp/".length) else result
+  val shortened = when {
+    file.startsWith(MAVEN_REPO) -> $$"$MAVEN_REPOSITORY$/" + MAVEN_REPO.relativize(file).toString()
+    file.startsWith(buildPaths.projectHome) -> $$"$PROJECT_DIR$/" + buildPaths.projectHome.relativize(file).toString()
+    file.startsWith(buildPaths.buildOutputDir) -> buildPaths.buildOutputDir.relativize(file).toString()
+    extraRoot != null && file.startsWith(extraRoot) -> extraRoot.relativize(file).toString()
+    else -> file.toString()
+  }
+
+  val normalized = shortened.replace(File.separatorChar, '/')
+  return if (normalized.startsWith("temp/")) normalized.substring("temp/".length) else normalized
 }
 
 private fun writeModules(
@@ -432,14 +386,8 @@ private fun writeModuleItem(writer: JsonGenerator, entry: ModuleOutputEntry, wri
 }
 
 private fun writeModuleLibraries(fileEntries: List<DistributionFileEntry>, moduleName: String, writer: JsonGenerator, buildPaths: BuildPaths) {
-  val entriesGroupedByLibraryName = LinkedHashMap<String, MutableList<ModuleLibraryFileEntry>>()
-  for (entry in fileEntries) {
-    if (entry is ModuleLibraryFileEntry) {
-      if (entry.moduleName == moduleName) {
-        entriesGroupedByLibraryName.computeIfAbsent(entry.libraryName) { ArrayList() }.add(entry)
-      }
-    }
-  }
+  val filteredEntries = fileEntries.filter { it is ModuleLibraryFileEntry && it.moduleName == moduleName }
+  val entriesGroupedByLibraryName = groupLibraryEntries<ModuleLibraryFileEntry>(filteredEntries) { it.libraryName }
 
   if (entriesGroupedByLibraryName.isEmpty()) {
     return
@@ -453,12 +401,7 @@ private fun writeModuleLibraries(fileEntries: List<DistributionFileEntry>, modul
 }
 
 private fun writeSeparatePackedModuleLibrary(fileEntries: List<DistributionFileEntry>, writer: JsonGenerator, buildPaths: BuildPaths) {
-  val entriesGroupedByLibraryName = LinkedHashMap<String, MutableList<ModuleLibraryFileEntry>>()
-  for (entry in fileEntries) {
-    if (entry is ModuleLibraryFileEntry) {
-      entriesGroupedByLibraryName.computeIfAbsent(entry.libraryName) { ArrayList() }.add(entry)
-    }
-  }
+  val entriesGroupedByLibraryName = groupLibraryEntries<ModuleLibraryFileEntry>(fileEntries) { it.libraryName }
 
   require(entriesGroupedByLibraryName.size == 1) {
     "Expected only one library, but got: $entriesGroupedByLibraryName"
@@ -540,4 +483,53 @@ private fun writeModuleDependents(writer: JsonGenerator, data: ProjectLibraryDat
     writer.writeEndArray()
   }
   writer.writeEndObject()
+}
+
+// Helper functions for deduplication
+
+private fun createPluginKey(plugin: PluginBuildDescriptor): String {
+  return plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
+}
+
+private fun writeStringArray(writer: YAMLGenerator, items: Collection<String>) {
+  writer.writeStartArray()
+  items.sorted().forEach(writer::writeString)
+  writer.writeEndArray()
+}
+
+private inline fun <reified T : LibraryFileEntry> groupLibraryEntries(
+  fileEntries: List<DistributionFileEntry>,
+  crossinline getLibraryName: (T) -> String,
+): Map<String, List<T>> {
+  val entriesGroupedByLibraryName = LinkedHashMap<String, MutableList<T>>()
+  for (entry in fileEntries) {
+    if (entry is T) {
+      entriesGroupedByLibraryName.computeIfAbsent(getLibraryName(entry)) { ArrayList() }.add(entry)
+    }
+  }
+  return entriesGroupedByLibraryName
+}
+
+private inline fun writeContentEntries(
+  writer: YAMLGenerator,
+  fileToEntry: Map<String, List<DistributionFileEntry>>,
+  buildPaths: BuildPaths,
+  writeModulesBlock: (YAMLGenerator, List<DistributionFileEntry>) -> Unit,
+) {
+  writer.writeArrayFieldStart("content")
+  for ((filePath, fileEntries) in fileToEntry) {
+    writer.writeStartObject()
+    writer.writeStringField("name", filePath)
+    writeProjectLibs(entries = fileEntries, writer = writer, buildPaths = buildPaths, isInner = false)
+
+    if (fileEntries.all { it is ModuleLibraryFileEntry }) {
+      writeSeparatePackedModuleLibrary(fileEntries = fileEntries, writer = writer, buildPaths = buildPaths)
+      writer.writeEndObject()
+      continue
+    }
+
+    writeModulesBlock(writer, fileEntries)
+    writer.writeEndObject()
+  }
+  writer.writeEndArray()
 }
