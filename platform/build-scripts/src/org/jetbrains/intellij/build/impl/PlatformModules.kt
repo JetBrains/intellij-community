@@ -44,7 +44,7 @@ import java.util.SortedSet
  * details. You can use 'loading="embedded"' to make it still loaded by the core classloader if needed.
  */
 @Suppress("RemoveRedundantQualifierName")
-private val PLATFORM_CORE_MODULES = java.util.List.of(
+internal val PLATFORM_CORE_MODULES = java.util.List.of(
   "intellij.platform.builtInServer",
   "intellij.platform.diff",
   "intellij.platform.editor.ui",
@@ -103,10 +103,6 @@ private val PLATFORM_CORE_MODULES = java.util.List.of(
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
   "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 )
-
-internal fun collectPlatformModules(to: MutableCollection<String>) {
-  to.addAll(PLATFORM_CORE_MODULES)
-}
 
 private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
