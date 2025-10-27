@@ -83,6 +83,15 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   }
 
   public void testNotFirstImportModule() throws IOException {
+    importFromXmlToJson();
+  }
+
+  public void testNotFirstImportModuleAfterMigration() throws IOException {
+    importFromXmlToJson();
+  }
+
+
+  private void importFromXmlToJson() throws IOException {
     CodeStyleScheme testScheme = new CodeStyleScheme() {
 
       @NotNull

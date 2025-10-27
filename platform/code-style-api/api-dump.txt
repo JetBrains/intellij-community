@@ -461,7 +461,6 @@ c:com.intellij.psi.codeStyle.CodeStyleSettings
 - FORMATTER_TAGS_ENABLED:Z
 - GENERATE_FINAL_LOCALS:Z
 - GENERATE_FINAL_PARAMETERS:Z
-- f:IMPORT_LAYOUT_TABLE:com.intellij.psi.codeStyle.PackageEntryTable
 - INNER_CLASSES_ORDER_WEIGHT:I
 - INSERT_INNER_CLASS_IMPORTS:Z
 - INSERT_OVERRIDE_ANNOTATION:Z
@@ -474,7 +473,6 @@ c:com.intellij.psi.codeStyle.CodeStyleSettings
 - METHODS_ORDER_WEIGHT:I
 - NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND:I
 - f:OTHER_INDENT_OPTIONS:com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
-- f:PACKAGES_TO_USE_IMPORT_ON_DEMAND:com.intellij.psi.codeStyle.PackageEntryTable
 - PARAMETER_NAME_PREFIX:java.lang.String
 - PARAMETER_NAME_SUFFIX:java.lang.String
 - PARENTHESES_AROUND_METHOD_ARGUMENTS:Z
@@ -511,7 +509,6 @@ c:com.intellij.psi.codeStyle.CodeStyleSettings
 - getExcludedFiles():com.intellij.psi.codeStyle.ExcludedFiles
 - getFormatterOffPattern():java.util.regex.Pattern
 - getFormatterOnPattern():java.util.regex.Pattern
-- getImportLayoutTable():com.intellij.psi.codeStyle.PackageEntryTable
 - getIndentOptions():com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
 - getIndentOptions(com.intellij.openapi.fileTypes.FileType):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
 - getIndentOptionsByDocument(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
@@ -521,7 +518,6 @@ c:com.intellij.psi.codeStyle.CodeStyleSettings
 - getLineSeparator():java.lang.String
 - getModificationTracker():com.intellij.openapi.util.SimpleModificationTracker
 - getNamesCountToUseImportOnDemand():I
-- getPackagesToUseImportOnDemand():com.intellij.psi.codeStyle.PackageEntryTable
 - getParentSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - getRepeatAnnotations():java.util.List
 - getRightMargin(com.intellij.lang.Language):I
@@ -957,9 +953,7 @@ a:com.intellij.psi.codeStyle.FileIndentOptionsProvider
 - useOnFullReformat():Z
 com.intellij.psi.codeStyle.ImportsLayoutSettings
 - a:getClassCountToUseImportOnDemand():I
-- a:getImportLayoutTable():com.intellij.psi.codeStyle.PackageEntryTable
 - a:getNamesCountToUseImportOnDemand():I
-- a:getPackagesToUseImportOnDemand():com.intellij.psi.codeStyle.PackageEntryTable
 - a:isInsertInnerClassImports():Z
 - a:isLayoutStaticImportsSeparately():Z
 - a:isUseFqClassNames():Z
@@ -1022,25 +1016,6 @@ c:com.intellij.psi.codeStyle.PackageEntry
 - isStatic():Z
 - isWithSubpackages():Z
 - matchesPackageName(java.lang.String):Z
-c:com.intellij.psi.codeStyle.PackageEntryTable
-- com.intellij.openapi.util.JDOMExternalizable
-- java.lang.Cloneable
-- <init>():V
-- addEntry(com.intellij.psi.codeStyle.PackageEntry):V
-- clone():java.lang.Object
-- contains(java.lang.String):Z
-- copyFrom(com.intellij.psi.codeStyle.PackageEntryTable):V
-- equals(java.lang.Object):Z
-- getEntries():com.intellij.psi.codeStyle.PackageEntry[]
-- getEntryAt(I):com.intellij.psi.codeStyle.PackageEntry
-- getEntryCount():I
-- hashCode():I
-- insertEntryAt(com.intellij.psi.codeStyle.PackageEntry,I):V
-- readExternal(org.jdom.Element):V
-- removeEmptyPackages():V
-- removeEntryAt(I):V
-- setEntryAt(com.intellij.psi.codeStyle.PackageEntry,I):V
-- writeExternal(org.jdom.Element):V
 a:com.intellij.psi.codeStyle.PredefinedCodeStyle
 - sf:EMPTY_ARRAY:com.intellij.psi.codeStyle.PredefinedCodeStyle[]
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

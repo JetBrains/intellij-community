@@ -102,7 +102,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    *                          code style extensions is unloaded. Can be {@code false} for temporarily created settings.
    */
   protected CodeStyleSettings(boolean loadExtensions, boolean needsRegistration) {
-    initImportsByDefault();
 
     if (loadExtensions) {
       myCustomCodeStyleSettingsManager.initCustomSettings();
@@ -111,17 +110,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     if (needsRegistration) {
       CodeStyleSettingsManager.registerSettings(this);
     }
-  }
-
-  private void initImportsByDefault() {
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
-    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
   public void setParentSettings(@NotNull CodeStyleSettings parent) {
@@ -158,9 +146,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
     myCustomCodeStyleSettingsManager.copyFrom(from);
-
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
 
     OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
 
@@ -315,16 +300,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated(forRemoval = true)
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PACKAGES_TO_USE_IMPORT_ON_DEMAND */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
-
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#IMPORT_LAYOUT_TABLE */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
-
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isLayoutStaticImportsSeparately()} */
   @Override
   @Deprecated
@@ -407,20 +382,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Override
   public void setUseFqClassNames(boolean value) {
     USE_FQ_CLASS_NAMES = value;
-  }
-
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getImportLayoutTable()} */
-  @Deprecated
-  @Override
-  public @NotNull PackageEntryTable getImportLayoutTable() {
-    return IMPORT_LAYOUT_TABLE;
-  }
-
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getPackagesToUseImportOnDemand()} */
-  @Deprecated
-  @Override
-  public @NotNull PackageEntryTable getPackagesToUseImportOnDemand() {
-    return PACKAGES_TO_USE_IMPORT_ON_DEMAND;
   }
 
   // endregion
@@ -555,24 +516,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myCustomCodeStyleSettingsManager.notifySettingsBeforeLoading();
     myStoredOptions.processOptions(element);
     DefaultJDOMExternalizer.readExternal(this, element);
-    if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
-      // add <all other static imports> entry if there is none
-      boolean found = false;
-      for (PackageEntry entry : IMPORT_LAYOUT_TABLE.getEntries()) {
-        if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        PackageEntry last = IMPORT_LAYOUT_TABLE.getEntryCount() == 0 ? null : IMPORT_LAYOUT_TABLE.getEntryAt(IMPORT_LAYOUT_TABLE.getEntryCount() - 1);
-        if (last != PackageEntry.BLANK_LINE_ENTRY) {
-          IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-        }
-        IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
-      }
-    }
-
     myRepeatAnnotations.clear();
     Element annotations = element.getChild(REPEAT_ANNOTATIONS);
     if (annotations != null) {
@@ -1120,8 +1063,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
         return field.getAnnotation(Deprecated.class) != null;
       }
     });
-    IMPORT_LAYOUT_TABLE.copyFrom(defaults.IMPORT_LAYOUT_TABLE);
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(defaults.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     myRepeatAnnotations.clear();
   }
 

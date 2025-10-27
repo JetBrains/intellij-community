@@ -85,5 +85,11 @@
     <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.MethodCallInstallerHandler"/>
     <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.NegationInsertHandler"/>
 
+    <registryKey key="code.style.package.entry.table.check.compatibility"
+                 defaultValue="true"
+                 description="Enable checks that the import layout is compatible"
+                 restartRequired="true"/>
+
+
   </extensions>
 </idea-plugin>

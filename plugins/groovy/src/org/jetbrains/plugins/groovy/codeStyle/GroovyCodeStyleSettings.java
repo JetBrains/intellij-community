@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Max Medvedev
  */
-public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements JavaImportsLayoutSettings {
   public int STATIC_FIELDS_ORDER_WEIGHT = 1;
   public int FIELDS_ORDER_WEIGHT = 2;
   public int CONSTRUCTORS_ORDER_WEIGHT = 3;

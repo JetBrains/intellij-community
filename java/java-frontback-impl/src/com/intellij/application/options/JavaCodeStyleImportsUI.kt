@@ -3,6 +3,7 @@ package com.intellij.application.options
 
 import com.intellij.application.options.JavaCodeStyleImportsPanel.InnerClassItem
 import com.intellij.psi.codeStyle.ImportsLayoutSettings
+import com.intellij.psi.codeStyle.JavaImportsLayoutSettings
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.ui.TableUtil
 import com.intellij.ui.ToolbarDecorator
@@ -60,7 +61,7 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
     }
   }
 
-  override fun reset(settings: ImportsLayoutSettings) {
+  override fun reset(settings: JavaImportsLayoutSettings) {
     super.reset(settings)
 
     doNotInsertInnerTable.setEnabled(cbInsertInnerClassImports.model.isSelected)

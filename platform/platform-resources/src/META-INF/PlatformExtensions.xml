@@ -1873,11 +1873,6 @@
                  defaultValue="true"
                  description="Enables showing non-local projects in the recents list"/>
 
-    <registryKey key="code.style.package.entry.table.check.compatibility"
-                 defaultValue="true"
-                 description="Enable checks that the import layout is compatible"
-                 restartRequired="true"/>
-
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer"/>
 
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"

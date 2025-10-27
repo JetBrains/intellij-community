@@ -4,7 +4,9 @@ package com.intellij.psi.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
@@ -20,8 +22,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements JavaImportsLayoutSettings {
   private static final int CURRENT_VERSION = 1;
+  private static final @NotNull Logger LOG = Logger.getInstance(JavaCodeStyleSettings.class);
 
   private int myVersion = CURRENT_VERSION;
   private int myOldVersion = 0;
@@ -186,6 +189,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
   @Property(externalName = "imports_layout")
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+  private JavaLegacySettings legacySettings = new JavaLegacySettings();
 
   private boolean updatedModuleImportLayout = false;
 
@@ -440,8 +444,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     INSERT_INNER_CLASS_IMPORTS = rootSettings.INSERT_INNER_CLASS_IMPORTS;
     CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = rootSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
     NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = rootSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(rootSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    IMPORT_LAYOUT_TABLE.copyFrom(rootSettings.IMPORT_LAYOUT_TABLE);
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(legacySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    IMPORT_LAYOUT_TABLE.copyFrom(legacySettings.IMPORT_LAYOUT_TABLE);
     FIELD_NAME_PREFIX = rootSettings.FIELD_NAME_PREFIX;
     STATIC_FIELD_NAME_PREFIX = rootSettings.STATIC_FIELD_NAME_PREFIX;
     PARAMETER_NAME_PREFIX = rootSettings.PARAMETER_NAME_PREFIX;
@@ -469,6 +473,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     cloned.setRepeatAnnotations(getRepeatAnnotations());
     cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
     cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    cloned.legacySettings = new JavaLegacySettings();
+    cloned.legacySettings.copyFrom(legacySettings);
     cloned.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
     cloned.IMPORT_LAYOUT_TABLE.copyFrom(IMPORT_LAYOUT_TABLE);
     cloned.myVersion = myVersion;
@@ -480,6 +486,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Override
   public void readExternal(Element parentElement) throws InvalidDataException {
     super.readExternal(parentElement);
+    legacySettings.readExternal(parentElement);
     readExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     readExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
     myOldVersion = myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
@@ -680,5 +687,50 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     JavaCodeStyleSettings otherSettings = (JavaCodeStyleSettings)obj;
     if (!myRepeatAnnotations.equals(otherSettings.getRepeatAnnotations())) return false;
     return myDoNotImportInner.equals(otherSettings.getDoNotImportInner());
+  }
+
+  private static class JavaLegacySettings {
+    public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+    public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+    public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+
+    private JavaLegacySettings() {
+      this.PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
+      this.PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
+      this.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      this.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      this.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
+      this.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+      this.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      this.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+    }
+
+    void readExternal(@NotNull Element parentElement) throws InvalidDataException {
+      DefaultJDOMExternalizer.readExternal(this, parentElement);
+      if (this.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
+        // add <all other static imports> entry if there is none
+        boolean found = false;
+        for (PackageEntry entry : this.IMPORT_LAYOUT_TABLE.getEntries()) {
+          if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          PackageEntry last =
+            this.IMPORT_LAYOUT_TABLE.getEntryCount() == 0 ? null : this.IMPORT_LAYOUT_TABLE.getEntryAt(this.IMPORT_LAYOUT_TABLE.getEntryCount() - 1);
+          if (last != PackageEntry.BLANK_LINE_ENTRY) {
+            this.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+          }
+          this.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+        }
+      }
+    }
+
+    void copyFrom(@NotNull JavaLegacySettings settings) {
+      this.IMPORT_LAYOUT_TABLE.copyFrom(settings.IMPORT_LAYOUT_TABLE);
+      this.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+      this.LAYOUT_STATIC_IMPORTS_SEPARATELY = settings.LAYOUT_STATIC_IMPORTS_SEPARATELY;
+    }
   }
 }
