@@ -134,7 +134,7 @@ class UvPackageManagerProvider : PythonPackageManagerProvider {
     }
 
     val uvWorkingDirectory = (sdk.sdkAdditionalData as UvSdkAdditionalData).uvWorkingDirectory ?: Path.of(project.basePath!!)
-    val uv = createUvLowLevel(uvWorkingDirectory, createUvCli())
+    val uv = createUvLowLevel(uvWorkingDirectory, createUvCli().getOr { return null })
     return UvPackageManager(project, sdk, uv)
   }
 }

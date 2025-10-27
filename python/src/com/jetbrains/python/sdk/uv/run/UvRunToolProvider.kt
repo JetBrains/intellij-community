@@ -7,6 +7,7 @@ import com.jetbrains.python.run.features.PyRunToolData
 import com.jetbrains.python.run.features.PyRunToolId
 import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.features.PyRunToolProvider
+import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.isUv
 
 /**
@@ -20,12 +21,18 @@ private class UvRunToolProvider : PyRunToolProvider {
     PyBundle.message("python.run.configuration.fragments.python.group"),
   )
 
-  override val runToolParameters: PyRunToolParameters = PyRunToolParameters(
-    "uv",
-    listOf("run")
-  )
+  /**
+   * We use runToolParameters only if a tool provider is available. So we need to have a lazy initialization here
+   * to construct these parameters iff the validation has passed.
+   */
+  override val runToolParameters: PyRunToolParameters by lazy {
+    PyRunToolParameters(
+      requireNotNull(getUvExecutable()?.toString()) { "Unable to find uv executable." },
+      listOf("run")
+    )
+  }
 
   override val initialToolState: Boolean = true
 
-  override fun isAvailable(sdk: Sdk): Boolean = sdk.isUv
+  override fun isAvailable(sdk: Sdk): Boolean = sdk.isUv && getUvExecutable() != null
 }

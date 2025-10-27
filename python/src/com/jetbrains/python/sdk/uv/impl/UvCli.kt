@@ -45,18 +45,7 @@ private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): PyRe
                                    env = mapOf("VIRTUAL_ENV" to ".venv"), timeout = 10.minutes, args = args)
 }
 
-private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : UvCli {
-  val uv: Path
-
-  init {
-    val path = uvPath ?: getUvExecutable()
-    val error = validateUvExecutable(path)
-    if (error != null) {
-      throw RuntimeException(error.message)
-    }
-
-    uv = path!!
-  }
+private class UvCliImpl(val dispatcher: CoroutineDispatcher, val uv: Path) : UvCli {
 
   override suspend fun runUv(workingDir: Path, vararg args: String): PyResult<String> {
     return withContext(dispatcher) {
@@ -80,7 +69,6 @@ fun detectUvExecutable(): Path? {
   val appData = if (SystemInfo.isWindows) System.getenv("APPDATA") else null
   val paths = mutableListOf<Path>().apply {
     add(Path.of(userHome, ".local", "bin", name))
-    add(Path.of(userHome, ".local", "bin", name))
     if (appData != null) {
       add(Path.of(appData, "Python", "Scripts", name))
     }
@@ -101,6 +89,11 @@ fun hasUvExecutable(): Boolean {
   return getUvExecutable() != null
 }
 
-fun createUvCli(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): UvCli {
-  return UvCliImpl(dispatcher, uv)
+fun createUvCli(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli> {
+  val path = uv ?: getUvExecutable()
+  val error = validateUvExecutable(path)
+  return if (error != null) {
+    PyResult.localizedError(error.message)
+  }
+  else PyResult.success(UvCliImpl(dispatcher, path!!))
 }

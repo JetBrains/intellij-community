@@ -23,7 +23,7 @@ internal class UvSystemPythonProvider : SystemPythonProvider {
       return Result.success(emptySet())
     }
 
-    val uv = createUvLowLevel(Path.of("."))
+    val uv = createUvLowLevel(Path.of(".")).getOr { return it }
     return uv.listUvPythons()
   }
 
