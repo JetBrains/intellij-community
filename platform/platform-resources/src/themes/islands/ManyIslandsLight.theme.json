@@ -67,7 +67,9 @@
 
     "StatusBar": {
       "background": "BackgroundDark",
-      "borderColor": "BorderTransparent"
+      "borderColor": "BorderTransparent",
+      "Breadcrumbs.hoverBackground": "#00000010",
+      "Widget.hoverBackground": "#00000010"
     },
 
     "ToolWindow": {
