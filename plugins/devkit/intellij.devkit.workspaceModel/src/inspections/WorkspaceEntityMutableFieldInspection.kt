@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.workspaceModel
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.workspaceModel.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
@@ -15,10 +16,9 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 @IntellijInternalApi
 @ApiStatus.Internal
 class WorkspaceEntityMutableFieldInspection: LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = object : KtVisitorVoid() {
     override fun visitClass(klass: KtClass) {
-      if (!klass.isWorkspaceEntity()) return
-      if (klass.name == "Builder") return
+      if (!klass.isWorkspaceEntityDeclaration()) return
       klass.getProperties().forEach { property ->
         if (property.isVar) {
           holder.registerProblem(property, DevKitWorkspaceModelBundle.message("inspection.workspace.mutable.field.display.name"),

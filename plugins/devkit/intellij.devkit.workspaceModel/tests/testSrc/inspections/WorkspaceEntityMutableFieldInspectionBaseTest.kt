@@ -3,16 +3,19 @@
 
 package com.intellij.devkit.workspaceModel.inspections
 
-import com.intellij.devkit.workspaceModel.WorkspaceEntityMutableFieldInspection
 import com.intellij.openapi.util.IntellijInternalApi
 
-class WorkspaceEntityMutableFieldInspectionTest: WorkspaceEntityInspectionBase() {
+abstract class WorkspaceEntityMutableFieldInspectionBaseTest : WorkspaceInspectionBaseTest() {
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(WorkspaceEntityMutableFieldInspection())
   }
 
   fun testVarFieldForbidden() {
-    doTest("Change to 'val'")
+    doTestWithQuickFix("Change to 'val'")
+  }
+  
+  fun testNotWorkspaceClasses() {
+    doTest()
   }
 }

@@ -66,6 +66,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/workspace/jps",
     "//java/java-impl:impl",
+    "//plugins/kotlin/base/psi",
   ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel` end
