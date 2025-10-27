@@ -25,6 +25,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -610,5 +611,18 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         ((StepAdapter)step).registerStepListener(myStepListener);
       }
     }
+  }
+
+  @Override
+  protected @Nullable String getHelpId() {
+    return getHelpID();
+  }
+
+  /**
+   * @deprecated use {@link #getHelpId()} instead
+   */
+  @Deprecated
+  protected @Nullable @NonNls String getHelpID() {
+    return null;
   }
 }
