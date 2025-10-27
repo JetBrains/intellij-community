@@ -50,11 +50,10 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun getAllSdks(): List<Sdk> {
     val globalWorkspaceModels = GlobalWorkspaceModel.getInstancesBlocking()
-    return globalWorkspaceModels.map {
-      it.currentSnapshot
-    }.flatMap { snapshot ->
-      snapshot.entities(SdkEntity::class.java).mapNotNull { snapshot.sdkMap.getDataByEntity(it) }
-    }.toList()
+    return globalWorkspaceModels.flatMap {
+      val snapshot = it.currentSnapshot
+      snapshot.entities(SdkEntity::class.java).mapNotNull { sdkEntity -> snapshot.sdkMap.getDataByEntity(sdkEntity) }
+    }
   }
 
   override fun createSdk(name: String, type: SdkTypeId, homePath: String?): Sdk {
