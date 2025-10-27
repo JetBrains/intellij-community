@@ -6,6 +6,8 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
@@ -35,6 +37,9 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
   private final List<CheckCanceledHook> myHooks = ContainerUtil.createEmptyCOWList();
   private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
+
+  private static final Logger LOG = Logger.getInstance(ProgressManagerImpl.class);
+  private static final ThrottledLogger THROTTLED_LOGGER = new ThrottledLogger(LOG, 100);
 
   public ProgressManagerImpl() {
     ExtensionPointImpl.Companion.setCheckCanceledAction(ProgressManager::checkCanceled);
@@ -148,6 +153,16 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     if (!shouldFireCheckCanceledEvent()) {
       return;
     }
+
+    THROTTLED_LOGGER.info(() -> {
+      return "checkCancelled is invoked while write-action is pending." +
+              " nonCancellable: " + nonCancellable +
+             ", hasProgressIndicator: " + hasProgressIndicator +
+             ", hasContextJob: " + hasContextJob +
+             ", hasNoneBehavior: " + hasNoneBehavior +
+             ", hasOnlyHooksBehavior: " + hasOnlyHooksBehavior +
+             ", cancelled: " + cancelled;
+    });
     CheckCanceledEvent.commit(nonCancellable, hasProgressIndicator, hasContextJob, hasNoneBehavior, hasOnlyHooksBehavior, cancelled);
   }
 
