@@ -5,7 +5,6 @@ import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType.*
 import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.annotation.Inherited
 
@@ -14,7 +13,6 @@ import java.lang.annotation.Inherited
  */
 @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-@TestTemplate
 @Inherited
 @ExtendWith(TestApplicationExtension::class,
             MonolithAndSplitModeContextProvider::class,

@@ -5,9 +5,10 @@ import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.project.LocalProjectInfo
 import com.intellij.ide.starter.project.TestCaseTemplate
 import com.intellij.ide.starter.runner.Starter
+import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.starter.newContextWithLambda
+import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter
-import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
 import com.intellij.openapi.application.PathManager
 import org.junit.jupiter.api.extension.AfterAllCallback
@@ -29,7 +30,7 @@ class MonolithAndSplitModeIdeInstanceInitializer : BeforeAllCallback, AfterAllCa
   }
 
   override fun afterAll(context: ExtensionContext) {
-    ideBackgroundRun.closeIdeAndWait()
+    catchAll { ideBackgroundRun.closeIdeAndWait() }
   }
 }
 

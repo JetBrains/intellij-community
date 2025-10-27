@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
@@ -41,14 +42,21 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
   }
 
   private fun <T : Any> intercept(invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>): T {
+    if (invocationContext.arguments.any { it::class == BackgroundRunWithLambda::class }) {
+      System.err.println("Test ${invocationContext.executable.name} has ${BackgroundRunWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
+      invocation.proceed()
+    }
+
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
-      // TODO: init background IDE run before all tests (and provide and option to start IDE for every test)
+      // TODO: https://youtrack.jetbrains.com/issue/AT-3386/Lambda-tests-Start-different-instances-of-IDE-for-each-mode
+      // TODO: provide and option to start IDE for every test
       MonolithAndSplitModeIdeInstanceInitializer.ideBackgroundRun.runLambda(InjectedLambda::class,
                                                                             params = mapOf(
-                                                       "testClass" to invocationContext.targetClass.name,
-                                                       "testMethod" to invocationContext.executable.name,
-                                                       "methodArguments" to argumentsToString(invocationContext.arguments)
-                                                     ))
+                                                                              "testClass" to invocationContext.targetClass.name,
+                                                                              "testMethod" to invocationContext.executable.name,
+                                                                              "methodArguments" to argumentsToString(invocationContext.arguments)
+                                                                            ))
     }
 
     invocation.skip()
