@@ -47,5 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="module" module-name="fleet.kernel" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.scopes" />
   </component>
 </module>

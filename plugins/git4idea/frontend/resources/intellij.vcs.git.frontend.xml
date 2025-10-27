@@ -5,6 +5,7 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.vcs.git.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
   </dependencies>
 
   <actions resource-bundle="messages.GitFrontendBundle">
@@ -25,5 +26,7 @@
     <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
 
     <postStartupActivity implementation="com.intellij.vcs.git.frontend.GitFrontendStartupActivity"/>
+
+    <searchEverywhere.tabFactory implementation="com.intellij.vcs.git.frontend.searchEverywhere.SeGitTabFactory"/>
   </extensions>
 </idea-plugin>
