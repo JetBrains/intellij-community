@@ -87,6 +87,8 @@ internal class TerminalCommandCompletionHandler(
                                                 initContext.offsetMap,
                                                 initContext.hostOffsets,
                                                 hasModifiers, lookup)
+    val arranger = TerminalCompletionLookupArranger(indicator)
+    indicator.setLookupArranger(arranger)
 
     if (synchronous) {
       trySynchronousCompletion(initContext, hasModifiers, startingTime, indicator, initContext.hostOffsets)
