@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,7 @@ import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
@@ -96,6 +98,7 @@ import org.jetbrains.jewel.ui.theme.scrollbarStyle
 public fun VerticalScrollbar(
     scrollState: ScrollableState,
     modifier: Modifier = Modifier,
+    containerState: ScrollableContainerState = ScrollableContainerState.of(),
     reverseLayout: Boolean = false,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -104,13 +107,37 @@ public fun VerticalScrollbar(
 ) {
     BaseScrollbar(
         scrollState = scrollState,
+        containerState = containerState,
         reverseLayout = reverseLayout,
         enabled = enabled,
         interactionSource = interactionSource,
         isVertical = true,
         style = style,
         keepVisible = keepVisible,
-        modifier = modifier,
+        modifier = Modifier.testTag("Jewel.VerticalScrollbar").then(modifier),
+    )
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun VerticalScrollbar(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    reverseLayout: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    keepVisible: Boolean = false,
+) {
+    VerticalScrollbar(
+        scrollState,
+        modifier,
+        ScrollableContainerState.of(),
+        reverseLayout,
+        enabled,
+        interactionSource,
+        style,
+        keepVisible,
     )
 }
 
@@ -129,6 +156,7 @@ public fun VerticalScrollbar(
 public fun HorizontalScrollbar(
     scrollState: ScrollableState,
     modifier: Modifier = Modifier,
+    containerState: ScrollableContainerState = ScrollableContainerState.of(),
     reverseLayout: Boolean = false,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -137,19 +165,43 @@ public fun HorizontalScrollbar(
 ) {
     BaseScrollbar(
         scrollState = scrollState,
+        containerState = containerState,
         reverseLayout = reverseLayout,
         enabled = enabled,
         interactionSource = interactionSource,
         isVertical = false,
         style = style,
         keepVisible = keepVisible,
-        modifier = modifier,
+        modifier = Modifier.testTag("Jewel.HorizontalScrollbar").then(modifier),
+    )
+}
+
+@Composable
+public fun HorizontalScrollbar(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    reverseLayout: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    keepVisible: Boolean = false,
+) {
+    HorizontalScrollbar(
+        scrollState,
+        modifier,
+        ScrollableContainerState.of(),
+        reverseLayout,
+        enabled,
+        interactionSource,
+        style,
+        keepVisible,
     )
 }
 
 @Composable
 private fun BaseScrollbar(
     scrollState: ScrollableState,
+    containerState: ScrollableContainerState,
     reverseLayout: Boolean,
     enabled: Boolean,
     interactionSource: MutableInteractionSource,
@@ -158,7 +210,12 @@ private fun BaseScrollbar(
     keepVisible: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
     val dragInteraction = remember { mutableStateOf<DragInteraction.Start?>(null) }
+    var showScrollbar by remember { mutableStateOf(false) }
+    val isExpanded by remember { derivedStateOf { showScrollbar && isHovered } }
+
     DisposableEffect(interactionSource) {
         onDispose {
             dragInteraction.value?.let { interaction ->
@@ -168,27 +225,23 @@ private fun BaseScrollbar(
         }
     }
 
-    val visibilityStyle = style.scrollbarVisibility
-    val isOpaque = visibilityStyle is AlwaysVisible
-    var isExpanded by remember { mutableStateOf(false) }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    var showScrollbar by remember { mutableStateOf(false) }
+    val visibilityStyle by rememberUpdatedState(style.scrollbarVisibility)
+    val isOpaque by rememberUpdatedState(visibilityStyle is AlwaysVisible)
 
     val isDragging = dragInteraction.value != null
     val isScrolling = scrollState.isScrollInProgress || isDragging
     val isActive = isOpaque || isScrolling || (keepVisible && showScrollbar)
 
-    if (isHovered && showScrollbar) isExpanded = true
+    LaunchedEffect(isActive, isHovered, containerState, visibilityStyle) {
+        val showBasedOnParentState =
+            containerState.isHovered && visibilityStyle is ScrollbarVisibility.WhenContainerHovered
 
-    LaunchedEffect(isActive, isHovered, showScrollbar) {
-        val isVisibleAndHovered = showScrollbar && isHovered
-        if (isActive || isVisibleAndHovered) {
+        if (isActive || isHovered || showBasedOnParentState) {
             showScrollbar = true
         } else {
             launch {
                 delay(visibilityStyle.lingerDuration)
                 showScrollbar = false
-                isExpanded = false
             }
         }
     }
@@ -222,8 +275,14 @@ private fun BaseScrollbar(
         val thumbBackgroundColor = getThumbBackgroundColor(isOpaque, isHovered, isScrolling, style, showScrollbar)
         val thumbBorderColor = getThumbBorderColor(isOpaque, isHovered, isScrolling, style, showScrollbar)
         val hasVisibleBorder = !areTheSameColor(thumbBackgroundColor, thumbBorderColor)
-        val trackPadding =
-            if (hasVisibleBorder) visibilityStyle.trackPaddingWithBorder else visibilityStyle.trackPadding
+        val trackPadding by
+            rememberUpdatedState(
+                when {
+                    isExpanded -> visibilityStyle.trackPaddingExpanded
+                    hasVisibleBorder -> visibilityStyle.trackPaddingWithBorder
+                    else -> visibilityStyle.trackPadding
+                }
+            )
 
         val thumbThicknessPx =
             if (isVertical) {

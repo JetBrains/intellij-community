@@ -12,6 +12,7 @@ import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible
+import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenContainerHovered
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.skiko.hostOs
@@ -395,7 +396,7 @@ public fun AlwaysVisible.Companion.macOs(
  */
 public fun AlwaysVisible.Companion.windowsAndLinux(
     trackThickness: Dp = 10.dp,
-    trackPadding: PaddingValues = PaddingValues(0.dp),
+    trackPadding: PaddingValues = PaddingValues(),
     thumbColorAnimationDuration: Duration = 330.milliseconds,
     trackColorAnimationDuration: Duration = thumbColorAnimationDuration,
 ): AlwaysVisible =
@@ -508,8 +509,8 @@ public fun WhenScrolling.Companion.macOs(
 public fun WhenScrolling.Companion.windowsAndLinux(
     trackThickness: Dp = 10.dp,
     trackThicknessExpanded: Dp = 10.dp,
-    trackPadding: PaddingValues = PaddingValues(0.dp),
-    trackPaddingWithBorder: PaddingValues = PaddingValues(0.dp),
+    trackPadding: PaddingValues = PaddingValues(),
+    trackPaddingWithBorder: PaddingValues = PaddingValues(),
     trackColorAnimationDuration: Duration = 330.milliseconds,
     expandAnimationDuration: Duration = 0.milliseconds,
     thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
@@ -519,6 +520,115 @@ public fun WhenScrolling.Companion.windowsAndLinux(
         trackThickness = trackThickness,
         trackThicknessExpanded = trackThicknessExpanded,
         trackPadding = trackPadding,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
+    )
+
+/**
+ * Creates a [WhenContainerHovered] scrollbar visibility configuration appropriate for the current operating system.
+ *
+ * On macOS, this returns [macOs]. On Windows and Linux, this returns [windowsAndLinux].
+ *
+ * @return A [WhenContainerHovered] configuration for the current OS.
+ */
+public fun WhenContainerHovered.Companion.default(): WhenContainerHovered =
+    if (hostOs.isMacOS) {
+        WhenContainerHovered.macOs()
+    } else {
+        WhenContainerHovered.windowsAndLinux()
+    }
+
+/**
+ * Creates a [WhenContainerHovered] scrollbar visibility configuration specifically designed for macOS.
+ *
+ * @param trackThickness The thickness of the scrollbar track when not expanded.
+ * @param trackThicknessExpanded The thickness of the scrollbar track when expanded.
+ * @param trackPadding The padding around the scrollbar track.
+ * @param trackPaddingWithBorder The padding around the scrollbar track when it has a border.
+ * @param trackColorAnimationDuration The duration of track color animations.
+ * @param expandAnimationDuration The duration of track expansion animations.
+ * @param thumbColorAnimationDuration The duration of thumb color animations.
+ * @param lingerDuration The duration the scrollbar remains visible after scrolling stops.
+ * @return A [WhenContainerHovered] configuration for macOS.
+ */
+public fun WhenContainerHovered.Companion.macOs(
+    trackThickness: Dp = 11.dp,
+    trackThicknessExpanded: Dp = 14.dp,
+    trackPadding: PaddingValues = PaddingValues(2.dp),
+    trackPaddingExpanded: PaddingValues = trackPadding,
+    trackPaddingWithBorder: PaddingValues = PaddingValues(1.dp),
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): WhenContainerHovered =
+    WhenContainerHovered(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingExpanded = trackPaddingExpanded,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
+    )
+
+/**
+ * Creates a [WhenContainerHovered] scrollbar visibility configuration specifically designed for Windows and Linux.
+ *
+ * @param trackThickness The thickness of the scrollbar track when not expanded.
+ * @param trackThicknessExpanded The thickness of the scrollbar track when expanded.
+ * @param trackPadding The padding around the scrollbar track.
+ * @param trackPaddingWithBorder The padding around the scrollbar track when it has a border.
+ * @param trackColorAnimationDuration The duration of track color animations.
+ * @param expandAnimationDuration The duration of track expansion animations.
+ * @param thumbColorAnimationDuration The duration of thumb color animations.
+ * @param lingerDuration The duration the scrollbar remains visible after scrolling stops.
+ * @return A [WhenContainerHovered] configuration for Windows and Linux.
+ */
+public fun WhenContainerHovered.Companion.windowsAndLinux(
+    trackThickness: Dp = 10.dp,
+    trackThicknessExpanded: Dp = 10.dp,
+    trackPadding: PaddingValues = PaddingValues(),
+    trackPaddingExpanded: PaddingValues = trackPadding,
+    trackPaddingWithBorder: PaddingValues = PaddingValues(),
+    trackColorAnimationDuration: Duration = 330.milliseconds,
+    expandAnimationDuration: Duration = 0.milliseconds,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 200.milliseconds,
+): WhenContainerHovered =
+    WhenContainerHovered(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingExpanded = trackPaddingExpanded,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
+    )
+
+public fun ScrollbarVisibility.Companion.tabStrip(
+    trackThickness: Dp = 5.dp,
+    trackThicknessExpanded: Dp = 5.dp,
+    trackPadding: PaddingValues = PaddingValues(1.dp),
+    trackPaddingExpanded: PaddingValues = PaddingValues(),
+    trackPaddingWithBorder: PaddingValues = PaddingValues(1.dp),
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): ScrollbarVisibility =
+    WhenContainerHovered(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingExpanded = trackPaddingExpanded,
         trackPaddingWithBorder = trackPaddingWithBorder,
         trackColorAnimationDuration = trackColorAnimationDuration,
         expandAnimationDuration = expandAnimationDuration,
