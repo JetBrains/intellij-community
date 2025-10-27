@@ -319,7 +319,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
 
         val globalAndLocalQueue = SharedPriorityQueue(remainingSections) { it.priority }.createLocalInstance()
 
-        analyze(parameters.completionFile) {
+         analyze(parameters.completionFile) {
             val commonData = createCommonSectionData(completionContext) ?: return@analyze
 
             while (true) {

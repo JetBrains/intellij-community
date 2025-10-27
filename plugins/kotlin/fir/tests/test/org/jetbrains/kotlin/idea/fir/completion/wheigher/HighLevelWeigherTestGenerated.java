@@ -550,6 +550,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/ExactMatchForKeyword.kt");
         }
 
+        @TestMetadata("ExpectedTypeTypeParameters.kt")
+        public void testExpectedTypeTypeParameters() throws Exception {
+            runTest("../../completion/testData/weighers/basic/ExpectedTypeTypeParameters.kt");
+        }
+
         @TestMetadata("ImportDirective.kt")
         public void testImportDirective() throws Exception {
             runTest("../../completion/testData/weighers/basic/ImportDirective.kt");
