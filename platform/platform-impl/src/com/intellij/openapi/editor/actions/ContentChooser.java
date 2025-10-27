@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -183,7 +184,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         }
       })
       .createPanel();
-    mySplitter.setFirstComponent(listWithToolbar);
+    JComponent listWithFilter = ListWithFilter.wrap(
+      myList, ScrollPaneFactory.createScrollPane(listWithToolbar), o -> o.getShortText(renderer.previewChars), true);
+
+    mySplitter.setFirstComponent(listWithFilter);
     mySplitter.setSecondComponent(new JPanel());
     mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -311,9 +315,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       index++;
     }
     myAllContents = contents;
-    CollectionListModel<Item> listModel = (CollectionListModel<Item>)myList.getModel();
-    listModel.removeAll();
-    listModel.addAll(0, items);
+    FilteringListModel<Item> listModel = (FilteringListModel<Item>)myList.getModel();
+    ((CollectionListModel<?>)listModel.getOriginalModel()).removeAll();
+    listModel.addAll(items);
     ListWithFilter<?> listWithFilter = ComponentUtil.getParentOfType(ListWithFilter.class, myList);
     if (listWithFilter != null) {
       listWithFilter.getSpeedSearch().update();
