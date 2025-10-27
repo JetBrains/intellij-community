@@ -237,7 +237,7 @@ private class TerminalEventDispatcher(
       "Terminal.ClearBuffer",
       "Terminal.Find",
       "Terminal.CommandCompletion.Invoke",
-      "Terminal.EnterCommandCompletion",
+      "Terminal.CommandCompletion.InsertSuggestion",
       "Terminal.UpCommandCompletion",
       "Terminal.DownCommandCompletion",
       "Terminal.InsertInlineCompletion",
