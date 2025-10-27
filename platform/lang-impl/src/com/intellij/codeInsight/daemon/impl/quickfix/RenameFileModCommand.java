@@ -31,8 +31,12 @@ public class RenameFileModCommand implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    VirtualFile file = context.file().getVirtualFile();
-    return new ModMoveFile(file, new FutureVirtualFile(file.getParent(), myNewFileName, file.getFileType()));
+    PsiFile psiFile = context.file();
+    if (psiFile.getCopyableUserData(COMMAND_COMPLETION_COPY) == Boolean.TRUE) {
+      psiFile = psiFile.getOriginalFile();
+    }
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    return new ModMoveFile(virtualFile, new FutureVirtualFile(virtualFile.getParent(), myNewFileName, virtualFile.getFileType()));
   }
 
   @Override
@@ -41,7 +45,7 @@ public class RenameFileModCommand implements ModCommandAction {
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return null;
     VirtualFile parent = vFile.getParent();
-    if (parent == null && psiFile.getUserData(COMMAND_COMPLETION_COPY) == Boolean.TRUE) {
+    if (parent == null && psiFile.getCopyableUserData(COMMAND_COMPLETION_COPY) == Boolean.TRUE) {
       psiFile = psiFile.getOriginalFile();
       vFile = psiFile.getVirtualFile();
       if (vFile == null) return null;

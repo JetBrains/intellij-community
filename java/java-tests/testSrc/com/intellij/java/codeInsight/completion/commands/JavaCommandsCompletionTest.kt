@@ -685,7 +685,11 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         }""".trimIndent())
     myFixture.doHighlighting()
     val elements = myFixture.completeBasic()
-    assertTrue(elements.any { element -> element.lookupString.contains("Rename File", ignoreCase = true) })
+    val lookupElement = elements.firstOrNull { element -> element.lookupString.contains("Rename File", ignoreCase = true) }
+    assertNotNull(lookupElement)
+    val element = lookupElement?.`as`(CommandCompletionLookupElement::class.java)
+    assertNotNull(element)
+    assertNotNull(element?.preview)
   }
 
   fun testRedCode() {
