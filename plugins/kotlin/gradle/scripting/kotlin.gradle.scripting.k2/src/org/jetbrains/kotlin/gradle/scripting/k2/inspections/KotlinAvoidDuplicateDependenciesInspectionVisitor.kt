@@ -16,39 +16,22 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.descendantsOfType
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
-import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinFirConstantExpressionEvaluator
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolverUtil.getResolvedDependency
-import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
 
 class KotlinAvoidDuplicateDependenciesInspectionVisitor(
     private val holder: ProblemsHolder,
     private val isOnTheFly: Boolean
 ) : KtVisitorVoid() {
     override fun visitKtFile(file: KtFile) {
-        val dependencyBlocks = PsiTreeUtil.findChildrenOfType(file, KtScriptInitializer::class.java)
-            .filter { it.text.startsWith("dependencies") }
-            .mapNotNull { it.childrenOfType<KtCallExpression>().firstOrNull() }
-            .filter {
-                analyze(it) {
-                    val callableId = it.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId ?: return@analyze false
-                    if (callableId.callableName.asString() != "dependencies") return@analyze false
-                    if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return@analyze false
-                }
-                true
-            }
+        val dependencyBlocks = file.findScriptInitializers("dependencies").mapNotNull { it.getBlock() }
 
         // find all dependencies with their argument type in all the dependencies blocks
         val dependencies = dependencyBlocks.flatMap { it.descendantsOfType<KtCallExpression>() }
@@ -58,89 +41,76 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
                 else null
             }
         // group duplicate dependencies
-        val evaluator = KotlinFirConstantExpressionEvaluator()
         val duplicateGroups = dependencies.groupBy { (dependency, type) ->
-            // in batch mode only group exact duplicates
-            if (isOnTheFly) extractDependencyKey(dependency, type, evaluator)
-            else dependency.text
-        }.filter { it.key != null && it.value.size > 1 }.map { mapEntry -> mapEntry.key!! to mapEntry.value.map { it.first } }
+            if (isOnTheFly) extractDependencyKey(dependency, type) to null
+            else extractDependencyKey(dependency, type) to dependency.text // in batch mode additionally restrict groups to exact duplicates
+        }.filter { it.key.first != null && it.value.size > 1 }
+            .map { mapEntry -> mapEntry.key.first!! to mapEntry.value.map { it.first } }
 
         duplicateGroups.forEach { (key, dependencies) ->
-            if (isOnTheFly) reportProblemInOnTheFlyMode(key.toString(), dependencies)
-            else reportProblemInBatchMode(key.toString(), dependencies)
+            if (isOnTheFly) reportProblemInOnTheFlyMode(key, dependencies)
+            else reportProblemInBatchMode(key, dependencies)
         }
     }
 
+    /**
+     * Tries to evaluate the dependency coordinates which act as the key
+     *
+     * `kotlin(id)` will be evaluated to `"kotlin("resolved-id")"` key
+     *
+     * Will return null if any part of evaluation fails
+     */
     private fun extractDependencyKey(
         dependency: KtCallExpression,
-        type: DependencyType,
-        evaluator: KotlinFirConstantExpressionEvaluator
-    ): DependencyKey? {
+        type: DependencyType
+    ): String? {
         return when (type) {
-            DependencyType.SINGLE_ARGUMENT -> extractSingleArgumentKey(dependency, evaluator)
-            DependencyType.NAMED_ARGUMENTS -> extractNamedArgumentsKey(dependency, evaluator)
+            DependencyType.SINGLE_ARGUMENT -> extractSingleArgumentKey(dependency)
+            DependencyType.NAMED_ARGUMENTS -> extractNamedArgumentsKey(dependency)
             else -> null
         }
     }
 
-    private fun extractSingleArgumentKey(dependency: KtCallExpression, evaluator: KotlinFirConstantExpressionEvaluator): DependencyKey? {
+    private fun extractSingleArgumentKey(dependency: KtCallExpression): String? {
         val argumentExpression = dependency.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
 
-        val stringArgument = evaluator.computeConstantExpression(argumentExpression, false) as? String
+        // string or direct constant reference to a string argument
+        val stringArgument = argumentExpression.evaluateString()
         if (stringArgument != null) {
-            return DependencyKey(stringArgument, 0)
+            return stringArgument
         }
 
+        // kotlin(id) argument
         if (argumentExpression is KtCallExpression && argumentExpression.calleeExpression?.text == "kotlin") {
-            val kotlinArgument = argumentExpression.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
-            return if (evaluator.computeConstantExpression(kotlinArgument, false) is String) {
-                DependencyKey(argumentExpression.text, 0)
-            } else null
+            val argumentExpressionInKotlin = argumentExpression.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
+            return argumentExpressionInKotlin.evaluateString()?.let { "kotlin(\"$it\")" }
         }
 
+        // version catalog argument
         if (argumentExpression is KtDotQualifiedExpression) {
             val resolved = argumentExpression.selectorExpression?.mainReference?.resolve() as? PsiMethod ?: return null
-            return if (isInVersionCatalogAccessor(resolved)) {
-                val dependency = getResolvedDependency(resolved, argumentExpression) ?: return null
-                DependencyKey(dependency, 0)
-            } else null
+            return getResolvedDependency(resolved, argumentExpression).toString()
         }
 
         return null
     }
 
-    private fun extractNamedArgumentsKey(dependency: KtCallExpression, evaluator: KotlinFirConstantExpressionEvaluator): DependencyKey? {
+    private fun extractNamedArgumentsKey(dependency: KtCallExpression): String? {
         val argList = dependency.valueArgumentList ?: return null
 
-        val group = findNamedOrPositionalArgument(argList, "group", 0)
-            ?.let { evaluator.computeConstantExpression(it, false) as? String }
+        val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
             ?: return null
 
-        val name = findNamedOrPositionalArgument(argList, "name", 1)
-            ?.let { evaluator.computeConstantExpression(it, false) as? String }
+        val name = findNamedOrPositionalArgument(argList, "name", 1)?.evaluateString()
             ?: return null
 
-        val versionArgument = findNamedOrPositionalArgument(argList, "version", 2)
-            ?: return DependencyKey("$group:$name", 0)
+        // if the version argument is missing, return a key without a version
+        val versionArg = findNamedOrPositionalArgument(argList, "version", 2)
+            ?: return "$group:$name"
 
-        val versionString = evaluator.computeConstantExpression(versionArgument, false) as? String
-        if (versionString != null) return DependencyKey("$group:$name:$versionString", 0)
+        val version = versionArg.evaluateString() ?: return null
 
-        // check if the version argument is a constant variable
-        // if so, put its psi element's hash as the hidden value of the key
-        analyze(versionArgument) {
-            val resolvedExpression = versionArgument.resolveExpression()
-            val hash =
-                if (resolvedExpression is KaVariableSymbol && resolvedExpression.isVal) resolvedExpression.psi.hashCode()
-                else 0
-            return DependencyKey("$group:$name", hash)
-        }
-    }
-
-    private data class DependencyKey(val main: String, val hidden: Int) {
-        override fun toString(): String {
-            return main
-        }
+        return "$group:$name:$version"
     }
 
     /**
