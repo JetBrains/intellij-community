@@ -9,13 +9,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 /**
  * Exposing decompilation presets to the users was initially discussed in IDEA-343826.
  */
-internal enum class DecompilerPreset(@Nls val description: String, val options: Map<String, String>) {
-  HIGH(IdeaDecompilerBundle.message("decompiler.preset.high.description"), highPreset),
-  MEDIUM(IdeaDecompilerBundle.message("decompiler.preset.medium.description"), mediumPreset),
-  LOW(IdeaDecompilerBundle.message("decompiler.preset.low.description"), lowPreset);
+internal enum class DecompilerPreset(@Nls val description: String, val options: () -> Map<String, String>) {
+  HIGH(IdeaDecompilerBundle.message("decompiler.preset.high.description"), {highPreset}),
+  MEDIUM(IdeaDecompilerBundle.message("decompiler.preset.medium.description"), {mediumPreset}),
+  LOW(IdeaDecompilerBundle.message("decompiler.preset.low.description"), {lowPreset});
 
   fun toCommandLineInvocation(): String {
-    return options
+    return options()
       .filterNot { (key, _) -> key == "ban" || key == "ind" } // remove banner and indent flags as they breaks output
       .map { (key, value) -> "-$key=$value" }.joinToString(separator = " ")
   }
