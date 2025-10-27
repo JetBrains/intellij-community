@@ -348,7 +348,7 @@ private fun createScriptJavaParameters(
   val moduleManager = ModuleManager.getInstance(project)
   val ultimate = moduleManager.findModuleByName("intellij.idea.ultimate.main") != null
   val params = JavaParameters()
-  params.isUseClasspathJar = true
+  params.isArgFile = true
   params.setDefaultCharset(project)
   params.jdk = sdk
 
