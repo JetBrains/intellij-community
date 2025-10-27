@@ -84,7 +84,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
   }
 
   suspend fun callCompletionPopup() {
-    runActionById("Terminal.CommandCompletion.Gen2")
+    runActionById("Terminal.CommandCompletion.Invoke")
     awaitLookupPrefixUpdated()
   }
 

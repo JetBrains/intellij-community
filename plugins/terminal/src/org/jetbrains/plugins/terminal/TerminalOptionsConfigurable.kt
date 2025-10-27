@@ -174,7 +174,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
               shortcutCombobox(
                 labelText = message("terminal.command.completion.shortcut.trigger"),
                 presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
-                actionId = "Terminal.CommandCompletion.Gen2"
+                actionId = "Terminal.CommandCompletion.Invoke"
               )
             }
             row {
