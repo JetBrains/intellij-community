@@ -2,12 +2,13 @@
 package com.intellij.execution.configurations
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent
+import com.intellij.openapi.Disposable
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
-interface AdditionalTabComponentManagerEx : AdditionalTabComponentManager {
+interface AdditionalTabComponentManagerEx : AdditionalTabComponentManager, Disposable {
   fun addAdditionalTabComponent(
     tabComponent: AdditionalTabComponent,
     id: String,

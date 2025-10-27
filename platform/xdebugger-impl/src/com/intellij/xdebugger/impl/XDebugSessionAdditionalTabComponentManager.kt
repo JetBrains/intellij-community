@@ -20,19 +20,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
 class XDebugSessionAdditionalTabComponentManager(private val debugTabScope: CoroutineScope) : AdditionalTabComponentManagerEx {
   init {
-    debugTabScope.coroutineContext.job.invokeOnCompletion {
-      val tabs = tabToId.keys.toList()
-      for (tab in tabs) {
-        removeAdditionalTabComponent(tab)
-      }
-    }
+    Disposer.register(debugTabScope.asDisposable(), this)
   }
 
   val id: XDebugSessionAdditionalTabComponentManagerId = storeValueGlobally(debugTabScope, this, XDebugSessionAdditionalTabComponentManagerValueIdType)
@@ -59,6 +53,13 @@ class XDebugSessionAdditionalTabComponentManager(private val debugTabScope: Coro
     }
     val tabId = tabToId.remove(component) ?: return
     _tabComponentEvents.tryEmit(XDebuggerSessionAdditionalTabEvent.TabRemoved(tabId))
+  }
+
+  override fun dispose() {
+    val tabs = tabToId.keys.toList()
+    for (tab in tabs) {
+      removeAdditionalTabComponent(tab)
+    }
   }
 }
 

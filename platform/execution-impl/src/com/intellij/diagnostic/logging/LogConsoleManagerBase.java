@@ -7,32 +7,42 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.UIExperiment;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
 
-public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable, AdditionalTabComponentManagerEx {
+public abstract class LogConsoleManagerBase implements LogConsoleManager, AdditionalTabComponentManagerEx {
   private final Project myProject;
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<>();
   private final GlobalSearchScope mySearchScope;
+  private final AdditionalTabComponentManagerEx myDelegate;
 
   protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    this(project, searchScope, null);
+  }
+
+  @ApiStatus.Internal
+  protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope,
+                                  @Nullable AdditionalTabComponentManagerEx delegate) {
     myProject = project;
     mySearchScope = searchScope;
+    if (delegate != null) {
+      myDelegate = delegate;
+    }
+    else {
+      //noinspection AbstractMethodCallInConstructor
+      myDelegate = new AdditionalTabComponentManagerImpl(getUi(), getDefaultIcon());
+    }
   }
 
   @Override
@@ -80,7 +90,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
 
   @Override
   public void addAdditionalTabComponent(@NotNull AdditionalTabComponent tabComponent, @NotNull String id) {
-    addAdditionalTabComponent(tabComponent, id, getDefaultIcon());
+    myDelegate.addAdditionalTabComponent(tabComponent, id);
   }
 
   public Content addAdditionalTabComponent(@NotNull AdditionalTabComponent tabComponent, @NotNull String id, @Nullable Icon icon) {
@@ -94,28 +104,17 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     @Nullable Icon icon,
     boolean closeable
   ) {
-    Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
-                                               tabComponent.getPreferredFocusableComponent());
-    logContent.setCloseable(closeable);
-    myAdditionalContent.put(tabComponent, logContent);
-    getUi().addContent(logContent);
-    return logContent;
+    return myDelegate.addAdditionalTabComponent(tabComponent, id, icon, closeable);
   }
 
   @Override
   public void removeAdditionalTabComponent(@NotNull AdditionalTabComponent component) {
-    Disposer.dispose(component);
-    final Content content = myAdditionalContent.remove(component);
-    if (!getUi().isDisposed()) {
-      getUi().removeContent(content, true);
-    }
+    myDelegate.removeAdditionalTabComponent(component);
   }
 
   @Override
   public void dispose() {
-    for (AdditionalTabComponent component : myAdditionalContent.keySet().toArray(new AdditionalTabComponent[0])) {
-      removeAdditionalTabComponent(component);
-    }
+    Disposer.dispose(myDelegate);
   }
 
   protected abstract Icon getDefaultIcon();
