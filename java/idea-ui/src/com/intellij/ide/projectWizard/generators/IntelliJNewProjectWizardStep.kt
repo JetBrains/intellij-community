@@ -21,13 +21,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PR
 import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
@@ -222,16 +220,9 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
-  private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = sdkDownloadTask
-    if (sdkDownloadTask is JdkDownloadTask) {
-      module.project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
-    }
-  }
-
   fun setupProject(project: Project, builder: ModuleBuilder) {
     configureModuleBuilder(project, builder)
     setupProjectFromBuilder(project, builder)
-      ?.let(::startJdkDownloadIfNeeded)
+    project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
   }
 }

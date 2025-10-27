@@ -76,7 +76,7 @@ private class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard
       })
 
       setupProjectFromBuilder(project, groovyModuleBuilder)
-      sdkDownloadTask?.let { project.service<JdkDownloadService>().downloadSdk(context.projectJdk) }
+      project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
     }
 
     private fun createCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings? {

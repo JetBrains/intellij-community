@@ -13,7 +13,6 @@ import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.shared.ValidationFunctions.*
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.util.projectWizard.ModuleBuilderListener
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
@@ -22,7 +21,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.*
@@ -148,12 +146,9 @@ abstract class CommonStarterInitialStep(
         { sdk -> moduleBuilder.isSuitableSdkType(sdk.sdkType) }
       )
 
-      moduleBuilder.addListener(object : ModuleBuilderListener {
-        override fun moduleCreated(module: Module) {
-          if (jdkIntentProperty.get().downloadTask == null) return
-          module.project.service<JdkDownloadService>().downloadSdk(wizardContext.projectJdk)
-        }
-      })
+      moduleBuilder.addListener { module ->
+        module.project.service<JdkDownloadService>().downloadSdk(wizardContext.projectJdk)
+      }
     }.bottomGap(BottomGap.SMALL)
   }
 

@@ -17,7 +17,6 @@ import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -92,9 +91,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     configure(builder)
 
-    if (jdkIntent.downloadTask is JdkDownloadTask) {
-      builder.sdkDownloadedFuture = project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
-    }
+    builder.sdkDownloadedFuture = project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
 
     val module = setupProjectFromBuilder(project, builder)
 

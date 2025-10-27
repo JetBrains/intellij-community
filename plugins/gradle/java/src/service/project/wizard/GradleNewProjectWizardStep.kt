@@ -507,9 +507,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
 
-    if (jdkIntent.downloadTask != null) {
-      project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
-    }
+    project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
 
     setupProjectFromBuilder(project, builder)
   }
