@@ -137,6 +137,9 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .component
         }
 
+        val inlineCompletionSettingsProvider = TerminalCloudCompletionSettingsProvider.getProvider()
+        val inlineCompletionAvailable = inlineCompletionSettingsProvider?.isAvailable() == true
+        val commandCompletionAvailable = TerminalCommandCompletion.isEnabled(project)
         group(message("terminal.command.completion")) {
           rowsRange {
             lateinit var completionEnabledCheckBox: JBCheckBox
@@ -184,13 +187,16 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 actionId = "Terminal.CommandCompletion.InsertSuggestion"
               )
             }
-          }.visible(TerminalCommandCompletion.isEnabled(project))
+          }.visible(commandCompletionAvailable)
 
-          TerminalCloudCompletionSettingsProvider.getProvider()?.addSettingsRow(this)
+          if (inlineCompletionAvailable) {
+            inlineCompletionSettingsProvider.addSettingsRow(this)
+          }
         }.bottomGap(BottomGap.NONE)
           .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
                        .and(shellPathField.shellWithIntegrationSelected())
-                       .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith())))
+                       .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith()))
+                       .and(ComponentPredicate.fromValue(commandCompletionAvailable || inlineCompletionAvailable)))
 
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {
