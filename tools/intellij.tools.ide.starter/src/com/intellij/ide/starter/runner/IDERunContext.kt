@@ -3,6 +3,7 @@ package com.intellij.ide.starter.runner
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.classFileVerification
 import com.intellij.ide.starter.config.includeRuntimeModuleRepositoryInIde
+import com.intellij.ide.starter.config.monitoringDumpsIntervalSeconds
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDEStartConfig
@@ -302,7 +303,7 @@ data class IDERunContext(
 
     var cnt = 0
     while (process.isAlive) {
-      delay(1.minutes)
+      delay(ConfigurationStorage.monitoringDumpsIntervalSeconds().seconds)
       if (!process.isAlive) break
 
       val dumpFile = monitoringThreadDumpDir.resolve("threadDump-${++cnt}-${getCurrentTimestamp()}.txt")

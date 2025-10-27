@@ -15,6 +15,7 @@ private const val ENV_USE_DOCKER_ADDITIONAL_BINDS = "USE_DOCKER_ADDITIONAL_BINDS
 private const val AFTER_EACH_MESSAGE_BUS_CLEANUP = "AFTER_EACH_MESSAGE_BUS_CLEANUP"
 private const val ENV_JBR_DEV_SERVER_VERSION = "JBR_DEV_SERVER_VERSION"
 private const val ENABLE_SCRAMBLING_FOR_DEVSERVER = "ENABLE_SCRAMBLING_FOR_DEVSERVER"
+private const val ENV_MONITORING_DUMPS_INTERVAL_SECONDS = "MONITORING_DUMPS_INTERVAL_SECONDS"
 
 val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_ENABLE_CLASS_FILE_VERIFICATION to System.getenv(ENV_ENABLE_CLASS_FILE_VERIFICATION),
@@ -27,8 +28,9 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_LOG_ENVIRONMENT_VARIABLES to CIServer.instance.isBuildRunningOnCI.toString(),
   SPLIT_MODE_ENABLED to System.getenv().getOrDefault("REMOTE_DEV_RUN", "false"),
   ENV_JBR_DEV_SERVER_VERSION to System.getenv(ENV_JBR_DEV_SERVER_VERSION),
-  ENABLE_SCRAMBLING_FOR_DEVSERVER to System.getenv().getOrDefault("ENABLE_SCRAMBLING_FOR_DEVSERVER", "false")
-).filter { entry ->
+  ENABLE_SCRAMBLING_FOR_DEVSERVER to System.getenv().getOrDefault("ENABLE_SCRAMBLING_FOR_DEVSERVER", "false"),
+  ENV_MONITORING_DUMPS_INTERVAL_SECONDS to System.getenv().getOrDefault(ENV_MONITORING_DUMPS_INTERVAL_SECONDS, "60"),
+  ).filter { entry ->
   @Suppress("SENSELESS_COMPARISON")
   entry.value != null
 }
@@ -69,6 +71,9 @@ fun ConfigurationStorage.Companion.useLastDownloadedBuild(value: Boolean) = inst
 
 fun ConfigurationStorage.Companion.ignoredTestFailuresPattern(pattern: String) = instance().put(IGNORED_TEST_FAILURE_PATTERN, pattern)
 fun ConfigurationStorage.Companion.ignoredTestFailuresPattern(): String? = instance().get(IGNORED_TEST_FAILURE_PATTERN)
+
+fun ConfigurationStorage.Companion.monitoringDumpsIntervalSeconds(value: Int) = instance().put(ENV_MONITORING_DUMPS_INTERVAL_SECONDS, value.toString())
+fun ConfigurationStorage.Companion.monitoringDumpsIntervalSeconds(): Int = instance().get(ENV_MONITORING_DUMPS_INTERVAL_SECONDS)?.toIntOrNull() ?: error("No value for $ENV_MONITORING_DUMPS_INTERVAL_SECONDS")
 
 /**
  * By default, Message bus cleanup is performed after each test container run. This is needed to prevent side effects when once IDE run is used among several tests methods.
