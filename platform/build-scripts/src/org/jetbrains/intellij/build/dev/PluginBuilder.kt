@@ -58,7 +58,7 @@ internal suspend fun buildPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
       targetDir = pluginRootDir,
-      state = DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context),
+      state = DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context),
       context = context,
       buildPlatformJob = buildPlatformJob,
       searchableOptionSet = searchableOptionSet,

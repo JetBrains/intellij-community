@@ -21,7 +21,14 @@ interface ScrambleTool {
    */
   suspend fun scramble(platform: PlatformLayout, platformFileEntries: List<DistributionFileEntry>, context: BuildContext)
 
-  suspend fun scramblePlugin(pluginLayout: PluginLayout, targetDir: Path, additionalPluginDir: Path, layouts: Collection<PluginLayout>, context: BuildContext)
+  suspend fun scramblePlugin(
+    pluginLayout: PluginLayout,
+    platformLayout: PlatformLayout,
+    targetDir: Path,
+    additionalPluginDir: Path,
+    layouts: Collection<PluginLayout>,
+    context: BuildContext,
+  )
 
   /**
    * Returns list of module names which cannot be included in the product without scrambling.

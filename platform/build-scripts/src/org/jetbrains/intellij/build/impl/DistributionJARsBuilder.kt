@@ -79,8 +79,8 @@ internal suspend fun buildDistribution(
   isUpdateFromSources: Boolean = false,
 ): ContentReport = coroutineScope {
   val state = context.distributionState()
-  validateModuleStructure(state.platform, context)
-  context.productProperties.validateLayout(state.platform, context)
+  validateModuleStructure(state.platformLayout, context)
+  context.productProperties.validateLayout(state.platformLayout, context)
   createBuildBrokenPluginListJob(context)
 
   val productRunner = context.createProductRunner()
@@ -171,7 +171,7 @@ suspend fun buildPlatform(
 ): List<DistributionFileEntry> {
   val distributionFileEntries = buildLib(
     moduleOutputPatcher = moduleOutputPatcher,
-    platform = state.platform,
+    platform = state.platformLayout,
     searchableOptionSetDescriptor = searchableOptionSet,
     context = context,
   )
@@ -181,7 +181,7 @@ suspend fun buildPlatform(
       Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
     }
     else {
-      tool.scramble(platform = state.platform, platformFileEntries = distributionFileEntries, context = context)
+      tool.scramble(platform = state.platformLayout, platformFileEntries = distributionFileEntries, context = context)
     }
   }
   context.bootClassPathJarNames = if (context.useModularLoader) {
@@ -246,7 +246,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     common = common,
     specific = specific,
     additional = additionalDeferred.await(),
-    platformLayout = state.platform,
+    platformLayout = state.platformLayout,
     context = context,
   )
   common + specific.values.flatten()
@@ -298,8 +298,10 @@ fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
 
 private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> {
   if (isUpdateFromSources) {
-    return listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch, LibcImpl.current(OsFamily.currentOs)) to
-                    context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+    return listOf(
+      SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(OsFamily.currentOs)) to
+        context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
+    )
   }
   else {
     return SUPPORTED_DISTRIBUTIONS.map {
@@ -515,7 +517,7 @@ internal suspend fun buildPlugins(
           releaseVersion = context.applicationInfo.releaseVersionForLicensing,
           pluginsToPublish = state.pluginsToPublish,
           helper = (context as BuildContextImpl).jarPackagerDependencyHelper,
-          platformLayout = state.platform,
+          platformLayout = state.platformLayout,
           context = context,
         )
       }
@@ -526,7 +528,7 @@ internal suspend fun buildPlugins(
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
           val (entries, file) = layoutDistribution(
             layout = plugin,
-            platformLayout = state.platform,
+            platformLayout = state.platformLayout,
             targetDirectory = pluginDir,
             copyFiles = true,
             moduleOutputPatcher = moduleOutputPatcher,
@@ -574,6 +576,7 @@ internal suspend fun buildPlugins(
         launch(CoroutineName("scramble plugin ${scrambleTask.plugin.directoryName}")) {
           scrambleTool.scramblePlugin(
             pluginLayout = scrambleTask.plugin,
+            platformLayout = state.platformLayout,
             targetDir = scrambleTask.pluginDir,
             additionalPluginDir = scrambleTask.targetDir,
             layouts = plugins,
@@ -719,11 +722,8 @@ private suspend fun checkOutputOfPluginModules(
   context: BuildContext,
 ) {
   for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
-    if (
-      module == "intellij.java.guiForms.rt" ||
-      !containsFileInOutput(module, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(module) ?: emptyList(), context)
-    ) {
-      @Suppress("GrazieInspection")
+    if (module == "intellij.java.guiForms.rt" ||
+        !containsFileInOutput(module, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(module) ?: emptyList(), context)) {
       "Runtime classes of GUI designer must not be packaged to '$module' module in '$mainPluginModule' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
       "to the output directory' is disabled in Settings | Editor | GUI Designer."

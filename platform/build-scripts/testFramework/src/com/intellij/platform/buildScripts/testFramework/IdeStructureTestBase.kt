@@ -45,11 +45,11 @@ abstract class IdeStructureTestBase {
     }
 
     println("Packed modules:")
-    for (item in state.platform.includedModules) {
+    for (item in state.platformLayout.includedModules) {
       println("  ${item.moduleName} ${item.relativeOutputFile}")
     }
 
-    val validator = ModuleStructureValidator(context, state.platform.includedModules)
+    val validator = ModuleStructureValidator(context, state.platformLayout.includedModules)
     val errors = validator.validate()
     for (error in errors) {
       softly.collectAssertionError(error)
