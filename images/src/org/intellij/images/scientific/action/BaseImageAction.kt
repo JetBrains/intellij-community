@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.images.editor.ImageDocument
 import org.intellij.images.scientific.utils.ImageTransformationData
@@ -18,9 +19,7 @@ abstract class BaseImageAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    e.presentation.isEnabledAndVisible = imageFile != null &&
-                                         imageFile.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null &&
-                                         isActionEnabled(imageFile)
+    e.presentation.isEnabledAndVisible = imageFile != null && imageFile.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null && isActionEnabled(imageFile)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -28,9 +27,8 @@ abstract class BaseImageAction : DumbAwareAction() {
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
     val currentImage = document.value ?: return
-    val transformationData = ImageTransformationData.getInstance(imageFile) ?: return
     launchBackground {
-      val resultImage = performImageTransformation(originalImage, currentImage, imageFile, transformationData)
+      val resultImage = performImageTransformation(originalImage, currentImage, imageFile, ImageTransformationData.getInstance(imageFile))
       if (resultImage != null) {
         ScientificUtils.saveImageToFile(imageFile, resultImage)
         document.value = resultImage
@@ -38,12 +36,9 @@ abstract class BaseImageAction : DumbAwareAction() {
     }
   }
 
-  protected abstract suspend fun performImageTransformation(
-    originalImage: BufferedImage,
-    currentImage: BufferedImage,
-    imageFile: VirtualFile,
-    transformationData: ImageTransformationData
-  ): BufferedImage?
+  protected abstract suspend fun performImageTransformation(originalImage: BufferedImage, currentImage: BufferedImage, imageFile: VirtualFile, transformationData: ImageTransformationData): BufferedImage?
 
   protected open fun isActionEnabled(imageFile: VirtualFile): Boolean = true
 }
+
+internal val CURRENT_OPERATION_MODE_KEY: Key<ImageOperationMode> = Key("CURRENT_OPERATION_MODE")

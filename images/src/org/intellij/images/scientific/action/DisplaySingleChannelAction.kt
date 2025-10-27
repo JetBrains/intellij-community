@@ -18,11 +18,12 @@ class DisplaySingleChannelAction(private val channelIndex: Int) : BaseImageActio
     originalImage: BufferedImage,
     currentImage: BufferedImage,
     imageFile: VirtualFile,
-    transformationData: ImageTransformationData,
+    transformationData: ImageTransformationData
   ): BufferedImage {
     transformationData.setIsNormalized(false)
     val transformedImage = transformationData.applyTransformations(originalImage)
     displaySingleChannel(transformedImage, channelIndex).also {
+      imageFile.putUserData(CURRENT_OPERATION_MODE_KEY, getModeForChannel(channelIndex))
       ScientificImageActionsCollector.logChannelSelection(channelIndex)
       return it
     }
@@ -31,5 +32,11 @@ class DisplaySingleChannelAction(private val channelIndex: Int) : BaseImageActio
   private fun getDisplayableChannels(image: BufferedImage): Int {
     val totalChannels = image.raster.numBands
     return if (image.colorModel.hasAlpha()) totalChannels - 1 else totalChannels
+  }
+
+  private fun getModeForChannel(index: Int): ImageOperationMode = when (index) {
+    1 -> ImageOperationMode.CHANNEL_2
+    2 -> ImageOperationMode.CHANNEL_3
+    else -> ImageOperationMode.CHANNEL_1
   }
 }

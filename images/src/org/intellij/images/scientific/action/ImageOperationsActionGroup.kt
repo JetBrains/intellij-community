@@ -3,6 +3,7 @@ package org.intellij.images.scientific.action
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
@@ -19,6 +20,7 @@ import javax.swing.*
 
 class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
   private var selectedMode: ImageOperationMode = ImageOperationMode.ORIGINAL_IMAGE
+  private var imageOptions: ComboBox<ImageOperationMode>? = null
 
   private val customRenderer = object : ListCellRenderer<Any?> {
     private val separator = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
@@ -29,9 +31,17 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       panel.isOpaque = false
       panel.border = null
       itemComponent.isOpaque = false
+      panel.add(separator, BorderLayout.NORTH)
+      panel.add(itemComponent, BorderLayout.CENTER)
+      templatePresentation.apply {
+        isPerformGroup = true
+      }
     }
 
-    override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
+    override fun getListCellRendererComponent(
+      list: JList<out Any>?, value: Any?,
+      index: Int, isSelected: Boolean, cellHasFocus: Boolean
+    ): Component {
       val mode = value as? ImageOperationMode
       itemComponent.text = mode?.displayName
       itemComponent.icon = mode?.icon
@@ -46,26 +56,16 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
         itemComponent.background = list?.background
         itemComponent.isOpaque = false
       }
-      panel.removeAll()
-      if (index > 0 && shouldShowSeparator(list, index)) {
-        panel.add(separator, BorderLayout.NORTH)
-      }
-      panel.add(itemComponent, BorderLayout.CENTER)
+      separator.isVisible = shouldShowSeparator(list, index)
       return panel
     }
 
     private fun shouldShowSeparator(list: JList<out Any>?, index: Int): Boolean {
+      if (index <= 0) return false
       val prevItem = list?.model?.getElementAt(index - 1) as? ImageOperationMode
       return prevItem == ImageOperationMode.ORIGINAL_IMAGE ||
              prevItem == ImageOperationMode.BINARIZE_IMAGE ||
              prevItem == ImageOperationMode.CHANNEL_3
-    }
-  }
-
-  init {
-    templatePresentation.apply {
-      isPerformGroup = true
-      isPopup = true
     }
   }
 
@@ -83,7 +83,6 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     selectedMode = ImageOperationMode.ORIGINAL_IMAGE
-
     val comboBoxModel = DefaultComboBoxModel(enumValues<ImageOperationMode>())
     val comboBox = ComboBox(comboBoxModel).apply {
       selectedItem = selectedMode
@@ -92,7 +91,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       renderer = customRenderer
       addActionListener { handleComboBoxSelection(this) }
     }
-
+    imageOptions = comboBox
     return JPanel(FlowLayout(FlowLayout.CENTER, 0, 0)).apply {
       isOpaque = false
       border = null
@@ -100,14 +99,19 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     }
   }
 
+  fun updateSelectedMode(mode: ImageOperationMode) {
+    selectedMode = mode
+    imageOptions?.selectedItem = mode
+  }
+
   private fun handleComboBoxSelection(comboBox: ComboBox<ImageOperationMode>) {
     val selectedItem = comboBox.selectedItem as? ImageOperationMode ?: return
-    if (selectedItem == ImageOperationMode.CONFIGURE_ACTIONS) {
+    if (selectedItem == ImageOperationMode.CONFIGURE_BINARIZATION) {
       comboBox.selectedItem = selectedMode
-      selectedItem.runAction()
+      selectedItem.executeAction()
     } else {
       selectedMode = selectedItem
-      selectedMode.runAction()
+      selectedMode.executeAction()
     }
   }
 }
@@ -121,18 +125,36 @@ enum class ImageOperationMode(@Nls val displayName: String, val icon: Icon? = nu
   CHANNEL_1(ImagesBundle.message("image.channels.mode.channel.1")),
   CHANNEL_2(ImagesBundle.message("image.channels.mode.channel.2")),
   CHANNEL_3(ImagesBundle.message("image.channels.mode.channel.3")),
-  CONFIGURE_ACTIONS(ImagesBundle.message("image.color.mode.configure.actions"), AllIcons.General.Settings);
+  CONFIGURE_BINARIZATION(ImagesBundle.message("image.color.mode.configure.actions"), AllIcons.General.Settings);
 
-  fun runAction() {
+  fun executeAction(actionEvent: AnActionEvent? = null) {
     val actionManager = ActionManager.getInstance()
+
+    fun run(action: AnAction) {
+      if (actionEvent != null) {
+        val presentationCopy = action.templatePresentation.clone()
+        val event = AnActionEvent.createEvent(
+          action, actionEvent.dataContext, presentationCopy,
+          actionEvent.place, ActionUiKind.NONE, actionEvent.inputEvent
+        )
+        ActionUtil.performAction(action, event)
+      }
+      else {
+        actionManager.tryToExecute(action, null, null, null, true)
+      }
+    }
     when {
-      actionId != null -> actionManager.tryToExecute(actionManager.getAction(actionId), null, null, null, true)
+      actionId != null -> {
+        val action = actionManager.getAction(actionId) ?: return
+        run(action)
+      }
       this in listOf(CHANNEL_1, CHANNEL_2, CHANNEL_3) -> {
         val channelIndex = ordinal - CHANNEL_1.ordinal
-        actionManager.tryToExecute(DisplaySingleChannelAction(channelIndex), null, null, null, true)
+        run(DisplaySingleChannelAction(channelIndex))
       }
-      this == CONFIGURE_ACTIONS -> {
-        actionManager.tryToExecute(actionManager.getAction("Images.ConfigureActions"), null, null, null, true)
+      this == CONFIGURE_BINARIZATION -> {
+        val action = actionManager.getAction("Images.ConfigureActions") ?: return
+        run(action)
       }
     }
   }

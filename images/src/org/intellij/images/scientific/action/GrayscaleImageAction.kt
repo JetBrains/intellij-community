@@ -17,6 +17,7 @@ class GrayscaleImageAction : BaseImageAction() {
     transformationData.setIsNormalized(false)
     val transformedImage = transformationData.applyTransformations(originalImage)
     applyGrayscale(transformedImage).also {
+      imageFile.putUserData(CURRENT_OPERATION_MODE_KEY, ImageOperationMode.GRAYSCALE_IMAGE)
       ScientificImageActionsCollector.logGrayscaleImageInvoked()
       return it
     }
