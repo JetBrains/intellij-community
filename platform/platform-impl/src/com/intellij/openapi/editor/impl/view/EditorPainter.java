@@ -97,6 +97,36 @@ public final class EditorPainter implements TextDrawingCallback {
     new Session(myView, g).paint();
   }
 
+  @ApiStatus.Internal
+  public static void fillRectExact(final Graphics2D g, final Rectangle2D r, final Color color) {
+    var transform = g.getTransform();
+
+    Point2D topLeft = transform.transform(new Point2D.Double(r.getX(), r.getY()), null);
+    Point2D bottomRight = transform.transform(new Point2D.Double(r.getX() + r.getWidth(), r.getY() + r.getHeight()), null);
+
+    int left   = (int) Math.floor(topLeft.getX());
+    int top    = (int) Math.floor(topLeft.getY());
+    int right  = (int) Math.ceil(bottomRight.getX());
+    int bottom = (int) Math.ceil(bottomRight.getY());
+
+    int pWidth  = right - left;
+    int pHeight = bottom - top;
+    if (pWidth <= 0 || pHeight <= 0) return;
+
+    var oldAA = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    var oldComposite = g.getComposite();
+    g.setTransform(new AffineTransform());
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    g.setComposite(AlphaComposite.Src);
+
+    g.setColor(color);
+    g.fillRect(left, top, pWidth, pHeight);
+
+    g.setTransform(transform);
+    g.setComposite(oldComposite);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
+  }
+
   void repaintCarets() {
     EditorImpl editor = myView.getEditor();
     EditorImpl.CaretRectangle[] locations = editor.getCaretLocations(false);
@@ -610,8 +640,12 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintBackground(Color color, float x, int y, float width, int height) {
       if (width <= 0 || color == null || color.equals(myDefaultBackgroundColor) || color.equals(myBackgroundColor)) return;
-      myGraphics.setColor(color);
-      myGraphics.fill(new Rectangle2D.Float(x, y, width, height));
+
+      fillRectExact(
+        myGraphics,
+        new Rectangle2D.Float(x, y, width, height),
+        color
+      );
     }
 
     private void paintCustomRenderers(MarkupModelEx markupModel) {

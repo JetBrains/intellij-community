@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.*;
@@ -188,12 +189,12 @@ public final class ImmediatePainter {
       EditorUIUtil.setupAntialiasing(graphics);
       graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
 
-      fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
+      EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
       fillRect(graphics, caretRectangle, getCaretColor(editor));
 
-      fillRect(graphics, rectangle1, attributes1.getBackgroundColor());
+      EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
     };
 
