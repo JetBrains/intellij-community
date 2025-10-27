@@ -1,6 +1,6 @@
 // IGNORE_K1
 fun test(l: List<Int>) {
-    if (l.isNotEmpty<caret>()) l
+    <caret>if (l.isNotEmpty()) l
     // comment1
     // comment2
     else {

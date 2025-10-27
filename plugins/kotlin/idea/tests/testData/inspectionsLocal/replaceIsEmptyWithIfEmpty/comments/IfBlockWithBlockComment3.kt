@@ -1,6 +1,6 @@
 // IGNORE_K1
 fun test(list: List<Int>) {
-    if<caret> (list.isEmpty()) listOf()
+    <caret>if (list.isEmpty()) listOf()
     else {
         /* comment in else
             before expression */

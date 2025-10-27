@@ -2,7 +2,7 @@
 class Api(val name: String)
 
 fun test(api: Api) {
-    val name = if (api.name.isNotBlank<caret>())
+    val name = <caret>if (api.name.isNotBlank())
         api.name
     else
         "John"

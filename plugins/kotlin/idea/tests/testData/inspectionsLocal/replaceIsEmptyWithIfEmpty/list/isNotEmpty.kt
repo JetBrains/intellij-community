@@ -1,6 +1,6 @@
 // WITH_STDLIB
 fun test(list: List<Int>): List<Int> {
-    return if (list.isNotEmpty<caret>()) {
+    return <caret>if (list.isNotEmpty()) {
         list
     } else {
         listOf(1)

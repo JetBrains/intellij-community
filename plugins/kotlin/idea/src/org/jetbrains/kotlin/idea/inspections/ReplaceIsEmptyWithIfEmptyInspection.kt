@@ -88,7 +88,7 @@ class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
 
         holder.registerProblem(
             ifExpression,
-            conditionCalleeExpression.textRangeIn(ifExpression),
+            ifExpression.ifKeyword.textRangeIn(ifExpression),
             KotlinBundle.message("replace.with.0", "${replacement.replacementFunctionName} {...}"),
             ReplaceFix(replacement)
         )

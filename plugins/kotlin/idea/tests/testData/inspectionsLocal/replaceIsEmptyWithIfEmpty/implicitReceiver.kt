@@ -1,6 +1,6 @@
 // WITH_STDLIB
 fun String.test(): String {
-    return if (isBlank<caret>()) {
+    return <caret>if (isBlank()) {
         "foo"
     } else {
         this

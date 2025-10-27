@@ -1,7 +1,7 @@
 // PROBLEM: none
 // WITH_STDLIB
 fun test(list: List<Int>) {
-    if (list.isEmpty<caret>()) {
+    <caret>if (list.isEmpty()) {
         listOf(1)
     }
 }
