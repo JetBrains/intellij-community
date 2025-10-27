@@ -185,6 +185,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     public static final int HEADER_SIZE = 8 * Long.BYTES;
 
     static {
+      //noinspection ConstantValue
       if (HEADER_SIZE < FIRST_UNUSED_OFFSET) {
         throw new ExceptionInInitializerError(
           "FIRST_UNUSED_OFFSET(" + FIRST_UNUSED_OFFSET + ") is > reserved HEADER_SIZE(=" + HEADER_SIZE + ")");
@@ -953,13 +954,10 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
         }//else: record not yet commited, we can't _read_ it -- but maybe _next_ record(s) are committed?
       }
       else if (RecordLayout.isPaddingHeader(recordHeader)) {
-        //TODO RC: enable the check below after VFS version bump (currently it causes all the aologs to become
-        //         corrupted, since all them previously missed 'committed' bit in padding records
-        //if (!RecordLayout.isRecordCommitted(recordHeader)) {
-        //  throw new IOException("padding.header("+recordHeader+") is not committed -- bug?")
-        //}
-
-        //just skip it
+        if (!RecordLayout.isRecordCommitted(recordHeader)) {
+          throw new IOException("padding.header("+recordHeader+") is not committed -- bug?");
+        }
+        //else: normal padding, just skip it
       }
       else {
         //if header != 0 => it must be either padding, or (uncommitted?) data record:
@@ -1005,13 +1003,11 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
         }//else: record OK -> move to the next one
       }
       else if (RecordLayout.isPaddingHeader(recordHeader)) {
-        //TODO RC: enable the check below after VFS version bump (currently it causes all the aologs to become
-        //         corrupted, since all them previously missed 'committed' bit in padding records
-        //if (!RecordLayout.isRecordCommitted(recordHeader)) {
-        //  throw new IOException("padding.header("+recordHeader+") is not committed -- bug?")
-        //}
-
-        //padding must be always committed -> move to the next one
+        //padding must always be committed
+        if (!RecordLayout.isRecordCommitted(recordHeader)) {
+          throw new IOException("padding.header(" + recordHeader + ") is not committed -- bug?");
+        }
+        //else: padding OK, move to the next one
       }
       else {
         //Unrecognizable garbage: we could just stop recovering here, and erase everything from
@@ -1115,8 +1111,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   private ByteBuffer headerPageBuffer() throws IOException {
     MMappedFileStorage.Page _headerPage = headerPage;
-    if(_headerPage == null) {
-      throw new ClosedStorageException("["+storagePath()+"] is already closed");
+    if (_headerPage == null) {
+      throw new ClosedStorageException("[" + storagePath() + "] is already closed");
     }
     return _headerPage.rawPageBuffer();
   }
@@ -1142,8 +1138,4 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Long.BYTES + 1);
     INT64_OVER_BYTE_BUFFER.setVolatile(headerPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
   }
-
-  //================== alignment: ========================================================================
-  // Record headers must be 32b-aligned so they could be accessed with volatile semantics -- because not
-  // all CPU arch support unaligned access with memory sync semantics
 }

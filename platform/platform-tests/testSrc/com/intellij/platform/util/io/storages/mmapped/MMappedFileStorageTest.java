@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
@@ -45,6 +45,11 @@ public class MMappedFileStorageTest {
     storage.closeAndClean();
   }
 
+  @Test
+  public void newlyCreatedStorage_hasActualSizeZero() throws IOException {
+    assertEquals(0, storage.actualFileSize(),
+                 "Empty storage.actualFileSize should be 0");
+  }
 
   @Test
   public void contentOfNewlyAllocatedPage_MustBeZero() throws Exception {
