@@ -9827,7 +9827,6 @@ f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
 - s:getBackgroundSpec(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 - s:getIdeBackgroundColor():java.awt.Color
 - s:getOriginalGraphics(java.awt.Graphics):java.awt.Graphics2D
-- s:isEditorBackgroundImageSet(com.intellij.openapi.project.Project):Z
 - s:repaintAllWindows():V
 - s:resetBackgroundImagePainters():V
 - s:withEditorBackground(java.awt.Graphics,javax.swing.JComponent):java.awt.Graphics2D
