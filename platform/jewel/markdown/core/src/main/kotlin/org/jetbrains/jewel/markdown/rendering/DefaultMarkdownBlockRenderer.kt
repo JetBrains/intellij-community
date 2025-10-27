@@ -21,6 +21,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -276,6 +277,8 @@ public open class DefaultMarkdownBlockRenderer(
     ) {
         val onlyImages = remember(block) { block.inlineContent.all { it is InlineMarkdown.Image } }
         val images = renderedImages(block)
+
+        if (onlyImages && images.isEmpty()) return
 
         Column(modifier = modifier.padding(styling.padding)) {
             if (onlyImages) {
@@ -704,15 +707,22 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> =
-        rendererExtensions
-            .firstNotNullOfOrNull { it.imageRendererExtension }
-            ?.let { imagesRenderer ->
-                getImages(blockInlineContent).associate { image ->
-                    image.source to imagesRenderer.renderImageContent(image)
-                }
+    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+        val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
+
+        val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
+
+        for (image in getImages(blockInlineContent)) {
+            val renderedImage = imagesRenderer?.renderImageContent(image)
+            if (renderedImage == null) {
+                map.remove(image.source)
+            } else {
+                map[image.source] = renderedImage
             }
-            .orEmpty()
+        }
+
+        return map
+    }
 
     @Composable
     protected fun MaybeScrollingContainer(
@@ -731,6 +741,8 @@ public open class DefaultMarkdownBlockRenderer(
 
     @Composable
     private fun RenderImages(images: Map<String, InlineTextContent>, modifier: Modifier = Modifier) {
+        if (images.isEmpty()) return
+
         val density = LocalDensity.current
         FlowRow(modifier) {
             images.map { (text, inlineBlock) ->
