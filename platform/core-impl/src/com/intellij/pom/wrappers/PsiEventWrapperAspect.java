@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 public final class PsiEventWrapperAspect implements PomModelAspect {
@@ -29,7 +30,7 @@ public final class PsiEventWrapperAspect implements PomModelAspect {
     ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getSynchronizer().processEvents(changeSet, file);
 
     if (PomModelImpl.shouldFirePhysicalPsiEvents(file)) {
-      changeSet.fireEvents();
+      PsiManagerImpl.runWriteActionOnEdtRegardlessOfCurrentThread(() -> changeSet.fireEvents());
     }
     else {
       ((PsiManagerEx)file.getManager()).afterChange(false);
