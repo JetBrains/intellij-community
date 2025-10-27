@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.modcommand;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,13 +12,6 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public interface ModPsiNavigator {
-  /**
-   * Selects given element
-   *
-   * @param element element to select
-   */
-  void select(@NotNull PsiElement element);
-
   /**
    * Selects given range
    *
@@ -35,14 +27,12 @@ public interface ModPsiNavigator {
   void moveCaretTo(int offset);
 
   /**
-   * Navigates to a given element
-   *
-   * @param element element to navigate to
-   */
-  void moveCaretTo(@NotNull PsiElement element);
-
-  /**
    * @return current caret offset
    */
   int getCaretOffset();
+
+  /**
+   * @return the document being edited 
+   */
+  @NotNull Document getDocument();
 }

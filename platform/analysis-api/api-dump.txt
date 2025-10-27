@@ -644,9 +644,10 @@ com.intellij.modcommand.ModCommandService
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction):com.intellij.codeInspection.LocalQuickFix
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction,Z):com.intellij.codeInspection.LocalQuickFix
 com.intellij.modcommand.ModPsiUpdater
-- com.intellij.modcommand.ModPsiNavigator
+- com.intellij.openapi.editor.ModPsiNavigator
 - a:cancel(java.lang.String):V
 - a:getCaretOffset():I
+- a:getDocument():com.intellij.openapi.editor.Document
 - a:getOriginalFile(com.intellij.psi.PsiFile):com.intellij.psi.PsiFile
 - a:getWritable(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - a:highlight(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey):V

@@ -6076,7 +6076,6 @@ f:com.intellij.openapi.editor.ex.util.EditorUIUtil
 - s:setupAntialiasing(java.awt.Graphics):V
 f:com.intellij.openapi.editor.ex.util.EditorUtil
 - s:addBulkSelectionListener(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.event.SelectionListener,com.intellij.openapi.Disposable):V
-- s:asPsiNavigator(com.intellij.openapi.editor.Editor):com.intellij.modcommand.ModPsiNavigator
 - s:attributesImpactFontStyle(com.intellij.openapi.editor.markup.TextAttributes):Z
 - s:attributesImpactFontStyleOrColor(com.intellij.openapi.editor.markup.TextAttributes):Z
 - s:attributesImpactForegroundColor(com.intellij.openapi.editor.markup.TextAttributes):Z

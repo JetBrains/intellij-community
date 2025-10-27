@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -54,7 +53,7 @@ public abstract class KotlinTrySurrounderBase<SELECTION extends KtElement> exten
         applyNavigation(context, updater, getSelectionElement(tryExpression));
     }
 
-    protected void applyNavigation(@NotNull ActionContext context, @NotNull ModPsiNavigator navigator, SELECTION element) {
+    protected void applyNavigation(@NotNull ActionContext context, @NotNull ModPsiUpdater navigator, SELECTION element) {
         if (element != null) {
             navigator.select(element);
         }

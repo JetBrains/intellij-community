@@ -173,8 +173,8 @@ final class PsiUpdateImpl {
       }
       List<ModUpdateFileText.Fragment> intersected = myFragments.subList(insertionPoint, insertionPoint + intersect);
       if (!intersected.isEmpty()) {
-        ModUpdateFileText.Fragment first = intersected.get(0);
-        ModUpdateFileText.Fragment last = intersected.get(intersected.size() - 1);
+        ModUpdateFileText.Fragment first = intersected.getFirst();
+        ModUpdateFileText.Fragment last = intersected.getLast();
         int diff = intersected.stream().mapToInt(f -> f.newLength() - f.oldLength()).sum();
         ModUpdateFileText.Fragment
           mergedFragment = new ModUpdateFileText.Fragment(first.offset(), last.offset() + last.newLength() - diff - first.offset(),
@@ -315,7 +315,12 @@ final class PsiUpdateImpl {
         myNavigationFile = tracker().myOrigFile.getViewProvider().getVirtualFile();
       }
       return myNavigationFile;
-    } 
+    }
+
+    @Override
+    public @NotNull Document getDocument() {
+      return tracker().myDocument;
+    }
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
       FileTracker result = myChangedFiles.computeIfAbsent(file, origFile -> {

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiNavigator
+import com.intellij.openapi.editor.ModPsiNavigator
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertToRawStringLiteral
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset

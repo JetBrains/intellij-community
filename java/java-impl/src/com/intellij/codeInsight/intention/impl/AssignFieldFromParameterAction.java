@@ -5,9 +5,12 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ModPsiNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -112,7 +115,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
                                                        @NotNull PsiField field,
                                                        @NotNull PsiParameter parameter,
                                                        @NotNull Editor editor) throws IncorrectOperationException {
-    return addFieldAssignmentStatement(project, field, parameter, EditorUtil.asPsiNavigator(editor));
+    return addFieldAssignmentStatement(project, field, parameter, editor.asPsiNavigator());
   }
 
   /**

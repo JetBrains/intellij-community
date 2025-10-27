@@ -9,7 +9,6 @@ import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,9 +16,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModPsiNavigator;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -140,7 +139,7 @@ public final class FixDocCommentAction extends EditorAction {
     }
     final Runnable task;
     if (pair.second == null || pair.second.getTextRange().isEmpty()) {
-      task = () -> generateComment(pair.first, EditorUtil.asPsiNavigator(editor), docProvider, commenter, project);
+      task = () -> generateComment(pair.first, editor.asPsiNavigator(), docProvider, commenter, project);
     }
     else {
       final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(language);
