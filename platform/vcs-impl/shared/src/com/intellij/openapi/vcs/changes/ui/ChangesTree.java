@@ -90,7 +90,6 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   private boolean myIsModelFlat;
 
   private @NotNull InclusionModel myInclusionModel = new DefaultInclusionModel();
-  private @NotNull Set<Object> myPreviousInclusion = Collections.emptySet();
   private final @NotNull InclusionListener myInclusionModelListener = () -> {
     notifyInclusionListener();
     repaint();
@@ -561,11 +560,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   }
 
   private void notifyInclusionListener() {
-    Set<Object> currentInclusion = myInclusionModel.getInclusion();
-    if (myTreeInclusionListener != null && !currentInclusion.equals(myPreviousInclusion)) {
-      myPreviousInclusion = currentInclusion;
-      myTreeInclusionListener.run();
-    }
+    if (myTreeInclusionListener != null) myTreeInclusionListener.run();
   }
 
   /**
