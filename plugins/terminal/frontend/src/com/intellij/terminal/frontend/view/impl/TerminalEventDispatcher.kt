@@ -238,8 +238,8 @@ private class TerminalEventDispatcher(
       "Terminal.Find",
       "Terminal.CommandCompletion.Invoke",
       "Terminal.CommandCompletion.InsertSuggestion",
-      "Terminal.UpCommandCompletion",
-      "Terminal.DownCommandCompletion",
+      "Terminal.CommandCompletion.SelectSuggestionAbove",
+      "Terminal.CommandCompletion.SelectSuggestionBelow",
       "Terminal.InsertInlineCompletion",
     )
 

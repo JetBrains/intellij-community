@@ -106,11 +106,11 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
   }
 
   fun downCompletionPopup() {
-    runActionById("Terminal.DownCommandCompletion")
+    runActionById("Terminal.CommandCompletion.SelectSuggestionBelow")
   }
 
   fun upCompletionPopup() {
-    runActionById("Terminal.UpCommandCompletion")
+    runActionById("Terminal.CommandCompletion.SelectSuggestionAbove")
   }
 
   /**
