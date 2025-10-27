@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -11,7 +10,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface TerminalCloudCompletionSettingsProvider {
-  fun addSettingsRow(panel: Panel): Row?
+  fun isAvailable(): Boolean
+
+  fun addSettingsRow(panel: Panel)
 
   companion object {
     private val EP_NAME = ExtensionPointName<TerminalCloudCompletionSettingsProvider>("org.jetbrains.plugins.terminal.terminalCloudCompletionSettingsProvider")
