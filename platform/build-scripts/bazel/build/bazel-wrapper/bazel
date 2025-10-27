@@ -3,7 +3,6 @@
 set -e -u -o pipefail
 
 ultimate_root="$(cd "$(dirname "$0")/../../../../../.."; pwd)"
-community_root="$(cd "$(dirname "$0")/../../../../.."; pwd)"
 
 # Provide packages.jetbrains.team credentials for Bazel in .netrc
 # The script will be missing if run from community repository
@@ -12,8 +11,4 @@ if [ -f "$authorizer" ]; then
   "$authorizer"
 fi
 
-. "$community_root/build/bazel-wrapper/common.sh"
-
-# shellcheck disable=SC2154
-# $output_user_root_opt is defined in common.sh
-exec "$BAZEL_REAL" "$output_user_root_opt" "$@"
+exec "$BAZEL_REAL" "$@"
