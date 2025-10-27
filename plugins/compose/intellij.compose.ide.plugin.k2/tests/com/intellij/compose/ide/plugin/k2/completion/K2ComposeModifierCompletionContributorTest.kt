@@ -2,13 +2,12 @@
 package com.intellij.compose.ide.plugin.k2.completion
 
 import com.intellij.compose.ide.plugin.shared.completion.ComposeModifierCompletionContributorTest
+import com.intellij.compose.ide.plugin.shared.util.CARET
 import com.intellij.compose.ide.plugin.shared.util.configureByText
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 
 internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompletionContributorTest() {
   override val pluginMode: KotlinPluginMode
@@ -60,7 +59,6 @@ internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompl
     )
   }
 
-  @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
   fun testModifierImportAliasForProperty() {
     // Prepare
     myFixture.configureByText(
@@ -86,7 +84,7 @@ internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompl
     lookupStrings shouldNotContain "Modifier.extensionFunctionReturnsNonModifier"
 
     // Do
-    typeAllowingAnalysisOnEDT("extensionFunction\t")
+    typeFromEDT("extensionFunction\t")
 
     // Check
     myFixture.checkResult(
@@ -103,5 +101,29 @@ internal class K2ComposeModifierCompletionContributorTest : ComposeModifierCompl
         }
       """.trimIndent()
     )
+  }
+
+  fun testModifierAsArgumentPartsOfModifierPrefix() {
+    // Prepare
+    myFixture.configureByText(
+      """
+        package com.example
+        
+        import androidx.compose.runtime.Composable
+        
+        @Composable
+        fun myWidget() {
+            myWidgetWithModifier(Modif$CARET
+        }
+      """.trimIndent(),
+    )
+
+    // Do
+    val lookupStrings = showCompletions()
+
+    // Check
+    lookupStrings shouldContain "Modifier.extensionFunction"
+    lookupStrings shouldNotContain "Modifier.extensionFunctionReturnsNonModifier"
+    lookupStrings.indexOf("Modifier.extensionFunction") shouldBe 0
   }
 }
