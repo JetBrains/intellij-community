@@ -313,10 +313,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
         val toCommitRemoved: Set<FilePath> = rootChanges.mapNotNullTo(HashSet()) { it.beforePath }
 
         // Save and reset what is staged besides our changes
-        val stagedChangesSaver = GitStagedChangesSaver.create(repository)
-        stagedChangesSaver.save(toCommitAdded, toCommitRemoved)
+        val stagingAreaManager = GitStagingAreaStateManager.create(repository)
+        stagingAreaManager.prepareStagingArea(toCommitAdded, toCommitRemoved)
 
-        try {
+        stagingAreaManager.use {
           val alreadyHandledPaths = getPaths(changedWithIndex)
           // Stage what else is needed to commit
           val toAdd = HashSet(toCommitAdded)
@@ -334,10 +334,6 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
           LOG.debug("Performing commit...")
           val committer = GitRepositoryCommitter(repository, commitOptions)
           committer.commitStaged(messageFile)
-        }
-        finally {
-          // Stage back the changes unstaged before commit
-          stagedChangesSaver.load()
         }
       }
       catch (e: VcsException) {

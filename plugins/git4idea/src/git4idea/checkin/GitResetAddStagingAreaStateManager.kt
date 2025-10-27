@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -24,11 +25,11 @@ import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
 import kotlin.collections.contains
 
-internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : GitStagedChangesSaver {
+internal class GitResetAddStagingAreaStateManager(val repository: GitRepository) : GitStagingAreaStateManager {
   private val excludedStagedChanges = mutableListOf<ChangedPath>()
   private val excludedUnstagedDeletions = mutableSetOf<FilePath>()
 
-  override fun save(toCommitAdded: Set<FilePath>, toCommitRemoved: Set<FilePath>) {
+  override fun prepareStagingArea(toAdd: Set<FilePath>, toRemove: Set<FilePath>) {
     val project = repository.project
     val root = repository.root
     val rootPath = root.path
@@ -36,11 +37,10 @@ internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : Gi
     validateNoUnmerged()
 
     val stagedChanges = GitChangeUtils.getStagedChanges(project, root)
-    LOG.debug("Found staged changes: " + GitUtil.getLogStringGitDiffChanges(rootPath, stagedChanges))
+    LOG.debug { "Found staged changes: " + GitUtil.getLogStringGitDiffChanges(rootPath, stagedChanges) }
 
-    excludedStagedChanges.clear()
     val excludedStagedAdditions = mutableListOf<FilePath>()
-    processExcludedPaths(stagedChanges, toCommitAdded, toCommitRemoved) { before, after ->
+    processExcludedPaths(stagedChanges, toAdd, toRemove) { before, after ->
       if (before != null || after != null) excludedStagedChanges.add(ChangedPath(before, after))
       if (before == null && after != null) excludedStagedAdditions.add(after)
     }
@@ -48,14 +48,13 @@ internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : Gi
     // Find files with 'AD' status, we will not be able to restore them after using 'git add' command,
     // getting "pathspec 'file.txt' did not match any files" error (and preventing us from adding other files).
     val unstagedChanges = GitChangeUtils.getUnstagedChanges(project, root, excludedStagedAdditions, false)
-    LOG.debug("Found unstaged changes: " + GitUtil.getLogStringGitDiffChanges(rootPath, unstagedChanges))
+    LOG.debug { "Found unstaged changes: " + GitUtil.getLogStringGitDiffChanges(rootPath, unstagedChanges) }
 
-    excludedUnstagedDeletions.clear()
-    processExcludedPaths(unstagedChanges, toCommitAdded, toCommitRemoved) { before, after ->
+    processExcludedPaths(unstagedChanges, toAdd, toRemove) { before, after ->
       if (before != null && after == null) excludedUnstagedDeletions.add(before)
     }
 
-    if (!excludedStagedChanges.isEmpty()) {
+    if (excludedStagedChanges.isNotEmpty()) {
       // Reset staged changes which are not selected for commit
       LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges))
       resetExcluded(project, root, excludedStagedChanges)
@@ -69,7 +68,7 @@ internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : Gi
     }
   }
 
-  override fun load() {
+  override fun restore() {
     if (excludedStagedChanges.isNotEmpty()) {
       restoreExcluded()
     }
@@ -114,13 +113,12 @@ internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : Gi
   private fun restoreExcluded() {
     val project = repository.project
     val root = repository.root
-    val restoreExceptions = mutableListOf<VcsException>()
 
     val toAdd = mutableSetOf<FilePath>()
     val toRemove = mutableSetOf<FilePath>()
 
     for (change in excludedStagedChanges) {
-      if (addAsCaseOnlyRename(project, root, change, restoreExceptions)) continue
+      if (addAsCaseOnlyRename(project, root, change)) continue
 
       if (change.beforePath == null && excludedUnstagedDeletions.contains(change.afterPath)) {
         // we can't restore ADDED-DELETED files
@@ -133,17 +131,17 @@ internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : Gi
     }
     toRemove.removeAll(toAdd)
 
-    LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove))
-    GitFileUtils.stageForCommit(project, root, toAdd, toRemove, restoreExceptions)
+    LOG.debug { "Restoring staged changes after commit: added: ${toAdd}, removed: ${toRemove}" }
 
-    for (e in restoreExceptions) {
+    val exceptions = mutableListOf<VcsException>()
+    GitFileUtils.stageForCommit(project, root, toAdd, toRemove, exceptions)
+    for (e in exceptions) {
       LOG.warn(e)
     }
   }
 
   private fun addAsCaseOnlyRename(
     project: Project, root: VirtualFile, change: ChangedPath,
-    exceptions: MutableList<in VcsException>,
   ): Boolean {
     try {
       if (!isCaseOnlyRename(change)) return false
@@ -151,7 +149,7 @@ internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : Gi
       val beforePath = change.beforePath!!
       val afterPath = change.afterPath!!
 
-      LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change))
+      LOG.debug { "Restoring staged case-only rename after commit: ${change}" }
       val h = GitLineHandler(project, root, GitCommand.MV).apply {
         addParameters("-f", beforePath.path, afterPath.path)
       }
@@ -159,12 +157,12 @@ internal class GitResetAddStagedChangesSaver(val repository: GitRepository) : Gi
       return true
     }
     catch (e: VcsException) {
-      exceptions.add(e)
+      LOG.warn(e)
       return false
     }
   }
 
   companion object {
-    private val LOG = logger<GitResetAddStagedChangesSaver>()
+    private val LOG = logger<GitResetAddStagingAreaStateManager>()
   }
 }

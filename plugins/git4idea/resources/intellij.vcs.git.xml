@@ -655,6 +655,8 @@
                  description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
     <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="false"
                  description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
+    <registryKey key="git.commit.staged.saver.use.index.info" defaultValue="false"
+                 description="Uses an optimized approach to save and restore the index during changelist commits, improving performance"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
