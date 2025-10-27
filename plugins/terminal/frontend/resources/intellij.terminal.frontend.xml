@@ -88,8 +88,9 @@
     <action id="Terminal.CommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
-    <action id="Terminal.CommandCompletion.Gen2" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionActionGen2"
+    <action id="Terminal.CommandCompletion.Invoke" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionActionGen2"
             use-shortcut-of="CodeCompletion">
+      <override-text place="GoToAction"/>
     </action>
     <action id="Terminal.EnterCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionEnterAction">
       <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
