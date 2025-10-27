@@ -415,6 +415,10 @@ class BuildContextImpl internal constructor(
 
     jvmArgs += "-Dcompose.swing.render.on.graphics=true"
 
+    if (bundledRuntime.version >= 25) {
+      jvmArgs += "--enable-native-access=ALL-UNNAMED"
+    }
+
     jvmArgs += getCommandLineArgumentsForOpenPackages(context = this, os)
 
     return jvmArgs

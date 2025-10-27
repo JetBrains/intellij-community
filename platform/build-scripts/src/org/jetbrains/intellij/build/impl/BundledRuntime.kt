@@ -11,6 +11,8 @@ interface BundledRuntime {
   val prefix: String
   val build: String
 
+  val version: Int get() = build.takeWhile { it != '.' }.toInt()
+
   suspend fun getHomeForCurrentOsAndArch(): Path
 
   /**
