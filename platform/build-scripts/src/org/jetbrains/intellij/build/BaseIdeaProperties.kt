@@ -4,8 +4,7 @@ package org.jetbrains.intellij.build
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.productLayout.DEFAULT_BUNDLED_PLUGINS
@@ -96,28 +95,15 @@ internal val TEST_FRAMEWORK_MODULE_NAMES = linkedSetOf(
   "intellij.tools.testsBootstrap",
 )
 
-/**
- * Describes modules to be added to 'testFramework.jar' in the IDE distribution. This JAR was used to compile and run tests in external plugins.
- * Since [#477](https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/477) is implemented, it's possible to take test framework JARs from Maven repository,
- * not from the IDE distribution.
- * So this JAR is kept for compatibility only, **please do not add new modules here**.
- * To publish a new test framework module, register it in [MavenArtifactsProperties.additionalModules] for the corresponding IDEs instead.
- */
-@ApiStatus.Obsolete
-val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
+val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
   for (name in TEST_FRAMEWORK_MODULE_NAMES) {
-    layout.withModule(name, TEST_FRAMEWORK_JAR)
+    layout.withModule(name, PlatformJarNames.TEST_FRAMEWORK_JAR)
   }
   layout.withoutProjectLibrary("JUnit4")
   layout.withoutProjectLibrary("JUnit5")
   layout.withoutProjectLibrary("JUnit5Jupiter")
-  @Suppress("SpellCheckingInspection")
   layout.withoutProjectLibrary("opentest4j")
-}
-
-val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layout, context ->
-  TEST_FRAMEWORK_LAYOUT_CUSTOMIZER(layout, context)
-  layout.withModule("intellij.java.rt", TEST_FRAMEWORK_JAR)
+  layout.withModule("intellij.java.rt", PlatformJarNames.TEST_FRAMEWORK_JAR)
 }
 
 /**
@@ -125,7 +111,6 @@ val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layo
  */
 abstract class BaseIdeaProperties : JetBrainsProductProperties() {
   init {
-    productLayout.addPlatformSpec(TEST_FRAMEWORK_LAYOUT_CUSTOMIZER)
     productLayout.addPlatformSpec { layout, _ ->
       layout.withModule("intellij.java.ide.resources")
 
@@ -133,16 +118,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
         layout.withModule("intellij.jsp.base")
       }
 
-      for (moduleName in arrayOf(
-        "intellij.java.testFramework",
-        "intellij.java.testFramework.shared",
-        "intellij.platform.debugger.testFramework",
-        "intellij.platform.uast.testFramework",
-      )) {
-        if (!productLayout.productApiModules.contains(moduleName) && !productLayout.productImplementationModules.contains(moduleName)) {
-          layout.withModule(moduleName, TEST_FRAMEWORK_JAR)
-        }
-      }
       //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
       layout.withModule("intellij.java.rt", "idea_rt.jar")
       // for compatibility with user projects which refer to IDEA_HOME/lib/annotations.jar
