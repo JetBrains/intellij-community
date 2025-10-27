@@ -26,7 +26,6 @@ import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -52,7 +51,7 @@ class SeTabVm(
     else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
 
   val isIndexingDependent: Boolean get() = tab.isIndexingDependent
-  val isPreviewEnabled: SuspendLazyProperty<Boolean> get() = suspendLazy { tab.isPreviewEnabled() }
+  val isPreviewEnabled: SuspendLazyProperty<Boolean> = initAsync(coroutineScope) { tab.isPreviewEnabled() }
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
