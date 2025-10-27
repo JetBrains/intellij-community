@@ -243,6 +243,8 @@
     <module name="intellij.platform.execution.dashboard.backend"/>
     <module name="intellij.platform.find" loading="embedded"/>
     <module name="intellij.platform.find.backend"/>
+    <module name="intellij.platform.todo" loading="embedded"/>
+    <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.editor.frontend"/>
     <module name="intellij.platform.managed.cache" loading="embedded"/>
     <module name="intellij.platform.managed.cache.backend"/>
