@@ -32,7 +32,10 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.terminalEditor?.isOutputModelEditor == true && TerminalCommandCompletion.isEnabled()
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null
+                                         && e.terminalEditor?.isOutputModelEditor == true
+                                         && TerminalCommandCompletion.isEnabled(project)
   }
 
   override fun createHandler(
