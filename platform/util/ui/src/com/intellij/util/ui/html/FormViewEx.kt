@@ -5,6 +5,7 @@ import java.awt.Component
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.text.Element
 import javax.swing.text.html.BlockView
 import javax.swing.text.html.FormView
@@ -28,8 +29,11 @@ internal class FormViewEx(elem: Element) : FormView(elem) {
         override fun focusGained(e: FocusEvent?) {
           if (e?.cause in focusTraversalCause
               // Only react to focus traversal events within the same HtmlPane
-              && e?.oppositeComponent?.parent?.parent == this@apply.parent?.parent
-          ) (this@apply as? JComponent)?.scrollRectToVisible(bounds)
+              && e?.oppositeComponent?.parents()?.firstNotNullOfOrNull { it as? JEditorPane } ==
+              this@apply.parents().firstNotNullOfOrNull { it as? JEditorPane }
+          ) {
+            (this@apply as? JComponent)?.scrollRectToVisible(bounds)
+          }
         }
       })
     }
@@ -54,5 +58,7 @@ internal class FormViewEx(elem: Element) : FormView(elem) {
     return siblingAlignment.takeIf { it >= 0 }
            ?: super.getAlignment(axis)
   }
+
+  private fun Component.parents(): Sequence<Component> = generateSequence(this) { it.parent }
 
 }
