@@ -221,6 +221,7 @@ public final class IdeBackgroundUtil {
     return spec == null ? System.getProperty(propertyName, "") : spec;
   }
 
+  @ApiStatus.Internal
   public static boolean isEditorBackgroundImageSet(@Nullable Project project) {
     return Strings.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
   }
