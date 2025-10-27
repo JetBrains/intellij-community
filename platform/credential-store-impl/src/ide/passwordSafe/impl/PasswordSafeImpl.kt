@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.Ephemeral
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.Dispatchers
