@@ -27,7 +27,7 @@ class DownloadJdkAction: AnAction() {
     if (downloadExtension != null) {
       downloadExtension.showDownloadUI(sdkType, ProjectSdksModel(), null, project, null, { true }) { task: SdkDownloadTask ->
         val sdk = JdkDownloadService.setupInstallableSdk(task)
-        project.service<JdkDownloadService>().downloadSdk(sdk)
+        project.service<JdkDownloadService>().scheduleDownloadSdk(sdk)
         project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk, true)
       }
     } else {

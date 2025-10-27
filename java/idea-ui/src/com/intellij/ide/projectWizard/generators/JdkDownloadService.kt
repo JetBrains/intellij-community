@@ -17,7 +17,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
@@ -31,14 +30,6 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     fun setupInstallableSdk(downloadTask: SdkDownloadTask): Sdk {
       return application.runWriteAction<Sdk> {
         JdkDownloadUtil.createDownloadSdkInternal(JavaSdk.getInstance(), downloadTask)
-      }
-    }
-  }
-
-  fun downloadSdk(sdk: Sdk) {
-    coroutineScope.launch {
-      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
-        JdkDownloadUtil.downloadSdk(sdk)
       }
     }
   }

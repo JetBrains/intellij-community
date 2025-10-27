@@ -223,6 +223,6 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   fun setupProject(project: Project, builder: ModuleBuilder) {
     configureModuleBuilder(project, builder)
     setupProjectFromBuilder(project, builder)
-    project.service<JdkDownloadService>().downloadSdk(context.projectJdk)
+    project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
   }
 }

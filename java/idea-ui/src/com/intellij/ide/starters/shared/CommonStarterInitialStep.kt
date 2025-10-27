@@ -145,7 +145,7 @@ abstract class CommonStarterInitialStep(
       )
 
       moduleBuilder.addListener { module ->
-        module.project.service<JdkDownloadService>().downloadSdk(wizardContext.projectJdk)
+        module.project.service<JdkDownloadService>().scheduleDownloadSdk(wizardContext.projectJdk)
       }
     }.bottomGap(BottomGap.SMALL)
   }
