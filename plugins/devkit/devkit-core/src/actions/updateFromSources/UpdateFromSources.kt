@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalPathApi::class)
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
@@ -348,7 +349,7 @@ private fun createScriptJavaParameters(
   val moduleManager = ModuleManager.getInstance(project)
   val ultimate = moduleManager.findModuleByName("intellij.idea.ultimate.main") != null
   val params = JavaParameters()
-  params.isArgFile = true
+  params.setShortenCommandLine(ShortenCommandLine.MANIFEST)
   params.setDefaultCharset(project)
   params.jdk = sdk
 
