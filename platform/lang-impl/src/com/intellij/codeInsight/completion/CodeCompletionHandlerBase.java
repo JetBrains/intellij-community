@@ -277,11 +277,10 @@ public class CodeCompletionHandlerBase {
     return lookup;
   }
 
-  @ApiStatus.Internal
-  protected void doComplete(@NotNull CompletionInitializationContextImpl initContext,
-                            boolean hasModifiers,
-                            boolean isValidContext,
-                            long startingTime) {
+  private void doComplete(@NotNull CompletionInitializationContextImpl initContext,
+                          boolean hasModifiers,
+                          boolean isValidContext,
+                          long startingTime) {
     Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
@@ -318,7 +317,8 @@ public class CodeCompletionHandlerBase {
     scheduleContributorsAfterAsyncCommit(initContext, indicator, hasModifiers);
   }
 
-  private void scheduleContributorsAfterAsyncCommit(@NotNull CompletionInitializationContextImpl initContext,
+  @ApiStatus.Internal
+  protected void scheduleContributorsAfterAsyncCommit(@NotNull CompletionInitializationContextImpl initContext,
                                                     @NotNull CompletionProgressIndicator indicator,
                                                     boolean hasModifiers) {
     CompletionPhase phase;
@@ -353,7 +353,8 @@ public class CodeCompletionHandlerBase {
    * 2. It waits for them to be computed for the given timeout.
    * 3. If candidates are computed until timeout, the UI is updated immediately, otherwise computation continues and the phase is set to BgCalculation.
    */
-  private void trySynchronousCompletion(@NotNull CompletionInitializationContextImpl initContext,
+  @ApiStatus.Internal
+  protected void trySynchronousCompletion(@NotNull CompletionInitializationContextImpl initContext,
                                         boolean hasModifiers,
                                         long startingTime,
                                         @NotNull CompletionProgressIndicator indicator,
