@@ -5288,6 +5288,7 @@ f:com.intellij.util.ui.UIUtil
 - s:getFontWithFallback(java.lang.String,I,I):javax.swing.plaf.FontUIResource
 - s:getFontWithFallbackIfNeeded(java.awt.Font,java.lang.String):java.awt.Font
 - s:getFontWithFallbackIfNeeded(java.awt.Font,C[]):java.awt.Font
+- s:getGeneralizedParentOfType(java.lang.Class,java.awt.Component):java.lang.Object
 - s:getGradientPaint(F,F,java.awt.Color,F,F,java.awt.Color):java.awt.Paint
 - s:getGrayFilter():java.awt.image.RGBImageFilter
 - s:getHTMLEditorKit():javax.swing.text.html.HTMLEditorKit

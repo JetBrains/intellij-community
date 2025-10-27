@@ -7,6 +7,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
@@ -29,6 +30,7 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -36,6 +38,7 @@ import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
@@ -136,18 +139,20 @@ internal class IslandsUICustomization : InternalUICustomization() {
   private val uiSettings by lazy { UISettings.getInstance() }
 
   private val awtListener = AWTEventListener { event ->
-    if (!isBrightCached && !uiSettings.differentToolwindowBackground) {
+    val component = (event as HierarchyEvent).component
+    if (
+      (!isBrightCached && !uiSettings.differentToolwindowBackground) ||
+      (event.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) == 0L ||
+      !component.isShowing
+    ) {
       return@AWTEventListener
     }
 
-    val component = (event as HierarchyEvent).component
-    val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
+    val isToolWindow = UIUtil.getGeneralizedParentOfType(InternalDecorator::class.java, component) != null
 
     if (isToolWindow) {
-      UIUtil.forEachComponentInHierarchy(component) {
-        if (it.background == JBColor.PanelBackground) {
-          it.background = JBUI.CurrentTheme.ToolWindow.background()
-        }
+      if (component.background == JBColor.PanelBackground) {
+        component.background = JBUI.CurrentTheme.ToolWindow.background()
       }
     }
   }
