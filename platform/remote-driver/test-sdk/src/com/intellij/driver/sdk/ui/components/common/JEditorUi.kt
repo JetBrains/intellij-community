@@ -133,7 +133,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getFontSize(): Int = editor.getColorsScheme().getEditorFontSize()
 
-  fun clickOn(text: String, button: RemoteMouseButton, times: Int = 1) {
+  fun clickOn(text: String, button: RemoteMouseButton = RemoteMouseButton.LEFT, times: Int = 1) {
     val offset = this.text.indexOf(text) + text.length / 2
     val point = interact {
       val p = offsetToVisualPosition(offset)
