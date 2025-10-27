@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
@@ -125,7 +125,6 @@ final class ProcessPopup {
     JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent());
 
     Dimension contentSize = myContentPanel.getPreferredSize();
-    int contentWidth = Math.max(contentSize.width, JBUI.scale(300));
     int contentHeight = Math.max(contentSize.height, JBUI.scale(100));
 
     int titleHeight = 0;
@@ -137,7 +136,7 @@ final class ProcessPopup {
     int fullHeight = frameBounds.height - titleHeight;
 
     boolean isEmpty = myIndicatorPanel.getComponentCount() == 0;
-    int width = Math.max(frameBounds.width / 4, contentWidth);
+    int width = Math.clamp(contentSize.width, JBUI.scale(300), JBUI.scale(500));
     int height = Math.min(isEmpty ? frameBounds.height / 4 : fullHeight, contentHeight);
 
     int x = frameBounds.x + frameBounds.width - width - JBUI.scale(20);
