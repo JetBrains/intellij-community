@@ -74,7 +74,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
       createCompactTextAndProgress(component)
       component.add(createButtonPanel(
         eastButtons.map{ b: ProgressButton -> b.button }), BorderLayout.EAST)
-      component.setToolTipText(indicatorModel.title + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"))
+      component.setToolTipText(computeTooltipText(indicatorModel))
     }
     else {
       component.setLayout(BorderLayout())
@@ -328,6 +328,16 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
       val wrapper = Wrapper(button)
       wrapper.setBorder(JBUI.Borders.empty(0, 3, 0, 2))
       return wrapper
+    }
+
+    @NlsContexts.Tooltip
+    fun computeTooltipText(indicatorModel: ProgressModel?): String {
+      return if (indicatorModel != null) {
+        indicatorModel.title + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow")
+      }
+      else {
+        IdeBundle.message("progress.text.clickToViewProgressWindow")
+      }
     }
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.ide.impl.ProjectUtil.getActiveProject
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressPaused
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressResumed
 import com.intellij.notification.impl.ApplicationNotificationsModel
@@ -994,7 +993,6 @@ class InfoAndProgressPanel internal constructor(
       })
       progressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
       progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
-      progressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"))
 
       counterComponent = CounterLabel()
       counterComponent.addMouseListener(object : MouseAdapter() {
@@ -1206,12 +1204,13 @@ class InfoAndProgressPanel internal constructor(
 
     @JvmOverloads
     fun updateState(showPopup: Boolean = host.popup != null && host.popup!!.isShowing) {
-      if (indicator == null) {
+      val currentIndicator = indicator
+      if (currentIndicator == null) {
         return
       }
       val size = host.originals.size
-      val isIndicatorVisible = !showPopup && (!supportSecondaryProgresses || indicator!!.visibleInStatusBar)
-      indicator!!.component.isVisible = isIndicatorVisible
+      val isIndicatorVisible = !showPopup && (!supportSecondaryProgresses || currentIndicator.visibleInStatusBar)
+      currentIndicator.component.isVisible = isIndicatorVisible
       if (showCounterInsteadOfMultiProcessLink) {
         counterComponent.setNumber(size, isIndicatorVisible, showPopup)
         counterComponent.isVisible = true
@@ -1230,6 +1229,10 @@ class InfoAndProgressPanel internal constructor(
           multiProcessLink.setText(IdeBundle.message("link.show.all.processes", size))
         }
       }
+
+      val tooltip = ProgressComponent.computeTooltipText(if (isIndicatorVisible) currentIndicator.indicatorModel else null)
+      progressIcon.toolTipText = tooltip
+      counterComponent.toolTipText = tooltip
       doLayout()
       revalidate()
       repaint()
