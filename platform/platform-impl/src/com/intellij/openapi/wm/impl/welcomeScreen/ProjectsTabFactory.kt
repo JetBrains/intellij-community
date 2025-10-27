@@ -186,6 +186,8 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
 
     initDnD(treeComponent)
 
+    recentProjectsPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+
     return recentProjectsPanel
   }
 
