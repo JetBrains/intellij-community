@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
@@ -51,7 +52,9 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
 
   override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project)
 
-  override fun isDefaultPane(project: Project): Boolean = isWelcomeScreenProject(project)
+  override fun isDefaultPane(project: Project): Boolean {
+    return !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) && isWelcomeScreenProject(project)
+  }
 
   override fun getWeight(): Int = -10 // TODO: Increase weight?
 
