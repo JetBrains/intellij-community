@@ -36,17 +36,34 @@ class CheckCanceledEvent extends Event {
   private final boolean cancelled;
 
 
-  CheckCanceledEvent(boolean nonCancellable,
-                     boolean hasProgressIndicator,
-                     boolean hasContextJob,
-                     boolean hasNoneBehavior,
-                     boolean hasOnlyHooksBehavior,
-                     boolean cancelled) {
+  private CheckCanceledEvent(boolean nonCancellable,
+                             boolean hasProgressIndicator,
+                             boolean hasContextJob,
+                             boolean hasNoneBehavior,
+                             boolean hasOnlyHooksBehavior,
+                             boolean cancelled) {
     this.nonCancellable = nonCancellable;
     this.hasProgressIndicator = hasProgressIndicator;
     this.hasContextJob = hasContextJob;
     this.hasNoneBehavior = hasNoneBehavior;
     this.hasOnlyHooksBehavior = hasOnlyHooksBehavior;
     this.cancelled = cancelled;
+  }
+
+  static void commit(boolean nonCancellable,
+                     boolean hasProgressIndicator,
+                     boolean hasContextJob,
+                     boolean hasNoneBehavior,
+                     boolean hasOnlyHooksBehavior,
+                     boolean cancelled) {
+    CheckCanceledEvent event = new CheckCanceledEvent(nonCancellable,
+                                                      hasProgressIndicator,
+                                                      hasContextJob,
+                                                      hasNoneBehavior,
+                                                      hasOnlyHooksBehavior,
+                                                      cancelled);
+    if (event.isEnabled() && event.shouldCommit()) {
+      event.commit();
+    }
   }
 }

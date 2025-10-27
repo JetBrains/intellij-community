@@ -99,63 +99,35 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   @Override
   protected void fireNonCancellableEvent() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(true, false, false, false, false, false);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    commitCheckCanceledJfrEvent(true, false, false, false, false, false);
   }
 
   @Override
   protected void fireCanceledByJobEvent() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(false, false, true, false, false, true);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    commitCheckCanceledJfrEvent(false, false, true, false, false, true);
   }
 
   @Override
   protected void fireCanceledByIndicatorEvent(@Nullable ProgressIndicator indicator) {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    @SuppressWarnings("TestOnlyProblems")
-    CheckCanceledEvent event = new CheckCanceledEvent(false,
-                                                      indicator != null,
-                                                      Cancellation.currentJob() != null,
-                                                      false,
-                                                      false,
-                                                      indicator != null && indicator.isCanceled());
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    //noinspection TestOnlyProblems
+    commitCheckCanceledJfrEvent(false,
+                              indicator != null,
+                              Cancellation.currentJob() != null,
+                                false,
+                                false,
+                              indicator != null && indicator.isCanceled());
   }
 
   @Override
   protected void fireCheckCanceledNone() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, true, false, false);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    //noinspection TestOnlyProblems
+    commitCheckCanceledJfrEvent(false, false, Cancellation.currentJob() != null, true, false, false);
   }
 
   @Override
   protected void fireCheckCanceledOnlyHooks() {
-    if (!shouldFireCheckCanceledEvent()) {
-      return;
-    }
-    CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, false, true, false);
-    if (event.isEnabled() && event.shouldCommit()) {
-      event.commit();
-    }
+    //noinspection TestOnlyProblems
+    commitCheckCanceledJfrEvent(false, false, Cancellation.currentJob() != null, false, true, false);
   }
 
   private static void systemNotify(@NotNull Task.NotificationInfo info) {
@@ -166,6 +138,19 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     ApplicationEx applicationManagerEx = ApplicationManagerEx.getApplicationEx();
     return applicationManagerEx != null && applicationManagerEx.isWriteActionPending() && applicationManagerEx.isReadAccessAllowed();
   }
+
+  private static void commitCheckCanceledJfrEvent(boolean nonCancellable,
+                                                  boolean hasProgressIndicator,
+                                                  boolean hasContextJob,
+                                                  boolean hasNoneBehavior,
+                                                  boolean hasOnlyHooksBehavior,
+                                                  boolean cancelled) {
+    if (!shouldFireCheckCanceledEvent()) {
+      return;
+    }
+    CheckCanceledEvent.commit(nonCancellable, hasProgressIndicator, hasContextJob, hasNoneBehavior, hasOnlyHooksBehavior, cancelled);
+  }
+
 
   @Override
   protected void startTask(@NotNull Task task,
@@ -340,24 +325,14 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
     @Override
     public void nonCanceledSectionInvoked() {
-      if (!shouldFireCheckCanceledEvent()) {
-        return;
-      }
-      CheckCanceledEvent event = new CheckCanceledEvent(true, false, Cancellation.currentJob() != null, false, false, false);
-      if (event.isEnabled() && event.shouldCommit()) {
-        event.commit();
-      }
+      //noinspection TestOnlyProblems
+      commitCheckCanceledJfrEvent(true, false, Cancellation.currentJob() != null, false, false, false);
     }
 
     @Override
     public void cancellableSectionInvoked(boolean wasCanceled) {
-      if (!shouldFireCheckCanceledEvent()) {
-        return;
-      }
-      CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, false, false, wasCanceled);
-      if (event.isEnabled() && event.shouldCommit()) {
-        event.commit();
-      }
+      //noinspection TestOnlyProblems
+      commitCheckCanceledJfrEvent(false, false, Cancellation.currentJob() != null, false, false, wasCanceled);
     }
   }
 }
