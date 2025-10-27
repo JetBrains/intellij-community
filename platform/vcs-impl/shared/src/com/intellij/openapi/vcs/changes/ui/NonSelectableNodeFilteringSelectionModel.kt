@@ -9,7 +9,7 @@ import javax.swing.tree.TreePath
  * SelectionModel that ignores selection requests for nodes marked with [ChangesBrowserNodeKeys.NON_SELECTABLE].
  */
 @ApiStatus.Internal
-internal class NonSelectableNodeFilteringSelectionModel : DefaultTreeSelectionModel() {
+class NonSelectableNodeFilteringSelectionModel : DefaultTreeSelectionModel() {
   private fun TreePath?.isNonSelectable(): Boolean {
     if (this == null) return false
     val node = this.lastPathComponent as? ChangesBrowserNode<*> ?: return false
