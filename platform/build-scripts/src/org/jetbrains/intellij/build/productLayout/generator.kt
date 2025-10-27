@@ -32,12 +32,12 @@ fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): 
   val fileName = "intellij.moduleSets.${moduleSet.name}.xml"
   val outputPath = outputDir.resolve(fileName)
 
-  val xml = buildModuleSetXml(moduleSet, label)
+  val buildResult = buildModuleSetXml(moduleSet, label)
 
   // determine change status
   val status = if (Files.exists(outputPath)) {
     val existingContent = Files.readString(outputPath)
-    if (existingContent == xml) FileChangeStatus.UNCHANGED else FileChangeStatus.MODIFIED
+    if (existingContent == buildResult.xml) FileChangeStatus.UNCHANGED else FileChangeStatus.MODIFIED
   }
   else {
     FileChangeStatus.CREATED
@@ -45,13 +45,10 @@ fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): 
 
   // Only write if changed
   if (status != FileChangeStatus.UNCHANGED) {
-    Files.writeString(outputPath, xml)
+    Files.writeString(outputPath, buildResult.xml)
   }
 
-  // Count direct modules (excluding nested)
-  val directModuleCount = getDirectModules(moduleSet).size
-
-  return ModuleSetFileResult(fileName, status, directModuleCount)
+  return ModuleSetFileResult(fileName, status, buildResult.directModuleCount)
 }
 
 /**
@@ -77,9 +74,11 @@ data class ModuleWithLoading(
 
 /**
  * Result of building product content XML.
- * Contains both the generated content blocks and the module-to-set chain mapping.
+ * Contains the generated XML string, content blocks, and module-to-set chain mapping.
  */
-data class ProductContentResult(
+data class ProductContentBuildResult(
+  /** Generated XML content as string */
+  val xml: String,
   /** List of content blocks generated from the spec */
   val contentBlocks: List<ContentBlock>,
   /** Mapping from module name to its module set chain as list (e.g., ["parent", "child"]) */
@@ -95,6 +94,7 @@ fun generateProductXml(
   pluginXmlPath: Path,
   spec: ProductModulesContentSpec,
   productName: String,
+  productPropertiesClass: String,
   moduleOutputProvider: ModuleOutputProvider,
   projectRoot: Path,
 ): ProductFileResult {
@@ -102,20 +102,18 @@ fun generateProductXml(
   // Community products are under community/ directory, Ultimate products are not
   val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateModuleSets") + ".main()"
 
-  // Build complete plugin.xml file and capture result for statistics
-  var result: ProductContentResult? = null
-  val newContent = buildString {
-    // Header comments
-    append("  <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
-    append("  <!-- To regenerate, run 'Generate Product Layouts' or directly $generatorCommand -->\n")
-    append("  <!-- Source: see getProductContentModules() in ${productName}Properties.kt -->\n")
-    // Generated content (module alias, xi:includes, content blocks)
-    result = buildProductContentXml(spec = spec, moduleOutputProvider = moduleOutputProvider, sb = this, inlineXmlIncludes = true)
-  }
+  // Build complete plugin.xml file
+  val buildResult = buildProductContentXml(
+    spec = spec,
+    moduleOutputProvider = moduleOutputProvider,
+    inlineXmlIncludes = true,
+    productPropertiesClass = productPropertiesClass,
+    generatorCommand = generatorCommand
+  )
 
   // Compare with existing file if it exists
   val originalContent = Files.readString(pluginXmlPath)
-  val status = if (originalContent == newContent) {
+  val status = if (originalContent == buildResult.xml) {
     FileChangeStatus.UNCHANGED
   }
   else {
@@ -124,11 +122,11 @@ fun generateProductXml(
 
   // Only write if changed
   if (status != FileChangeStatus.UNCHANGED) {
-    Files.writeString(pluginXmlPath, newContent)
+    Files.writeString(pluginXmlPath, buildResult.xml)
   }
 
   // Calculate statistics using the contentBlocks from generation
-  val totalModules = result!!.contentBlocks.sumOf { it.modules.size }
+  val totalModules = buildResult.contentBlocks.sumOf { it.modules.size }
   val relativePath = projectRoot.relativize(pluginXmlPath).toString()
 
   return ProductFileResult(
@@ -136,7 +134,7 @@ fun generateProductXml(
     relativePath = relativePath,
     status = status,
     includeCount = spec.deprecatedXmlIncludes.size,
-    contentBlockCount = result.contentBlocks.size,
+    contentBlockCount = buildResult.contentBlocks.size,
     totalModules = totalModules
   )
 }
@@ -174,7 +172,8 @@ suspend fun generateAllProductXmlFiles(projectRoot: Path): ProductGenerationResu
       spec = spec,
       productName = productName,
       moduleOutputProvider = moduleOutputProvider,
-      projectRoot = projectRoot
+      productPropertiesClass = productProperties::class.java.name,
+      projectRoot = projectRoot,
     )
     productResults.add(result)
   }
@@ -184,41 +183,57 @@ suspend fun generateAllProductXmlFiles(projectRoot: Path): ProductGenerationResu
 
 
 /**
- * Generates content blocks from a product modules specification.
- * This is the shared logic used by both static XML generation and runtime injection.
+ * Generates content blocks and module-to-set chain mapping in a single hierarchical traversal.
+ * This optimized version eliminates redundant tree walking by computing both results simultaneously.
  *
  * @param spec The product modules specification
- * @param allModuleSets All module sets (including nested ones) flattened into a list
- * @return List of content blocks, each representing a `<content>` element
+ * @return Pair of (content blocks, module-to-set chain mapping)
  */
-private fun generateContentBlocks(
-  spec: ProductModulesContentSpec,
-  allModuleSets: List<ModuleSet>
-): List<ContentBlock> {
-  val result = mutableListOf<ContentBlock>()
-
-  // Track which modules are in which sets for duplicate detection
+private fun generateContentBlocksWithChainMapping(
+  spec: ProductModulesContentSpec
+): Pair<List<ContentBlock>, Map<String, List<String>>> {
+  val contentBlocks = mutableListOf<ContentBlock>()
+  val moduleToChain = mutableMapOf<String, List<String>>()
   val moduleToSets = mutableMapOf<String, MutableList<String>>()
+  val processedSets = HashSet<String>()
 
-  // Process each module set
-  for (moduleSet in allModuleSets) {
-    val directModules = getDirectModules(moduleSet, spec.excludedModules)
+  fun traverse(moduleSet: ModuleSet, chain: List<String>) {
+    val setName = "intellij.moduleSets.${moduleSet.name}"
+    val currentChain = chain + setName
 
-    // Track each module's set for duplicate detection
-    for (module in directModules) {
-      moduleToSets.computeIfAbsent(module.name) { mutableListOf() }.add(moduleSet.name)
+    // Skip if already processed
+    if (!processedSets.add(setName)) {
+      return
     }
 
-    // Generate content block with loading rules applied
+    // Get direct modules for this set
+    val directModules = getDirectModules(moduleSet, spec.excludedModules)
+
+    // Build content block and track chains/duplicates in single pass
     val modulesWithLoading = mutableListOf<ModuleWithLoading>()
     for (module in directModules) {
+      // Track for duplicate detection
+      moduleToSets.computeIfAbsent(module.name) { mutableListOf() }.add(moduleSet.name)
+      // Track chain
+      moduleToChain[module.name] = currentChain
+      // Build loading info
       val effectiveLoading = spec.moduleLoadingOverrides[module.name] ?: module.loading
       modulesWithLoading.add(ModuleWithLoading(module.name, effectiveLoading))
     }
 
     if (modulesWithLoading.isNotEmpty()) {
-      result.add(ContentBlock(moduleSet.name, modulesWithLoading))
+      contentBlocks.add(ContentBlock(moduleSet.name, modulesWithLoading))
     }
+
+    // Recursively process nested sets
+    for (nestedSet in moduleSet.nestedSets) {
+      traverse(nestedSet, currentChain)
+    }
+  }
+
+  // Process all top-level module sets
+  for (moduleSet in spec.moduleSets) {
+    traverse(moduleSet, emptyList())
   }
 
   // Check for duplicates and FAIL if found
@@ -246,95 +261,92 @@ private fun generateContentBlocks(
   }
 
   if (additionalModulesWithLoading.isNotEmpty()) {
-    result.add(ContentBlock("additional", additionalModulesWithLoading))
+    contentBlocks.add(ContentBlock("additional", additionalModulesWithLoading))
   }
 
-  return result
+  return Pair(contentBlocks, moduleToChain)
 }
 
 /**
  * Builds XML content for programmatic product modules.
  * Generates module alias, xi:include directives (or inlined content), and `<content>` blocks for each module set.
- *
- * @param moduleOutputProvider Provider for module lookup and validation
- * @param inlineXmlIncludes If true, inline the actual XML content instead of generating xi:include directives (for runtime processing)
- * @return ProductContentResult containing content blocks and module-to-set chain mapping
  */
 internal fun buildProductContentXml(
   spec: ProductModulesContentSpec,
   moduleOutputProvider: ModuleOutputProvider,
-  sb: StringBuilder,
   inlineXmlIncludes: Boolean,
-): ProductContentResult {
-  // Opening tag with optional XInclude namespace
-  if (spec.deprecatedXmlIncludes.isEmpty()) {
-    sb.append("<idea-plugin>\n")
-  }
-  else {
-    sb.append("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n")
-  }
+  productPropertiesClass: String,
+  generatorCommand: String,
+): ProductContentBuildResult {
+  // Generate content blocks and module-to-set chain mapping in single pass
+  val (contentBlocks, moduleToSetChainMapping) = generateContentBlocksWithChainMapping(spec)
 
-  // Collect all module sets once (including nested ones)
-  val allModuleSets = collectAllModuleSets(spec.moduleSets)
+  val xml = buildString {
+    // Header comments
+    append("  <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
+    append("  <!-- To regenerate, run 'Generate Product Layouts' or directly $generatorCommand -->\n")
+    append("  <!-- Source: $productPropertiesClass -->\n")
 
-  // Generate module aliases (product-level + from module sets)
-  val allAliases = mutableListOf<String>()
-  allAliases.addAll(spec.productModuleAliases)
-  for (moduleSet in allModuleSets) {
-    if (moduleSet.alias != null) {
-      allAliases.add(moduleSet.alias)
+    // Opening tag with optional XInclude namespace
+    if (spec.deprecatedXmlIncludes.isEmpty()) {
+      append("<idea-plugin>\n")
     }
-  }
+    else {
+      append("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n")
+    }
 
-  val aliasXml = buildModuleAliasesXml(allAliases)
-  if (aliasXml.isNotEmpty()) {
-    sb.append(aliasXml)
-    sb.append("\n")
-  }
+    // Collect aliases from all module sets (including nested ones)
+    val allAliases = mutableListOf<String>()
+    allAliases.addAll(spec.productModuleAliases)
+    visitAllModuleSets(spec.moduleSets) { moduleSet ->
+      if (moduleSet.alias != null) {
+        allAliases.add(moduleSet.alias)
+      }
+    }
 
-  // Generate xi:include directives or inline content
-  if (spec.deprecatedXmlIncludes.isNotEmpty()) {
-    generateXIncludes(spec = spec, moduleOutputProvider = moduleOutputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = sb)
-  }
+    val aliasXml = buildModuleAliasesXml(allAliases)
+    if (aliasXml.isNotEmpty()) {
+      append(aliasXml)
+      append("\n")
+    }
 
-  // Generate single content block with comments separating module sets
-  val contentBlocks = generateContentBlocks(spec, allModuleSets)
-  if (contentBlocks.isNotEmpty()) {
-    sb.append("  <content namespace=\"jetbrains\">\n")
+    // Generate xi:include directives or inline content
+    if (spec.deprecatedXmlIncludes.isNotEmpty()) {
+      generateXIncludes(spec = spec, moduleOutputProvider = moduleOutputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = this)
+    }
 
-    for ((index, block) in contentBlocks.withIndex()) {
-      withEditorFold(sb, "    ", block.source) {
-        for (moduleWithLoading in block.modules) {
-          sb.append("    <module name=\"${moduleWithLoading.name}\"")
+    // Generate single content block with comments separating module sets
+    if (contentBlocks.isNotEmpty()) {
+      append("  <content namespace=\"jetbrains\">\n")
 
-          if (moduleWithLoading.loading != null) {
-            // convert enum to lowercase with hyphens (e.g., ON_DEMAND -> on-demand)
-            sb.append(" loading=\"${moduleWithLoading.loading.name.lowercase().replace('_', '-')}\"")
+      for ((index, block) in contentBlocks.withIndex()) {
+        withEditorFold(this, "    ", block.source) {
+          for (moduleWithLoading in block.modules) {
+            append("    <module name=\"${moduleWithLoading.name}\"")
+
+            if (moduleWithLoading.loading != null) {
+              // convert enum to lowercase with hyphens (e.g., ON_DEMAND -> on-demand)
+              append(" loading=\"${moduleWithLoading.loading.name.lowercase().replace('_', '-')}\"")
+            }
+
+            append("/>\n")
           }
+        }
 
-          sb.append("/>\n")
+        // Add blank line between sections for readability (except after last block)
+        if (index < contentBlocks.size - 1) {
+          append("\n")
         }
       }
 
-      // Add blank line between sections for readability (except after last block)
-      if (index < contentBlocks.size - 1) {
-        sb.append("\n")
-      }
+      append("  </content>\n")
     }
 
-    sb.append("  </content>\n")
+    // Closing tag
+    append("</idea-plugin>\n")
   }
 
-  // Closing tag
-  sb.append("</idea-plugin>\n")
-
-  // Build module-to-set chain mapping
-  val moduleToSetChainMapping = buildModuleToSetChainMapping(
-    moduleSets = spec.moduleSets,
-    excludedModules = spec.excludedModules
-  )
-
-  return ProductContentResult(contentBlocks, moduleToSetChainMapping)
+  return ProductContentBuildResult(xml = xml, contentBlocks = contentBlocks, moduleToSetChainMapping = moduleToSetChainMapping)
 }
 
 private fun generateXIncludes(

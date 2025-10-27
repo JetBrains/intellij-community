@@ -118,12 +118,13 @@ private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, inde
     // Build breadcrumb path
     val nestedBreadcrumb = if (breadcrumb.isEmpty()) {
       nestedSet.name
-    } else {
+    }
+    else {
       "$breadcrumb > ${nestedSet.name}"
     }
 
     withEditorFold(sb, indent, "nested: $nestedBreadcrumb") {
-      appendModuleSetContent(sb, nestedSet, indent, nestedBreadcrumb) // RECURSIVE CALL with breadcrumb
+      appendModuleSetContent(sb = sb, moduleSet = nestedSet, indent = indent, breadcrumb = nestedBreadcrumb) // RECURSIVE CALL with breadcrumb
     }
     sb.append("\n")
   }
@@ -146,47 +147,59 @@ private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, inde
 }
 
 /**
+ * Result of building module set XML.
+ * Contains the XML string and count of direct modules (excluding nested).
+ */
+data class ModuleSetBuildResult(
+  val xml: String,
+  val directModuleCount: Int,
+)
+
+/**
  * Builds the XML content for a module set.
  *
  * @param moduleSet The module set to build XML for
  * @param label Description label ("community" or "ultimate") for header generation
- * @return XML string representation of the module set
+ * @return ModuleSetBuildResult containing XML and direct module count
  */
-internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): String {
-  val sb = StringBuilder()
+internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBuildResult {
+  // Count direct modules (excluding nested) - do this once upfront
+  val directModuleCount = getDirectModules(moduleSet).size
 
-  // Add generated file header
-  val mainClass = if (label == "community") "CommunityModuleSets" else "UltimateModuleSets"
-  sb.append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
-  sb.append("<!-- To regenerate, run: ${mainClass}.main() -->\n")
-  sb.append("<!-- Source: see moduleSet(\"${moduleSet.name}\") function in ${mainClass}.kt -->\n")
-  sb.append("<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->\n")
+  val xml = buildString {
+    // Add generated file header
+    val mainClass = if (label == "community") "CommunityModuleSets" else "UltimateModuleSets"
+    append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
+    append("<!-- To regenerate, run: ${mainClass}.main() -->\n")
+    append("<!-- Source: see moduleSet(\"${moduleSet.name}\") function in ${mainClass}.kt -->\n")
+    append("<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->\n")
 
-  // Opening tag (no xmlns:xi needed since we inline nested sets)
-  sb.append("<idea-plugin>")
-  sb.append("\n")
+    // Opening tag (no xmlns:xi needed since we inline nested sets)
+    append("<idea-plugin>")
+    append("\n")
 
-  // Output all module aliases (recursively collected from this set and nested sets)
-  val allAliases = collectAllAliases(moduleSet)
-  if (allAliases.isNotEmpty()) {
-    sb.append(buildModuleAliasesXml(allAliases))
-    sb.append("\n")
+    // Output all module aliases (recursively collected from this set and nested sets)
+    val allAliases = collectAllAliases(moduleSet)
+    if (allAliases.isNotEmpty()) {
+      append(buildModuleAliasesXml(allAliases))
+      append("\n")
+    }
+
+    // Generate content blocks with source-file attributes for tracking
+    val hasAnyModules = moduleSet.nestedSets.isNotEmpty() || moduleSet.modules.isNotEmpty()
+    if (hasAnyModules) {
+      append("  <content namespace=\"jetbrains\">")
+      append("\n")
+      appendModuleSetContent(this, moduleSet)
+      append("  </content>")
+      append("\n")
+    }
+
+    // Closing tag - NO trailing newline
+    append("</idea-plugin>")
   }
 
-  // Generate content blocks with source-file attributes for tracking
-  val hasAnyModules = moduleSet.nestedSets.isNotEmpty() || moduleSet.modules.isNotEmpty()
-  if (hasAnyModules) {
-    sb.append("  <content namespace=\"jetbrains\">")
-    sb.append("\n")
-    appendModuleSetContent(sb, moduleSet)
-    sb.append("  </content>")
-    sb.append("\n")
-  }
-
-  // Closing tag - NO trailing newline
-  sb.append("</idea-plugin>")
-
-  return sb.toString()
+  return ModuleSetBuildResult(xml, directModuleCount)
 }
 
 /**

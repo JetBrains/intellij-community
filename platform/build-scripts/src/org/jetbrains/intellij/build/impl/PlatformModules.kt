@@ -581,19 +581,19 @@ private suspend fun processAndGetProductPluginContentModules(
       moduleToSetChainMapping = null
     }
     else {
-      val sb = StringBuilder()
-      val result = buildProductContentXml(
+      val buildResult = buildProductContentXml(
         spec = programmaticModulesSpec,
         moduleOutputProvider = context,
-        sb = sb,
         inlineXmlIncludes = true,
+        productPropertiesClass = context.productProperties::class.java.name,
+        generatorCommand = "(runtime)"
       )
-      Span.current().addEvent("Generated ${result.contentBlocks.size} content blocks with ${result.contentBlocks.sumOf { it.modules.size }} total modules")
+      Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
 
-      originalContent = sb.toString()
-      xml = JDOMUtil.load(sb)
+      originalContent = buildResult.xml
+      xml = JDOMUtil.load(buildResult.xml)
       resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = false)
-      moduleToSetChainMapping = result.moduleToSetChainMapping
+      moduleToSetChainMapping = buildResult.moduleToSetChainMapping
     }
 
     val moduleItems = collectAndEmbedProductModules(
