@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.google.common.collect.HashMultiset
@@ -39,6 +39,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
+import com.intellij.util.system.OS
 import com.intellij.vcs.commit.AmendCommitAware
 import com.intellij.vcs.commit.ToggleAmendCommitOption.Companion.isAmendCommitOptionSupported
 import com.intellij.vcs.commit.commitWithoutChangesRoots
@@ -107,7 +108,14 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   override fun getCheckinOperationName(): String {
-    return GitBundle.message("commit.action.name")
+    // To fix Mac commit mnemonic issue (IJPL-54603) while keeping same behavior for other users
+    return when (OS.CURRENT) {
+      OS.macOS -> GitBundle.message("commit.action.name.mac")
+      OS.Windows,
+      OS.Linux,
+      OS.FreeBSD,
+      OS.Other -> GitBundle.message("commit.action.name")
+    }
   }
 
   override fun isAmendCommitSupported(): Boolean {
