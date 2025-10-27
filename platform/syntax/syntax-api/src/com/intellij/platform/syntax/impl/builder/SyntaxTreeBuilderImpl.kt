@@ -45,6 +45,7 @@ internal class SyntaxTreeBuilderImpl(
   // mutable state
   private var myTokenTypeChecked = false
   private var myCurrentLexeme = 0
+  private var myCheckCanceledCounter = 0
   private var myCachedTokenType: SyntaxElementType? = null
 
   private var productionResult: ProductionResult? = null
@@ -195,15 +196,23 @@ internal class SyntaxTreeBuilderImpl(
   }
 
   override fun advanceLexer() {
-    if ((myCurrentLexeme and 0xff) == 0) {
-      cancellationProvider?.checkCancelled()
-    }
+    checkCanceled()
 
     if (eof()) return
 
     myTokenTypeChecked = false
     myCurrentLexeme++
     clearCachedTokenType()
+  }
+
+  private fun checkCanceled() {
+    myCheckCanceledCounter++
+    if ((myCheckCanceledCounter and 0xff) != 0) {
+      // perform the actual check once in 256 times
+      return
+    }
+
+    cancellationProvider?.checkCancelled()
   }
 
   fun lexType(index: Int): SyntaxElementType {
