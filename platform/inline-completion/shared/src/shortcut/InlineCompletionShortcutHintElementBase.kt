@@ -32,12 +32,12 @@ sealed class InlineCompletionShortcutHintElementBase @JvmOverloads constructor(
   protected abstract fun getHintWeight(hint: InlineCompletionShortcutHint): Int
 
   private fun chooseHint(): InlineCompletionShortcutHint {
+    forcedHint?.let { return it }
+
     val entries = when (insertActionId) {
       IdeActions.ACTION_INSERT_INLINE_COMPLETION -> InlineCompletionShortcutHint.entries
       else -> return InlineCompletionShortcutHint.INSERT_TERMINAL
     }
-
-    forcedHint?.let { return it }
 
     var randomPoint = Random.nextInt(entries.sumOf { getHintWeight(it) }) + 1
     return entries.firstOrNull {
