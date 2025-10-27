@@ -302,4 +302,34 @@ public final class GitFileUtils {
       h.addParameters("-p");
     }
   }
+
+  /**
+   * @param project    the project
+   * @param root       a vcs root
+   * @param toAdd      added/modified files to commit
+   * @param toRemove   removed files to commit
+   * @param exceptions a list of exceptions to update
+   */
+  public static void stageForCommit(@NotNull Project project,
+                                    @NotNull VirtualFile root,
+                                    @NotNull Collection<? extends FilePath> toAdd,
+                                    @NotNull Collection<? extends FilePath> toRemove,
+                                    @NotNull List<? super VcsException> exceptions) {
+    if (!toRemove.isEmpty()) {
+      try {
+        deletePaths(project, root, toRemove, "--ignore-unmatch", "--cached", "-r");
+      }
+      catch (VcsException ex) {
+        exceptions.add(ex);
+      }
+    }
+    if (!toAdd.isEmpty()) {
+      try {
+        addPathsForce(project, root, toAdd);
+      }
+      catch (VcsException ex) {
+        exceptions.add(ex);
+      }
+    }
+  }
 }

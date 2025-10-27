@@ -936,22 +936,28 @@ public final class GitUtil {
       FilePath after = afterPathGetter.convert(change);
       FilePath before = beforePathGetter.convert(change);
       if (before == null) {
-        return "A: " + getRelativePath(root, after);
+        return "A: " + getLogString(root, after);
       }
       else if (after == null) {
-        return "D: " + getRelativePath(root, before);
+        return "D: " + getLogString(root, before);
       }
       else if (ChangesUtil.equalsCaseSensitive(before, after)) {
-        return "M: " + getRelativePath(root, after);
+        return "M: " + getLogString(root, after);
       }
       else {
-        return "R: " + getRelativePath(root, before) + " -> " + getRelativePath(root, after);
+        return "R: " + getLogString(root, before) + " -> " + getLogString(root, after);
       }
     }, ", ");
   }
 
-  public static @Nullable String getRelativePath(@NotNull String root, @NotNull FilePath after) {
-    return FileUtil.getRelativePath(root, after.getPath(), File.separatorChar);
+  public static @NotNull String getLogString(@NotNull String root, @NotNull FilePath filePath) {
+    String path = getRelativePath(root, filePath);
+    if (path != null) return path;
+    return filePath.getPath();
+  }
+
+  public static @Nullable String getRelativePath(@NotNull String root, @NotNull FilePath filePath) {
+    return FileUtil.getRelativePath(root, filePath.getPath(), File.separatorChar);
   }
 
   /**
